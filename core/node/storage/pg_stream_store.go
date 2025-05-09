@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -34,8 +35,9 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	//
+	// workers
 	esm *ephemeralStreamMonitor
+	st  *snapshotTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -114,7 +116,7 @@ func NewPostgresStreamStore(
 	instanceId string,
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
-	ephemeralStreamTtl time.Duration,
+	config crypto.OnChainConfiguration,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -141,7 +143,13 @@ func NewPostgresStreamStore(
 	go store.listenForNewNodes(cancelCtx)
 
 	// Start the ephemeral stream monitor.
-	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	store.esm, err = newEphemeralStreamMonitor(ctx, config.Get().StreamEphemeralStreamTTL, store)
+	if err != nil {
+		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+	}
+
+	// Start the snapshot trimmer.
+	store.st, err = newSnapshotTrimmer(ctx, store, config)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
@@ -522,6 +530,10 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 		}
 		return err
 	}
+
+	// Add the stream to the snapshots trimmer
+	s.st.onCreated(streamId)
+
 	return nil
 }
 
@@ -1400,6 +1412,7 @@ func (s *PostgresStreamStore) WriteMiniblocks(
 		return RiverError(Err_INTERNAL, "No miniblocks to write").Func("pg.WriteMiniblocks")
 	}
 	if prevMinipoolGeneration != miniblocks[0].Number {
+		fmt.Println(prevMinipoolGeneration, miniblocks[0].Number)
 		return RiverError(Err_INTERNAL, "Previous minipool generation mismatch").Func("pg.WriteMiniblocks")
 	}
 	if newMinipoolGeneration != miniblocks[len(miniblocks)-1].Number+1 {
