@@ -21,8 +21,8 @@ export interface UserTipsResponsePayload {
 }
 
 const CACHE_CONTROL = {
-	200: 'public, max-age=30, s-maxage=1800, stale-while-revalidate=1800',
-	404: 'public, max-age=5, s-maxage=1800',
+	200: 'public, max-age=30, s-maxage=300, stale-while-revalidate=300',
+	404: 'public, max-age=5, s-maxage=300',
 }
 
 export async function fetchUserTips(request: FastifyRequest, reply: FastifyReply) {
