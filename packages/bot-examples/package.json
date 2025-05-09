@@ -4,8 +4,8 @@
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
-        "build": "tsc",
-        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx watch --env-file=.env ./src/thread-ai-bot.ts",
+        "dev:survey": "node esbuild.config.mjs && NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env dist/survey-bot.cjs",
+        "dev:thread-ai": "node esbuild.config.mjs && NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env dist/thread-ai-bot.cjs",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix"
@@ -20,10 +20,10 @@
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
+        "esbuild": "^0.21.5",
         "eslint": "^8.57.0",
         "eslint-import-resolver-typescript": "^3.5.5",
         "eslint-plugin-import": "^2.27.5",
-        "tsx": "^4.19.3",
         "typescript": "^5.8.2"
     },
     "files": [
