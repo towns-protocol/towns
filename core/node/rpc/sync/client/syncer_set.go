@@ -496,5 +496,29 @@ func (mr *ModifyRequest) Validate() error {
 		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists")
 	}
 
+	// Prevent duplicates in the add list
+	if len(mr.ToAdd) > 1 {
+		seen := make(map[StreamId]struct{}, len(mr.ToAdd))
+		for _, c := range mr.ToAdd {
+			streamId := StreamId(c.GetStreamId())
+			if _, exists := seen[streamId]; exists {
+				return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in add operation")
+			}
+			seen[streamId] = struct{}{}
+		}
+	}
+
+	// Prevent duplicates in the remove list
+	if len(mr.ToRemove) > 1 {
+		seen := make(map[StreamId]struct{}, len(mr.ToRemove))
+		for _, s := range mr.ToRemove {
+			streamId := StreamId(s)
+			if _, exists := seen[streamId]; exists {
+				return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in remove operation")
+			}
+			seen[streamId] = struct{}{}
+		}
+	}
+
 	return nil
 }
