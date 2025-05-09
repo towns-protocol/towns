@@ -34,7 +34,7 @@ import {
     userIdFromAddress,
 } from '../id'
 import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
-import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from 'ethereum-cryptography/secp256k1'
 import { EntitlementsDelegate } from '@towns-protocol/encryption'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
@@ -249,7 +249,7 @@ export const makeRandomUserContext = async (): Promise<SignerContextWithWallet> 
 }
 
 export const makeRandomUserAddress = (): Uint8Array => {
-    return publicKeyToAddress(getPublicKey(utils.randomPrivateKey(), false))
+    return publicKeyToAddress(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey(), false))
 }
 
 export const makeUserContextFromWallet = async (
