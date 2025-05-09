@@ -188,7 +188,7 @@ export const unpackStreamAndCookie = async (
         events: await unpackEnvelopes(streamAndCookie.events, opts),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot: streamAndCookie.snapshot
+        snapshot: streamAndCookie.snapshot && miniblocks.length > 0 && miniblocks[0].header.snapshotHash
             ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
             : undefined,
     }
@@ -250,7 +250,7 @@ export const unpackSnapshot = async (
     // make sure the given snapshot corresponds to the miniblock
     check(
         bin_equal(miniblock.header.snapshotHash, snapshot.hash),
-        'Snapshot hash does not match miniblock snapshot hash',
+        `Snapshot hash does not match miniblock snapshot hash: ${miniblock.header.snapshotHash} != ${snapshot.hash}`,
         Err.BAD_EVENT_ID,
     )
 
