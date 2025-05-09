@@ -104,12 +104,12 @@ export function parsedMiniblockToPersistedMiniblock(
     miniblock: ParsedMiniblock,
     direction: 'forward' | 'backward',
 ) {
-    if (direction === 'backward') {
-        miniblock.header.snapshot = undefined
-    }
+    // always zero out the snapshot since we save it separately
+    const header = { ...miniblock.header, snapshot: undefined }
+
     return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
-        header: miniblock.header,
+        header: header,
         events: miniblock.events
             .filter((event) => isPersistedEvent(event, direction))
             .map(parsedEventToPersistedEvent),
