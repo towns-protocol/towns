@@ -6,24 +6,24 @@ import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IExecutorBase} from "src/spaces/facets/account/executor/IExecutor.sol";
+import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 
 //libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 //contracts
-import {Executor} from "src/spaces/facets/account/executor/Executor.sol";
+import {ExecutorFacet} from "src/spaces/facets/executor/ExecutorFacet.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
 contract ExecutorTest is IOwnableBase, TestUtils {
-    Executor internal executor;
+    ExecutorFacet internal executor;
     MockERC721 internal mockERC721;
 
     address internal founder;
 
     function setUp() public {
         founder = _randomAddress();
-        executor = new Executor(founder);
+        executor = new ExecutorFacet(founder);
         mockERC721 = new MockERC721();
     }
 

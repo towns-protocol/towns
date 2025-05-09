@@ -2,7 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Group, Access, IExecutorBase} from "../IExecutor.sol";
+
+// libraries
+import {Group, Access} from "./IExecutor.sol";
 
 // contracts
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
