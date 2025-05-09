@@ -257,8 +257,7 @@ func (t *streamTrimmer) scheduleStreamsTrimming(ctx context.Context) error {
 			}
 
 			var stream string
-			var snapshotMiniblock int64
-			_, err = pgx.ForEachRow(rows, []any{&stream, &snapshotMiniblock}, func() error {
+			_, err = pgx.ForEachRow(rows, []any{&stream}, func() error {
 				streamId, err := StreamIdFromString(stream)
 				if err != nil {
 					return err
