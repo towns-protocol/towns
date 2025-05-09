@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 )
 
@@ -38,6 +39,8 @@ func TestMigrateExistingDb(t *testing.T) {
 		exitSignal2,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
+		crypto.StreamTrimmingMiniblocksToKeepSettings{},
+		100,
 	)
 	require.NoError(err)
 	defer pgStreamStore2.Close(ctx)

@@ -15,6 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -63,6 +64,8 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
+		crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
 
@@ -662,6 +665,8 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			exitSignal2,
 			infra.NewMetricsFactory(nil, "", ""),
 			time.Minute*10,
+			crypto.StreamTrimmingMiniblocksToKeepSettings{},
+			5,
 		)
 		require.NoError(err)
 		secondStoreInitialized.Done()
