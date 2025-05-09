@@ -10,6 +10,7 @@
 <p align="center">
   <a href="https://docs.towns.com"><img src="https://img.shields.io/badge/docs-read_the_docs-blue" alt="Read Towns Docs"></a>
   <a href="https://gov.towns.com/"><img src="https://img.shields.io/badge/governance-purple" alt="Towns Governance"></a>
+  <a href="https://deepwiki.com/towns-protocol/towns"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 <br/>
 
