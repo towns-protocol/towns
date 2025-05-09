@@ -156,7 +156,7 @@ The project supports two methods for deploying facets:
    - Replace `[FacetName]` with the actual facet contract name (without "Deploy" prefix)
    - This approach uses the common `DeployFacet.s.sol` script with the `CONTRACT_NAME` environment variable
    - It leverages deterministic CREATE2 addresses and supports batch deployments
-   - For more details, see the [DeployFacet documentation](./node_modules/@towns-protocol/diamond/scripts/README.md)
+   - For more details, see the [DeployFacet documentation](https://github.com/towns-protocol/diamond/blob/main/scripts/README.md)
 
 ### Live Network Deployment
 
@@ -196,32 +196,11 @@ make deploy-facet-ledger rpc=base_sepolia contract=WalletLink context=gamma
 
 You can see all the contracts available for deployment in the [deployments](./scripts/deployments) directory.
 
-## Diamond Pattern Implementation
+## Contributing
 
-The project uses the Diamond Pattern (EIP-2535) for contract upgradeability. A typical facet in this codebase is split into several files for clarity and upgrade safety:
+For detailed information on contributing to this project, please see our [CONTRIBUTING.md](CONTRIBUTING.md) file. It includes:
 
-- **Storage Library**: Handles diamond storage slot and layout
-- **Base Contract**: Implements internal logic and interacts with storage
-- **Facet Contract**: Exposes external/protected functions and inherits the base
-- **Interfaces**: Define external/internal APIs
-
-### Diamond Storage Pattern
-
-Every new facet/feature must use a specific storage pattern to avoid collision:
-
-```solidity
-library FacetStorage {
-  bytes32 internal constant STORAGE_SLOT =
-    0x672ef851d5f92307da037116e23aa9e31af7e1f7e3ca62c4e6d540631df3fd00;
-
-  struct Layout {
-    // storage variables go here
-  }
-
-  function layout() internal pure returns (Layout storage ds) {
-    assembly {
-      ds.slot := STORAGE_SLOT
-    }
-  }
-}
-```
+- Guidelines for opening issues and pull requests
+- Coding standards and best practices
+- Diamond Pattern implementation details
+- Facet development guidelines
