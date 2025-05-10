@@ -7884,6 +7884,7 @@ __metadata:
     "@matrix-org/olm": ^3.2.15
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/vodozemac": 0.1.0
     "@towns-protocol/web3": "workspace:^"
     "@types/lodash": ^4.14.186
     "@types/node": ^20.14.8
@@ -8203,6 +8204,13 @@ __metadata:
     viem: ^2.21.51
   languageName: unknown
   linkType: soft
+
+"@towns-protocol/vodozemac@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@towns-protocol/vodozemac@npm:0.1.0"
+  checksum: 19d2f59146b896b13589ed48d51b33fc521afb98110e86208c341f8c8428e04fa85eb1dd0462b801f1e9d8b15e2ed7f0e0324f9d754b0d5c2dc568f94afb6857
+  languageName: node
+  linkType: hard
 
 "@towns-protocol/web3@workspace:^, @towns-protocol/web3@workspace:packages/web3":
   version: 0.0.0-use.local
