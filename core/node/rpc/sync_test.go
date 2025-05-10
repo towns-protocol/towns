@@ -501,7 +501,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 			AddStreams: []*protocol.SyncCookie{channel, channel},
 		}))
 		require.Error(err)
-		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// remove two same streams in the modify sync request and expect error
@@ -514,7 +514,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 			},
 		}))
 		require.Error(err)
-		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// passing the same stream in add and remove streams in the modify sync request and expect error
@@ -533,4 +533,3 @@ func TestSyncWithManyStreams(t *testing.T) {
 	syncClients.cancelAll(t, ctx)
 	syncClients.checkDone(t)
 }
-

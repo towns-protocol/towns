@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
@@ -128,6 +129,11 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		defer span.End()
 	}
 
+	// Validate modify request
+	if err := req.Validate(); err != nil {
+		return AsRiverError(err, Err_INVALID_ARGUMENT).Tag("syncId", ss.syncID)
+	}
+
 	addingFailuresLock := sync.Mutex{}
 	addingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
 	mr := ModifyRequest{
@@ -193,19 +199,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
 	}
 
-	// Prevent passing the same stream to both add and remove operations
-	if len(req.ToAdd) > 0 && len(req.ToRemove) > 0 {
-		if slices.ContainsFunc(req.ToAdd, func(c *SyncCookie) bool {
-			return slices.ContainsFunc(req.ToRemove, func(streamId []byte) bool {
-				return StreamId(c.GetStreamId()) == StreamId(streamId)
-			})
-		}) {
-			return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists").
-				Tags("syncId", ss.syncID).
-				Func("SyncerSet.Modify")
-		}
-	}
-
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
 
 	// Group modify sync request by the remote syncer.
@@ -233,7 +226,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			}
 		}
 
-		// Fallback only if cookie-provided node is unavailable
+		// Add fallback nodes in case if cookie-provided node is unavailable
 		if !nodeAvailable {
 			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
 			if err != nil {
@@ -280,15 +273,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			modifySyncs[selectedNode] = &ModifySyncRequest{}
 		}
 
-		// avoid duplicates
-		if slices.ContainsFunc(modifySyncs[selectedNode].AddStreams, func(c *SyncCookie) bool {
-			return StreamId(c.StreamId) == streamID
-		}) {
-			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation").
-				Tags("syncId", ss.syncID, "streamId", streamID).
-				Func("SyncerSet.Modify")
-		}
-
 		modifySyncs[selectedNode].AddStreams = append(
 			modifySyncs[selectedNode].AddStreams,
 			cookie.CopyWithAddr(selectedNode),
@@ -312,15 +296,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			modifySyncs[syncer.Address()] = &ModifySyncRequest{}
 		}
 
-		// avoid duplicates in the remove list
-		if slices.ContainsFunc(modifySyncs[syncer.Address()].RemoveStreams, func(s []byte) bool {
-			return StreamId(streamIDRaw) == StreamId(s)
-		}) {
-			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in remove operation").
-				Tags("syncId", ss.syncID, "streamId", StreamId(streamIDRaw)).
-				Func("SyncerSet.Modify")
-		}
-
 		modifySyncs[syncer.Address()].RemoveStreams = append(
 			modifySyncs[syncer.Address()].RemoveStreams,
 			streamIDRaw,
@@ -331,6 +306,16 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		return nil
 	}
 
+	return ss.distributeSyncModifications(ctx, modifySyncs, req.AddingFailureHandler, req.RemovingFailureHandler)
+}
+
+// distributeSyncModifications distributes the given modify sync requests to the responsible syncers.
+func (ss *SyncerSet) distributeSyncModifications(
+	ctx context.Context,
+	modifySyncs map[common.Address]*ModifySyncRequest,
+	failedToAdd func(status *SyncStreamOpStatus),
+	failedToRemove func(status *SyncStreamOpStatus),
+) error {
 	var errGrp errgroup.Group
 	var localMuSyncers sync.Mutex
 	for nodeAddress, modifySync := range modifySyncs {
@@ -346,20 +331,19 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				if err != nil {
 					rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 					for _, cookie := range modifySync.GetAddStreams() {
-						req.AddingFailureHandler(&SyncStreamOpStatus{
+						failedToAdd(&SyncStreamOpStatus{
 							StreamId: cookie.GetStreamId(),
 							Code:     int32(rvrErr.Code),
 							Message:  rvrErr.GetMessage(),
 						})
 					}
 					for _, streamIDRaw := range modifySync.GetRemoveStreams() {
-						req.RemovingFailureHandler(&SyncStreamOpStatus{
+						failedToRemove(&SyncStreamOpStatus{
 							StreamId: streamIDRaw,
 							Code:     int32(rvrErr.Code),
 							Message:  rvrErr.GetMessage(),
 						})
 					}
-
 					continue
 				}
 			}
@@ -376,14 +360,14 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			if err != nil {
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
 				for _, cookie := range modifySync.GetAddStreams() {
-					req.AddingFailureHandler(&SyncStreamOpStatus{
+					failedToAdd(&SyncStreamOpStatus{
 						StreamId: cookie.GetStreamId(),
 						Code:     int32(rvrErr.Code),
 						Message:  rvrErr.GetMessage(),
 					})
 				}
 				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
-					req.RemovingFailureHandler(&SyncStreamOpStatus{
+					failedToRemove(&SyncStreamOpStatus{
 						StreamId: streamIDRaw,
 						Code:     int32(rvrErr.Code),
 						Message:  rvrErr.GetMessage(),
@@ -399,7 +383,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				})
 			})
 			for _, status := range addingFailures {
-				req.AddingFailureHandler(status)
+				failedToAdd(status)
 			}
 
 			removalFailures := resp.GetRemovals()
@@ -409,7 +393,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				})
 			})
 			for _, status := range removalFailures {
-				req.RemovingFailureHandler(status)
+				failedToRemove(status)
 			}
 
 			localMuSyncers.Lock()
@@ -472,6 +456,13 @@ func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (*remoteSyncer, error)
 		return nil, err
 	}
 
+	// Make sure the given client responds
+	ctx, cancel := context.WithTimeout(ss.ctx, time.Second*5)
+	defer cancel()
+	if _, err = client.Info(ctx, connect.NewRequest(&InfoRequest{})); err != nil {
+		return nil, err
+	}
+
 	return newRemoteSyncer(
 		ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, addr, client,
 		ss.rmStream, ss.messages, ss.otelTracer)
@@ -487,4 +478,47 @@ func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
 		delete(ss.syncers, syncer.Address())
 		ss.muSyncers.Unlock()
 	}()
+}
+
+// Validate checks the modify request for errors and returns an error if any are found.
+func (mr *ModifyRequest) Validate() error {
+	// Make sure the request is not empty
+	if len(mr.ToAdd) == 0 && len(mr.ToRemove) == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "Empty modify sync request")
+	}
+
+	// Prevent passing the same stream to both add and remove operations
+	if slices.ContainsFunc(mr.ToAdd, func(c *SyncCookie) bool {
+		return slices.ContainsFunc(mr.ToRemove, func(streamId []byte) bool {
+			return StreamId(c.GetStreamId()) == StreamId(streamId)
+		})
+	}) {
+		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists")
+	}
+
+	// Prevent duplicates in the add list
+	if len(mr.ToAdd) > 1 {
+		seen := make(map[StreamId]struct{}, len(mr.ToAdd))
+		for _, c := range mr.ToAdd {
+			streamId := StreamId(c.GetStreamId())
+			if _, exists := seen[streamId]; exists {
+				return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in add operation")
+			}
+			seen[streamId] = struct{}{}
+		}
+	}
+
+	// Prevent duplicates in the remove list
+	if len(mr.ToRemove) > 1 {
+		seen := make(map[StreamId]struct{}, len(mr.ToRemove))
+		for _, s := range mr.ToRemove {
+			streamId := StreamId(s)
+			if _, exists := seen[streamId]; exists {
+				return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in remove operation")
+			}
+			seen[streamId] = struct{}{}
+		}
+	}
+
+	return nil
 }
