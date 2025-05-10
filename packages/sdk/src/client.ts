@@ -2281,15 +2281,9 @@ export class Client
             return {}
         }
         const members = Array.from(stream.getUsersEntitledToKeyExchange())
-        this.logCall(
-            `Encrypting for users (shouldEncryptForInvitedMembers:`,
-            members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
-        )
+        this.logInfo(`getDevicesInStream: downloading device info for: `, members.length)
         const info = await this.downloadUserDeviceInfo(members)
-        this.logCall(
-            'keys: ',
-            Object.keys(info).map((key) => `${key} (${info[key].length})`),
-        )
+        this.logCall('getDevicesInStream: done, keys.length ', Object.keys(info).length)
         return info
     }
 
@@ -2727,20 +2721,23 @@ export class Client
         const sessionIds = sessions.map((session) => session.sessionId)
         const payload = makeSessionKeys(sessions)
         const payloadClearText = toJsonString(SessionKeysSchema, payload)
-        const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
+        const toDevicesEntries = Object.entries(toDevices)
+        const promises = toDevicesEntries.map(async ([userId, deviceKeys]) => {
             try {
                 const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logCall('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
-                this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
-                    toStreamId,
-                    deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
-                })
+                if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
+                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                        toStreamId,
+                        deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
+                    })
+                }
                 await this.makeEventWithHashAndAddToStream(
                     toStreamId,
                     make_UserInboxPayload_GroupEncryptionSessions({
@@ -2759,7 +2756,9 @@ export class Client
             }
         })
 
+        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
+        this.logInfo('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.
