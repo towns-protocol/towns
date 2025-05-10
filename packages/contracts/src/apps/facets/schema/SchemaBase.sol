@@ -17,6 +17,12 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SchemaStorage} from "./SchemaStorage.sol";
 // contracts
 
+/**
+ * @title SchemaBase
+ * @notice Base implementation for schema management functionality
+ * @dev Provides core logic for registering and retrieving schemas
+ * Implements the ISchemaBase interface to handle schema operations
+ */
 abstract contract SchemaBase is ISchemaBase {
     using CustomRevert for bytes4;
     using SchemaLib for SchemaRecord;
@@ -25,12 +31,15 @@ abstract contract SchemaBase is ISchemaBase {
     /*                     Schema Management                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Registers a new schema in the registry
-    /// @param schema The schema string to register
-    /// @param resolver The resolver contract for this schema
-    /// @param revocable Whether attestations using this schema can be revoked
-    /// @return schemaUID The unique identifier of the registered schema
-    /// @dev Reverts if schema is empty, resolver is invalid, or schema is already registered
+    /**
+     * @notice Registers a new schema in the registry
+     * @dev Creates a unique identifier for the schema and stores it in the storage
+     * Validates schema content, resolver implementation, and prevents duplicates
+     * @param schema The schema string to register (e.g., data structure format)
+     * @param resolver The resolver contract for this schema that will validate attestations
+     * @param revocable Whether attestations using this schema can be revoked
+     * @return schemaUID The unique identifier of the registered schema
+     */
     function _registerSchema(
         string calldata schema,
         ISchemaResolver resolver,
@@ -65,9 +74,12 @@ abstract contract SchemaBase is ISchemaBase {
         return schemaUID;
     }
 
-    /// @notice Retrieves a schema record by its UID
-    /// @param uid The unique identifier of the schema
-    /// @return The schema record
+    /**
+     * @notice Retrieves a schema record by its UID
+     * @dev Gets the schema record from storage
+     * @param uid The unique identifier of the schema
+     * @return The complete schema record including schema string, resolver, and settings
+     */
     function _getSchema(bytes32 uid) internal view returns (SchemaRecord memory) {
         return SchemaStorage.getSchema(uid);
     }
@@ -76,9 +88,12 @@ abstract contract SchemaBase is ISchemaBase {
     /*                     Validator Checks                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Validates that a resolver implements the required interface
-    /// @param resolver The resolver contract to check
-    /// @dev Reverts if the resolver doesn't implement ISchemaResolver interface
+    /**
+     * @notice Validates that a resolver implements the required interface
+     * @dev Uses ERC-165 interface detection to verify resolver implementation
+     * Allows zero address as a valid input (representing no resolver)
+     * @param resolver The resolver contract to check
+     */
     function checkResolver(ISchemaResolver resolver) internal view {
         if (
             address(resolver) != address(0) &&

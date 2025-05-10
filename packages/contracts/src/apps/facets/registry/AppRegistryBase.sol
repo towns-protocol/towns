@@ -23,9 +23,21 @@ import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-s
 import {SchemaBase} from "../schema/SchemaBase.sol";
 import {AttestationBase} from "../attest/AttestationBase.sol";
 
+/**
+ * @title AppRegistryBase
+ * @notice Base implementation for app registry functionality
+ * @dev Provides core logic for registering, retrieving, and managing apps
+ * Extends SchemaBase and AttestationBase to leverage schema and attestation functionality
+ */
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
 
+    /**
+     * @notice Initializes the app registry with a schema
+     * @dev Registers a schema and sets it as the active schema for app registrations
+     * @param schema The schema structure for app registrations
+     * @param resolver The resolver contract for the schema
+     */
     function __AppRegistry_init_unchained(
         string calldata schema,
         ISchemaResolver resolver
@@ -38,33 +50,44 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /*                           FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Sets the schema ID for the app registry
-    /// @param schemaId The schema ID to set
+    /**
+     * @notice Sets the schema ID for the app registry
+     * @dev Updates the schema ID in storage and emits an event
+     * @param schemaId The schema ID to set
+     */
     function _setSchema(bytes32 schemaId) internal {
         AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
         db.schemaId = schemaId;
         emit AppSchemaSet(schemaId);
     }
 
-    /// @notice Retrieves the current schema ID
-    /// @return The current schema ID
+    /**
+     * @notice Retrieves the current schema ID
+     * @dev Gets the schema ID from storage
+     * @return The current schema ID
+     */
     function _getSchema() internal view returns (bytes32) {
         return AppRegistryStorage.getLayout().schemaId;
     }
 
-    /// @notice Gets the latest version ID for a app
-    /// @param app The address of the app
-    /// @return The latest version ID, or EMPTY_UID if the app is banned
+    /**
+     * @notice Gets the latest version ID for an app
+     * @dev Returns EMPTY_UID if the app is banned
+     * @param app The address of the app
+     * @return The latest version ID, or EMPTY_UID if the app is banned
+     */
     function _getLatestAppId(address app) internal view returns (bytes32) {
         AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
         if (appInfo.isBanned) return EMPTY_UID;
         return appInfo.latestVersion;
     }
 
-    /// @notice Retrieves app attestation data by version ID
-    /// @param appId The version ID of the app
-    /// @return attestation The attestation data for the app
-    /// @dev Reverts if app is not registered, revoked, or banned
+    /**
+     * @notice Retrieves app attestation data by version ID
+     * @dev Validates that the app exists, is not revoked, and is not banned
+     * @param appId The version ID of the app
+     * @return attestation The attestation data for the app
+     */
     function _getApp(bytes32 appId) internal view returns (Attestation memory attestation) {
         Attestation memory att = _getAttestation(appId);
         if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
@@ -77,18 +100,23 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return att;
     }
 
-    /// @notice Checks if a app is banned
-    /// @param app The address of the app to check
-    /// @return True if the app is banned, false otherwise
+    /**
+     * @notice Checks if an app is banned
+     * @dev Retrieves the ban status from storage
+     * @param app The address of the app to check
+     * @return True if the app is banned, false otherwise
+     */
     function _isBanned(address app) internal view returns (bool) {
         return AppRegistryStorage.getLayout().apps[app].isBanned;
     }
 
-    /// @notice Registers a new app in the registry
-    /// @param app The address of the app to register
-    /// @param clients Array of client addresses that can use the app
-    /// @return version The version ID of the registered app
-    /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
+    /**
+     * @notice Registers a new app in the registry
+     * @dev Validates inputs, creates an attestation, and updates storage
+     * @param app The address of the app to register
+     * @param clients Array of client addresses that can use the app
+     * @return version The version ID of the registered app
+     */
     function _registerApp(
         address app,
         address[] calldata clients
@@ -123,12 +151,14 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return version;
     }
 
-    /// @notice Removes a app from the registry
-    /// @param revoker The address revoking the app
-    /// @param appId The version ID of the app to remove
-    /// @return app The address of the removed app
-    /// @return version The version ID that was removed
-    /// @dev Reverts if app is not registered, revoked, or banned
+    /**
+     * @notice Removes an app from the registry
+     * @dev Revokes the attestation and updates storage
+     * @param revoker The address revoking the app
+     * @param appId The version ID of the app to remove
+     * @return app The address of the removed app
+     * @return version The version ID that was removed
+     */
     function _removeApp(
         address revoker,
         bytes32 appId
@@ -162,10 +192,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return (app, version);
     }
 
-    /// @notice Bans a app from the registry
-    /// @param app The address of the app to ban
-    /// @return version The version ID of the banned app
-    /// @dev Reverts if app is not registered, already banned, or revoked
+    /**
+     * @notice Bans an app from the registry
+     * @dev Revokes the current attestation and marks the app as banned
+     * @param app The address of the app to ban
+     * @return version The version ID of the banned app
+     */
     function _banApp(address app) internal returns (bytes32 version) {
         if (app == address(0)) AppNotRegistered.selector.revertWith();
 
@@ -189,10 +221,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return appInfo.latestVersion;
     }
 
-    /// @notice Verifies inputs for adding a new app
-    /// @param app The app address to verify
-    /// @param clients Array of client addresses to verify
-    /// @dev Reverts if any input is invalid or app doesn't implement required interfaces
+    /**
+     * @notice Verifies inputs for adding a new app
+     * @dev Checks address validity, array validity, and required interfaces
+     * @param app The app address to verify
+     * @param clients Array of client addresses to verify
+     */
     function _verifyAddAppInputs(address app, address[] memory clients) internal view {
         if (app == address(0)) InvalidAddressInput.selector.revertWith();
         if (clients.length == 0) InvalidArrayInput.selector.revertWith();

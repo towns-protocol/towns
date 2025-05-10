@@ -13,16 +13,34 @@ import {HookLib} from "./HookLib.sol";
 
 // contracts
 
+/**
+ * @title HookBase
+ * @author Towns Protocol Team
+ * @notice Base contract for implementing hook functionality in the executor system
+ * @dev This abstract contract provides the core implementation for managing pre and post execution hooks
+ *      Hooks allow modules to execute custom logic before and after function calls
+ */
 abstract contract HookBase is IHookBase {
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
     using CustomRevert for bytes4;
     using HookLib for HookConfig;
 
-    uint256 internal constant MAX_HOOKS = 10;
+    /// @notice Maximum number of hooks that can be added to prevent DoS attacks
+    uint256 internal constant MAX_HOOK_COUNT = 5;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           HOOKS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /**
+     * @notice Add a new hook for a specific module and function selector
+     * @dev Registers a hook that can execute before and/or after a function call
+     * @param module Address of the module that will implement the hook
+     * @param selector Function selector that the hook will target
+     * @param entityId Identifier for the entity associated with this hook
+     * @param isPre Whether this hook should run before the target function
+     * @param isPost Whether this hook should run after the target function
+     */
     function _addHook(
         address module,
         bytes4 selector,
@@ -38,18 +56,25 @@ abstract contract HookBase is IHookBase {
         config.createHook(hookId, module, entityId);
 
         if (isPre) {
-            if (config.preHooks.length() >= MAX_HOOKS) TooManyHooks.selector.revertWith();
+            if (config.preHooks.length() >= MAX_HOOK_COUNT) TooManyHooks.selector.revertWith();
             config.preHooks.add(hookId);
         }
 
         if (isPost) {
-            if (config.postHooks.length() >= MAX_HOOKS) TooManyHooks.selector.revertWith();
+            if (config.postHooks.length() >= MAX_HOOK_COUNT) TooManyHooks.selector.revertWith();
             config.postHooks.add(hookId);
         }
 
         emit HookAdded(module, selector, entityId, isPre, isPost);
     }
 
+    /**
+     * @notice Remove a hook for a specific module and function selector
+     * @dev Completely removes the hook from storage
+     * @param module Address of the module implementing the hook
+     * @param selector Function selector that the hook is targeting
+     * @param entityId Identifier for the entity associated with this hook
+     */
     function _removeHook(address module, bytes4 selector, uint32 entityId) internal {
         HookConfig storage config = _getConfig(module, selector);
         bytes32 hookId = _entityId(module, entityId);
@@ -61,6 +86,14 @@ abstract contract HookBase is IHookBase {
         emit HookRemoved(module, selector, entityId);
     }
 
+    /**
+     * @notice Execute all pre-execution hooks for a function
+     * @dev Calls all registered pre-hooks and stores any returned data for later use in post-hooks
+     * @param module Address of the module being called
+     * @param selector Function selector being called
+     * @param value Value being sent with the call
+     * @param data Function call data
+     */
     function _callPreHooks(
         address module,
         bytes4 selector,
@@ -95,6 +128,12 @@ abstract contract HookBase is IHookBase {
         }
     }
 
+    /**
+     * @notice Execute all post-execution hooks for a function
+     * @dev Calls all registered post-hooks with any data stored from pre-hooks
+     * @param module Address of the module being called
+     * @param selector Function selector being called
+     */
     function _callPostHooks(address module, bytes4 selector) internal {
         HookConfig storage config = _getConfig(module, selector);
 
@@ -123,6 +162,14 @@ abstract contract HookBase is IHookBase {
         }
     }
 
+    /**
+     * @notice Get all hooks for a specific module and function selector
+     * @dev Returns an array of Hook structs for either pre or post hooks
+     * @param module Address of the module
+     * @param selector Function selector
+     * @param isPre Whether to get pre-hooks (true) or post-hooks (false)
+     * @return hooks Array of Hook structs
+     */
     function _getHooks(
         address module,
         bytes4 selector,
@@ -140,6 +187,15 @@ abstract contract HookBase is IHookBase {
         }
     }
 
+    /**
+     * @notice Check if a specific hook exists for a module and function selector
+     * @dev Verifies if a hook exists and is registered as either pre or post hook
+     * @param module Address of the module
+     * @param selector Function selector
+     * @param entityId Identifier for the entity
+     * @param isPre Whether to check for pre-hooks (true) or post-hooks (false)
+     * @return bool True if the hook exists, false otherwise
+     */
     function _hasHook(
         address module,
         bytes4 selector,
@@ -154,14 +210,35 @@ abstract contract HookBase is IHookBase {
         return hooks.contains(hookId);
     }
 
+    /**
+     * @notice Generate a unique ID for a module and selector combination
+     * @dev Used as a key in the hooks mapping
+     * @param target Address of the target module
+     * @param selector Function selector
+     * @return bytes32 Unique identifier
+     */
     function _configId(address target, bytes4 selector) internal pure returns (bytes32) {
         return keccak256(abi.encode(target, selector));
     }
 
+    /**
+     * @notice Generate a unique ID for a module and entity combination
+     * @dev Used to identify a specific hook
+     * @param module Address of the module
+     * @param entity Entity identifier
+     * @return bytes32 Unique identifier
+     */
     function _entityId(address module, uint32 entity) internal pure returns (bytes32) {
         return keccak256(abi.encode(module, entity));
     }
 
+    /**
+     * @notice Get the hook configuration for a specific module and selector
+     * @dev Retrieves the HookConfig from storage
+     * @param module Address of the module
+     * @param selector Function selector
+     * @return config The hook configuration storage struct
+     */
     function _getConfig(
         address module,
         bytes4 selector

@@ -21,7 +21,7 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
 
-abstract contract ExecutorBase {
+abstract contract ExecutorBase is IExecutorBase {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using Time for Time.Delay;
@@ -71,7 +71,7 @@ abstract contract ExecutorBase {
             executionDelay
         );
 
-        emit IExecutorBase.GroupAccessGranted(
+        emit GroupAccessGranted(
             groupId,
             account,
             executionDelay,
@@ -89,7 +89,7 @@ abstract contract ExecutorBase {
         Group storage group = ExecutorStorage.getLayout().groups[groupId];
         revoked = group.revokeAccess(account);
 
-        emit IExecutorBase.GroupAccessRevoked(groupId, account, revoked);
+        emit GroupAccessRevoked(groupId, account, revoked);
     }
 
     /// @notice Allows an account to renounce its own group access.
@@ -97,7 +97,7 @@ abstract contract ExecutorBase {
     /// @param account The account renouncing access.
     function _renounceGroupAccess(bytes32 groupId, address account) internal {
         if (account != msg.sender) {
-            IExecutorBase.UnauthorizedRenounce.selector.revertWith();
+            UnauthorizedRenounce.selector.revertWith();
         }
 
         _revokeGroupAccess(groupId, account);
@@ -109,7 +109,7 @@ abstract contract ExecutorBase {
     function _setGroupGuardian(bytes32 groupId, bytes32 guardian) internal {
         ExecutorStorage.Layout storage l = ExecutorStorage.getLayout();
         l.groups[groupId].setGuardian(guardian);
-        emit IExecutorBase.GroupGuardianSet(groupId, guardian);
+        emit GroupGuardianSet(groupId, guardian);
     }
 
     /// @notice Sets the ETH allowance for a group.
@@ -118,7 +118,7 @@ abstract contract ExecutorBase {
     function _setGroupAllowance(bytes32 groupId, uint256 allowance) internal {
         ExecutorStorage.Layout storage l = ExecutorStorage.getLayout();
         l.groups[groupId].setAllowance(allowance);
-        emit IExecutorBase.GroupMaxEthValueSet(groupId, allowance);
+        emit GroupMaxEthValueSet(groupId, allowance);
     }
 
     /// @notice Gets the guardian for a group.
@@ -152,7 +152,7 @@ abstract contract ExecutorBase {
         }
 
         ExecutorStorage.getLayout().groups[groupId].setGrantDelay(grantDelay, minSetback);
-        emit IExecutorBase.GroupGrantDelaySet(groupId, grantDelay);
+        emit GroupGrantDelaySet(groupId, grantDelay);
     }
 
     /// @notice Checks if an account has access to a group.
@@ -209,7 +209,7 @@ abstract contract ExecutorBase {
     /// @param groupId The group ID.
     function _setTargetFunctionGroup(address target, bytes4 selector, bytes32 groupId) internal {
         ExecutorStorage.getLayout().targets[target].allowedGroups[selector] = groupId;
-        emit IExecutorBase.TargetFunctionGroupSet(target, selector, groupId);
+        emit TargetFunctionGroupSet(target, selector, groupId);
     }
 
     /// @notice Enables or disables a target function.
@@ -218,7 +218,7 @@ abstract contract ExecutorBase {
     /// @param disabled True to disable, false to enable.
     function _setTargetFunctionDisabled(address target, bytes4 selector, bool disabled) internal {
         ExecutorStorage.getLayout().targets[target].disabledFunctions[selector] = disabled;
-        emit IExecutorBase.TargetFunctionDisabledSet(target, selector, disabled);
+        emit TargetFunctionDisabledSet(target, selector, disabled);
     }
 
     /// @notice Enables or disables a target contract.
@@ -226,7 +226,7 @@ abstract contract ExecutorBase {
     /// @param disabled True to disable, false to enable.
     function _setTargetDisabled(address target, bool disabled) internal {
         ExecutorStorage.getLayout().targets[target].disabled = disabled;
-        emit IExecutorBase.TargetDisabledSet(target, disabled);
+        emit TargetDisabledSet(target, disabled);
     }
 
     /// @notice Gets the group ID for a target function.
@@ -284,7 +284,7 @@ abstract contract ExecutorBase {
 
         // If call with delay is not authorized, or if requested timing is too soon, revert
         if (setback == 0 || (when > 0 && when < minWhen)) {
-            IExecutorBase.UnauthorizedCall.selector.revertWith();
+            UnauthorizedCall.selector.revertWith();
         }
 
         when = uint48(Math.max(when, minWhen));
@@ -303,7 +303,7 @@ abstract contract ExecutorBase {
             timepoint: when,
             nonce: nonce
         });
-        emit IExecutorBase.OperationScheduled(operationId, when, nonce);
+        emit OperationScheduled(operationId, when, nonce);
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
@@ -322,16 +322,16 @@ abstract contract ExecutorBase {
         uint32 nonce = ExecutorStorage.getLayout().schedules[operationId].nonce;
 
         if (timepoint == 0) {
-            IExecutorBase.NotScheduled.selector.revertWith();
+            NotScheduled.selector.revertWith();
         } else if (timepoint > Time.timestamp()) {
-            IExecutorBase.NotReady.selector.revertWith();
+            NotReady.selector.revertWith();
         } else if (_isExpired(timepoint, 0)) {
-            IExecutorBase.Expired.selector.revertWith();
+            Expired.selector.revertWith();
         }
 
         Schedule storage schedule = ExecutorStorage.getLayout().schedules[operationId];
         delete schedule.timepoint; // reset the timepoint, keep the nonce
-        emit IExecutorBase.OperationExecuted(operationId, nonce);
+        emit OperationExecuted(operationId, nonce);
 
         return nonce;
     }
@@ -355,7 +355,7 @@ abstract contract ExecutorBase {
 
         // If call is not authorized, revert
         if (!allowed && delay == 0) {
-            IExecutorBase.UnauthorizedCall.selector.revertWith();
+            UnauthorizedCall.selector.revertWith();
         }
 
         bytes32 operationId = _hashOperation(caller, target, data);
@@ -408,7 +408,7 @@ abstract contract ExecutorBase {
 
         // If the operation is not scheduled, revert
         if (schedule.timepoint == 0) {
-            IExecutorBase.NotScheduled.selector.revertWith();
+            NotScheduled.selector.revertWith();
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
             // a guardian of the required role.
@@ -418,14 +418,14 @@ abstract contract ExecutorBase {
             );
             bool isOwner = OwnableStorage.layout().owner == sender;
             if (!isGuardian && !isOwner) {
-                IExecutorBase.UnauthorizedCancel.selector.revertWith();
+                UnauthorizedCancel.selector.revertWith();
             }
         }
 
         delete schedule.timepoint; // reset the timepoint,
         // keep the nonce
         uint32 nonce = schedule.nonce;
-        emit IExecutorBase.OperationCanceled(operationId, nonce);
+        emit OperationCanceled(operationId, nonce);
 
         return nonce;
     }
@@ -454,7 +454,7 @@ abstract contract ExecutorBase {
 
         // If already scheduled and not expired, revert
         if (prevTimepoint != 0 && !_isExpired(prevTimepoint, 0)) {
-            IExecutorBase.AlreadyScheduled.selector.revertWith();
+            AlreadyScheduled.selector.revertWith();
         }
     }
 
@@ -534,7 +534,7 @@ abstract contract ExecutorBase {
     /// @param data The calldata.
     /// @return The function selector.
     function _getSelector(bytes calldata data) private pure returns (bytes4) {
-        if (data.length < 4) IExecutorBase.InvalidDataLength.selector.revertWith();
+        if (data.length < 4) InvalidDataLength.selector.revertWith();
         return bytes4(data[0:4]);
     }
 

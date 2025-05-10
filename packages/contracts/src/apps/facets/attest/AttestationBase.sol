@@ -20,6 +20,13 @@ import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaR
 
 // contracts
 
+/**
+ * @title AttestationBase
+ * @notice Base contract for attestation operations within the Towns Protocol
+ * @dev Provides core functionality for creating, revoking, and managing attestations
+ * This contract implements the internal logic used by the AttestationRegistry facet
+ * and handles schema resolvers, attestation validation, and storage operations.
+ */
 abstract contract AttestationBase is IAttestationRegistryBase {
     using CustomRevert for bytes4;
     using AttestationLib for Attestation;
@@ -28,11 +35,14 @@ abstract contract AttestationBase is IAttestationRegistryBase {
     /*                     Internal Functions                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Creates a new attestation
-    /// @param attester The address creating the attestation
-    /// @param value The ETH value to send with the attestation
-    /// @param request The attestation request data
-    /// @return attestation The created attestation
+    /**
+     * @notice Creates a new attestation
+     * @dev Handles creation of single attestations through the multi-attestation flow
+     * @param attester The address creating the attestation
+     * @param value The ETH value to send with the attestation
+     * @param request The attestation request data
+     * @return attestation The created attestation
+     */
     function _attest(
         address attester,
         uint256 value,
@@ -44,12 +54,15 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         return _getAttestation(uids[0]);
     }
 
-    /// @notice Revokes an existing attestation
-    /// @param schemaId The schema ID of the attestation to revoke
-    /// @param request The revocation request data
-    /// @param revoker The address revoking the attestation
-    /// @param availableValue The available ETH value for the revocation
-    /// @param last Whether this is the last revocation in a batch
+    /**
+     * @notice Revokes an existing attestation
+     * @dev Handles revocation of single attestations through the multi-revocation flow
+     * @param schemaId The schema ID of the attestation to revoke
+     * @param request The revocation request data
+     * @param revoker The address revoking the attestation
+     * @param availableValue The available ETH value for the revocation
+     * @param last Whether this is the last revocation in a batch
+     */
     function _revoke(
         bytes32 schemaId,
         RevocationRequestData memory request,
@@ -62,21 +75,27 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         _revokeMultiple(schemaId, requests, revoker, availableValue, last);
     }
 
-    /// @notice Retrieves an attestation by its UID
-    /// @param uid The unique identifier of the attestation
-    /// @return The attestation data
+    /**
+     * @notice Retrieves an attestation by its UID
+     * @dev Direct access to storage to get attestation data
+     * @param uid The unique identifier of the attestation
+     * @return The attestation data
+     */
     function _getAttestation(bytes32 uid) internal view returns (Attestation memory) {
         return AttestationStorage.getAttestation(uid);
     }
 
-    /// @notice Resolves a new attestation or revocation through its resolver
-    /// @param schema The schema record of the attestation
-    /// @param attestation The attestation data
-    /// @param value The ETH value to send to the resolver
-    /// @param isRevocation Whether this is a revocation
-    /// @param availableValue The total available ETH value
-    /// @param last Whether this is the last attestation/revocation in a batch
-    /// @return The amount of ETH value used
+    /**
+     * @notice Resolves a new attestation or revocation through its resolver
+     * @dev Validates and processes a single attestation/revocation via its schema's resolver
+     * @param schema The schema record of the attestation
+     * @param attestation The attestation data
+     * @param value The ETH value to send to the resolver
+     * @param isRevocation Whether this is a revocation
+     * @param availableValue The total available ETH value
+     * @param last Whether this is the last attestation/revocation in a batch
+     * @return The amount of ETH value used
+     */
     function _resolveAttestation(
         SchemaRecord memory schema,
         Attestation memory attestation,
@@ -121,14 +140,17 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         return value;
     }
 
-    /// @notice Resolves multiple attestations or revocations through their resolver
-    /// @param schema The schema record
-    /// @param attestations Array of attestations to resolve
-    /// @param values Array of ETH values for each attestation
-    /// @param isRevocation Whether these are revocations
-    /// @param availableValue Total available ETH value
-    /// @param last Whether this is the last batch
-    /// @return totalUsedValue Total ETH value used in the resolution
+    /**
+     * @notice Resolves multiple attestations or revocations through their resolver
+     * @dev Batch processing of attestations/revocations via their schema's resolver
+     * @param schema The schema record
+     * @param attestations Array of attestations to resolve
+     * @param values Array of ETH values for each attestation
+     * @param isRevocation Whether these are revocations
+     * @param availableValue Total available ETH value
+     * @param last Whether this is the last batch
+     * @return totalUsedValue Total ETH value used in the resolution
+     */
     function _resolveAttestations(
         SchemaRecord memory schema,
         Attestation[] memory attestations,
@@ -199,10 +221,13 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         return totalUsedValue;
     }
 
-    /// @notice Refunds any remaining ETH value if no value was used
-    /// @param values Array of values to check
-    /// @param availableValue Total available ETH value
-    /// @param last Whether this is the last operation
+    /**
+     * @notice Refunds any remaining ETH value if no value was used
+     * @dev Ensures no value is sent when operations don't accept payments
+     * @param values Array of values to check
+     * @param availableValue Total available ETH value
+     * @param last Whether this is the last operation
+     */
     function _refundIfZeroValue(
         uint256[] memory values,
         uint256 availableValue,
@@ -215,14 +240,17 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         if (last) _refund(availableValue);
     }
 
-    /// @notice Creates multiple attestations
-    /// @param schemaId The schema ID for the attestations
-    /// @param requests Array of attestation requests
-    /// @param attester The address creating the attestations
-    /// @param availableValue Total available ETH value
-    /// @param last Whether this is the last batch
-    /// @return usedValue Amount of ETH value used
-    /// @return uids Array of created attestation UIDs
+    /**
+     * @notice Creates multiple attestations
+     * @dev Core implementation for creating attestations, with schema validation and resolver handling
+     * @param schemaId The schema ID for the attestations
+     * @param requests Array of attestation requests
+     * @param attester The address creating the attestations
+     * @param availableValue Total available ETH value
+     * @param last Whether this is the last batch
+     * @return usedValue Amount of ETH value used
+     * @return uids Array of created attestation UIDs
+     */
     function _attestMultiple(
         bytes32 schemaId,
         AttestationRequestData[] memory requests,
@@ -295,13 +323,16 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         usedValue = _resolveAttestations(schema, attestations, values, false, availableValue, last);
     }
 
-    /// @notice Revokes multiple attestations
-    /// @param schemaId The schema ID of the attestations
-    /// @param requests Array of revocation requests
-    /// @param revoker The address performing the revocations
-    /// @param availableValue Total available ETH value
-    /// @param last Whether this is the last batch
-    /// @return Returns the total ETH value used
+    /**
+     * @notice Revokes multiple attestations
+     * @dev Core implementation for revoking attestations, with schema validation and resolver handling
+     * @param schemaId The schema ID of the attestations
+     * @param requests Array of revocation requests
+     * @param revoker The address performing the revocations
+     * @param availableValue Total available ETH value
+     * @param last Whether this is the last batch
+     * @return Returns the total ETH value used
+     */
     function _revokeMultiple(
         bytes32 schemaId,
         RevocationRequestData[] memory requests,
@@ -328,8 +359,11 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         return _resolveAttestations(schema, attestations, values, true, availableValue, last);
     }
 
-    /// @notice Refunds any remaining ETH value to the sender
-    /// @param value The amount to refund
+    /**
+     * @notice Refunds any remaining ETH value to the sender
+     * @dev Uses safe transfer to return unused ETH
+     * @param value The amount to refund
+     */
     function _refund(uint256 value) private {
         if (value > 0) {
             SafeTransferLib.safeTransferETH(msg.sender, value);

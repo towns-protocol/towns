@@ -23,10 +23,28 @@ import {HookBase} from "../executor/hooks/HookBase.sol";
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
+/**
+ * @title AppAccountBase
+ * @notice Base implementation for app account functionality
+ * @dev This abstract contract extends ExecutorBase and HookBase to provide the core
+ *      implementation for installing, uninstalling, and managing apps within the Towns Protocol
+ *      It follows ERC6900 patterns for app/module management with Towns-specific extensions
+ */
 abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
 
+
+
+    /**
+     * @notice Install an app in the account
+     * @dev Sets up the app's hooks, permissions, and allowance
+     * @param appId The unique identifier of the app to install
+     * @param grantDelay The delay before the app can be granted access to the group
+     * @param executionDelay The delay before the app can execute a transaction
+     * @param allowance The maximum amount of ETH that can be spent by the app
+     * @param postInstallData Additional data to pass to the app's onInstall function
+     */
     function _installApp(
         bytes32 appId,
         uint32 grantDelay,
@@ -107,6 +125,12 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
     }
 
+    /**
+     * @notice Uninstall an app from the account
+     * @dev Removes the app's hooks, permissions, and calls its onUninstall function
+     * @param appId The unique identifier of the app to uninstall
+     * @param uninstallData Additional data to pass to the app's onUninstall function
+     */
     function _uninstallApp(bytes32 appId, bytes calldata uninstallData) internal {
         (address module, , address[] memory clients, , ExecutionManifest memory manifest) = _getApp(
             appId
@@ -146,19 +170,38 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
     }
 
+    /**
+     * @notice Set the maximum amount of ETH that an app can spend
+     * @dev Updates the allowance for the specified app
+     * @param appId The unique identifier of the app
+     * @param allowance The new allowance value
+     */
     function _setAppAllowance(bytes32 appId, uint256 allowance) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
         if (!_isGroupActive(appId)) AppNotInstalled.selector.revertWith();
         _setGroupAllowance(appId, allowance);
     }
 
+    /**
+     * @notice Get the current ETH allowance for an app
+     * @dev Returns the maximum amount of ETH the app can spend
+     * @param appId The unique identifier of the app
+     * @return The current allowance value
+     */
     function _getAppAllowance(bytes32 appId) internal view returns (uint256) {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
         if (!_isGroupActive(appId)) AppNotInstalled.selector.revertWith();
         return _getGroupAllowance(appId);
     }
 
-    // Getters
+    /**
+     * @notice Check if a client is entitled to a specific permission for an app
+     * @dev Verifies if the client has the specified permission for the given app
+     * @param appId The unique identifier of the app
+     * @param client The address of the client to check
+     * @param permission The permission to check for
+     * @return True if the client has the permission, false otherwise
+     */
     function _isEntitled(
         bytes32 appId,
         address client,
@@ -189,6 +232,16 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         return false;
     }
 
+    /**
+     * @notice Get app details from the app registry
+     * @dev Retrieves and decodes the app data from the registry
+     * @param appId The unique identifier of the app
+     * @return module The address of the app's module contract
+     * @return owner The address of the app's owner
+     * @return clients Array of client addresses that can use the app
+     * @return permissions Array of permissions the app has
+     * @return manifest The execution manifest for the app
+     */
     function _getApp(
         bytes32 appId
     )
@@ -215,7 +268,11 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         );
     }
 
-    // Checks
+    /**
+     * @notice Check if a module address is authorized for execution
+     * @dev Verifies the module is not a system contract and is not banned
+     * @param module The address of the module to check
+     */
     function _checkAuthorized(address module) internal view {
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
@@ -245,6 +302,12 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         }
     }
 
+    /**
+     * @notice Verify that the module's manifest matches the cached manifest
+     * @dev Compares the hash of both manifests to ensure they match
+     * @param module The address of the module
+     * @param cachedManifest The cached execution manifest
+     */
     function _verifyManifests(
         address module,
         ExecutionManifest memory cachedManifest
@@ -260,6 +323,12 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         }
     }
 
+    /**
+     * @notice Check if a function selector is a protected system selector
+     * @dev Returns true for ERC6900 and other system selectors that should not be overridden
+     * @param selector The function selector to check
+     * @return True if the selector is protected, false otherwise
+     */
     function _isInvalidSelector(bytes4 selector) internal pure returns (bool) {
         return
             selector == IERC6900Account.installExecution.selector ||
@@ -279,6 +348,14 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
             selector == ITownsApp.requiredPermissions.selector;
     }
 
+    /**
+     * @notice Execute pre-execution hooks
+     * @dev Overrides the ExecutorBase implementation to use HookBase's hook system
+     * @param target The address of the target contract
+     * @param selector The function selector being called
+     * @param value The amount of ETH being sent
+     * @param data The calldata being sent
+     */
     function _executePreHooks(
         address target,
         bytes4 selector,
@@ -288,6 +365,12 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
         _callPreHooks(target, selector, value, data);
     }
 
+    /**
+     * @notice Execute post-execution hooks
+     * @dev Overrides the ExecutorBase implementation to use HookBase's hook system
+     * @param target The address of the target contract
+     * @param selector The function selector being called
+     */
     function _executePostHooks(address target, bytes4 selector) internal virtual override {
         _callPostHooks(target, selector);
     }

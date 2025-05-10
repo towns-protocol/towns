@@ -7,17 +7,35 @@ pragma solidity ^0.8.23;
 
 // contracts
 
+/**
+ * @title AppRegistryStorage
+ * @notice Storage library for the app registry system
+ * @dev Uses a dedicated storage slot to ensure storage safety in the diamond pattern
+ */
 library AppRegistryStorage {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STRUCTS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /**
+     * @notice Information about a registered app
+     * @dev Tracks the app address, latest version, and ban status
+     * @param app The app's contract address
+     * @param latestVersion The UID of the latest version of the app
+     * @param isBanned Whether the app has been banned
+     */
     struct AppInfo {
         address app;
         bytes32 latestVersion;
         bool isBanned;
     }
 
+    /**
+     * @notice Storage layout for the app registry module
+     * @dev Contains the schema ID and mapping of app addresses to their info
+     * @param schemaId The current schema ID used for app attestations
+     * @param apps Mapping from app address to app information
+     */
     struct Layout {
         // Registered schema ID
         bytes32 schemaId;
