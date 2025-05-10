@@ -8,13 +8,15 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/account/interfaces/IExecutor.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
-import {IModularAccountBase} from "src/spaces/facets/account/interfaces/IModularAccount.sol";
+import {IAppAccountBase} from "src/spaces/facets/account/interfaces/IAppAccount.sol";
+import {IModuleRegistryBase} from "src/modules/interfaces/IModuleRegistry.sol";
+
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 //contracts
-import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
+import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -23,9 +25,9 @@ import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
 import {MockSavingsModule} from "test/mocks/MockSavingsModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
 
-contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
+contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
     ModuleRegistry internal moduleRegistry;
-    ModularAccount internal modularAccount;
+    AppAccount internal appAccount;
     MockModule internal mockModule;
 
     bytes32 internal activeSchemaId;
@@ -39,7 +41,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
 
     function setUp() public override {
         super.setUp();
-        modularAccount = ModularAccount(everyoneSpace);
+        appAccount = AppAccount(everyoneSpace);
         moduleRegistry = ModuleRegistry(appRegistry);
 
         dev = _randomAddress();
@@ -58,7 +60,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
         );
     }
 
-    modifier givenModuleIsRegistered() {
+    modifier givenAppIsRegistered() {
         address[] memory clients = new address[](1);
         clients[0] = client;
 
@@ -67,7 +69,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
         _;
     }
 
-    modifier givenModuleIsInstalled() {
+    modifier givenAppIsInstalled() {
         // setup clients
         address[] memory clients = new address[](1);
         clients[0] = client;
@@ -79,107 +81,104 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
 
         vm.prank(founder);
         emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
-        modularAccount.installModule(
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
         _;
     }
 
-    // installModule
+    // installApp
 
-    function test_installModule() external givenModuleIsInstalled {
+    function test_installApp() external givenAppIsInstalled {
         vm.prank(client);
         vm.expectEmit(address(mockModule));
-        emit MockModule.MockFunctionCalled(address(modularAccount), 0);
-        modularAccount.execute({
+        emit MockModule.MockFunctionCalled(address(appAccount), 0);
+        appAccount.execute({
             target: address(mockModule),
             value: 0,
             data: abi.encodeWithSelector(mockModule.mockFunction.selector)
         });
 
-        assertEq(modularAccount.isModuleEntitled(versionId, client, keccak256("Read")), true);
-        assertEq(modularAccount.isModuleEntitled(versionId, client, keccak256("Create")), false);
+        assertEq(appAccount.isAppEntitled(versionId, client, keccak256("Read")), true);
+        assertEq(appAccount.isAppEntitled(versionId, client, keccak256("Create")), false);
     }
 
-    function test_revertWhen_execute_bannedModule() external givenModuleIsInstalled {
+    function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {
         vm.prank(deployer);
         moduleRegistry.adminBanModule(address(mockModule));
 
         vm.prank(client);
-        vm.expectRevert(IModularAccountBase.InvalidModuleId.selector);
-        modularAccount.execute({
+        vm.expectRevert(IAppAccountBase.InvalidAppId.selector);
+        appAccount.execute({
             target: address(mockModule),
             value: 0,
             data: abi.encodeWithSelector(mockModule.mockFunction.selector)
         });
     }
 
-    function test_revertWhen_installModule_notOwner() external givenModuleIsRegistered {
+    function test_revertWhen_installApp_notOwner() external givenAppIsRegistered {
         address notOwner = _randomAddress();
 
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
-        modularAccount.installModule(
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
     }
 
-    function test_revertWhen_installModule_emptyModuleId() external {
+    function test_revertWhen_installApp_emptyModuleId() external {
         vm.prank(founder);
-        vm.expectRevert(IModularAccountBase.InvalidModuleId.selector);
-        modularAccount.installModule(
+        vm.expectRevert(IAppAccountBase.InvalidAppId.selector);
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
     }
 
-    function test_revertWhen_installModule_invalidManifest() external givenModuleIsRegistered {
+    function test_revertWhen_installApp_invalidManifest() external givenAppIsRegistered {
         MockModuleV2 mockModuleV2 = new MockModuleV2();
         mockModule.upgradeToAndCall(address(mockModuleV2), "");
 
         vm.prank(founder);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IModularAccountBase.InvalidManifest.selector,
-                address(mockModule)
-            )
+            abi.encodeWithSelector(IAppAccountBase.InvalidManifest.selector, address(mockModule))
         );
-        modularAccount.installModule(
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
     }
 
-    function test_revertWhen_installModule_moduleNotRegistered() external {
+    function test_revertWhen_installApp_moduleNotRegistered() external {
         vm.prank(founder);
-        vm.expectRevert(IModularAccountBase.ModuleNotRegistered.selector);
-        modularAccount.installModule(
+        vm.expectRevert(IModuleRegistryBase.ModuleNotRegistered.selector);
+        appAccount.installApp(
             _randomBytes32(),
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
     }
 
-    function test_revertWhen_installModule_moduleRevoked() external givenModuleIsInstalled {
+    function test_revertWhen_installApp_moduleRevoked() external givenAppIsInstalled {
         vm.prank(dev);
         moduleRegistry.removeModule(versionId);
 
         vm.prank(founder);
-        vm.expectRevert(IModularAccountBase.ModuleRevoked.selector);
-        modularAccount.installModule(
+        vm.expectRevert(IModuleRegistryBase.ModuleRevoked.selector);
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
     }
 
-    function test_revertWhen_installModule_invalidSelector() external {
+    function test_revertWhen_installApp_invalidSelector() external {
         vm.prank(dev);
         MockInvalidModule invalidModule = new MockInvalidModule();
 
@@ -190,69 +189,69 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
         versionId = moduleRegistry.registerModule(address(invalidModule), clients);
 
         vm.prank(founder);
-        vm.expectRevert(IModularAccountBase.UnauthorizedSelector.selector);
-        modularAccount.installModule(
+        vm.expectRevert(IAppAccountBase.UnauthorizedSelector.selector);
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
     }
 
-    // uninstallModule
-    function test_uninstallModule() external givenModuleIsInstalled {
+    // uninstallApp
+    function test_uninstallApp() external givenAppIsInstalled {
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
         vm.prank(founder);
-        vm.expectEmit(address(modularAccount));
+        vm.expectEmit(address(appAccount));
         emit IERC6900Account.ExecutionUninstalled(address(mockModule), true, manifest);
-        modularAccount.uninstallModule(versionId, "");
+        appAccount.uninstallApp(versionId, "");
 
         vm.prank(client);
         vm.expectRevert(IExecutorBase.UnauthorizedCall.selector);
-        modularAccount.execute({
+        appAccount.execute({
             target: address(mockModule),
             value: 0,
             data: abi.encodeWithSelector(mockModule.mockFunction.selector)
         });
     }
 
-    function test_revertWhen_uninstallModule_notOwner() external givenModuleIsInstalled {
+    function test_revertWhen_uninstallApp_notOwner() external givenAppIsInstalled {
         vm.prank(client);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        modularAccount.uninstallModule(versionId, "");
+        appAccount.uninstallApp(versionId, "");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Allowance                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_allowance() external givenModuleIsInstalled {
+    function test_allowance() external givenAppIsInstalled {
         uint256 allowance = 1 ether;
         vm.prank(founder);
-        modularAccount.setModuleAllowance(versionId, allowance);
+        appAccount.setAppAllowance(versionId, allowance);
 
-        assertEq(modularAccount.getModuleAllowance(versionId), allowance);
+        assertEq(appAccount.getAppAllowance(versionId), allowance);
     }
 
-    function test_revertWhen_setAllowance_notOwner() external givenModuleIsInstalled {
+    function test_revertWhen_setAllowance_notOwner() external givenAppIsInstalled {
         uint256 allowance = 1 ether;
         vm.prank(client);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        modularAccount.setModuleAllowance(versionId, allowance);
+        appAccount.setAppAllowance(versionId, allowance);
     }
 
-    function test_revertWhen_setAllowance_invalidModule() external givenModuleIsInstalled {
+    function test_revertWhen_setAllowance_invalidModule() external givenAppIsInstalled {
         bytes32 invalidModule = _randomBytes32();
         uint256 allowance = 1 ether;
         vm.prank(founder);
-        vm.expectRevert(IModularAccountBase.ModuleNotInstalled.selector);
-        modularAccount.setModuleAllowance(invalidModule, allowance);
+        vm.expectRevert(IAppAccountBase.AppNotInstalled.selector);
+        appAccount.setAppAllowance(invalidModule, allowance);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Savings Module                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function test_savingsModule() external givenModuleIsInstalled {
+    function test_savingsModule() external givenAppIsInstalled {
         vm.prank(dev);
         MockSavingsModule savingsModule = new MockSavingsModule();
 
@@ -266,38 +265,38 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
         address savingsModuleAddress = address(savingsModule);
 
         vm.deal(address(savingsModule), 5 ether);
-        vm.deal(address(modularAccount), 1 ether);
+        vm.deal(address(appAccount), 1 ether);
 
         vm.startPrank(founder);
-        modularAccount.installModule(
+        appAccount.installApp(
             versionId,
             "",
-            ModuleParams({grantDelay: 0, executionDelay: 0, allowance: maxEtherValue})
+            AppParams({grantDelay: 0, executionDelay: 0, allowance: maxEtherValue})
         );
         vm.stopPrank();
 
         vm.prank(client);
-        modularAccount.execute({
+        appAccount.execute({
             target: savingsModuleAddress,
             value: maxEtherValue,
             data: abi.encodeWithSelector(savingsModule.deposit.selector, 1 ether)
         });
 
         assertEq(address(savingsModule).balance, 6 ether);
-        assertEq(savingsModule.balances(address(modularAccount)), 1 ether);
+        assertEq(savingsModule.balances(address(appAccount)), 1 ether);
 
         vm.warp(block.timestamp + 100 days);
 
-        uint256 accruedInterest = savingsModule.getCurrentBalance(address(modularAccount));
+        uint256 accruedInterest = savingsModule.getCurrentBalance(address(appAccount));
 
         vm.prank(client);
-        modularAccount.execute({
+        appAccount.execute({
             target: savingsModuleAddress,
             value: 0,
             data: abi.encodeWithSelector(savingsModule.withdraw.selector, accruedInterest)
         });
 
-        assertEq(address(modularAccount).balance, accruedInterest);
+        assertEq(address(appAccount).balance, accruedInterest);
         assertEq(address(savingsModule).balance, 6 ether - accruedInterest);
     }
 }
