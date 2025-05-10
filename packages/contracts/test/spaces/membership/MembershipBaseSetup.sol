@@ -36,7 +36,7 @@ import {Vm} from "forge-std/Test.sol";
 
 import {Architect} from "src/factory/facets/architect/Architect.sol";
 
-import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
+import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpaceFacet.sol";
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 
 contract MembershipBaseSetup is
