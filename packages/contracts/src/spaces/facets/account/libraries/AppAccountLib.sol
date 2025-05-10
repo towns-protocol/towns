@@ -3,8 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IAppAccountBase} from "../interfaces/IAppAccount.sol";
-import {IModuleRegistry} from "src/modules/interfaces/IModuleRegistry.sol";
-import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
+import {IAppRegistry} from "src/apps/IAppRegistry.sol";
+import {ITownsApp} from "src/apps/interfaces/ITownsApp.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
@@ -36,7 +36,7 @@ library AppAccountLib {
 
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
 
-        if (IModuleRegistry(ms.getDependency("AppRegistry")).isModuleBanned(target)) {
+        if (IAppRegistry(ms.getDependency("AppRegistry")).isAppBanned(target)) {
             IAppAccountBase.InvalidAppId.selector.revertWith();
         }
 
@@ -44,13 +44,13 @@ library AppAccountLib {
     }
 
     function installApp(
-        bytes32 versionId,
+        bytes32 appId,
         uint32 grantDelay,
         uint32 executionDelay,
         uint256 allowance,
         bytes calldata postInstallData
     ) internal {
-        if (versionId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
+        if (appId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
 
         // get the module group id from the module registry
         (
@@ -59,22 +59,22 @@ library AppAccountLib {
             address[] memory clients,
             ,
             ExecutionManifest memory cachedManifest
-        ) = getModule(versionId);
+        ) = getApp(appId);
 
         // verify if already installed
-        if (ExecutorLib.isGroupActive(versionId))
+        if (ExecutorLib.isGroupActive(appId))
             IAppAccountBase.AppAlreadyInstalled.selector.revertWith();
 
         verifyManifests(module, cachedManifest);
 
-        ExecutorLib.createGroup(versionId);
+        ExecutorLib.createGroup(appId);
 
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
             ExecutorLib.grantGroupAccess({
-                groupId: versionId,
+                groupId: appId,
                 account: clients[i],
-                grantDelay: grantDelay > 0 ? grantDelay : ExecutorLib.getGroupGrantDelay(versionId),
+                grantDelay: grantDelay > 0 ? grantDelay : ExecutorLib.getGroupGrantDelay(appId),
                 executionDelay: executionDelay > 0 ? executionDelay : 0
             });
         }
@@ -89,7 +89,7 @@ library AppAccountLib {
                 IAppAccountBase.UnauthorizedSelector.selector.revertWith();
             }
 
-            ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, versionId);
+            ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, appId);
 
             if (!func.allowGlobalValidation) {
                 ExecutorLib.setTargetFunctionDisabled(module, func.executionSelector, true);
@@ -113,7 +113,7 @@ library AppAccountLib {
         if (allowance > 0) {
             if (address(this).balance < allowance)
                 IAppAccountBase.NotEnoughEth.selector.revertWith();
-            ExecutorLib.setGroupAllowance(versionId, allowance);
+            ExecutorLib.setGroupAllowance(appId, allowance);
         }
 
         // Call module's onInstall if it has install data using LibCall
@@ -126,14 +126,10 @@ library AppAccountLib {
         emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
     }
 
-    function uninstallApp(bytes32 versionId, bytes calldata uninstallData) internal {
-        (
-            address module,
-            ,
-            address[] memory clients,
-            ,
-            ExecutionManifest memory manifest
-        ) = getModule(versionId);
+    function uninstallApp(bytes32 appId, bytes calldata uninstallData) internal {
+        (address module, , address[] memory clients, , ExecutionManifest memory manifest) = getApp(
+            appId
+        );
 
         // Remove hooks first
         uint256 executionHooksLength = manifest.executionHooks.length;
@@ -153,7 +149,7 @@ library AppAccountLib {
         // Revoke module's group access
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
-            ExecutorLib.revokeGroupAccess(versionId, clients[i]);
+            ExecutorLib.revokeGroupAccess(appId, clients[i]);
         }
 
         // Call module's onUninstall if uninstall data is provided
@@ -169,27 +165,27 @@ library AppAccountLib {
         emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
     }
 
-    function setAppAllowance(bytes32 versionId, uint256 allowance) internal {
-        if (versionId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
-        if (!ExecutorLib.isGroupActive(versionId))
+    function setAppAllowance(bytes32 appId, uint256 allowance) internal {
+        if (appId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
+        if (!ExecutorLib.isGroupActive(appId))
             IAppAccountBase.AppNotInstalled.selector.revertWith();
-        ExecutorLib.setGroupAllowance(versionId, allowance);
+        ExecutorLib.setGroupAllowance(appId, allowance);
     }
 
-    function getAppAllowance(bytes32 versionId) internal view returns (uint256) {
-        if (versionId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
-        if (!ExecutorLib.isGroupActive(versionId))
+    function getAppAllowance(bytes32 appId) internal view returns (uint256) {
+        if (appId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
+        if (!ExecutorLib.isGroupActive(appId))
             IAppAccountBase.AppNotInstalled.selector.revertWith();
-        return ExecutorLib.getGroupAllowance(versionId);
+        return ExecutorLib.getGroupAllowance(appId);
     }
 
     // Getters
     function isEntitled(
-        bytes32 versionId,
+        bytes32 appId,
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        (, , address[] memory clients, bytes32[] memory permissions, ) = getModule(versionId);
+        (, , address[] memory clients, bytes32[] memory permissions, ) = getApp(appId);
 
         uint256 clientsLength = clients.length;
         uint256 permissionsLength = permissions.length;
@@ -214,8 +210,8 @@ library AppAccountLib {
         return false;
     }
 
-    function getModule(
-        bytes32 versionId
+    function getApp(
+        bytes32 appId
     )
         internal
         view
@@ -229,7 +225,7 @@ library AppAccountLib {
     {
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
         address appRegistry = ms.getDependency("AppRegistry");
-        Attestation memory att = IModuleRegistry(appRegistry).getModuleById(versionId);
+        Attestation memory att = IAppRegistry(appRegistry).getAppById(appId);
 
         if (att.uid == EMPTY_UID) IAppAccountBase.AppNotRegistered.selector.revertWith();
         if (att.revocationTime != 0) IAppAccountBase.AppRevoked.selector.revertWith();

@@ -10,7 +10,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
-import {SchemaResolver} from "src/modules/resolvers/SchemaResolver.sol";
+import {SchemaResolver} from "src/apps/resolvers/SchemaResolver.sol";
 
 contract MockPluginResolver is SchemaResolver {
     mapping(address plugin => address owner) public pluginOwners;
