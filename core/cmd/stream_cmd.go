@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -23,6 +25,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
@@ -273,19 +276,26 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 	}
 	from := max(to-blockRange, 0)
 
-	miniblocks, err := remoteClient.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-		StreamId:      streamID[:],
-		FromInclusive: from,
-		ToExclusive:   to,
-	}))
-	if err != nil {
-		return err
+	var miniblocks []*protocol.Miniblock
+	for currentFrom := from; currentFrom < to; currentFrom += 100 {
+		currentTo := min(currentFrom+100, to)
+		resp, err := remoteClient.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
+			StreamId:      streamID[:],
+			FromInclusive: currentFrom,
+			ToExclusive:   currentTo,
+			OmitSnapshots: true,
+		}))
+		if err != nil {
+			return err
+		}
+		miniblocks = append(miniblocks, resp.Msg.GetMiniblocks()...)
 	}
 
-	for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
+	for n, miniblock := range miniblocks {
 		// Parse header
 		info, err := events.NewMiniblockInfoFromProto(
-			miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
+			miniblock,
+			nil,
 			events.NewParsedMiniblockInfoOpts().
 				WithExpectedBlockNumber(from+int64(n)),
 		)
@@ -699,6 +709,91 @@ func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runStreamUserCmd(cmd *cobra.Command, args []string) error {
+	a := args[0]
+	if !common.IsHexAddress(a) {
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "Not a valid address", "arg", a)
+	}
+	address := common.HexToAddress(a)
+
+	fmt.Printf("%s\n", UserStreamIdFromAddr(address))
+	fmt.Printf("%s\n", UserSettingStreamIdFromAddr(address))
+	fmt.Printf("%s\n", UserMetadataStreamIdFromAddress(address))
+	fmt.Printf("%s\n", UserInboxStreamIdFromAddress(address))
+
+	return nil
+}
+
+func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
+	cc, ctxCancel, err := newCmdContext(cmd, cmdConfig)
+	if err != nil {
+		return err
+	}
+	defer ctxCancel()
+
+	streamId, err := shared.StreamIdFromString(args[0])
+	if err != nil {
+		return err
+	}
+
+	stub, _, _, err := cc.getStubForStream(streamId, cc.nodeAddress)
+	if err != nil {
+		return err
+	}
+
+	stream, err := cc.getStream(streamId, stub)
+	if err != nil {
+		return err
+	}
+
+	si := &streamInfo{}
+	if err := si.init(stream); err != nil {
+		return err
+	}
+
+	if si.minKnownMb != math.MaxInt64 && si.minKnownMb > 0 {
+		for {
+			toExclusive := si.minKnownMb
+			fromInclusive := toExclusive - int64(cc.pageSize)
+			if fromInclusive < 0 {
+				fromInclusive = 0
+			}
+
+			resp, err := stub.GetMiniblocks(cc.ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
+				StreamId:      streamId[:],
+				FromInclusive: fromInclusive,
+				ToExclusive:   toExclusive,
+			}))
+			if err != nil {
+				return err
+			}
+
+			if len(resp.Msg.Miniblocks) != 0 {
+				if err := si.addMbProtos(resp.Msg.Miniblocks, fromInclusive); err != nil {
+					return err
+				}
+			}
+
+			if fromInclusive == 0 || resp.Msg.Terminus {
+				break
+			}
+
+			if len(resp.Msg.Miniblocks) == 0 {
+				return RiverError(protocol.Err_INTERNAL, "No miniblocks found in range", "stream", streamId, "from", fromInclusive, "to", toExclusive)
+			}
+		}
+	}
+
+	err = si.validateEventMbRefs()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("OK\n")
+
+	return nil
+}
+
 func init() {
 	cmdStream := &cobra.Command{
 		Use:   "stream",
@@ -772,6 +867,25 @@ max-block-range is optional and limits the number of blocks to consider (default
 		RunE:  runStreamPartitionCmd,
 	}
 
+	cmdStreamUser := &cobra.Command{
+		Use:   "user <stream-id>",
+		Short: "Get user stream ids",
+		Long:  `Print 4 stream ids for the given user`,
+		Args:  cobra.RangeArgs(1, 1),
+		RunE:  runStreamUserCmd,
+	}
+
+	cmdStreamValidate := &cobra.Command{
+		Use:   "validate <stream-id>",
+		Short: "Validate stream contents",
+		Long:  `Validate stream content by loading all miniblocks and checking for duplicate events.`,
+		Args:  cobra.ExactArgs(1),
+		RunE:  runStreamValidateCmd,
+	}
+	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
+	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
+	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
+
 	cmdStream.AddCommand(cmdStreamGetMiniblock)
 	cmdStream.AddCommand(cmdStreamGetMiniblockNum)
 	cmdStream.AddCommand(cmdStreamGetEvent)
@@ -780,5 +894,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamGet)
 	cmdStream.AddCommand(cmdStreamNodeGet)
 	cmdStream.AddCommand(cmdStreamGetPartition)
+	cmdStream.AddCommand(cmdStreamUser)
+	cmdStream.AddCommand(cmdStreamValidate)
 	rootCmd.AddCommand(cmdStream)
 }
