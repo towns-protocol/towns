@@ -17,8 +17,11 @@ Example contract:
 <summary>Click to expand example code</summary>
 
 ```solidity
-import { Deployer } from "contracts/scripts/common/Deployer.s.sol";
-import { MockERC721A } from "contracts/test/mocks/MockERC721A.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import { Deployer } from "scripts/common/Deployer.s.sol";
+import { MockERC721A } from "test/mocks/MockERC721A.sol";
 
 contract DeployMockERC721A is Deployer {
   function versionName() public pure override returns (string memory) {
@@ -36,13 +39,15 @@ contract DeployMockERC721A is Deployer {
 
 The framework will:
 
-1. Load an existing deployment from `contracts/deployments/<context>/<chainIdAlias>/<contracts>.json`
+1. Load an existing deployment from
+   `contracts/deployments/<deploymentContext>/<chainIdAlias>/<contracts>.json`
 
 2. if `OVERRIDE_DEPLOYMENTS=1` is set or if no deployments are found, it will:
 
 - read `PRIVATE_KEY` from env (LOCAL_PRIVATE_KEY for anvil) or wait for ledger
 - invoke `__deploy()` function
-- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to `contracts/deployments/<context>/<chainIdAlias>/<contract>.json`
+- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to
+  `contracts/deployments/deploymentContext/<network>/<contract>.json`
 
 ### Method 2: DeployFacet Script (For Facet Contracts)
 
@@ -52,35 +57,12 @@ For facet contract deployments, we also support a standardized deployment proces
 2. Supports batch deployments for gas efficiency
 3. Provides advanced gas estimation and deployment verification
 
-To deploy a facet with this method, you set the `CONTRACT_NAME` environment variable and call the script:
-
-```
-CONTRACT_NAME=MyFacet forge script scripts/common/DeployFacet.s.sol
-```
-
-Or use the convenience makefile commands:
-
-```
-make deploy-facet rpc=base_sepolia contract=MyFacet
-```
-
-For more details on the DeployFacet functionality, see the [DeployFacet documentation](../node_modules/@towns-protocol/diamond/scripts/README.md).
-
-### Comparing the Two Methods
-
-| Feature             | Custom Deployment Scripts           | DeployFacet                         |
-| ------------------- | ----------------------------------- | ----------------------------------- |
-| Deployment Method   | Standard deployment                 | CREATE2 deterministic addresses     |
-| Contract Support    | Any contract type                   | Optimized for facet contracts       |
-| Implementation      | Requires custom script per contract | Standardized for all facets         |
-| Address Consistency | Different per deployment            | Same across networks with same salt |
-| Batch Deployments   | No native support                   | Built-in support                    |
-
-### Flags
-
-- `OVERRIDE_DEPLOYMENTS=1`: It will redeploy a version of the contracts even if there's a cache in deployments assigned, be cautious when using this
-- `SAVE_DEPLOYMENTS=1`: It will save a cached address of deployments to `contracts/deployments/<network>/<contract>.json`
-- `DEPLOYMENT_CONTEXT=<context>`: It will save the addresses on a subdirectory with the given name, useful for deploying contracts to the same network
+- `OVERRIDE_DEPLOYMENTS=1`: It will redeploy a version of the contracts even if there's a cache in
+  deployments assigned, be very careful when using this
+- `SAVE_DEPLOYMENTS=1`: It will save a cached address of deployments to
+  `contracts/deployments/<network>/<contract>.json`
+- `DEPLOYMENT_CONTEXT=string`: It will save the addresses on a subdirectory with the given name,
+  useful for deployment contract to same network
 
 ## How to write new deployment libraries and diamonds
 
