@@ -413,11 +413,7 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		header.Snapshot = parsedSnapshot.Snapshot
-		// header.SnapshotHash = parsedSnapshot.Envelope.Hash
-		// TODO: Remove the following line.
-		// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
-		parsedSnapshot = nil
+		header.SnapshotHash = parsedSnapshot.Envelope.Hash
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
