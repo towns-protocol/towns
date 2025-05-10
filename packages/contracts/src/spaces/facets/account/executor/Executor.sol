@@ -120,8 +120,8 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
     }
 
     /// @inheritdoc IExecutor
-    function getSchedule(bytes32 id) external view returns (uint48) {
-        return _getSchedule(id);
+    function getScheduleTimepoint(bytes32 id) external view returns (uint48) {
+        return _getScheduleTimepoint(id);
     }
 
     /// @inheritdoc IExecutor
