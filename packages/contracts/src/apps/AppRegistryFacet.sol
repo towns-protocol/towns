@@ -14,16 +14,10 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 // contracts
 import {AppRegistryBase} from "./AppRegistryBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract AppRegistryFacet is
-    IAppRegistry,
-    AppRegistryBase,
-    OwnableBase,
-    ReentrancyGuardTransient,
-    Facet
-{
+contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
         string calldata schema,
         ISchemaResolver resolver
