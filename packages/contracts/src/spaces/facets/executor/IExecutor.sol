@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                           STRUCTS                          */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 // Structure that stores the details for a target contract.
 struct Target {

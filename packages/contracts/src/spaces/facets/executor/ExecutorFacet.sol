@@ -19,7 +19,7 @@ import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.
  * @notice Facet that enables permissioned calls from a Space
  * @dev This contract is used for implementation reference purposes
  */
-contract Executor is OwnableBase, ExecutorBase, IExecutor {
+contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor {
     using CustomRevert for bytes4;
 
     constructor(address owner) {
@@ -166,4 +166,13 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
     }
 
     function _checkAuthorized(address target) internal virtual {}
+
+    function _executePreHooks(
+        address target,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal virtual override {}
+
+    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }

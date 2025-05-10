@@ -6,7 +6,7 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IExecutorBase} from "src/spaces/facets/account/executor/IExecutor.sol";
+import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IAppAccountBase} from "src/spaces/facets/account/IAppAccount.sol";
 import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
@@ -110,7 +110,9 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         registry.adminBanApp(address(mockModule));
 
         vm.prank(client);
-        vm.expectRevert(IAppAccountBase.InvalidAppId.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAppAccountBase.UnauthorizedApp.selector, address(mockModule))
+        );
         appAccount.execute({
             target: address(mockModule),
             value: 0,
