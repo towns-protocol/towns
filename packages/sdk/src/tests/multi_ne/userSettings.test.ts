@@ -5,7 +5,7 @@
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { check } from '@towns-protocol/dlog'
-import { StreamTimelineEvent } from '../../types'
+import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
 
 describe('userSettingsTests', () => {
     let clients: Client[] = []
@@ -116,8 +116,8 @@ describe('userSettingsTests', () => {
             expect(
                 bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
                     return (
-                        m.creatorUserId === alicesClient.userId &&
-                        isDmChannelPayload(m) &&
+                        m.sender.id === alicesClient.userId &&
+                        isChannelMessage(m) &&
                         bobsClient
                             .stream(bobsClient.userSettingsStreamId!)
                             ?.view?.userSettingsContent?.isUserBlockedAt(
@@ -152,8 +152,8 @@ describe('userSettingsTests', () => {
             expect(
                 bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
                     return (
-                        m.creatorUserId === alicesClient.userId &&
-                        isDmChannelPayload(m) &&
+                        m.sender.id === alicesClient.userId &&
+                        isChannelMessage(m) &&
                         bobsClient
                             .stream(bobsClient.userSettingsStreamId!)
                             ?.view?.userSettingsContent?.isUserBlockedAt(
@@ -167,6 +167,6 @@ describe('userSettingsTests', () => {
     })
 })
 
-function isDmChannelPayload(m: StreamTimelineEvent): boolean {
-    return m.remoteEvent?.event.payload.case === 'dmChannelPayload'
+function isChannelMessage(m: TimelineEvent): boolean {
+    return m.content?.kind === RiverTimelineEvent.ChannelMessage
 }
