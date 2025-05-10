@@ -117,36 +117,6 @@ interface IExecutor is IExecutorBase {
     ) external returns (bool newMember);
 
     /**
-     * @notice Checks if an account has access to a group
-     * @param groupId The group ID
-     * @param account The account to check access for
-     * @return isMember Whether the account is a member of the group
-     * @return executionDelay The delay for the access to be effective
-     * @return maxEthValue The max eth value that can be used by the group
-     */
-    function hasAccess(
-        bytes32 groupId,
-        address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active);
-
-    /**
-     * @notice Gets the access information for an account in a group
-     * @param groupId The group ID
-     * @param account The account to get access information for
-     * @return since The timestamp when the access was granted
-     * @return currentDelay The current delay for the access
-     * @return pendingDelay The pending delay for the access
-     * @return effect The effect of the access
-     */
-    function getAccess(
-        bytes32 groupId,
-        address account
-    ) external view returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect);
-
-    /**
      * @notice Revokes access to a group for an account
      * @param groupId The group ID
      * @param account The account to revoke access from
@@ -175,11 +145,11 @@ interface IExecutor is IExecutorBase {
     function setGroupDelay(bytes32 groupId, uint32 delay) external;
 
     /**
-     * @notice Gets the grant delay for a group
+     * @notice Sets the allowance for a group
      * @param groupId The group ID
-     * @return The grant delay
+     * @param allowance The allowance amount
      */
-    function getGroupDelay(bytes32 groupId) external view returns (uint32);
+    function setAllowance(bytes32 groupId, uint256 allowance) external;
 
     /**
      * @notice Sets the group ID for a target function
@@ -197,13 +167,6 @@ interface IExecutor is IExecutorBase {
     function setTargetDisabled(address target, bool disabled) external;
 
     /**
-     * @notice Gets the scheduled timepoint for an operation
-     * @param id The operation ID
-     * @return The scheduled timepoint, or 0 if not scheduled or expired
-     */
-    function getSchedule(bytes32 id) external view returns (uint48);
-
-    /**
      * @notice Schedules an operation for future execution
      * @param target The target contract address
      * @param value The value for the operation
@@ -218,19 +181,6 @@ interface IExecutor is IExecutorBase {
         bytes calldata data,
         uint48 when
     ) external payable returns (bytes32 operationId, uint32 nonce);
-
-    /**
-     * @notice Hashes an operation
-     * @param caller The caller address
-     * @param target The target contract address
-     * @param data The calldata for the operation
-     * @return The hash of the operation
-     */
-    function hashOperation(
-        address caller,
-        address target,
-        bytes calldata data
-    ) external pure returns (bytes32);
 
     /**
      * @notice Executes an operation immediately or after delay
@@ -257,4 +207,69 @@ interface IExecutor is IExecutorBase {
         address target,
         bytes calldata data
     ) external returns (uint32 nonce);
+
+    /**
+     * @notice Checks if an account has access to a group
+     * @param groupId The group ID
+     * @param account The account to check access for
+     * @return isMember Whether the account is a member of the group
+     * @return executionDelay The delay for the access to be effective
+     * @return maxEthValue The max eth value that can be used by the group
+     * @return active Whether the group is active
+     */
+    function hasAccess(
+        bytes32 groupId,
+        address account
+    )
+        external
+        view
+        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active);
+
+    /**
+     * @notice Gets the access information for an account in a group
+     * @param groupId The group ID
+     * @param account The account to get access information for
+     * @return since The timestamp when the access was granted
+     * @return currentDelay The current delay for the access
+     * @return pendingDelay The pending delay for the access
+     * @return effect The effect of the access
+     */
+    function getAccess(
+        bytes32 groupId,
+        address account
+    ) external view returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect);
+
+    /**
+     * @notice Gets the grant delay for a group
+     * @param groupId The group ID
+     * @return The grant delay
+     */
+    function getGroupDelay(bytes32 groupId) external view returns (uint32);
+
+    /**
+     * @notice Gets the allowance for a group
+     * @param groupId The group ID
+     * @return The allowance amount
+     */
+    function getAllowance(bytes32 groupId) external view returns (uint256);
+
+    /**
+     * @notice Gets the scheduled timepoint for an operation
+     * @param id The operation ID
+     * @return The scheduled timepoint, or 0 if not scheduled or expired
+     */
+    function getSchedule(bytes32 id) external view returns (uint48);
+
+    /**
+     * @notice Hashes an operation
+     * @param caller The caller address
+     * @param target The target contract address
+     * @param data The calldata for the operation
+     * @return The hash of the operation
+     */
+    function hashOperation(
+        address caller,
+        address target,
+        bytes calldata data
+    ) external pure returns (bytes32);
 }
