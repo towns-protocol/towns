@@ -9,7 +9,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 
 //contracts
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
-import {AppRegistryFacet} from "src/apps/AppRegistryFacet.sol";
+import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployAppRegistryFacet {

@@ -18,6 +18,7 @@ interface IAttestationRegistryBase {
     error InsufficientBalance();
     error InvalidRevocation();
     error InvalidAttestation();
+    error InvalidAttestationSchema();
     error InvalidExpirationTime();
     error Irrevocable();
     error InvalidRevoker();

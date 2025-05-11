@@ -4,11 +4,13 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {ITownsApp} from "../interfaces/ITownsApp.sol";
+import {ITownsApp} from "./ITownsApp.sol";
 
-// libraries
-
-// contracts
+/// @title BaseApp
+/// @notice Base contract for Towns apps implementing core ERC-6900 module functionality
+/// @dev Provides base implementation for module installation/uninstallation and interface support
+/// @dev Inheriting contracts should override _onInstall and _onUninstall as needed
+/// @dev Implements IERC6900Module, IERC6900ExecutionModule, and ITownsApp interfaces
 
 abstract contract BaseApp is ITownsApp {
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {

@@ -5,14 +5,13 @@ pragma solidity ^0.8.23;
 import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {ITownsApp} from "./interfaces/ITownsApp.sol";
+import {ITownsApp} from "../../ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
-import {CustomRevert} from "../utils/libraries/CustomRevert.sol";
-import {AttestationLib} from "./libraries/AttestationLib.sol";
-import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {AppRegistryStorage} from "./AppRegistryStorage.sol";
 
 // types
@@ -21,9 +20,19 @@ import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contract
 import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
 // contracts
+import {SchemaBase} from "../schema/SchemaBase.sol";
+import {AttestationBase} from "../attest/AttestationBase.sol";
 
-abstract contract AppRegistryBase is IAppRegistryBase {
+abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
+
+    function __AppRegistry_init_unchained(
+        string calldata schema,
+        ISchemaResolver resolver
+    ) internal {
+        bytes32 schemaId = _registerSchema(schema, resolver, true);
+        _setSchema(schemaId);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           FUNCTIONS                          */
@@ -57,7 +66,7 @@ abstract contract AppRegistryBase is IAppRegistryBase {
     /// @return attestation The attestation data for the app
     /// @dev Reverts if app is not registered, revoked, or banned
     function _getApp(bytes32 appId) internal view returns (Attestation memory attestation) {
-        Attestation memory att = AttestationLib.getAttestation(appId);
+        Attestation memory att = _getAttestation(appId);
         if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
         (address app, , , , ) = abi.decode(
@@ -104,7 +113,7 @@ abstract contract AppRegistryBase is IAppRegistryBase {
         request.data.revocable = true;
         request.data.refUID = appInfo.latestVersion;
         request.data.data = abi.encode(app, owner, clients, permissions, manifest);
-        version = AttestationLib.attest(msg.sender, msg.value, request).uid;
+        version = _attest(msg.sender, msg.value, request).uid;
 
         appInfo.latestVersion = version;
         appInfo.app = app;
@@ -126,7 +135,7 @@ abstract contract AppRegistryBase is IAppRegistryBase {
     ) internal returns (address app, bytes32 version) {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
-        Attestation memory att = AttestationLib.getAttestation(appId);
+        Attestation memory att = _getAttestation(appId);
 
         if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
@@ -141,7 +150,7 @@ abstract contract AppRegistryBase is IAppRegistryBase {
 
         RevocationRequestData memory request;
         request.uid = appId;
-        AttestationLib.revoke(att.schema, request, revoker, 0, true);
+        _revoke(att.schema, request, revoker, 0, true);
 
         version = appInfo.latestVersion;
         if (version == appId) {
@@ -165,14 +174,14 @@ abstract contract AppRegistryBase is IAppRegistryBase {
         if (appInfo.app == address(0)) AppNotRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
-        Attestation memory att = AttestationLib.getAttestation(appInfo.latestVersion);
+        Attestation memory att = _getAttestation(appInfo.latestVersion);
 
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
         RevocationRequestData memory request;
         request.uid = appInfo.latestVersion;
 
-        AttestationLib.revoke(att.schema, request, att.attester, 0, true);
+        _revoke(att.schema, request, att.attester, 0, true);
         appInfo.isBanned = true;
 
         emit AppBanned(app, appInfo.latestVersion);

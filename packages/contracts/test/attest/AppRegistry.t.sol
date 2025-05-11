@@ -7,17 +7,17 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 //interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IAppRegistryBase} from "src/apps/IAppRegistry.sol";
-import {IAttestationRegistryBase} from "src/apps/interfaces/IAttestationRegistry.sol";
+import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
+
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {AttestationLib} from "src/apps/libraries/AttestationLib.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 //contracts
-import {AppRegistryFacet} from "src/apps/AppRegistryFacet.sol";
+import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
 
 contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase {

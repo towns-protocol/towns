@@ -6,13 +6,13 @@ import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IExecutorBase} from "src/spaces/facets/account/interfaces/IExecutor.sol";
+import {IExecutorBase} from "src/spaces/facets/account/executor/IExecutor.sol";
 
 //libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 //contracts
-import {Executor} from "src/spaces/facets/account/reference/Executor.sol";
+import {Executor} from "src/spaces/facets/account/executor/Executor.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
 contract ExecutorTest is IOwnableBase, TestUtils {

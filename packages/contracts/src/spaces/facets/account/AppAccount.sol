@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IAppAccount} from "./interfaces/IAppAccount.sol";
+import {IAppAccount} from "./IAppAccount.sol";
 
 // libraries
-import {AppAccountLib} from "./libraries/AppAccountLib.sol";
+import {AppAccountBase} from "./AppAccountBase.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -17,14 +17,14 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @notice A lightweight modular erc6900 semi-compatible account
  * @dev This account is used to execute transactions on behalf of a Space
  */
-contract AppAccount is IAppAccount, ReentrancyGuard, TokenOwnableBase, Facet {
+contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, TokenOwnableBase, Facet {
     /**
      * @notice Validates if the target address is allowed for delegate calls
      * @dev Prevents delegate calls to critical system contracts
      * @param target The contract address to check
      */
     modifier onlyAuthorized(address target) {
-        AppAccountLib.checkAuthorized(target);
+        _checkAuthorized(target);
         _;
     }
 
@@ -37,7 +37,7 @@ contract AppAccount is IAppAccount, ReentrancyGuard, TokenOwnableBase, Facet {
         uint256 value,
         bytes calldata data
     ) external payable onlyAuthorized(target) nonReentrant returns (bytes memory result) {
-        (result, ) = AppAccountLib.execute(target, value, data);
+        (result, ) = _exec(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -48,17 +48,11 @@ contract AppAccount is IAppAccount, ReentrancyGuard, TokenOwnableBase, Facet {
         bytes calldata data,
         AppParams calldata params
     ) external onlyOwner {
-        AppAccountLib.installApp(
-            appId,
-            params.grantDelay,
-            params.executionDelay,
-            params.allowance,
-            data
-        );
+        _installApp(appId, params.grantDelay, params.executionDelay, params.allowance, data);
     }
 
     function uninstallApp(bytes32 appId, bytes calldata data) external onlyOwner {
-        AppAccountLib.uninstallApp(appId, data);
+        _uninstallApp(appId, data);
     }
 
     /// @notice Checks if a client is entitled to a permission for a module
@@ -71,7 +65,7 @@ contract AppAccount is IAppAccount, ReentrancyGuard, TokenOwnableBase, Facet {
         address publicKey,
         bytes32 permission
     ) external view returns (bool) {
-        return AppAccountLib.isEntitled(appId, publicKey, permission);
+        return _isEntitled(appId, publicKey, permission);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -79,10 +73,10 @@ contract AppAccount is IAppAccount, ReentrancyGuard, TokenOwnableBase, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function setAppAllowance(bytes32 appId, uint256 allowance) external onlyOwner {
-        AppAccountLib.setAppAllowance(appId, allowance);
+        _setAppAllowance(appId, allowance);
     }
 
     function getAppAllowance(bytes32 appId) external view returns (uint256) {
-        return AppAccountLib.getAppAllowance(appId);
+        return _getAppAllowance(appId);
     }
 }

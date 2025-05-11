@@ -1,6 +1,51 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+
+// Structure that stores the details for a target contract.
+struct Target {
+    // Mapping of allowed groups for this target.
+    mapping(bytes4 selector => bytes32 groupId) allowedGroups;
+    // Mapping of disabled functions for this target.
+    mapping(bytes4 selector => bool disabled) disabledFunctions;
+    // Whether the target is disabled.
+    bool disabled;
+}
+
+struct Access {
+    // Timepoint at which the user gets the permission.
+    // If this is either 0 or in the future, then the role permission is not available.
+    uint48 lastAccess;
+    // Delay for execution. Only applies to execute() calls.
+    Time.Delay delay;
+}
+
+struct Group {
+    // Address of the module that created the group.
+    address module;
+    // Members of the group.
+    mapping(address user => Access access) members;
+    // Guardian Role ID who can cancel operations targeting functions that need this group.
+    bytes32 guardian;
+    // Delay in which the group takes effect after being granted.
+    Time.Delay grantDelay;
+    // Allowed value of ETH that can be spent by the group.
+    uint256 allowance;
+    // Whether the group is active.
+    bool active;
+}
+
+// Structure that stores the details for a scheduled operation. This structure fits into a
+// single slot.
+struct Schedule {
+    // Moment at which the operation can be executed.
+    uint48 timepoint;
+    // Operation nonce to allow third-party contracts to identify the operation.
+    uint32 nonce;
+}
+
 interface IExecutorBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                            */
@@ -36,7 +81,7 @@ interface IExecutorBase {
         uint48 since,
         bool newMember
     );
-    event GroupAccessRevoked(bytes32 indexed groupId, address indexed account);
+    event GroupAccessRevoked(bytes32 indexed groupId, address indexed account, bool revoked);
     event GroupGuardianSet(bytes32 indexed groupId, bytes32 guardian);
     event GroupGrantDelaySet(bytes32 indexed groupId, uint32 delay);
     event GroupMaxEthValueSet(bytes32 indexed groupId, uint256 allowance);
