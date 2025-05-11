@@ -68,16 +68,16 @@ abstract contract SchemaResolver is ISchemaResolver {
                 revert InsufficientValue();
             }
 
-            // Forward the attestation to the underlying resolver and return false in case it isn't
-            // approved.
-            if (!onAttest(attestations[i], value)) {
-                return false;
-            }
-
             unchecked {
                 // Subtract the ETH amount, that was provided to this attestation, from the global
                 // remaining ETH amount.
                 remainingValue -= value;
+            }
+
+            // Forward the attestation to the underlying resolver and return false in case it isn't
+            // approved.
+            if (!onAttest(attestations[i], value)) {
+                return false;
             }
         }
 
@@ -111,20 +111,21 @@ abstract contract SchemaResolver is ISchemaResolver {
         for (uint256 i = 0; i < length; ++i) {
             // Ensure that the attester/revoker doesn't try to spend more than available.
             uint256 value = values[i];
+
             if (value > remainingValue) {
                 revert InsufficientValue();
-            }
-
-            // Forward the revocation to the underlying resolver and return false in case it isn't
-            // approved.
-            if (!onRevoke(attestations[i], value)) {
-                return false;
             }
 
             unchecked {
                 // Subtract the ETH amount, that was provided to this attestation, from the global
                 // remaining ETH amount.
                 remainingValue -= value;
+            }
+
+            // Forward the revocation to the underlying resolver and return false in case it isn't
+            // approved.
+            if (!onRevoke(attestations[i], value)) {
+                return false;
             }
         }
 

@@ -142,15 +142,6 @@ contract Executor is OwnableBase, IExecutor {
     }
 
     /// @inheritdoc IExecutor
-    function hashOperation(
-        address caller,
-        address target,
-        bytes calldata data
-    ) external pure returns (bytes32) {
-        return ExecutorLib.hashOperation(caller, target, data);
-    }
-
-    /// @inheritdoc IExecutor
     function execute(
         address target,
         uint256 value,
@@ -171,6 +162,15 @@ contract Executor is OwnableBase, IExecutor {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Internal                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IExecutor
+    function hashOperation(
+        address caller,
+        address target,
+        bytes calldata data
+    ) external pure returns (bytes32) {
+        return ExecutorLib.hashOperation(caller, target, data);
+    }
 
     function _checkAuthorized(address target) internal virtual {}
 }
