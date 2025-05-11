@@ -13,6 +13,9 @@ import {LibCall} from "solady/utils/LibCall.sol";
 library HookLib {
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
     using CustomRevert for bytes4;
+    using HookLib for HookConfig;
+
+    uint256 internal constant MAX_HOOKS = 10;
 
     struct Hook {
         address module;
@@ -24,6 +27,7 @@ library HookLib {
         EnumerableSetLib.Bytes32Set preHooks;
         EnumerableSetLib.Bytes32Set postHooks;
         mapping(bytes4 selector => mapping(bytes32 hookId => bytes)) preHookData;
+        mapping(bytes32 hookId => Hook) hookData;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -35,10 +39,8 @@ library HookLib {
         0x6de21252b699dbf6a7f1195b099c65cf8b84fe6c75c379b02ee173319a840200;
 
     struct Layout {
-        // Selector => Hook Configuration
-        mapping(bytes4 => HookConfig) hooks;
-        // Hook ID => Hook Data
-        mapping(bytes32 => Hook) hookData;
+        // Target => Selector => Hook Configuration
+        mapping(address target => mapping(bytes4 selector => HookConfig config)) hooks;
     }
 
     function getLayout() internal pure returns (Layout storage db) {
@@ -56,7 +58,7 @@ library HookLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     error HookAlreadyExists();
     error HookDoesNotExist();
-
+    error TooManyHooks();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -80,19 +82,21 @@ library HookLib {
         bool isPost
     ) internal {
         Layout storage db = getLayout();
+        HookConfig storage config = db.hooks[module][selector];
+
         bytes32 hookId = createHookId(module, entityId);
 
-        if (db.hookData[hookId].isActive) HookAlreadyExists.selector.revertWith();
+        if (config.isHookActive(hookId)) HookAlreadyExists.selector.revertWith();
 
-        db.hookData[hookId] = Hook({module: module, entityId: entityId, isActive: true});
-
-        HookConfig storage config = db.hooks[selector];
+        config.createHook(hookId, module, entityId);
 
         if (isPre) {
+            if (config.preHooks.length() >= MAX_HOOKS) TooManyHooks.selector.revertWith();
             config.preHooks.add(hookId);
         }
 
         if (isPost) {
+            if (config.postHooks.length() >= MAX_HOOKS) TooManyHooks.selector.revertWith();
             config.postHooks.add(hookId);
         }
 
@@ -103,26 +107,27 @@ library HookLib {
         Layout storage db = getLayout();
         bytes32 hookId = createHookId(module, entityId);
 
-        if (!db.hookData[hookId].isActive) HookDoesNotExist.selector.revertWith();
+        HookConfig storage config = db.hooks[module][selector];
+        if (!config.isHookActive(hookId)) HookDoesNotExist.selector.revertWith();
 
-        HookConfig storage config = db.hooks[selector];
-        config.preHooks.remove(hookId);
-        config.postHooks.remove(hookId);
-        delete config.preHookData[selector][hookId];
-
-        db.hookData[hookId].isActive = false;
+        config.removeHook(hookId, selector);
 
         emit HookRemoved(module, selector, entityId);
     }
 
-    function executePreHooks(bytes4 selector, uint256 value, bytes calldata data) internal {
+    function executePreHooks(
+        address module,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal {
         Layout storage db = getLayout();
-        HookConfig storage config = db.hooks[selector];
+        HookConfig storage config = db.hooks[module][selector];
 
         uint256 preHookCount = config.preHooks.length();
         for (uint256 i; i < preHookCount; ++i) {
             bytes32 hookId = config.preHooks.at(i);
-            Hook storage hook = db.hookData[hookId];
+            Hook storage hook = config.hookData[hookId];
 
             if (!hook.isActive) continue;
 
@@ -145,15 +150,15 @@ library HookLib {
         }
     }
 
-    function executePostHooks(bytes4 selector) internal {
+    function executePostHooks(address module, bytes4 selector) internal {
         Layout storage db = getLayout();
-        HookConfig storage config = db.hooks[selector];
+        HookConfig storage config = db.hooks[module][selector];
 
         uint256 postHookCount = config.postHooks.length();
 
         for (uint256 i; i < postHookCount; ++i) {
             bytes32 hookId = config.postHooks.at(i);
-            Hook storage hook = db.hookData[hookId];
+            Hook storage hook = config.hookData[hookId];
 
             if (!hook.isActive) continue;
 
@@ -174,24 +179,28 @@ library HookLib {
         }
     }
 
-    function getHooks(bytes4 selector, bool isPre) internal view returns (Hook[] memory hooks) {
+    function getHooks(
+        address module,
+        bytes4 selector,
+        bool isPre
+    ) internal view returns (Hook[] memory hooks) {
         Layout storage l = getLayout();
         EnumerableSetLib.Bytes32Set storage hookSet = isPre
-            ? l.hooks[selector].preHooks
-            : l.hooks[selector].postHooks;
+            ? l.hooks[module][selector].preHooks
+            : l.hooks[module][selector].postHooks;
 
         uint256 length = hookSet.length();
         hooks = new Hook[](length);
 
         for (uint256 i; i < length; ++i) {
             bytes32 hookId = hookSet.at(i);
-            hooks[i] = l.hookData[hookId];
+            hooks[i] = l.hooks[module][selector].hookData[hookId];
         }
     }
 
     function hasHook(
-        bytes4 selector,
         address module,
+        bytes4 selector,
         uint32 entityId,
         bool isPre
     ) internal view returns (bool) {
@@ -199,9 +208,29 @@ library HookLib {
         bytes32 hookId = createHookId(module, entityId);
 
         EnumerableSetLib.Bytes32Set storage hooks = isPre
-            ? l.hooks[selector].preHooks
-            : l.hooks[selector].postHooks;
+            ? l.hooks[module][selector].preHooks
+            : l.hooks[module][selector].postHooks;
 
         return hooks.contains(hookId);
+    }
+
+    function isHookActive(HookConfig storage self, bytes32 hookId) internal view returns (bool) {
+        return self.hookData[hookId].isActive;
+    }
+
+    function createHook(
+        HookConfig storage self,
+        bytes32 hookId,
+        address module,
+        uint32 entityId
+    ) internal {
+        self.hookData[hookId] = Hook({module: module, entityId: entityId, isActive: true});
+    }
+
+    function removeHook(HookConfig storage self, bytes32 hookId, bytes4 selector) internal {
+        delete self.hookData[hookId];
+        delete self.preHookData[selector][hookId];
+        self.preHooks.remove(hookId);
+        self.postHooks.remove(hookId);
     }
 }
