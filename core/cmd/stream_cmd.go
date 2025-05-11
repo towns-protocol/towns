@@ -24,7 +24,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	"github.com/towns-protocol/towns/core/node/shared"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
@@ -33,7 +32,7 @@ func getStreamFromNode(
 	ctx context.Context,
 	registryContract registries.RiverRegistryContract,
 	remoteNodeAddress common.Address,
-	streamID shared.StreamId,
+	streamID StreamId,
 ) error {
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
 	if err != nil {
@@ -75,7 +74,7 @@ func getStreamFromNode(
 
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	streamID, err := shared.StreamIdFromString(args[0])
+	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
@@ -184,7 +183,7 @@ func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid argument 0: node-address")
 	}
 
-	streamID, err := shared.StreamIdFromString(args[1])
+	streamID, err := StreamIdFromString(args[1])
 	if err != nil {
 		return fmt.Errorf("invalid argument 1: stream-id; %w", err)
 	}
@@ -215,7 +214,7 @@ func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
 
 func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	streamID, err := shared.StreamIdFromString(args[0])
+	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
@@ -407,7 +406,7 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 
 func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	streamID, err := shared.StreamIdFromString(args[0])
+	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
@@ -473,7 +472,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 
 func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	streamID, err := shared.StreamIdFromString(args[0])
+	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
@@ -573,7 +572,7 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid argument 0: node-address")
 	}
 
-	streamId, err := shared.StreamIdFromString(args[1])
+	streamId, err := StreamIdFromString(args[1])
 	if err != nil {
 		return err
 	}
@@ -660,7 +659,7 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 
 func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	streamID, err := shared.StreamIdFromString(args[0])
+	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
@@ -698,7 +697,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
-	streamID, err := shared.StreamIdFromString(args[0])
+	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
@@ -731,7 +730,7 @@ func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 	}
 	defer ctxCancel()
 
-	streamId, err := shared.StreamIdFromString(args[0])
+	streamId, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
