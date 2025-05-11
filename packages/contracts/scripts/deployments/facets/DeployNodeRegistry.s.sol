@@ -1,47 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
-import "forge-std/console.sol";
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {NodeRegistry} from "src/river/registry/facets/node/NodeRegistry.sol";
 
-contract DeployNodeRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(NodeRegistry.isNode.selector);
-        addSelector(NodeRegistry.registerNode.selector);
-        addSelector(NodeRegistry.removeNode.selector);
-        addSelector(NodeRegistry.updateNodeStatus.selector);
-        addSelector(NodeRegistry.updateNodeUrl.selector);
-        addSelector(NodeRegistry.getNode.selector);
-        addSelector(NodeRegistry.getNodeCount.selector);
-        addSelector(NodeRegistry.getAllNodeAddresses.selector);
-        addSelector(NodeRegistry.getAllNodes.selector);
+library DeployNodeRegistry {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](9);
+        res[0] = NodeRegistry.isNode.selector;
+        res[1] = NodeRegistry.registerNode.selector;
+        res[2] = NodeRegistry.removeNode.selector;
+        res[3] = NodeRegistry.updateNodeStatus.selector;
+        res[4] = NodeRegistry.updateNodeUrl.selector;
+        res[5] = NodeRegistry.getNode.selector;
+        res[6] = NodeRegistry.getNodeCount.selector;
+        res[7] = NodeRegistry.getAllNodeAddresses.selector;
+        res[8] = NodeRegistry.getAllNodes.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/nodeRegistryFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function facetInitHelper(
-        address deployer,
-        address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
-        IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
-        console.log("facetInitHelper: deployer", deployer);
-        return (facetCut, "");
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        NodeRegistry facet = new NodeRegistry();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("NodeRegistry.sol", "");
     }
 }
