@@ -6,11 +6,11 @@ import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
-import {IAttestationRegistryBase} from "src/modules/interfaces/IAttestationRegistry.sol";
+import {IAttestationRegistryBase} from "src/apps/interfaces/IAttestationRegistry.sol";
 
 // libraries
-import {AttestationLib} from "src/modules/libraries/AttestationLib.sol";
-import {SchemaLib} from "src/modules/libraries/SchemaLib.sol";
+import {AttestationLib} from "src/apps/libraries/AttestationLib.sol";
+import {SchemaLib} from "src/apps/libraries/SchemaLib.sol";
 
 // types
 import {Attestation, EMPTY_UID, NotFound} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -24,8 +24,8 @@ import {DeployMockDiamond} from "scripts/deployments/utils/DeployMockDiamond.s.s
 import {DeployAttestationRegistry} from "scripts/deployments/facets/DeployAttestationRegistry.s.sol";
 import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 
-import {AttestationRegistry} from "src/modules/reference/AttestationRegistry.sol";
-import {SchemaRegistry} from "src/modules/reference/SchemaRegistry.sol";
+import {AttestationRegistry} from "src/apps/reference/AttestationRegistry.sol";
+import {SchemaRegistry} from "src/apps/reference/SchemaRegistry.sol";
 
 // mocks
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
