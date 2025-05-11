@@ -15,13 +15,13 @@ import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ICrossDomainMessenger} from "src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 import {IMainnetDelegation, IMainnetDelegationBase} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
+import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 //libraries
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
-import {RewardsDistributionV2} from "src/base/registry/facets/distribution/v2/RewardsDistributionV2.sol";
 import {MainnetDelegation} from "src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
@@ -54,7 +54,7 @@ contract ForkRewardsDistributionTest is
         baseRegistry = getDeployment("baseRegistry");
         spaceFactory = getDeployment("spaceFactory");
         towns = Towns(getDeployment("river"));
-        rewardsDistributionFacet = RewardsDistributionV2(baseRegistry);
+        rewardsDistributionFacet = IRewardsDistribution(baseRegistry);
         owner = IERC173(baseRegistry).owner();
 
         governanceActions();
@@ -379,7 +379,7 @@ contract ForkRewardsDistributionTest is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function governanceActions() internal {
-        address distributionV2Impl = address(new RewardsDistributionV2());
+        address distributionV2Impl = DeployRewardsDistributionV2.deploy();
         address mainnetDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
             MainnetDelegation.setProxyDelegation.selector
         );
