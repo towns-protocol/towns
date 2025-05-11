@@ -34,6 +34,6 @@ library DeployAppAccount {
     }
 
     function deploy() internal returns (address) {
-        return LibDeploy.deployCode("ModularAccount.sol", "");
+        return LibDeploy.deployCode("AppAccount.sol", "");
     }
 }

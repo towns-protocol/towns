@@ -11,19 +11,18 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {ExecutorBase} from "./ExecutorBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
 /**
  * @title Executor
  * @notice Facet that enables permissioned calls from a Space
  * @dev This contract is used for implementation reference purposes
  */
-contract Executor is OwnableBase, ExecutorBase, IExecutor {
+contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
     using CustomRevert for bytes4;
 
-    constructor(address owner) {
-        _transferOwnership(owner);
+    constructor(address collection, uint256 tokenId) {
+        __TokenOwnableBase_init(TokenOwnable(collection, tokenId));
     }
 
     /**
@@ -166,4 +165,13 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
     }
 
     function _checkAuthorized(address target) internal virtual {}
+
+    function _executePreHooks(
+        address target,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal virtual override {}
+
+    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }
