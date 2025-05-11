@@ -3,7 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
-import {IModuleRegistry} from "src/modules/interfaces/IModuleRegistry.sol";
+import {IAppRegistry} from "src/apps/IAppRegistry.sol";
+
 // libraries
 
 // helpers
@@ -22,7 +23,7 @@ import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
 
 // facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployModuleRegistry} from "scripts/deployments/facets/DeployModuleRegistry.s.sol";
+import {DeployAppRegistryFacet} from "scripts/deployments/facets/DeployAppRegistryFacet.s.sol";
 
 contract DeployAppRegistry is DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
@@ -33,10 +34,10 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     address internal diamondLoupe;
     address internal introspection;
     address internal ownable;
-    address internal moduleRegistry;
+    address internal appRegistry;
 
-    string internal MODULE_REGISTRY_SCHEMA =
-        "address module, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
+    string internal APP_REGISTRY_SCHEMA =
+        "address app, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";
@@ -82,11 +83,11 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        moduleRegistry = facetHelper.deploy("ModuleRegistry", deployer);
+        appRegistry = facetHelper.deploy("AppRegistryFacet", deployer);
         addFacet(
-            DeployModuleRegistry.makeCut(moduleRegistry, IDiamond.FacetCutAction.Add),
-            moduleRegistry,
-            DeployModuleRegistry.makeInitData(MODULE_REGISTRY_SCHEMA, address(0))
+            DeployAppRegistryFacet.makeCut(appRegistry, IDiamond.FacetCutAction.Add),
+            appRegistry,
+            DeployAppRegistryFacet.makeInitData(APP_REGISTRY_SCHEMA, address(0))
         );
 
         return

@@ -7,7 +7,7 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
+import {ITownsApp} from "src/apps/interfaces/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // types
