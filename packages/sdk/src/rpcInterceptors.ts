@@ -17,7 +17,7 @@ export const DEFAULT_RETRY_PARAMS: RetryParams = {
     maxAttempts: 3,
     initialRetryDelay: 2000,
     maxRetryDelay: 6000,
-    defaultTimeoutMs: 30000, // 30 seconds for long running requests
+    defaultTimeoutMs: 90000, // 90 seconds for long running requests
 }
 
 export type RetryParams = {
