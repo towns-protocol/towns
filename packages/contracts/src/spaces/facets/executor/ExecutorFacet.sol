@@ -3,16 +3,14 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IExecutor} from "./IExecutor.sol";
-import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
-import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
-import {ExecutorBase} from "./ExecutorBase.sol";
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {ExecutorBase} from "./ExecutorBase.sol";
 
 /**
  * @title Executor
@@ -21,10 +19,6 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
  */
 contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor, Facet {
     using CustomRevert for bytes4;
-
-    constructor(address collection, uint256 tokenId) {
-        __TokenOwnableBase_init(TokenOwnable(collection, tokenId));
-    }
 
     /**
      * @notice Validates if the target address is allowed for calls
@@ -151,8 +145,8 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor, Facet {
     }
 
     /// @inheritdoc IExecutor
-    function getSchedule(bytes32 id) external view returns (uint48) {
-        return _getSchedule(id);
+    function getScheduleTimepoint(bytes32 id) external view returns (uint48) {
+        return _getScheduleTimepoint(id);
     }
 
     /// @inheritdoc IExecutor

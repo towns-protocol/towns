@@ -19,8 +19,6 @@ import {SchemaBase} from "./SchemaBase.sol";
 /// @notice A registry for schema records
 /// @dev This contract is used for implementation reference purposes
 contract SchemaRegistry is ISchemaRegistry, SchemaBase, OwnableBase, Facet {
-    function __SchemaRegistry_init() external onlyInitializing {}
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Schema Management                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

@@ -31,7 +31,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         ISchemaResolver resolver
     ) internal {
         bytes32 schemaId = _registerSchema(schema, resolver, true);
-        _setSchema(schemaId);
+        _setSchemaId(schemaId);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -40,7 +40,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     /// @notice Sets the schema ID for the app registry
     /// @param schemaId The schema ID to set
-    function _setSchema(bytes32 schemaId) internal {
+    function _setSchemaId(bytes32 schemaId) internal {
         AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
         db.schemaId = schemaId;
         emit AppSchemaSet(schemaId);
@@ -48,7 +48,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     /// @notice Retrieves the current schema ID
     /// @return The current schema ID
-    function _getSchema() internal view returns (bytes32) {
+    function _getSchemaId() internal view returns (bytes32) {
         return AppRegistryStorage.getLayout().schemaId;
     }
 
@@ -108,7 +108,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
         AttestationRequest memory request;
-        request.schema = _getSchema();
+        request.schema = _getSchemaId();
         request.data.recipient = app;
         request.data.revocable = true;
         request.data.refUID = appInfo.latestVersion;

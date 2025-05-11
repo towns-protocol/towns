@@ -2,9 +2,15 @@
 pragma solidity ^0.8.19;
 
 // utils
-import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
+import {DeployFacet} from "scripts/common/DeployFacet.s.sol";
+import {DeployAppAccount} from "scripts/deployments/facets/DeployAppAccount.s.sol";
+import {DeployExecutorFacet} from "scripts/deployments/facets/DeployExecutorFacet.s.sol";
+import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 
@@ -15,18 +21,26 @@ import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {ExecutorFacet} from "src/spaces/facets/executor/ExecutorFacet.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
-contract ExecutorTest is IOwnableBase, TestUtils {
+contract ExecutorTest is BaseSetup, IOwnableBase, IDiamond {
     ExecutorFacet internal executor;
     MockERC721 internal mockERC721;
-    MockERC721 internal spaceOwner;
+    DeployFacet private facetHelper = new DeployFacet();
 
-    address internal founder;
+    function setUp() public override {
+        super.setUp();
 
-    function setUp() public {
-        founder = _randomAddress();
-        spaceOwner = new MockERC721();
-        uint256 tokenId = spaceOwner.mintTo(founder);
-        executor = new ExecutorFacet(address(spaceOwner), tokenId);
+        // remove the AppAccount facet and add the Executor facet
+        address facet = facetHelper.deploy("ExecutorFacet", deployer);
+        FacetCut[] memory cuts = new FacetCut[](2);
+        cuts[0] = DeployAppAccount.makeCut(
+            IDiamondLoupe(spaceDiamond).facetAddress(ExecutorFacet.execute.selector),
+            FacetCutAction.Remove
+        );
+        cuts[1] = DeployExecutorFacet.makeCut(facet, FacetCutAction.Add);
+        vm.prank(deployer);
+        IDiamondCut(spaceDiamond).diamondCut(cuts, address(0), "");
+
+        executor = ExecutorFacet(everyoneSpace);
         mockERC721 = new MockERC721();
     }
 
@@ -44,7 +58,7 @@ contract ExecutorTest is IOwnableBase, TestUtils {
         _;
     }
 
-    function test_nofuzz_grantAccess() external {
+    function test_grantAccess() external {
         bytes32 groupId = _randomBytes32();
         address account = _randomAddress();
         // execution delay is the delay at which any execution for this group will take effect

@@ -2,26 +2,23 @@
 pragma solidity ^0.8.23;
 
 // types
-
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 // interfaces
-import {IExecutorBase, Group, Schedule} from "./IExecutor.sol";
-
-// types
+import {IExecutorBase, Group, Schedule, Target} from "./IExecutor.sol";
 
 // libraries
-import {ExecutorStorage} from "./ExecutorStorage.sol";
-import {GroupLib} from "./GroupLib.sol";
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {ExecutorStorage} from "./ExecutorStorage.sol";
+import {GroupLib} from "./GroupLib.sol";
 
 // contracts
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
-abstract contract ExecutorBase is TokenOwnableBase {
+abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using Time for Time.Delay;
@@ -35,20 +32,23 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /*                           GROUP MANAGEMENT                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice Gets the group configuration for a group ID.
+    /// @param groupId The ID of the group.
+    /// @return The group configuration.
+    function _getGroup(bytes32 groupId) internal view returns (Group storage) {
+        return ExecutorStorage.getLayout().groups[groupId];
+    }
+
     /// @notice Creates a new group and marks it as active.
     /// @param groupId The ID of the group to create.
     function _createGroup(bytes32 groupId) internal {
-        ExecutorStorage.Layout storage l = ExecutorStorage.getLayout();
-        Group storage group = l.groups[groupId];
-        group.createGroup();
+        _getGroup(groupId).createGroup();
     }
 
     /// @notice Removes (deactivates) a group.
     /// @param groupId The ID of the group to remove.
     function _removeGroup(bytes32 groupId) internal {
-        ExecutorStorage.Layout storage l = ExecutorStorage.getLayout();
-        Group storage group = l.groups[groupId];
-        group.removeGroup();
+        _getGroup(groupId).removeGroup();
     }
 
     /// @notice Grants access to a group for an account.
@@ -63,21 +63,14 @@ abstract contract ExecutorBase is TokenOwnableBase {
         uint32 grantDelay,
         uint32 executionDelay
     ) internal returns (bool) {
-        Group storage group = ExecutorStorage.getLayout().groups[groupId];
-
+        Group storage group = _getGroup(groupId);
         (bool newMember, uint48 lastAccess) = group.grantAccess(
             account,
             grantDelay,
             executionDelay
         );
 
-        emit IExecutorBase.GroupAccessGranted(
-            groupId,
-            account,
-            executionDelay,
-            lastAccess,
-            newMember
-        );
+        emit GroupAccessGranted(groupId, account, executionDelay, lastAccess, newMember);
         return newMember;
     }
 
@@ -86,10 +79,9 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @param account The account to revoke access from.
     /// @return revoked True if access was revoked, false otherwise.
     function _revokeGroupAccess(bytes32 groupId, address account) internal returns (bool revoked) {
-        Group storage group = ExecutorStorage.getLayout().groups[groupId];
-        revoked = group.revokeAccess(account);
+        revoked = _getGroup(groupId).revokeAccess(account);
 
-        emit IExecutorBase.GroupAccessRevoked(groupId, account, revoked);
+        emit GroupAccessRevoked(groupId, account, revoked);
     }
 
     /// @notice Allows an account to renounce its own group access.
@@ -97,7 +89,7 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @param account The account renouncing access.
     function _renounceGroupAccess(bytes32 groupId, address account) internal {
         if (account != msg.sender) {
-            IExecutorBase.UnauthorizedRenounce.selector.revertWith();
+            UnauthorizedRenounce.selector.revertWith();
         }
 
         _revokeGroupAccess(groupId, account);
@@ -107,39 +99,37 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @param groupId The ID of the group.
     /// @param guardian The guardian role ID.
     function _setGroupGuardian(bytes32 groupId, bytes32 guardian) internal {
-        ExecutorStorage.Layout storage l = ExecutorStorage.getLayout();
-        l.groups[groupId].setGuardian(guardian);
-        emit IExecutorBase.GroupGuardianSet(groupId, guardian);
+        _getGroup(groupId).setGuardian(guardian);
+        emit GroupGuardianSet(groupId, guardian);
     }
 
     /// @notice Sets the ETH allowance for a group.
     /// @param groupId The ID of the group.
     /// @param allowance The new ETH allowance.
     function _setGroupAllowance(bytes32 groupId, uint256 allowance) internal {
-        ExecutorStorage.Layout storage l = ExecutorStorage.getLayout();
-        l.groups[groupId].setAllowance(allowance);
-        emit IExecutorBase.GroupMaxEthValueSet(groupId, allowance);
+        _getGroup(groupId).setAllowance(allowance);
+        emit GroupMaxEthValueSet(groupId, allowance);
     }
 
     /// @notice Gets the guardian for a group.
     /// @param groupId The ID of the group.
     /// @return The guardian role ID.
     function _getGroupGuardian(bytes32 groupId) internal view returns (bytes32) {
-        return ExecutorStorage.getLayout().groups[groupId].getGuardian();
+        return _getGroup(groupId).getGuardian();
     }
 
     /// @notice Gets the grant delay for a group.
     /// @param groupId The ID of the group.
     /// @return The grant delay in seconds.
     function _getGroupGrantDelay(bytes32 groupId) internal view returns (uint32) {
-        return ExecutorStorage.getLayout().groups[groupId].getGrantDelay();
+        return _getGroup(groupId).getGrantDelay();
     }
 
     /// @notice Gets the ETH allowance for a group.
     /// @param groupId The ID of the group.
     /// @return The ETH allowance.
     function _getGroupAllowance(bytes32 groupId) internal view returns (uint256) {
-        return ExecutorStorage.getLayout().groups[groupId].getAllowance();
+        return _getGroup(groupId).getAllowance();
     }
 
     /// @notice Sets the grant delay for a group.
@@ -151,8 +141,8 @@ abstract contract ExecutorBase is TokenOwnableBase {
             minSetback = DEFAULT_MIN_SETBACK;
         }
 
-        ExecutorStorage.getLayout().groups[groupId].setGrantDelay(grantDelay, minSetback);
-        emit IExecutorBase.GroupGrantDelaySet(groupId, grantDelay);
+        _getGroup(groupId).setGrantDelay(grantDelay, minSetback);
+        emit GroupGrantDelaySet(groupId, grantDelay);
     }
 
     /// @notice Checks if an account has access to a group.
@@ -166,7 +156,7 @@ abstract contract ExecutorBase is TokenOwnableBase {
         bytes32 groupId,
         address account
     ) internal view returns (bool isMember, uint32 executionDelay, uint256 allowance, bool active) {
-        Group storage group = ExecutorStorage.getLayout().groups[groupId];
+        Group storage group = _getGroup(groupId);
         (isMember, executionDelay, allowance, active) = group.hasAccess(account);
     }
 
@@ -178,7 +168,7 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @param groupId The ID of the group.
     /// @return True if the group is active.
     function _isGroupActive(bytes32 groupId) internal view returns (bool) {
-        return ExecutorStorage.getLayout().groups[groupId].isActive();
+        return _getGroup(groupId).active;
     }
 
     /// @notice Gets access details for an account in a group.
@@ -196,20 +186,27 @@ abstract contract ExecutorBase is TokenOwnableBase {
         view
         returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect)
     {
-        Group storage group = ExecutorStorage.getLayout().groups[groupId];
-        return group.getAccess(account);
+        return _getGroup(groupId).getAccess(account);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       TARGET MANAGEMENT                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Gets the target configuration for a contract.
+    /// @param target The target contract.
+    /// @return The target configuration.
+    function _getTarget(address target) internal view returns (Target storage) {
+        return ExecutorStorage.getLayout().targets[target];
+    }
+
     /// @notice Sets the group for a target function.
     /// @param target The target contract.
     /// @param selector The function _selector.
     /// @param groupId The group ID.
     function _setTargetFunctionGroup(address target, bytes4 selector, bytes32 groupId) internal {
-        ExecutorStorage.getLayout().targets[target].allowedGroups[selector] = groupId;
-        emit IExecutorBase.TargetFunctionGroupSet(target, selector, groupId);
+        _getTarget(target).allowedGroups[selector] = groupId;
+        emit TargetFunctionGroupSet(target, selector, groupId);
     }
 
     /// @notice Enables or disables a target function.
@@ -217,16 +214,16 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @param selector The function _selector.
     /// @param disabled True to disable, false to enable.
     function _setTargetFunctionDisabled(address target, bytes4 selector, bool disabled) internal {
-        ExecutorStorage.getLayout().targets[target].disabledFunctions[selector] = disabled;
-        emit IExecutorBase.TargetFunctionDisabledSet(target, selector, disabled);
+        _getTarget(target).disabledFunctions[selector] = disabled;
+        emit TargetFunctionDisabledSet(target, selector, disabled);
     }
 
     /// @notice Enables or disables a target contract.
     /// @param target The target contract.
     /// @param disabled True to disable, false to enable.
     function _setTargetDisabled(address target, bool disabled) internal {
-        ExecutorStorage.getLayout().targets[target].disabled = disabled;
-        emit IExecutorBase.TargetDisabledSet(target, disabled);
+        _getTarget(target).disabled = disabled;
+        emit TargetDisabledSet(target, disabled);
     }
 
     /// @notice Gets the group ID for a target function.
@@ -237,14 +234,14 @@ abstract contract ExecutorBase is TokenOwnableBase {
         address target,
         bytes4 selector
     ) internal view returns (bytes32) {
-        return ExecutorStorage.getLayout().targets[target].allowedGroups[selector];
+        return _getTarget(target).allowedGroups[selector];
     }
 
     /// @notice Checks if a target contract is disabled.
     /// @param target The target contract.
     /// @return True if disabled.
     function _isTargetDisabled(address target) internal view returns (bool) {
-        return ExecutorStorage.getLayout().targets[target].disabled;
+        return _getTarget(target).disabled;
     }
 
     /// @notice Checks if a target function _is disabled.
@@ -255,12 +252,20 @@ abstract contract ExecutorBase is TokenOwnableBase {
         address target,
         bytes4 selector
     ) internal view returns (bool) {
-        return ExecutorStorage.getLayout().targets[target].disabledFunctions[selector];
+        return _getTarget(target).disabledFunctions[selector];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         EXECUTION                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Gets the schedule for an operation by its id.
+    /// @param operationId The operation ID.
+    /// @return The schedule storage for the operation.
+    function _getSchedule(bytes32 operationId) internal view returns (Schedule storage) {
+        return ExecutorStorage.getLayout().schedules[operationId];
+    }
+
     /// @notice Schedules an execution operation.
     /// @param target The target contract.
     /// @param value The ETH value to send.
@@ -284,56 +289,52 @@ abstract contract ExecutorBase is TokenOwnableBase {
 
         // If call with delay is not authorized, or if requested timing is too soon, revert
         if (setback == 0 || (when > 0 && when < minWhen)) {
-            IExecutorBase.UnauthorizedCall.selector.revertWith();
+            UnauthorizedCall.selector.revertWith();
         }
 
-        when = uint48(Math.max(when, minWhen));
+        when = uint48(FixedPointMathLib.max(when, minWhen));
 
         // If caller is authorized, schedule operation
         operationId = _hashOperation(caller, target, data);
 
         _checkNotScheduled(operationId);
 
+        Schedule storage schedule = _getSchedule(operationId);
         unchecked {
             // It's not feasible to overflow the nonce in less than 1000 years
-            nonce = ExecutorStorage.getLayout().schedules[operationId].nonce + 1;
+            nonce = schedule.nonce + 1;
         }
 
-        ExecutorStorage.getLayout().schedules[operationId] = Schedule({
-            timepoint: when,
-            nonce: nonce
-        });
-        emit IExecutorBase.OperationScheduled(operationId, when, nonce);
+        (schedule.timepoint, schedule.nonce) = (when, nonce);
+        emit OperationScheduled(operationId, when, nonce);
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
     /// @param id The operation ID.
     /// @return The scheduled timepoint, or 0 if expired.
-    function _getSchedule(bytes32 id) internal view returns (uint48) {
-        uint48 timepoint = ExecutorStorage.getLayout().schedules[id].timepoint;
+    function _getScheduleTimepoint(bytes32 id) internal view returns (uint48) {
+        uint48 timepoint = _getSchedule(id).timepoint;
         return _isExpired(timepoint, 0) ? 0 : timepoint;
     }
 
     /// @notice Consumes a scheduled operation, marking it as executed.
     /// @param operationId The operation ID.
     /// @return nonce The operation nonce.
-    function _consumeScheduledOp(bytes32 operationId) internal returns (uint32) {
-        uint48 timepoint = ExecutorStorage.getLayout().schedules[operationId].timepoint;
-        uint32 nonce = ExecutorStorage.getLayout().schedules[operationId].nonce;
+    function _consumeScheduledOp(bytes32 operationId) internal returns (uint32 nonce) {
+        Schedule storage schedule = _getSchedule(operationId);
+        uint48 timepoint = schedule.timepoint;
+        nonce = schedule.nonce;
 
         if (timepoint == 0) {
-            IExecutorBase.NotScheduled.selector.revertWith();
+            NotScheduled.selector.revertWith();
         } else if (timepoint > Time.timestamp()) {
-            IExecutorBase.NotReady.selector.revertWith();
+            NotReady.selector.revertWith();
         } else if (_isExpired(timepoint, 0)) {
-            IExecutorBase.Expired.selector.revertWith();
+            Expired.selector.revertWith();
         }
 
-        Schedule storage schedule = ExecutorStorage.getLayout().schedules[operationId];
         delete schedule.timepoint; // reset the timepoint, keep the nonce
-        emit IExecutorBase.OperationExecuted(operationId, nonce);
-
-        return nonce;
+        emit OperationExecuted(operationId, nonce);
     }
 
     /// @notice Executes a scheduled or immediate operation.
@@ -355,14 +356,14 @@ abstract contract ExecutorBase is TokenOwnableBase {
 
         // If call is not authorized, revert
         if (!allowed && delay == 0) {
-            IExecutorBase.UnauthorizedCall.selector.revertWith();
+            UnauthorizedCall.selector.revertWith();
         }
 
         bytes32 operationId = _hashOperation(caller, target, data);
 
         // If caller is authorized, check operation was scheduled early enough
         // Consume an available schedule even if there is no currently enforced delay
-        if (delay != 0 || _getSchedule(operationId) != 0) {
+        if (delay != 0 || _getScheduleTimepoint(operationId) != 0) {
             nonce = _consumeScheduledOp(operationId);
         }
 
@@ -375,7 +376,7 @@ abstract contract ExecutorBase is TokenOwnableBase {
 
         // Reduce the allowance of the group before external call
         bytes32 groupId = _getTargetFunctionGroupId(target, selector);
-        ExecutorStorage.getLayout().groups[groupId].allowance -= value;
+        _getGroup(groupId).allowance -= value;
 
         // Call the target
         result = LibCall.callContract(target, value, data);
@@ -385,8 +386,6 @@ abstract contract ExecutorBase is TokenOwnableBase {
 
         // Reset the executionId
         ExecutorStorage.getLayout().executionId = executionIdBefore;
-
-        return (result, nonce);
     }
 
     /// @notice Cancels a scheduled operation.
@@ -398,17 +397,17 @@ abstract contract ExecutorBase is TokenOwnableBase {
         address caller,
         address target,
         bytes calldata data
-    ) internal returns (uint32) {
+    ) internal returns (uint32 nonce) {
         address sender = msg.sender;
         bytes4 selector = _getSelector(data);
 
         bytes32 operationId = _hashOperation(caller, target, data);
 
-        Schedule storage schedule = ExecutorStorage.getLayout().schedules[operationId];
+        Schedule storage schedule = _getSchedule(operationId);
 
         // If the operation is not scheduled, revert
         if (schedule.timepoint == 0) {
-            IExecutorBase.NotScheduled.selector.revertWith();
+            NotScheduled.selector.revertWith();
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
             // a guardian of the required role.
@@ -418,16 +417,14 @@ abstract contract ExecutorBase is TokenOwnableBase {
             );
             bool isOwner = _owner() == sender;
             if (!isGuardian && !isOwner) {
-                IExecutorBase.UnauthorizedCancel.selector.revertWith();
+                UnauthorizedCancel.selector.revertWith();
             }
         }
 
         delete schedule.timepoint; // reset the timepoint,
         // keep the nonce
-        uint32 nonce = schedule.nonce;
-        emit IExecutorBase.OperationCanceled(operationId, nonce);
-
-        return nonce;
+        nonce = schedule.nonce;
+        emit OperationCanceled(operationId, nonce);
     }
 
     /// @notice Computes a unique hash for an operation.
@@ -450,11 +447,11 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @dev Checks that an operation is not already scheduled and not expired.
     /// @param operationId The operation ID.
     function _checkNotScheduled(bytes32 operationId) private view {
-        uint48 prevTimepoint = ExecutorStorage.getLayout().schedules[operationId].timepoint;
+        uint48 prevTimepoint = _getSchedule(operationId).timepoint;
 
         // If already scheduled and not expired, revert
         if (prevTimepoint != 0 && !_isExpired(prevTimepoint, 0)) {
-            IExecutorBase.AlreadyScheduled.selector.revertWith();
+            AlreadyScheduled.selector.revertWith();
         }
     }
 
@@ -478,10 +475,11 @@ abstract contract ExecutorBase is TokenOwnableBase {
         }
 
         // Disallow if the target or function is disabled
-        if (
-            _isTargetDisabled(target) ||
-            (target != address(this) && _isTargetFunctionDisabled(target, selector))
-        ) {
+        if (_isTargetDisabled(target)) {
+            return (false, 0);
+        }
+
+        if ((target != address(this) && _isTargetFunctionDisabled(target, selector))) {
             return (false, 0);
         }
 
@@ -534,7 +532,7 @@ abstract contract ExecutorBase is TokenOwnableBase {
     /// @param data The calldata.
     /// @return The function selector.
     function _getSelector(bytes calldata data) private pure returns (bytes4) {
-        if (data.length < 4) IExecutorBase.InvalidDataLength.selector.revertWith();
+        if (data.length < 4) InvalidDataLength.selector.revertWith();
         return bytes4(data[0:4]);
     }
 
