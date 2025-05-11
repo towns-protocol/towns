@@ -29,7 +29,7 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
-import {DeployMockMessenger} from "../facets/DeployMockMessenger.s.sol";
+import {DeployMockMessenger} from "../utils/DeployMockMessenger.s.sol";
 
 contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
