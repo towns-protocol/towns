@@ -706,7 +706,8 @@ func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicat
 // If relaxDuplicateCheck is true, it will not return an error if referenced miniblock can't be found in the cache.
 // In this case duplicate check can't be completed.
 // This options is used to add events that are reported by other nodes.
-// Without this option 
+// Without this option there are rare situations when events stay in minipools forever since they have mbs that too
+// old to be in the cache and thus can't complete the duplicate check.
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
 func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
