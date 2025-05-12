@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 // utils
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {DeployFacet} from "scripts/common/DeployFacet.s.sol";
-import {DeployAppAccount} from "scripts/deployments/facets/DeployAppAccount.s.sol";
+import {DeployDiamond} from "@towns-protocol/diamond/scripts/deployments/diamonds/DeployDiamond.s.sol";
 import {DeployExecutorFacet} from "scripts/deployments/facets/DeployExecutorFacet.s.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
@@ -21,27 +22,25 @@ import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {ExecutorFacet} from "src/spaces/facets/executor/ExecutorFacet.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
-contract ExecutorTest is BaseSetup, IOwnableBase, IDiamond {
+contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
     ExecutorFacet internal executor;
     MockERC721 internal mockERC721;
+
+    DeployDiamond private diamondHelper = new DeployDiamond();
     DeployFacet private facetHelper = new DeployFacet();
 
-    function setUp() public override {
-        super.setUp();
+    address internal founder;
 
-        // remove the AppAccount facet and add the Executor facet
-        address facet = facetHelper.deploy("ExecutorFacet", deployer);
-        FacetCut[] memory cuts = new FacetCut[](2);
-        cuts[0] = DeployAppAccount.makeCut(
-            IDiamondLoupe(spaceDiamond).facetAddress(ExecutorFacet.execute.selector),
-            FacetCutAction.Remove
-        );
-        cuts[1] = DeployExecutorFacet.makeCut(facet, FacetCutAction.Add);
-        vm.prank(deployer);
-        IDiamondCut(spaceDiamond).diamondCut(cuts, address(0), "");
+    function setUp() public {
+        founder = _randomAddress();
 
-        executor = ExecutorFacet(everyoneSpace);
         mockERC721 = new MockERC721();
+
+        // Add the Executor facet to the diamond
+        address facet = facetHelper.deploy("ExecutorFacet", founder);
+        diamondHelper.addCut(DeployExecutorFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
+
+        executor = ExecutorFacet(diamondHelper.deploy(founder));
     }
 
     modifier givenHasAccess(bytes32 groupId, address account, uint32 delay) {

@@ -19,11 +19,13 @@ import {LibCall} from "solady/utils/LibCall.sol";
 
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
 import {HookBase} from "../executor/hooks/HookBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
+abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorBase, HookBase {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
 
@@ -277,6 +279,14 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
             selector == IERC6900ExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
             selector == ITownsApp.requiredPermissions.selector;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Hooks                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _getOwner() internal view virtual override returns (address) {
+        return _owner();
     }
 
     function _executePreHooks(

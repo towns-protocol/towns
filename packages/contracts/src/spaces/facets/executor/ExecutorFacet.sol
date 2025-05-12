@@ -9,7 +9,7 @@ import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {ExecutorBase} from "./ExecutorBase.sol";
 
 /**
@@ -17,7 +17,7 @@ import {ExecutorBase} from "./ExecutorBase.sol";
  * @notice Facet that enables permissioned calls from a Space
  * @dev This contract is used for implementation reference purposes
  */
-contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor, Facet {
+contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     using CustomRevert for bytes4;
 
     /**
@@ -161,6 +161,11 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Internal                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Internal function to get the owner
+    function _getOwner() internal view virtual override returns (address) {
+        return _owner();
+    }
 
     /// @dev Internal function to check if a target is authorized
     function _checkAuthorized(address target) internal virtual {}

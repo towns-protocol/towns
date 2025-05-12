@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// types
+// Standard and external types
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
-// interfaces
+// Interfaces
 import {IExecutorBase, Group, Schedule, Target} from "./IExecutor.sol";
 
-// libraries
+// Internal libraries
+import {ExecutorStorage} from "./ExecutorStorage.sol";
+import {GroupLib} from "./GroupLib.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+
+// External libraries
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
-import {ExecutorStorage} from "./ExecutorStorage.sol";
-import {GroupLib} from "./GroupLib.sol";
 
-// contracts
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
-
-abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
+abstract contract ExecutorBase is IExecutorBase {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using Time for Time.Delay;
@@ -111,6 +110,19 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         emit GroupMaxEthValueSet(groupId, allowance);
     }
 
+    /// @notice Sets the grant delay for a group.
+    /// @param groupId The ID of the group.
+    /// @param grantDelay The new grant delay.
+    /// @param minSetback The minimum setback for the delay.
+    function _setGroupGrantDelay(bytes32 groupId, uint32 grantDelay, uint32 minSetback) internal {
+        if (minSetback == 0) {
+            minSetback = DEFAULT_MIN_SETBACK;
+        }
+
+        _getGroup(groupId).setGrantDelay(grantDelay, minSetback);
+        emit GroupGrantDelaySet(groupId, grantDelay);
+    }
+
     /// @notice Gets the guardian for a group.
     /// @param groupId The ID of the group.
     /// @return The guardian role ID.
@@ -130,19 +142,6 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
     /// @return The ETH allowance.
     function _getGroupAllowance(bytes32 groupId) internal view returns (uint256) {
         return _getGroup(groupId).getAllowance();
-    }
-
-    /// @notice Sets the grant delay for a group.
-    /// @param groupId The ID of the group.
-    /// @param grantDelay The new grant delay.
-    /// @param minSetback The minimum setback for the delay.
-    function _setGroupGrantDelay(bytes32 groupId, uint32 grantDelay, uint32 minSetback) internal {
-        if (minSetback == 0) {
-            minSetback = DEFAULT_MIN_SETBACK;
-        }
-
-        _getGroup(groupId).setGrantDelay(grantDelay, minSetback);
-        emit GroupGrantDelaySet(groupId, grantDelay);
     }
 
     /// @notice Checks if an account has access to a group.
@@ -202,7 +201,7 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
 
     /// @notice Sets the group for a target function.
     /// @param target The target contract.
-    /// @param selector The function _selector.
+    /// @param selector The function selector.
     /// @param groupId The group ID.
     function _setTargetFunctionGroup(address target, bytes4 selector, bytes32 groupId) internal {
         _getTarget(target).allowedGroups[selector] = groupId;
@@ -211,7 +210,7 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
 
     /// @notice Enables or disables a target function.
     /// @param target The target contract.
-    /// @param selector The function _selector.
+    /// @param selector The function selector.
     /// @param disabled True to disable, false to enable.
     function _setTargetFunctionDisabled(address target, bytes4 selector, bool disabled) internal {
         _getTarget(target).disabledFunctions[selector] = disabled;
@@ -228,7 +227,7 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
 
     /// @notice Gets the group ID for a target function.
     /// @param target The target contract.
-    /// @param selector The function _selector.
+    /// @param selector The function selector.
     /// @return The group ID.
     function _getTargetFunctionGroupId(
         address target,
@@ -244,9 +243,9 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         return _getTarget(target).disabled;
     }
 
-    /// @notice Checks if a target function _is disabled.
+    /// @notice Checks if a target function is disabled.
     /// @param target The target contract.
-    /// @param selector The function _selector.
+    /// @param selector The function selector.
     /// @return True if disabled.
     function _isTargetFunctionDisabled(
         address target,
@@ -309,14 +308,6 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         emit OperationScheduled(operationId, when, nonce);
     }
 
-    /// @notice Gets the scheduled timepoint for an operation.
-    /// @param id The operation ID.
-    /// @return The scheduled timepoint, or 0 if expired.
-    function _getScheduleTimepoint(bytes32 id) internal view returns (uint48) {
-        uint48 timepoint = _getSchedule(id).timepoint;
-        return _isExpired(timepoint, 0) ? 0 : timepoint;
-    }
-
     /// @notice Consumes a scheduled operation, marking it as executed.
     /// @param operationId The operation ID.
     /// @return nonce The operation nonce.
@@ -335,6 +326,44 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
 
         delete schedule.timepoint; // reset the timepoint, keep the nonce
         emit OperationExecuted(operationId, nonce);
+    }
+
+    /// @notice Cancels a scheduled operation.
+    /// @param caller The original caller who scheduled the operation.
+    /// @param target The target contract.
+    /// @param data The calldata for the operation.
+    /// @return nonce The operation nonce.
+    function _cancel(
+        address caller,
+        address target,
+        bytes calldata data
+    ) internal returns (uint32 nonce) {
+        address sender = msg.sender;
+        bytes4 selector = _getSelector(data);
+
+        bytes32 operationId = _hashOperation(caller, target, data);
+
+        Schedule storage schedule = _getSchedule(operationId);
+
+        // If the operation is not scheduled, revert
+        if (schedule.timepoint == 0) {
+            NotScheduled.selector.revertWith();
+        } else if (caller != sender) {
+            // calls can only be canceled by the account that scheduled them, a global admin, or by
+            // a guardian of the required role.
+            (bool isGuardian, , , ) = _hasGroupAccess(
+                _getGroupGuardian(_getTargetFunctionGroupId(target, selector)),
+                sender
+            );
+            bool isOwner = _getOwner() == sender;
+            if (!isGuardian && !isOwner) {
+                UnauthorizedCancel.selector.revertWith();
+            }
+        }
+
+        delete schedule.timepoint; // reset the timepoint, keep the nonce
+        nonce = schedule.nonce;
+        emit OperationCanceled(operationId, nonce);
     }
 
     /// @notice Executes a scheduled or immediate operation.
@@ -388,43 +417,12 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         ExecutorStorage.getLayout().executionId = executionIdBefore;
     }
 
-    /// @notice Cancels a scheduled operation.
-    /// @param caller The original caller who scheduled the operation.
-    /// @param target The target contract.
-    /// @param data The calldata for the operation.
-    /// @return nonce The operation nonce.
-    function _cancel(
-        address caller,
-        address target,
-        bytes calldata data
-    ) internal returns (uint32 nonce) {
-        address sender = msg.sender;
-        bytes4 selector = _getSelector(data);
-
-        bytes32 operationId = _hashOperation(caller, target, data);
-
-        Schedule storage schedule = _getSchedule(operationId);
-
-        // If the operation is not scheduled, revert
-        if (schedule.timepoint == 0) {
-            NotScheduled.selector.revertWith();
-        } else if (caller != sender) {
-            // calls can only be canceled by the account that scheduled them, a global admin, or by
-            // a guardian of the required role.
-            (bool isGuardian, , , ) = _hasGroupAccess(
-                _getGroupGuardian(_getTargetFunctionGroupId(target, selector)),
-                sender
-            );
-            bool isOwner = _owner() == sender;
-            if (!isGuardian && !isOwner) {
-                UnauthorizedCancel.selector.revertWith();
-            }
-        }
-
-        delete schedule.timepoint; // reset the timepoint,
-        // keep the nonce
-        nonce = schedule.nonce;
-        emit OperationCanceled(operationId, nonce);
+    /// @notice Gets the scheduled timepoint for an operation.
+    /// @param id The operation ID.
+    /// @return The scheduled timepoint, or 0 if expired.
+    function _getScheduleTimepoint(bytes32 id) internal view returns (uint48) {
+        uint48 timepoint = _getSchedule(id).timepoint;
+        return _isExpired(timepoint, 0) ? 0 : timepoint;
     }
 
     /// @notice Computes a unique hash for an operation.
@@ -440,10 +438,6 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         return keccak256(abi.encode(caller, target, data));
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           PRIVATE FUNCTIONS                */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @dev Checks that an operation is not already scheduled and not expired.
     /// @param operationId The operation ID.
     function _checkNotScheduled(bytes32 operationId) private view {
@@ -455,12 +449,12 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         }
     }
 
-    /// @dev Determines if a caller can invoke a function _on a target, and if a delay is required.
+    /// @dev Determines if a caller can invoke a function on a target, and if a delay is required.
     ///      Handles both self-calls and external calls.
     /// @param caller The address attempting the call.
     /// @param target The contract being called.
     /// @param value The ETH value sent with the call.
-    /// @param selector The function _selector being called.
+    /// @param selector The function selector being called.
     /// @return allowed True if the call is allowed immediately, false otherwise.
     /// @return delay The required delay before the call is allowed (0 if immediate).
     function _canCall(
@@ -536,6 +530,10 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         return bytes4(data[0:4]);
     }
 
+    /// @dev Internal function to get the owner
+    function _getOwner() internal view virtual returns (address);
+
+    /// @dev Internal function to execute pre hooks
     function _executePreHooks(
         address target,
         bytes4 selector,
@@ -543,5 +541,6 @@ abstract contract ExecutorBase is IExecutorBase, TokenOwnableBase {
         bytes calldata data
     ) internal virtual;
 
+    /// @dev Internal function to execute post hooks
     function _executePostHooks(address target, bytes4 selector) internal virtual;
 }
