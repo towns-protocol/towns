@@ -65,12 +65,14 @@ func newRemoteSyncer(
 
 	select {
 	case received := <-firstMsgChan:
+		close(firstMsgChan)
 		if !received {
 			syncStreamCancel()
 			return nil, responseStream.Err()
 		}
 		// First message received successfully, continue with the stream
 	case <-timer.C:
+		close(firstMsgChan)
 		syncStreamCancel()
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
