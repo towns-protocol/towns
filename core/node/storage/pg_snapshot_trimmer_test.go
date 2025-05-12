@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"slices"
 	"sort"
 	"strconv"
 	"testing"
@@ -10,10 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func TestSnapshotsTrimmer(t *testing.T) {
@@ -57,27 +56,18 @@ func TestSnapshotsTrimmer(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Force trim streams
-	onChainConf := mocks.NewMockOnChainConfiguration(t)
-	onChainConf.On("Get").Return(&crypto.OnChainSettings{
-		StreamEphemeralStreamTTL:           time.Minute * 10,
-		StreamSnapshotIntervalInMiniblocks: 110,
-	})
-	pgStreamStore.st.config = onChainConf
-	pgStreamStore.st.trimStreams(ctx)
-
 	// Check if the snapshots are trimmed correctly
-	mbsWithSnapshot := make([]int64, 0)
-	err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-		if len(snapshot) > 0 {
-			mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
-		}
-		return nil
-	})
-	require.NoError(err)
-	require.Equal([]int64{0, 100, 210, 320, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
-	lastMb, _ := pgStreamStore.st.streams.Load(streamId)
-	require.Equal(int64(400), lastMb)
+	require.Eventually(func() bool {
+		mbsWithSnapshot := make([]int64, 0)
+		err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
+			if len(snapshot) > 0 {
+				mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
+			}
+			return nil
+		})
+		require.NoError(err)
+		return slices.Equal([]int64{100, 210, 320, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
+	}, time.Second*5, 100*time.Millisecond)
 }
 
 func TestDetermineSnapshotsToNullify(t *testing.T) {

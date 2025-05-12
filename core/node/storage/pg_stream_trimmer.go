@@ -45,6 +45,7 @@ type streamTrimmer struct {
 func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
+	workerPool *workerpool.WorkerPool,
 	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
 	trimmingBatchSize int64,
 ) (*streamTrimmer, error) {
@@ -54,7 +55,7 @@ func newStreamTrimmer(
 		store:             store,
 		miniblocksToKeep:  miniblocksToKeep,
 		trimmingBatchSize: trimmingBatchSize,
-		workerPool:        workerpool.New(4),
+		workerPool:        workerPool,
 		pendingTasks:      make(map[StreamId]struct{}),
 		stop:              make(chan struct{}),
 	}
@@ -225,7 +226,7 @@ func (t *streamTrimmer) tryScheduleTrimming(
 	// Schedule trimming for the given stream if the trimming for this type is enabled.
 	if mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type())); mbsToKeep > 0 {
 		// Get the miniblock number to start from
-		startMiniblockNum, err := t.getLowestStreamMiniblock(ctx, tx, streamId)
+		startMiniblockNum, err := t.store.getLowestStreamMiniblock(ctx, tx, streamId)
 		if err != nil {
 			t.log.Errorw("Failed to get lowest stream miniblock to schedule trimming, starting from miniblock 0",
 				"stream", streamId, "err", err)
@@ -271,21 +272,4 @@ func (t *streamTrimmer) scheduleStreamsTrimming(ctx context.Context) error {
 		},
 		nil,
 	)
-}
-
-// getLowestStreamMiniblock retrieves the lowest miniblock number for a given stream
-func (t *streamTrimmer) getLowestStreamMiniblock(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) (int64, error) {
-	var lowestMiniblock int64
-	err := tx.QueryRow(ctx,
-		t.store.sqlForStream(
-			`SELECT MIN(seq_num) FROM {{miniblocks}} WHERE stream_id = $1`,
-			streamId,
-		),
-		streamId,
-	).Scan(&lowestMiniblock)
-	return lowestMiniblock, err
 }

@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/contracts/types"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/xchain/examples"
 )
 
@@ -327,18 +327,30 @@ var cfg = &config.Config{
 	},
 }
 
-var allSepoliaChains_onChainConfig *mocks.MockOnChainConfiguration
+type MockOnChainCfg struct {
+	settings *crypto.OnChainSettings
+}
 
-func init() {
-	allSepoliaChains_onChainConfig = new(mocks.MockOnChainConfiguration)
-	allSepoliaChains_onChainConfig.On("Get").Return(&crypto.OnChainSettings{
+func (m *MockOnChainCfg) ActiveBlock() crypto.BlockNumber { return 0 }
+func (m *MockOnChainCfg) Get() *crypto.OnChainSettings    { return m.settings }
+func (m *MockOnChainCfg) GetOnBlock(block crypto.BlockNumber) *crypto.OnChainSettings {
+	return m.settings
+}
+
+func (m *MockOnChainCfg) All() []*crypto.OnChainSettings {
+	return []*crypto.OnChainSettings{m.settings}
+}
+func (m *MockOnChainCfg) LastAppliedEvent() *river.RiverConfigV1ConfigurationChanged { return nil }
+
+var allSepoliaChains_onChainConfig = &MockOnChainCfg{
+	settings: &crypto.OnChainSettings{
 		XChain: crypto.XChainSettings{
 			Blockchains: []uint64{
 				examples.EthSepoliaChainIdUint64,
 				examples.BaseSepoliaChainIdUint64,
 			},
 		},
-	})
+	},
 }
 
 var evaluator *Evaluator

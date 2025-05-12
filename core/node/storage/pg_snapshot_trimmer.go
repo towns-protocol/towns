@@ -2,12 +2,12 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"sort"
+	"sync"
 	"time"
 
+	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
-	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -20,123 +20,175 @@ const (
 
 	// minKeep is the number of most recent miniblocks to protect (no nullification)
 	minKeep = 100 // 100 miniblocks
-
-	// snapshotsTrimmingInterval is the interval at which we check for snapshots to nullify.
-	snapshotsTrimmingInterval = time.Hour
 )
 
+type snapshotTrimTask struct {
+	streamId          StreamId
+	retentionInterval int64
+}
+
 // snapshotTrimmer contains a logic that handles the trimming of snapshots in the database.
+// It uses a shared worker pool to schedule trimming task.
+// When a new miniblock with snapshot is produced, tryScheduleTrimming function must be called to
+// schedule the trimming task for the stream.
+// It does not load streams into cache and does not keep any state apart from pending tasks.
 type snapshotTrimmer struct {
-	storage *PostgresStreamStore
+	ctx     context.Context
+	log     *logging.Log
+	store   *PostgresStreamStore
 	config  crypto.OnChainConfiguration
 	minKeep int64
 
-	// streams is the map of stream IDs to their last processed snapshot miniblock number.
-	streams *xsync.Map[StreamId, int64]
+	// Worker pool for trimming operations
+	workerPool *workerpool.WorkerPool
+
+	// Task tracking
+	pendingTasksLock sync.Mutex
+	pendingTasks     map[StreamId]struct{}
+
+	stopOnce sync.Once
+	stop     chan struct{}
 }
 
 // newSnapshotTrimmer creates a new snapshot trimmer.
 func newSnapshotTrimmer(
 	ctx context.Context,
-	storage *PostgresStreamStore,
+	store *PostgresStreamStore,
+	workerPool *workerpool.WorkerPool,
 	config crypto.OnChainConfiguration,
 ) (*snapshotTrimmer, error) {
-	// Load all existing stream IDs into the in-mem cache
-	streamIDs, err := storage.GetStreams(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	streams := xsync.NewMap[StreamId, int64]()
-	for _, streamID := range streamIDs {
-		streams.Store(streamID, 0)
-	}
-
 	st := &snapshotTrimmer{
-		storage: storage,
-		config:  config,
-		minKeep: minKeep,
-		streams: streams,
+		ctx:          ctx,
+		log:          logging.FromCtx(ctx).Named("snapshotTrimmer"),
+		store:        store,
+		config:       config,
+		minKeep:      minKeep,
+		workerPool:   workerPool,
+		pendingTasks: make(map[StreamId]struct{}),
+		stop:         make(chan struct{}),
 	}
 
-	go st.start(ctx)
+	go st.monitorWorkerPool(ctx)
 
 	return st, nil
 }
 
-// onCreated is called when a new stream is created.
-func (st *snapshotTrimmer) onCreated(streamId StreamId) {
-	st.streams.Store(streamId, 0)
-}
-
-// start starts the snapshot trimmer.
-func (st *snapshotTrimmer) start(ctx context.Context) {
-	ticker := time.NewTicker(snapshotsTrimmingInterval)
-	defer ticker.Stop()
-
+// monitorWorkerPool monitors the worker pool and handles shutdown
+func (st *snapshotTrimmer) monitorWorkerPool(ctx context.Context) {
 	for {
 		select {
-		case <-ticker.C:
-			st.trimStreams(ctx)
 		case <-ctx.Done():
-			if err := ctx.Err(); !errors.Is(err, context.Canceled) {
-				logging.FromCtx(ctx).Error("snapshots trimmer stopped", "err", err)
-			}
+			st.log.Info("Worker pool stopped due to context cancellation")
+			st.workerPool.StopWait()
+			return
+		case <-st.stop:
+			st.log.Info("Worker pool stopped due to stop signal")
+			st.workerPool.StopWait()
 			return
 		}
 	}
 }
 
-// trimStreams runs the snapshot trimming logic for all streams.
-func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
-	// Retention interval could be changed at any time so the current value must be used
-	retentionInterval := int64(st.config.Get().StreamSnapshotIntervalInMiniblocks)
-	if retentionInterval < minRetentionInterval {
-		retentionInterval = minRetentionInterval
-	}
-
-	// Iterate over all streams and trim them
-	st.streams.Range(func(streamId StreamId, lastMbNum int64) bool {
-		ctx, cancel := context.WithTimeout(ctx, time.Minute)
-		if err := st.storage.txRunner(
-			ctx,
-			"snapshotTrimmer.trimStreams",
-			pgx.ReadWrite,
-			func(ctx context.Context, tx pgx.Tx) error {
-				return st.trimStreamTx(ctx, tx, streamId, lastMbNum, retentionInterval)
-			},
-			nil,
-			"streamId", streamId,
-			"lastMbNum", lastMbNum,
-			"retentionInterval", retentionInterval,
-		); err != nil {
-			logging.FromCtx(ctx).Error("failed to trim the stream",
-				"retentionInterval", retentionInterval,
-				"streamId", streamId,
-				"err", err)
-		}
-		cancel()
-		return true
+// close stops the snapshot trimmer
+func (st *snapshotTrimmer) close() {
+	st.stopOnce.Do(func() {
+		close(st.stop)
 	})
+	st.workerPool.StopWait()
 }
 
-// trimStream trims the snapshots for the given stream.
-func (st *snapshotTrimmer) trimStreamTx(
+// tryScheduleTrimming checks if snapshots of the given stream can be trimmed and schedules the trimming task.
+func (st *snapshotTrimmer) tryScheduleTrimming(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	lastMbNum int64,
-	retentionInterval int64,
+) {
+	// Retention interval could be changed at any time so the current value must be used
+	retentionInterval := int64(st.config.Get().StreamSnapshotIntervalInMiniblocks)
+	if retentionInterval == 0 {
+		// If retention interval is 0, it means that snapshots trimming is disabled
+		return
+	}
+
+	// Schedule snapshot trimming task for the stream
+	st.scheduleTrimTask(streamId, max(retentionInterval, minRetentionInterval))
+}
+
+// scheduleTrimTask schedules a new trim task for a stream
+func (st *snapshotTrimmer) scheduleTrimTask(streamId StreamId, retentionInterval int64) {
+	st.pendingTasksLock.Lock()
+	if _, exists := st.pendingTasks[streamId]; exists {
+		st.pendingTasksLock.Unlock()
+		return
+	}
+	st.pendingTasks[streamId] = struct{}{}
+	st.pendingTasksLock.Unlock()
+
+	// Create a new task
+	task := snapshotTrimTask{
+		streamId:          streamId,
+		retentionInterval: retentionInterval,
+	}
+
+	// Submit the task to the worker pool
+	st.workerPool.Submit(func() {
+		if err := st.processTrimTask(task); err != nil {
+			st.log.Errorw("Failed to process snapshot trimming task",
+				"stream", task.streamId,
+				"retentionInterval", task.retentionInterval,
+				"err", err,
+			)
+		}
+	})
+}
+
+// processTrimTask processes a single trim task
+func (st *snapshotTrimmer) processTrimTask(task snapshotTrimTask) error {
+	ctx, cancel := context.WithTimeout(st.ctx, time.Minute)
+	defer cancel()
+
+	return st.store.txRunner(
+		ctx,
+		"snapshotTrimmer.processTrimTask",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return st.processTrimTaskTx(ctx, tx, task)
+		},
+		nil,
+		"streamId", task.streamId,
+		"retentionInterval", task.retentionInterval,
+	)
+}
+
+// processTrimTaskTx processes a single trim task within a transaction
+func (st *snapshotTrimmer) processTrimTaskTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	task snapshotTrimTask,
 ) error {
-	// Collect all miniblocks with a snapshot for the given stream starting from the last processed miniblock number.
-	// Genesis miniblock must not be trimmed.
+	defer func() {
+		// Delete the pending task mark
+		st.pendingTasksLock.Lock()
+		delete(st.pendingTasks, task.streamId)
+		st.pendingTasksLock.Unlock()
+	}()
+
+	// Get the last snapshot miniblock number
+	lastSnapshotMiniblock, err := st.store.lockStream(ctx, tx, task.streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Collect all miniblocks with a snapshot for the given stream starting from the last snapshot miniblock
 	snapshotMiniblockRows, err := tx.Query(
 		ctx,
-		st.storage.sqlForStream(
-			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num > $2 AND snapshot IS NOT NULL",
-			streamId,
+		st.store.sqlForStream(
+			`SELECT seq_num 
+				FROM {{miniblocks}} 
+				WHERE stream_id = $1 AND seq_num < $2 AND snapshot IS NOT NULL`,
+			task.streamId,
 		),
-		streamId, lastMbNum,
+		task.streamId, lastSnapshotMiniblock,
 	)
 	if err != nil {
 		return err
@@ -152,36 +204,21 @@ func (st *snapshotTrimmer) trimStreamTx(
 	}
 
 	// Determine which miniblocks should be nullified
-	toNullify := determineSnapshotsToNullify(mbs, retentionInterval, st.minKeep)
-	if len(toNullify) == 0 {
-		// If there are no miniblocks with snapshots, store (last miniblock number - minKeep) as the last processed one.
-		lastMiniblockNum, err := st.storage.GetLastMiniblockNumber(ctx, streamId)
-		if err != nil {
+	toNullify := determineSnapshotsToNullify(mbs, task.retentionInterval, st.minKeep)
+	if len(toNullify) > 0 {
+		// Reset snapshot field for the given miniblocks
+		if _, err = tx.Exec(
+			ctx,
+			st.store.sqlForStream(
+				`UPDATE {{miniblocks}}
+				SET snapshot = NULL
+				WHERE stream_id = $1 AND seq_num = ANY($2)`,
+				task.streamId,
+			),
+			task.streamId, toNullify,
+		); err != nil {
 			return err
 		}
-
-		if cutoff := lastMiniblockNum - minKeep; cutoff > 0 {
-			st.streams.Store(streamId, cutoff)
-		}
-
-		return nil
-	}
-
-	// Reset snapshot field for the given miniblocks
-	if _, err = tx.Exec(
-		ctx,
-		st.storage.sqlForStream(
-			"UPDATE {{miniblocks}} SET snapshot = NULL WHERE stream_id = $1 AND seq_num = ANY($2)",
-			streamId,
-		),
-		streamId, toNullify,
-	); err != nil {
-		return err
-	}
-
-	// Update last processed miniblock number
-	if cutoff := mbs[len(mbs)-1] - minKeep; cutoff > 0 {
-		st.streams.Store(streamId, cutoff)
 	}
 
 	return nil
