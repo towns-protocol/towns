@@ -8133,7 +8133,7 @@ __metadata:
     "@openzeppelin/merkle-tree": ^1.0.8
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
-    "@towns-protocol/diamond": "github:towns-protocol/diamond#1cee9e0ffb755d85af17de5bb1fb9a87cff56f4e"
+    "@towns-protocol/diamond": ^0.5.4
     "@towns-protocol/prettier-config": "workspace:^"
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction"
@@ -8147,15 +8147,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/diamond@github:towns-protocol/diamond#1cee9e0ffb755d85af17de5bb1fb9a87cff56f4e":
-  version: 0.5.3
-  resolution: "@towns-protocol/diamond@https://github.com/towns-protocol/diamond.git#commit=1cee9e0ffb755d85af17de5bb1fb9a87cff56f4e"
+"@towns-protocol/diamond@npm:^0.5.4":
+  version: 0.5.4
+  resolution: "@towns-protocol/diamond@npm:0.5.4"
   dependencies:
     "@openzeppelin/contracts": ^5.3.0
     "@prb/test": ^0.6.4
     forge-std: "github:foundry-rs/forge-std#v1.9.7"
     solady: ^0.1.14
-  checksum: a1c294f09738d6aa10a7a2c4694590c0e7f0aca0f0c2ebfbeebfc7dbc86642c7bfce3eadd3baf139f00affdc1d4fb2009ca8da23aa82acd1d43e47d4a8363b58
+  checksum: d1215edd76d69e80b95d0a987373837fd7d92471e8835f4bc41b742b39a84653bedc3d2f74d8e4a784cd8d18de01596117f46c4c22ce2faf664535ae57f9f8d4
   languageName: node
   linkType: hard
 

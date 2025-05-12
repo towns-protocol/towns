@@ -2,7 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Group, Access, IExecutorBase} from "./IExecutor.sol";
+
+// libraries
+import {Group, Access} from "./IExecutor.sol";
 
 // contracts
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
@@ -25,22 +27,19 @@ library GroupLib {
     /// @param guardian The guardian role ID.
     function setGuardian(Group storage self, bytes32 guardian) internal {
         self.guardian = guardian;
-        // emit IExecutorBase.GroupGuardianSet(groupId, guardian);
     }
 
     /// @notice Sets the ETH allowance for a group.
     /// @param allowance The new ETH allowance.
     function setAllowance(Group storage self, uint256 allowance) internal {
         self.allowance = allowance;
-        // emit IExecutorBase.GroupMaxEthValueSet(groupId, allowance);
     }
 
     /// @notice Sets the grant delay for a group.
     /// @param grantDelay The new grant delay.
     /// @param minSetback The minimum setback for the delay.
     function setGrantDelay(Group storage self, uint32 grantDelay, uint32 minSetback) internal {
-        uint48 effect;
-        (self.grantDelay, effect) = self.grantDelay.withUpdate(grantDelay, minSetback);
+        (self.grantDelay, ) = self.grantDelay.withUpdate(grantDelay, minSetback);
     }
 
     /// @notice Grants access to a group for an account.
@@ -85,10 +84,6 @@ library GroupLib {
         // delete the access
         delete self.members[account];
         return true;
-    }
-
-    function isActive(Group storage self) internal view returns (bool) {
-        return self.active;
     }
 
     function getAccess(

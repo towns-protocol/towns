@@ -17,31 +17,17 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 
-import {ExecutorBase} from "./executor/ExecutorBase.sol";
-import {HookLib} from "./hooks/HookLib.sol";
+import {ExecutorBase} from "../executor/ExecutorBase.sol";
+import {HookBase} from "../executor/hooks/HookBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
+abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorBase, HookBase {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
-
-    function _exec(
-        address target,
-        uint256 value,
-        bytes calldata data
-    ) internal returns (bytes memory result, uint32 nonce) {
-        if (target == address(0)) InvalidAppAddress.selector.revertWith();
-
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        if (IAppRegistry(ms.getDependency("AppRegistry")).isAppBanned(target)) {
-            InvalidAppId.selector.revertWith();
-        }
-
-        return _execute(target, value, data);
-    }
 
     function _installApp(
         bytes32 appId,
@@ -98,7 +84,7 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
         uint256 executionHooksLength = cachedManifest.executionHooks.length;
         for (uint256 i; i < executionHooksLength; ++i) {
             ManifestExecutionHook memory hook = cachedManifest.executionHooks[i];
-            HookLib.addHook(
+            _addHook(
                 module,
                 hook.executionSelector,
                 hook.entityId,
@@ -132,7 +118,7 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
         uint256 executionHooksLength = manifest.executionHooks.length;
         for (uint256 i; i < executionHooksLength; ++i) {
             ManifestExecutionHook memory hook = manifest.executionHooks[i];
-            HookLib.removeHook(module, hook.executionSelector, hook.entityId);
+            _removeHook(module, hook.executionSelector, hook.entityId);
         }
 
         // Remove function _group mappings
@@ -245,6 +231,10 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
         dependencies[3] = bytes32("AppRegistry");
         address[] memory deps = ms.getDependencies(dependencies);
 
+        if (IAppRegistry(deps[3]).isAppBanned(module)) {
+            UnauthorizedApp.selector.revertWith(module);
+        }
+
         // Unauthorized targets
         if (
             module == factory ||
@@ -289,5 +279,26 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
             selector == IERC6900ExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
             selector == ITownsApp.requiredPermissions.selector;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Hooks                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _getOwner() internal view virtual override returns (address) {
+        return _owner();
+    }
+
+    function _executePreHooks(
+        address target,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal virtual override {
+        _callPreHooks(target, selector, value, data);
+    }
+
+    function _executePostHooks(address target, bytes4 selector) internal virtual override {
+        _callPostHooks(target, selector);
     }
 }

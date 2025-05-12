@@ -3,28 +3,22 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IExecutor} from "./IExecutor.sol";
-import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
-import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
-import {ExecutorBase} from "./ExecutorBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
+import {ExecutorBase} from "./ExecutorBase.sol";
 
 /**
  * @title Executor
  * @notice Facet that enables permissioned calls from a Space
  * @dev This contract is used for implementation reference purposes
  */
-contract Executor is OwnableBase, ExecutorBase, IExecutor {
+contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     using CustomRevert for bytes4;
-
-    constructor(address owner) {
-        _transferOwnership(owner);
-    }
 
     /**
      * @notice Validates if the target address is allowed for calls
@@ -47,30 +41,6 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
     }
 
     /// @inheritdoc IExecutor
-    function hasAccess(
-        bytes32 groupId,
-        address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
-    {
-        return _hasGroupAccess(groupId, account);
-    }
-
-    /// @inheritdoc IExecutor
-    function getAccess(
-        bytes32 groupId,
-        address account
-    )
-        external
-        view
-        returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect)
-    {
-        return _getAccess(groupId, account);
-    }
-
-    /// @inheritdoc IExecutor
     function revokeAccess(bytes32 groupId, address account) external onlyOwner {
         _revokeGroupAccess(groupId, account);
     }
@@ -90,16 +60,9 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
         _setGroupGrantDelay(groupId, delay, 0);
     }
 
-    function getGroupDelay(bytes32 groupId) external view returns (uint32) {
-        return _getGroupGrantDelay(groupId);
-    }
-
+    /// @inheritdoc IExecutor
     function setAllowance(bytes32 groupId, uint256 allowance) external onlyOwner {
         _setGroupAllowance(groupId, allowance);
-    }
-
-    function getAllowance(bytes32 groupId) external view returns (uint256) {
-        return _getGroupAllowance(groupId);
     }
 
     /// @inheritdoc IExecutor
@@ -117,11 +80,6 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
         bool disabled
     ) external onlyAuthorized(target) onlyOwner {
         _setTargetDisabled(target, disabled);
-    }
-
-    /// @inheritdoc IExecutor
-    function getSchedule(bytes32 id) external view returns (uint48) {
-        return _getSchedule(id);
     }
 
     /// @inheritdoc IExecutor
@@ -152,9 +110,44 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
         return _cancel(caller, target, data);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        Internal                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /// @inheritdoc IExecutor
+    function hasAccess(
+        bytes32 groupId,
+        address account
+    )
+        external
+        view
+        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
+    {
+        return _hasGroupAccess(groupId, account);
+    }
+
+    /// @inheritdoc IExecutor
+    function getAccess(
+        bytes32 groupId,
+        address account
+    )
+        external
+        view
+        returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect)
+    {
+        return _getAccess(groupId, account);
+    }
+
+    /// @inheritdoc IExecutor
+    function getGroupDelay(bytes32 groupId) external view returns (uint32) {
+        return _getGroupGrantDelay(groupId);
+    }
+
+    /// @inheritdoc IExecutor
+    function getAllowance(bytes32 groupId) external view returns (uint256) {
+        return _getGroupAllowance(groupId);
+    }
+
+    /// @inheritdoc IExecutor
+    function getScheduleTimepoint(bytes32 id) external view returns (uint48) {
+        return _getScheduleTimepoint(id);
+    }
 
     /// @inheritdoc IExecutor
     function hashOperation(
@@ -165,5 +158,26 @@ contract Executor is OwnableBase, ExecutorBase, IExecutor {
         return _hashOperation(caller, target, data);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Internal                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Internal function to get the owner
+    function _getOwner() internal view virtual override returns (address) {
+        return _owner();
+    }
+
+    /// @dev Internal function to check if a target is authorized
     function _checkAuthorized(address target) internal virtual {}
+
+    /// @dev Hook called before execution
+    function _executePreHooks(
+        address target,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal virtual override {}
+
+    /// @dev Hook called after execution
+    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }
