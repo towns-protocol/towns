@@ -10,7 +10,6 @@ import (
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -301,11 +300,11 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		)
 	}
 
-	if len(modifySyncs) == 0 {
-		return nil
+	if len(modifySyncs) > 0 {
+		ss.distributeSyncModifications(ctx, modifySyncs, req.AddingFailureHandler, req.RemovingFailureHandler)
 	}
 
-	return ss.distributeSyncModifications(ctx, modifySyncs, req.AddingFailureHandler, req.RemovingFailureHandler)
+	return nil
 }
 
 // distributeSyncModifications distributes the given modify sync requests to the responsible syncers.
@@ -314,8 +313,8 @@ func (ss *SyncerSet) distributeSyncModifications(
 	modifySyncs map[common.Address]*ModifySyncRequest,
 	failedToAdd func(status *SyncStreamOpStatus),
 	failedToRemove func(status *SyncStreamOpStatus),
-) error {
-	var errGrp errgroup.Group
+) {
+	var wg sync.WaitGroup
 	var localMuSyncers sync.Mutex
 	for nodeAddress, modifySync := range modifySyncs {
 		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
@@ -351,7 +350,10 @@ func (ss *SyncerSet) distributeSyncModifications(
 			ss.startSyncer(syncer)
 		}
 
-		errGrp.Go(func() error {
+		wg.Add(1)
+		go func(modifySync *ModifySyncRequest) {
+			defer wg.Done()
+
 			ctx, cancel := context.WithTimeout(ctx, time.Second*20)
 			defer cancel()
 
@@ -372,7 +374,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 						Message:  rvrErr.GetMessage(),
 					})
 				}
-				return nil
+				return
 			}
 
 			addingFailures := resp.GetAdds()
@@ -406,12 +408,9 @@ func (ss *SyncerSet) distributeSyncModifications(
 				delete(ss.syncers, syncer.Address())
 			}
 			localMuSyncers.Unlock()
-
-			return nil
-		})
+		}(modifySync)
 	}
-
-	return errGrp.Wait()
+	wg.Wait()
 }
 
 func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) error {
