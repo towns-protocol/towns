@@ -61,8 +61,6 @@ abstract contract SchemaBase is ISchemaBase {
         db.schemas[schemaUID] = schemaRecord;
 
         emit ISchemaRegistry.Registered(schemaUID, msg.sender, schemaRecord);
-
-        return schemaUID;
     }
 
     /// @notice Retrieves a schema record by its UID

@@ -29,15 +29,10 @@ contract ForkSpaceOwner is IArchitectBase, ISpaceOwnerBase, TestUtils, SpaceHelp
     address spaceOwnerDiamond = 0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42;
     address spaceFactory = 0x9978c826d93883701522d2CA645d5436e5654252;
 
-    DeployArchitect architectHelper = new DeployArchitect();
-
     function setUp() external onlyForked {
-        address deployer = getDeployer();
-
         // create diamond cut to current space owner
-        vm.prank(deployer);
         address spaceOwnerFacet = DeploySpaceOwnerFacet.deploy();
-        address architectFacet = architectHelper.deploy(deployer);
+        address architectFacet = DeployArchitect.deploy();
 
         bytes4[] memory addSelectors = new bytes4[](2);
         addSelectors[0] = SpaceOwner.mintSpace.selector;

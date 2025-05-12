@@ -39,8 +39,7 @@ library GroupLib {
     /// @param grantDelay The new grant delay.
     /// @param minSetback The minimum setback for the delay.
     function setGrantDelay(Group storage self, uint32 grantDelay, uint32 minSetback) internal {
-        uint48 effect;
-        (self.grantDelay, effect) = self.grantDelay.withUpdate(grantDelay, minSetback);
+        (self.grantDelay, ) = self.grantDelay.withUpdate(grantDelay, minSetback);
     }
 
     /// @notice Grants access to a group for an account.
@@ -85,10 +84,6 @@ library GroupLib {
         // delete the access
         delete self.members[account];
         return true;
-    }
-
-    function isActive(Group storage self) internal view returns (bool) {
-        return self.active;
     }
 
     function getAccess(

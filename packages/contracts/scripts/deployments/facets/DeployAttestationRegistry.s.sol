@@ -30,10 +30,6 @@ library DeployAttestationRegistry {
             });
     }
 
-    function makeInitData() internal pure returns (bytes memory) {
-        return abi.encodeCall(AttestationRegistry.__AttestationRegistry_init, ());
-    }
-
     function deploy() internal returns (address) {
         return LibDeploy.deployCode("AttestationRegistry.sol", "");
     }

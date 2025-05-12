@@ -5,33 +5,27 @@ pragma solidity ^0.8.19;
 import {Vm} from "forge-std/Test.sol";
 
 //interfaces
-
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 //libraries
-
 import {DropClaimLib} from "src/airdrop/drop/DropClaimLib.sol";
 import {DropFacet} from "src/airdrop/drop/DropFacet.sol";
 import {DropFacetLib} from "src/airdrop/drop/DropFacetLib.sol";
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {MerkleTree} from "test/utils/MerkleTree.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {NodeOperatorFacet} from "src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {TownsPoints} from "src/airdrop/points/TownsPoints.sol";
-
-// debuggging
-import {console} from "forge-std/console.sol";
 
 contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistributionBase {
     using FixedPointMathLib for uint256;
@@ -54,7 +48,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
     Towns internal towns;
     DropFacet internal dropFacet;
-    RewardsDistribution internal rewardsDistribution;
+    IRewardsDistribution internal rewardsDistribution;
     TownsPoints internal pointsFacet;
     NodeOperatorFacet internal operatorFacet;
 
@@ -98,7 +92,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         eip712Facet = EIP712Facet(baseRegistry);
 
         // RewardsDistribution
-        rewardsDistribution = RewardsDistribution(baseRegistry);
+        rewardsDistribution = IRewardsDistribution(baseRegistry);
 
         vm.prank(deployer);
         rewardsDistribution.setRewardNotifier(NOTIFIER, true);
