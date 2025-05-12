@@ -144,7 +144,7 @@ func (s *remoteSyncer) Run() {
 		}
 	}
 
-	// stream interrupted while client didn't cancel sync -> remote is unavailable
+	// Stream interrupted while client didn't cancel sync -> remote is unavailable
 	if s.syncStreamCtx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
@@ -160,6 +160,10 @@ func (s *remoteSyncer) Run() {
 				s.cancelGlobalSyncOp(err)
 				return false
 			}
+
+			// unsubStream is called to remove the stream from the local cache of the syncer set so
+			// the given stream could be re-added.
+			s.unsubStream(streamID)
 
 			return true
 		})
