@@ -48,7 +48,7 @@ export const RiverEnvSwitcher = () => {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" onClick={() => setOpen(true)}>
-                    {isAgentConnected ? 'Switch environment or disconnect' : `Connect to River`}
+                    {isAgentConnected ? 'Switch environment or disconnect' : `Connect to Towns`}
                 </Button>
             </DialogTrigger>
             <RiverEnvSwitcherContent allowBearerToken onClose={() => setOpen(false)} />
@@ -77,7 +77,7 @@ export const RiverEnvSwitcherContent = (props: {
         <DialogContent className="gap-6">
             <DialogHeader>
                 <DialogTitle>
-                    {isAgentConnected ? 'Switch environment' : 'Connect to River'}
+                    {isAgentConnected ? 'Switch environment' : 'Connect to Towns'}
                 </DialogTitle>
                 <DialogDescription>
                     {isAgentConnected
