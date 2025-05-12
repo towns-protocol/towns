@@ -317,37 +317,25 @@ func (ss *SyncerSet) distributeSyncModifications(
 	var wg sync.WaitGroup
 	var localMuSyncers sync.Mutex
 	for nodeAddress, modifySync := range modifySyncs {
-		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
-		syncer, found := ss.syncers[nodeAddress]
-		if !found {
-			// first stream to sync with remote -> create a new syncer instance
-			if nodeAddress == ss.localNodeAddress {
-				syncer = ss.newLocalSyncer()
-			} else {
-				var err error
-				syncer, err = ss.newRemoteSyncer(nodeAddress)
-				if err != nil {
-					rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
-					for _, cookie := range modifySync.GetAddStreams() {
-						failedToAdd(&SyncStreamOpStatus{
-							StreamId: cookie.GetStreamId(),
-							Code:     int32(rvrErr.Code),
-							Message:  rvrErr.GetMessage(),
-						})
-					}
-					for _, streamIDRaw := range modifySync.GetRemoveStreams() {
-						failedToRemove(&SyncStreamOpStatus{
-							StreamId: streamIDRaw,
-							Code:     int32(rvrErr.Code),
-							Message:  rvrErr.GetMessage(),
-						})
-					}
-					continue
-				}
+		// Get syncer for the given node address
+		syncer, err := ss.getOrCreateSyncerNoLock(nodeAddress)
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			for _, cookie := range modifySync.GetAddStreams() {
+				failedToAdd(&SyncStreamOpStatus{
+					StreamId: cookie.GetStreamId(),
+					Code:     int32(rvrErr.Code),
+					Message:  rvrErr.GetMessage(),
+				})
 			}
-
-			ss.syncers[nodeAddress] = syncer
-			ss.startSyncer(syncer)
+			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
+				failedToRemove(&SyncStreamOpStatus{
+					StreamId: streamIDRaw,
+					Code:     int32(rvrErr.Code),
+					Message:  rvrErr.GetMessage(),
+				})
+			}
+			continue
 		}
 
 		wg.Add(1)
@@ -440,6 +428,31 @@ func (ss *SyncerSet) rmStream(streamID StreamId) {
 	ss.muSyncers.Lock()
 	delete(ss.streamID2Syncer, streamID)
 	ss.muSyncers.Unlock()
+}
+
+// getOrCreateSyncerNoLock returns the syncer for the given node address.
+// If the syncer does not exist, it creates a new one and starts it.
+func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (StreamsSyncer, error) {
+	if syncer, found := ss.syncers[nodeAddress]; found {
+		return syncer, nil
+	}
+
+	var syncer StreamsSyncer
+	var err error
+
+	if nodeAddress == ss.localNodeAddress {
+		syncer = ss.newLocalSyncer()
+	} else {
+		syncer, err = ss.newRemoteSyncer(nodeAddress)
+		if err != nil {
+			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
+		}
+	}
+
+	ss.syncers[nodeAddress] = syncer
+	ss.startSyncer(syncer)
+
+	return syncer, nil
 }
 
 func (ss *SyncerSet) newLocalSyncer() *localSyncer {
