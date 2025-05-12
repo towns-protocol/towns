@@ -21,7 +21,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 type testStreamStoreParams struct {
@@ -56,12 +55,6 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 	)
 	require.NoError(err, "Error creating pgx pool for test")
 
-	onChainConf := mocks.NewMockOnChainConfiguration(t)
-	onChainConf.On("Get").Return(&crypto.OnChainSettings{
-		StreamEphemeralStreamTTL:           time.Minute * 10,
-		StreamSnapshotIntervalInMiniblocks: 0,
-	})
-
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
 	store, err := NewPostgresStreamStore(
@@ -70,7 +63,9 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		instanceId,
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
-		onChainConf,
+		time.Minute*10,
+		crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
 
@@ -656,12 +651,6 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	)
 	require.NoError(err)
 
-	onChainConf := mocks.NewMockOnChainConfiguration(t)
-	onChainConf.On("Get").Return(&crypto.OnChainSettings{
-		StreamEphemeralStreamTTL:           time.Minute * 10,
-		StreamSnapshotIntervalInMiniblocks: 0,
-	})
-
 	instanceId2 := GenShortNanoid()
 	exitSignal2 := make(chan error, 1)
 
@@ -675,7 +664,9 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			instanceId2,
 			exitSignal2,
 			infra.NewMetricsFactory(nil, "", ""),
-			onChainConf,
+			time.Minute*10,
+			crypto.StreamTrimmingMiniblocksToKeepSettings{},
+			5,
 		)
 		require.NoError(err)
 		secondStoreInitialized.Done()
@@ -1210,6 +1201,13 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 		Snapshot: genMB.Snapshot,
 	}))
 
+	count, err := store.GetMiniblockCandidateCount(ctx, streamId, 0)
+	require.NoError(err)
+	require.EqualValues(0, count)
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, 1)
+	require.NoError(err)
+	require.EqualValues(0, count)
+
 	mb1 := dataMaker.mb(1, false)
 	mbs = append(mbs, mb1)
 	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
@@ -1217,6 +1215,19 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 		Hash:   mb1.Hash,
 		Data:   mb1.Data,
 	}))
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, mb1.Number)
+	require.NoError(err)
+	require.EqualValues(1, count)
+
+	mb1_1 := dataMaker.mb(1, false)
+	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
+		Number: mb1_1.Number,
+		Hash:   mb1_1.Hash,
+		Data:   mb1_1.Data,
+	}))
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, mb1.Number)
+	require.NoError(err)
+	require.EqualValues(2, count)
 
 	mb1read, err := store.ReadMiniblockCandidate(ctx, streamId, mb1.Hash, mb1.Number)
 	require.NoError(err)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
-	"time"
 
 	"github.com/exaring/otelpgx"
 	"github.com/golang-migrate/migrate/v4"
@@ -48,12 +47,6 @@ type PostgresEventStore struct {
 
 	txTracker pgTxTracker
 }
-
-// var _ StreamStorage = (*PostgresEventStore)(nil)
-
-const (
-	PG_REPORT_INTERVAL = 3 * time.Minute
-)
 
 type txRunnerOpts struct {
 	skipLoggingNotFound bool

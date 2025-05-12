@@ -13,7 +13,8 @@
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "typecheck": "tsc",
         "dev:fork": "./scripts/setup-subgraph.sh",
-        "find-paths": "tsx utils/findContractsPath.ts"
+        "find-paths": "tsx utils/findContractsPath.ts",
+        "dev:no-ui": "ponder dev --disable-ui"
     },
     "dependencies": {
         "hono": "^4.5.0",
@@ -24,11 +25,11 @@
         "@towns-protocol/contracts": "workspace:^",
         "@towns-protocol/prettier-config": "workspace:^",
         "@types/node": "^20.14.8",
-        "eslint": "^8.57.0",
+        "eslint": "^8.57.1",
         "eslint-config-ponder": "^0.9.27",
-        "eslint-import-resolver-typescript": "^3.5.5",
-        "eslint-plugin-prettier": "^4.2.1",
-        "prettier": "^2.8.8",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-prettier": "^5.2.6",
+        "prettier": "^3.5.3",
         "tsx": "^4.7.1",
         "typescript": "^5.8.2"
     },

@@ -27,7 +27,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 )
 
@@ -307,19 +306,15 @@ func TestArchiveOneStream(t *testing.T) {
 	tester.cleanup(pool.Pool.Close)
 	tester.cleanup(pool.StreamingPool.Close)
 
-	onChainConf := mocks.NewMockOnChainConfiguration(t)
-	onChainConf.On("Get").Return(&crypto.OnChainSettings{
-		StreamEphemeralStreamTTL:           time.Minute * 10,
-		StreamSnapshotIntervalInMiniblocks: 0,
-	})
-
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,
 		pool,
 		GenShortNanoid(),
 		make(chan error, 1),
 		infra.NewMetricsFactory(nil, "", ""),
-		onChainConf,
+		time.Minute*10,
+		crypto.StreamTrimmingMiniblocksToKeepSettings{},
+		100,
 	)
 	require.NoError(err)
 

@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IMembershipMetadata} from "src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 //libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
 
@@ -25,6 +25,6 @@ library DeployMembershipMetadata {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("MembershipMetadata.sol", "");
+        return LibDeploy.deployCode("MembershipMetadata.sol", "");
     }
 }

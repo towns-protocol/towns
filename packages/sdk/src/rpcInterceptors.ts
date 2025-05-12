@@ -17,7 +17,7 @@ export const DEFAULT_RETRY_PARAMS: RetryParams = {
     maxAttempts: 3,
     initialRetryDelay: 2000,
     maxRetryDelay: 6000,
-    defaultTimeoutMs: 30000, // 30 seconds for long running requests
+    defaultTimeoutMs: 90000, // 90 seconds for long running requests
 }
 
 export type RetryParams = {
@@ -343,7 +343,7 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
                 logCalls(name, 'SHUTDOWN', id)
                 updateHistogram(`${name} SHUTDOWN`)
             } else {
-                const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
+                const stack = err instanceof Error && 'stack' in err ? (err.stack ?? '') : ''
                 logError(name, 'ERROR STREAMING RESPONSE', id, err, stack)
                 updateHistogram(`${name} RECV`, undefined, true)
             }

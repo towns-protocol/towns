@@ -7,7 +7,7 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 //libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 import {DeployERC721A} from "./DeployERC721A.s.sol";
 
@@ -66,6 +66,6 @@ library DeploySpaceOwnerFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("SpaceOwner.sol", "");
+        return LibDeploy.deployCode("SpaceOwner.sol", "");
     }
 }

@@ -12,12 +12,18 @@ set -a
 set +a
 
 : ${RIVER_ENV:?}
+: ${BASE_RPC_URL:?}
 : ${BASE_ANVIL_RPC_URL:?}
 
 # Build if not called with nobuild
 if [ "${1-}" != "nobuild" ]; then
     yarn turbo build --filter=@towns-protocol/contracts
 fi
+
+# Deploy Multicall3
+MULTICALL3_ADDRESS=0xcA11bde05977b3631167028862bE2a173976CA11
+MULTICALL3_BYTECODE=$(cast code $MULTICALL3_ADDRESS --rpc-url $BASE_RPC_URL)
+cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
 
 # Space Architect
 make clear-anvil-deployments context=$RIVER_ENV
@@ -32,6 +38,8 @@ make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=Depl
 make deploy-facet-local context=$RIVER_ENV rpc=base_anvil contract=FixedPricing
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceFactory
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployRiverAirdrop
+make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployAppRegistry
+make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySwapRouter
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractPostDeploy
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractSetDefaultUriLocalhost
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractClaimCondition

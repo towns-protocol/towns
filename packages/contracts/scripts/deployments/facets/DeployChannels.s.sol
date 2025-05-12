@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployChannels {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -30,6 +30,6 @@ library DeployChannels {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("Channels.sol", "");
+        return LibDeploy.deployCode("Channels.sol", "");
     }
 }

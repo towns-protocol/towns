@@ -414,12 +414,13 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 func (i *cacheTestInstance) makeAndSaveMbCandidate(
 	ctx context.Context,
 	stream *Stream,
+	blockNum crypto.BlockNumber,
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
 		stream: stream,
 		cache:  i.cache,
 	}
-	err := j.produceCandidate(ctx)
+	err := j.produceCandidate(ctx, blockNum)
 	if err != nil {
 		return nil, err
 	}
