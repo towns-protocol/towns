@@ -1,6 +1,6 @@
 ---
 description: These rules are essential for working with a complex blockchain-based space management and permission system. They're particularly helpful when:  1. Implementing new features or modifying existing ones in the space management system 2. Working with cross-chain entitlements and permission validation 3. Developing token distribution mechanisms or reward systems 4. Adding or modifying role-based access control 5. Upgrading contracts using the Diamond Pattern 6. Implementing new entitlement types or rules 7. Debugging permission or access control issues 8. Writing tests for contract interactions
-globs: **/*.sol
+globs: *.sol
 alwaysApply: false
 ---
 # Contracts Rule
