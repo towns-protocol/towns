@@ -82,6 +82,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 7. Follow semantic versioning for contract upgrades
 8. Use calldata in external function argument definitions when possible
 9. Prefer clear/descriptive names over excessive comments
+10. Library functions should be pure in the functional programming sense (no side effects)
 
 ### Storage
 1. Use diamond storage pattern for all state variables
