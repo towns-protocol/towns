@@ -670,13 +670,7 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) error {
 // AddEvent2 adds an event to the stream and returns the new stream view.
 // AddEvent2 is thread-safe.
 func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
-	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-
-	return s.addEventLocked(ctx, event)
+	return s.addEvent(ctx, event, false)
 }
 
 // notifySubscribersLocked updates all callers with unseen events and the new sync cookie.
@@ -698,9 +692,25 @@ func (s *Stream) notifySubscribersLocked(
 	}
 }
 
+func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+	_, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.addEventLocked(ctx, event, relaxDuplicateCheck)
+}
+
+// addEventLocked adds an event to the stream.
+// If relaxDuplicateCheck is true, it will not return an error if referenced miniblock can't be found in the cache.
+// In this case duplicate check can't be completed.
+// This options is used to add events that are reported by other nodes.
+// Without this option there are rare situations when events stay in minipools forever since they have mbs that too
+// old to be in the cache and thus can't complete the duplicate check.
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
+func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
 		return nil, err
@@ -712,7 +722,11 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
 			return oldSV, nil
 		}
-		return nil, AsRiverError(err).Func("copyAndAddEvent")
+		skipError := relaxDuplicateCheck && IsRiverErrorCode(err, Err_BAD_PREV_MINIBLOCK_HASH)
+		if !skipError {
+			return nil, AsRiverError(err).Func("copyAndAddEvent")
+		}
+		logging.FromCtx(ctx).Warnw("Stream.addEventLocked: adding event with relaxed duplicate check", "error", err)
 	}
 
 	// Check if event can be added before writing to storage.

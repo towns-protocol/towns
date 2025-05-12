@@ -210,6 +210,10 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	for i, p := range proposals {
 		converted[i] = mbProposalFromProto(p.response.Proposal)
 
+		if converted[i].newMiniblockNum != view.minipool.generation {
+			continue
+		}
+
 		for _, e := range p.response.MissingEvents {
 			parsed, err := ParseEvent(e)
 			if err != nil {
@@ -220,7 +224,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 				added[parsed.Hash] = true
 
 				if !view.minipool.events.Has(parsed.Hash) {
-					newView, err := j.stream.AddEvent2(ctx, parsed)
+					newView, err := j.stream.addEvent(ctx, parsed, true)
 					if err == nil {
 						view = newView
 					} else {

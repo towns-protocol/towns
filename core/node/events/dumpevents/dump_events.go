@@ -53,9 +53,8 @@ func GetContentName(p IsStreamEvent_Payload) string {
 		return "NIL_CONTENT"
 	}
 	n := fmt.Sprintf("%T", c)
-	if u := strings.Index(n, "_"); u >= 0 {
-		n = n[u+1:]
-	}
+	n = strings.TrimPrefix(n, "*protocol.")
+	n = strings.TrimSuffix(n, "_")
 	return n
 }
 

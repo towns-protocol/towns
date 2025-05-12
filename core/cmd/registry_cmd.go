@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strings"
@@ -20,12 +21,14 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events/dumpevents"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -176,6 +179,7 @@ func validateStream(
 	expectedMinBlockHash common.Hash,
 	expectedMinBlockNum int64,
 	timeout time.Duration,
+	verbose bool,
 ) error {
 	if timeout <= 0 {
 		timeout = 30 * time.Second
@@ -191,12 +195,12 @@ func validateStream(
 	}
 
 	streamServiceClient := NewStreamServiceClient(httpClient, nodeRecord.Url, connect.WithGRPC())
-	response, err := streamServiceClient.GetStream(
-		ctx,
-		connect.NewRequest(&GetStreamRequest{
-			StreamId: streamId[:],
-		}),
-	)
+	request := connect.NewRequest(&GetStreamRequest{
+		StreamId: streamId[:],
+	})
+	request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+	request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+	response, err := streamServiceClient.GetStream(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -220,9 +224,10 @@ func validateStream(
 			snapshot = "snapshot"
 		}
 		fmt.Printf(
-			"          %d %s num_events=%d %s\n",
+			"          %6d %s %s num_events=%d %s\n",
 			info.Ref.Num,
 			info.Ref.Hash.Hex(),
+			info.Header().Timestamp.AsTime().Local().Format(time.RFC3339),
 			len(header.EventHashes),
 			snapshot,
 		)
@@ -246,12 +251,40 @@ func validateStream(
 			}
 		}
 	}
-	fmt.Printf("      Minipool: len=%d\n", len(stream.Events))
-	fmt.Printf(
-		"      Cookie: minipool_generation=%d prev_mb_hash=%s\n",
-		stream.NextSyncCookie.MinipoolGen,
-		common.BytesToHash(stream.NextSyncCookie.PrevMiniblockHash),
-	)
+	evs, err := events.ParseEvents(stream.Events)
+	if err != nil {
+		return err
+	}
+	var minTimestampEpochMs int64 = math.MaxInt64
+	var maxTimestampEpochMs int64 = math.MinInt64
+	for _, ev := range evs {
+		if ev.Event.CreatedAtEpochMs < minTimestampEpochMs {
+			minTimestampEpochMs = ev.Event.CreatedAtEpochMs
+		}
+		if ev.Event.CreatedAtEpochMs > maxTimestampEpochMs {
+			maxTimestampEpochMs = ev.Event.CreatedAtEpochMs
+		}
+	}
+	fmt.Printf("      Minipool: len=%d\n", len(evs))
+	if len(evs) > 0 {
+		fmt.Printf(
+			"                min_timestamp=%s\n                max_timestamp=%s\n",
+			time.UnixMilli(minTimestampEpochMs).Local().Format(time.RFC3339),
+			time.UnixMilli(maxTimestampEpochMs).Local().Format(time.RFC3339),
+		)
+	}
+	if verbose {
+		for i, ev := range evs {
+			fmt.Printf("          Event %4d: %s %s\n", i, ev.Hash.Hex(), time.UnixMilli(ev.Event.CreatedAtEpochMs).Local().Format(time.RFC3339))
+			fmt.Printf(
+				"                        %s creator: %s type: %s %s\n",
+				ev.MiniblockRef,
+				common.BytesToAddress(ev.Event.CreatorAddress),
+				dumpevents.GetPayloadName(ev.Event.Payload),
+				dumpevents.GetContentName(ev.Event.Payload),
+			)
+		}
+	}
 
 	if lastBlock == nil {
 		return RiverError(Err_INTERNAL, "No miniblocks found", "node", nodeAddress)
@@ -271,7 +304,7 @@ func validateStream(
 	return nil
 }
 
-func srStream(cfg *config.Config, streamId string, validate, urls, csv bool, timeout time.Duration) error {
+func srStream(cfg *config.Config, streamId string, validate, urls, csv, verbose bool, timeout time.Duration) error {
 	if csv && validate {
 		return RiverError(Err_INVALID_ARGUMENT, "--validate and --csv flags cannot be used together")
 	}
@@ -357,6 +390,7 @@ func srStream(cfg *config.Config, streamId string, validate, urls, csv bool, tim
 					stream.LastMbHash(),
 					stream.LastMbNum(),
 					timeout,
+					verbose,
 				)
 				elapsed := time.Since(startTime)
 				if validateErr != nil {
@@ -639,12 +673,17 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return srStream(cmdConfig, args[0], validate, urls, csv, timeout)
+			verbose, err := cmd.Flags().GetBool("verbose")
+			if err != nil {
+				return err
+			}
+			return srStream(cmdConfig, args[0], validate, urls, csv, verbose, timeout)
 		},
 	}
 	streamCmd.Flags().Bool("validate", false, "Fetch stream from each node and compare to the registry record")
 	streamCmd.Flags().Bool("urls", true, "Print node URLs")
 	streamCmd.Flags().Bool("csv", false, "Output in CSV format")
+	streamCmd.Flags().Bool("verbose", false, "Print verbose output")
 	streamCmd.Flags().Duration("timeout", 30*time.Second, "Timeout for validation")
 	srCmd.AddCommand(streamCmd)
 
