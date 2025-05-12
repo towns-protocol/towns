@@ -12,13 +12,14 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 // contracts
 import {ExecutorBase} from "./ExecutorBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 /**
  * @title Executor
  * @notice Facet that enables permissioned calls from a Space
  * @dev This contract is used for implementation reference purposes
  */
-contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
+contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor, Facet {
     using CustomRevert for bytes4;
 
     constructor(address collection, uint256 tokenId) {
@@ -46,30 +47,6 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
     }
 
     /// @inheritdoc IExecutor
-    function hasAccess(
-        bytes32 groupId,
-        address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
-    {
-        return _hasGroupAccess(groupId, account);
-    }
-
-    /// @inheritdoc IExecutor
-    function getAccess(
-        bytes32 groupId,
-        address account
-    )
-        external
-        view
-        returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect)
-    {
-        return _getAccess(groupId, account);
-    }
-
-    /// @inheritdoc IExecutor
     function revokeAccess(bytes32 groupId, address account) external onlyOwner {
         _revokeGroupAccess(groupId, account);
     }
@@ -89,16 +66,9 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
         _setGroupGrantDelay(groupId, delay, 0);
     }
 
-    function getGroupDelay(bytes32 groupId) external view returns (uint32) {
-        return _getGroupGrantDelay(groupId);
-    }
-
+    /// @inheritdoc IExecutor
     function setAllowance(bytes32 groupId, uint256 allowance) external onlyOwner {
         _setGroupAllowance(groupId, allowance);
-    }
-
-    function getAllowance(bytes32 groupId) external view returns (uint256) {
-        return _getGroupAllowance(groupId);
     }
 
     /// @inheritdoc IExecutor
@@ -116,11 +86,6 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
         bool disabled
     ) external onlyAuthorized(target) onlyOwner {
         _setTargetDisabled(target, disabled);
-    }
-
-    /// @inheritdoc IExecutor
-    function getSchedule(bytes32 id) external view returns (uint48) {
-        return _getSchedule(id);
     }
 
     /// @inheritdoc IExecutor
@@ -151,9 +116,44 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
         return _cancel(caller, target, data);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        Internal                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /// @inheritdoc IExecutor
+    function hasAccess(
+        bytes32 groupId,
+        address account
+    )
+        external
+        view
+        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
+    {
+        return _hasGroupAccess(groupId, account);
+    }
+
+    /// @inheritdoc IExecutor
+    function getAccess(
+        bytes32 groupId,
+        address account
+    )
+        external
+        view
+        returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect)
+    {
+        return _getAccess(groupId, account);
+    }
+
+    /// @inheritdoc IExecutor
+    function getGroupDelay(bytes32 groupId) external view returns (uint32) {
+        return _getGroupGrantDelay(groupId);
+    }
+
+    /// @inheritdoc IExecutor
+    function getAllowance(bytes32 groupId) external view returns (uint256) {
+        return _getGroupAllowance(groupId);
+    }
+
+    /// @inheritdoc IExecutor
+    function getSchedule(bytes32 id) external view returns (uint48) {
+        return _getSchedule(id);
+    }
 
     /// @inheritdoc IExecutor
     function hashOperation(
@@ -164,8 +164,14 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
         return _hashOperation(caller, target, data);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Internal                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Internal function to check if a target is authorized
     function _checkAuthorized(address target) internal virtual {}
 
+    /// @dev Hook called before execution
     function _executePreHooks(
         address target,
         bytes4 selector,
@@ -173,5 +179,6 @@ contract ExecutorFacet is TokenOwnableBase, ExecutorBase, IExecutor {
         bytes calldata data
     ) internal virtual override {}
 
+    /// @dev Hook called after execution
     function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }
