@@ -157,7 +157,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		return nil
 	}
 
-	mr = ModifyRequest{
+	mr := ModifyRequest{
 		ToAdd:                make([]*SyncCookie, 0, len(addingFailures)),
 		AddingFailureHandler: req.AddingFailureHandler,
 	}
