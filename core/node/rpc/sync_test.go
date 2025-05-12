@@ -563,8 +563,8 @@ func TestSyncWithManyStreams(t *testing.T) {
 // TestRemoteNodeFailsDuringSync ensures that when a remote node fails during sync, the sync session is closed and
 // the client receives a stream down event for all streams on the failed node.
 func TestRemoteNodeFailsDuringSync(t *testing.T) {
-	numNodes := 3
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 2})
+	numNodes := 5
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 3})
 	ctx := tt.ctx
 	require := tt.require
 
@@ -587,7 +587,8 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 
 	var channelCookies []*protocol.SyncCookie
 	nodeToStreams := make(map[common.Address][]StreamId)
-	for range 5 {
+	nodeToCookies := make(map[common.Address][]*protocol.SyncCookie)
+	for range 15 {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
 			ctx,
@@ -607,6 +608,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 
 		node := common.BytesToAddress(channel.NodeAddress)
 		nodeToStreams[node] = append(nodeToStreams[node], StreamId(channel.StreamId))
+		nodeToCookies[node] = append(nodeToCookies[node], channel)
 	}
 
 	now := time.Now()
@@ -632,5 +634,14 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		t,
 		nodeToStreams[unavailableNodeAddress],
 		time.Minute,
+	)
+
+	// try to add failed streams back to sync - falling back to another node
+	syncClients.modifySync(t, ctx, nodeToCookies[unavailableNodeAddress], nil)
+	syncClients.expectNUpdates(
+		t,
+		len(nodeToCookies[unavailableNodeAddress]),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 }

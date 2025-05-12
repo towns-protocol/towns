@@ -168,10 +168,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 	// Remove node addresses from failed to add streams
 	for _, status := range addingFailures {
-		if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
-			continue
-		}
-
 		preparedSyncCookie := &SyncCookie{
 			StreamId: status.StreamId,
 		}
