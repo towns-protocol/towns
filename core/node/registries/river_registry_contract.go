@@ -214,7 +214,8 @@ func (c *RiverRegistryContract) AllocateStream(
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
 			Func("AllocateStream").
-			Message("Smart contract call failed")
+			Message("Smart contract call failed").
+			Tag("streamId", streamId)
 	}
 
 	receipt, err := pendingTx.Wait(ctx)
@@ -228,7 +229,8 @@ func (c *RiverRegistryContract) AllocateStream(
 	if receipt != nil && receipt.Status != crypto.TransactionResultSuccess {
 		return RiverError(Err_ERR_UNSPECIFIED, "Allocate stream transaction failed").
 			Tag("tx", receipt.TxHash.Hex()).
-			Func("AllocateStream")
+			Func("AllocateStream").
+			Tag("streamId", streamId)
 	}
 
 	return RiverError(Err_ERR_UNSPECIFIED, "AllocateStream transaction result unknown")
@@ -867,9 +869,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-		river.NodeRegistryV1NodeRemoved |
-		river.NodeRegistryV1NodeStatusUpdated |
-		river.NodeRegistryV1NodeUrlUpdated
+	river.NodeRegistryV1NodeRemoved |
+	river.NodeRegistryV1NodeStatusUpdated |
+	river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
