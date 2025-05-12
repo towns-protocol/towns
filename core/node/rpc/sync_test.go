@@ -588,7 +588,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	var channelCookies []*protocol.SyncCookie
 	nodeToStreams := make(map[common.Address][]StreamId)
 	nodeToCookies := make(map[common.Address][]*protocol.SyncCookie)
-	for range 15 {
+	for range 20 {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
 			ctx,
