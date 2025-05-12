@@ -118,6 +118,10 @@ abstract contract MembershipBase is IMembershipBase {
     function _verifyDuration(uint64 duration) internal view {
         uint256 maxDuration = _getPlatformRequirements().getMembershipDuration();
 
+        if (duration == 0) {
+            CustomRevert.revertWith(Membership__InvalidDuration.selector);
+        }
+
         if (duration > maxDuration) {
             CustomRevert.revertWith(Membership__InvalidDuration.selector);
         }

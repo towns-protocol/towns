@@ -117,6 +117,12 @@ interface IMembership is IMembershipBase {
      */
     function getMembershipDuration() external view returns (uint64);
 
+    /**
+     * @notice Set the membership duration
+     * @param duration The new membership duration in seconds
+     */
+    function setMembershipDuration(uint64 duration) external;
+
     // =============================================================
     //                        Pricing Module
     // =============================================================
