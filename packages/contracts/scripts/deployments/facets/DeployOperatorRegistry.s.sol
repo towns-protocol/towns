@@ -1,50 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {OperatorRegistry} from "src/river/registry/facets/operator/OperatorRegistry.sol";
 
-contract DeployOperatorRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(OperatorRegistry.approveOperator.selector);
-        addSelector(OperatorRegistry.isOperator.selector);
-        addSelector(OperatorRegistry.removeOperator.selector);
-        addSelector(OperatorRegistry.getAllOperators.selector);
+library DeployOperatorRegistry {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](4);
+        res[0] = OperatorRegistry.approveOperator.selector;
+        res[1] = OperatorRegistry.isOperator.selector;
+        res[2] = OperatorRegistry.removeOperator.selector;
+        res[3] = OperatorRegistry.getAllOperators.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return OperatorRegistry.__OperatorRegistry_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function makeInitData(address[] memory operators) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), operators);
+    function makeInitData(address[] memory operators) internal pure returns (bytes memory) {
+        return abi.encodeCall(OperatorRegistry.__OperatorRegistry_init, (operators));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/operatorRegistryFacet";
-    }
-
-    function facetInitHelper(
-        address deployer,
-        address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
-        IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
-        address[] memory operators = new address[](1);
-        operators[0] = deployer;
-        return (facetCut, makeInitData(operators));
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        OperatorRegistry facet = new OperatorRegistry();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("OperatorRegistry.sol", "");
     }
 }

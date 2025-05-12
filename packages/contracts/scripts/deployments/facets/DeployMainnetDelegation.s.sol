@@ -2,46 +2,49 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {MainnetDelegation} from "src/base/registry/facets/mainnet/MainnetDelegation.sol";
 
-contract DeployMainnetDelegation is FacetHelper, Deployer {
-    constructor() {
-        addSelector(MainnetDelegation.setProxyDelegation.selector);
-        addSelector(MainnetDelegation.setDelegationDigest.selector);
-        addSelector(MainnetDelegation.relayDelegations.selector);
-        addSelector(MainnetDelegation.getDelegationByDelegator.selector);
-        addSelector(MainnetDelegation.getMainnetDelegationsByOperator.selector);
-        addSelector(MainnetDelegation.getDelegatedStakeByOperator.selector);
-        addSelector(MainnetDelegation.getAuthorizedClaimer.selector);
-        addSelector(MainnetDelegation.getProxyDelegation.selector);
-        addSelector(MainnetDelegation.getMessenger.selector);
-        addSelector(MainnetDelegation.getDepositIdByDelegator.selector);
+library DeployMainnetDelegation {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        arr.p(MainnetDelegation.setProxyDelegation.selector);
+        arr.p(MainnetDelegation.setDelegationDigest.selector);
+        arr.p(MainnetDelegation.relayDelegations.selector);
+        arr.p(MainnetDelegation.getDelegationByDelegator.selector);
+        arr.p(MainnetDelegation.getMainnetDelegationsByOperator.selector);
+        arr.p(MainnetDelegation.getDelegatedStakeByOperator.selector);
+        arr.p(MainnetDelegation.getAuthorizedClaimer.selector);
+        arr.p(MainnetDelegation.getProxyDelegation.selector);
+        arr.p(MainnetDelegation.getMessenger.selector);
+        arr.p(MainnetDelegation.getDepositIdByDelegator.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return MainnetDelegation.__MainnetDelegation_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function makeInitData(address messenger) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), messenger);
-        // 0xfdf649b20000000000000000000000004200000000000000000000000000000000000007 // Base
-        // Sepolia
+    function makeInitData(address messenger) internal pure returns (bytes memory) {
+        return abi.encodeCall(MainnetDelegation.__MainnetDelegation_init, (messenger));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/mainnetDelegationFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        MainnetDelegation facet = new MainnetDelegation();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("MainnetDelegation.sol", "");
     }
 }

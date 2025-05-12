@@ -1,53 +1,50 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IStreamRegistry} from "src/river/registry/facets/stream/IStreamRegistry.sol";
 
-//libraries
-import {console} from "forge-std/console.sol";
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {StreamRegistry} from "src/river/registry/facets/stream/StreamRegistry.sol";
+// contracts
 
-contract DeployStreamRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(StreamRegistry.allocateStream.selector);
-        addSelector(StreamRegistry.addStream.selector);
-        addSelector(StreamRegistry.getStream.selector);
-        addSelector(StreamRegistry.getStreamWithGenesis.selector);
-        addSelector(StreamRegistry.setStreamLastMiniblockBatch.selector);
-        addSelector(StreamRegistry.placeStreamOnNode.selector); // future
-        addSelector(StreamRegistry.removeStreamFromNode.selector);
-        addSelector(StreamRegistry.setStreamReplicationFactor.selector);
-        addSelector(StreamRegistry.getStreamCount.selector); // monitoring
-        addSelector(StreamRegistry.getPaginatedStreams.selector); // only interested for stream on a
-        // single node
-        addSelector(StreamRegistry.isStream.selector); // returns if stream exists
-        addSelector(StreamRegistry.getStreamCountOnNode.selector);
-        addSelector(StreamRegistry.getPaginatedStreamsOnNode.selector);
-        addSelector(StreamRegistry.syncNodesOnStreams.selector);
+library DeployStreamRegistry {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(14);
+        arr.p(IStreamRegistry.allocateStream.selector);
+        arr.p(IStreamRegistry.addStream.selector);
+        arr.p(IStreamRegistry.getStream.selector);
+        arr.p(IStreamRegistry.getStreamWithGenesis.selector);
+        arr.p(IStreamRegistry.setStreamLastMiniblockBatch.selector);
+        arr.p(IStreamRegistry.placeStreamOnNode.selector);
+        arr.p(IStreamRegistry.removeStreamFromNode.selector);
+        arr.p(IStreamRegistry.setStreamReplicationFactor.selector);
+        arr.p(IStreamRegistry.getStreamCount.selector);
+        arr.p(IStreamRegistry.getPaginatedStreams.selector);
+        arr.p(IStreamRegistry.isStream.selector);
+        arr.p(IStreamRegistry.getStreamCountOnNode.selector);
+        arr.p(IStreamRegistry.getPaginatedStreamsOnNode.selector);
+        arr.p(IStreamRegistry.syncNodesOnStreams.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/streamRegistryFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function facetInitHelper(
-        address deployer,
-        address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
-        IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
-        console.log("facetInitHelper: deployer", deployer);
-        return (facetCut, "");
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        StreamRegistry facet = new StreamRegistry();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("StreamRegistry.sol", "");
     }
 }

@@ -5,19 +5,17 @@ pragma solidity ^0.8.23;
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
+import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
-
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-
 import {RewardsVerifier} from "./RewardsVerifier.t.sol";
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {SpaceDelegationFacet} from "src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {MainnetDelegation} from "src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {NodeOperatorFacet} from "src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
@@ -44,7 +42,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
         operatorFacet = NodeOperatorFacet(baseRegistry);
         towns = Towns(townsToken);
         mainnetDelegationFacet = MainnetDelegation(baseRegistry);
-        rewardsDistributionFacet = RewardsDistribution(baseRegistry);
+        rewardsDistributionFacet = IRewardsDistribution(baseRegistry);
         spaceDelegationFacet = SpaceDelegationFacet(baseRegistry);
 
         messenger.setXDomainMessageSender(mainnetProxyDelegation);
