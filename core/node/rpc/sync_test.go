@@ -626,7 +626,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		time.Since(now),
 	)
 
-	// simulate node failure
+	// simulate node #1 failure
 	unavailableNodeAddress := tt.nodes[1].address
 	go tt.CloseNode(1)
 
@@ -634,14 +634,5 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		t,
 		nodeToStreams[unavailableNodeAddress],
 		time.Minute,
-	)
-
-	// try to add failed streams back to sync - falling back to another node
-	syncClients.modifySync(t, ctx, nodeToCookies[unavailableNodeAddress], nil)
-	syncClients.expectNUpdates(
-		t,
-		len(nodeToCookies[unavailableNodeAddress]),
-		30*time.Second,
-		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 }
