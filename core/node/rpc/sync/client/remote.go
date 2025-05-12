@@ -219,7 +219,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				continue
 			}
 
-			// send ping to remote to generate activity to check if remote is still alive
+			// Send ping to remote to generate activity to check if remote is still alive
 			if _, err := s.client.PingSync(s.syncStreamCtx, connect.NewRequest(&PingSyncRequest{
 				SyncId: s.syncID,
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
@@ -230,8 +230,6 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				s.syncStreamCancel()
 				return
 			}
-			return
-
 		case <-s.syncStreamCtx.Done():
 			return
 		}
