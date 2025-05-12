@@ -388,7 +388,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                     facet,
                     DeployCreateSpace.makeInitData()
                 );
-            } else if (facetName.eq("FeatureManager")) {
+            } else if (facetName.eq("FeatureManagerFacet")) {
                 addFacet(
                     DeployFeatureManager.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
