@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
@@ -453,13 +452,6 @@ func (ss *SyncerSet) newLocalSyncer() *localSyncer {
 func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (*remoteSyncer, error) {
 	client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(addr)
 	if err != nil {
-		return nil, err
-	}
-
-	// Make sure the given client responds
-	ctx, cancel := context.WithTimeout(ss.ctx, time.Second*5)
-	defer cancel()
-	if _, err = client.Info(ctx, connect.NewRequest(&InfoRequest{})); err != nil {
 		return nil, err
 	}
 

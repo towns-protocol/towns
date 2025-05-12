@@ -54,9 +54,25 @@ func newRemoteSyncer(
 		return nil, err
 	}
 
-	if !responseStream.Receive() {
+	// Create a timer for the first Receive
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	firstMsgChan := make(chan bool, 1)
+	go func() {
+		firstMsgChan <- responseStream.Receive()
+	}()
+
+	select {
+	case received := <-firstMsgChan:
+		if !received {
+			syncStreamCancel()
+			return nil, responseStream.Err()
+		}
+		// First message received successfully, continue with the stream
+	case <-timer.C:
 		syncStreamCancel()
-		return nil, responseStream.Err()
+		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
 	log := logging.FromCtx(ctx)
