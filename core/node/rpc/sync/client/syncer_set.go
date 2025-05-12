@@ -438,42 +438,39 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 	}
 
 	var syncer StreamsSyncer
-	var err error
 
 	if nodeAddress == ss.localNodeAddress {
-		syncer = ss.newLocalSyncer()
+		syncer = newLocalSyncer(
+			ss.ctx,
+			ss.syncID,
+			ss.globalSyncOpCtxCancel,
+			ss.localNodeAddress,
+			ss.streamCache,
+			ss.messages,
+			ss.otelTracer,
+		)
 	} else {
-		syncer, err = ss.newRemoteSyncer(nodeAddress)
+		client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+		if err != nil {
+			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
+		}
+
+		syncer, err = newRemoteSyncer(
+			ss.ctx,
+			ss.globalSyncOpCtxCancel,
+			ss.syncID,
+			nodeAddress,
+			client,
+			ss.rmStream,
+			ss.messages,
+			ss.otelTracer,
+		)
 		if err != nil {
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 	}
 
 	ss.syncers[nodeAddress] = syncer
-	ss.startSyncer(syncer)
-
-	return syncer, nil
-}
-
-func (ss *SyncerSet) newLocalSyncer() *localSyncer {
-	return newLocalSyncer(
-		ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
-		ss.streamCache, ss.messages, ss.otelTracer)
-}
-
-func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (*remoteSyncer, error) {
-	client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	return newRemoteSyncer(
-		ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, addr, client,
-		ss.rmStream, ss.messages, ss.otelTracer)
-}
-
-// caller must have ss.muSyncers claimed
-func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
 	ss.syncerTasks.Add(1)
 	go func() {
 		syncer.Run()
@@ -482,6 +479,8 @@ func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
 		delete(ss.syncers, syncer.Address())
 		ss.muSyncers.Unlock()
 	}()
+
+	return syncer, nil
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.
