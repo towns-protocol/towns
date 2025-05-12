@@ -88,19 +88,19 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
 
         if (schema.uid == EMPTY_UID) {
-            IAttestationRegistryBase.InvalidAttestationSchema.selector.revertWith();
+            InvalidAttestationSchema.selector.revertWith();
         }
 
         if (address(resolver) == address(0)) {
-            if (value != 0) IAttestationRegistryBase.NotPayable.selector.revertWith();
+            if (value != 0) NotPayable.selector.revertWith();
             if (last) _refund(availableValue);
             return 0;
         }
 
         if (value != 0) {
-            if (!resolver.isPayable()) IAttestationRegistryBase.NotPayable.selector.revertWith();
+            if (!resolver.isPayable()) NotPayable.selector.revertWith();
             if (value > availableValue) {
-                IAttestationRegistryBase.InsufficientBalance.selector.revertWith();
+                InsufficientBalance.selector.revertWith();
             }
 
             unchecked {
@@ -110,10 +110,10 @@ abstract contract AttestationBase is IAttestationRegistryBase {
 
         if (isRevocation) {
             if (!resolver.revoke{value: value}(attestation)) {
-                IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
+                InvalidRevocation.selector.revertWith();
             }
         } else if (!resolver.attest{value: value}(attestation)) {
-            IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
+            InvalidAttestation.selector.revertWith();
         }
 
         if (last) _refund(availableValue);
@@ -168,10 +168,9 @@ abstract contract AttestationBase is IAttestationRegistryBase {
             uint256 val = values[i];
             if (val == 0) continue; // Skip zero-value attestations
             // Ensure resolver accepts payments if value is non-zero
-            if (!isPayable) IAttestationRegistryBase.NotPayable.selector.revertWith();
+            if (!isPayable) NotPayable.selector.revertWith();
             // Ensure sufficient balance for this attestation
-            if (val > availableValue)
-                IAttestationRegistryBase.InsufficientBalance.selector.revertWith();
+            if (val > availableValue) InsufficientBalance.selector.revertWith();
             // Safe arithmetic: subtract from available and add to total
             unchecked {
                 availableValue -= val;
@@ -182,10 +181,10 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         // Process either revocation or attestation for multiple items
         if (isRevocation) {
             if (!resolver.multiRevoke{value: totalUsedValue}(attestations, values)) {
-                IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
+                InvalidRevocation.selector.revertWith();
             }
         } else if (!resolver.multiAttest{value: totalUsedValue}(attestations, values)) {
-            IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
+            InvalidAttestation.selector.revertWith();
         }
 
         // The 'last' parameter indicates this is the final batch in a sequence of operations.
@@ -195,8 +194,6 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         // 2. We want to refund unused ETH only after all batches are complete
         // 3. Prevents unnecessary gas costs from multiple refunds
         if (last) _refund(availableValue);
-
-        return totalUsedValue;
     }
 
     /// @notice Refunds any remaining ETH value if no value was used
@@ -210,7 +207,7 @@ abstract contract AttestationBase is IAttestationRegistryBase {
     ) private {
         uint256 len = values.length;
         for (uint256 i; i < len; ++i) {
-            if (values[i] != 0) IAttestationRegistryBase.NotPayable.selector.revertWith();
+            if (values[i] != 0) NotPayable.selector.revertWith();
         }
         if (last) _refund(availableValue);
     }
@@ -246,11 +243,11 @@ abstract contract AttestationBase is IAttestationRegistryBase {
             AttestationRequestData memory request = requests[i];
             // Ensure that either no expiration time was set or that it was set in the future.
             if (request.expirationTime != NO_EXPIRATION_TIME && request.expirationTime <= timeNow) {
-                IAttestationRegistryBase.InvalidExpirationTime.selector.revertWith();
+                InvalidExpirationTime.selector.revertWith();
             }
 
             if (!schema.revocable && request.revocable) {
-                IAttestationRegistryBase.Irrevocable.selector.revertWith();
+                Irrevocable.selector.revertWith();
             }
 
             Attestation memory attestation;

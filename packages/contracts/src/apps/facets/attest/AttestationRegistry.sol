@@ -17,8 +17,6 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 /// @notice A registry for attestation requests
 /// @dev This contract is used for implementation reference purposes
 contract AttestationRegistry is IAttestationRegistry, AttestationBase, Facet {
-    function __AttestationRegistry_init() external onlyInitializing {}
-
     /// @notice Create a new attestation
     /// @param request The attestation request data
     /// @return The UID of the created attestation

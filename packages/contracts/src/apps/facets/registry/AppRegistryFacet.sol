@@ -32,10 +32,9 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         string calldata schema,
         ISchemaResolver resolver,
         bool revocable
-    ) external onlyOwner returns (bytes32) {
-        bytes32 schemaId = _registerSchema(schema, resolver, revocable);
-        _setSchema(schemaId);
-        return schemaId;
+    ) external onlyOwner returns (bytes32 schemaId) {
+        schemaId = _registerSchema(schema, resolver, revocable);
+        _setSchemaId(schemaId);
     }
 
     /// @notice Ban a app from the registry
@@ -64,22 +63,21 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @notice Remove a app from the registry
     /// @param versionId The app ID to remove
     /// @dev Only the owner of the app can remove it
-    /// @return The version ID that was removed
-    function removeApp(bytes32 versionId) external nonReentrant returns (bytes32) {
-        (, bytes32 version) = _removeApp(msg.sender, versionId);
-        return version;
+    /// @return version The version ID that was removed
+    function removeApp(bytes32 versionId) external nonReentrant returns (bytes32 version) {
+        (, version) = _removeApp(msg.sender, versionId);
     }
 
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getAppSchema() external view returns (string memory) {
-        return _getSchema(_getSchema()).schema;
+        return _getSchema(_getSchemaId()).schema;
     }
 
     /// @notice Get the active schema ID used for app attestations
     /// @return The schema ID
     function getAppSchemaId() external view returns (bytes32) {
-        return _getSchema();
+        return _getSchemaId();
     }
 
     /// @notice Get the attestation for a app

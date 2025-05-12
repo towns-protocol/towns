@@ -258,7 +258,7 @@ interface IExecutor is IExecutorBase {
      * @param id The operation ID
      * @return The scheduled timepoint, or 0 if not scheduled or expired
      */
-    function getSchedule(bytes32 id) external view returns (uint48);
+    function getScheduleTimepoint(bytes32 id) external view returns (uint48);
 
     /**
      * @notice Hashes an operation

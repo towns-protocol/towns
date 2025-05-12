@@ -8,6 +8,7 @@ import {IAppAccount} from "./IAppAccount.sol";
 import {AppAccountBase} from "./AppAccountBase.sol";
 
 // contracts
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 

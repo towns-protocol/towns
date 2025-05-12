@@ -29,10 +29,6 @@ library DeploySchemaRegistry {
             });
     }
 
-    function makeInitData() internal pure returns (bytes memory) {
-        return abi.encodeCall(SchemaRegistry.__SchemaRegistry_init, ());
-    }
-
     function deploy() internal returns (address) {
         return LibDeploy.deployCode("SchemaRegistry.sol", "");
     }
