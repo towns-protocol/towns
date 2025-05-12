@@ -205,10 +205,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         // Deploy all requested facets in a single batch transaction
         facetHelper.deployBatch(deployer);
 
-        address facet;
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
-            facet = facetHelper.getDeployedAddress(facetName);
+            address facet = facetHelper.getDeployedAddress(facetName);
 
             if (facetName.eq("MembershipToken")) {
                 addCut(DeployMembershipToken.makeCut(facet, IDiamond.FacetCutAction.Add));

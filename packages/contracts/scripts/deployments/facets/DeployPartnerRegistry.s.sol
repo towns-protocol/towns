@@ -1,35 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+//interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+
+//libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+
+//contracts
 import {PartnerRegistry} from "src/factory/facets/partner/PartnerRegistry.sol";
 
-contract DeployPartnerRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(PartnerRegistry.registerPartner.selector);
-        addSelector(PartnerRegistry.partnerInfo.selector);
-        addSelector(PartnerRegistry.partnerFee.selector);
-        addSelector(PartnerRegistry.updatePartner.selector);
-        addSelector(PartnerRegistry.removePartner.selector);
-        addSelector(PartnerRegistry.maxPartnerFee.selector);
-        addSelector(PartnerRegistry.setMaxPartnerFee.selector);
-        addSelector(PartnerRegistry.registryFee.selector);
-        addSelector(PartnerRegistry.setRegistryFee.selector);
+library DeployPartnerRegistry {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](9);
+        _selectors[0] = PartnerRegistry.registerPartner.selector;
+        _selectors[1] = PartnerRegistry.partnerInfo.selector;
+        _selectors[2] = PartnerRegistry.partnerFee.selector;
+        _selectors[3] = PartnerRegistry.updatePartner.selector;
+        _selectors[4] = PartnerRegistry.removePartner.selector;
+        _selectors[5] = PartnerRegistry.maxPartnerFee.selector;
+        _selectors[6] = PartnerRegistry.setMaxPartnerFee.selector;
+        _selectors[7] = PartnerRegistry.registryFee.selector;
+        _selectors[8] = PartnerRegistry.setRegistryFee.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return PartnerRegistry.__PartnerRegistry_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/partnerRegistryFacet";
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(PartnerRegistry.__PartnerRegistry_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        PartnerRegistry partnerRegistry = new PartnerRegistry();
-        vm.stopBroadcast();
-        return address(partnerRegistry);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("PartnerRegistry.sol", "");
     }
 }

@@ -1,49 +1,50 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {PlatformRequirementsFacet} from "src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
-contract DeployPlatformRequirements is FacetHelper, Deployer {
-    constructor() {
-        addSelector(PlatformRequirementsFacet.getFeeRecipient.selector);
-        addSelector(PlatformRequirementsFacet.getMembershipBps.selector);
-        addSelector(PlatformRequirementsFacet.getMembershipFee.selector);
-        addSelector(PlatformRequirementsFacet.getMembershipMintLimit.selector);
-        addSelector(PlatformRequirementsFacet.getMembershipDuration.selector);
-        addSelector(PlatformRequirementsFacet.setFeeRecipient.selector);
-        addSelector(PlatformRequirementsFacet.setMembershipBps.selector);
-        addSelector(PlatformRequirementsFacet.setMembershipFee.selector);
-        addSelector(PlatformRequirementsFacet.setMembershipMintLimit.selector);
-        addSelector(PlatformRequirementsFacet.setMembershipDuration.selector);
-        addSelector(PlatformRequirementsFacet.setMembershipMinPrice.selector);
-        addSelector(PlatformRequirementsFacet.getMembershipMinPrice.selector);
-        addSelector(PlatformRequirementsFacet.getDenominator.selector);
-        addSelector(PlatformRequirementsFacet.setSwapFees.selector);
-        addSelector(PlatformRequirementsFacet.getSwapFees.selector);
-        addSelector(PlatformRequirementsFacet.setRouterWhitelisted.selector);
-        addSelector(PlatformRequirementsFacet.isRouterWhitelisted.selector);
+library DeployPlatformRequirements {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(17);
+        arr.p(PlatformRequirementsFacet.getFeeRecipient.selector);
+        arr.p(PlatformRequirementsFacet.getMembershipBps.selector);
+        arr.p(PlatformRequirementsFacet.getMembershipFee.selector);
+        arr.p(PlatformRequirementsFacet.getMembershipMintLimit.selector);
+        arr.p(PlatformRequirementsFacet.getMembershipDuration.selector);
+        arr.p(PlatformRequirementsFacet.setFeeRecipient.selector);
+        arr.p(PlatformRequirementsFacet.setMembershipBps.selector);
+        arr.p(PlatformRequirementsFacet.setMembershipFee.selector);
+        arr.p(PlatformRequirementsFacet.setMembershipMintLimit.selector);
+        arr.p(PlatformRequirementsFacet.setMembershipDuration.selector);
+        arr.p(PlatformRequirementsFacet.setMembershipMinPrice.selector);
+        arr.p(PlatformRequirementsFacet.getMembershipMinPrice.selector);
+        arr.p(PlatformRequirementsFacet.getDenominator.selector);
+        arr.p(PlatformRequirementsFacet.setSwapFees.selector);
+        arr.p(PlatformRequirementsFacet.getSwapFees.selector);
+        arr.p(PlatformRequirementsFacet.setRouterWhitelisted.selector);
+        arr.p(PlatformRequirementsFacet.isRouterWhitelisted.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/platformRequirementsFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        PlatformRequirementsFacet facet = new PlatformRequirementsFacet();
-        vm.stopBroadcast();
-        return address(facet);
-    }
-
-    function initializer() public pure override returns (bytes4) {
-        return PlatformRequirementsFacet.__PlatformRequirements_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData(
@@ -53,16 +54,22 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
         uint256 membershipMintLimit,
         uint64 membershipDuration,
         uint256 membershipMinPrice
-    ) public pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         return
-            abi.encodeWithSelector(
-                PlatformRequirementsFacet.__PlatformRequirements_init.selector,
-                feeRecipient,
-                membershipBps,
-                membershipFee,
-                membershipMintLimit,
-                membershipDuration,
-                membershipMinPrice
+            abi.encodeCall(
+                PlatformRequirementsFacet.__PlatformRequirements_init,
+                (
+                    feeRecipient,
+                    membershipBps,
+                    membershipFee,
+                    membershipMintLimit,
+                    membershipDuration,
+                    membershipMinPrice
+                )
             );
+    }
+
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("PlatformRequirementsFacet.sol", "");
     }
 }
