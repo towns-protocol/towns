@@ -41,6 +41,11 @@ abstract contract MembershipBase is IMembershipBase {
             _verifyPrice(info.price);
             IMembershipPricing(info.pricingModule).setPrice(info.price);
         }
+
+        if (info.duration > 0) {
+            _verifyDuration(info.duration);
+            ds.membershipDuration = info.duration;
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -110,8 +115,25 @@ abstract contract MembershipBase is IMembershipBase {
     /*                          DURATION                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getMembershipDuration() internal view returns (uint64) {
-        return _getPlatformRequirements().getMembershipDuration();
+    function _verifyDuration(uint64 duration) internal view {
+        uint256 maxDuration = _getPlatformRequirements().getMembershipDuration();
+
+        if (duration > maxDuration) {
+            CustomRevert.revertWith(Membership__InvalidDuration.selector);
+        }
+    }
+
+    function _getMembershipDuration() internal view returns (uint64 duration) {
+        duration = MembershipStorage.layout().membershipDuration;
+
+        if (duration == 0) {
+            duration = _getPlatformRequirements().getMembershipDuration();
+        }
+    }
+
+    function _setMembershipDuration(uint64 duration) internal {
+        _verifyDuration(duration);
+        MembershipStorage.layout().membershipDuration = duration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
