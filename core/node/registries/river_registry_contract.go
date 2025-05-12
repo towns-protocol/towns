@@ -212,6 +212,14 @@ func (c *RiverRegistryContract) AllocateStream(
 		},
 	)
 	if err != nil {
+		customError, stringError, _ := c.errDecoder.DecodeEVMError(err)
+		if customError != nil {
+			err = customError
+		}
+		if stringError != nil {
+			err = customError
+		}
+
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
 			Func("AllocateStream").
 			Message("Smart contract call failed")
@@ -279,6 +287,14 @@ func (c *RiverRegistryContract) AddStream(
 		},
 	)
 	if err != nil {
+		customError, stringError, _ := c.errDecoder.DecodeEVMError(err)
+		if customError != nil {
+			err = customError
+		}
+		if stringError != nil {
+			err = customError
+		}
+		
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
 			Func("AddStream").
 			Message("Smart contract call failed")
@@ -867,9 +883,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-		river.NodeRegistryV1NodeRemoved |
-		river.NodeRegistryV1NodeStatusUpdated |
-		river.NodeRegistryV1NodeUrlUpdated
+	river.NodeRegistryV1NodeRemoved |
+	river.NodeRegistryV1NodeStatusUpdated |
+	river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
