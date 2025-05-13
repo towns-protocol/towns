@@ -190,7 +190,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
-		}); err != nil {
+		}); err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 			return err
 		}
 
@@ -228,7 +228,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 					Miniblock: ephemeralMb,
 				},
 			),
-		); err != nil {
+		); err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 			return err
 		}
 

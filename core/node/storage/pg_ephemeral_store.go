@@ -191,7 +191,14 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	}
 
 	_, err := tx.Exec(ctx, query, streamId, miniblock.Number, miniblock.Data, miniblock.Snapshot)
-	return err
+	if err != nil {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
+			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("ephemeral miniblock or stream already exists")
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *PostgresStreamStore) NormalizeEphemeralStream(
