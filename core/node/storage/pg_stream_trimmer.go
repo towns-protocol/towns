@@ -90,7 +90,7 @@ func (t *streamTrimmer) close() {
 func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 	// Schedule trimming for the given stream if the trimming for this type is enabled.
 	if mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type())); mbsToKeep > 0 {
-		if t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
+		if t.workerPool.Stopped() || t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
 			// If the worker pool is full, do not schedule any new tasks
 			return
 		}

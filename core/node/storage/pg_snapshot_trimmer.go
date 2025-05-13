@@ -102,7 +102,7 @@ func (st *snapshotTrimmer) tryScheduleTrimming(streamId StreamId) {
 		return
 	}
 
-	if st.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
+	if st.workerPool.Stopped() || st.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
 		// If the worker pool is full, do not schedule any new tasks
 		return
 	}
