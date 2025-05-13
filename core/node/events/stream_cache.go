@@ -199,6 +199,21 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	wp := workerpool.New(16)
 
+	wp.Submit(func() {
+		now := time.Now()
+		for {
+			reconTask := s.retryableReconcilationTasks.Peek()
+			if reconTask != nil && reconTask.deadline.Before(now) {
+				if stream, _ := s.GetStreamNoWait(ctx, reconTask.item.StreamId()); stream != nil {
+					s.SubmitSyncStreamTask(stream, reconTask.item)
+				}
+				s.retryableReconcilationTasks.Remove(reconTask)
+				continue
+			}
+			break
+		}
+	})
+
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
 			for len(events) > 0 {
@@ -229,19 +244,6 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 				}
 			}
 		})
-	}
-
-	now := time.Now()
-	for {
-		reconTask := s.retryableReconcilationTasks.Peek()
-		if reconTask != nil && reconTask.deadline.Before(now) {
-			if stream, _ := s.GetStreamNoWait(ctx, reconTask.item.StreamId()); stream != nil {
-				s.SubmitSyncStreamTask(stream, reconTask.item)
-			}
-			s.retryableReconcilationTasks.Remove(reconTask)
-			continue
-		}
-		break
 	}
 
 	wp.StopWait()
