@@ -10,12 +10,9 @@ import {
     setupWalletsAndContexts,
     waitFor,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
 import { NoopRuleData } from '@towns-protocol/web3'
 import { makeUserStreamId } from '../../../id'
 import { MembershipOp } from '@towns-protocol/proto'
-
-const log = dlog('csb:test:membershipRenewals')
 
 const SHORT_MEMBERSHIP_DURATION = 5 // seconds
 const WAIT_TIME = SHORT_MEMBERSHIP_DURATION * 1_000 + 1_000
