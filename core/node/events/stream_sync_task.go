@@ -280,7 +280,7 @@ func (s *StreamCache) syncStreamFromPeers(
 	}
 
 	return AsRiverError(err, Err_UNAVAILABLE).
-		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExlusive", toExclusive).
+		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
 		Message("No peer could provide miniblocks for stream reconciliation")
 }
 
