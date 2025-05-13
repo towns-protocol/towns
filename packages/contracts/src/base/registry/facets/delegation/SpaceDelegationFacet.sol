@@ -75,6 +75,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
 
         // overwrite the operator for this space
         ds.operatorBySpace[space] = operator;
+
         // add the space to this new operator array
         ds.spacesByOperator[operator].add(space);
         ds.spaceDelegationTime[space] = block.timestamp;

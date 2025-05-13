@@ -66,6 +66,10 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         return _getMembershipDuration();
     }
 
+    function setMembershipDuration(uint64 duration) external onlyOwner {
+        _setMembershipDuration(duration);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       PRICING MODULE                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
