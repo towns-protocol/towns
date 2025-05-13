@@ -263,6 +263,8 @@ func (sc *syncClients) expectNStreamsDown(
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
+	downStreams := make(map[StreamId]struct{})
+
 	for i, client := range sc.clients {
 		for range len(streams) {
 			select {
@@ -271,11 +273,17 @@ func (sc *syncClients) expectNStreamsDown(
 					t.Fatalf("Unexpected stream down on client %d: %v", i, update)
 					return
 				}
+				downStreams[update] = struct{}{}
 			case <-timer.C:
 				t.Fatalf("Timeout waiting for update on client %d", i)
 				return
 			}
 		}
+	}
+
+	if len(downStreams) != len(streams) {
+		t.Fatalf("Expected %d streams down, but got %d", len(streams), len(downStreams))
+		return
 	}
 }
 
@@ -588,7 +596,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	var channelCookies []*protocol.SyncCookie
 	nodeToStreams := make(map[common.Address][]StreamId)
 	nodeToCookies := make(map[common.Address][]*protocol.SyncCookie)
-	for range 20 {
+	for range 50 {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
 			ctx,
@@ -626,13 +634,38 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		time.Since(now),
 	)
 
-	// simulate node #1 failure
-	unavailableNodeAddress := tt.nodes[1].address
-	go tt.CloseNode(1)
-
+	// Shut down second and third nodes and expect stream down events for all streams on those nodes
+	tt.CloseNode(1)
 	syncClients.expectNStreamsDown(
 		t,
-		nodeToStreams[unavailableNodeAddress],
+		nodeToStreams[tt.nodes[1].address],
 		time.Minute,
+	)
+	tt.CloseNode(2)
+	syncClients.expectNStreamsDown(
+		t,
+		nodeToStreams[tt.nodes[2].address],
+		time.Minute,
+	)
+
+	// Add all cookies to the modify stream again and expect for updates
+	resp, err := syncClient0.ModifySync(context.Background(), connect.NewRequest(&protocol.ModifySyncRequest{
+		SyncId:     syncClients.clients[0].syncId,
+		AddStreams: channelCookies,
+	}))
+	require.NoError(err)
+	require.Len(resp.Msg.GetAdds(), 0)
+
+	syncClients.expectNUpdates(
+		t,
+		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received first update for all %d streams in init sync session took: %s",
+		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
+		time.Since(now),
 	)
 }

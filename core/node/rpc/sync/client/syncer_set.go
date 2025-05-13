@@ -204,57 +204,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			continue
 		}
 
-		var (
-			selectedNode  common.Address
-			nodeAvailable bool
-		)
-
-		// Try node from the cookie first
-		if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
-			selectedNode = common.BytesToAddress(addrRaw)
-			if selectedNode.Cmp(ss.localNodeAddress) == 0 {
-				nodeAvailable = true
-			} else {
-				if _, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
-					nodeAvailable = true
-				}
-			}
-		}
-
-		// Add fallback nodes in case if cookie-provided node is unavailable
-		if !nodeAvailable {
-			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
-			if err != nil {
-				rvrErr := AsRiverError(err)
-				req.AddingFailureHandler(&SyncStreamOpStatus{
-					StreamId: streamID[:],
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-				continue
-			}
-
-			remotes, isLocal := stream.GetRemotesAndIsLocal()
-
-			// Try using the local node if the stream is local
-			if isLocal {
-				selectedNode = ss.localNodeAddress
-				nodeAvailable = true
-			}
-
-			// Try using the remote nodes
-			if !nodeAvailable && len(remotes) > 0 {
-				selectedNode = stream.GetStickyPeer()
-				for range remotes {
-					if _, err = ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
-						nodeAvailable = true
-						break
-					}
-					selectedNode = stream.AdvanceStickyPeer(selectedNode)
-				}
-			}
-		}
-
+		selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie)
 		if !nodeAvailable {
 			req.AddingFailureHandler(&SyncStreamOpStatus{
 				StreamId: streamID[:],
@@ -317,7 +267,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 		// Get syncer for the given node address
 		syncer, err := ss.getOrCreateSyncerNoLock(nodeAddress)
 		if err != nil {
-			rvrErr := AsRiverError(err)
+			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 			for _, cookie := range modifySync.GetAddStreams() {
 				failedToAdd(&SyncStreamOpStatus{
 					StreamId: cookie.GetStreamId(),
@@ -421,10 +371,48 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 	return nil
 }
 
-func (ss *SyncerSet) rmStream(streamID StreamId) {
-	ss.muSyncers.Lock()
-	delete(ss.streamID2Syncer, streamID)
-	ss.muSyncers.Unlock()
+// selectNodeForStream attempts to find an available node for the given stream in the following order:
+// 1. Node specified in the cookie (if any)
+// 2. Local node (if stream is local)
+// 3. Remote nodes (in order of preference)
+// Returns the selected node address and true if a node was found and available, false otherwise.
+// Initializes syncer for the selected node if it does not exist yet.
+func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie) (common.Address, bool) {
+	streamID := StreamId(cookie.GetStreamId())
+
+	// 1. Try node from cookie first
+	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
+		selectedNode := common.BytesToAddress(addrRaw)
+		if _, err := ss.getOrCreateSyncerNoLock(selectedNode); err == nil {
+			return selectedNode, true
+		}
+	}
+
+	stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
+	if err != nil {
+		return common.Address{}, false
+	}
+
+	// 2. Try local node if stream is local
+	remotes, isLocal := stream.GetRemotesAndIsLocal()
+	if isLocal {
+		if _, err = ss.getOrCreateSyncerNoLock(ss.localNodeAddress); err == nil {
+			return ss.localNodeAddress, true
+		}
+	}
+
+	// 3. Try remote nodes
+	if len(remotes) > 0 {
+		selectedNode := stream.GetStickyPeer()
+		for range remotes {
+			if _, err = ss.getOrCreateSyncerNoLock(selectedNode); err == nil {
+				return selectedNode, true
+			}
+			selectedNode = stream.AdvanceStickyPeer(selectedNode)
+		}
+	}
+
+	return common.Address{}, false
 }
 
 // getOrCreateSyncerNoLock returns the syncer for the given node address.
@@ -478,6 +466,12 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 	}()
 
 	return syncer, nil
+}
+
+func (ss *SyncerSet) rmStream(streamID StreamId) {
+	ss.muSyncers.Lock()
+	delete(ss.streamID2Syncer, streamID)
+	ss.muSyncers.Unlock()
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.
