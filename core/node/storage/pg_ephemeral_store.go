@@ -88,7 +88,9 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 	}
 
 	// Add the ephemeral stream to the ephemeral stream monitor
-	s.esm.onCreated(streamId)
+	if s.esm != nil {
+		s.esm.onCreated(streamId)
+	}
 
 	return nil
 }

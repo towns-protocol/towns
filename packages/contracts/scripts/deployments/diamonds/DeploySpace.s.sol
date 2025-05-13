@@ -29,6 +29,7 @@ import {DeploySpaceEntitlementGated} from "../facets/DeploySpaceEntitlementGated
 import {DeploySwapFacet} from "../facets/DeploySwapFacet.s.sol";
 import {DeployTipping} from "../facets/DeployTipping.s.sol";
 import {DeployTreasury} from "../facets/DeployTreasury.s.sol";
+import {DeployAppAccount} from "../facets/DeployAppAccount.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -38,7 +39,6 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
-
 // Test Facets
 import {DeployMockLegacyMembership} from "scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
@@ -46,6 +46,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
+
     address private multiInit;
 
     function versionName() public pure override returns (string memory) {
@@ -179,6 +180,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facet = facetHelper.getDeployedAddress("Treasury");
         addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
 
+        facet = facetHelper.deploy("AppAccount", deployer);
+        addCut(DeployAppAccount.makeCut(facet, IDiamond.FacetCutAction.Add));
+
         if (isAnvil()) {
             facet = facetHelper.getDeployedAddress("MockLegacyMembership");
             addCut(DeployMockLegacyMembership.makeCut(facet, IDiamond.FacetCutAction.Add));
@@ -201,10 +205,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         // Deploy all requested facets in a single batch transaction
         facetHelper.deployBatch(deployer);
 
-        address facet;
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
-            facet = facetHelper.getDeployedAddress(facetName);
+            address facet = facetHelper.getDeployedAddress(facetName);
 
             if (facetName.eq("MembershipToken")) {
                 addCut(DeployMembershipToken.makeCut(facet, IDiamond.FacetCutAction.Add));
@@ -240,6 +243,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
                 addCut(DeployTipping.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("Treasury")) {
                 addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
+            } else if (facetName.eq("AppAccount")) {
+                facet = facetHelper.deploy("AppAccount", deployer);
+                addCut(DeployAppAccount.makeCut(facet, IDiamond.FacetCutAction.Add));
             }
         }
     }
