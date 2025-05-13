@@ -426,13 +426,19 @@ func (ca *chainAuth) areLinkedWalletsEntitled(
 ) (bool, error) {
 	log := logging.FromCtx(ctx)
 	if args.kind == chainAuthKindSpace {
-		log.Debugw("isWalletEntitled", "kind", "space", "args", args)
+		log.Debugw("isWalletEntitled", "kind", "space", "args", args, "isExpired", *isExpired)
+		if *isExpired {
+			return false, nil
+		}
 		return ca.isEntitledToSpace(ctx, cfg, args)
 	} else if args.kind == chainAuthKindChannel {
-		log.Debugw("isWalletEntitled", "kind", "channel", "args", args)
+		log.Debugw("isWalletEntitled", "kind", "channel", "args", args, "isExpired", *isExpired)
+		if *isExpired {
+			return false, nil
+		}
 		return ca.isEntitledToChannel(ctx, cfg, args)
 	} else if args.kind == chainAuthKindIsSpaceMember {
-		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args)
+		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args, "isExpired", *isExpired)
 		return !*isExpired, nil // is space member is checked by the calling code in checkEntitlement
 	} else {
 		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
