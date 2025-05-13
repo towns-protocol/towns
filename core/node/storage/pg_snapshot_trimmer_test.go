@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"slices"
 	"sort"
 	"strconv"
@@ -66,7 +67,8 @@ func TestSnapshotsTrimmer(t *testing.T) {
 			return nil
 		})
 		require.NoError(err)
-		return slices.Equal([]int64{100, 210, 320, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
+		fmt.Println(mbsWithSnapshot)
+		return slices.Equal([]int64{0, 110, 220, 330, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
 	}, time.Second*5, 100*time.Millisecond)
 }
 
@@ -83,21 +85,21 @@ func TestDetermineSnapshotsToNullify(t *testing.T) {
 			snapshotSeqs:      []int64{0, 500, 1000, 1500, 2000, 2500},
 			retentionInterval: 1000,
 			minKeep:           0,
-			expected:          []int64{0, 1000, 2000},
+			expected:          []int64{500, 1500, 2500},
 		},
 		{
 			name:              "basic trimming with alignment #2",
 			snapshotSeqs:      []int64{0, 500, 900, 1100, 1500, 1990, 2000, 2100, 2500},
 			retentionInterval: 1000,
 			minKeep:           0,
-			expected:          []int64{0, 500, 1100, 1500, 2000, 2100},
+			expected:          []int64{500, 900, 1500, 1990, 2100, 2500},
 		},
 		{
 			name:              "basic trimming with alignment #3",
 			snapshotSeqs:      []int64{0, 10, 20, 30, 40, 50, 60, 70, 80},
 			retentionInterval: 50,
 			minKeep:           20,
-			expected:          []int64{0, 10, 20, 30, 50},
+			expected:          []int64{10, 20, 30, 40, 60},
 		},
 		{
 			name:              "only one snapshot in a bucket",
@@ -111,7 +113,7 @@ func TestDetermineSnapshotsToNullify(t *testing.T) {
 			snapshotSeqs:      []int64{0, 500, 1000, 2000, 3000, 4000},
 			retentionInterval: 1000,
 			minKeep:           1000,
-			expected:          []int64{0},
+			expected:          []int64{500},
 		},
 		{
 			name:              "empty input",
@@ -132,7 +134,7 @@ func TestDetermineSnapshotsToNullify(t *testing.T) {
 			snapshotSeqs:      []int64{0, 900, 1000, 1800, 2000, 2700},
 			retentionInterval: 1000,
 			minKeep:           500,
-			expected:          []int64{0, 1000},
+			expected:          []int64{900, 1800},
 		},
 	}
 

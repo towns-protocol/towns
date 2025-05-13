@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"sort"
 	"sync"
 	"time"
 
@@ -223,14 +222,13 @@ func (st *snapshotTrimmer) processTrimTaskTx(
 }
 
 // determineSnapshotsToNullify returns the seq_nums whose snapshot field should be set to NULL.
-// It does a single reverse‐scan over the sorted snapshotSeqs, grouping by
-// bucket = seq_num / retentionInterval, and skipping the first seq in each bucket
-// (the “latest” snapshot).  Any seq > maxSeq - minKeep is also protected.
-// Final result is returned in ascending order.
+// It scans snapshotSeqs (ascending), groups by bucket = seq_num/retentionInterval,
+// keeps the very first seq in each bucket, and nullifies the rest—except anything
+// newer than maxSeq-minKeep, which stays protected.
 //
-//	snapshotSeqs:      sorted slice of seq_nums where snapshot != NULL
+//	snapshotSeqs:      sorted ascending slice of seq_nums where snapshot != NULL
 //	retentionInterval: onchain setting, e.g. 1000 miniblocks
-//	minKeep:           number of most recent miniblocks to protect (no nullification)
+//	minKeep:           number of most recent miniblocks to protect
 func determineSnapshotsToNullify(
 	snapshotSeqs []int64,
 	retentionInterval int64,
@@ -245,27 +243,21 @@ func determineSnapshotsToNullify(
 	cutoff := maxSeq - minKeep
 
 	var toNullify []int64
-	var seenBucket int64 = -1
+	var lastBucket int64 = -1
 
-	// Reverse‐scan: newest first
-	for i := n - 1; i >= 0; i-- {
-		seq := snapshotSeqs[i]
+	for _, seq := range snapshotSeqs {
+		// skip anything in the protected tail
 		if seq > cutoff {
-			// still within the protected tail window
 			continue
 		}
 		bucket := seq / retentionInterval
-		if bucket == seenBucket {
-			// we've already kept one snapshot in this bucket,
-			// so this one can be nullified
-			toNullify = append(toNullify, seq)
+		if bucket != lastBucket {
+			// first snapshot in this bucket → keep it, advance bucket marker
+			lastBucket = bucket
 		} else {
-			// first time we hit this bucket (i.e. the latest in it)
-			seenBucket = bucket
+			// subsequent snapshot in same bucket → nullify
+			toNullify = append(toNullify, seq)
 		}
 	}
-
-	// return in ascending order
-	sort.Slice(toNullify, func(i, j int) bool { return toNullify[i] < toNullify[j] })
 	return toNullify
 }
