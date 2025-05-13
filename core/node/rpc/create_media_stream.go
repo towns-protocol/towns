@@ -126,7 +126,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 
 	// create the stream
 	resp, err := s.createReplicatedMediaStream(ctx, streamId, []*ParsedEvent{parsedEvents[0]})
-	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
+	if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 		return nil, err
 	}
 
@@ -164,7 +164,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			resp,
 			parsedEvents[0].Event.GetMediaPayload().GetInception().GetChunkCount() == 1,
 		)
-		if err != nil {
+		if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 			return nil, AsRiverError(err).Func("createMediaStream")
 		}
 
