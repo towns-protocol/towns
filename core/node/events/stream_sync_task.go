@@ -163,17 +163,15 @@ func (s *StreamCache) reconciliationTask(
 			s.scheduledReconciliationTasks.Compute(
 				streamId,
 				func(existingValue *reconcileTask, loaded bool) (newValue *reconcileTask, op xsync.ComputeOp) {
-					if loaded && existingValue.inProgress != streamRecord {
-						return existingValue, xsync.DeleteOp
-					}
 					if loaded && existingValue.next != nil && existingValue.next.LastMbNum() > streamRecord.LastMbNum() {
 						streamRecord = existingValue.next
-					}
-					if loaded && existingValue.inProgress != nil && existingValue.inProgress.LastMbNum() > streamRecord.LastMbNum() {
+					} else if loaded && existingValue.inProgress != nil && existingValue.inProgress.LastMbNum() > streamRecord.LastMbNum() {
 						streamRecord = existingValue.inProgress
 					}
-					s.retryableReconcilationTasks.Add(streamId, stream, existingValue.inProgress)
-					return existingValue, xsync.DeleteOp
+
+					s.retryableReconcilationTasks.Add(streamId, stream, streamRecord)
+
+					return nil, xsync.DeleteOp
 				})
 		}
 
