@@ -1043,7 +1043,7 @@ func (ca *chainAuth) checkEntitlement(
 	}()
 
 	isMember := false
-	isExpired := false
+	isExpired := true
 	var membershipError error = nil
 
 	// This loop will wait on at least one true result, and will exit if the channel is closed,
@@ -1051,9 +1051,12 @@ func (ca *chainAuth) checkEntitlement(
 	for result := range isMemberResults {
 		if result.status.IsMember {
 			isMember = true
-			isExpired = result.status.IsExpired
-			isMemberCancel() // Cancel all other goroutines
-			break
+			// if not expired, cancel other checks, otherwise continue
+			if !result.status.IsExpired {
+				isExpired = false
+				isMemberCancel()
+				break
+			}
 		}
 	}
 
