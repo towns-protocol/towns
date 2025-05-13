@@ -59,6 +59,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "joinSpaceWithReferral(address,(address,address,string))": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
     "revenue()": FunctionFragment;
+    "setMembershipDuration(uint64)": FunctionFragment;
     "setMembershipFreeAllocation(uint256)": FunctionFragment;
     "setMembershipImage(string)": FunctionFragment;
     "setMembershipLimit(uint256)": FunctionFragment;
@@ -83,6 +84,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "joinSpaceWithReferral"
       | "renewMembership"
       | "revenue"
+      | "setMembershipDuration"
       | "setMembershipFreeAllocation"
       | "setMembershipImage"
       | "setMembershipLimit"
@@ -147,6 +149,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(functionFragment: "revenue", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "setMembershipDuration",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
   encodeFunctionData(
     functionFragment: "setMembershipFreeAllocation",
     values: [PromiseOrValue<BigNumberish>]
@@ -219,6 +225,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "revenue", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setMembershipDuration",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setMembershipFreeAllocation",
     data: BytesLike
@@ -838,6 +848,11 @@ export interface MembershipFacet extends BaseContract {
 
     revenue(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    setMembershipDuration(
+      duration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -910,6 +925,11 @@ export interface MembershipFacet extends BaseContract {
 
   revenue(overrides?: CallOverrides): Promise<BigNumber>;
 
+  setMembershipDuration(
+    duration: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setMembershipFreeAllocation(
     newAllocation: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -981,6 +1001,11 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<void>;
 
     revenue(overrides?: CallOverrides): Promise<BigNumber>;
+
+    setMembershipDuration(
+      duration: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
@@ -1354,6 +1379,11 @@ export interface MembershipFacet extends BaseContract {
 
     revenue(overrides?: CallOverrides): Promise<BigNumber>;
 
+    setMembershipDuration(
+      duration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1440,6 +1470,11 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     revenue(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    setMembershipDuration(
+      duration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
