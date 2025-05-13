@@ -15,9 +15,8 @@ import (
 
 // trimTask represents a task to trim miniblocks from a stream
 type trimTask struct {
-	streamId          StreamId
-	startMiniblockNum int64
-	miniblocksToKeep  int64
+	streamId         StreamId
+	miniblocksToKeep int64
 }
 
 // streamTrimmer handles periodic trimming of streams
@@ -48,7 +47,7 @@ func newStreamTrimmer(
 	workerPool *workerpool.WorkerPool,
 	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
 	trimmingBatchSize int64,
-) (*streamTrimmer, error) {
+) *streamTrimmer {
 	st := &streamTrimmer{
 		ctx:               ctx,
 		log:               logging.FromCtx(ctx).Named("streamTrimmer"),
@@ -60,15 +59,10 @@ func newStreamTrimmer(
 		stop:              make(chan struct{}),
 	}
 
-	// Schedule trimming for existing streams
-	if err := st.scheduleStreamsTrimming(ctx); err != nil {
-		return nil, err
-	}
-
 	// Start the worker pool
 	go st.monitorWorkerPool(ctx)
 
-	return st, nil
+	return st
 }
 
 // monitorWorkerPool monitors the worker pool and handles shutdown
@@ -77,14 +71,60 @@ func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			t.log.Info("Worker pool stopped due to context cancellation")
-			t.workerPool.StopWait()
 			return
 		case <-t.stop:
 			t.log.Info("Worker pool stopped due to stop signal")
-			t.workerPool.StopWait()
 			return
 		}
 	}
+}
+
+// close stops the stream trimmer
+func (t *streamTrimmer) close() {
+	t.stopOnce.Do(func() {
+		close(t.stop)
+	})
+}
+
+// tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
+func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
+	// Schedule trimming for the given stream if the trimming for this type is enabled.
+	if mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type())); mbsToKeep > 0 {
+		if t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
+			// If the worker pool is full, do not schedule any new tasks
+			return
+		}
+
+		t.scheduleTrimTask(streamId, mbsToKeep)
+	}
+}
+
+// scheduleTrimTask schedules a new trim task for a stream
+func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, miniblocksToKeep int64) {
+	t.pendingTasksLock.Lock()
+	if _, exists := t.pendingTasks[streamId]; exists {
+		t.pendingTasksLock.Unlock()
+		return
+	}
+	t.pendingTasks[streamId] = struct{}{}
+	t.pendingTasksLock.Unlock()
+
+	// Create a new task
+	task := trimTask{
+		streamId:         streamId,
+		miniblocksToKeep: miniblocksToKeep,
+	}
+
+	// Submit the task to the worker pool
+	t.workerPool.Submit(func() {
+		if err := t.processTrimTask(task); err != nil {
+			t.log.Errorw("Failed to process stream trimming task",
+				"stream", task.streamId,
+				"miniblocksToKeep", task.miniblocksToKeep,
+				"err", err,
+			)
+		}
+	})
 }
 
 // processTrimTask processes a single trim task
@@ -128,6 +168,12 @@ func (t *streamTrimmer) processTrimTaskTx(
 		return err
 	}
 
+	// Get the miniblock number to start from
+	startMiniblockNum, err := t.store.getLowestStreamMiniblockTx(ctx, tx, task.streamId)
+	if err != nil {
+		return err
+	}
+
 	// Calculate the highest miniblock number to keep
 	lastMiniblockToKeep := lastSnapshotMiniblock - task.miniblocksToKeep
 	if lastMiniblockToKeep <= 0 {
@@ -135,13 +181,13 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 
 	// Just for safety reasons
-	if lastMiniblockToKeep <= task.startMiniblockNum {
+	if lastMiniblockToKeep <= startMiniblockNum {
 		return nil
 	}
 
 	// Calculate the end sequence number for deletion.
 	// The given miniblock number will not be deleted.
-	exclusiveEndSeq := task.startMiniblockNum + t.trimmingBatchSize
+	exclusiveEndSeq := startMiniblockNum + t.trimmingBatchSize
 	if exclusiveEndSeq >= lastMiniblockToKeep {
 		exclusiveEndSeq = lastMiniblockToKeep
 	}
@@ -156,7 +202,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 			task.streamId,
 		),
 		task.streamId,
-		task.startMiniblockNum,
+		startMiniblockNum,
 		exclusiveEndSeq,
 	)
 	if err != nil {
@@ -181,95 +227,8 @@ func (t *streamTrimmer) processTrimTaskTx(
 		scheduledNext = true
 
 		// Schedule the next trim task
-		t.scheduleTrimTask(task.streamId, lastDeletedMiniblock+1, task.miniblocksToKeep)
+		t.scheduleTrimTask(task.streamId, task.miniblocksToKeep)
 	}
 
 	return nil
-}
-
-// scheduleTrimTask schedules a new trim task for a stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, startMiniblockNum int64, miniblocksToKeep int64) {
-	t.pendingTasksLock.Lock()
-	if _, exists := t.pendingTasks[streamId]; exists {
-		t.pendingTasksLock.Unlock()
-		return
-	}
-	t.pendingTasks[streamId] = struct{}{}
-	t.pendingTasksLock.Unlock()
-
-	// Create a new task
-	task := trimTask{
-		streamId:          streamId,
-		startMiniblockNum: startMiniblockNum,
-		miniblocksToKeep:  miniblocksToKeep,
-	}
-
-	// Submit the task to the worker pool
-	t.workerPool.Submit(func() {
-		if err := t.processTrimTask(task); err != nil {
-			t.log.Errorw("Failed to process stream trimming task",
-				"stream", task.streamId,
-				"startMiniblockNum", task.startMiniblockNum,
-				"miniblocksToKeep", task.miniblocksToKeep,
-				"err", err,
-			)
-		}
-	})
-}
-
-// tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
-func (t *streamTrimmer) tryScheduleTrimming(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) {
-	// Schedule trimming for the given stream if the trimming for this type is enabled.
-	if mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type())); mbsToKeep > 0 {
-		// Get the miniblock number to start from
-		startMiniblockNum, err := t.store.getLowestStreamMiniblock(ctx, tx, streamId)
-		if err != nil {
-			t.log.Errorw("Failed to get lowest stream miniblock to schedule trimming, starting from miniblock 0",
-				"stream", streamId, "err", err)
-			startMiniblockNum = 0 // Just to explicitly reset if getLowestStreamMiniblock returns non 0 value
-		}
-
-		t.scheduleTrimTask(streamId, startMiniblockNum, mbsToKeep)
-	}
-}
-
-// close stops the stream trimmer
-func (t *streamTrimmer) close() {
-	t.stopOnce.Do(func() {
-		close(t.stop)
-	})
-	t.workerPool.StopWait()
-}
-
-// scheduleStreamsTrimming schedules trimming for all trimmable streams.
-func (t *streamTrimmer) scheduleStreamsTrimming(ctx context.Context) error {
-	return t.store.txRunner(
-		ctx,
-		"streamTrimmer.scheduleStreamsTrimming",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			rows, err := tx.Query(ctx, "SELECT stream_id FROM es WHERE ephemeral = false FOR UPDATE SKIP LOCKED")
-			if err != nil {
-				return err
-			}
-
-			var stream string
-			_, err = pgx.ForEachRow(rows, []any{&stream}, func() error {
-				streamId, err := StreamIdFromString(stream)
-				if err != nil {
-					return err
-				}
-
-				t.tryScheduleTrimming(ctx, tx, streamId)
-
-				return nil
-			})
-			return err
-		},
-		nil,
-	)
 }

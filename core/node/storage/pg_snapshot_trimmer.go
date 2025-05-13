@@ -56,7 +56,7 @@ func newSnapshotTrimmer(
 	store *PostgresStreamStore,
 	workerPool *workerpool.WorkerPool,
 	config crypto.OnChainConfiguration,
-) (*snapshotTrimmer, error) {
+) *snapshotTrimmer {
 	st := &snapshotTrimmer{
 		ctx:          ctx,
 		log:          logging.FromCtx(ctx).Named("snapshotTrimmer"),
@@ -70,7 +70,7 @@ func newSnapshotTrimmer(
 
 	go st.monitorWorkerPool(ctx)
 
-	return st, nil
+	return st
 }
 
 // monitorWorkerPool monitors the worker pool and handles shutdown
@@ -79,11 +79,9 @@ func (st *snapshotTrimmer) monitorWorkerPool(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			st.log.Info("Worker pool stopped due to context cancellation")
-			st.workerPool.StopWait()
 			return
 		case <-st.stop:
 			st.log.Info("Worker pool stopped due to stop signal")
-			st.workerPool.StopWait()
 			return
 		}
 	}
@@ -94,19 +92,19 @@ func (st *snapshotTrimmer) close() {
 	st.stopOnce.Do(func() {
 		close(st.stop)
 	})
-	st.workerPool.StopWait()
 }
 
 // tryScheduleTrimming checks if snapshots of the given stream can be trimmed and schedules the trimming task.
-func (st *snapshotTrimmer) tryScheduleTrimming(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) {
+func (st *snapshotTrimmer) tryScheduleTrimming(streamId StreamId) {
 	// Retention interval could be changed at any time so the current value must be used
 	retentionInterval := int64(st.config.Get().StreamSnapshotIntervalInMiniblocks)
 	if retentionInterval == 0 {
 		// If retention interval is 0, it means that snapshots trimming is disabled
+		return
+	}
+
+	if st.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
+		// If the worker pool is full, do not schedule any new tasks
 		return
 	}
 

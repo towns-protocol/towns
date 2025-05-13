@@ -26,6 +26,12 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// maxWorkerPoolPendingTasks is the maximum number of pending tasks in the worker pool.
+	// Background workers must respect this limit to avoid overloading.
+	maxWorkerPoolPendingTasks = 10000
+)
+
 type PostgresStreamStore struct {
 	PostgresEventStore
 
@@ -147,6 +153,10 @@ func NewPostgresStreamStore(
 
 	// Create shared worker pool for background workers
 	workerPool := workerpool.New(8)
+	go func() {
+		<-ctx.Done()
+		workerPool.Stop()
+	}()
 
 	// Start the ephemeral stream monitor.
 	store.esm, err = newEphemeralStreamMonitor(
@@ -159,27 +169,21 @@ func NewPostgresStreamStore(
 	}
 
 	// Start the stream trimmer
-	store.streamTrimmer, err = newStreamTrimmer(
+	store.streamTrimmer = newStreamTrimmer(
 		ctx,
 		store,
 		workerPool,
 		config.Get().StreamTrimmingMiniblocksToKeep,
 		trimmingBatchSize,
 	)
-	if err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
-	}
 
 	// Start the snapshot trimmer
-	store.snapshotTrimmer, err = newSnapshotTrimmer(
+	store.snapshotTrimmer = newSnapshotTrimmer(
 		ctx,
 		store,
 		workerPool,
 		config,
 	)
-	if err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
-	}
 
 	return store, nil
 }
@@ -1651,11 +1655,11 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 		// Let the stream trimmer know that a new snapshot miniblock was created.
 		if s.streamTrimmer != nil {
-			s.streamTrimmer.tryScheduleTrimming(ctx, tx, streamId)
+			s.streamTrimmer.tryScheduleTrimming(streamId)
 		}
 		// Let the snapshot trimmer know that a new snapshot miniblock was created.
 		if s.snapshotTrimmer != nil {
-			s.snapshotTrimmer.tryScheduleTrimming(ctx, tx, streamId)
+			s.snapshotTrimmer.tryScheduleTrimming(streamId)
 		}
 	}
 
@@ -2273,8 +2277,8 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	return maxSeqNum, nil
 }
 
-// getLowestStreamMiniblock retrieves the lowest miniblock number for a given stream
-func (s *PostgresStreamStore) getLowestStreamMiniblock(
+// getLowestStreamMiniblockTx retrieves the lowest miniblock number for a given stream
+func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
