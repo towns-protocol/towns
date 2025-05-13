@@ -594,7 +594,6 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	require.NoError(err)
 
 	var channelCookies []*protocol.SyncCookie
-	streamToChannel := make(map[StreamId]*MiniblockRef)
 	nodeToStreams := make(map[common.Address][]StreamId)
 	nodeToCookies := make(map[common.Address][]*protocol.SyncCookie)
 	for range 50 {
@@ -614,7 +613,6 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		require.Equal(int64(0), b0ref.Num)
 		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
 		channelCookies = append(channelCookies, channel)
-		streamToChannel[StreamId(channel.StreamId)] = channelHash
 
 		node := common.BytesToAddress(channel.NodeAddress)
 		nodeToStreams[node] = append(nodeToStreams[node], StreamId(channel.StreamId))
