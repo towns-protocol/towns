@@ -110,12 +110,25 @@ func makeTrackedStreamConstructor(
 	}
 }
 
-func TestMultiSyncer(t *testing.T) {
-	numNodes := 10
-	replFactor := 5
+type multiSyncerTestConfig struct {
+	numNodes              int
+	replFactor            int
+	numChannels           int
+	numMessagesPerChannel int
+	streamsPerSyncSession int
+	numWorkers            int
+	maxConcurrentRequests int
+}
+
+func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 	tt := newServiceTester(
 		t,
-		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true, printTestLogs: false},
+		serviceTesterOpts{
+			numNodes:          testCfg.numNodes,
+			replicationFactor: testCfg.replFactor,
+			start:             true,
+			printTestLogs:     false,
+		},
 	)
 	ctx := tt.ctx
 	require := tt.require
@@ -152,9 +165,9 @@ func TestMultiSyncer(t *testing.T) {
 		[]nodes.NodeRegistry{nodeRegistry},
 		makeTrackedStreamConstructor(streamEvents),
 		config.StreamTrackingConfig{
-			StreamsPerSyncSession:     3,
-			NumWorkers:                2,
-			MaxConcurrentNodeRequests: 2,
+			StreamsPerSyncSession:     testCfg.streamsPerSyncSession,
+			NumWorkers:                testCfg.numWorkers,
+			MaxConcurrentNodeRequests: testCfg.maxConcurrentRequests,
 		},
 		nil,
 	)
@@ -175,11 +188,10 @@ func TestMultiSyncer(t *testing.T) {
 	require.NoError(err)
 
 	// Create multiple channels
-	numChannels := 50
-	channelIds := make([]StreamId, numChannels)
-	channelHashes := make([]*MiniblockRef, numChannels)
+	channelIds := make([]StreamId, testCfg.numChannels)
+	channelHashes := make([]*MiniblockRef, testCfg.numChannels)
 
-	for i := 0; i < numChannels; i++ {
+	for i := 0; i < testCfg.numChannels; i++ {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
 			ctx,
@@ -211,7 +223,7 @@ func TestMultiSyncer(t *testing.T) {
 				Id: [32]byte(channelIds[i]),
 				Stream: river.Stream{
 					Nodes:     stream.Nodes(),
-					Reserved0: uint64(replFactor),
+					Reserved0: uint64(testCfg.replFactor),
 				},
 			},
 			true,
@@ -248,10 +260,10 @@ func TestMultiSyncer(t *testing.T) {
 		}
 	}()
 
-	// Send 10 messages to each channel
+	// Send messages to each channel
 	expectedMessages := make(map[StreamId][]string)
 	for i, channelId := range channelIds {
-		for j := 0; j < 10; j++ {
+		for j := 0; j < testCfg.numMessagesPerChannel; j++ {
 			msg := fmt.Sprintf("msg%d-channel%d", j, i)
 			addMessageToChannel(ctx, client0, wallet, msg, channelId, channelHashes[i], require)
 			expectedMessages[channelId] = append(expectedMessages[channelId], msg)
@@ -288,14 +300,58 @@ func TestMultiSyncer(t *testing.T) {
 
 	for i, channelId := range channelIds {
 		messages := eventTracker[channelId]
-		require.Equal(10, len(messages), "Channel %d should have received 10 messages", i)
+		require.Equal(
+			testCfg.numMessagesPerChannel,
+			len(messages),
+			"Channel %d should have received %d messages",
+			i,
+			testCfg.numMessagesPerChannel,
+		)
 
 		// Verify message order and content
-		for j := 0; j < 10; j++ {
+		for j := 0; j < testCfg.numMessagesPerChannel; j++ {
 			expectedMsg := fmt.Sprintf("msg%d-channel%d", j, i)
 			require.Equal(expectedMsg, messages[j], "Message %d in channel %d has wrong content", j, i)
 		}
 	}
+}
+
+func TestMultiSyncer(t *testing.T) {
+	t.Run("Parallelism check: low concurrency", func(t *testing.T) {
+		runMultiSyncerTest(t, multiSyncerTestConfig{
+			numNodes:              10,
+			replFactor:            5,
+			numChannels:           50,
+			numMessagesPerChannel: 10,
+			streamsPerSyncSession: 3,
+			numWorkers:            1,
+			maxConcurrentRequests: 1,
+		})
+	})
+
+	t.Run("Medium test - many sync sessions", func(t *testing.T) {
+		runMultiSyncerTest(t, multiSyncerTestConfig{
+			numNodes:              10,
+			replFactor:            5,
+			numChannels:           50,
+			numMessagesPerChannel: 10,
+			streamsPerSyncSession: 3,
+			numWorkers:            2,
+			maxConcurrentRequests: 2,
+		})
+	})
+
+	t.Run("Long test - fewer sessions", func(t *testing.T) {
+		runMultiSyncerTest(t, multiSyncerTestConfig{
+			numNodes:              10,
+			replFactor:            5,
+			numChannels:           100,
+			numMessagesPerChannel: 10,
+			streamsPerSyncSession: 10,
+			numWorkers:            2,
+			maxConcurrentRequests: 2,
+		})
+	})
 }
 
 // TestMultiSyncerWithNodeFailures stops nodes one at a time after streams have already started syncing. This

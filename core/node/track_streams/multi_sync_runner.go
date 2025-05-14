@@ -485,6 +485,13 @@ func NewSyncSessionRunner(
 	return &runner
 }
 
+type TrackedViewConstructorFn func(
+	ctx context.Context,
+	streamID shared.StreamId,
+	cfg crypto.OnChainConfiguration,
+	stream *protocol.StreamAndCookie,
+) (events.TrackedStreamView, error)
+
 // The MultiSyncRunner implements the logic for setting up a collection of stream syncs across nodes, and creating and
 // continuously updating TrackedStreamViews with updates for each stream from streaming sync responses. The TrackedStreamView
 // is responsible for firing any callbacks needed by a service that is tracking the contents of remotely hosted streams.
@@ -572,21 +579,16 @@ func NewMultiSyncRunner(
 func (msr *MultiSyncRunner) Run(
 	rootCtx context.Context,
 ) {
-	for range msr.config.NumWorkers {
-		// Each worker routine will continuously loop, placing streams in sync sessions, until the rootCtx is canceled.
-		msr.workerPool.Submit(func() {
-			for {
-				select {
-				case <-rootCtx.Done():
-					return
-				case streamInitRecord := <-msr.streamsToSync:
-					msr.addToSync(rootCtx, streamInitRecord)
-				}
-			}
-		})
+consume_loop:
+	for {
+		select {
+		case <-rootCtx.Done():
+			break consume_loop
+		case streamSyncInitRecord := <-msr.streamsToSync:
+			msr.workerPool.Submit(func() { msr.addToSync(rootCtx, streamSyncInitRecord) })
+		}
 	}
 
-	<-rootCtx.Done()
 	msr.workerPool.StopWait()
 }
 

@@ -61,7 +61,6 @@ type StreamsTrackerImpl struct {
 	listener        StreamEventListener
 	metrics         *TrackStreamsSyncMetrics
 	tracked         sync.Map // map[shared.StreamId] = struct{}
-	syncRunner      *SyncRunner
 	multiSyncRunner *MultiSyncRunner
 }
 
@@ -83,7 +82,6 @@ func (tracker *StreamsTrackerImpl) Init(
 	tracker.nodeRegistries = nodeRegistries
 	tracker.listener = listener
 	tracker.filter = filter
-	tracker.syncRunner = NewSyncRunner()
 	tracker.multiSyncRunner = NewMultiSyncRunner(
 		tracker.metrics,
 		onChainConfig,
