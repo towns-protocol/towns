@@ -102,20 +102,6 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	}
 }
 
-// TODO: FIX: move to correct file
-func (s *StreamCache) writeLatestMbToBlockchain(ctx context.Context, stream *Stream)  {
-	view, err := stream.GetViewIfLocal(ctx)
-	if err != nil {
-		logging.FromCtx(ctx).
-			Errorw("writeLatestMbToBlockchain: failed to get stream view", "err", err, "streamId", stream.streamId)
-		return
-	}
-
-	s.params.
-	
-
-}
-
 // normalizeEphemeralStream normalizes the ephemeral stream.
 // Loads the missing miniblocks from the sticky peers and writes them to the storage.
 // Seals the stream if it is ephemeral and all miniblocks are loaded.
