@@ -328,9 +328,10 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 	cfg.ShutdownTimeout = 2 * time.Millisecond
 	cfg.StreamReconciliation = config.StreamReconciliationConfig{
-		InitialWorkerPoolSize: 4,
-		OnlineWorkerPoolSize:  8,
-		GetMiniblocksPageSize: 4,
+		InitialWorkerPoolSize:           4,
+		OnlineWorkerPoolSize:            8,
+		GetMiniblocksPageSize:           4,
+		ReconciliationTaskRetryDuration: 2 * time.Second,
 	}
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0

@@ -78,6 +78,8 @@ type StreamCache struct {
 	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
+
+	retryableReconcilationTasks *retryableReconciliationTasks
 }
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
@@ -118,6 +120,7 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
+		retryableReconcilationTasks:  newRetryableReconciliationTasks(params.Config.StreamReconciliation.ReconciliationTaskRetryDuration),
 	}
 	s.params.streamCache = s
 	return s
@@ -195,6 +198,21 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	}
 
 	wp := workerpool.New(16)
+
+	wp.Submit(func() {
+		now := time.Now()
+		for {
+			reconTask := s.retryableReconcilationTasks.Peek()
+			if reconTask != nil && reconTask.retryAfter.Before(now) {
+				if stream, _ := s.GetStreamNoWait(ctx, reconTask.item.StreamId()); stream != nil {
+					s.SubmitSyncStreamTask(stream, reconTask.item)
+				}
+				s.retryableReconcilationTasks.Remove(reconTask)
+				continue
+			}
+			break
+		}
+	})
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
