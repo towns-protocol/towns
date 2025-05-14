@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 // Format this with the desired schema name
@@ -106,6 +109,7 @@ END $$;
 `
 
 const viewReportSql = `
+SELECT * FROM (
 SELECT
     COALESCE(tm.stream_id, tmc.stream_id, tmp.stream_id) AS stream_id,
 	(COALESCE(tm.total_bytes, 0) + COALESCE(tmc.total_bytes, 0) + COALESCE(tmp.total_bytes, 0)) as total_bytes,
@@ -122,7 +126,9 @@ SELECT
 FROM tmp_miniblocks tm
 FULL OUTER JOIN tmp_miniblock_candidates tmc ON tm.stream_id = tmc.stream_id
 FULL OUTER JOIN tmp_minipools tmp ON COALESCE(tm.stream_id, tmc.stream_id) = tmp.stream_id
-ORDER BY total_bytes DESC;
+{{stream_filter_clause}}
+{{limit_clause}}
+) ORDER BY total_bytes DESC;
 `
 
 func formatBytes(bytes int64) string {
@@ -144,6 +150,42 @@ func printUsageReport(
 	info *dbInfo,
 ) (err error) {
 	escapedSql := strings.ReplaceAll(generateReportSql, "{{schemaName}}", info.schema)
+
+	formattedReportSql := viewReportSql
+	if usageSampleSize > 0 {
+		formattedReportSql = strings.ReplaceAll(
+			formattedReportSql,
+			"{{limit_clause}}",
+			fmt.Sprintf(" ORDER BY RANDOM() LIMIT %d ", usageSampleSize),
+		)
+	} else {
+		formattedReportSql = strings.ReplaceAll(formattedReportSql, "{{limit_clause}}", "")
+	}
+
+	if usageStreamType != "" {
+		// Validate valid prefix
+		if len(usageStreamType) != 2 {
+			return fmt.Errorf("expect stream type to be a 2 character hex string with no '0x' prefix")
+		}
+
+		streamType, err := hex.DecodeString(usageStreamType)
+		if err != nil {
+			return fmt.Errorf("stream_type should be a hex string, but failed to parse as such: %w", err)
+		}
+
+		if _, err := shared.StreamIdContentLengthForType(streamType[0]); err != nil {
+			return fmt.Errorf("invalid stream_type: %w", err)
+		}
+
+		formattedReportSql = strings.ReplaceAll(
+			formattedReportSql,
+			"{{stream_filter_clause}}",
+			fmt.Sprintf("WHERE stream_id LIKE '%v%%'", usageStreamType),
+		)
+	} else {
+		formattedReportSql = strings.ReplaceAll(formattedReportSql, "{{stream_filter_clause}}", "")
+	}
+
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to create a pgx transaction: %w", err)
@@ -162,7 +204,7 @@ func printUsageReport(
 		return fmt.Errorf("error generating stream disk usage report for schema %v: %w", info.schema, err)
 	}
 
-	rows, err := tx.Query(ctx, viewReportSql)
+	rows, err := tx.Query(ctx, formattedReportSql)
 	if err != nil {
 		return fmt.Errorf("error generating stream disk usage report: %w", err)
 	}
@@ -256,6 +298,15 @@ var usageCmd = &cobra.Command{
 	},
 }
 
+var (
+	usageSampleSize int
+	usageStreamType string
+)
+
 func init() {
+	usageCmd.Flags().IntVarP(&usageSampleSize, "sample_size", "s", 0, "Sample size (0 for all streams)")
+	usageCmd.Flags().
+		StringVarP(&usageStreamType, "stream_type", "t", "", "Filter by stream type (e.g. 'a8' for user streams)")
+
 	rootCmd.AddCommand(usageCmd)
 }
