@@ -1,7 +1,9 @@
-import { BytesLike, ethers } from 'ethers'
+import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { dlogger } from '@towns-protocol/dlog'
 import { Connect, ContractType } from './types/typechain'
 import { Abi } from 'abitype'
+import { TransactionOpts } from './types/ContractTypes'
+import { wrapTransaction } from './space-dapp/wrapTransaction'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
@@ -61,6 +63,47 @@ export class BaseContractShim<
             }
         }
         return this.writeContract
+    }
+
+    /**
+     * Executes a contract function call. If overrideExecution is provided, uses that instead of
+     * the default blockchain transaction. This allows for custom handling of the call, such as
+     * returning the raw calldata or implementing custom transaction logic.
+     *
+     * @param params.signer - The signer to use for the transaction
+     * @param params.functionName - The name of the contract function to call
+     * @param params.args - The arguments to pass to the function
+     * @param params.overrideExecution - Optional function to override the default execution
+     * @param params.transactionOpts - Optional transaction options
+     * @returns The result of the function call or the override execution
+     */
+    public executeCall<
+        T = ContractTransaction,
+        FnName extends keyof T_CONTRACT['functions'] = keyof T_CONTRACT['functions'],
+        Args extends Parameters<T_CONTRACT['functions'][FnName]> = Parameters<
+            T_CONTRACT['functions'][FnName]
+        >,
+    >(params: {
+        signer: ethers.Signer
+        functionName: FnName
+        args: Args
+        overrideExecution?: (calldata: string) => Promise<T>
+        transactionOpts?: TransactionOpts
+    }): Promise<T extends undefined ? ContractTransaction : T> {
+        const callData = this.encodeFunctionData(params.functionName, params.args)
+        return (
+            params.overrideExecution
+                ? params.overrideExecution(callData)
+                : wrapTransaction(
+                      () =>
+                          (
+                              this.write(params.signer)[params.functionName] as (
+                                  ...args: Args
+                              ) => Promise<ContractTransaction>
+                          )(...params.args),
+                      params.transactionOpts,
+                  )
+        ) as Promise<T extends undefined ? ContractTransaction : T>
     }
 
     public decodeFunctionResult<FnName extends keyof T_CONTRACT['functions']>(
