@@ -58,6 +58,7 @@ import {
     type Account,
     type Address,
     type Chain,
+    type Client as ViemClient,
     type ContractFunctionArgs,
     type ContractFunctionName,
 } from 'viem'
@@ -198,14 +199,17 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly server: Hono
     private readonly client: ClientV2<BotActions>
     botId: string
+    viemClient: ViemClient
 
     constructor(
         clientV2: ClientV2<BotActions>,
+        viemClient: ViemClient,
         private readonly jwtSecret: string,
     ) {
         super()
         this.client = clientV2
         this.botId = clientV2.userId
+        this.viemClient = viemClient
         this.server = new Hono()
         this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
@@ -480,6 +484,25 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         return this.client.editMessage(streamId, messageId, message)
     }
 
+    writeContract<
+        chain extends Chain | undefined,
+        account extends Account | undefined,
+        const abi extends Abi | readonly unknown[],
+        functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
+        args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
+        chainOverride extends Chain | undefined,
+    >(tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>) {
+        return writeContract(this.viemClient, tx as WriteContractParameters)
+    }
+
+    readContract<
+        const abi extends Abi | readonly unknown[],
+        functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
+        const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
+    >(parameters: ReadContractParameters<abi, functionName, args>) {
+        return readContract(this.viemClient, parameters)
+    }
+
     /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
@@ -566,26 +589,26 @@ export const makeTownsBot = async (
     appPrivateDataBase64: string,
     jwtSecret: string,
     env: Parameters<typeof makeRiverConfig>[0],
+    viemRpcUrl?: string,
 ) => {
     const { privateKey, encryptionDevice } = fromBinary(
         AppPrivateDataSchema,
         bin_fromBase64(appPrivateDataBase64),
     )
+    const viemClient = createViemClient({
+        transport: http(viemRpcUrl),
+    })
     const client = await createTownsClient({
         privateKey,
         env,
         encryptionDevice: {
             fromExportedDevice: encryptionDevice,
         },
-    }).then((x) => x.extend(buildBotActions))
-    return new Bot(client, jwtSecret)
+    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
+    return new Bot(client, viemClient, jwtSecret)
 }
 
-const buildBotActions = (client: ClientV2, rpcUrl?: string) => {
-    const viem = createViemClient({
-        transport: http(rpcUrl),
-    })
-
+const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
     const sendMessageEvent = async ({
         streamId,
         payload,
@@ -885,14 +908,14 @@ const buildBotActions = (client: ClientV2, rpcUrl?: string) => {
             chainOverride extends Chain | undefined,
         >(
             tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>,
-        ) => writeContract(viem, tx as WriteContractParameters),
+        ) => writeContract(viemClient, tx as WriteContractParameters),
         readContract: <
             const abi extends Abi | readonly unknown[],
             functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
             const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
         >(
             parameters: ReadContractParameters<abi, functionName, args>,
-        ) => readContract(viem, parameters),
+        ) => readContract(viemClient, parameters),
         sendMessage,
         editMessage,
         sendDm,
