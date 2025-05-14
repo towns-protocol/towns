@@ -4,7 +4,7 @@ import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 import { MembershipFacet__factory } from '@towns-protocol/generated/dev/typings/factories/MembershipFacet__factory'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
-
+import { IMulticallShim } from './IMulticallShim'
 const log = dlogger('csb:IMembershipShim')
 
 const { abi, connect } = MembershipFacet__factory
@@ -12,16 +12,13 @@ const { abi, connect } = MembershipFacet__factory
 export class IMembershipShim extends BaseContractShim<typeof connect> {
     private erc721Shim: IERC721AShim
     metadata: IMembershipMetadataShim
+    multicall: IMulticallShim
 
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
         this.erc721Shim = new IERC721AShim(address, provider)
         this.metadata = new IMembershipMetadataShim(address, provider)
-    }
-
-    async hasMembership(wallet: string) {
-        const balance = (await this.erc721Shim.read.balanceOf(wallet)).toNumber()
-        return balance > 0
+        this.multicall = new IMulticallShim(address, provider)
     }
 
     // If the caller doesn't provide an abort controller, create one and set a timeout

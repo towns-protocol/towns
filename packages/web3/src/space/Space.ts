@@ -37,6 +37,8 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
+import { dlogger } from '@towns-protocol/dlog'
+const log = dlogger('csb:Space')
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -480,12 +482,99 @@ export class Space {
         }
     }
 
-    public async getTokenIdsOfOwner(linkedWallets: string[]): Promise<string[]> {
-        const tokenPromises = linkedWallets.map((wallet) =>
-            this.erc721AQueryable.read.tokensOfOwner(wallet),
-        )
-        const allTokenArrays = await Promise.all(tokenPromises)
-        return allTokenArrays.flat().map((token) => token.toString())
+    public async getTokenIdsOfOwner(wallets: string[]): Promise<string[]> {
+        const results = await this.multicall.makeCalls({
+            encoder: () =>
+                wallets.map((wallet) =>
+                    this.erc721AQueryable.encodeFunctionData('tokensOfOwner', [wallet]),
+                ),
+            decoder: (result) => {
+                return this.erc721AQueryable
+                    .decodeFunctionResult('tokensOfOwner', result)[0]
+                    .map((token) => token.toString())
+            },
+        })
+
+        const tokenIds = new Set(results.flat())
+        return Array.from(tokenIds)
+    }
+
+    public async getMembershipStatus(wallets: string[]) {
+        const tokenIds = await this.getTokenIdsOfOwner(wallets)
+
+        if (tokenIds.length === 0) {
+            return {
+                isMember: false,
+                isExpired: undefined,
+                expiryTime: undefined,
+                expiredAt: undefined,
+            }
+        }
+
+        let expirations: bigint[] = []
+        try {
+            expirations = await this.multicall.makeCalls({
+                encoder: () =>
+                    tokenIds.map((id) => this.membership.encodeFunctionData('expiresAt', [id])),
+                decoder: (result) => {
+                    return this.membership.decodeFunctionResult('expiresAt', result)[0].toBigInt()
+                },
+            })
+        } catch (error) {
+            log.error('getMembershipStatus::error', { error })
+            return {
+                isMember: true,
+                // error evaluating expirations so just assume its not expired
+                isExpired: false,
+                expiryTime: undefined,
+                expiredAt: undefined,
+            }
+        }
+
+        let isExpired = true
+        let expiryTime: bigint | undefined = undefined
+        let expiredAt: bigint | undefined = undefined
+
+        const currentTime = BigInt(Math.floor(Date.now() / 1000))
+
+        let hasActiveToken = false
+
+        expirations.forEach((expiration, _index) => {
+            // Token is permanent (never expires)
+            if (expiration === 0n) {
+                hasActiveToken = true
+                // If a token is permanent, use 0n to indicate it never expires
+                if (expiryTime === undefined || expiryTime !== 0n) {
+                    expiryTime = 0n
+                }
+                return
+            }
+
+            // Check if token is not expired yet
+            if (expiration > currentTime) {
+                hasActiveToken = true
+
+                // Track the furthest future expiry
+                // Skip if we already have a permanent token
+                if (expiryTime !== 0n && (expiryTime === undefined || expiration > expiryTime)) {
+                    expiryTime = expiration
+                }
+            } else {
+                // This is an expired token, track the most recent expiry
+                if (expiredAt === undefined || expiration > expiredAt) {
+                    expiredAt = expiration
+                }
+            }
+        })
+
+        isExpired = !hasActiveToken
+
+        return {
+            isMember: true,
+            isExpired,
+            expiryTime,
+            expiredAt,
+        }
     }
 
     public async getProtocolFee(): Promise<bigint> {

@@ -42,16 +42,16 @@ describe('membershipRenewals', () => {
         await new Promise((resolve) => setTimeout(resolve, WAIT_TIME))
         await alice.leaveStream(spaceId)
 
-        // space dapp does not check expiration, so we'll still get an entitled wallet
+        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
+        const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
+        expect(membershipStatus.isMember).toBe(true)
+        expect(membershipStatus.isExpired).toBe(true)
         const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
             spaceId,
             alicesWallet.address,
             getXchainConfigForTesting(),
         )
-        expect(entitledWallet).toBeDefined()
-        // same here
-        const hasMembership = await aliceSpaceDapp.hasSpaceMembership(spaceId, entitledWallet!)
-        expect(hasMembership).toBe(true)
+        expect(entitledWallet).toBeUndefined()
 
         await expect(alice.joinStream(spaceId)).rejects.toThrow(/7:PERMISSION_DENIED/)
         // Clean up
@@ -168,6 +168,17 @@ describe('membershipRenewals', () => {
 
         // now mint a membership for the eoa wallet, which is linked to alice - mint only, not joining stream
         await aliceSpaceDapp.joinSpace(spaceId, eoaWallet.address, aliceProvider.wallet)
+
+        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
+        const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
+        expect(membershipStatus.isMember).toBe(true)
+        expect(membershipStatus.isExpired).toBe(false)
+        const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+            spaceId,
+            alicesWallet.address,
+            getXchainConfigForTesting(),
+        )
+        expect(entitledWallet).toBeDefined()
 
         await expectUserCanJoin(
             spaceId,

@@ -109,14 +109,16 @@ export class BaseContractShim<
     public decodeFunctionResult<FnName extends keyof T_CONTRACT['functions']>(
         functionName: FnName,
         data: BytesLike,
-    ) {
+    ): Awaited<ReturnType<T_CONTRACT['functions'][FnName]>> {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')
         }
         if (!this.interface.getFunction(functionName)) {
             throw new Error(`Function ${functionName} not found in contract interface`)
         }
-        return this.interface.decodeFunctionResult(functionName, data)
+        const decoded = this.interface.decodeFunctionResult(functionName, data)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return decoded as Awaited<ReturnType<T_CONTRACT['functions'][FnName]>>
     }
 
     public decodeFunctionData<FnName extends keyof T_CONTRACT['functions']>(
