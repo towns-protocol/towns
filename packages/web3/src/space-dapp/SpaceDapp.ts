@@ -1920,28 +1920,6 @@ export class SpaceDapp {
             txnOpts,
         )
     }
-
-    public async executeSwap(
-        spaceId: string,
-        exactInputParams: ISwapRouterBase.ExactInputParamsStruct,
-        routerParams: ISwapRouterBase.RouterParamsStruct,
-        poster: string,
-        value: bigint,
-        signer: ethers.Signer,
-        txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        return wrapTransaction(
-            () =>
-                space.Swap.write(signer).executeSwap(exactInputParams, routerParams, poster, {
-                    value,
-                }),
-            txnOpts,
-        )
-    }
 }
 
 // Retry submitting the transaction N times (3 by default in jest, 0 by default elsewhere)
