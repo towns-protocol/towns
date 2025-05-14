@@ -395,9 +395,8 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 
 	// create fresh stream cache and subscribe
 	streamCache = NewStreamCache(tc.instances[0].params)
-	err = streamCache.Start(ctx)
+	err = streamCache.Start(ctx, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	require.NoError(err, "instantiating stream cache")
-	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
@@ -442,9 +441,9 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	}
 
 	// make all mini-blocks to process all events in minipool
-	jobs := mpProducer.scheduleCandidates(ctx, blockNum)
+	jobs := streamCache.mbProducer.scheduleCandidates(ctx, blockNum)
 	require.Eventually(
-		func() bool { return mpProducer.testCheckAllDone(jobs) },
+		func() bool { return streamCache.mbProducer.testCheckAllDone(jobs) },
 		240*time.Second,
 		10*time.Millisecond,
 	)
@@ -464,7 +463,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	require := require.New(t)
 	instance := tt.instances[0]
-	mbProducer := instance.mbProducer
+	mbProducer := instance.cache.mbProducer
 
 	// through disableCallback the test can control if the stream cache witnesses river chain events.
 	var disableCallbacks atomic.Bool
