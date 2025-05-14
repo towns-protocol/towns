@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -145,8 +147,9 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 			continue
 		}
 
-		// Send message to subscriber
-		if err := subscription.Messages.AddMessage(msg); err != nil {
+		// Send message to subscriber.
+		// This is safe to clone the message, otherwise the message could be modified.
+		if err := subscription.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
 			rvrErr := AsRiverError(err).
 				Tag("syncId", subscription.SyncOp).
 				Tag("op", msg.GetSyncOp())
@@ -157,7 +160,8 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 		}
 
 		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-			// The given stream is no longer needed, remove it from the subscription
+			// The given stream is no longer needed, remove it from the subscription.
+			// TODO: Optimize this, do in batch
 			subscription.removeStream(streamIDRaw)
 		}
 	}
