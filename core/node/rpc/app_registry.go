@@ -14,6 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry"
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -49,7 +50,13 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init store").LogError(s.defaultLogger)
 	}
 
-	httpClient, err := s.httpClientMaker(s.serverCtx, s.config)
+	// If insecure webhook calls are desired, override the configured http client with an h2c client.
+	httpClientMaker := s.httpClientMaker
+	if s.config.AppRegistry.AllowInsecureWebhooks {
+		httpClientMaker = http_client.GetH2cHttpClient
+	}
+
+	httpClient, err := httpClientMaker(s.serverCtx, s.config)
 	if err != nil {
 		return err
 	}
