@@ -4714,6 +4714,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/curves@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "@noble/curves@npm:1.9.1"
+  dependencies:
+    "@noble/hashes": 1.8.0
+  checksum: 4f3483a1001538d2f55516cdcb19319d1eaef79550633f670e7d570b989cdbc0129952868b72bb67643329746b8ffefe8e4cd791c8cc35574e05a37f873eef42
+  languageName: node
+  linkType: hard
+
 "@noble/hashes@npm:1.2.0, @noble/hashes@npm:~1.2.0":
   version: 1.2.0
   resolution: "@noble/hashes@npm:1.2.0"
@@ -4749,7 +4758,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:1.8.0, @noble/hashes@npm:~1.8.0":
+"@noble/hashes@npm:1.8.0, @noble/hashes@npm:^1.8.0, @noble/hashes@npm:~1.8.0":
   version: 1.8.0
   resolution: "@noble/hashes@npm:1.8.0"
   checksum: c94e98b941963676feaba62475b1ccfa8341e3f572adbb3b684ee38b658df44100187fa0ef4220da580b13f8d27e87d5492623c8a02ecc61f23fb9960c7918f5
@@ -4770,10 +4779,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/secp256k1@npm:1.7.1, @noble/secp256k1@npm:~1.7.0":
+"@noble/secp256k1@npm:1.7.1":
   version: 1.7.1
   resolution: "@noble/secp256k1@npm:1.7.1"
   checksum: d2301f1f7690368d8409a3152450458f27e54df47e3f917292de3de82c298770890c2de7c967d237eff9c95b70af485389a9695f73eb05a43e2bd562d18b18cb
+  languageName: node
+  linkType: hard
+
+"@noble/secp256k1@npm:~1.7.0":
+  version: 1.7.2
+  resolution: "@noble/secp256k1@npm:1.7.2"
+  checksum: 34c80b862996e215b9abb4faa53c30155bbf4338bfb973218f91139fd882dbeff01dde63de3745485664aee539621c13e11fc4ee55c87a462a30e414db6459fc
   languageName: node
   linkType: hard
 
@@ -8172,7 +8188,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
-    ethereum-cryptography: ^1.2.0
+    ethereum-cryptography: ^3.2.0
     ts-node: ^10.9.1
     typescript: ^5.8.2
     vitest: 3.0.5
@@ -8383,6 +8399,8 @@ __metadata:
     "@connectrpc/connect-node": ^2.0.0
     "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^8.0.1
+    "@noble/curves": ^1.9.1
+    "@noble/hashes": ^1.8.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
@@ -8401,7 +8419,7 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
     eslint-plugin-tsdoc: ^0.3.0
-    ethereum-cryptography: ^1.2.0
+    ethereum-cryptography: ^3.2.0
     ethers: ^5.7.2
     fake-indexeddb: ^4.0.1
     happy-dom: ^15.11.7
@@ -15341,7 +15359,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethereum-cryptography@npm:^1.0.3, ethereum-cryptography@npm:^1.2.0":
+"ethereum-cryptography@npm:^1.0.3":
   version: 1.2.0
   resolution: "ethereum-cryptography@npm:1.2.0"
   dependencies:
@@ -15365,7 +15383,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethereum-cryptography@npm:^3.0.0":
+"ethereum-cryptography@npm:^3.0.0, ethereum-cryptography@npm:^3.2.0":
   version: 3.2.0
   resolution: "ethereum-cryptography@npm:3.2.0"
   dependencies:
