@@ -162,8 +162,8 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 			// start stream sync session for stream if it hasn't seen before
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
-				// start tracking the stream until ctx expires
-				tracker.multiSyncRunner.AddStream(ctx, stream, false)
+				// start tracking the stream, until the root ctx expires.
+				tracker.multiSyncRunner.AddStream(stream, false)
 			}
 
 			return true
@@ -194,10 +194,13 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
 		stream := &river.StreamWithId{
-			Id:     streamId,
-			Stream: river.Stream{Nodes: nodes},
+			Id: streamId,
+			Stream: river.Stream{
+				Reserved0: uint64(len(nodes)),
+				Nodes:     nodes,
+			},
 		}
-		tracker.multiSyncRunner.AddStream(ctx, stream, true)
+		tracker.multiSyncRunner.AddStream(stream, true)
 	}
 }
 

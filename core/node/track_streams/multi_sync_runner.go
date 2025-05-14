@@ -46,7 +46,7 @@ type streamSyncInitRecord struct {
 	// to a zero hash.
 	minipoolGen       int64
 	prevMiniblockHash []byte
-	remotes           *nodes.StreamNodesWithLock
+	remotes           nodes.StreamNodes
 }
 
 // Run a sync session, including parsing out the streaming sync response and multiplexing to the
@@ -120,6 +120,8 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.streamRecords.Store(record.streamId, &record)
 	ssr.mu.Unlock()
 
+	logging.FromCtx(ctx).
+		Debugw("Adding stream with cookie", "stream", record.streamId, "minipoolGen", record.minipoolGen, "prevMiniblockHash", record.prevMiniblockHash)
 	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
@@ -246,14 +248,19 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	}
 
 	record.applyHistoricalStreamContents = false
+
+	// Update record cookie for restarting sync after relocation
+	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
+	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
 }
+
+var errSyncEmpty = fmt.Errorf("sync runner no longer contains active streams")
 
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
 	log := logging.FromCtx(ssr.syncCtx)
 	switch update.SyncOp {
 	case protocol.SyncOp_SYNC_DOWN:
-		// the remote syncer will trigger relocation for this stream.
-		break
+		ssr.relocateStream(shared.StreamId(update.StreamId))
 	case protocol.SyncOp_SYNC_UPDATE:
 		{
 			streamID, err := shared.StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
@@ -375,6 +382,13 @@ func (ssr *syncSessionRunner) Run(
 func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	ssr.mu.Lock()
 	rawRecordPtr, ok := ssr.streamRecords.LoadAndDelete(streamID)
+	ssr.streamCount--
+
+	// Cancel the remote sync session if all streams have been relocated.
+	if ssr.streamCount <= 0 {
+		ssr.cancelSync(errSyncEmpty)
+	}
+
 	ssr.mu.Unlock()
 
 	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
@@ -383,7 +397,6 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 		return
 	}
 
-	log.Debugw("Relocating stream")
 	record, ok := rawRecordPtr.(*streamSyncInitRecord)
 	if !ok {
 		log.Errorw(
@@ -399,7 +412,11 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 }
 
 func (ssr *syncSessionRunner) GetSyncId() string {
-	return ssr.syncer.GetSyncId()
+	if ssr.syncer != nil {
+		return ssr.syncer.GetSyncId()
+	}
+
+	return ""
 }
 
 // Close shuts down the runner and relocates all streams.
@@ -415,7 +432,7 @@ func (ssr *syncSessionRunner) Close(err error) {
 			"error",
 			err,
 			"syncId",
-			ssr.syncer.GetSyncId(),
+			ssr.GetSyncId(),
 			"node",
 			ssr.node,
 		)
@@ -665,17 +682,6 @@ func (msr *MultiSyncRunner) addToSync(
 	if err := runner.AddStream(rootCtx, record); err != nil {
 		// Aggressively release the lock on target node resources to maximize request throughput.
 		pool.Release(1)
-		// log.Debugw(
-		// 	"Failed to add stream to sync; creating new syncSessionRunner",
-		// 	"err",
-		// 	err,
-		// 	"stream",
-		// 	record.streamId,
-		// 	"syncId",
-		// 	runner.GetSyncId(),
-		// 	"pool",
-		// 	pool,
-		// )
 
 		// Create a new runner and replace this one
 		newRunner := NewSyncSessionRunner(
@@ -720,23 +726,26 @@ func (msr *MultiSyncRunner) addToSync(
 		pool.Release(1)
 
 		log := logging.FromCtx(rootCtx)
+
+		// Relocate this stream's target node and re-insert into the pool of unassigned streams
+		newRemote := record.remotes.AdvanceStickyPeer(targetNode)
+
 		if errors.Is(err, errSyncSessionUnassignable) {
 			log.Debugw(
-				"Could not assign stream to session, cycling to new session",
+				"Could not assign stream to existing session, cycling to new session",
 				"streamId", record.streamId,
 				"syncId", runner.GetSyncId(),
-				"node", targetNode,
+				"failedRemote", targetNode,
+				"newRemote", newRemote,
 			)
 		} else {
 			log.Errorw(
-				"Error assigning stream to sync on node",
+				"Error adding stream to sync on node, cycling to new session",
 				"streamId", record.streamId,
 				"node", targetNode,
 				"syncId", runner.GetSyncId(),
 				"error", err,
 			)
-			// Relocate this stream's target node and re-insert into the pool of unassigned streams
-			record.remotes.AdvanceStickyPeer(targetNode)
 		}
 		msr.streamsToSync <- record
 	} else {
@@ -747,7 +756,6 @@ func (msr *MultiSyncRunner) addToSync(
 // AddStream adds a stream to the queue to be added to a sync session for event tracking.
 // This method may block if the queue fills.
 func (msr *MultiSyncRunner) AddStream(
-	rootCtx context.Context,
 	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
 ) {
