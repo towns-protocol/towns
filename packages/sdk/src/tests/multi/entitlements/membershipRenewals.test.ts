@@ -15,8 +15,12 @@ import { makeUserStreamId } from '../../../id'
 import { MembershipOp } from '@towns-protocol/proto'
 import { ethers } from 'ethers'
 
-const SHORT_MEMBERSHIP_DURATION = 10 // seconds
+const SHORT_MEMBERSHIP_DURATION = 20 // seconds
 const WAIT_TIME = SHORT_MEMBERSHIP_DURATION * 1_000 + 1_000
+
+// this test is long because it has to wait for the membership to expire in real time
+// but the membership duration has to be long enough such that other actions/assertions can be made
+// it tests both node entitlement checks for expired memberships, as well as client entitlement checks via space dapp
 
 describe('membershipRenewals', () => {
     test('expired membership is not allowed to join', async () => {
@@ -204,4 +208,29 @@ describe('membershipRenewals', () => {
         await alice.stopSync()
         await carol.stopSync()
     })
+
+    // test('user can renew membership', async () => {
+    //     const { spaceId, channelId, alice, aliceSpaceDapp, aliceProvider, alicesWallet } =
+    //         await createTownWithRequirements({
+    //             everyone: true,
+    //             users: [],
+    //             ruleData: NoopRuleData,
+    //             duration: 5,
+    //         })
+
+    //     await expectUserCanJoin(
+    //         spaceId,
+    //         channelId,
+    //         'alice',
+    //         alice,
+    //         aliceSpaceDapp,
+    //         alicesWallet.address,
+    //         aliceProvider.wallet,
+    //     )
+
+    //     await new Promise((resolve) => setTimeout(resolve, 5_000))
+
+    //     // wait for membership to expire
+    //     await new Promise((resolve) => setTimeout(resolve, WAIT_TIME))
+    // })
 })

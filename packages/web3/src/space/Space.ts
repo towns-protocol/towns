@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
 import {
     ChannelDetails,
     ChannelMetadata,
@@ -575,6 +575,10 @@ export class Space {
             expiryTime,
             expiredAt,
         }
+    }
+
+    public async renewMembership(tokenId: string, signer: Signer) {
+        return await this.membership.write(signer).renewMembership(tokenId)
     }
 
     public async getProtocolFee(): Promise<bigint> {
