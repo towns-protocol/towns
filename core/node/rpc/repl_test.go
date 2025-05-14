@@ -1,17 +1,17 @@
 package rpc
 
 import (
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/google/go-cmp/cmp"
-	"github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	"slices"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
