@@ -20,6 +20,7 @@ export class EncryptionDelegate {
         return this._initialized
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     constructor() {}
 
     public async init(): Promise<void> {
