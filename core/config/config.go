@@ -41,7 +41,7 @@ func GetDefaultConfig() *Config {
 		// TODO: RegistryContract:  ContractConfig{},
 		StreamReconciliation: StreamReconciliationConfig{
 			InitialWorkerPoolSize: 4,
-			OnlineWorkerPoolSize:  32,
+			OnlineWorkerPoolSize:  16,
 			GetMiniblocksPageSize: 128,
 		},
 		Log: LogConfig{
