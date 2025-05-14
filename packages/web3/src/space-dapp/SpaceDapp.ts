@@ -70,7 +70,6 @@ import {
     IsTokenBanned,
 } from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
-import { ISwapRouterBase } from '@towns-protocol/generated/dev/typings/ISwapRouter'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
