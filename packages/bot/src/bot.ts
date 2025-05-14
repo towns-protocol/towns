@@ -51,6 +51,21 @@ import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
 } from '@towns-protocol/encryption'
+import {
+    createClient as createViemClient,
+    http,
+    type Abi,
+    type Account,
+    type Address,
+    type Chain,
+    type ContractFunctionArgs,
+    type ContractFunctionName,
+} from 'viem'
+import {
+    writeContract,
+    type WriteContractParameters,
+} from 'viem/_types/actions/wallet/writeContract'
+import { readContract, type ReadContractParameters } from 'viem/_types/actions/public/readContract'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -566,7 +581,11 @@ export const makeTownsBot = async (
     return new Bot(client, jwtSecret)
 }
 
-const buildBotActions = (client: ClientV2) => {
+const buildBotActions = (client: ClientV2, rpcUrl?: string) => {
+    const viem = createViemClient({
+        transport: http(rpcUrl),
+    })
+
     const sendMessageEvent = async ({
         streamId,
         payload,
@@ -855,6 +874,25 @@ const buildBotActions = (client: ClientV2) => {
     }
 
     return {
+        // Is it those enough?
+        // TODO: think about a web3 use case..
+        writeContract: <
+            chain extends Chain | undefined,
+            account extends Account | undefined,
+            const abi extends Abi | readonly unknown[],
+            functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
+            args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
+            chainOverride extends Chain | undefined,
+        >(
+            tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>,
+        ) => writeContract(viem, tx as WriteContractParameters),
+        readContract: <
+            const abi extends Abi | readonly unknown[],
+            functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
+            const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
+        >(
+            parameters: ReadContractParameters<abi, functionName, args>,
+        ) => readContract(viem, parameters),
         sendMessage,
         editMessage,
         sendDm,
