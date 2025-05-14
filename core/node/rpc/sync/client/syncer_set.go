@@ -212,11 +212,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	for _, streamIDRaw := range req.ToRemove {
 		syncer, found := ss.streamID2Syncer[StreamId(streamIDRaw)]
 		if !found {
-			req.RemovingFailureHandler(&SyncStreamOpStatus{
-				StreamId: streamIDRaw,
-				Code:     int32(Err_NOT_FOUND),
-				Message:  "Stream not part of sync operation",
-			})
 			continue
 		}
 

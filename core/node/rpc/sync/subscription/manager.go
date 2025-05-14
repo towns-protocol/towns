@@ -59,12 +59,25 @@ func NewManager(
 	return manager
 }
 
+func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncOp string) *Subscription {
+	subcription := &Subscription{
+		log:      m.log.With("syncId", syncOp),
+		Ctx:      ctx,
+		Cancel:   cancel,
+		SyncOp:   syncOp,
+		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+	}
+	go subcription.Run()
+	m.subscriptions.Store(syncOp, subcription)
+	return subcription
+}
+
 func (m *Manager) start() {
 	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-m.globalCtx.Done():
-			// TODO: Handle
+			// TODO: Handle, cancel all subscriptions
 			return
 		case _, open := <-m.messages.Wait():
 			msgs = m.messages.GetBatch(msgs)
@@ -76,31 +89,11 @@ func (m *Manager) start() {
 			}
 
 			for _, msg := range msgs {
-				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE || msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-					streamID := StreamId(msg.GetStreamId())
-
-					// Send the message to all subscriptions for this stream
-					subscriptions, _ := m.streamToSubscriptions.Load(streamID)
-					for _, subscriptionID := range subscriptions {
-						subscription, ok := m.subscriptions.Load(subscriptionID)
-						if !ok {
-							// TODO: Handle
-							continue
-						}
-
-						if err := subscription.Messages.AddMessage(msg); err != nil {
-							// TODO: Handle error
-						}
-					}
-				} else if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					return
-				} else {
-					// TODO: Handle, unexpected op type
-				}
+				m.distributeMessages(msg)
 
 				select {
 				case <-m.globalCtx.Done():
-					// TODO: Handle
+					// TODO: Handle, cancel all subscriptions
 					return
 				default:
 				}
@@ -109,146 +102,46 @@ func (m *Manager) start() {
 			// If the client sent a close message, stop sending messages to client from the buffer.
 			// In theory should not happen, but just in case.
 			if !open {
-				// TODO: Handle
+				// TODO: Handle, cancel all subscriptions
 				return
 			}
 		}
 	}
 }
 
-func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncOp string) *Subscription {
-	// TODO: Handle context cancellation -> unsubscribe
-	suscription := &Subscription{
-		Ctx:      ctx,
-		Cancel:   cancel,
-		SyncOp:   syncOp,
-		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-	}
-	m.subscriptions.Store(syncOp, suscription)
-	return suscription
-}
-
-type Subscription struct {
-	Ctx      context.Context
-	Cancel   context.CancelCauseFunc
-	SyncOp   string
-	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-
-	manager *Manager
-}
-
-func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) error {
-	// Validate the given request first
-	if err := req.Validate(); err != nil {
-		return err
+// distributeMessages ...
+func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
+	// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
+	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+		m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
+		return
 	}
 
-	// Prepare a request to be sent to the syncer set if needed
-	modifiedReq := client.ModifyRequest{
-		AddingFailureHandler:   req.AddingFailureHandler,
-		RemovingFailureHandler: req.RemovingFailureHandler,
+	streamID, err := StreamIdFromBytes(msg.GetStreamId())
+	if err != nil || streamID == (StreamId{}) {
+		m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
+		return
 	}
 
-	// Handle streams that the clients wants to subscribe to.
-	for _, toAdd := range req.ToAdd {
-		var existed bool
-		var subscribed bool
-
-		// Add the stream to the subscription
-		s.manager.streamToSubscriptions.Compute(
-			StreamId(toAdd.GetStreamId()),
-			func(oldValue []string, loaded bool) (newValue []string, op xsync.ComputeOp) {
-				existed = loaded
-
-				if subscribed = slices.Contains(oldValue, s.SyncOp); subscribed {
-					// The given stream is already subscribed
-					return nil, xsync.CancelOp
-				}
-
-				return append(oldValue, s.SyncOp), xsync.UpdateOp
-			},
-		)
-
-		if subscribed {
-			// The given subscription already subscribed on the given stream, no nothing
+	// Send the message to all subscriptions for this stream
+	// TODO: Parallelize this?
+	subscriptions, _ := m.streamToSubscriptions.Load(streamID)
+	for i, syncID := range subscriptions {
+		subscription, ok := m.subscriptions.Load(syncID)
+		if !ok {
+			// The given subscription has already been removed, just delete from list and update.
+			m.streamToSubscriptions.Store(streamID, slices.Delete(subscriptions, i, i+1))
 			continue
-		} else if !existed {
-			// The given stream is not subscribed yet, add it to the syncer set.
-			// It is ok to use the entire cookie when subscribing at the first time.
-			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
-		} else {
-			// The subscription on the given stream already in but the client might
-			// want to get updates since a specific miniblock.
-			// TODO: Load updates based on the sync cookie
+		}
+
+		// Send message to subscriber
+		if err := subscription.Messages.AddMessage(msg); err != nil {
+			rvrErr := AsRiverError(err).
+				Tag("syncId", subscription.SyncOp).
+				Tag("op", msg.GetSyncOp())
+			subscription.Cancel(rvrErr)
+			m.log.Errorw("Failed to add message to subscription",
+				"syncId", subscription.SyncOp, "op", msg.GetSyncOp(), "err", err)
 		}
 	}
-
-	// Handle streams that the clients wants to unsubscribe from.
-	for _, toRemove := range req.ToRemove {
-		var found bool
-
-		// Remove the stream from the subscription
-		s.manager.streamToSubscriptions.Compute(
-			StreamId(toRemove),
-			func(oldValue []string, loaded bool) (newValue []string, op xsync.ComputeOp) {
-				if !loaded {
-					// No record found for the given stream, just cancel
-					return nil, xsync.CancelOp
-				}
-
-				if len(oldValue) == 0 {
-					// No subscriptions for the given stream, just delete the record from cache
-					return nil, xsync.DeleteOp
-				}
-
-				// Remove the given subscriptions from the list of subscribers on the given stream
-				for i, sub := range oldValue {
-					if sub == s.SyncOp {
-						found = true
-						newValue = append(oldValue[:i], oldValue[i+1:]...)
-					}
-				}
-
-				if len(newValue) == len(oldValue) {
-					// The given subscriber is not subscribed on the given stream
-					return nil, xsync.CancelOp
-				}
-
-				if len(newValue) == 0 {
-					// No more subscriptions for the given stream, remove it from the entire sync
-					modifiedReq.ToRemove = append(modifiedReq.ToRemove, toRemove)
-					return nil, xsync.DeleteOp
-				}
-
-				return newValue, xsync.UpdateOp
-			},
-		)
-
-		if !found {
-			req.RemovingFailureHandler(&SyncStreamOpStatus{
-				StreamId: toRemove,
-				Code:     int32(Err_NOT_FOUND),
-				Message:  "Stream not part of sync operation",
-			})
-		}
-	}
-
-	if len(modifiedReq.ToAdd) == 0 && len(modifiedReq.ToRemove) == 0 {
-		// No changes to be made, just return
-		return nil
-	}
-
-	// Send the request to the syncer set
-	if err := s.manager.syncers.Modify(ctx, modifiedReq); err != nil {
-		return err
-	}
-
-	// TODO: Handle remove and add failures
-
-	return nil
-}
-
-func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	// TODO: Drop stream only for the current subscription. Drop from syncers if no more subscribers left.
-	return s.manager.syncers.DebugDropStream(ctx, streamID)
 }
