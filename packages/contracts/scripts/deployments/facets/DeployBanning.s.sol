@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IBanning} from "src/spaces/facets/banning/IBanning.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployBanning {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -25,6 +25,6 @@ library DeployBanning {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("Banning.sol", "");
+        return LibDeploy.deployCode("Banning.sol", "");
     }
 }

@@ -13,7 +13,8 @@
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "typecheck": "tsc",
         "dev:fork": "./scripts/setup-subgraph.sh",
-        "find-paths": "tsx utils/findContractsPath.ts"
+        "find-paths": "tsx utils/findContractsPath.ts",
+        "dev:no-ui": "ponder dev --disable-ui"
     },
     "dependencies": {
         "hono": "^4.5.0",

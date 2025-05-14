@@ -1,15 +1,11 @@
-import {
-    IOperatorRegistry as DevContract,
-    IOperatorRegistryInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/IOperatorRegistry'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/OperatorRegistry.abi.json' assert { type: 'json' }
-
+import { OperatorRegistry__factory } from '@towns-protocol/generated/dev/typings/factories/OperatorRegistry__factory'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 
-export class IOperatorRegistryShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+const { abi, connect } = OperatorRegistry__factory
+
+export class IOperatorRegistryShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

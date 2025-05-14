@@ -6,14 +6,14 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployMembership {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(21);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(22);
 
         // Funds
         arr.p(IMembership.revenue.selector);
@@ -27,6 +27,7 @@ library DeployMembership {
 
         // Duration
         arr.p(IMembership.getMembershipDuration.selector);
+        arr.p(IMembership.setMembershipDuration.selector);
 
         // Pricing Module
         arr.p(IMembership.setMembershipPricingModule.selector);
@@ -70,6 +71,6 @@ library DeployMembership {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("MembershipFacet.sol", "");
+        return LibDeploy.deployCode("MembershipFacet.sol", "");
     }
 }

@@ -36,15 +36,19 @@ import {
     findEthereumProviders,
 } from '../space/entitlements/entitlement'
 
-import { IRuleEntitlementBase } from '../space/entitlements/IRuleEntitlementShim'
+import {
+    IRuleEntitlementBase,
+    RuleEntitlementShim,
+} from '../space/entitlements/RuleEntitlementShim'
 import {
     createEntitlementStruct,
     createLegacyEntitlementStruct,
     convertRuleDataV1ToV2,
 } from '../space/entitlements/ConvertersEntitlements'
-import { IRuleEntitlementV2Base } from '../space/entitlements/IRuleEntitlementV2Shim'
-import { RuleEntitlementV2Shim } from '../space/entitlements/RuleEntitlementV2Shim'
-import { RuleEntitlementShim } from '../space/entitlements/RuleEntitlementShim'
+import {
+    IRuleEntitlementV2Base,
+    RuleEntitlementV2Shim,
+} from '../space/entitlements/RuleEntitlementV2Shim'
 import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
@@ -66,6 +70,7 @@ import {
     IsTokenBanned,
 } from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
+import { ISwapRouterBase } from '@towns-protocol/generated/dev/typings/ISwapRouter'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -1912,6 +1917,28 @@ export class SpaceDapp {
                         value: amount,
                     },
                 ),
+            txnOpts,
+        )
+    }
+
+    public async executeSwap(
+        spaceId: string,
+        exactInputParams: ISwapRouterBase.ExactInputParamsStruct,
+        routerParams: ISwapRouterBase.RouterParamsStruct,
+        poster: string,
+        value: bigint,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () =>
+                space.Swap.write(signer).executeSwap(exactInputParams, routerParams, poster, {
+                    value,
+                }),
             txnOpts,
         )
     }

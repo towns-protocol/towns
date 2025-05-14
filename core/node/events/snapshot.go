@@ -2,6 +2,7 @@ package events
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"slices"
 
@@ -273,11 +274,18 @@ func update_Snapshot_Space(
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot").
+			Func("update_Snapshot_Space").
+			Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+			Tag("eventHash", eventHash).Tag("eventNum", eventNum)
 	}
+
 	switch content := spacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
-		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event").
+			Func("update_Snapshot_Space").
+			Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+			Tag("eventHash", eventHash).Tag("eventNum", eventNum)
 	case *SpacePayload_Channel:
 		channel := &SpacePayload_ChannelMetadata{
 			ChannelId:         content.Channel.ChannelId,
@@ -301,7 +309,11 @@ func update_Snapshot_Space(
 				// Find the existing channel and copy over the settings if new ones are not provided.
 				existingChannel, err := findChannel(snapshot.SpaceContent.Channels, content.Channel.ChannelId)
 				if err != nil {
-					return err
+					return AsRiverError(err, Err_INTERNAL).Message("Could not update channel settings").
+						Func("update_Snapshot_Space").
+						Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+						Tag("eventHash", eventHash).Tag("eventNum", eventNum).
+						Tag("channelId", content.Channel.ChannelId)
 				}
 				channel.Settings = existingChannel.Settings
 			}
@@ -311,14 +323,22 @@ func update_Snapshot_Space(
 	case *SpacePayload_UpdateChannelAutojoin_:
 		channel, err := findChannel(snapshot.SpaceContent.Channels, content.UpdateChannelAutojoin.ChannelId)
 		if err != nil {
-			return err
+			return AsRiverError(err, Err_INTERNAL).Message("Could not update channel autojoin").
+				Func("update_Snapshot_Space").
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("eventHash", eventHash).Tag("eventNum", eventNum).
+				Tag("channelId", content.UpdateChannelAutojoin.ChannelId)
 		}
 		channel.Settings.Autojoin = content.UpdateChannelAutojoin.Autojoin
 		return nil
 	case *SpacePayload_UpdateChannelHideUserJoinLeaveEvents_:
 		channel, err := findChannel(snapshot.SpaceContent.Channels, content.UpdateChannelHideUserJoinLeaveEvents.ChannelId)
 		if err != nil {
-			return err
+			return AsRiverError(err, Err_INTERNAL).Message("Could not update channel HideUserJoinLeaveEvents").
+				Func("update_Snapshot_Space").
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("eventHash", eventHash).Tag("eventNum", eventNum).
+				Tag("channelId", content.UpdateChannelHideUserJoinLeaveEvents.ChannelId)
 		}
 		channel.Settings.HideUserJoinLeaveEvents = content.UpdateChannelHideUserJoinLeaveEvents.HideUserJoinLeaveEvents
 		return nil
@@ -610,7 +630,14 @@ func update_Snapshot_Member(
 ) error {
 	snapshot := iSnapshot.Members
 	if snapshot == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a membership snapshot")
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"blockheader snapshot is not a membership snapshot",
+		).Func("update_Snapshot_Member").
+			Tag("eventHash", hex.EncodeToString(eventHash)).
+			Tag("eventNum", eventNum).
+			Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+			Tag("miniblockNum", miniblockNum)
 	}
 	switch content := memberPayload.Content.(type) {
 	case *MemberPayload_Membership_:
@@ -629,49 +656,95 @@ func update_Snapshot_Member(
 			// not tracking invites currently
 			return nil
 		case MembershipOp_SO_UNSPECIFIED:
-			return RiverError(Err_INVALID_ARGUMENT, "membership op is unspecified")
+			return RiverError(Err_INVALID_ARGUMENT, "membership op is unspecified").
+				Func("update_Snapshot_Member").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		default:
-			return RiverError(Err_INVALID_ARGUMENT, "unknown membership op %v", content.Membership.Op)
+			return RiverError(Err_INVALID_ARGUMENT, "unknown membership op %v", content.Membership.Op).
+				Func("update_Snapshot_Member").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 	case *MemberPayload_KeySolicitation_:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return err
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of KeySolicitation member payload in stream members").
+				Func("update_Snapshot_Member").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 		applyKeySolicitation(member, content.KeySolicitation)
 		return nil
 	case *MemberPayload_KeyFulfillment_:
 		member, err := findMember(snapshot.Joined, content.KeyFulfillment.UserAddress)
 		if err != nil {
-			return AsRiverError(err).Tag("contentType", "KeySolicitation")
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of KeyFulfillment member payload in stream members").
+				Func("update_Snapshot_Member").
+				Tag("contentType", "KeySolicitation").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("KeyFulfillment.UserAddress", hex.EncodeToString(content.KeyFulfillment.UserAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 		applyKeyFulfillment(member, content.KeyFulfillment)
 		return nil
 	case *MemberPayload_DisplayName:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return AsRiverError(err).Tag("contentType", "DisplayName")
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of DisplayName member payload in stream members").
+				Func("update_Snapshot_Member").
+				Tag("contentType", "DisplayName").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 		member.DisplayName = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *MemberPayload_Username:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return AsRiverError(err).Tag("contentType", "Username")
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of UserName member payload in stream members").
+				Tag("contentType", "Username").
+				Func("update_Snapshot_Member").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 		member.Username = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *MemberPayload_EnsAddress:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return AsRiverError(err).Tag("contentType", "EnsAddress")
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of EnsAddress member payload in stream members").
+				Func("update_Snapshot_Member").
+				Tag("contentType", "EnsAddress").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 		member.EnsAddress = content.EnsAddress
 		return nil
 	case *MemberPayload_Nft_:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return AsRiverError(err).Tag("contentType", "Nft")
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of Nft member payload in stream members").
+				Func("update_Snapshot_Member").
+				Tag("contentType", "Nft").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
 		}
 		member.Nft = content.Nft
 		return nil
@@ -720,9 +793,15 @@ func update_Snapshot_Member(
 
 			sender, err := findMember(snapshot.Joined, content.MemberBlockchainTransaction.FromUserAddress)
 			if err != nil {
-				return AsRiverError(err).
+				return AsRiverError(err, Err_NOT_FOUND).Message("Could not find FromUserAddress of member blockchain transaction payload in stream members").
+					Func("update_Snapshot_Member").
 					Tag("party", "sender").
-					Tag("contentType", "MemberBlockchainTransaction")
+					Tag("contentType", "MemberBlockchainTransaction").
+					Tag("eventHash", hex.EncodeToString(eventHash)).
+					Tag("eventNum", eventNum).
+					Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+					Tag("miniblockNum", miniblockNum).
+					Tag("FromUserAddress", hex.EncodeToString(content.MemberBlockchainTransaction.FromUserAddress))
 			}
 			if sender.TipsSent == nil {
 				sender.TipsSent = make(map[string]uint64)
@@ -741,9 +820,15 @@ func update_Snapshot_Member(
 
 			receiver, err := findMember(snapshot.Joined, transactionContent.Tip.ToUserAddress)
 			if err != nil {
-				return AsRiverError(err).
+				return AsRiverError(err, Err_NOT_FOUND).Message("Could not find ToUserAddress of member Tip transaction payload in stream members").
+					Func("update_Snapshot_Member").
 					Tag("party", "receiver").
-					Tag("contentType", "MemberBlockchainTransaction")
+					Tag("contentType", "MemberBlockchainTransaction").
+					Tag("eventHash", hex.EncodeToString(eventHash)).
+					Tag("eventNum", eventNum).
+					Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+					Tag("miniblockNum", miniblockNum).
+					Tag("ToUserAddress", hex.EncodeToString(transactionContent.Tip.ToUserAddress))
 			}
 			if receiver.TipsReceived == nil {
 				receiver.TipsReceived = make(map[string]uint64)
@@ -766,10 +851,21 @@ func update_Snapshot_Member(
 		case *BlockchainTransaction_SpaceReview_:
 			return nil
 		default:
-			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown member blockchain transaction type %T", transactionContent))
+			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown member blockchain transaction type %T", transactionContent)).
+				Func("update_Snapshot_Member").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
+
 		}
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown membership payload type %T", memberPayload.Content))
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown membership payload type %T", memberPayload.Content)).
+			Func("update_Snapshot_Member").
+			Tag("eventHash", hex.EncodeToString(eventHash)).
+			Tag("eventNum", eventNum).
+			Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+			Tag("miniblockNum", miniblockNum)
 	}
 }
 
@@ -834,7 +930,7 @@ func removeSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn 
 }
 
 func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*SpacePayload_ChannelMetadata, error) {
-	md, err := findSorted(
+	metadata, err := findSorted(
 		channels,
 		channelId,
 		bytes.Compare,
@@ -843,9 +939,9 @@ func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*S
 		},
 	)
 	if err != nil {
-		return nil, AsRiverError(err).Func("findChannel")
+		return nil, AsRiverError(err).Func("findChannel").Tag("channelId", hex.EncodeToString(channelId))
 	}
-	return md, nil
+	return metadata, nil
 }
 
 func insertChannel(
@@ -869,7 +965,7 @@ func findMember(
 	members []*MemberPayload_Snapshot_Member,
 	memberAddress []byte,
 ) (*MemberPayload_Snapshot_Member, error) {
-	md, err := findSorted(
+	payload, err := findSorted(
 		members,
 		memberAddress,
 		bytes.Compare,
@@ -878,9 +974,10 @@ func findMember(
 		},
 	)
 	if err != nil {
-		return nil, AsRiverError(err).Func("findMember")
+		return nil, AsRiverError(err).Func("findMember").
+			Tag("memberAddress", hex.EncodeToString(memberAddress))
 	}
-	return md, nil
+	return payload, nil
 }
 
 func removeMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) []*MemberPayload_Snapshot_Member {
@@ -915,7 +1012,7 @@ func findUserMembership(
 	memberships []*UserPayload_UserMembership,
 	streamId []byte,
 ) (*UserPayload_UserMembership, error) {
-	md, err := findSorted(
+	payload, err := findSorted(
 		memberships,
 		streamId,
 		bytes.Compare,
@@ -924,9 +1021,10 @@ func findUserMembership(
 		},
 	)
 	if err != nil {
-		return nil, AsRiverError(err).Func("findUserMembership")
+		return nil, AsRiverError(err).Func("findUserMembership").
+			Tag("streamId", hex.EncodeToString(streamId))
 	}
-	return md, nil
+	return payload, nil
 }
 
 func insertUserMembership(

@@ -770,6 +770,31 @@ export default [
   },
   {
     "type": "error",
+    "name": "ChannelService__ChannelAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ChannelService__ChannelDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ChannelService__ChannelDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ChannelService__RoleAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ChannelService__RoleDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ERC5643__DurationZero",
     "inputs": []
   },
@@ -919,6 +944,11 @@ export default [
   {
     "type": "error",
     "name": "Roles__RoleDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__RoleIsImmutable",
     "inputs": []
   },
   {

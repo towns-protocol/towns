@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -33,7 +34,62 @@ type mbJob struct {
 	candidate *MiniblockInfo
 }
 
-func (j *mbJob) produceCandidate(ctx context.Context) error {
+func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {
+	if blockNum == 0 {
+		return false
+	}
+
+	cc := candidateCount / 10
+
+	if cc <= 0 {
+		return false
+	}
+
+	if cc > 10 {
+		cc = 10
+	}
+
+	// slow down candidate production by 2x for every 10 candidates for up to 450x slowdown.
+	// i.e. 900 seconds -> once every 15 minutes.
+	slowDownFactor := min(1<<cc, 450)
+
+	// Really shouldn't happen, but just in case.
+	if slowDownFactor <= 1 {
+		return false
+	}
+
+	return uint64(blockNum)%uint64(slowDownFactor) != 0
+}
+
+func (j *mbJob) shouldContinue(ctx context.Context, blockNum crypto.BlockNumber) error {
+	if blockNum == 0 {
+		return nil
+	}
+
+	view, err := j.stream.GetView(ctx)
+	if err != nil {
+		return err
+	}
+
+	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(ctx, j.stream.StreamId(), view.minipool.generation)
+	if err != nil {
+		return err
+	}
+
+	if skipCandidate(candidateCount, blockNum) {
+		return RiverError(Err_RESOURCE_EXHAUSTED, "mbJob.shouldContinue: candidate production is slowed down",
+			"candidateCount", candidateCount, "blockNum", blockNum, "streamId", j.stream.streamId, "miniblockGeneration", view.minipool.generation)
+	}
+
+	return nil
+}
+
+func (j *mbJob) produceCandidate(ctx context.Context, blockNum crypto.BlockNumber) error {
+	err := j.shouldContinue(ctx, blockNum)
+	if err != nil {
+		return err
+	}
+
 	// miniblock producer creates mbJob's only on nodes that participate in stream quorum.
 	j.quorumNodes, j.syncNodes, _ = j.stream.GetQuorumAndSyncNodesAndIsLocal()
 	j.replicated = len(j.quorumNodes) > 1
@@ -45,7 +101,7 @@ func (j *mbJob) produceCandidate(ctx context.Context) error {
 			Tag("streamId", j.stream.streamId)
 	}
 
-	err := j.makeCandidate(ctx)
+	err = j.makeCandidate(ctx)
 	if err != nil {
 		return err
 	}
@@ -154,6 +210,10 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	for i, p := range proposals {
 		converted[i] = mbProposalFromProto(p.response.Proposal)
 
+		if converted[i].newMiniblockNum != view.minipool.generation {
+			continue
+		}
+
 		for _, e := range p.response.MissingEvents {
 			parsed, err := ParseEvent(e)
 			if err != nil {
@@ -164,7 +224,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 				added[parsed.Hash] = true
 
 				if !view.minipool.events.Has(parsed.Hash) {
-					newView, err := j.stream.AddEvent2(ctx, parsed)
+					newView, err := j.stream.addEvent(ctx, parsed, true)
 					if err == nil {
 						view = newView
 					} else {

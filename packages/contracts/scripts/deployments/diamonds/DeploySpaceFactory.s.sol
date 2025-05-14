@@ -6,13 +6,25 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
-import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
-import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.sol";
+import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
+import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.sol";
+import {DeployProxyManager} from "@towns-protocol/diamond/scripts/deployments/utils/DeployProxyManager.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DeployFeatureManager} from "../facets/DeployFeatureManager.s.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
+import {DeployPricingModules} from "../facets/DeployPricingModules.s.sol";
+import {DeploySpaceFactoryInit} from "../facets/DeploySpaceFactoryInit.s.sol";
+import {DeployArchitect} from "../facets/DeployArchitect.s.sol";
+import {DeployCreateSpace} from "../facets/DeployCreateSpace.s.sol";
+import {DeployImplementationRegistry} from "../facets/DeployImplementationRegistry.s.sol";
+import {DeployMockLegacyArchitect} from "../facets/DeployMockLegacyArchitect.s.sol";
+import {DeployPartnerRegistry} from "../facets/DeployPartnerRegistry.s.sol";
+import {DeployPlatformRequirements} from "../facets/DeployPlatformRequirements.s.sol";
+import {DeployWalletLink} from "../facets/DeployWalletLink.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
@@ -25,42 +37,19 @@ import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 import {DeploySpace} from "scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-import {DeployArchitect} from "scripts/deployments/facets/DeployArchitect.s.sol";
-import {DeployCreateSpace} from "scripts/deployments/facets/DeployCreateSpace.s.sol";
-import {DeployImplementationRegistry} from "scripts/deployments/facets/DeployImplementationRegistry.s.sol";
-import {DeployMockLegacyArchitect} from "scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
-import {DeployPartnerRegistry} from "scripts/deployments/facets/DeployPartnerRegistry.s.sol";
-import {DeployPlatformRequirements} from "scripts/deployments/facets/DeployPlatformRequirements.s.sol";
-import {DeployPricingModules} from "scripts/deployments/facets/DeployPricingModules.s.sol";
-import {DeployProxyManager} from "scripts/deployments/facets/DeployProxyManager.s.sol";
-import {DeploySpaceFactoryInit} from "scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
-import {DeployWalletLink} from "scripts/deployments/facets/DeployWalletLink.s.sol";
-import {DeploySLCEIP6565} from "scripts/deployments/utils/DeploySLCEIP6565.s.sol";
 import {DeployTieredLogPricingV2} from "scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
 import {DeployTieredLogPricingV3} from "scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
-import {DeployFeatureManager} from "scripts/deployments/facets/DeployFeatureManager.s.sol";
 
 contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
-    DeployArchitect private architectHelper = new DeployArchitect();
-    DeployCreateSpace private createSpaceHelper = new DeployCreateSpace();
-    DeployPricingModules private pricingModulesHelper = new DeployPricingModules();
-    DeployImplementationRegistry private registryHelper = new DeployImplementationRegistry();
-    DeployWalletLink private walletLinkHelper = new DeployWalletLink();
-    DeployProxyManager private proxyManagerHelper = new DeployProxyManager();
-    DeployPlatformRequirements private platformReqsHelper = new DeployPlatformRequirements();
-    DeployMockLegacyArchitect private deployMockLegacyArchitect = new DeployMockLegacyArchitect();
-    DeployPartnerRegistry private partnerRegistryHelper = new DeployPartnerRegistry();
-    DeployFeatureManager private featureManagerHelper = new DeployFeatureManager();
+
     // dependencies
     DeploySpace private deploySpace = new DeploySpace();
     DeploySpaceOwner private deploySpaceOwner = new DeploySpaceOwner();
     DeployTieredLogPricingV2 private deployTieredLogPricingV2 = new DeployTieredLogPricingV2();
     DeployTieredLogPricingV3 private deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
-    DeploySLCEIP6565 private deployVerifierLib = new DeploySLCEIP6565();
-    DeploySpaceFactoryInit private deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
     // helpers
     address private multiInit;
@@ -72,11 +61,9 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     address public legacyRuleEntitlement;
     address public ruleEntitlement;
     address public spaceOwner;
-    address public spaceProxyInitializer;
     address public tieredLogPricingV2;
     address public tieredLogPricingV3;
     address public fixedPricing;
-    address public sclEip6565;
     address public mockDelegationRegistry;
 
     // init
@@ -91,44 +78,59 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         spaceImpl = deploySpace.deploy(deployer);
         spaceOwner = deploySpaceOwner.deploy(deployer);
 
+        // Queue up all core facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("DiamondCutFacet");
+        facetHelper.add("DiamondLoupeFacet");
+        facetHelper.add("IntrospectionFacet");
+        facetHelper.add("OwnableFacet");
+        facetHelper.add("UserEntitlement");
+        facetHelper.add("RuleEntitlementV2");
+        facetHelper.add("RuleEntitlement");
+        facetHelper.add("FixedPricing");
+
+        // Deploy the first batch of facets
+        facetHelper.deployBatch(deployer);
+
         // entitlement modules
-        userEntitlement = facetHelper.deploy("UserEntitlement", deployer);
-        ruleEntitlement = facetHelper.deploy("RuleEntitlementV2", deployer);
-        legacyRuleEntitlement = facetHelper.deploy("RuleEntitlement", deployer);
+        userEntitlement = facetHelper.getDeployedAddress("UserEntitlement");
+        ruleEntitlement = facetHelper.getDeployedAddress("RuleEntitlementV2");
+        legacyRuleEntitlement = facetHelper.getDeployedAddress("RuleEntitlement");
 
         // pricing modules
         tieredLogPricingV2 = deployTieredLogPricingV2.deploy(deployer);
         tieredLogPricingV3 = deployTieredLogPricingV3.deploy(deployer);
-        fixedPricing = facetHelper.deploy("FixedPricing", deployer);
+        fixedPricing = facetHelper.getDeployedAddress("FixedPricing");
+
         // pricing modules
         pricingModules.push(tieredLogPricingV2);
         pricingModules.push(tieredLogPricingV3);
         pricingModules.push(fixedPricing);
 
-        multiInit = facetHelper.deploy("MultiInit", deployer);
+        multiInit = facetHelper.getDeployedAddress("MultiInit");
 
-        address facet = facetHelper.deploy("DiamondCutFacet", deployer);
+        address facet = facetHelper.getDeployedAddress("DiamondCutFacet");
         addFacet(
             DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
-        facet = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        facet = facetHelper.getDeployedAddress("DiamondLoupeFacet");
         addFacet(
             DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
-        facet = facetHelper.deploy("IntrospectionFacet", deployer);
+        facet = facetHelper.getDeployedAddress("IntrospectionFacet");
         addFacet(
             DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployIntrospection.makeInitData()
         );
 
-        facet = facetHelper.deploy("OwnableFacet", deployer);
+        facet = facetHelper.getDeployedAddress("OwnableFacet");
         addFacet(
             DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
@@ -138,27 +140,54 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         if (isAnvil()) {
-            mockDelegationRegistry = facetHelper.deploy("MockDelegationRegistry", deployer);
+            facetHelper.add("MockDelegationRegistry");
+            facetHelper.add("MockLegacyArchitect");
+        }
+
+        // Queue up all feature facets for batch deployment
+        facetHelper.add("MetadataFacet");
+        facetHelper.add("Architect");
+        facetHelper.add("CreateSpaceFacet");
+        facetHelper.add("ProxyManager");
+        facetHelper.add("PausableFacet");
+        facetHelper.add("PlatformRequirementsFacet");
+        facetHelper.add("PricingModulesFacet");
+        facetHelper.add("ImplementationRegistryFacet");
+        facetHelper.add("SCL_EIP6565");
+        facetHelper.add("WalletLink");
+        facetHelper.add("EIP712Facet");
+        facetHelper.add("PartnerRegistry");
+        facetHelper.add("FeatureManagerFacet");
+        facetHelper.add("SpaceProxyInitializer");
+        facetHelper.add("SpaceFactoryInit");
+
+        // Deploy the feature facets in a batch
+        facetHelper.deployBatch(deployer);
+
+        if (isAnvil()) {
+            mockDelegationRegistry = facetHelper.getDeployedAddress("MockDelegationRegistry");
+            address legacyArchitect = facetHelper.getDeployedAddress("MockLegacyArchitect");
+            addFacet(
+                DeployMockLegacyArchitect.makeCut(legacyArchitect, IDiamond.FacetCutAction.Add),
+                legacyArchitect,
+                DeployMockLegacyArchitect.makeInitData()
+            );
         } else {
             mockDelegationRegistry = 0x00000000000000447e69651d841bD8D104Bed493;
         }
 
-        spaceProxyInitializer = facetHelper.deploy("SpaceProxyInitializer", deployer);
-        spaceFactoryInit = deploySpaceFactoryInit.deploy(deployer);
-        spaceFactoryInitData = deploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
-
-        address facet = facetHelper.deploy("MetadataFacet", deployer);
+        address facet = facetHelper.getDeployedAddress("MetadataFacet");
         addFacet(
             DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployMetadata.makeInitData(bytes32("SpaceFactory"), "")
         );
 
-        facet = architectHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("Architect");
         addFacet(
-            architectHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            architectHelper.makeInitData(
+            DeployArchitect.makeInitData(
                 spaceOwner,
                 userEntitlement,
                 ruleEntitlement,
@@ -166,41 +195,32 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             )
         );
 
-        facet = createSpaceHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("CreateSpaceFacet");
         addFacet(
-            createSpaceHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployCreateSpace.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            createSpaceHelper.makeInitData("")
+            DeployCreateSpace.makeInitData()
         );
 
-        if (isAnvil()) {
-            facet = deployMockLegacyArchitect.deploy(deployer);
-            addFacet(
-                deployMockLegacyArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
-                facet,
-                deployMockLegacyArchitect.makeInitData("")
-            );
-        }
-
-        facet = proxyManagerHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("ProxyManager");
         addFacet(
-            proxyManagerHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployProxyManager.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            proxyManagerHelper.makeInitData(spaceImpl)
+            DeployProxyManager.makeInitData(spaceImpl)
         );
 
-        facet = facetHelper.deploy("PausableFacet", deployer);
+        facet = facetHelper.getDeployedAddress("PausableFacet");
         addFacet(
             DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployPausable.makeInitData()
         );
 
-        facet = platformReqsHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("PlatformRequirementsFacet");
         addFacet(
-            platformReqsHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployPlatformRequirements.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            platformReqsHelper.makeInitData(
+            DeployPlatformRequirements.makeInitData(
                 deployer, // feeRecipient
                 500, // membershipBps 5%
                 0.001 ether, // membershipFee
@@ -210,49 +230,52 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             )
         );
 
-        facet = pricingModulesHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("PricingModulesFacet");
         addFacet(
-            pricingModulesHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployPricingModules.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            pricingModulesHelper.makeInitData(pricingModules)
+            DeployPricingModules.makeInitData(pricingModules)
         );
 
-        facet = registryHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("ImplementationRegistryFacet");
         addFacet(
-            registryHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployImplementationRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            registryHelper.makeInitData("")
+            DeployImplementationRegistry.makeInitData()
         );
 
-        facet = walletLinkHelper.deploy(deployer);
-        sclEip6565 = deployVerifierLib.deploy(deployer);
+        address sclEip6565 = facetHelper.getDeployedAddress("SCL_EIP6565");
+        facet = facetHelper.getDeployedAddress("WalletLink");
         addFacet(
-            walletLinkHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployWalletLink.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            walletLinkHelper.makeInitData(sclEip6565)
+            DeployWalletLink.makeInitData(sclEip6565)
         );
 
-        facet = facetHelper.deploy("EIP712Facet", deployer);
+        facet = facetHelper.getDeployedAddress("EIP712Facet");
         addFacet(
             DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployEIP712Facet.makeInitData("SpaceFactory", "1")
         );
 
-        facet = partnerRegistryHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("PartnerRegistry");
         addFacet(
-            partnerRegistryHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployPartnerRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            partnerRegistryHelper.makeInitData("")
+            DeployPartnerRegistry.makeInitData()
         );
 
-        facet = featureManagerHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("FeatureManagerFacet");
         addFacet(
-            featureManagerHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            DeployFeatureManager.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
-            featureManagerHelper.makeInitData("")
+            DeployFeatureManager.makeInitData()
         );
 
+        address spaceProxyInitializer = facetHelper.getDeployedAddress("SpaceProxyInitializer");
+        spaceFactoryInit = facetHelper.getDeployedAddress("SpaceFactoryInit");
+        spaceFactoryInitData = DeploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
         addInit(spaceFactoryInit, spaceFactoryInitData);
 
         return
@@ -264,23 +287,33 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
-        address facet;
+        // Queue up all requested facets for batch deployment
+        for (uint256 i; i < facets.length; ++i) {
+            facetHelper.add(facets[i]);
+        }
+
+        if (!facetHelper.isDeployed("SCL_EIP6565")) {
+            facetHelper.add("SCL_EIP6565");
+        }
+
+        // Deploy all requested facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
+            address facet = facetHelper.getDeployedAddress(facetName);
 
             if (facetName.eq("MetadataFacet")) {
-                facet = facetHelper.deploy("MetadataFacet", deployer);
                 addFacet(
                     DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
                     DeployMetadata.makeInitData(bytes32("SpaceFactory"), "")
                 );
             } else if (facetName.eq("Architect")) {
-                facet = architectHelper.deploy(deployer);
                 addFacet(
-                    architectHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    architectHelper.makeInitData(
+                    DeployArchitect.makeInitData(
                         spaceOwner,
                         userEntitlement,
                         ruleEntitlement,
@@ -288,32 +321,28 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                     )
                 );
             } else if (facetName.eq("MockLegacyArchitect")) {
-                facet = deployMockLegacyArchitect.deploy(deployer);
                 addFacet(
-                    deployMockLegacyArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployMockLegacyArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    deployMockLegacyArchitect.makeInitData("")
+                    DeployMockLegacyArchitect.makeInitData()
                 );
             } else if (facetName.eq("ProxyManager")) {
-                facet = proxyManagerHelper.deploy(deployer);
                 addFacet(
-                    proxyManagerHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployProxyManager.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    proxyManagerHelper.makeInitData(spaceImpl)
+                    DeployProxyManager.makeInitData(spaceImpl)
                 );
             } else if (facetName.eq("PausableFacet")) {
-                facet = facetHelper.deploy("PausableFacet", deployer);
                 addFacet(
                     DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
                     DeployPausable.makeInitData()
                 );
             } else if (facetName.eq("PlatformRequirementsFacet")) {
-                facet = platformReqsHelper.deploy(deployer);
                 addFacet(
-                    platformReqsHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployPlatformRequirements.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    platformReqsHelper.makeInitData(
+                    DeployPlatformRequirements.makeInitData(
                         deployer, // feeRecipient
                         500, // membershipBps 5%
                         0.005 ether, // membershipFee
@@ -323,54 +352,47 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                     )
                 );
             } else if (facetName.eq("PricingModulesFacet")) {
-                facet = pricingModulesHelper.deploy(deployer);
                 addFacet(
-                    pricingModulesHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployPricingModules.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    pricingModulesHelper.makeInitData(pricingModules)
+                    DeployPricingModules.makeInitData(pricingModules)
                 );
-            } else if (facetName.eq("ImplementationRegistry")) {
-                facet = registryHelper.deploy(deployer);
+            } else if (facetName.eq("ImplementationRegistryFacet")) {
                 addFacet(
-                    registryHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployImplementationRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    registryHelper.makeInitData("")
+                    DeployImplementationRegistry.makeInitData()
                 );
             } else if (facetName.eq("WalletLink")) {
-                facet = walletLinkHelper.deploy(deployer);
-                sclEip6565 = deployVerifierLib.deploy(deployer);
+                address sclEip6565 = facetHelper.getDeployedAddress("SCL_EIP6565");
                 addFacet(
-                    walletLinkHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployWalletLink.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    walletLinkHelper.makeInitData(sclEip6565)
+                    DeployWalletLink.makeInitData(sclEip6565)
                 );
             } else if (facetName.eq("EIP712Facet")) {
-                facet = facetHelper.deploy("EIP712Facet", deployer);
                 addFacet(
                     DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
                     DeployEIP712Facet.makeInitData("SpaceFactory", "1")
                 );
             } else if (facetName.eq("PartnerRegistry")) {
-                facet = partnerRegistryHelper.deploy(deployer);
                 addFacet(
-                    partnerRegistryHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployPartnerRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    partnerRegistryHelper.makeInitData("")
+                    DeployPartnerRegistry.makeInitData()
                 );
             } else if (facetName.eq("CreateSpaceFacet")) {
-                facet = createSpaceHelper.deploy(deployer);
                 addFacet(
-                    createSpaceHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployCreateSpace.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    createSpaceHelper.makeInitData("")
+                    DeployCreateSpace.makeInitData()
                 );
-            } else if (facetName.eq("FeatureManager")) {
-                facet = featureManagerHelper.deploy(deployer);
+            } else if (facetName.eq("FeatureManagerFacet")) {
                 addFacet(
-                    featureManagerHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    DeployFeatureManager.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
-                    featureManagerHelper.makeInitData("")
+                    DeployFeatureManager.makeInitData()
                 );
             }
         }
@@ -381,7 +403,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         string[] memory facetNames
     ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
-        return this.getCuts();
+        return baseFacets();
     }
 
     function __deploy(address deployer) internal override returns (address) {

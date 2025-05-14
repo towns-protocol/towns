@@ -27,8 +27,8 @@ import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'
-import { RuleEntitlementShim } from './entitlements/RuleEntitlementShim'
-import { RuleEntitlementV2Shim } from './entitlements/RuleEntitlementV2Shim'
+import { RuleEntitlementShim, IRuleEntitlementBase } from './entitlements/RuleEntitlementShim'
+import { RuleEntitlementV2Shim, IRuleEntitlementV2Base } from './entitlements/RuleEntitlementV2Shim'
 import { IBanningShim } from './IBanningShim'
 import { ITippingShim } from './ITippingShim'
 import { IERC721AQueryableShim } from '../erc-721/IERC721AQueryableShim'
@@ -37,8 +37,7 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { IRuleEntitlementBase } from './entitlements/IRuleEntitlementShim'
-import { IRuleEntitlementV2Base } from './entitlements/IRuleEntitlementV2Shim'
+import { ISwapShim } from './ISwapShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -48,7 +47,7 @@ export class Space {
     private readonly address: string
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
-    public readonly provider: ethers.providers.Provider | undefined
+    public readonly provider: ethers.providers.Provider
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
     private readonly multicall: IMulticallShim
@@ -64,12 +63,13 @@ export class Space {
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
     private readonly treasury: ITreasuryShim
+    private readonly swap: ISwapShim
 
     constructor(
         address: string,
         spaceId: string,
         config: BaseChainConfig,
-        provider: ethers.providers.Provider | undefined,
+        provider: ethers.providers.Provider,
     ) {
         this.address = address
         this.spaceId = spaceId
@@ -92,6 +92,7 @@ export class Space {
         this.tipping = new ITippingShim(address, provider)
         this.review = new IReviewShim(address, provider)
         this.treasury = new ITreasuryShim(address, provider)
+        this.swap = new ISwapShim(address, provider)
     }
 
     private getAllShims() {
@@ -110,6 +111,7 @@ export class Space {
             this.erc721A,
             this.tipping,
             this.treasury,
+            this.swap,
         ] as const
     }
 
@@ -179,6 +181,10 @@ export class Space {
 
     public get Treasury(): ITreasuryShim {
         return this.treasury
+    }
+
+    public get Swap(): ISwapShim {
+        return this.swap
     }
 
     public async totalTips({ currency }: { currency: string }): Promise<{

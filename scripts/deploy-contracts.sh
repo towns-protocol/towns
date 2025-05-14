@@ -34,6 +34,10 @@ set -a
 . .env.localhost
 set +a
 
+: ${BASE_RPC_URL:?}
+: ${BASE_ANVIL_RPC_URL:?}
+: ${RIVER_ANVIL_RPC_URL:?}
+
 if [ "${1-}" != "nobuild" ]; then
     yarn turbo build --filter=@towns-protocol/contracts
 fi
@@ -48,6 +52,11 @@ cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 
 # Deploy base contracts
 "$SCRIPT_DIR/deploy-base-contracts.sh" nobuild
+
+# Deploy Multicall3
+MULTICALL3_ADDRESS=0xcA11bde05977b3631167028862bE2a173976CA11
+MULTICALL3_BYTECODE=$(cast code $MULTICALL3_ADDRESS --rpc-url $BASE_RPC_URL)
+cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $RIVER_ANVIL_RPC_URL
 
 # River Registry
 make deploy-any-local context=$RIVER_ENV rpc=river_anvil type=diamonds contract=DeployRiverRegistry

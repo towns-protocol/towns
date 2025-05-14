@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -34,8 +35,8 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	//
-	esm *ephemeralStreamMonitor
+	esm           *ephemeralStreamMonitor
+	streamTrimmer *streamTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -115,6 +116,8 @@ func NewPostgresStreamStore(
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
 	ephemeralStreamTtl time.Duration,
+	streamMiniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
+	trimmingBatchSize int64,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -142,6 +145,12 @@ func NewPostgresStreamStore(
 
 	// Start the ephemeral stream monitor.
 	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	if err != nil {
+		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+	}
+
+	// Start the stream trimmer
+	store.streamTrimmer, err = newStreamTrimmer(ctx, store, streamMiniblocksToKeep, trimmingBatchSize)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
@@ -1333,6 +1342,59 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 	return miniblock, nil
 }
 
+func (s *PostgresStreamStore) GetMiniblockCandidateCount(
+	ctx context.Context,
+	streamId StreamId,
+	miniblockNumber int64,
+) (int, error) {
+	var count int
+	err := s.txRunner(
+		ctx,
+		"GetMiniblockCandidateCount",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			count, err = s.getMiniblockCandidateCountTx(ctx, tx, streamId, miniblockNumber)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+		"miniblockNumber", miniblockNumber,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (s *PostgresStreamStore) getMiniblockCandidateCountTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblockNumber int64,
+) (int, error) {
+	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+		return 0, err
+	}
+
+	var count int
+	if err := tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT COUNT(*) FROM {{miniblock_candidates}} WHERE stream_id = $1 AND seq_num = $2",
+			streamId,
+		),
+		streamId,
+		miniblockNumber,
+	).Scan(&count); err != nil {
+		// if errors.Is(err, pgx.ErrNoRows) {
+		// 	return 0, RiverError(Err_NOT_FOUND, "Miniblock candidate not found")
+		// }
+		return 0, err
+	}
+	return count, nil
+}
+
 func (s *PostgresStreamStore) WriteMiniblocks(
 	ctx context.Context,
 	streamId StreamId,
@@ -1560,6 +1622,11 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		); err != nil {
 			return err
 		}
+
+		// Let the stream trimmer know that a new snapshot miniblock was created.
+		if s.streamTrimmer != nil {
+			s.streamTrimmer.tryScheduleTrimming(ctx, tx, streamId)
+		}
 	}
 
 	// Delete miniblock candidates up to the last miniblock number.
@@ -1617,7 +1684,12 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	s.cleanupLockFunc()
 	// Cancel the notify listening func to release the listener connection before closing the pool.
 	s.cleanupListenFunc()
-	s.esm.close()
+	if s.esm != nil {
+		s.esm.close()
+	}
+	if s.streamTrimmer != nil {
+		s.streamTrimmer.close()
+	}
 	s.PostgresEventStore.Close(ctx)
 }
 

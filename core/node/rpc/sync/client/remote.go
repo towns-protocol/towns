@@ -54,9 +54,27 @@ func NewRemoteSyncer(
 		return nil, err
 	}
 
-	if !responseStream.Receive() {
+	// Create a timer for the first Receive
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	firstMsgChan := make(chan bool, 1)
+	go func() {
+		firstMsgChan <- responseStream.Receive()
+	}()
+
+	select {
+	case received := <-firstMsgChan:
+		close(firstMsgChan)
+		if !received {
+			syncStreamCancel()
+			return nil, responseStream.Err()
+		}
+		// First message received successfully, continue with the stream
+	case <-timer.C:
+		close(firstMsgChan)
 		syncStreamCancel()
-		return nil, responseStream.Err()
+		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
 	log := logging.FromCtx(ctx)
@@ -132,7 +150,7 @@ func (s *remoteSyncer) Run() {
 		}
 	}
 
-	// stream interrupted while client didn't cancel sync -> remote is unavailable
+	// Stream interrupted while client didn't cancel sync -> remote is unavailable
 	if s.syncStreamCtx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
@@ -148,6 +166,10 @@ func (s *remoteSyncer) Run() {
 				s.cancelGlobalSyncOp(err)
 				return false
 			}
+
+			// unsubStream is called to remove the stream from the local cache of the syncer set so
+			// the given stream could be re-added.
+			s.unsubStream(streamID)
 
 			return true
 		})
@@ -201,7 +223,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				continue
 			}
 
-			// send ping to remote to generate activity to check if remote is still alive
+			// Send ping to remote to generate activity to check if remote is still alive
 			if _, err := s.client.PingSync(s.syncStreamCtx, connect.NewRequest(&PingSyncRequest{
 				SyncId: s.syncID,
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
@@ -212,8 +234,6 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				s.syncStreamCancel()
 				return
 			}
-			return
-
 		case <-s.syncStreamCtx.Done():
 			return
 		}

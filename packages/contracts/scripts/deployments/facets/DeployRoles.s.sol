@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployRoles {
@@ -43,6 +43,6 @@ library DeployRoles {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("Roles.sol", "");
+        return LibDeploy.deployCode("Roles.sol", "");
     }
 }
