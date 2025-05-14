@@ -16,8 +16,6 @@ import (
 )
 
 type localSyncer struct {
-	globalSyncOpID string
-
 	syncStreamCtx      context.Context
 	cancelGlobalSyncOp context.CancelCauseFunc
 
@@ -34,7 +32,6 @@ type localSyncer struct {
 
 func newLocalSyncer(
 	ctx context.Context,
-	globalSyncOpID string,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
@@ -42,7 +39,6 @@ func newLocalSyncer(
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		globalSyncOpID:     globalSyncOpID,
 		syncStreamCtx:      ctx,
 		cancelGlobalSyncOp: cancelGlobalSyncOp,
 		streamCache:        streamCache,
@@ -165,7 +161,6 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
 			err := AsRiverError(err).
-				Tag("syncId", s.globalSyncOpID).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
 

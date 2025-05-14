@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -40,8 +39,6 @@ type (
 		ctx context.Context
 		// globalSyncOpCtxCancel cancels ctx
 		globalSyncOpCtxCancel context.CancelCauseFunc
-		// syncID is the sync id as used between the client and this node
-		syncID string
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
@@ -63,9 +60,6 @@ type (
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
-
-	// SyncCookieSet maps from a stream id to a sync cookie
-	SyncCookieSet map[StreamId]*SyncCookie
 )
 
 var (
@@ -73,21 +67,12 @@ var (
 	_ StreamsSyncer = (*remoteSyncer)(nil)
 )
 
-func (cs SyncCookieSet) AsSlice() []*SyncCookie {
-	cookies := make([]*SyncCookie, 0, len(cs))
-	for _, cookie := range cs {
-		cookies = append(cookies, cookie)
-	}
-	return cookies
-}
-
 // NewSyncers creates the required syncer set that subscribe on all given cookies.
 // A syncer can either be local or remote and writes received events to an internal messages channel from which events
 // are streamed to the client.
 func NewSyncers(
 	ctx context.Context,
 	globalSyncOpCtxCancel context.CancelCauseFunc,
-	syncID string,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
@@ -96,7 +81,6 @@ func NewSyncers(
 	ss := &SyncerSet{
 		ctx:                   ctx,
 		globalSyncOpCtxCancel: globalSyncOpCtxCancel,
-		syncID:                syncID,
 		streamCache:           streamCache,
 		nodeRegistry:          nodeRegistry,
 		localNodeAddress:      localNodeAddress,
@@ -122,14 +106,13 @@ func (ss *SyncerSet) Run() {
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	if ss.otelTracer != nil {
 		var span trace.Span
-		ctx, span = ss.otelTracer.Start(ctx, "Modify",
-			trace.WithAttributes(attribute.String("syncID", ss.syncID)))
+		ctx, span = ss.otelTracer.Start(ctx, "Modify")
 		defer span.End()
 	}
 
 	// Validate modify request
 	if err := req.Validate(); err != nil {
-		return AsRiverError(err, Err_INVALID_ARGUMENT).Tag("syncId", ss.syncID)
+		return AsRiverError(err, Err_INVALID_ARGUMENT).Func("SyncerSet.Modify")
 	}
 
 	addingFailuresLock := sync.Mutex{}
@@ -191,7 +174,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	defer ss.muSyncers.Unlock()
 
 	if len(req.ToAdd) > 0 && ss.stopped {
-		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
+		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -355,7 +338,7 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 	syncer, found := ss.streamID2Syncer[streamID]
 	if !found {
 		return RiverError(Err_NOT_FOUND, "Stream not part of sync operation").
-			Tags("syncId", ss.syncID, "streamId", streamID)
+			Tag("streamId", streamID)
 	}
 
 	syncerStopped, err := syncer.DebugDropStream(ctx, streamID)
@@ -427,7 +410,6 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 	if nodeAddress == ss.localNodeAddress {
 		syncer = newLocalSyncer(
 			ss.ctx,
-			ss.syncID,
 			ss.globalSyncOpCtxCancel,
 			ss.localNodeAddress,
 			ss.streamCache,
@@ -443,7 +425,6 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 		syncer, err = newRemoteSyncer(
 			ss.ctx,
 			ss.globalSyncOpCtxCancel,
-			ss.syncID,
 			nodeAddress,
 			client,
 			ss.rmStream,

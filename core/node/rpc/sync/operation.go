@@ -102,7 +102,7 @@ func (syncOp *StreamSyncOperation) Run(
 	syncOp.log.Debugw("Stream sync operation start")
 
 	syncers, messages := client.NewSyncers(
-		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
+		syncOp.ctx, syncOp.cancel, syncOp.streamCache,
 		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)
 
 	go syncers.Run()

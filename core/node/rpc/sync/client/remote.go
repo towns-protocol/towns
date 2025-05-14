@@ -26,7 +26,6 @@ type remoteSyncer struct {
 	syncStreamCtx      context.Context
 	syncStreamCancel   context.CancelFunc
 	syncID             string
-	forwarderSyncID    string
 	remoteAddr         common.Address
 	client             protocolconnect.StreamServiceClient
 	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -40,7 +39,6 @@ type remoteSyncer struct {
 func newRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
-	forwarderSyncID string,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
@@ -89,7 +87,6 @@ func newRemoteSyncer(
 
 	return &remoteSyncer{
 		syncID:             responseStream.Msg().GetSyncId(),
-		forwarderSyncID:    forwarderSyncID,
 		cancelGlobalSyncOp: cancelGlobalSyncOp,
 		syncStreamCtx:      syncStreamCtx,
 		syncStreamCancel:   syncStreamCancel,
@@ -152,7 +149,7 @@ func (s *remoteSyncer) Run() {
 
 		s.streams.Range(func(key, value any) bool {
 			streamID := key.(StreamId)
-			log.Debugw("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
+			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
