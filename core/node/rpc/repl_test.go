@@ -89,7 +89,7 @@ func TestReplMiniblock(t *testing.T) {
 
 	tt.eventuallyCompareStreamDataInStorage(streamId, 1, 100)
 
-	mbRef, err := tt.nodes[0].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+	mbRef, err := tt.nodes[0].service.cache.TestMakeMiniblock(ctx, streamId, false)
 	require.NoError(err)
 	require.EqualValues(1, mbRef.Num)
 	tt.eventuallyCompareStreamDataInStorage(streamId, 2, 0)
@@ -131,7 +131,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	mbRef := MiniblockRefFromCookie(cookie)
 	for i := range N {
 		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, mbRef))
-		mbRef, err = tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err = tt.nodes[2].service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err, "Failed to make miniblock on round %d", i)
 
 		if mbChain[latestMbNum] != mbRef.Hash {
@@ -214,7 +214,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 
 	for range N {
 		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromCookie(cookie)))
-		mbRef, err := tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err := tt.nodes[2].service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err)
 
 		if mbChain[latestMbNum] != mbRef.Hash {
@@ -247,7 +247,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 			Hash: mbChain[latestMbNum],
 			Num:  latestMbNum,
 		}))
-		mbRef, err := tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err := tt.nodes[2].service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err)
 
 		if mbChain[latestMbNum] != mbRef.Hash {
@@ -409,7 +409,7 @@ func TestStreamReconciliationTaskRescheduling(t *testing.T) {
 
 	for range 15 {
 		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, mbRef))
-		mbRef, err = mbMinterNode.service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err = mbMinterNode.service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err)
 	}
 
