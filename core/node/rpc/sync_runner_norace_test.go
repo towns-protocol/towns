@@ -1,3 +1,8 @@
+//go:build !race
+
+// This file contains tests that are skipped when the race detector is enabled
+// because they are too resource-intensive.
+
 package rpc
 
 import (
