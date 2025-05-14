@@ -8604,6 +8604,7 @@ __metadata:
     openai: ^4.95.1
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
+    viem: ^2.21.51
     vitest: 3.0.5
   languageName: unknown
   linkType: soft
