@@ -80,7 +80,11 @@ type StreamCache struct {
 	onlineSyncWorkerPool *workerpool.WorkerPool
 
 	retryableReconcilationTasks *retryableReconciliationTasks
+
+	mbProducer *miniblockProducer
 }
+
+var _ TestMiniblockProducer = (*StreamCache)(nil)
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	s := &StreamCache{
@@ -126,7 +130,9 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	return s
 }
 
-func (s *StreamCache) Start(ctx context.Context) error {
+func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) error {
+	s.mbProducer = newMiniblockProducer(ctx, s, opts)
+
 	// schedule sync tasks for all streams that are local to this node.
 	// these tasks sync up the local db with the latest block in the registry.
 	var localStreamResults []*river.StreamWithId
@@ -550,4 +556,8 @@ func (s *StreamCache) GetMbCandidateStreams(ctx context.Context) []*Stream {
 	})
 
 	return candidates
+}
+
+func (s *StreamCache) TestMakeMiniblock(ctx context.Context, streamId StreamId, forceSnapshot bool) (*MiniblockRef, error) {
+	return s.mbProducer.TestMakeMiniblock(ctx, streamId, forceSnapshot)
 }

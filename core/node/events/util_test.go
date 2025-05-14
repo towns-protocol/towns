@@ -42,7 +42,6 @@ type cacheTestInstance struct {
 	params         *StreamCacheParams
 	streamRegistry StreamRegistry
 	cache          *StreamCache
-	mbProducer     *miniblockProducer
 }
 
 type testParams struct {
@@ -164,10 +163,9 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *StreamCache {
 	streamCache := NewStreamCache(ctc.instances[n].params)
-	err := streamCache.Start(ctc.ctx)
+	err := streamCache.Start(ctc.ctx, opts)
 	ctc.require.NoError(err)
 	ctc.instances[n].cache = streamCache
-	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, opts)
 	return streamCache
 }
 
@@ -296,7 +294,7 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 }
 
 func (ctc *cacheTestContext) makeMiniblock(inst int, streamId StreamId, forceSnapshot bool) *MiniblockRef {
-	ref, err := ctc.instances[inst].mbProducer.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
+	ref, err := ctc.instances[inst].cache.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
 	ctc.require.NoError(err)
 	return ref
 }
