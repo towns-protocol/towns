@@ -4711,6 +4711,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/curves@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "@noble/curves@npm:1.9.1"
+  dependencies:
+    "@noble/hashes": 1.8.0
+  checksum: 4f3483a1001538d2f55516cdcb19319d1eaef79550633f670e7d570b989cdbc0129952868b72bb67643329746b8ffefe8e4cd791c8cc35574e05a37f873eef42
+  languageName: node
+  linkType: hard
+
 "@noble/hashes@npm:1.3.1":
   version: 1.3.1
   resolution: "@noble/hashes@npm:1.3.1"
@@ -8345,6 +8354,7 @@ __metadata:
     "@connectrpc/connect-node": ^2.0.0
     "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^8.0.1
+    "@noble/curves": ^1.9.1
     "@noble/hashes": ^1.8.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"

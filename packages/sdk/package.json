@@ -30,6 +30,7 @@
         "@connectrpc/connect-node": "^2.0.0",
         "@connectrpc/connect-web": "^2.0.0",
         "@ethereumjs/util": "^8.0.1",
+        "@noble/curves": "^1.9.1",
         "@noble/hashes": "^1.8.0",
         "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/encryption": "workspace:^",

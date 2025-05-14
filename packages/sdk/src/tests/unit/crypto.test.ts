@@ -3,7 +3,7 @@
  */
 
 import { bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
-import { secp256k1 } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { randomBytes } from '@noble/hashes/utils'
 import { readFileSync, writeFileSync } from 'fs'
 import { riverHash, riverRecoverPubKey, riverSign, riverVerifySignature } from '../../sign'

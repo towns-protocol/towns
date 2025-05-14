@@ -34,7 +34,7 @@ import {
     userIdFromAddress,
 } from '../id'
 import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
-import { secp256k1 } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '@towns-protocol/encryption'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'

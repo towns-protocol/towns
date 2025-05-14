@@ -24,7 +24,7 @@ import {
     SnapshotSchema,
 } from '@towns-protocol/proto'
 import { abytes } from '@noble/hashes/utils'
-import { secp256k1 } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
 import {
     ParsedEvent,
