@@ -728,12 +728,10 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		)
 	}
 
-	err := s.cache.Start(s.serverCtx)
+	err := s.cache.Start(s.serverCtx, nil)
 	if err != nil {
 		return err
 	}
-
-	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
 
 	s.syncHandler = sync.NewHandler(
 		s.wallet.Address,
