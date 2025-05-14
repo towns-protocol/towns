@@ -29,14 +29,18 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/events/dumpevents"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/shared"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -552,21 +556,25 @@ func (r *receivedStreamUpdates) Clone() []*SyncStreamsResponse {
 }
 
 type testClient struct {
-	t                    *testing.T
-	ctx                  context.Context
-	assert               *assert.Assertions
-	require              *require.Assertions
-	client               protocolconnect.StreamServiceClient
-	node2nodeClient      protocolconnect.NodeToNodeClient
-	nodes                []*testNodeRecord
-	wallet               *crypto.Wallet
-	userId               common.Address
-	userStreamId         StreamId
-	name                 string
-	syncID               atomic.String // use testClient#SyncID() to retrieve the value
-	enableSync           bool
-	updates              *xsync.Map[StreamId, *receivedStreamUpdates]
-	disableMiniblockComp bool
+	t                     *testing.T
+	ctx                   context.Context
+	assert                *assert.Assertions
+	require               *require.Assertions
+	client                protocolconnect.StreamServiceClient
+	node2nodeClient       protocolconnect.NodeToNodeClient
+	nodes                 []*testNodeRecord
+	wallet                *crypto.Wallet
+	userId                common.Address
+	userStreamId          StreamId
+	name                  string
+	syncID                atomic.String // use testClient#SyncID() to retrieve the value
+	enableSync            bool
+	updates               *xsync.Map[StreamId, *receivedStreamUpdates]
+	disableMiniblockComp  bool
+	deviceKey             string
+	fallbackKey           string
+	defaultSessionId      string
+	defaultSessionIdBytes []byte
 }
 
 type testClientOpts struct {
@@ -574,6 +582,11 @@ type testClientOpts struct {
 	// enableSync set to true means that the client will sync with all channels that it joined and compares all
 	// received updates with other clients.
 	enableSync bool
+
+	deviceKey   string
+	fallbackKey string
+
+	createUserStreamsWithEncryptionDevice bool
 }
 
 func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
@@ -583,22 +596,40 @@ func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 }
 
 func (st *serviceTester) newTestClientWithWallet(i int, opts testClientOpts, wallet *crypto.Wallet) *testClient {
-	return &testClient{
-		t:                    st.t,
-		ctx:                  st.ctx,
-		assert:               assert.New(st.t),
-		require:              st.require,
-		client:               st.testClient(i),
-		node2nodeClient:      st.testNode2NodeClient(i),
-		nodes:                st.nodes,
-		wallet:               wallet,
-		userId:               wallet.Address,
-		userStreamId:         UserStreamIdFromAddr(wallet.Address),
-		name:                 fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
-		enableSync:           opts.enableSync,
-		updates:              xsync.NewMap[StreamId, *receivedStreamUpdates](),
-		disableMiniblockComp: opts.disableMiniblockComp,
+	deviceKey := opts.deviceKey
+	if deviceKey == "" {
+		deviceKey = fmt.Sprintf("deviceKey_%x", wallet.Address[:6])
 	}
+	fallbackKey := opts.fallbackKey
+	if fallbackKey == "" {
+		fallbackKey = fmt.Sprintf("fallbackKey_%x", wallet.Address[:6])
+	}
+
+	tc := &testClient{
+		t:                     st.t,
+		ctx:                   st.ctx,
+		assert:                assert.New(st.t),
+		require:               st.require,
+		client:                st.testClient(i),
+		node2nodeClient:       st.testNode2NodeClient(i),
+		nodes:                 st.nodes,
+		wallet:                wallet,
+		userId:                wallet.Address,
+		userStreamId:          UserStreamIdFromAddr(wallet.Address),
+		name:                  fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+		enableSync:            opts.enableSync,
+		updates:               xsync.NewMap[StreamId, *receivedStreamUpdates](),
+		disableMiniblockComp:  opts.disableMiniblockComp,
+		deviceKey:             opts.deviceKey,
+		fallbackKey:           opts.fallbackKey,
+		defaultSessionId:      fmt.Sprintf("%0x", wallet.Address[:6]),
+		defaultSessionIdBytes: wallet.Address[:6],
+	}
+
+	if opts.createUserStreamsWithEncryptionDevice {
+		tc.createUserStreamsWithEncryptionDevice()
+	}
+	return tc
 }
 
 // newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
@@ -615,6 +646,58 @@ func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) tes
 	})
 
 	return clients
+}
+
+func (tc *testClient) DefaultEncryptionDevice() app_client.EncryptionDevice {
+	return app_client.EncryptionDevice{
+		DeviceKey:   tc.deviceKey,
+		FallbackKey: tc.fallbackKey,
+	}
+}
+
+func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
+	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err, "Error creating user metadata stream for testClient")
+
+	event, err := events.MakeEnvelopeWithPayloadAndTags(
+		tc.wallet,
+		events.Make_UserMetadataPayload_EncryptionDevice(
+			tc.deviceKey,
+			tc.fallbackKey,
+		),
+		&MiniblockRef{
+			Num:  cookie.GetMinipoolGen() - 1,
+			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
+		},
+		nil,
+	)
+	tc.require.NoError(err)
+
+	addEventResp, err := tc.client.AddEvent(
+		tc.ctx,
+		&connect.Request[protocol.AddEventRequest]{
+			Msg: &protocol.AddEventRequest{
+				StreamId: cookie.StreamId,
+				Event:    event,
+			},
+		},
+	)
+	tc.require.NoError(err)
+	tc.require.Nil(addEventResp.Msg.GetError())
+}
+
+func (tc *testClient) createUserInboxStream() {
+	inboxStreamId := UserInboxStreamIdFromAddress(tc.wallet.Address)
+	tc.t.Logf("Creating user inbox stream %v for wallet %v", inboxStreamId, tc.wallet.Address)
+	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err, "Error creating user inbox stream for testClient")
+}
+
+func (tc *testClient) createUserStreamsWithEncryptionDevice() *MiniblockRef {
+	userStreamMbRef := tc.createUserStream()
+	tc.createUserInboxStream()
+	tc.createUserMetadataStreamWithEncryptionDevice()
+	return userStreamMbRef
 }
 
 func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
@@ -634,45 +717,6 @@ func (tc *testClient) createUserStreamGetCookie(
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
 	return cookie
-}
-
-func (tc *testClient) createUserStreamsWithEncryptionDevice(
-	encryptionDevice *UserMetadataPayload_EncryptionDevice,
-) *SyncCookie {
-	userCookie := tc.createUserStreamGetCookie()
-
-	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
-	tc.require.NoError(err)
-
-	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
-	tc.require.NoError(err)
-
-	event, err := MakeEnvelopeWithPayload(
-		tc.wallet,
-		Make_UserMetadataPayload_EncryptionDevice(
-			encryptionDevice.DeviceKey,
-			encryptionDevice.FallbackKey,
-		),
-		&MiniblockRef{
-			Num:  cookie.GetMinipoolGen() - 1,
-			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
-		},
-	)
-	tc.require.NoError(err)
-
-	addEventResp, err := tc.client.AddEvent(
-		tc.ctx,
-		&connect.Request[AddEventRequest]{
-			Msg: &AddEventRequest{
-				StreamId: cookie.StreamId,
-				Event:    event,
-			},
-		},
-	)
-	tc.require.NoError(err)
-	tc.require.Nil(addEventResp.Msg.GetError())
-
-	return userCookie
 }
 
 func (tc *testClient) createUserStream(
@@ -1021,7 +1065,7 @@ func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
 		if len(expectedExtra) > 0 {
 			tc.require.FailNow(
 				"Didn't receive all messages",
-				"client %s\nexpectedExtra:%vactualExtra:%v",
+				"client %s\nexpectedExtra:%v\nactualExtra:%v",
 				tc.name,
 				expectedExtra,
 				actualExtra,
@@ -1221,6 +1265,15 @@ func containsKeySolicitation(
 	)
 }
 
+func (tc *testClient) requireKeySolicitationFromClients(channelId StreamId, tcs testClients) {
+	tc.eventually(func(tc *testClient) {
+		channel := tc.getStream(channelId)
+		for _, c := range tcs {
+			findKeySolicitation(tc.require, channel, c.deviceKey, tc.defaultSessionId)
+		}
+	})
+}
+
 func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey string, sessionId string) {
 	tc.eventually(func(tc *testClient) {
 		channel := tc.getStream(channelId)
@@ -1326,9 +1379,21 @@ func (tcs testClients) listen(channelId StreamId, messages [][]string) {
 func (tcs testClients) say(channelId StreamId, messages ...string) {
 	parallel(tcs, func(tc *testClient, msg string) {
 		if msg != "" {
-			tc.say(channelId, msg)
+			tc.sayWithSessionAndTags(
+				channelId,
+				msg,
+				nil,
+				tc.wallet.Address[:6],
+				tc.deviceKey,
+			)
 		}
 	}, messages...)
+}
+
+func (tcs testClients) requireKeySolicitationFromClients(channel shared.StreamId, clients testClients) {
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.requireKeySolicitationFromClients(channel, clients)
+	})
 }
 
 // parallel spreads params over clients calling provided function in parallel.
@@ -1398,11 +1463,11 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 	}
 }
 
-// setupChannelWithClients creates a channel and returns a testClients with clients subscribed/connected to it.
+// createChannelAndJoin creates a channel and joins all clients to it.
 // The first client is the creator of both the space and the channel.
 // Other clients join the channel.
 // Clients are connected to nodes in a round-robin fashion.
-func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
+func (tcs testClients) createChannelAndJoin(spaceId StreamId) (StreamId, *protocol.SyncCookie) {
 	alice := tcs[0]
 	channelId, _, syncCookie := alice.createChannel(spaceId)
 
@@ -1419,7 +1484,32 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 
 	tcs.requireSubscribed(channelId)
 
-	return channelId
+	return channelId, syncCookie
+}
+
+func (tcs testClients) joinChannel(
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
+	channelSyncCookie *protocol.SyncCookie,
+	extraMembers testClients,
+) {
+	tcs.parallelForAll(func(tc *testClient) {
+		userLastMb := tc.getLastMiniblockHash(tc.userStreamId)
+		tc.joinChannel(spaceId, channelId, userLastMb)
+	})
+
+	userIds := tcs.userIds()
+	if extraMembers != nil {
+		userIds = append(userIds, extraMembers.userIds()...)
+	}
+
+	tcs.requireMembership(channelId, userIds)
+
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.syncChannel(channelSyncCookie)
+	})
+
+	tcs.requireSubscribed(channelId)
 }
 
 func (tcs testClients) compareNowImpl(

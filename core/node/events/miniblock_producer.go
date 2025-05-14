@@ -75,7 +75,7 @@ type MiniblockProducerOpts struct {
 }
 
 // NewMiniblockProducer instantiates a new miniblockProducer instance that implements the MiniblockProducer interface.
-// It registers a callback on new RiverChain blocks and everytime this callback is called it creates new miniblock
+// It registers a callback on new RiverChain blocks, and every time this callback is called, it creates new miniblock
 // candidates and schedules these candidates for registration.
 func NewMiniblockProducer(
 	ctx context.Context,
