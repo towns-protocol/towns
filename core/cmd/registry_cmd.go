@@ -292,7 +292,19 @@ func validateStream(
 	if lastBlock.Num < expectedMinBlockNum {
 		return RiverError(
 			Err_INTERNAL,
-			"Block number mismatch",
+			"Node miniblock is behind blockchain record (can happen while candidate is being promoted)",
+			"expectedMinimumBlockNum",
+			expectedMinBlockNum,
+			"actual",
+			lastBlock.Num,
+			"node",
+			nodeAddress,
+		)
+	}
+	if lastBlock.Num > expectedMinBlockNum {
+		return RiverError(
+			Err_INTERNAL,
+			"Node miniblock is AHEAD of blockchain record",
 			"expectedMinimumBlockNum",
 			expectedMinBlockNum,
 			"actual",
