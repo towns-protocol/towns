@@ -249,7 +249,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 
 	record.applyHistoricalStreamContents = false
 
-	// Update record cookie for restarting sync after relocation
+	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
 }
