@@ -55,6 +55,7 @@ const (
 	// snapshot for streams.
 	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey = "stream.defaultStreamTrimmingMiniblocksToKeep"
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey   = "stream.streamTrimmingMiniblocksToKeep.10"
+	ServerEnableNode2NodeAuthConfigKey                   = "server.enableNode2NodeAuth"
 )
 
 var (
@@ -131,6 +132,10 @@ type OnChainSettings struct {
 	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined with the default value and per stream type.
 	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
+
+	// ServerEnableNode2NodeAuth indicates whether node-to-node authentication is enabled.
+	// Options: 1 means enabled, 0 means disabled.
+	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enableNode2NodeAuth"`
 }
 
 type XChainSettings struct {
@@ -232,6 +237,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 		XChain: XChainSettings{
 			Blockchains: []uint64{},
 		},
+
+		ServerEnableNode2NodeAuth: 1,
 	}
 }
 

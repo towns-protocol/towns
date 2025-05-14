@@ -146,6 +146,7 @@ func TestSetOnChain(t *testing.T) {
 	btc.SetConfigValue(t, ctx, StreamSnapshotIntervalInMiniblocksConfigKey, ABIEncodeUint64(1000))
 	btc.SetConfigValue(t, ctx, StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(1000))
 	btc.SetConfigValue(t, ctx, StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(999))
+	btc.SetConfigValue(t, ctx, ServerEnableNode2NodeAuthConfigKey, ABIEncodeUint64(1))
 
 	s := btc.OnChainConfig.Get()
 	assert.EqualValues(3, s.ReplicationFactor)
@@ -158,6 +159,7 @@ func TestSetOnChain(t *testing.T) {
 	assert.Equal(uint64(1000), s.StreamSnapshotIntervalInMiniblocks)
 	assert.Equal(uint64(1000), s.StreamTrimmingMiniblocksToKeep.Default)
 	assert.Equal(uint64(999), s.StreamTrimmingMiniblocksToKeep.Space)
+	assert.Equal(uint64(1), s.ServerEnableNode2NodeAuth)
 
 	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, []byte("invalid value is ignored"))
 	assert.EqualValues(3, btc.OnChainConfig.Get().ReplicationFactor)
