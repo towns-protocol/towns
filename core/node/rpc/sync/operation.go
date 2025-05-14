@@ -106,7 +106,8 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	sub := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
+	sub := syncOp.subscriptionManager.Subscribe(syncOp.cancel, syncOp.SyncID)
+	defer sub.Close()
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
@@ -215,7 +216,6 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subsc
 				cmd.Reply(sub.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != "" {
 				_ = sub.Messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
-				sub.Messages.Close() // TODO: Close subscription instead
 				cmd.Reply(nil)
 				return
 			} else if cmd.PingReq != "" {

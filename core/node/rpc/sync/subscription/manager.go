@@ -27,8 +27,8 @@ type Manager struct {
 	syncers  *client.SyncerSet
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 
-	subscriptions         xsync.Map[string, *Subscription]
-	streamToSubscriptions xsync.Map[StreamId, []string]
+	subscriptions         *xsync.Map[string, *Subscription]
+	streamToSubscriptions *xsync.Map[StreamId, []string]
 }
 
 func NewManager(
@@ -48,10 +48,12 @@ func NewManager(
 	go syncers.Run()
 
 	manager := &Manager{
-		log:       log,
-		globalCtx: globalCtx,
-		syncers:   syncers,
-		messages:  messages,
+		log:                   log,
+		globalCtx:             globalCtx,
+		syncers:               syncers,
+		messages:              messages,
+		subscriptions:         xsync.NewMap[string, *Subscription](),
+		streamToSubscriptions: xsync.NewMap[StreamId, []string](),
 	}
 
 	go manager.start()
@@ -59,17 +61,16 @@ func NewManager(
 	return manager
 }
 
-func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncOp string) *Subscription {
-	subcription := &Subscription{
+func (m *Manager) Subscribe(cancel context.CancelCauseFunc, syncOp string) *Subscription {
+	subscription := &Subscription{
 		log:      m.log.With("syncId", syncOp),
-		Ctx:      ctx,
 		Cancel:   cancel,
 		SyncOp:   syncOp,
 		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		manager:  m,
 	}
-	go subcription.Run()
-	m.subscriptions.Store(syncOp, subcription)
-	return subcription
+	m.subscriptions.Store(syncOp, subscription)
+	return subscription
 }
 
 func (m *Manager) start() {
@@ -84,13 +85,16 @@ func (m *Manager) start() {
 
 			// nil msgs indicates the buffer is closed
 			if msgs == nil {
-				// TODO: Handle
+				// TODO: Handle, should not happen
 				return
 			}
 
 			for _, msg := range msgs {
+				// Distribute the messages to all relevant subscriptions.
 				m.distributeMessages(msg)
 
+				// In case of the global context (the node itself) is done in the middle of the sending messages
+				// from the current batch, just interrupt the sending process and close.
 				select {
 				case <-m.globalCtx.Done():
 					// TODO: Handle, cancel all subscriptions
@@ -109,7 +113,7 @@ func (m *Manager) start() {
 	}
 }
 
-// distributeMessages ...
+// distributeMessages processes the given message and sends it to all relevant subscriptions.
 func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 	// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
 	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
@@ -117,7 +121,14 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 		return
 	}
 
-	streamID, err := StreamIdFromBytes(msg.GetStreamId())
+	var streamIDRaw []byte
+	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+		streamIDRaw = msg.GetStreamId()
+	} else {
+		streamIDRaw = msg.GetStream().GetNextSyncCookie().GetStreamId()
+	}
+
+	streamID, err := StreamIdFromBytes(streamIDRaw)
 	if err != nil || streamID == (StreamId{}) {
 		m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
 		return
@@ -142,6 +153,12 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 			subscription.Cancel(rvrErr)
 			m.log.Errorw("Failed to add message to subscription",
 				"syncId", subscription.SyncOp, "op", msg.GetSyncOp(), "err", err)
+			continue
+		}
+
+		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+			// The given stream is no longer needed, remove it from the subscription
+			subscription.removeStream(streamIDRaw)
 		}
 	}
 }

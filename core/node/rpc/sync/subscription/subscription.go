@@ -17,7 +17,6 @@ import (
 type Subscription struct {
 	// log is the logger for this stream sync operation
 	log      *logging.Log
-	Ctx      context.Context
 	Cancel   context.CancelCauseFunc
 	SyncOp   string
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -25,14 +24,9 @@ type Subscription struct {
 	manager *Manager
 }
 
-func (s *Subscription) Run() {
-	for {
-		select {
-		case <-s.Ctx.Done():
-			s.Messages.Close()
-			s.manager.subscriptions.Delete(s.SyncOp)
-		}
-	}
+func (s *Subscription) Close() {
+	s.Messages.Close()
+	s.manager.subscriptions.Delete(s.SyncOp)
 }
 
 // Send sends the given message to the subscription messages channel.
@@ -65,7 +59,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	// Handle streams that the clients wants to subscribe to.
 	for _, toAdd := range req.ToAdd {
 		addToRemote := s.addStream(toAdd)
-		if !addToRemote {
+		if addToRemote {
 			// The given stream must be added to the main syncer set
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
 		}
@@ -96,19 +90,16 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
 func (s *Subscription) addStream(cookie *SyncCookie) (addToRemote bool) {
-	var (
-		streamSyncing bool
-		subscribed    bool
-	)
-
 	// Add the stream to the subscription if not added yet
-	s.manager.streamToSubscriptions.Compute(
+	_, subscribed := s.manager.streamToSubscriptions.Compute(
 		StreamId(cookie.GetStreamId()),
 		func(oldValue []string, loaded bool) (newValue []string, op xsync.ComputeOp) {
-			streamSyncing = loaded
+			// The given stream is not syncing yet, add it to the syncer set.
+			// It is ok to use the entire cookie when subscribing at the first time.
+			addToRemote = !loaded || len(oldValue) == 0
 
-			if subscribed = slices.Contains(oldValue, s.SyncOp); subscribed {
-				// The given stream is already subscribed
+			if slices.Contains(oldValue, s.SyncOp) {
+				// The given stream is already subscribed, do nothing
 				return nil, xsync.CancelOp
 			}
 
@@ -121,11 +112,7 @@ func (s *Subscription) addStream(cookie *SyncCookie) (addToRemote bool) {
 		return
 	}
 
-	if !streamSyncing {
-		// The given stream is not syncing yet, add it to the syncer set.
-		// It is ok to use the entire cookie when subscribing at the first time.
-		addToRemote = true
-	} else {
+	if !addToRemote {
 		// The given stream is already syncing but the client might
 		// want to get updates since a specific miniblock.
 		// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
