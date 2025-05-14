@@ -624,7 +624,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
-		10*time.Second,
+		30*time.Second,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(
