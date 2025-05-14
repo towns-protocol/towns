@@ -8616,7 +8616,7 @@ __metadata:
     "@bufbuild/protobuf": ^2.2.2
     "@ethereumjs/util": ^8.0.1
     "@towns-protocol/dlog": "workspace:^"
-    "@towns-protocol/olm": 3.2.18
+    "@towns-protocol/olm": 3.2.19
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/lodash": ^4.14.186
@@ -8669,10 +8669,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/olm@npm:3.2.18":
-  version: 3.2.18
-  resolution: "@towns-protocol/olm@npm:3.2.18"
-  checksum: aec356d6f74e7eed36c4d1723756b774ecdf1c8e20855aa391302b9d4c92cb45740bde6e813efaf1023eb7dff971f87267b611a8b9b88ae9cbe4b01efbed612d
+"@towns-protocol/olm@npm:3.2.19":
+  version: 3.2.19
+  resolution: "@towns-protocol/olm@npm:3.2.19"
+  checksum: 10c9c607174159ba86ee3a94614fd64350593957a4b3a1077d517bbb104124bba34dae19949d361be4b0ad1e36b6fda580fec91349cc6f182fa426d4b481b84c
   languageName: node
   linkType: hard
 
