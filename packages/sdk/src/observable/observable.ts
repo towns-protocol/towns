@@ -1,6 +1,6 @@
 interface Subscription<T> {
     id: number
-    fn: (value: T) => void
+    fn: (value: T, prevValue: T) => void
     condition: (value: T) => boolean
     once: boolean
 }
@@ -19,23 +19,25 @@ export class Observable<T> {
     }
 
     setValue(newValue: T) {
+        const prevValue = this._value
         this._value = newValue
-        this.notify()
+        this.notify(prevValue)
     }
 
     subscribe(
-        subscriber: (newValue: T) => void,
+        subscriber: (newValue: T, prevValue: T) => void,
         opts: { fireImediately?: boolean; once?: boolean; condition?: (value: T) => boolean } = {},
     ): () => void {
+        const nextId = this._nextId++
         const sub = {
-            id: this._nextId++,
+            id: nextId,
             fn: subscriber,
             once: opts?.once ?? false,
             condition: opts?.condition ?? (() => true),
         } satisfies Subscription<T>
         this.subscribers.push(sub)
         if (opts.fireImediately) {
-            this._notify(sub, this.value)
+            this._notify(sub, this.value, this.value)
         }
         return () => this.unsubscribe(subscriber)
     }
@@ -60,18 +62,23 @@ export class Observable<T> {
         })
     }
 
-    unsubscribe(subscriber: (value: T) => void) {
-        this.subscribers = this.subscribers.filter((sub) => sub.fn !== subscriber)
+    unsubscribe(subscriber: (value: T, prevValue: T) => void) {
+        this.subscribers = this.subscribers.filter((sub) => {
+            if (sub.fn === subscriber) {
+                return false
+            }
+            return true
+        })
     }
 
-    private notify() {
+    private notify(prevValue: T) {
         const subscriptions = this.subscribers
-        subscriptions.forEach((sub) => this._notify(sub, this.value))
+        subscriptions.forEach((sub) => this._notify(sub, this.value, prevValue))
     }
 
-    private _notify(sub: Subscription<T>, value: T) {
+    private _notify(sub: Subscription<T>, value: T, prevValue: T) {
         if (sub.condition(value)) {
-            sub.fn(value)
+            sub.fn(value, prevValue)
             if (sub.once) {
                 this.subscribers = this.subscribers.filter((s) => s !== sub)
             }

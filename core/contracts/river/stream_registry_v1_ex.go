@@ -103,9 +103,10 @@ type (
 )
 
 const (
-	// Event_StreamUpdated is the unified event emitted by the stream registry when a stream mutation occurs.
-	// Either when its created or modified.
+	// Event_StreamUpdated is emitted by the streams registry when a stream is added or modified
 	Event_StreamUpdated = "StreamUpdated"
+	// Event_StreamLastMiniblockUpdateFailed is emitted when setting a new miniblock for a stream failed
+	Event_StreamLastMiniblockUpdateFailed = "StreamLastMiniblockUpdateFailed"
 
 	StreamUpdatedEventTypeAllocate                  StreamUpdatedEventType = 0
 	StreamUpdatedEventTypeCreate                    StreamUpdatedEventType = 1

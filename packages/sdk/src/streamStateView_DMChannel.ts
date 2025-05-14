@@ -12,9 +12,10 @@ import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { userIdFromAddress } from './id'
-
+import { StreamStateView_ChannelMessages } from './streamStateView_Common_ChannelMessages'
 export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
+    readonly messages: StreamStateView_ChannelMessages
     firstPartyId?: string
     secondPartyId?: string
     lastEventCreatedAtEpochMs = 0n
@@ -22,6 +23,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     constructor(streamId: string) {
         super()
         this.streamId = streamId
+        this.messages = new StreamStateView_ChannelMessages(streamId, this)
     }
 
     applySnapshot(
@@ -50,12 +52,12 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 break
 
             case 'message':
-                this.decryptEvent(
-                    'channelMessage',
+                this.messages.appendChannelMessage(
                     event,
-                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
+                    stateEmitter,
+                    payload.content.value,
                 )
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
@@ -81,12 +83,12 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 break
             case 'message':
                 this.updateLastEvent(event.remoteEvent, undefined)
-                this.decryptEvent(
-                    'channelMessage',
+                this.messages.prependChannelMessage(
                     event,
-                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
+                    undefined,
+                    payload.content.value,
                 )
                 break
             case undefined:
@@ -97,11 +99,11 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     }
 
     onDecryptedContent(
-        _eventId: string,
-        _content: DecryptedContent,
-        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        eventId: string,
+        content: DecryptedContent,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        // pass
+        this.messages.onDecryptedContent(eventId, content, stateEmitter)
     }
 
     onConfirmedEvent(

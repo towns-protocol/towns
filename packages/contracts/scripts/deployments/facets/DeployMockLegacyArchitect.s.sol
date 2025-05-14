@@ -2,31 +2,32 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {MockLegacyArchitect} from "test/mocks/legacy/MockLegacyArchitect.sol";
 
-contract DeployMockLegacyArchitect is FacetHelper, Deployer {
-    constructor() {
-        addSelector(MockLegacyArchitect.createSpace.selector);
+library DeployMockLegacyArchitect {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](1);
+        _selectors[0] = MockLegacyArchitect.createSpace.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return MockLegacyArchitect.__Architect_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/mockLegacyArchitectFacet";
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(MockLegacyArchitect.__Architect_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        MockLegacyArchitect architect = new MockLegacyArchitect();
-        vm.stopBroadcast();
-        return address(architect);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("MockLegacyArchitect.sol", "");
     }
 }

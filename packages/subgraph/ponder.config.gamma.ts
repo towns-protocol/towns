@@ -1,8 +1,18 @@
-import { createConfig } from 'ponder'
-import { http } from 'viem'
+import { createConfig, mergeAbis, factory } from 'ponder'
+import { http, parseAbiItem } from 'viem'
 
 // import abis
-import { createSpaceFacetAbi } from '../contracts/typings'
+import {
+    createSpaceFacetAbi,
+    spaceOwnerAbi,
+    tokenPausableFacetAbi,
+    mainnetDelegationAbi,
+    entitlementCheckerAbi,
+    nodeOperatorFacetAbi,
+    spaceDelegationFacetAbi,
+    rewardsDistributionAbi,
+    xChainAbi,
+} from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
 import { getContractAddress } from './utils/contractAddresses'
@@ -19,6 +29,16 @@ if (!spaceFactory) {
     throw new Error('Space factory address not found')
 }
 
+const spaceOwner = getContractAddress('spaceOwner')
+if (!spaceOwner) {
+    throw new Error('Space owner address not found')
+}
+
+const baseRegistry = getContractAddress('baseRegistry')
+if (!baseRegistry) {
+    throw new Error('Base registry address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -33,9 +53,40 @@ export default createConfig({
         },
     },
     contracts: {
-        CreateSpace: {
-            abi: createSpaceFacetAbi,
+        BaseRegistry: {
+            abi: mergeAbis([
+                mainnetDelegationAbi,
+                entitlementCheckerAbi,
+                nodeOperatorFacetAbi,
+                spaceDelegationFacetAbi,
+                rewardsDistributionAbi,
+                xChainAbi,
+            ]),
+            address: baseRegistry,
+            startBlock,
+            network: 'gamma',
+        },
+        SpaceFactory: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
+            startBlock,
+            network: 'gamma',
+        },
+        Space: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            address: factory({
+                address: spaceFactory,
+                event: parseAbiItem([
+                    'event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)',
+                ]),
+                parameter: 'space',
+            }),
+            startBlock,
+            network: 'gamma',
+        },
+        SpaceOwner: {
+            abi: spaceOwnerAbi,
+            address: spaceOwner,
             startBlock,
             network: 'gamma',
         },

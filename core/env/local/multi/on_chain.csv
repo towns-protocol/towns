@@ -12,6 +12,9 @@
 "stream.minEventsPerSnapshot.ad",0,10
 "stream.cacheExpirationMs",0,300000
 "stream.cacheExpirationPollIntervalMs",0,30000
-"xchain.blockchains",0,"31337,31338,84532,11155111"
+"xchain.blockchains",0,"31337,31338"
 "stream.getMiniblocksMaxPageSize",0,200
 "stream.ephemeralStreamTTLMs",0,600000
+"stream.snapshotIntervalInMiniblocks",0,0
+"stream.defaultStreamTrimmingMiniblocksToKeep",0,0
+"stream.streamTrimmingMiniblocksToKeep.10",0,100

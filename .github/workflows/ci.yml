@@ -8,12 +8,13 @@ env:
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
-    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546,84532:${{ secrets.BASE_SEPOLIA_RPC_URL }},11155111:${{ secrets.ETH_SEPOLIA_RPC_URL }}'
+    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
 on:
     schedule:
         # Run every hour
         - cron: '0 * * * *'
     pull_request:
+    merge_group:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
             skip_common_ci:

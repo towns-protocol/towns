@@ -1,6 +1,7 @@
 package entitlement
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -22,8 +23,10 @@ import (
 )
 
 const (
-	slow = 500
-	fast = 10
+	verySlow     = 5000
+	checkTimeout = 1000
+	slow         = 500
+	fast         = 10
 )
 
 var (
@@ -36,7 +39,11 @@ var (
 	slowThresholdParams  = ThresholdParams{
 		Threshold: big.NewInt(slow),
 	}
-	slowEncodedParams, _ = slowThresholdParams.AbiEncode()
+	slowEncodedParams, _    = slowThresholdParams.AbiEncode()
+	verySlowThresholdParams = ThresholdParams{
+		Threshold: big.NewInt(verySlow),
+	}
+	verySlowEncodedParams, _ = verySlowThresholdParams.AbiEncode()
 )
 
 var fastTrueCheck = CheckOperation{
@@ -85,6 +92,15 @@ var slowErrorCheck = CheckOperation{
 	ChainID:         big.NewInt(0),
 	ContractAddress: common.HexToAddress("2"),
 	Params:          slowEncodedParams,
+}
+
+// This mock check will result in an error, but not until 5s have passed.
+var verySlowErrorCheck = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(MOCK),
+	ChainID:         big.NewInt(0),
+	ContractAddress: common.HexToAddress("3"),
+	Params:          verySlowEncodedParams,
 }
 
 var (
@@ -359,8 +375,9 @@ func TestMain(m *testing.M) {
 }
 
 var (
-	errSlow = fmt.Errorf("intentional failure (02)")
-	errFast = fmt.Errorf("intentional failure (01)")
+	errSlow    = fmt.Errorf("intentional failure (02)")
+	errFast    = fmt.Errorf("intentional failure (01)")
+	errTimeout = fmt.Errorf("operation cancelled: context deadline exceeded")
 )
 
 func TestAndOperation(t *testing.T) {
@@ -391,6 +408,7 @@ func TestAndOperation(t *testing.T) {
 		// Error handling
 		// For (error, true) - expect an error returned with the maximum execution time of both operations.
 		// For (error, false) - expect false returned with timing of false operation.
+
 		{"slow true, fast error", &slowTrueCheck, &fastErrorCheck, false, slow, errFast},
 		{"fast true, fast error", &fastTrueCheck, &fastErrorCheck, false, fast, errFast},
 		{"slow true, slow error", &slowTrueCheck, &slowErrorCheck, false, slow, errSlow},
@@ -415,6 +433,62 @@ func TestAndOperation(t *testing.T) {
 			slow,
 			fmt.Errorf("%w; %w", errFast, errSlow),
 		},
+		{
+			"fast error, timeout",
+			&fastErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"timeout, fast error",
+			&verySlowErrorCheck,
+			&fastErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"fast true, timeout",
+			&fastTrueCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"timeout, fast true",
+			&verySlowErrorCheck,
+			&fastTrueCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"fast false, timeout",
+			&fastFalseCheck,
+			&verySlowErrorCheck,
+			false,
+			fast,
+			nil,
+		},
+		{
+			"timeout, fast false",
+			&verySlowErrorCheck,
+			&fastFalseCheck,
+			false,
+			fast,
+			nil,
+		},
+		{
+			"timeout, timeout",
+			&verySlowErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			fmt.Errorf("%w; %w", errTimeout, errTimeout),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -429,7 +503,9 @@ func TestAndOperation(t *testing.T) {
 
 			callerAddress := common.Address{}
 
-			result, actualErr := evaluator.evaluateOp(ctx, tree, []common.Address{callerAddress})
+			timeoutCtx, cancel := context.WithTimeout(ctx, checkTimeout*time.Millisecond)
+			defer cancel()
+			result, actualErr := evaluator.evaluateOp(timeoutCtx, tree, []common.Address{callerAddress})
 			elapsedTime := time.Since(startTime)
 			if tc.expectedErr != nil {
 				require.EqualError(t, actualErr, tc.expectedErr.Error(), "Expected error was not found")
@@ -501,6 +577,62 @@ func TestOrOperation(t *testing.T) {
 			slow,
 			fmt.Errorf("%w; %w", errFast, errSlow),
 		},
+		{
+			"fast error, timeout",
+			&fastErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"timeout, fast error",
+			&verySlowErrorCheck,
+			&fastErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"fast true, timeout",
+			&fastTrueCheck,
+			&verySlowErrorCheck,
+			true,
+			fast,
+			nil,
+		},
+		{
+			"timeout, fast true",
+			&verySlowErrorCheck,
+			&fastTrueCheck,
+			true,
+			fast,
+			nil,
+		},
+		{
+			"fast false, timeout",
+			&fastFalseCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"timeout, fast false",
+			&verySlowErrorCheck,
+			&fastFalseCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"timeout, timeout",
+			&verySlowErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			fmt.Errorf("%w; %w", errTimeout, errTimeout),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -515,7 +647,9 @@ func TestOrOperation(t *testing.T) {
 
 			callerAddress := common.Address{}
 
-			result, actualErr := evaluator.evaluateOp(ctx, tree, []common.Address{callerAddress})
+			timeoutCtx, cancel := context.WithTimeout(ctx, checkTimeout*time.Millisecond)
+			defer cancel()
+			result, actualErr := evaluator.evaluateOp(timeoutCtx, tree, []common.Address{callerAddress})
 			elapsedTime := time.Since(startTime)
 			if tc.expectedErr != nil {
 				require.EqualError(t, actualErr, tc.expectedErr.Error(), "Expected error was not found")
@@ -590,6 +724,7 @@ func TestCheckOperation(t *testing.T) {
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func TestCheckOperation_Untimed(t *testing.T) {
+	t.Skip("Skipping due to dependency on outbound network calls")
 	testCases := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -959,6 +1094,7 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 }
 
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
+	t.Skip("Skipping due to dependency on outbound network calls")
 	tests := map[string]struct {
 		op          Operation
 		wallets     []common.Address

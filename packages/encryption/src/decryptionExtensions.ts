@@ -153,15 +153,18 @@ class StreamQueues {
         return true
     }
     toString() {
-        const counts = Array.from(this.streams.entries()).reduce((acc, [_, stream]) => {
-            acc['encryptedContent'] =
-                (acc['encryptedContent'] ?? 0) + stream.encryptedContent.length
-            acc['streamsMissingKeys'] =
-                (acc['streamsMissingKeys'] ?? 0) + (stream.isMissingKeys ? 1 : 0)
-            acc['keySolicitations'] =
-                (acc['keySolicitations'] ?? 0) + stream.keySolicitations.length
-            return acc
-        }, {} as Record<string, number>)
+        const counts = Array.from(this.streams.entries()).reduce(
+            (acc, [_, stream]) => {
+                acc['encryptedContent'] =
+                    (acc['encryptedContent'] ?? 0) + stream.encryptedContent.length
+                acc['streamsMissingKeys'] =
+                    (acc['streamsMissingKeys'] ?? 0) + (stream.isMissingKeys ? 1 : 0)
+                acc['keySolicitations'] =
+                    (acc['keySolicitations'] ?? 0) + stream.keySolicitations.length
+                return acc
+            },
+            {} as Record<string, number>,
+        )
 
         return Object.entries(counts)
             .map(([key, count]) => `${key}: ${count}`)
@@ -336,7 +339,7 @@ export abstract class BaseDecryptionExtensions {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
                 }
-                if (!keySolicitation.isNewDevice || keySolicitation.sessionIds.length === 0) {
+                if (keySolicitation.sessionIds.length === 0 && !keySolicitation.isNewDevice) {
                     continue
                 }
                 const selectedQueue =
@@ -675,7 +678,7 @@ export abstract class BaseDecryptionExtensions {
                     sessionId: session.sessionIds[i],
                     sessionKey: sessionKeys.keys[i],
                     algorithm: algorithm,
-                } satisfies GroupEncryptionSession),
+                }) satisfies GroupEncryptionSession,
         )
         // import the sessions
         this.log.debug(
@@ -891,13 +894,16 @@ export abstract class BaseDecryptionExtensions {
         }
 
         // if the key fulfillment succeeded, send one group session payload for each algorithm
-        const sessions = allSessions.reduce((acc, session) => {
-            if (!acc[session.algorithm]) {
-                acc[session.algorithm] = []
-            }
-            acc[session.algorithm].push(session)
-            return acc
-        }, {} as Record<GroupEncryptionAlgorithmId, GroupEncryptionSession[]>)
+        const sessions = allSessions.reduce(
+            (acc, session) => {
+                if (!acc[session.algorithm]) {
+                    acc[session.algorithm] = []
+                }
+                acc[session.algorithm].push(session)
+                return acc
+            },
+            {} as Record<GroupEncryptionAlgorithmId, GroupEncryptionSession[]>,
+        )
 
         // send one key fulfillment for each algorithm
         for (const kv of Object.entries(sessions)) {

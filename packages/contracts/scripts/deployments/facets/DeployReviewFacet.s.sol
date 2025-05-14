@@ -1,14 +1,14 @@
-// SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IReview} from "src/spaces/facets/review/IReview.sol";
 
-//libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
+// contracts
 
 library DeployReviewFacet {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -26,6 +26,6 @@ library DeployReviewFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("ReviewFacet.sol", "");
+        return LibDeploy.deployCode("ReviewFacet.sol", "");
     }
 }

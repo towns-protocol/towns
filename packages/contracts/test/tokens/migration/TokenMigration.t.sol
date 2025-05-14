@@ -11,7 +11,7 @@ import {IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausab
 import {ITokenMigrationBase} from "src/tokens/migration/ITokenMigration.sol";
 
 //libraries
-import {Validator__InvalidAddress} from "src/utils/libraries/Validator.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 
 //contracts
 import {DeployRiverMigration} from "scripts/deployments/diamonds/DeployRiverMigration.s.sol";
@@ -107,7 +107,7 @@ contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IO
     }
 
     function test_revertWhen_addressIsZero() external givenContractIsUnpaused {
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         tokenMigration.migrate(address(0));
     }
 

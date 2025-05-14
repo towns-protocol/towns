@@ -48,9 +48,8 @@ describe('withEntitlements', () => {
         const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
 
         // create a space stream,
         log('Bob created user, about to create space')

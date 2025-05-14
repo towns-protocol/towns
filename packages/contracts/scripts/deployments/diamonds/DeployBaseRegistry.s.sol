@@ -6,12 +6,20 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
-import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.sol";
+import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
+import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
+import {DeployERC721ANonTransferable} from "../facets/DeployERC721ANonTransferable.s.sol";
+import {DeployEntitlementChecker} from "../facets/DeployEntitlementChecker.s.sol";
+import {DeployMainnetDelegation} from "../facets/DeployMainnetDelegation.s.sol";
+import {DeployNodeOperator} from "../facets/DeployNodeOperator.s.sol";
+import {DeployRewardsDistributionV2} from "../facets/DeployRewardsDistributionV2.s.sol";
+import {DeploySpaceDelegation} from "../facets/DeploySpaceDelegation.s.sol";
+import {DeployXChain} from "../facets/DeployXChain.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -21,46 +29,17 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
-import {DeployERC721ANonTransferable} from "scripts/deployments/facets/DeployERC721ANonTransferable.s.sol";
-import {DeployEntitlementChecker} from "scripts/deployments/facets/DeployEntitlementChecker.s.sol";
-import {DeployMainnetDelegation} from "scripts/deployments/facets/DeployMainnetDelegation.s.sol";
-import {DeployMockMessenger} from "scripts/deployments/facets/DeployMockMessenger.s.sol";
-import {DeployNodeOperator} from "scripts/deployments/facets/DeployNodeOperator.s.sol";
-import {DeployRewardsDistributionV2} from "scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
-import {DeploySpaceDelegation} from "scripts/deployments/facets/DeploySpaceDelegation.s.sol";
-import {DeployXChain} from "scripts/deployments/facets/DeployXChain.s.sol";
+import {DeployMockMessenger} from "../utils/DeployMockMessenger.s.sol";
 
 contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
-    DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
+    using LibString for string;
 
-    // deployments
     DeployFacet private facetHelper = new DeployFacet();
-    DeployMainnetDelegation mainnetDelegationHelper = new DeployMainnetDelegation();
-    DeployEntitlementChecker checkerHelper = new DeployEntitlementChecker();
-    DeployNodeOperator operatorHelper = new DeployNodeOperator();
-    DeploySpaceDelegation spaceDelegationHelper = new DeploySpaceDelegation();
-    DeployRewardsDistributionV2 distributionV2Helper = new DeployRewardsDistributionV2();
-    DeployMockMessenger messengerHelper = new DeployMockMessenger();
-    DeployXChain xchainHelper = new DeployXChain();
-    address multiInit;
-    address diamondCut;
-    address diamondLoupe;
-    address introspection;
-    address ownable;
-    address metadata;
-    address entitlementChecker;
-    address operator;
+    DeployMockMessenger private messengerHelper = new DeployMockMessenger();
 
-    address nft;
-    address eip712;
-    address distribution;
-    address distributionV2;
-    address spaceDelegation;
-    address mainnetDelegation;
-    address xchain;
+    address private multiInit;
     address public messenger;
-
-    address riverToken = 0x9172852305F32819469bf38A3772f29361d7b768;
+    address private riverToken = 0x9172852305F32819469bf38A3772f29361d7b768;
 
     function versionName() public pure override returns (string memory) {
         return "baseRegistry";
@@ -71,92 +50,123 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = facetHelper.deploy("MultiInit", deployer);
+        // Queue up all core facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("DiamondCutFacet");
+        facetHelper.add("DiamondLoupeFacet");
+        facetHelper.add("IntrospectionFacet");
+        facetHelper.add("OwnableFacet");
 
-        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
-        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
-        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
-        ownable = facetHelper.deploy("OwnableFacet", deployer);
+        // Get predicted addresses
+        multiInit = facetHelper.predictAddress("MultiInit");
 
+        address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
-            diamondCut,
+            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployDiamondCut.makeInitData()
         );
+
+        facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
-            diamondLoupe,
+            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployDiamondLoupe.makeInitData()
         );
+
+        facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
-            introspection,
+            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployIntrospection.makeInitData()
         );
+
+        facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
-            ownable,
+            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployOwnable.makeInitData(deployer)
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        metadata = facetHelper.deploy("MetadataFacet", deployer);
-        entitlementChecker = checkerHelper.deploy(deployer);
-        operator = operatorHelper.deploy(deployer);
-        distributionV2 = distributionV2Helper.deploy(deployer);
-        mainnetDelegation = mainnetDelegationHelper.deploy(deployer);
-        spaceDelegation = spaceDelegationHelper.deploy(deployer);
-        nft = deployNFT.deploy(deployer);
+        // Queue up all feature facets for batch deployment
+        facetHelper.add("ERC721ANonTransferable");
+        facetHelper.add("NodeOperatorFacet");
+        facetHelper.add("MetadataFacet");
+        facetHelper.add("EntitlementChecker");
+        facetHelper.add("RewardsDistributionV2");
+        facetHelper.add("SpaceDelegationFacet");
+        facetHelper.add("MainnetDelegation");
+        facetHelper.add("EIP712Facet");
+        facetHelper.add("XChain");
+
+        // Deploy all facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
+        // Add facets using the deployed addresses
+        address facet = facetHelper.getDeployedAddress("ERC721ANonTransferable");
+        addFacet(
+            DeployERC721ANonTransferable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployERC721ANonTransferable.makeInitData("Operator", "OPR")
+        );
+
+        facet = facetHelper.getDeployedAddress("NodeOperatorFacet");
+        addFacet(
+            DeployNodeOperator.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployNodeOperator.makeInitData()
+        );
+
+        facet = facetHelper.getDeployedAddress("MetadataFacet");
+        addFacet(
+            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployMetadata.makeInitData(bytes32("SpaceOperator"), "")
+        );
+
+        facet = facetHelper.getDeployedAddress("EntitlementChecker");
+        addFacet(
+            DeployEntitlementChecker.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployEntitlementChecker.makeInitData()
+        );
+
+        facet = facetHelper.getDeployedAddress("RewardsDistributionV2");
+        addFacet(
+            DeployRewardsDistributionV2.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployRewardsDistributionV2.makeInitData(riverToken, riverToken, 14 days)
+        );
+
+        facet = facetHelper.getDeployedAddress("SpaceDelegationFacet");
+        addFacet(
+            DeploySpaceDelegation.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeploySpaceDelegation.makeInitData(riverToken)
+        );
+
         messenger = messengerHelper.deploy(deployer);
-        eip712 = facetHelper.deploy("EIP712Facet", deployer);
-        xchain = xchainHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("MainnetDelegation");
         addFacet(
-            deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
-            nft,
-            deployNFT.makeInitData("Operator", "OPR")
-        );
-        addFacet(
-            operatorHelper.makeCut(operator, IDiamond.FacetCutAction.Add),
-            operator,
-            operatorHelper.makeInitData("")
+            DeployMainnetDelegation.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployMainnetDelegation.makeInitData(messenger)
         );
 
+        facet = facetHelper.getDeployedAddress("EIP712Facet");
         addFacet(
-            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
-            metadata,
-            DeployMetadata.makeInitData("SpaceOperator", "")
-        );
-        addFacet(
-            checkerHelper.makeCut(entitlementChecker, IDiamond.FacetCutAction.Add),
-            entitlementChecker,
-            checkerHelper.makeInitData("")
-        );
-
-        addFacet(
-            distributionV2Helper.makeCut(distributionV2, IDiamond.FacetCutAction.Add),
-            distributionV2,
-            distributionV2Helper.makeInitData(riverToken, riverToken, 14 days)
-        );
-        addFacet(
-            spaceDelegationHelper.makeCut(spaceDelegation, IDiamond.FacetCutAction.Add),
-            spaceDelegation,
-            spaceDelegationHelper.makeInitData(riverToken)
-        );
-        addFacet(
-            mainnetDelegationHelper.makeCut(mainnetDelegation, IDiamond.FacetCutAction.Add),
-            mainnetDelegation,
-            mainnetDelegationHelper.makeInitData(messenger)
-        );
-        addFacet(
-            DeployEIP712Facet.makeCut(eip712, IDiamond.FacetCutAction.Add),
-            eip712,
+            DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployEIP712Facet.makeInitData("BaseRegistry", "1")
         );
+
+        facet = facetHelper.getDeployedAddress("XChain");
         addFacet(
-            xchainHelper.makeCut(xchain, IDiamond.FacetCutAction.Add),
-            xchain,
-            xchainHelper.makeInitData("")
+            DeployXChain.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployXChain.makeInitData()
         );
 
         return
@@ -168,66 +178,73 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
-        for (uint256 i = 0; i < facets.length; i++) {
-            string memory facetName = facets[i];
-            bytes32 facetNameHash = keccak256(abi.encodePacked(facetName));
+        // Queue up all requested facets for batch deployment
+        for (uint256 i; i < facets.length; ++i) {
+            facetHelper.add(facets[i]);
+        }
 
-            if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
-                metadata = facetHelper.deploy("MetadataFacet", deployer);
+        // Deploy all requested facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
+        // Add the requested facets
+        for (uint256 i; i < facets.length; ++i) {
+            string memory facetName = facets[i];
+            address facet = facetHelper.getDeployedAddress(facetName);
+
+            if (facetName.eq("MetadataFacet")) {
                 addFacet(
-                    DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
-                    metadata,
-                    DeployMetadata.makeInitData("SpaceOperator", "")
+                    DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployMetadata.makeInitData(bytes32("SpaceOperator"), "")
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("EntitlementChecker"))) {
-                entitlementChecker = checkerHelper.deploy(deployer);
+            } else if (facetName.eq("EntitlementChecker")) {
                 addFacet(
-                    checkerHelper.makeCut(entitlementChecker, IDiamond.FacetCutAction.Add),
-                    entitlementChecker,
-                    checkerHelper.makeInitData("")
+                    DeployEntitlementChecker.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployEntitlementChecker.makeInitData()
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("NodeOperatorFacet"))) {
-                operator = operatorHelper.deploy(deployer);
+            } else if (facetName.eq("NodeOperatorFacet")) {
                 addFacet(
-                    operatorHelper.makeCut(operator, IDiamond.FacetCutAction.Add),
-                    operator,
-                    operatorHelper.makeInitData("")
+                    DeployNodeOperator.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployNodeOperator.makeInitData()
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("RewardsDistributionV2"))) {
-                distributionV2 = distributionV2Helper.deploy(deployer);
+            } else if (facetName.eq("RewardsDistributionV2")) {
                 addFacet(
-                    distributionV2Helper.makeCut(distributionV2, IDiamond.FacetCutAction.Add),
-                    distributionV2,
-                    distributionV2Helper.makeInitData("")
+                    DeployRewardsDistributionV2.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployRewardsDistributionV2.makeInitData(riverToken, riverToken, 14 days)
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("MainnetDelegation"))) {
-                mainnetDelegation = mainnetDelegationHelper.deploy(deployer);
+            } else if (facetName.eq("MainnetDelegation")) {
                 messenger = messengerHelper.deploy(deployer);
                 addFacet(
-                    mainnetDelegationHelper.makeCut(mainnetDelegation, IDiamond.FacetCutAction.Add),
-                    mainnetDelegation,
-                    mainnetDelegationHelper.makeInitData(messenger)
+                    DeployMainnetDelegation.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployMainnetDelegation.makeInitData(messenger)
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("SpaceDelegationFacet"))) {
-                spaceDelegation = spaceDelegationHelper.deploy(deployer);
+            } else if (facetName.eq("SpaceDelegationFacet")) {
                 addFacet(
-                    spaceDelegationHelper.makeCut(spaceDelegation, IDiamond.FacetCutAction.Add),
-                    spaceDelegation,
-                    spaceDelegationHelper.makeInitData(riverToken)
+                    DeploySpaceDelegation.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeploySpaceDelegation.makeInitData(riverToken)
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("ERC721ANonTransferable"))) {
-                nft = deployNFT.deploy(deployer);
+            } else if (facetName.eq("ERC721ANonTransferable")) {
                 addFacet(
-                    deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
-                    nft,
-                    deployNFT.makeInitData("Operator", "OPR")
+                    DeployERC721ANonTransferable.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployERC721ANonTransferable.makeInitData("Operator", "OPR")
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
-                eip712 = facetHelper.deploy("EIP712Facet", deployer);
+            } else if (facetName.eq("EIP712Facet")) {
                 addFacet(
-                    DeployEIP712Facet.makeCut(eip712, IDiamond.FacetCutAction.Add),
-                    eip712,
+                    DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
                     DeployEIP712Facet.makeInitData("BaseRegistry", "1")
+                );
+            } else if (facetName.eq("XChain")) {
+                addFacet(
+                    DeployXChain.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
+                    DeployXChain.makeInitData()
                 );
             }
         }
@@ -238,7 +255,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         string[] memory facetNames
     ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
-        return this.getCuts();
+        return baseFacets();
     }
 
     function __deploy(address deployer) internal override returns (address) {

@@ -21,6 +21,8 @@ const (
 	// MiniblockCandidateBatchSize keep track the max number of new miniblocks that are registered in the StreamRegistry
 	// in a single transaction.
 	MiniblockCandidateBatchSize = 50
+
+	MiniblockLeaderBlockInterval = 10
 )
 
 // RemoteMiniblockProvider abstracts communications required for coordinated miniblock production.
@@ -191,7 +193,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 			)
 			continue
 		}
-		j := p.trySchedule(ctx, stream)
+		j := p.trySchedule(ctx, stream, blockNum)
 		if j != nil {
 			scheduled = append(scheduled, j)
 			log.Debugw(
@@ -219,18 +221,18 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	if len(streamNodes) == 0 {
 		return false
 	}
-	index := blockNum.AsUint64() % uint64(len(streamNodes))
+	index := (blockNum.AsUint64() / MiniblockLeaderBlockInterval) % uint64(len(streamNodes))
 	return streamNodes[index] == p.localNodeAddress
 }
 
-func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream) *mbJob {
+func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream, blockNum crypto.BlockNumber) *mbJob {
 	j := &mbJob{
 		stream: stream,
 		cache:  p.streamCache,
 	}
 	_, prevLoaded := p.jobs.LoadOrStore(stream.streamId, j)
 	if !prevLoaded {
-		go p.jobStart(ctx, j)
+		go p.jobStart(ctx, j, blockNum)
 		return j
 	}
 	return nil
@@ -282,7 +284,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	for {
 		actual, _ := p.jobs.LoadOrStore(streamId, job)
 		if actual == job {
-			go p.jobStart(ctx, job)
+			go p.jobStart(ctx, job, 0)
 			break
 		}
 
@@ -318,16 +320,16 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	return view.LastBlock().Ref, nil
 }
 
-func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob) {
+func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum crypto.BlockNumber) {
 	if ctx.Err() != nil {
 		p.jobDone(ctx, j)
 		return
 	}
 
-	err := j.produceCandidate(ctx)
+	err := j.produceCandidate(ctx, blockNum)
 	if err != nil {
 		logging.FromCtx(ctx).
-			Errorw(
+			Warnw(
 				"MiniblockProducer: jobStart: Error creating new miniblock proposal",
 				"streamId",
 				j.stream.streamId,

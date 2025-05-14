@@ -1,9 +1,10 @@
 import fs from 'fs'
 import { MetricsDiscovery } from './metrics-discovery'
-import { envVarsSchema } from './env-vars'
 import { sleep } from './utils'
 import { createPrometheusConfig } from './create-prometheus-config'
 import http from 'node:http'
+import { getLogger } from './logger'
+import { config } from './config'
 
 const PROMETHEUS_TARGETS_FILE = './prometheus/etc/targets.json'
 const SLEEP_DURATION_MS = 1000 * 60 * 5 // 5 minutes
@@ -11,15 +12,16 @@ const PORT = 8080
 
 let numWrites = 0
 
-const run = async () => {
-    console.info('Creating prometheus config...')
-    await createPrometheusConfig()
-    console.info('Prometheus config created')
+const logger = getLogger('metrics-discovery')
 
-    const envVars = envVarsSchema.parse(process.env)
+const run = async () => {
+    logger.info('Creating prometheus config...')
+    await createPrometheusConfig()
+    logger.info('Prometheus config created')
+
     const metricsDiscovery = MetricsDiscovery.init({
-        riverRpcURL: envVars.RIVER_RPC_URL,
-        env: envVars.ENV,
+        riverRpcURL: config.riverRpcURL,
+        env: config.env,
     })
 
     const server = http.createServer((req, res) => {
@@ -34,21 +36,31 @@ const run = async () => {
     })
 
     server.listen(PORT, () => {
-        console.log(`Server running at http://localhost:${PORT}/`)
+        logger.info(`Server running at http://localhost:${PORT}/`)
     })
 
-    for (;;) {
-        console.info('Getting prometheus targets...')
-        const targets = await metricsDiscovery.getPrometheusTargets()
-        console.info('Writing prometheus targets...', targets)
-        await fs.promises.writeFile(PROMETHEUS_TARGETS_FILE, targets, {
-            encoding: 'utf8',
-        })
-        numWrites++
-        console.info(`Prometheus targets written to: ${PROMETHEUS_TARGETS_FILE}`)
-        console.info(`Sleeping for ${SLEEP_DURATION_MS} ms...`)
-        await sleep(SLEEP_DURATION_MS)
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        try {
+            logger.info('Getting prometheus targets...')
+            const targets = await metricsDiscovery.getPrometheusTargets()
+            logger.info({ targets }, 'Writing prometheus targets...')
+            await fs.promises.writeFile(PROMETHEUS_TARGETS_FILE, targets, {
+                encoding: 'utf8',
+            })
+            numWrites++
+            logger.info(
+                {
+                    file: PROMETHEUS_TARGETS_FILE,
+                },
+                `Prometheus targets written`,
+            )
+        } catch (e) {
+            logger.error({ error: e }, 'Error writing prometheus targets:')
+        } finally {
+            logger.info({ durationMs: SLEEP_DURATION_MS }, `Sleeping...`)
+            await sleep(SLEEP_DURATION_MS)
+        }
     }
 }
-
-run().catch(console.error)
+run().catch(logger.error)

@@ -25,6 +25,7 @@ core/node/registries/contracts/*.json
 packages/encryption-pkg/turbo.json
 packages/contracts/cache/*
 packages/contracts/deployments/*
+packages/contracts/broadcast/*
 packages/contracts/addresses/*
 packages/contracts/lib/*
 packages/contracts/**/out/*
@@ -33,6 +34,9 @@ packages/contracts/**/types/*
 packages/contracts/docgen/*
 packages/contract/out
 packages/contracts/coverage/*
+packages/subgraph/generated/*
+packages/subgraph/.ponder/*
+packages/subgraph/*.d.ts
 core/xchain/src/gen/*
 
 broadcast/*

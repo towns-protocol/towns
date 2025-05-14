@@ -8,11 +8,12 @@ const json = JSON.parse(
 const values = [];
 
 for (const condition of json.conditions) {
-  values.push([condition.account, condition.amount]);
+  console.log(condition);
+  values.push([condition.account, condition.amount, condition.points]);
 }
 
 // (2)
-const tree = StandardMerkleTree.of(values, ["address", "uint256"]);
+const tree = StandardMerkleTree.of(values, ["address", "uint256", "uint256"]);
 
 // (3)
 console.log(tree.root);

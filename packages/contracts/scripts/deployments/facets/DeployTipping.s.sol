@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployTipping {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -26,6 +26,6 @@ library DeployTipping {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("TippingFacet.sol", "");
+        return LibDeploy.deployCode("TippingFacet.sol", "");
     }
 }

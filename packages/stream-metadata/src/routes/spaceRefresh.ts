@@ -44,8 +44,8 @@ export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply)
 		target === 'metadata'
 			? [`/space/${spaceAddress}`, `/space/${spaceAddress}/token/*`]
 			: target === 'image'
-			? [`/space/${spaceAddress}/image*`]
-			: [`/space/${spaceAddress}*`]
+				? [`/space/${spaceAddress}/image*`]
+				: [`/space/${spaceAddress}*`]
 
 	try {
 		logger.info({ spaceAddress }, 'Refreshing space')
