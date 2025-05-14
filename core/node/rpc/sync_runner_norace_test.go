@@ -110,6 +110,197 @@ func makeTrackedStreamConstructor(
 	}
 }
 
+func TestMultiSyncer(t *testing.T) {
+	numNodes := 10
+	replFactor := 5
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true, printTestLogs: false},
+	)
+	ctx := tt.ctx
+	require := tt.require
+
+	streamEvents := make(chan eventRecord, 2048)
+	eventTracker := make(map[StreamId][]string)
+	var eventTrackerMu sync.Mutex
+
+	cfg := tt.getConfig()
+	riverContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		tt.btc.DeployerBlockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	require.NoError(err, "Error creating river registry contract for multi-sync runner")
+
+	nodeRegistry, err := nodes.LoadNodeRegistry(
+		ctx,
+		riverContract,
+		common.Address{},
+		0,
+		tt.btc.DeployerBlockchain.ChainMonitor,
+		tt.btc.OnChainConfig,
+		tt.httpClient(),
+		nil,
+	)
+	require.NoError(err, "Error creating node registry for multi-sync runner")
+
+	// Create MultiSyncRunner
+	msr := track_streams.NewMultiSyncRunner(
+		track_streams.NewTrackStreamsSyncMetrics(infra.NewMetricsFactory(nil, "", "")),
+		tt.btc.OnChainConfig,
+		[]nodes.NodeRegistry{nodeRegistry},
+		makeTrackedStreamConstructor(streamEvents),
+		config.StreamTrackingConfig{
+			StreamsPerSyncSession:     3,
+			NumWorkers:                2,
+			MaxConcurrentNodeRequests: 2,
+		},
+		nil,
+	)
+	msrCtx := ctx
+	go msr.Run(msrCtx)
+
+	client0 := tt.newTestClient(0, testClientOpts{}).client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, client0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	// Create space
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, client0, spaceId, nil)
+	require.NoError(err)
+
+	// Create multiple channels
+	numChannels := 50
+	channelIds := make([]StreamId, numChannels)
+	channelHashes := make([]*MiniblockRef, numChannels)
+
+	for i := 0; i < numChannels; i++ {
+		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channel, channelHash, err := createChannel(
+			ctx,
+			wallet,
+			client0,
+			spaceId,
+			channelId,
+			&StreamSettings{DisableMiniblockCreation: true},
+		)
+		require.NoError(err)
+		require.NotNil(channel)
+
+		b0ref, err := makeMiniblock(ctx, client0, channelId, false, -1)
+		require.NoError(err)
+		require.Equal(int64(0), b0ref.Num)
+
+		channelIds[i] = StreamId(channel.StreamId)
+		channelHashes[i] = channelHash
+
+		// Add to sync runner
+		stream, err := tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(
+			ctx,
+			channelIds[i],
+		)
+		require.NoError(err)
+
+		msr.AddStream(
+			&river.StreamWithId{
+				Id: [32]byte(channelIds[i]),
+				Stream: river.Stream{
+					Nodes:     stream.Nodes(),
+					Reserved0: uint64(replFactor),
+				},
+			},
+			true,
+		)
+
+		eventTracker[channelIds[i]] = []string{}
+	}
+
+	// Start goroutine to collect events
+	eventCollectorCtx, cancelCollector := context.WithCancel(ctx)
+	defer cancelCollector()
+
+	eventCollectorDone := make(chan struct{})
+	go func() {
+		defer close(eventCollectorDone)
+
+		for {
+			select {
+			case <-eventCollectorCtx.Done():
+				return
+
+			case record := <-streamEvents:
+				if payload, ok := record.event.Event.Payload.(*StreamEvent_ChannelPayload); ok {
+					if message, ok := payload.ChannelPayload.GetContent().(*ChannelPayload_Message); ok {
+						eventTrackerMu.Lock()
+						eventTracker[record.streamId] = append(
+							eventTracker[record.streamId],
+							message.Message.Ciphertext,
+						)
+						eventTrackerMu.Unlock()
+					}
+				}
+			}
+		}
+	}()
+
+	// Send 10 messages to each channel
+	expectedMessages := make(map[StreamId][]string)
+	for i, channelId := range channelIds {
+		for j := 0; j < 10; j++ {
+			msg := fmt.Sprintf("msg%d-channel%d", j, i)
+			addMessageToChannel(ctx, client0, wallet, msg, channelId, channelHashes[i], require)
+			expectedMessages[channelId] = append(expectedMessages[channelId], msg)
+		}
+	}
+
+	// Wait until all messages are received
+	require.Eventually(func() bool {
+		eventTrackerMu.Lock()
+		defer eventTrackerMu.Unlock()
+
+		// Check if all channels have received all their messages
+		for channelId, expectedMsgs := range expectedMessages {
+			messages := eventTracker[channelId]
+			if len(messages) != len(expectedMsgs) {
+				return false
+			}
+			for i, expectedMsg := range expectedMsgs {
+				if messages[i] != expectedMsg {
+					return false
+				}
+			}
+		}
+		return true
+	}, 30*time.Second, 100*time.Millisecond, "Not all messages were received")
+
+	// Shutdown cleanly
+	cancelCollector()
+	<-eventCollectorDone
+
+	// Final verification of messages
+	eventTrackerMu.Lock()
+	defer eventTrackerMu.Unlock()
+
+	for i, channelId := range channelIds {
+		messages := eventTracker[channelId]
+		require.Equal(10, len(messages), "Channel %d should have received 10 messages", i)
+
+		// Verify message order and content
+		for j := 0; j < 10; j++ {
+			expectedMsg := fmt.Sprintf("msg%d-channel%d", j, i)
+			require.Equal(expectedMsg, messages[j], "Message %d in channel %d has wrong content", j, i)
+		}
+	}
+}
+
+// TestMultiSyncerWithNodeFailures stops nodes one at a time after streams have already started syncing. This
+// tests that the MultiSyncer correctly detects when streams are not syncing and rotates them to new
+// nodes, verifying message delivery after each node failure.
 func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	numNodes := 10
 	replFactor := 5
@@ -153,7 +344,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		makeTrackedStreamConstructor(streamEvents),
 		config.StreamTrackingConfig{
 			StreamsPerSyncSession:     3, // Small number to force multiple sync sessions per target node
-			NumWorkers:                2,
+			NumWorkers:                4,
 			MaxConcurrentNodeRequests: 2,
 		},
 		nil,
@@ -177,7 +368,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	require.NoError(err)
 
 	// Create multiple channels
-	numChannels := 50
+	numChannels := 100
 	channelIds := make([]StreamId, numChannels)
 	channelHashes := make([]*MiniblockRef, numChannels)
 
@@ -283,12 +474,10 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		return true
 	}, 30*time.Second, 100*time.Millisecond, "Not all messages from first batch were received")
 
-	// Stop two nodes to force stream relocation
+	// Stop first node to force stream relocation
 	tt.CloseNode(1)
-	tt.CloseNode(2)
 
-	// Send second batch of messages - we don't need to wait for relocation explicitly
-	// as our assertion will verify that messages are eventually delivered
+	// Send second batch of messages after first node failure
 	for i, channelId := range channelIds {
 		msg := fmt.Sprintf("msg2-channel%d", i)
 		addMessageToChannelWithRetries(ctx, client0, wallet, msg, channelId, channelHashes[i], require, replFactor)
@@ -312,13 +501,46 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 					}
 				}
 				if !found {
-					// t.Logf("Missing message %s for channel %s", expectedMsg, channelId)
 					return false
 				}
 			}
 		}
 		return true
-	}, 15*time.Second, 100*time.Millisecond, "Not all messages were received after node failures")
+	}, 15*time.Second, 100*time.Millisecond, "Not all messages were received after first node failure")
+
+	// Stop second node to force another stream relocation
+	tt.CloseNode(2)
+
+	// Send third batch of messages after second node failure
+	for i, channelId := range channelIds {
+		msg := fmt.Sprintf("msg3-channel%d", i)
+		addMessageToChannelWithRetries(ctx, client0, wallet, msg, channelId, channelHashes[i], require, replFactor)
+		expectedMessages[channelId] = append(expectedMessages[channelId], msg)
+	}
+
+	// Wait until all third batch messages are received
+	require.Eventually(func() bool {
+		eventTrackerMu.Lock()
+		defer eventTrackerMu.Unlock()
+
+		// Check if all channels have received all expected messages
+		for channelId, expectedMsgs := range expectedMessages {
+			messages := eventTracker[channelId]
+			for _, expectedMsg := range expectedMsgs {
+				found := false
+				for _, msg := range messages {
+					if msg == expectedMsg {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return false
+				}
+			}
+		}
+		return true
+	}, 15*time.Second, 100*time.Millisecond, "Not all messages were received after second node failure")
 
 	// Shutdown cleanly
 	cancelCollector()
@@ -330,13 +552,13 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 
 	for i, channelId := range channelIds {
 		messages := eventTracker[channelId]
-		// t.Logf("Channel %d received %d messages: %v", i, len(messages), messages)
 
-		// Check that both our specific messages are present
+		// Check that all three messages are present
 		msg1 := fmt.Sprintf("msg1-channel%d", i)
 		msg2 := fmt.Sprintf("msg2-channel%d", i)
+		msg3 := fmt.Sprintf("msg3-channel%d", i)
 
-		found1, found2 := false, false
+		found1, found2, found3 := false, false, false
 		for _, msg := range messages {
 			if msg == msg1 {
 				found1 = true
@@ -344,9 +566,13 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 			if msg == msg2 {
 				found2 = true
 			}
+			if msg == msg3 {
+				found3 = true
+			}
 		}
 
 		require.True(found1, "First message not found for channel %d", i)
 		require.True(found2, "Second message not found for channel %d", i)
+		require.True(found3, "Third message not found for channel %d", i)
 	}
 }
