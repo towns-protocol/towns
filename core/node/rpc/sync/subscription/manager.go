@@ -117,6 +117,7 @@ func (m *Manager) start() {
 }
 
 func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncOp string) *Subscription {
+	// TODO: Handle context cancellation -> unsubscribe
 	suscription := &Subscription{
 		Ctx:      ctx,
 		Cancel:   cancel,
