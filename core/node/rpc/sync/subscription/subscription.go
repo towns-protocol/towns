@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/puzpuzpuz/xsync/v4"
@@ -27,6 +28,16 @@ type Subscription struct {
 func (s *Subscription) Close() {
 	s.Messages.Close()
 	s.manager.subscriptions.Delete(s.SyncOp)
+	s.manager.streamToSubscriptions.Range(func(streamID StreamId, syncOps []string) bool {
+		for i, op := range syncOps {
+			if op == s.SyncOp {
+				syncOps = append(syncOps[:i], syncOps[i+1:]...)
+				break
+			}
+		}
+		s.manager.streamToSubscriptions.Store(streamID, syncOps)
+		return true
+	})
 }
 
 // Send sends the given message to the subscription messages channel.
@@ -89,36 +100,39 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
-func (s *Subscription) addStream(cookie *SyncCookie) (addToRemote bool) {
+func (s *Subscription) addStream(cookie *SyncCookie) bool {
+	var streamAlreadyInSync bool
+	var updatedSubscribers bool
+
 	// Add the stream to the subscription if not added yet
-	_, subscribed := s.manager.streamToSubscriptions.Compute(
+	s.manager.streamToSubscriptions.Compute(
 		StreamId(cookie.GetStreamId()),
 		func(oldValue []string, loaded bool) (newValue []string, op xsync.ComputeOp) {
 			// The given stream is not syncing yet, add it to the syncer set.
 			// It is ok to use the entire cookie when subscribing at the first time.
-			addToRemote = !loaded || len(oldValue) == 0
-
+			streamAlreadyInSync = loaded && len(oldValue) > 0
 			if slices.Contains(oldValue, s.SyncOp) {
 				// The given stream is already subscribed, do nothing
 				return nil, xsync.CancelOp
 			}
-
+			updatedSubscribers = true
 			return append(oldValue, s.SyncOp), xsync.UpdateOp
 		},
 	)
 
-	if subscribed {
-		// The given subscription already subscribed on the given stream, no nothing
-		return
+	if streamAlreadyInSync && !updatedSubscribers {
+		// The given subscription already subscribed on the given stream, do nothing
+		return false
 	}
 
-	if !addToRemote {
-		// The given stream is already syncing but the client might
+	if updatedSubscribers {
+		// The given stream is already syncing but the client is not subscribed yet might
 		// want to get updates since a specific miniblock.
 		// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
+
 	}
 
-	return addToRemote
+	return !streamAlreadyInSync
 }
 
 // removeStream removes the given stream from the current subscription.
@@ -142,6 +156,7 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 			for i, sub := range oldValue {
 				if sub == s.SyncOp {
 					newValue = append(oldValue[:i], oldValue[i+1:]...)
+					break
 				}
 			}
 
@@ -164,11 +179,13 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 }
 
 // DebugDropStream drops the given stream from the subscription.
+// TODO: Doublecheck the complete behaviour
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	removeFromRemote := s.removeStream(streamID[:])
+	fmt.Println("debug drop stream", streamID, s.SyncOp)
+	/*removeFromRemote := s.removeStream(streamID[:])
 	if !removeFromRemote {
 		return nil
-	}
+	}*/
 
 	return s.manager.syncers.DebugDropStream(ctx, streamID)
 }

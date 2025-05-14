@@ -4,11 +4,10 @@ import (
 	"context"
 	"slices"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -22,9 +21,9 @@ import (
 
 type Manager struct {
 	// log is the logger for this stream sync operation
-	log *logging.Log
-
-	globalCtx context.Context
+	log           *logging.Log
+	localNodeAddr common.Address
+	globalCtx     context.Context
 
 	syncers  *client.SyncerSet
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -51,6 +50,7 @@ func NewManager(
 
 	manager := &Manager{
 		log:                   log,
+		localNodeAddr:         localNodeAddr,
 		globalCtx:             globalCtx,
 		syncers:               syncers,
 		messages:              messages,
@@ -137,8 +137,13 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 	}
 
 	// Send the message to all subscriptions for this stream
+	subscriptions, ok := m.streamToSubscriptions.Load(streamID)
+	if !ok {
+		// No subscriptions for this stream, nothing to do.
+		return
+	}
+
 	// TODO: Parallelize this?
-	subscriptions, _ := m.streamToSubscriptions.Load(streamID)
 	for i, syncID := range subscriptions {
 		subscription, ok := m.subscriptions.Load(syncID)
 		if !ok {
@@ -158,11 +163,10 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 				"syncId", subscription.SyncOp, "op", msg.GetSyncOp(), "err", err)
 			continue
 		}
+	}
 
-		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-			// The given stream is no longer needed, remove it from the subscription.
-			// TODO: Optimize this, do in batch
-			subscription.removeStream(streamIDRaw)
-		}
+	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+		// The given stream is no longer needed, remove it from the subscription.
+		m.streamToSubscriptions.Delete(streamID)
 	}
 }

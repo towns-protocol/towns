@@ -455,7 +455,8 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		mu.Unlock()
 
 		return count == streamsDownCounter
-	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message: %d != %d",
+		streamsDownCounter, len(streamDownMessages))
 
 	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
 
