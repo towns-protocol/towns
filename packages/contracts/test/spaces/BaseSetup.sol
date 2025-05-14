@@ -70,6 +70,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address internal space;
     address internal everyoneSpace;
     address internal spaceFactory;
+    address internal spaceDiamond;
 
     address internal userEntitlement;
     address internal ruleEntitlement;
@@ -158,6 +159,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         walletLink = IWalletLink(spaceFactory);
         implementationRegistry = IImplementationRegistry(spaceFactory);
         eip712Facet = EIP712Facet(spaceFactory);
+        spaceDiamond = deploySpaceFactory.spaceImpl();
 
         // River Airdrop
         deployRiverAirdrop.setBaseRegistry(baseRegistry);

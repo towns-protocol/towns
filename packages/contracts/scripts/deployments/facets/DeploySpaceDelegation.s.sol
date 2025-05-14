@@ -2,44 +2,49 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-// helpers
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {SpaceDelegationFacet} from "src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
-contract DeploySpaceDelegation is Deployer, FacetHelper {
-    constructor() {
-        addSelector(SpaceDelegationFacet.addSpaceDelegation.selector);
-        addSelector(SpaceDelegationFacet.removeSpaceDelegation.selector);
-        addSelector(SpaceDelegationFacet.getSpaceDelegation.selector);
-        addSelector(SpaceDelegationFacet.getSpaceDelegationsByOperator.selector);
-        addSelector(SpaceDelegationFacet.setRiverToken.selector);
-        addSelector(SpaceDelegationFacet.riverToken.selector);
-        addSelector(SpaceDelegationFacet.getTotalDelegation.selector);
-        addSelector(SpaceDelegationFacet.setMainnetDelegation.selector);
-        addSelector(SpaceDelegationFacet.setSpaceFactory.selector);
-        addSelector(SpaceDelegationFacet.getSpaceFactory.selector);
+library DeploySpaceDelegation {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        arr.p(SpaceDelegationFacet.addSpaceDelegation.selector);
+        arr.p(SpaceDelegationFacet.removeSpaceDelegation.selector);
+        arr.p(SpaceDelegationFacet.getSpaceDelegation.selector);
+        arr.p(SpaceDelegationFacet.getSpaceDelegationsByOperator.selector);
+        arr.p(SpaceDelegationFacet.setRiverToken.selector);
+        arr.p(SpaceDelegationFacet.riverToken.selector);
+        arr.p(SpaceDelegationFacet.getTotalDelegation.selector);
+        arr.p(SpaceDelegationFacet.setMainnetDelegation.selector);
+        arr.p(SpaceDelegationFacet.setSpaceFactory.selector);
+        arr.p(SpaceDelegationFacet.getSpaceFactory.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return SpaceDelegationFacet.__SpaceDelegation_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function makeInitData(address riverToken) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), riverToken);
+    function makeInitData(address riverToken) internal pure returns (bytes memory) {
+        return abi.encodeCall(SpaceDelegationFacet.__SpaceDelegation_init, (riverToken));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/spaceDelegationFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        SpaceDelegationFacet spaceDelegationFacet = new SpaceDelegationFacet();
-        vm.stopBroadcast();
-        return address(spaceDelegationFacet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("SpaceDelegationFacet.sol", "");
     }
 }

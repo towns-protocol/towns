@@ -16,7 +16,7 @@ interface IMembershipBase {
         string symbol;
         uint256 price;
         uint256 maxSupply;
-        uint64 duration; // remove
+        uint64 duration;
         address currency;
         address feeRecipient;
         uint256 freeAllocation;
@@ -116,6 +116,12 @@ interface IMembership is IMembershipBase {
      * @return The membership duration
      */
     function getMembershipDuration() external view returns (uint64);
+
+    /**
+     * @notice Set the membership duration
+     * @param duration The new membership duration in seconds
+     */
+    function setMembershipDuration(uint64 duration) external;
 
     // =============================================================
     //                        Pricing Module
