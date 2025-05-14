@@ -101,7 +101,7 @@ describe('membershipRenewals', () => {
             carolsWallet.address,
             carolProvider.wallet,
         )
-        // When bob's join event is added to the stream, it should trigger a scrub, and Alice
+        // When carol's join event is added to the stream, it should trigger a scrub, and Alice
         // should be booted from the stream since her membership has expired
         await expect(carol.joinStream(channelId)).resolves.not.toThrow()
         const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
@@ -178,8 +178,8 @@ describe('membershipRenewals', () => {
             carolsWallet.address,
             carolProvider.wallet,
         )
-        // When bob's join event is added to the stream, it should trigger a scrub, and Alice
-        // should be booted from the stream since her membership has expired
+        // When carol's join event is added to the stream, it should trigger a scrub, and Alice
+        // should not be booted from the stream since her she has an additional token that is not expired
         await expect(carol.joinStream(channelId)).resolves.not.toThrow()
         const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
 
