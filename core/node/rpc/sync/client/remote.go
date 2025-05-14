@@ -123,7 +123,6 @@ func (s *remoteSyncer) Run() {
 			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-					s.cancelGlobalSyncOp(err)
 				}
 				return
 			}
@@ -133,7 +132,6 @@ func (s *remoteSyncer) Run() {
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-						s.cancelGlobalSyncOp(err)
 					}
 					return
 				}
@@ -156,7 +154,6 @@ func (s *remoteSyncer) Run() {
 			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-				s.cancelGlobalSyncOp(err)
 				return false
 			}
 
@@ -177,6 +174,7 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 		return s.syncStreamCtx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
+			s.cancelGlobalSyncOp(err)
 			return AsRiverError(err).
 				Tag("syncId", s.syncID).
 				Tag("op", msg.GetSyncOp()).

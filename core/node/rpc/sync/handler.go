@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
@@ -73,10 +75,12 @@ type (
 		streamCache *StreamCache
 		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
 		nodeRegistry nodes.NodeRegistry
-		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
-		otelTracer trace.Tracer
 		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
 		activeSyncOperations sync.Map
+		// subscriptionManager is used to manage subscriptions to streams
+		subscriptionManager *subscription.Manager
+		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+		otelTracer trace.Tracer
 	}
 )
 
@@ -89,16 +93,18 @@ var (
 // It keeps internally a map of in progress stream sync operations and forwards add stream, remove sream, cancel sync
 // requests to the associated stream sync operation.
 func NewHandler(
+	ctx context.Context,
 	nodeAddr common.Address,
 	cache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) *handlerImpl {
 	return &handlerImpl{
-		nodeAddr:     nodeAddr,
-		streamCache:  cache,
-		nodeRegistry: nodeRegistry,
-		otelTracer:   otelTracer,
+		nodeAddr:            nodeAddr,
+		streamCache:         cache,
+		nodeRegistry:        nodeRegistry,
+		subscriptionManager: subscription.NewManager(ctx, nodeAddr, cache, nodeRegistry, otelTracer),
+		otelTracer:          otelTracer,
 	}
 }
 
@@ -108,7 +114,15 @@ func (h *handlerImpl) SyncStreams(
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
-	op, err := NewStreamsSyncOperation(ctx, syncId, h.nodeAddr, h.streamCache, h.nodeRegistry, h.otelTracer)
+	op, err := NewStreamsSyncOperation(
+		ctx,
+		syncId,
+		h.nodeAddr,
+		h.streamCache,
+		h.nodeRegistry,
+		h.subscriptionManager,
+		h.otelTracer,
+	)
 	if err != nil {
 		return err
 	}
