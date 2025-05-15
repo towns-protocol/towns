@@ -8764,7 +8764,7 @@ __metadata:
     tailwindcss-animate: ^1.0.7
     typescript: ^5.8.2
     use-stick-to-bottom: ^1.1.0
-    viem: ^2.21.51
+    viem: ^2.29.3
     vite: ^6.1.0
     vite-plugin-checker: ^0.8.0
     vite-plugin-node-polyfills: ^0.22.0
@@ -8980,7 +8980,7 @@ __metadata:
     prettier: ^3.5.3
     tsx: ^4.7.1
     typescript: ^5.8.2
-    viem: ^2.21.51
+    viem: ^2.29.3
   languageName: unknown
   linkType: soft
 
@@ -9006,7 +9006,7 @@ __metadata:
     nanoid: ^4.0.0
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
-    viem: ^2.21.51
+    viem: ^2.29.3
     vitest: 3.0.5
     zod: ^3.21.4
   languageName: unknown
@@ -9026,7 +9026,7 @@ __metadata:
     tsx: ^4.7.1
     typescript: ^5.8.2
     uuid: ^8.3.2
-    viem: ^2.21.51
+    viem: ^2.29.3
     zod: ^3.21.4
   languageName: unknown
   linkType: soft
@@ -30611,7 +30611,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"viem@npm:>=2.23.11":
+"viem@npm:>=2.23.11, viem@npm:^2.29.3":
   version: 2.29.3
   resolution: "viem@npm:2.29.3"
   dependencies:
@@ -30632,7 +30632,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"viem@npm:^2.1.1, viem@npm:^2.21.51":
+"viem@npm:^2.1.1":
   version: 2.21.51
   resolution: "viem@npm:2.21.51"
   dependencies:
