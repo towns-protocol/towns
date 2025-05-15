@@ -21,8 +21,9 @@ func testBotConversation(
 	compareInterval int,
 ) {
 	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{
-		numNodes: numNodes,
-		numBots:  numBots,
+		numNodes:            numNodes,
+		numBots:             numBots,
+		enableAppServerLogs: true,
 	})
 	participants := tester.newTestClients(numClients, testClientOpts{})
 	t.Logf("Participants: %v", participants.userIds())
@@ -31,14 +32,14 @@ func testBotConversation(
 	channelId, syncCookie := participants.createChannelAndJoin(spaceId)
 	t.Logf("All participants joined channel")
 
+	tester.StartBotServices()
+
 	tester.RegisterBotServices(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
 	t.Log("Registered bot services")
 
 	botClients := tester.BotNodeTestClients(testClientOpts{})
 	t.Logf("botClients: %v", botClients.userIds())
 	botClients.joinChannel(spaceId, channelId, syncCookie, participants)
-
-	// tester.StartBotServices()
 
 	// for i := range numSteps {
 	// 	participants.say(channelId, fmt.Sprintf("step %d", i))

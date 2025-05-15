@@ -689,8 +689,6 @@ func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
 }
 
 func (tc *testClient) createUserInboxStream() {
-	inboxStreamId := UserInboxStreamIdFromAddress(tc.wallet.Address)
-	tc.t.Logf("Creating user inbox stream %v for wallet %v", inboxStreamId, tc.wallet.Address)
 	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
 	tc.require.NoError(err, "Error creating user inbox stream for testClient")
 }

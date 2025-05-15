@@ -191,10 +191,11 @@ type testBotCredentials struct {
 }
 
 type appRegistryTesterOpts struct {
-	numNodes        int
-	numBots         int
-	botCredentials  []testBotCredentials
-	enableRiverLogs bool
+	numNodes            int
+	numBots             int
+	botCredentials      []testBotCredentials
+	enableRiverLogs     bool
+	enableAppServerLogs bool
 }
 
 func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *appRegistryServiceTester {
@@ -244,6 +245,7 @@ func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *app
 		botWallets[i] = credentials.botWallet
 	}
 
+	enableAppServerLogs := opts != nil && opts.enableAppServerLogs
 	// Start a test app service that serves webhook responses
 	appServer := app_registry.NewTestAppServer(
 		t,
@@ -253,7 +255,7 @@ func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *app
 			AppWallets: botWallets,
 		},
 		client,
-		false,
+		enableAppServerLogs,
 	)
 	tester.cleanup(appServer.Close)
 
@@ -787,7 +789,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 }
 
 func TestAppRegistry_GetSession(t *testing.T) {
-	t.Skip("Skipping due to flakes")
+	// t.Skip("Skipping due to flakes")
 	tester := NewAppRegistryServiceTester(t, nil)
 	require := tester.require
 
