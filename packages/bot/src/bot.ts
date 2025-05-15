@@ -56,17 +56,17 @@ import {
     http,
     type Abi,
     type Account,
-    type Address,
     type Chain,
     type Client as ViemClient,
     type ContractFunctionArgs,
     type ContractFunctionName,
 } from 'viem'
 import {
+    readContract,
+    type ReadContractParameters,
     writeContract,
     type WriteContractParameters,
-} from 'viem/_types/actions/wallet/writeContract'
-import { readContract, type ReadContractParameters } from 'viem/_types/actions/public/readContract'
+} from 'viem/actions'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -826,6 +826,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
      * NOTE: Decryption relies on the bot having the necessary group session keys for the
      * specified stream. If somehow the keys are missing, decryption will fail, and null values will be returned for username/displayName.
      *
+     * @deprecated Not planned for now
      * @param streamId - The ID of the channel or space stream.
      * @param userId -  The ID of the member whose data is being requested.
      */
@@ -924,6 +925,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
+        /** @deprecated Not planned for now */
         getUserData,
     }
 }
