@@ -122,6 +122,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			return nil, nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
 			).Func("createStream")

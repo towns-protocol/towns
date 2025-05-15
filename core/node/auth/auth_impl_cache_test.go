@@ -24,11 +24,22 @@ func (scr *simpleCacheResult) Reason() EntitlementResultReason {
 	return EntitlementResultReason_NONE
 }
 
-func testEntitlementResultReasons(t *testing.T) {
+func TestEntitlementResultReasons(t *testing.T) {
 	for i := EntitlementResultReason_NONE; i < EntitlementResultReason_MAX; i++ {
 		assert.True(t, i >= EntitlementResultReason_NONE && i < EntitlementResultReason_MAX)
-		assert.NotNil(t, i.String()) // the stringer is an array, please keep it up to date
+		assert.NotNil(
+			t,
+			i.String(),
+			"EntitlementResultReason.String() is an array, please keep it up to date with EntitlementResultReason values",
+		)
 	}
+
+	// test that EntitlementReason_MAX is the last value
+	assert.Equal(
+		t,
+		EntitlementResultReason_MAX,
+		EntitlementResultReason(len(entitlementResultReasonDescriptions)),
+	)
 }
 
 // Test for the newEntitlementCache function

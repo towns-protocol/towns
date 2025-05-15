@@ -61,10 +61,16 @@ type IsEntitledResult interface {
 }
 
 func (r *isEntitledResult) IsEntitled() bool {
+	if r == nil {
+		return false
+	}
 	return r.isAllowed
 }
 
 func (r *isEntitledResult) Reason() EntitlementResultReason {
+	if r == nil {
+		return EntitlementResultReason_NONE
+	}
 	return r.reason
 }
 

@@ -35,11 +35,22 @@ const (
 	EntitlementResultReason_CHANNEL_DISABLED
 	EntitlementResultReason_WALLET_NOT_LINKED
 
-	EntitlementResultReason_MAX // leave at the end
+	EntitlementResultReason_MAX // MAX - leave at the end
 )
 
+var entitlementResultReasonDescriptions = []string{
+	"NONE",
+	"MEMBERSHIP",
+	"MEMBERSHIP_EXPIRED",
+	"SPACE_ENTITLEMENTS",
+	"CHANNEL_ENTITLEMENTS",
+	"SPACE_DISABLED",
+	"CHANNEL_DISABLED",
+	"WALLET_NOT_LINKED",
+}
+
 func (r EntitlementResultReason) String() string {
-	return []string{"NONE", "MEMBERSHIP", "MEMBERSHIP_EXPIRED", "SPACE_ENTITLEMENTS", "CHANNEL_ENTITLEMENTS", "SPACE_DISABLED", "CHANNEL_DISABLED", "WALLET_NOT_LINKED"}[r]
+	return entitlementResultReasonDescriptions[r]
 }
 
 type CacheResult interface {

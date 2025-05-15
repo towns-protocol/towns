@@ -118,6 +118,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			return nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
 			).Func("createStream")
