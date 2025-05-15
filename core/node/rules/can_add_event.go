@@ -1490,13 +1490,10 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 		if ru.userMembership.Op != MembershipOp_SO_LEAVE {
 			return false, RiverError(Err_PERMISSION_DENIED, "reasons should be undefined for non-leave events", "op", ru.userMembership.Op)
 		}
-		userAddress, err := shared.GetUserAddressFromStreamId(*ru.params.streamView.StreamId())
-		if err != nil {
-			return false, err
-		}
 		// reasons should only be set by the scrubber at this time
-		if bytes.Equal(ru.params.parsedEvent.Event.CreatorAddress, userAddress.Bytes()) {
-			return false, RiverError(Err_PERMISSION_DENIED, "reasons should only be set by the scrubber", "creator", ru.params.parsedEvent.Event.CreatorAddress, "user", userAddress)
+		canAdd, err := ru.params.creatorIsValidNode()
+		if !canAdd || err != nil {
+			return false, err
 		}
 	}
 
