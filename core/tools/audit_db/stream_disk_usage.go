@@ -423,9 +423,30 @@ var histogramCmd = &cobra.Command{
 		}
 		table.Render()
 
+		// Optionally output individual sampled stream sizes
+		if listIndividualSizes, _ := cmd.Flags().GetBool("list-sampled-sizes"); listIndividualSizes {
+			fmt.Println("\n--- Individual Sampled Stream Sizes ---")
+			for _, r := range results {
+				if r.SampledStreamCount > 0 {
+					fmt.Printf("\nStream Type: %s (%d streams sampled):\n", r.TypeName, r.SampledStreamCount)
+					for i, size := range r.SampledStreamSizes {
+						fmt.Printf("  Sample %d: %s\n", i+1, formatBytes(size))
+					}
+				} else {
+					fmt.Printf("\nStream Type: %s (0 streams sampled)\n", r.TypeName)
+				}
+			}
+			fmt.Println("\n--- End of Individual Sampled Stream Sizes ---")
+		}
+
 		if renderDetailedHistograms, _ := cmd.Flags().GetBool("render"); renderDetailedHistograms {
-			const numBuckets = 10
-			const maxBarWidth = 40
+			numBucketsOpt, _ := cmd.Flags().GetInt("num-histogram-buckets")
+			// Use a local variable for numBuckets, defaulting if the flag parsing somehow failed or returned <=0
+			numHistBuckets := numBucketsOpt
+			if numHistBuckets <= 0 {
+				numHistBuckets = 10 // Default to 10 if flag is not set or invalid
+			}
+			const maxBarWidth = 40 // Keep this as a const for now, or make it a flag too if desired later
 
 			for _, r := range results {
 				if r.SampledStreamCount == 0 {
@@ -454,22 +475,22 @@ var histogramCmd = &cobra.Command{
 					histogramTable.Append([]string{
 						formatBytes(minSize),
 						fmt.Sprintf("%d", r.SampledStreamCount),
-						strings.Repeat("#", maxBarWidth),
+						strings.Repeat("#", maxBarWidth), // Full bar as all are in this one bucket
 					})
 				} else {
-					bucketWidth := (maxSize - minSize) / int64(numBuckets)
-					if bucketWidth == 0 {
+					bucketWidth := (maxSize - minSize) / int64(numHistBuckets)
+					if bucketWidth == 0 { // Avoid division by zero if maxSize-minSize < numHistBuckets but not all same
 						bucketWidth = 1
 					}
 
-					bucketCounts := make([]int, numBuckets)
+					bucketCounts := make([]int, numHistBuckets)
 					for _, size := range r.SampledStreamSizes {
 						bucketIndex := 0
 						if bucketWidth > 0 {
 							bucketIndex = int((size - minSize) / bucketWidth)
 						}
-						if bucketIndex >= numBuckets {
-							bucketIndex = numBuckets - 1
+						if bucketIndex >= numHistBuckets { // Ensure last bucket catches everything at maxSize
+							bucketIndex = numHistBuckets - 1
 						}
 						bucketCounts[bucketIndex]++
 					}
@@ -481,10 +502,10 @@ var histogramCmd = &cobra.Command{
 						}
 					}
 
-					for i := 0; i < numBuckets; i++ {
+					for i := 0; i < numHistBuckets; i++ {
 						lowerBound := minSize + int64(i)*bucketWidth
 						upperBound := lowerBound + bucketWidth - 1
-						if i == numBuckets-1 {
+						if i == numHistBuckets-1 {
 							upperBound = maxSize
 						}
 
@@ -513,5 +534,8 @@ func init() {
 	rootCmd.AddCommand(usageCmd)
 	histogramCmd.Flags().IntP("sample-size", "s", 100, "Number of streams to sample per type for histogram analysis")
 	histogramCmd.Flags().BoolP("render", "H", false, "Render detailed histograms for each stream type")
+	histogramCmd.Flags().
+		BoolP("list-sampled-sizes", "L", false, "List the total size of each individually sampled stream, grouped by type")
+	histogramCmd.Flags().IntP("num-histogram-buckets", "N", 10, "Number of buckets for the detailed histograms")
 	rootCmd.AddCommand(histogramCmd)
 }
