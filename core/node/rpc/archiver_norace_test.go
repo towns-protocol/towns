@@ -81,7 +81,7 @@ func TestArchive100StreamsWithReplication_NoRace(t *testing.T) {
 	)
 
 	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(0)))
-	requireNoCorruptStreams("TestArchive100StreamsWithReplication_NoRace", t, ctx, require, arch.Archiver)
+	requireNoCorruptStreams(ctx, require, arch.Archiver)
 }
 
 func TestArchive20StreamsWithCorruption_NoRace(t *testing.T) {
@@ -185,7 +185,7 @@ func TestArchive100Streams_NoRace(t *testing.T) {
 	arch.Archiver.WaitForTasks()
 
 	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(3)))
-	requireNoCorruptStreams("TestArchive100Streams_NoRace", t, ctx, require, arch.Archiver)
+	requireNoCorruptStreams(ctx, require, arch.Archiver)
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
@@ -222,7 +222,7 @@ func TestArchive100StreamsWithData_NoRace(t *testing.T) {
 	arch.Archiver.WaitForTasks()
 
 	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(5)))
-	requireNoCorruptStreams("TestArchive100StreamsWithData_NoRace", t, ctx, require, arch.Archiver)
+	requireNoCorruptStreams(ctx, require, arch.Archiver)
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
