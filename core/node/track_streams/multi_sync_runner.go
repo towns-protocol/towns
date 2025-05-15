@@ -100,8 +100,6 @@ type syncSessionRunner struct {
 	closeErr error
 }
 
-var errSyncSessionUnassignable = fmt.Errorf("sync session runner is not assignable")
-
 func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
@@ -111,7 +109,7 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Lock()
 	if ssr.streamCount >= ssr.maxStreamsPerSyncSession-1 || ssr.closeErr != nil {
 		ssr.mu.Unlock()
-		return errSyncSessionUnassignable
+		return base.RiverError(protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE, "Sync runner session is not assignable")
 	}
 	ssr.streamCount = ssr.streamCount + 1
 	ssr.streamRecords.Store(record.streamId, &record)
@@ -251,8 +249,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
 }
 
-var errSyncEmpty = fmt.Errorf("sync runner no longer contains active streams")
-
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
 	log := logging.FromCtx(ssr.syncCtx)
 	switch update.SyncOp {
@@ -381,7 +377,9 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 
 	// Cancel the remote sync session if all streams have been relocated.
 	if ssr.streamCount <= 0 {
-		ssr.cancelSync(errSyncEmpty)
+		ssr.cancelSync(
+			base.RiverError(protocol.Err_SYNC_SESSION_RUNNER_EMPTY, "Sync session runner has no streams remaining"),
+		)
 	}
 
 	ssr.mu.Unlock()
@@ -734,7 +732,7 @@ func (msr *MultiSyncRunner) addToSync(
 		// Relocate this stream's target node and re-insert into the pool of unassigned streams
 		newRemote := record.remotes.AdvanceStickyPeer(targetNode)
 
-		if errors.Is(err, errSyncSessionUnassignable) {
+		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
 			log.Debugw(
 				"Could not assign stream to existing session, cycling to new session",
 				"streamId", record.streamId,
