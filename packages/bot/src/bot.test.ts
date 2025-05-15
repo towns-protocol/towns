@@ -22,10 +22,8 @@ import { ethers } from 'ethers'
 import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
 import { toBinary, create } from '@bufbuild/protobuf'
 import { ETH_ADDRESS, SpaceDapp } from '@towns-protocol/web3'
-import { createSecureServer } from 'node:http2'
+import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
-import fs from 'node:fs'
-import path from 'node:path'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -154,13 +152,7 @@ describe('Bot', { sequential: true }, () => {
         serve({
             port: Number(process.env.BOT_PORT!),
             fetch,
-            createServer: createSecureServer,
-            serverOptions: {
-                // TODO: mkcert localhost in CI
-                key: fs.readFileSync(path.join(__dirname, '../certs', 'localhost+2-key.pem')),
-                cert: fs.readFileSync(path.join(__dirname, '../certs', 'localhost+2.pem')),
-                allowHTTP1: false,
-            },
+            createServer,
         })
         await appRegistryRpcClient.registerWebhook({
             appId,
