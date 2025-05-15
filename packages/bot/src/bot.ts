@@ -47,7 +47,13 @@ import {
     MembershipOp,
     type PlainMessage,
 } from '@towns-protocol/proto'
-import { bin_fromBase64, bin_toHexString, bin_toString, check } from '@towns-protocol/dlog'
+import {
+    bin_fromBase64,
+    bin_fromHexString,
+    bin_toHexString,
+    bin_toString,
+    check,
+} from '@towns-protocol/dlog'
 import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
@@ -69,6 +75,9 @@ import {
     type WriteContractParameters,
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
+
+// Import the jsonwebtoken library and necessary dlog utilities
+import { default as jwt } from 'jsonwebtoken'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -202,16 +211,14 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
+    private readonly jwtSecret: Uint8Array
 
-    constructor(
-        clientV2: ClientV2<BotActions>,
-        viemClient: ViemClient,
-        private readonly jwtSecret: string,
-    ) {
+    constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
         super()
         this.client = clientV2
         this.botId = clientV2.userId
         this.viemClient = viemClient
+        this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.server = new Hono()
         this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
@@ -221,8 +228,37 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         return { fetch: this.server.fetch }
     }
 
-    // TODO: check JWT token matches the request JWT from app registry
     private async webhookResponseHandler(c: Context) {
+        const authHeader = c.req.header('Authorization')
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return c.text('Unauthorized: Missing or malformed token', 401)
+        } else {
+            const tokenString = authHeader.substring(7)
+            try {
+                // Convert botId (Ethereum address string, e.g., "0xABC") to raw bytes,
+                // then to a lowercase hex string for the audience check.
+                // This must match how the Go service creates the 'aud' claim.
+                const botAddressBytes = bin_fromHexString(this.botId)
+                // Assumes lowercase hex output without "0x"
+                const expectedAudience = bin_toHexString(botAddressBytes)
+
+                jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
+                    algorithms: ['HS256'],
+                    audience: expectedAudience,
+                })
+            } catch (err) {
+                console.error('Webhook: JWT verification failed', err)
+                let errorMessage = 'Unauthorized: Token verification failed'
+                if (err instanceof jwt.TokenExpiredError) {
+                    errorMessage = 'Unauthorized: Token expired'
+                } else if (err instanceof jwt.JsonWebTokenError) {
+                    errorMessage = `Unauthorized: Invalid token (${err.message})`
+                }
+                return c.text(errorMessage, 401)
+            }
+        }
+
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
@@ -589,7 +625,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
 
 export const makeTownsBot = async (
     appPrivateDataBase64: string,
-    jwtSecret: string,
+    jwtSecretBase64: string,
     env: Parameters<typeof makeRiverConfig>[0],
     baseRpcUrl?: string,
 ) => {
@@ -612,7 +648,7 @@ export const makeTownsBot = async (
             fromExportedDevice: encryptionDevice,
         },
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
-    return new Bot(client, viemClient, jwtSecret)
+    return new Bot(client, viemClient, jwtSecretBase64)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {

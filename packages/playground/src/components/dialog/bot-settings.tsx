@@ -5,7 +5,7 @@ import { isAddress } from 'viem'
 import { useMutation } from '@tanstack/react-query'
 import { AppRegistryService } from '@towns-protocol/sdk'
 import { useSyncAgent } from '@towns-protocol/react-sdk'
-import { bin_fromHexString, bin_toString } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toBase64, bin_toString } from '@towns-protocol/dlog'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
@@ -110,8 +110,8 @@ export const BotSettingsDialog = ({
                 appId,
                 appOwnerId: bin_fromHexString(userId),
             })
-            // TODO: the encoding is wrong probably, check if this is correct
-            return { jwtSecret: bin_toString(hs256SharedSecret) }
+            // Convert the Uint8Array secret to a Base64 string for display and copy-paste
+            return { jwtSecretBase64: bin_toBase64(hs256SharedSecret) }
         },
         onSuccess: () => {
             botForm.reset()
@@ -222,15 +222,17 @@ export const BotSettingsDialog = ({
                                 {registerBotMutation.isPending ? 'Registering...' : 'Register Bot'}
                             </Button>
 
-                            {registerBotMutation.data?.jwtSecret && (
+                            {registerBotMutation.data?.jwtSecretBase64 && (
                                 <>
                                     <SecretInformationBanner>
-                                        Store this JWT secret in a secure location.
+                                        Store this Base64 encoded JWT secret in a secure location.
                                     </SecretInformationBanner>
                                     <div className="flex flex-col gap-2 text-sm">
-                                        <p className="text-muted-foreground">JWT Secret</p>
+                                        <p className="text-muted-foreground">
+                                            JWT Secret (Base64 Encoded)
+                                        </p>
                                         <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 text-xs">
-                                            {registerBotMutation.data.jwtSecret}
+                                            {registerBotMutation.data.jwtSecretBase64}
                                         </pre>
                                     </div>
                                 </>
