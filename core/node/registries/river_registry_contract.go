@@ -940,7 +940,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		func(ctx context.Context, log types.Log) {
 			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, &log)
 			if err != nil {
-				logging.FromCtx(ctx).Errorw("Failed to parse event", "err", err, "log", log)
+				logging.FromCtx(ctx).Errorw("Failed to parse event", "error", err, "log", log)
 				return
 			}
 			if event, ok := parsed.(*river.StreamRegistryV1StreamUpdated); ok {

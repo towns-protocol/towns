@@ -842,7 +842,7 @@ func (ca *chainAuth) getLinkedWalletsUncached(
 
 	wallets, err := ca.evaluator.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -881,7 +881,7 @@ func (ca *chainAuth) getLinkedWallets(
 		ca.getLinkedWalletsUncached,
 	)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -936,7 +936,7 @@ func (ca *chainAuth) checkMembership(
 		// linked wallet resulted in a positive membership check.
 		log.Infow(
 			"Error checking membership (due to early termination?)",
-			"err",
+			"error",
 			err,
 			"address",
 			address.Hex(),
@@ -1136,30 +1136,30 @@ func (ca *chainAuth) GetMembershipStatus(ctx context.Context, cfg *config.Config
 		spaceId:   spaceId,
 		principal: principal,
 	}
-	
+
 	result, cacheHit, err := ca.membershipCache.executeUsingCache(
 		ctx,
 		cfg,
 		&args,
 		ca.checkMembershipUncached,
 	)
-	
+
 	if err != nil {
 		return nil, AsRiverError(err).Func("GetMembershipStatus").
 			Tag("spaceId", spaceId).
 			Tag("principal", principal)
 	}
-	
+
 	if cacheHit {
 		ca.membershipCacheHit.Inc()
 	} else {
 		ca.membershipCacheMiss.Inc()
 	}
-	
+
 	if cachedResult, ok := result.(*timestampedCacheValue).result.(*membershipStatusCacheResult); ok {
 		return cachedResult.GetMembershipStatus(), nil
 	}
-	
+
 	// Fallback to direct contract call if cache type conversion fails
 	return ca.spaceContract.GetMembershipStatus(ctx, spaceId, principal)
 }

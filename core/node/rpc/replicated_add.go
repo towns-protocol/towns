@@ -262,7 +262,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	})
 
 	if err = quorum.Wait(); err != nil {
-		logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "err", err)
+		logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "error", err)
 		return nil, err
 	}
 

@@ -127,7 +127,7 @@ func CanCreateStream(
 	}
 	creatorUserStreamId, err := shared.UserStreamIdFromBytes(creatorAddress)
 	if err != nil {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid creator user stream id", "err", err)
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid creator user stream id", "error", err)
 	}
 
 	for _, event := range parsedEvents {
