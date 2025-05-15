@@ -356,9 +356,6 @@ export class StreamStateView implements IStreamStateView {
             switch (payload.case) {
                 case 'miniblockHeader':
                     // TODO: Remove
-                    if ((this.miniblockInfo?.max ?? -1n) > payload.value.miniblockNum) {
-                        break
-                    }
                     check(
                         (this.miniblockInfo?.max ?? -1n) <= payload.value.miniblockNum,
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,

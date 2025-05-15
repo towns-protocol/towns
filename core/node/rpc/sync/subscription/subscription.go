@@ -2,16 +2,11 @@ package subscription
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
-	"sync"
-
-	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/ethereum/go-ethereum/common"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"google.golang.org/protobuf/proto"
 
@@ -33,9 +28,6 @@ type Subscription struct {
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 
 	manager *Manager
-
-	duplicates sync.Map
-	//highestMiniblock sync.Map
 }
 
 func (s *Subscription) Close() {
@@ -55,24 +47,6 @@ func (s *Subscription) Close() {
 
 // Send sends the given message to the subscription messages channel.
 func (s *Subscription) Send(msg *SyncStreamsResponse) {
-	// TODO: This will be removed, for debugging purposes only
-	msgRaw, _ := json.Marshal(msg.GetStream())
-	mshHash := crypto.Keccak256Hash(msgRaw)
-	if _, ok := s.duplicates.Load(mshHash); ok {
-		fmt.Println("duplicate message", s.SyncOp)
-		return
-	} else {
-		s.duplicates.Store(mshHash, struct{}{})
-	}
-
-	// TODO: For debugging purposes
-	/*if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-		streamId := StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId())
-		if highest, ok := s.highestMiniblock.Load(streamId); ok {
-			highest = highest.(int64)
-		}
-	}*/
-
 	select {
 	case <-s.Ctx.Done():
 		// Client context is cancelled, do not send the message.
