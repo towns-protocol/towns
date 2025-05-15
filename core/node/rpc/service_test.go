@@ -287,6 +287,7 @@ func joinChannel(
 			channelId,
 			nil,
 			spaceId[:],
+			nil,
 		),
 		&MiniblockRef{
 			Hash: common.BytesToHash(userStreamSyncCookie.PrevMiniblockHash),

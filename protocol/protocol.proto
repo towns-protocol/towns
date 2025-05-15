@@ -194,6 +194,7 @@ message MemberPayload {
         bytes user_address = 2;
         bytes initiator_address = 3;
         optional bytes stream_parent_id = 4;
+        MembershipReason reason = 5;
     }
     
     message KeySolicitation {
@@ -420,6 +421,7 @@ message UserPayload {
         MembershipOp op = 2;
         optional bytes inviter = 3;
         optional bytes stream_parent_id = 4;
+        optional MembershipReason reason = 5;
     }
 
     // update someone else's membership
@@ -428,6 +430,7 @@ message UserPayload {
         bytes user_id = 2; 
         MembershipOp op = 3;
         optional bytes stream_parent_id = 4;
+        optional MembershipReason reason = 5;
     }
 
     // derived event, only send from nodes
@@ -1075,6 +1078,11 @@ enum MembershipOp {
     SO_INVITE = 1;
     SO_JOIN = 2;
     SO_LEAVE = 3;
+}
+
+enum MembershipReason {
+    MR_NONE = 0;
+    MR_NOT_ENTITLED = 1;
 }
 
 enum ChannelOp {

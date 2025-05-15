@@ -536,6 +536,7 @@ func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
 		ru.streamId,
 		&inviterId,
 		streamParentId,
+		nil,
 	)
 
 	return &DerivedEvent{
@@ -696,6 +697,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 		ru.params.streamId,
 		&ru.params.creatorUserId,
 		nil,
+		nil,
 	)
 
 	// second party
@@ -703,6 +705,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
 		&ru.params.creatorUserId,
+		nil,
 		nil,
 	)
 
@@ -840,6 +843,7 @@ func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, erro
 			MembershipOp_SO_JOIN,
 			ru.params.streamId,
 			&ru.params.creatorUserId,
+			nil,
 			nil,
 		)
 		derivedEvents = append(derivedEvents, &DerivedEvent{

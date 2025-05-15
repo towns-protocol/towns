@@ -158,6 +158,8 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			"spaceId",
 			spaceId,
 		)
+		
+		reason := MembershipReason_MR_NOT_ENTITLED
 
 		if _, err = tp.eventAdder.AddEventPayload(
 			ctx,
@@ -167,6 +169,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 				channelId,
 				&member,
 				spaceId[:],
+				&reason,
 			),
 			nil,
 		); err != nil {

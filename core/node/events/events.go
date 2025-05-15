@@ -559,6 +559,7 @@ func Make_UserPayload_Membership(
 	streamId StreamId,
 	inInviter *string,
 	streamParentId []byte,
+	reason *MembershipReason,
 ) *StreamEvent_UserPayload {
 	var inviter []byte
 	if inInviter != nil {
@@ -577,6 +578,7 @@ func Make_UserPayload_Membership(
 					Op:             op,
 					Inviter:        inviter,
 					StreamParentId: streamParentId,
+					Reason:         reason,
 				},
 			},
 		},

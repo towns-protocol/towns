@@ -57,6 +57,7 @@ func make_User_Membership(
 			streamId,
 			nil,
 			nil,
+			nil,
 		),
 		prevMiniblock,
 	)

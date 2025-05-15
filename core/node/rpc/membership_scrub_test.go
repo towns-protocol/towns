@@ -42,6 +42,7 @@ func addUserToChannel(
 			channelId,
 			nil,
 			spaceId[:],
+			nil,
 		),
 		&MiniblockRef{
 			Hash: common.BytesToHash(resUser.PrevMiniblockHash),
@@ -185,6 +186,35 @@ func (o *ObservingEventAdder) ObservedEvents() []struct {
 	return slices.Clone(o.observedEvents)
 }
 
+// checks if all observed events are membership leave events
+// with the expected scrubber reason
+func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	
+	for i, e := range o.observedEvents {
+		userPayload, ok := e.payload.(*StreamEvent_UserPayload)
+		assert.True(t, ok, "Event %d is not a UserPayload", i)
+		if !ok {
+			continue
+		}
+		
+		membershipPayload, ok := userPayload.UserPayload.Content.(*UserPayload_UserMembership_)
+		assert.True(t, ok, "Event %d is not a MembershipPayload", i)
+		if !ok {
+			continue
+		}
+		
+		assert.Equal(t, MembershipOp_SO_LEAVE, membershipPayload.UserMembership.Op, 
+			"Event %d is not a LEAVE operation", i)
+		
+		// Check for scrubber reason
+		assert.NotNil(t, membershipPayload.UserMembership.Reason, "Event %d has no reason", i)
+		assert.Equal(t, MembershipReason_MR_NOT_ENTITLED, *membershipPayload.UserMembership.Reason,
+			"Event %d does not have the expected reason code", i)
+	}
+}
+
 func TestScrubStreamTaskProcessor(t *testing.T) {
 	ctx, ctxCancel := test.NewTestContext()
 	defer ctxCancel()
@@ -307,6 +337,9 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 						// event for one of the users is emitted twice. Why?
 						// assert.Len(eventAdder.ObservedEvents(), len(tc.expectedBootedUsers))
 						assert.GreaterOrEqual(len(eventAdder.ObservedEvents()), len(tc.expectedBootedUsers))
+						
+						// Validate that all observed events are membership leave events with expected reason
+						eventAdder.ValidateMembershipLeaveEvents(t)
 					}
 				},
 				10*time.Second,

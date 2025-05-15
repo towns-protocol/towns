@@ -808,6 +808,7 @@ func (tc *testClient) joinChannel(
 			channelId,
 			nil,
 			spaceId[:],
+			nil,
 		),
 		userStreamMb,
 	)
