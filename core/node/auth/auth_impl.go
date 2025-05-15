@@ -1020,6 +1020,13 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult(false), nil
 	}
 
+	// Now that we know the user is a member of the space, we can check entitlements.
+	if len(wallets) > ca.linkedWalletsLimit {
+		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
+			"too many wallets linked to the root key",
+			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
+	}
+
 	args = args.withLinkedWallets(wallets)
 
 	isMemberCtx, isMemberCancel := context.WithCancel(ctx)
@@ -1115,13 +1122,6 @@ func (ca *chainAuth) checkEntitlement(
 		}
 	}
 
-	// Now that we know the user is a member of the space, we can check entitlements.
-	if len(wallets) > ca.linkedWalletsLimit {
-		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
-			"too many wallets linked to the root key",
-			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
-	}
-
 	result, err := ca.areLinkedWalletsEntitled(ctx, cfg, args, &isExpired)
 	if err != nil {
 		return nil, err
@@ -1130,36 +1130,40 @@ func (ca *chainAuth) checkEntitlement(
 	return boolCacheResult(result), nil
 }
 
-func (ca *chainAuth) GetMembershipStatus(ctx context.Context, cfg *config.Config, spaceId shared.StreamId, principal common.Address) (*MembershipStatus, error) {
+func (ca *chainAuth) GetMembershipStatus(
+	ctx context.Context,
+	cfg *config.Config,
+	spaceId shared.StreamId,
+	principal common.Address,
+) (*MembershipStatus, error) {
 	args := ChainAuthArgs{
 		kind:      chainAuthKindIsSpaceMember,
 		spaceId:   spaceId,
 		principal: principal,
 	}
-	
+
 	result, cacheHit, err := ca.membershipCache.executeUsingCache(
 		ctx,
 		cfg,
 		&args,
 		ca.checkMembershipUncached,
 	)
-	
 	if err != nil {
 		return nil, AsRiverError(err).Func("GetMembershipStatus").
 			Tag("spaceId", spaceId).
 			Tag("principal", principal)
 	}
-	
+
 	if cacheHit {
 		ca.membershipCacheHit.Inc()
 	} else {
 		ca.membershipCacheMiss.Inc()
 	}
-	
+
 	if cachedResult, ok := result.(*timestampedCacheValue).result.(*membershipStatusCacheResult); ok {
 		return cachedResult.GetMembershipStatus(), nil
 	}
-	
+
 	// Fallback to direct contract call if cache type conversion fails
 	return ca.spaceContract.GetMembershipStatus(ctx, spaceId, principal)
 }
