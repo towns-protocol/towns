@@ -280,11 +280,6 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
-            # Start an ssh session with tmate if the PR has the 'ssh' label
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              if: contains(github.event.pull_request.labels.*.name, 'ssh')
-
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -309,6 +304,11 @@ jobs:
             - name: Run multiple nodes
               working-directory: core
               run: just RUN_ENV=multi_ne config-and-start
+            
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Run app registry
               working-directory: core
