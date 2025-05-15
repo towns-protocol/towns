@@ -46,13 +46,19 @@ func (s *Subscription) Close() {
 
 // Send sends the given message to the subscription messages channel.
 func (s *Subscription) Send(msg *SyncStreamsResponse) {
-	if err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
-		rvrErr := AsRiverError(err).
-			Tag("syncId", s.SyncOp).
-			Tag("op", msg.GetSyncOp())
-		s.Cancel(rvrErr)
-		s.log.Errorw("Failed to add message to subscription",
-			"op", msg.GetSyncOp(), "err", err)
+	select {
+	case <-s.Ctx.Done():
+		// Client context is cancelled, do not send the message.
+		return
+	default:
+		if err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
+			rvrErr := AsRiverError(err).
+				Tag("syncId", s.SyncOp).
+				Tag("op", msg.GetSyncOp())
+			s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
+			s.log.Errorw("Failed to add message to subscription",
+				"op", msg.GetSyncOp(), "err", err)
+		}
 	}
 }
 
@@ -231,15 +237,11 @@ func (s *Subscription) backfillByCookie(
 
 		// TODO: What to do if the stream cannot be backfilled from the given cookie?
 		if sc != nil {
-			// Send the stream since the given cookie to the subscription
-			if err := s.Messages.AddMessage(&SyncStreamsResponse{
-				SyncId:   s.SyncOp,
-				SyncOp:   SyncOp_SYNC_UPDATE,
-				Stream:   sc,
-				StreamId: cookie.GetStreamId(),
-			}); err != nil {
-				return AsRiverError(err).Func("startSyncingByCookie")
-			}
+			s.Send(&SyncStreamsResponse{
+				SyncId: s.SyncOp,
+				SyncOp: SyncOp_SYNC_UPDATE,
+				Stream: sc,
+			})
 		}
 	}
 

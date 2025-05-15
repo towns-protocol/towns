@@ -1511,14 +1511,14 @@ func (tcs testClients) compareNowImpl(
 				clientUpdate := clientUpdates[j]
 
 				success = success && assert.Equal(
-					first.GetSyncOp(), clientUpdates[i].GetSyncOp(),
+					first.GetSyncOp(), clientUpdate.GetSyncOp(),
 					"sync op not matching [%d:%d]: %s / %s",
 					i+1, j,
 					first.GetSyncOp(),
 					clientUpdate.GetSyncOp())
 
 				success = success && assert.Equal(
-					first.GetStreamId(), clientUpdates[i].GetStreamId(),
+					first.GetStreamId(), clientUpdate.GetStreamId(),
 					"different stream id [%d:%d]: %x / %x",
 					i+1, j,
 					first.GetStreamId(),
