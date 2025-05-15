@@ -251,9 +251,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -407,9 +404,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -559,9 +553,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -699,9 +690,6 @@ jobs:
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
