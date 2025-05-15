@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,7 +16,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/xchain/bindings/erc721"
 	"github.com/towns-protocol/towns/core/xchain/bindings/ierc5313"
 )
 
@@ -165,21 +165,106 @@ func (sc *SpaceContractV3) IsMember(
 	spaceId shared.StreamId,
 	user common.Address,
 ) (bool, error) {
+	membershipStatus, err := sc.GetMembershipStatus(ctx, spaceId, user)
+	if err != nil {
+		return false, err
+	}
+
+	return membershipStatus.IsMember && !membershipStatus.IsExpired, nil
+}
+
+func (sc *SpaceContractV3) GetMembershipStatus(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	user common.Address,
+) (*MembershipStatus, error) {
+	log := logging.FromCtx(ctx).With("function", "SpaceContractV3.GetMembershipStatus")
 	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	spaceAsErc271, err := erc721.NewErc721(space.address, sc.backend)
-	if err != nil {
-		return false, err
+	status := &MembershipStatus{
+		IsMember: false,
+		IsExpired: true,
+		TokenIds: []*big.Int{},
+		ExpiryTime: nil,
+		ExpiredAt: nil,
 	}
 
-	isMember, err := spaceAsErc271.BalanceOf(nil, user)
+	spaceAsQueryable, err := base.NewErc721aQueryable(space.address, sc.backend)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return isMember.Cmp(big.NewInt(0)) > 0, err
+
+	tokens, err := spaceAsQueryable.TokensOfOwner(&bind.CallOpts{Context: ctx}, user)
+	if err != nil {
+		return nil, err
+	}
+
+	status.TokenIds = tokens
+	status.IsMember = len(tokens) > 0
+
+	if !status.IsMember {
+		return status, nil
+	}
+
+	// Check expirations
+	membership, err := base.NewMembership(space.address, sc.backend)
+	if err != nil {
+		status.IsExpired = false
+		return status, nil
+	}
+
+	currentTime := big.NewInt(time.Now().Unix())
+	
+	// Track active and expired tokens
+	var hasActiveToken bool
+	var furthestExpiryTime *big.Int
+	var mostRecentExpiry *big.Int
+
+	for _, tokenId := range tokens {
+		expiresAt, err := membership.ExpiresAt(&bind.CallOpts{Context: ctx}, tokenId)
+		if err != nil {
+			log.Warnw("Failed to get expiration for token", "tokenId", tokenId, "error", err)
+			continue
+		}
+
+		// Token never expires
+		if expiresAt.Cmp(big.NewInt(0)) == 0 {
+			hasActiveToken = true
+			// If a token is permanent, use 0 to indicate it never expires
+			if furthestExpiryTime == nil || furthestExpiryTime.Cmp(big.NewInt(0)) != 0 {
+				furthestExpiryTime = big.NewInt(0)
+			}
+			continue
+		}
+
+		// Check if token is not expired yet
+		if expiresAt.Cmp(currentTime) > 0 {
+			hasActiveToken = true
+			
+			// Track the furthest future expiry
+			if furthestExpiryTime == nil || 
+			   (furthestExpiryTime.Cmp(big.NewInt(0)) != 0 && expiresAt.Cmp(furthestExpiryTime) > 0) {
+				furthestExpiryTime = expiresAt
+			}
+		} else {
+			// This is an expired token
+			if mostRecentExpiry == nil || expiresAt.Cmp(mostRecentExpiry) > 0 {
+				mostRecentExpiry = expiresAt
+			}
+		}
+	}
+
+	status.IsExpired = !hasActiveToken
+	status.ExpiryTime = furthestExpiryTime
+	
+	if status.IsExpired && mostRecentExpiry != nil {
+		status.ExpiredAt = mostRecentExpiry
+	}
+
+	return status, nil
 }
 
 func (sc *SpaceContractV3) IsEntitledToSpace(
@@ -468,3 +553,4 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 	}
 	return sc.spaces[spaceId], nil
 }
+
