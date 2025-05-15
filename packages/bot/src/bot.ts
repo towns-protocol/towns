@@ -26,6 +26,7 @@ import {
     type ParsedEvent,
     unsafe_makeTags,
     getStreamMetadataUrl,
+    makeBaseChainConfig,
 } from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
 import EventEmitter from 'node:events'
@@ -67,6 +68,7 @@ import {
     writeContract,
     type WriteContractParameters,
 } from 'viem/actions'
+import { base, baseSepolia } from 'viem/chains'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -589,14 +591,17 @@ export const makeTownsBot = async (
     appPrivateDataBase64: string,
     jwtSecret: string,
     env: Parameters<typeof makeRiverConfig>[0],
-    viemRpcUrl?: string,
+    baseRpcUrl?: string,
 ) => {
     const { privateKey, encryptionDevice } = fromBinary(
         AppPrivateDataSchema,
         bin_fromBase64(appPrivateDataBase64),
     )
+    const baseConfig = makeBaseChainConfig(env)
     const viemClient = createViemClient({
-        transport: http(viemRpcUrl),
+        transport: baseRpcUrl ? http(baseRpcUrl) : http(baseConfig.rpcUrl),
+        // TODO: would be nice if makeBaseChainConfig returned a viem chain
+        chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
     })
     const client = await createTownsClient({
         privateKey,
