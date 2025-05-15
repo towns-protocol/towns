@@ -38,6 +38,7 @@ import {
     MemberPayload_Nft,
     BlockchainTransaction,
     ChannelMessageSchema,
+    MembershipReason,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/dlog'
@@ -539,6 +540,7 @@ export const make_MemberPayload_Membership2 = (
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
         streamParentId: value.streamParentId ? streamIdAsBytes(value.streamParentId) : undefined,
+        reason: MembershipReason.MR_NONE,
     })
 }
 
