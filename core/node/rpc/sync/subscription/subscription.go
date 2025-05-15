@@ -30,7 +30,7 @@ type Subscription struct {
 	manager *Manager
 }
 
-func (s *Subscription) Close() {
+func (s *Subscription) close() {
 	s.Messages.Close()
 	s.manager.subscriptions.Delete(s.SyncOp)
 	s.manager.streamToSubscriptions.Range(func(streamID StreamId, syncOps []string) bool {

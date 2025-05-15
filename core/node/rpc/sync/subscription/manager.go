@@ -80,7 +80,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 	}
 	go func() {
 		<-ctx.Done()
-		subscription.Close()
+		subscription.close()
 	}()
 	m.subscriptions.Store(syncOp, subscription)
 	return subscription
