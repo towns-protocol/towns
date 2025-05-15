@@ -561,3 +561,14 @@ func (s *StreamCache) GetMbCandidateStreams(ctx context.Context) []*Stream {
 func (s *StreamCache) TestMakeMiniblock(ctx context.Context, streamId StreamId, forceSnapshot bool) (*MiniblockRef, error) {
 	return s.mbProducer.TestMakeMiniblock(ctx, streamId, forceSnapshot)
 }
+
+func (s *StreamCache) writeLatestMbToBlockchain(ctx context.Context, stream *Stream) {
+	view, err := stream.GetViewIfLocal(ctx)
+	if err != nil {
+		logging.FromCtx(ctx).
+			Errorw("writeLatestMbToBlockchain: failed to get stream view", "err", err, "streamId", stream.streamId)
+		return
+	}
+
+	s.mbProducer.writeLatestKnownMiniblock(ctx, stream, view.LastBlock())
+}
