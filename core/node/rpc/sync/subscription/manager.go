@@ -78,6 +78,10 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:  m,
 	}
+	go func() {
+		<-ctx.Done()
+		subscription.Close()
+	}()
 	m.subscriptions.Store(syncOp, subscription)
 	return subscription
 }
