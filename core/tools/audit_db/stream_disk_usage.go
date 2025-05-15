@@ -128,7 +128,7 @@ FULL OUTER JOIN tmp_miniblock_candidates tmc ON tm.stream_id = tmc.stream_id
 FULL OUTER JOIN tmp_minipools tmp ON COALESCE(tm.stream_id, tmc.stream_id) = tmp.stream_id
 {{stream_filter_clause}}
 {{limit_clause}}
-) ORDER BY total_bytes DESC;
+) AS sampled ORDER BY sampled.total_bytes DESC;
 `
 
 func formatBytes(bytes int64) string {
