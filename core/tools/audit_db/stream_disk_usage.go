@@ -2,14 +2,20 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 // Format this with the desired schema name
@@ -256,6 +262,222 @@ var usageCmd = &cobra.Command{
 	},
 }
 
+var histogramCmd = &cobra.Command{
+	Use:   "histogram",
+	Short: "Generate a histogram of disk usage by stream type based on a random sample of streams.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		sampleSize, _ := cmd.Flags().GetInt("sample-size")
+
+		pool, info, err := getDbPool(ctx, true)
+		if err != nil {
+			return fmt.Errorf("failed to get db pool: %w", err)
+		}
+
+		var numPartitions int
+		err = pool.QueryRow(ctx, "SELECT num_partitions FROM settings WHERE single_row_key=true").Scan(&numPartitions)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				// Fallback or warning if num_partitions not found, though it should exist.
+				fmt.Fprintln(
+					os.Stderr,
+					"Warning: num_partitions not found in settings table, defaulting to 256. Report may be inaccurate.",
+				)
+				numPartitions = 256
+			} else {
+				return fmt.Errorf("failed to query num_partitions from settings: %w", err)
+			}
+		}
+
+		esRows, err := pool.Query(ctx, "SELECT stream_id FROM es")
+		if err != nil {
+			return fmt.Errorf("failed to query stream_ids from es table: %w", err)
+		}
+		defer esRows.Close()
+
+		allStreamIdStrings := []string{}
+		for esRows.Next() {
+			var idStr string
+			if err := esRows.Scan(&idStr); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to scan stream_id: %v\n", err)
+				continue
+			}
+			allStreamIdStrings = append(allStreamIdStrings, idStr)
+		}
+		if err := esRows.Err(); err != nil {
+			return fmt.Errorf("error iterating over stream_ids from es table: %w", err)
+		}
+
+		streamTypeMap := map[byte]string{
+			shared.STREAM_CHANNEL_BIN:           shared.StreamTypeToString(shared.STREAM_CHANNEL_BIN),
+			shared.STREAM_DM_CHANNEL_BIN:        shared.StreamTypeToString(shared.STREAM_DM_CHANNEL_BIN),
+			shared.STREAM_GDM_CHANNEL_BIN:       shared.StreamTypeToString(shared.STREAM_GDM_CHANNEL_BIN),
+			shared.STREAM_MEDIA_BIN:             shared.StreamTypeToString(shared.STREAM_MEDIA_BIN),
+			shared.STREAM_SPACE_BIN:             shared.StreamTypeToString(shared.STREAM_SPACE_BIN),
+			shared.STREAM_USER_METADATA_KEY_BIN: shared.StreamTypeToString(shared.STREAM_USER_METADATA_KEY_BIN),
+			shared.STREAM_USER_INBOX_BIN:        shared.StreamTypeToString(shared.STREAM_USER_INBOX_BIN),
+			shared.STREAM_USER_BIN:              shared.StreamTypeToString(shared.STREAM_USER_BIN),
+			shared.STREAM_USER_SETTINGS_BIN:     shared.StreamTypeToString(shared.STREAM_USER_SETTINGS_BIN),
+		}
+
+		streamsByType := make(map[byte][]shared.StreamId)
+		for _, idStr := range allStreamIdStrings {
+			streamIdObj, err := shared.StreamIdFromString(idStr)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to parse stream_id '%s': %v\n", idStr, err)
+				continue
+			}
+			streamsByType[streamIdObj.Type()] = append(streamsByType[streamIdObj.Type()], streamIdObj)
+		}
+
+		type streamTypeStatsResults struct {
+			TypeName                       string
+			SampledStreamCount             int
+			TotalBytesInSample             int64
+			RawAverageBytesInSample        int64
+			FormattedAverageBytesPerStream string
+		}
+		var results []streamTypeStatsResults
+
+		localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+		for typeByte, typeName := range streamTypeMap {
+			idsForType, ok := streamsByType[typeByte]
+			if !ok || len(idsForType) == 0 {
+				results = append(results, streamTypeStatsResults{
+					TypeName:                       typeName,
+					SampledStreamCount:             0,
+					TotalBytesInSample:             0,
+					RawAverageBytesInSample:        0,
+					FormattedAverageBytesPerStream: "N/A",
+				})
+				continue
+			}
+
+			// Use the localized random source
+			localRand.Shuffle(len(idsForType), func(i, j int) {
+				idsForType[i], idsForType[j] = idsForType[j], idsForType[i]
+			})
+
+			actualSampleSize := sampleSize
+			if len(idsForType) < sampleSize {
+				actualSampleSize = len(idsForType)
+			}
+			sample := idsForType[:actualSampleSize]
+
+			var currentTypeTotalBytes int64 = 0
+			for _, sID := range sample {
+				partitionSuffix := storage.CreatePartitionSuffix(sID, numPartitions)
+				tableName := fmt.Sprintf("miniblocks_%s", partitionSuffix)
+
+				// Ensure schema name is quoted if it contains special characters, though typically it won't for this tool's use cases.
+				// pgx handles quoting for table names if Identifier is used, but here we build it into the query string.
+				// Direct concatenation is generally safe if info.schema and tableName are controlled, which they are here.
+				query := fmt.Sprintf(
+					"SELECT COALESCE(SUM(octet_length(blockdata))::BIGINT, 0) FROM %s.%s WHERE stream_id = $1",
+					info.schema, // info.schema should be safe as it's derived from DB connection params or defaults
+					tableName,   // tableName is constructed from controlled inputs
+				)
+
+				var streamTotalBytes int64
+				err := pool.QueryRow(ctx, query, sID.String()).Scan(&streamTotalBytes)
+				if err != nil {
+					// Log error but continue. This can happen if a stream_id is in the 'es' table
+					// but has not had any miniblocks written to its partition table yet, or if there's
+					// a schema issue (though less likely for a simple size query).
+					fmt.Fprintf(
+						os.Stderr,
+						"Warning: failed to query size for stream %s in table %s.%s: %v. Assuming 0 bytes for this stream.\n",
+						sID.String(),
+						info.schema,
+						tableName,
+						err,
+					)
+					// Treat as 0 bytes for this stream in the sample if query fails
+					streamTotalBytes = 0
+				}
+				currentTypeTotalBytes += streamTotalBytes
+			}
+
+			avgBytesStr := "N/A"
+			var rawAvgBytes int64 = 0
+			if actualSampleSize > 0 {
+				rawAvgBytes = currentTypeTotalBytes / int64(actualSampleSize)
+				avgBytesStr = formatBytes(rawAvgBytes)
+			} else if currentTypeTotalBytes > 0 {
+				// This case (total bytes > 0 but sample size = 0) should ideally not be hit if logic is correct
+				// but if it is, treat average as total for a single effective item.
+				rawAvgBytes = currentTypeTotalBytes
+				avgBytesStr = formatBytes(currentTypeTotalBytes)
+			}
+
+			results = append(results, streamTypeStatsResults{
+				TypeName:                       typeName,
+				SampledStreamCount:             actualSampleSize,
+				TotalBytesInSample:             currentTypeTotalBytes,
+				RawAverageBytesInSample:        rawAvgBytes,
+				FormattedAverageBytesPerStream: avgBytesStr,
+			})
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader(
+			[]string{"Stream Type", "Streams Sampled", "Total MB Bytes (Sample)", "Avg Bytes/Stream (Sample)"},
+		)
+		for _, r := range results {
+			table.Append([]string{
+				r.TypeName,
+				fmt.Sprintf("%d", r.SampledStreamCount),
+				formatBytes(r.TotalBytesInSample),
+				r.FormattedAverageBytesPerStream,
+			})
+		}
+		table.Render()
+
+		// Optionally render text histogram
+		if renderHistogram, _ := cmd.Flags().GetBool("render"); renderHistogram {
+			fmt.Println("\nText Histogram of Average Miniblock Size per Stream (Sampled):")
+
+			var maxRawAvgBytes int64 = 0
+			for _, r := range results {
+				if r.RawAverageBytesInSample > maxRawAvgBytes {
+					maxRawAvgBytes = r.RawAverageBytesInSample
+				}
+			}
+
+			const maxBarWidth = 50
+			histogramTable := tablewriter.NewWriter(os.Stdout)
+			histogramTable.SetHeader([]string{"Stream Type", "Histogram", "Avg Size"})
+			histogramTable.SetAlignment(tablewriter.ALIGN_LEFT)
+			// No borders for a cleaner histogram look, or keep them if preferred.
+			histogramTable.SetBorder(false)
+			histogramTable.SetColumnSeparator("|")
+
+			for _, r := range results {
+				bar := "N/A"
+				if r.SampledStreamCount > 0 && maxRawAvgBytes > 0 {
+					barLength := int(
+						(float64(r.RawAverageBytesInSample) / float64(maxRawAvgBytes)) * float64(maxBarWidth),
+					)
+					if barLength < 0 {
+						barLength = 0
+					} // Ensure non-negative
+					bar = strings.Repeat("#", barLength)
+				} else if r.SampledStreamCount > 0 && r.RawAverageBytesInSample == 0 {
+					bar = "(empty)" // Indicates sampled, but size is zero
+				}
+				histogramTable.Append([]string{r.TypeName, bar, r.FormattedAverageBytesPerStream})
+			}
+			histogramTable.Render()
+		}
+
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(usageCmd)
+	histogramCmd.Flags().IntP("sample-size", "s", 100, "Number of streams to sample per type for histogram analysis")
+	histogramCmd.Flags().BoolP("render", "H", false, "Render a text-based histogram of average sizes")
+	rootCmd.AddCommand(histogramCmd)
 }
