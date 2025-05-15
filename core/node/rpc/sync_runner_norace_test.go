@@ -387,11 +387,11 @@ func TestMultiSyncer(t *testing.T) {
 		})
 	})
 
-	t.Run("Long test - fewer sessions", func(t *testing.T) {
+	t.Run("Long test - larger syncs", func(t *testing.T) {
 		runMultiSyncerTest(t, multiSyncerTestConfig{
-			numNodes:              10,
-			replFactor:            5,
-			numChannels:           100,
+			numNodes:              5,
+			replFactor:            3,
+			numChannels:           200,
 			numMessagesPerChannel: 10,
 			streamsPerSyncSession: 10,
 			numWorkers:            2,

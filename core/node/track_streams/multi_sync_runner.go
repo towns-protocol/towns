@@ -102,24 +102,17 @@ type syncSessionRunner struct {
 
 var errSyncSessionUnassignable = fmt.Errorf("sync session runner is not assignable")
 
-func (ssr *syncSessionRunner) Assignable() bool {
-	ssr.mu.Lock()
-	defer ssr.mu.Unlock()
-
-	return ssr.streamCount < ssr.maxStreamsPerSyncSession && ssr.closeErr == nil
-}
-
 func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
 ) error {
 	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
 	ssr.syncStarted.Wait()
-	if !ssr.Assignable() {
+	ssr.mu.Lock()
+	if ssr.streamCount >= ssr.maxStreamsPerSyncSession-1 || ssr.closeErr != nil {
+		ssr.mu.Unlock()
 		return errSyncSessionUnassignable
 	}
-
-	ssr.mu.Lock()
 	ssr.streamCount = ssr.streamCount + 1
 	ssr.streamRecords.Store(record.streamId, &record)
 	ssr.mu.Unlock()
@@ -427,7 +420,7 @@ func (ssr *syncSessionRunner) Close(err error) {
 	ssr.closeErr = err
 	ssr.mu.Unlock()
 
-	log := logging.FromCtx(ssr.syncCtx)
+	log := logging.FromCtx(ssr.rootCtx)
 	if !errors.Is(err, context.Canceled) {
 		log.Errorw(
 			"Sync session was closed due to error",
