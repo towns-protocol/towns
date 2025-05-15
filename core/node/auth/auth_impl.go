@@ -450,7 +450,7 @@ func (ca *chainAuth) areLinkedWalletsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
-) (bool, error) {
+) (bool, EntitlementResultReason, error) {
 	log := logging.FromCtx(ctx)
 	if args.kind == chainAuthKindSpace {
 		log.Debugw("isWalletEntitled", "kind", "space", "args", args)
@@ -476,10 +476,14 @@ func (ca *chainAuth) isSpaceEnabledUncached(
 	if err != nil {
 		return nil, err
 	}
-	return boolCacheResult(!isDisabled), nil
+	return boolCacheResult{!isDisabled, EntitlementResultReason_SPACE_DISABLED}, nil
 }
 
-func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, spaceId shared.StreamId) (bool, error) {
+func (ca *chainAuth) checkSpaceEnabled(
+	ctx context.Context,
+	cfg *config.Config,
+	spaceId shared.StreamId,
+) (bool, EntitlementResultReason, error) {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -487,7 +491,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, 
 		ca.isSpaceEnabledUncached,
 	)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isSpaceEnabledCacheHit.Inc()
@@ -495,7 +499,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, 
 		ca.isSpaceEnabledCacheMiss.Inc()
 	}
 
-	return isEnabled.IsAllowed(), nil
+	return isEnabled.IsAllowed(), isEnabled.Reason(), nil
 }
 
 func (ca *chainAuth) isChannelEnabledUncached(
@@ -508,7 +512,7 @@ func (ca *chainAuth) isChannelEnabledUncached(
 	if err != nil {
 		return nil, err
 	}
-	return boolCacheResult(!isDisabled), nil
+	return boolCacheResult{!isDisabled, EntitlementResultReason_CHANNEL_DISABLED}, nil
 }
 
 func (ca *chainAuth) checkChannelEnabled(
@@ -516,7 +520,7 @@ func (ca *chainAuth) checkChannelEnabled(
 	cfg *config.Config,
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
-) (bool, error) {
+) (bool, EntitlementResultReason, error) {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -524,7 +528,7 @@ func (ca *chainAuth) checkChannelEnabled(
 		ca.isChannelEnabledUncached,
 	)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isChannelEnabledCacheHit.Inc()
@@ -532,7 +536,7 @@ func (ca *chainAuth) checkChannelEnabled(
 		ca.isChannelEnabledCacheMiss.Inc()
 	}
 
-	return isEnabled.IsAllowed(), nil
+	return isEnabled.IsAllowed(), isEnabled.Reason(), nil
 }
 
 // CacheResult is the result of a cache lookup.
@@ -548,8 +552,8 @@ func (scr *entitlementCacheResult) IsAllowed() bool {
 	return scr.allowed
 }
 
-func (scr *entitlementCacheResult) IsExpired() bool {
-	return false
+func (scr *entitlementCacheResult) Reason() EntitlementResultReason {
+	return EntitlementResultReason_NONE // entitlement cache results are a second layer of caching, so we don't need to return a reason
 }
 
 // If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may be cached.
@@ -645,7 +649,7 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 			Message("Failed to evaluate entitlements").
 			Tag("channelId", args.channelId)
 	}
-	return boolCacheResult(allowed), nil
+	return boolCacheResult{allowed, EntitlementResultReason_CHANNEL_ENTITLEMENTS}, nil
 }
 
 func deserializeWallets(serialized string) []common.Address {
@@ -819,17 +823,17 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 			Func("isEntitledToSpace").
 			Message("Failed to evaluate entitlements")
 	}
-	return boolCacheResult(allowed), nil
+	return boolCacheResult{allowed, EntitlementResultReason_SPACE_ENTITLEMENTS}, nil
 }
 
-func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, EntitlementResultReason, error) {
 	if args.kind != chainAuthKindSpace {
-		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
 	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, cfg, args, ca.isEntitledToSpaceUncached)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isEntitledToSpaceCacheHit.Inc()
@@ -837,17 +841,17 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, 
 		ca.isEntitledToSpaceCacheMiss.Inc()
 	}
 
-	return isEntitled.IsAllowed(), nil
+	return isEntitled.IsAllowed(), isEntitled.Reason(), nil
 }
 
-func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, EntitlementResultReason, error) {
 	if args.kind != chainAuthKindChannel {
-		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
 	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, cfg, args, ca.isEntitledToChannelUncached)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isEntitledToChannelCacheHit.Inc()
@@ -855,7 +859,7 @@ func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config
 		ca.isEntitledToChannelCacheMiss.Inc()
 	}
 
-	return isEntitled.IsAllowed(), nil
+	return isEntitled.IsAllowed(), isEntitled.Reason(), nil
 }
 
 func (ca *chainAuth) getLinkedWalletsUncached(
@@ -986,23 +990,23 @@ func (ca *chainAuth) checkStreamIsEnabled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
-) (bool, error) {
+) (bool, EntitlementResultReason, error) {
 	if args.kind == chainAuthKindSpace || args.kind == chainAuthKindIsSpaceMember {
-		isEnabled, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
+		isEnabled, reason, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
 		if err != nil {
-			return false, err
+			return false, reason, err
 		}
-		return isEnabled, nil
+		return isEnabled, reason, nil
 	} else if args.kind == chainAuthKindChannel {
-		isEnabled, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
+		isEnabled, reason, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
 		if err != nil {
-			return false, err
+			return false, reason, err
 		}
-		return isEnabled, nil
+		return isEnabled, reason, nil
 	} else if args.kind == chainAuthKindIsWalletLinked {
-		return true, nil
+		return true, EntitlementResultReason_NONE, nil
 	} else {
-		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
 }
 
@@ -1022,11 +1026,11 @@ func (ca *chainAuth) checkEntitlement(
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
 
-	isEnabled, err := ca.checkStreamIsEnabled(ctx, cfg, args)
+	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	} else if !isEnabled {
-		return boolCacheResult(false), nil
+		return boolCacheResult{false, reason}, nil
 	}
 
 	// Get all linked wallets.
@@ -1039,10 +1043,10 @@ func (ca *chainAuth) checkEntitlement(
 	if args.kind == chainAuthKindIsWalletLinked {
 		for _, wallet := range wallets {
 			if wallet == args.walletAddress {
-				return boolCacheResult(true), nil
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 			}
 		}
-		return boolCacheResult(false), nil
+		return boolCacheResult{false, EntitlementResultReason_WALLET_NOT_LINKED}, nil
 	}
 
 	args = args.withLinkedWallets(wallets)
@@ -1136,7 +1140,7 @@ func (ca *chainAuth) checkEntitlement(
 				"wallets",
 				wallets,
 			)
-			return boolCacheResult(false), nil
+			return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP}, nil
 		}
 	}
 

@@ -23,15 +23,32 @@ type entitlementCache struct {
 	negativeCacheTTL time.Duration
 }
 
+type EntitlementResultReason int
+
+const (
+	EntitlementResultReason_NONE EntitlementResultReason = iota
+	EntitlementResultReason_MEMBERSHIP
+	EntitlementResultReason_MEMBERSHIP_EXPIRATION
+	EntitlementResultReason_SPACE_ENTITLEMENTS
+	EntitlementResultReason_CHANNEL_ENTITLEMENTS
+	EntitlementResultReason_SPACE_DISABLED
+	EntitlementResultReason_CHANNEL_DISABLED
+	EntitlementResultReason_WALLET_NOT_LINKED
+)
+
+func (r EntitlementResultReason) String() string {
+	return []string{"NONE", "MEMBERSHIP", "MEMBERSHIP_EXPIRATION", "SPACE_ENTITLEMENTS", "CHANNEL_ENTITLEMENTS", "SPACE_DISABLED", "CHANNEL_DISABLED"}[r]
+}
+
 type CacheResult interface {
 	IsAllowed() bool
-	IsExpired() bool
+	Reason() EntitlementResultReason
 }
 
 // Cached results of isEntitlement check with the TTL of the result
 type entitlementCacheValue interface {
 	IsAllowed() bool
-	IsExpired() bool
+	Reason() EntitlementResultReason
 	GetTimestamp() time.Time
 }
 
@@ -44,8 +61,8 @@ func (ccv *timestampedCacheValue) IsAllowed() bool {
 	return ccv.result.IsAllowed()
 }
 
-func (ccv *timestampedCacheValue) IsExpired() bool {
-	return ccv.result.IsExpired()
+func (ccv *timestampedCacheValue) Reason() EntitlementResultReason {
+	return ccv.result.Reason()
 }
 
 func (ccv *timestampedCacheValue) Result() CacheResult {
@@ -56,14 +73,20 @@ func (ccv *timestampedCacheValue) GetTimestamp() time.Time {
 	return ccv.timestamp
 }
 
-type boolCacheResult bool
-
-func (b boolCacheResult) IsAllowed() bool {
-	return bool(b)
+type boolCacheResult struct {
+	isAllowed bool
+	reason    EntitlementResultReason
 }
 
-func (b boolCacheResult) IsExpired() bool {
-	return false
+func (b boolCacheResult) IsAllowed() bool {
+	return b.isAllowed
+}
+
+func (b boolCacheResult) Reason() EntitlementResultReason {
+	if b.isAllowed {
+		return EntitlementResultReason_NONE
+	}
+	return b.reason
 }
 
 type membershipStatusCacheResult struct {
@@ -81,8 +104,17 @@ func (ms *membershipStatusCacheResult) GetMembershipStatus() *MembershipStatus {
 	return ms.status
 }
 
-func (ms *membershipStatusCacheResult) IsExpired() bool {
-	return ms.status.IsExpired
+func (ms *membershipStatusCacheResult) Reason() EntitlementResultReason {
+	if ms.status == nil {
+		return EntitlementResultReason_NONE
+	}
+	if !ms.status.IsMember {
+		return EntitlementResultReason_NOT_MEMBER
+	}
+	if ms.status.IsExpired {
+		return EntitlementResultReason_EXPIRED
+	}
+	return EntitlementResultReason_NONE
 }
 
 type linkedWalletCacheValue struct {
