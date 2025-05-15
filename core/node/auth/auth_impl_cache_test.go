@@ -20,10 +20,18 @@ func (scr *simpleCacheResult) IsAllowed() bool {
 	return scr.allowed
 }
 
-func (scr *simpleCacheResult) IsExpired() bool {
-	return false
+func (scr *simpleCacheResult) Reason() EntitlementResultReason {
+	return EntitlementResultReason_NONE
 }
 
+func testEntitlementResultReasons(t *testing.T) {
+	for i := EntitlementResultReason_NONE; i < EntitlementResultReason_MAX; i++ {
+		assert.True(t, i >= EntitlementResultReason_NONE && i < EntitlementResultReason_MAX)
+		assert.NotNil(t, i.String()) // the stringer is an array, please keep it up to date
+	}
+}
+
+// Test for the newEntitlementCache function
 // Test for the newEntitlementCache function
 func TestCache(t *testing.T) {
 	ctx, cancel := test.NewTestContext()

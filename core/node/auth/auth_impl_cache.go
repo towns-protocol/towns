@@ -28,16 +28,18 @@ type EntitlementResultReason int
 const (
 	EntitlementResultReason_NONE EntitlementResultReason = iota
 	EntitlementResultReason_MEMBERSHIP
-	EntitlementResultReason_MEMBERSHIP_EXPIRATION
+	EntitlementResultReason_MEMBERSHIP_EXPIRED
 	EntitlementResultReason_SPACE_ENTITLEMENTS
 	EntitlementResultReason_CHANNEL_ENTITLEMENTS
 	EntitlementResultReason_SPACE_DISABLED
 	EntitlementResultReason_CHANNEL_DISABLED
 	EntitlementResultReason_WALLET_NOT_LINKED
+
+	EntitlementResultReason_MAX // leave at the end
 )
 
 func (r EntitlementResultReason) String() string {
-	return []string{"NONE", "MEMBERSHIP", "MEMBERSHIP_EXPIRATION", "SPACE_ENTITLEMENTS", "CHANNEL_ENTITLEMENTS", "SPACE_DISABLED", "CHANNEL_DISABLED"}[r]
+	return []string{"NONE", "MEMBERSHIP", "MEMBERSHIP_EXPIRED", "SPACE_ENTITLEMENTS", "CHANNEL_ENTITLEMENTS", "SPACE_DISABLED", "CHANNEL_DISABLED", "WALLET_NOT_LINKED"}[r]
 }
 
 type CacheResult interface {
@@ -109,10 +111,10 @@ func (ms *membershipStatusCacheResult) Reason() EntitlementResultReason {
 		return EntitlementResultReason_NONE
 	}
 	if !ms.status.IsMember {
-		return EntitlementResultReason_NOT_MEMBER
+		return EntitlementResultReason_MEMBERSHIP
 	}
 	if ms.status.IsExpired {
-		return EntitlementResultReason_EXPIRED
+		return EntitlementResultReason_MEMBERSHIP_EXPIRED
 	}
 	return EntitlementResultReason_NONE
 }
@@ -131,8 +133,12 @@ func (lwcv *linkedWalletCacheValue) IsAllowed() bool {
 	return true
 }
 
-func (lwcv *linkedWalletCacheValue) IsExpired() bool {
-	return false
+func (lwcv *linkedWalletCacheValue) Reason() EntitlementResultReason {
+	return EntitlementResultReason_NONE
+}
+
+func (lwcv *linkedWalletCacheValue) GetTimestamp() time.Time {
+	return time.Now()
 }
 
 func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {

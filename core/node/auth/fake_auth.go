@@ -23,7 +23,7 @@ func (a *fakeChainAuth) IsEntitled(
 ) (IsEntitledResult, error) {
 	return &isEntitledResult{
 		isAllowed: true,
-		isExpired: false,
+		reason:    EntitlementResultReason_NONE,
 	}, nil
 }
 

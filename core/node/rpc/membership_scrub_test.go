@@ -85,25 +85,21 @@ func createUserAndAddToChannel(
 
 type MockChainAuth struct {
 	auth.ChainAuth
-	result    bool
-	isExpired bool
-	err       error
+	result bool
+	err    error
 }
 
 type mockChainAuthResult struct {
 	isAllowed bool
-	isExpired bool
+	reason    auth.EntitlementResultReason
 }
 
 func (m *mockChainAuthResult) IsEntitled() bool {
 	return m.isAllowed
 }
 
-func (m *mockChainAuthResult) Reason() string {
-	if m.isExpired {
-		return "entitlement expired"
-	}
-	return "not entitled"
+func (m *mockChainAuthResult) Reason() auth.EntitlementResultReason {
+	return m.reason
 }
 
 func (m *MockChainAuth) IsEntitled(
@@ -113,15 +109,14 @@ func (m *MockChainAuth) IsEntitled(
 ) (auth.IsEntitledResult, error) {
 	return &mockChainAuthResult{
 		isAllowed: m.result,
-		isExpired: m.isExpired,
+		reason:    auth.EntitlementResultReason_NONE,
 	}, m.err
 }
 
 func NewMockChainAuth(expectedResult bool, expectedErr error) auth.ChainAuth {
 	return &MockChainAuth{
-		result:    expectedResult,
-		isExpired: false,
-		err:       expectedErr,
+		result: expectedResult,
+		err:    expectedErr,
 	}
 }
 
@@ -142,13 +137,13 @@ func (m *MockChainAuthForWallets) IsEntitled(
 		if args.Principal() == wallet.Address {
 			return &mockChainAuthResult{
 				isAllowed: result.expectedResult,
-				isExpired: false,
+				reason:    auth.EntitlementResultReason_NONE,
 			}, result.expectedErr
 		}
 	}
 	return &mockChainAuthResult{
 		isAllowed: true,
-		isExpired: false,
+		reason:    auth.EntitlementResultReason_NONE,
 	}, nil
 }
 

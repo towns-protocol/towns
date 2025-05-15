@@ -52,23 +52,20 @@ type ChainAuth interface {
 
 type isEntitledResult struct {
 	isAllowed bool
-	isExpired bool
+	reason    EntitlementResultReason
 }
 
 type IsEntitledResult interface {
 	IsEntitled() bool
-	Reason() string
+	Reason() EntitlementResultReason
 }
 
 func (r *isEntitledResult) IsEntitled() bool {
-	return r.isAllowed && !r.isExpired
+	return r.isAllowed
 }
 
-func (r *isEntitledResult) Reason() string {
-	if r.isExpired {
-		return "entitlement expired" // TODO replace with protobuf enum MembershipReason
-	}
-	return "not entitled"
+func (r *isEntitledResult) Reason() EntitlementResultReason {
+	return r.reason
 }
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
@@ -442,7 +439,7 @@ func (ca *chainAuth) IsEntitled(
 
 	return &isEntitledResult{
 		isAllowed: result.IsAllowed(),
-		isExpired: result.IsExpired(),
+		reason:    result.Reason(),
 	}, nil
 }
 
@@ -460,9 +457,9 @@ func (ca *chainAuth) areLinkedWalletsEntitled(
 		return ca.isEntitledToChannel(ctx, cfg, args)
 	} else if args.kind == chainAuthKindIsSpaceMember {
 		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args)
-		return true, nil // is space member is checked by the calling code in checkEntitlement
+		return true, EntitlementResultReason_NONE, nil // is space member is checked by the calling code in checkEntitlement
 	} else {
-		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
 	}
 }
 
@@ -826,7 +823,11 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 	return boolCacheResult{allowed, EntitlementResultReason_SPACE_ENTITLEMENTS}, nil
 }
 
-func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, EntitlementResultReason, error) {
+func (ca *chainAuth) isEntitledToSpace(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (bool, EntitlementResultReason, error) {
 	if args.kind != chainAuthKindSpace {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
@@ -844,7 +845,11 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, 
 	return isEntitled.IsAllowed(), isEntitled.Reason(), nil
 }
 
-func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, EntitlementResultReason, error) {
+func (ca *chainAuth) isEntitledToChannel(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (bool, EntitlementResultReason, error) {
 	if args.kind != chainAuthKindChannel {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
@@ -1153,15 +1158,15 @@ func (ca *chainAuth) checkEntitlement(
 
 	if isExpired {
 		log.Debugw("Membership expired", "principal", args.principal, "spaceId", args.spaceId)
-		return boolCacheResult(false), nil
+		return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP_EXPIRED}, nil
 	}
 
-	result, err := ca.areLinkedWalletsEntitled(ctx, cfg, args)
+	result, reason, err := ca.areLinkedWalletsEntitled(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	}
 
-	return boolCacheResult(result), nil
+	return boolCacheResult{result, reason}, nil
 }
 
 func (ca *chainAuth) GetMembershipStatus(
