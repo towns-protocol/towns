@@ -869,9 +869,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-	river.NodeRegistryV1NodeRemoved |
-	river.NodeRegistryV1NodeStatusUpdated |
-	river.NodeRegistryV1NodeUrlUpdated
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -964,6 +964,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 						logging.FromCtx(ctx).Errorw("Unknown stream updated reason type", "event", event)
 					}
 				}
+			} else if event, ok := parsed.(*river.StreamRegistryV1StreamLastMiniblockUpdateFailed); ok {
+				logging.FromCtx(ctx).Debugw("Stream last miniblock update failed", "event", event)
 			} else {
 				logging.FromCtx(ctx).Errorw("Unknown event type", "event", parsed)
 			}
