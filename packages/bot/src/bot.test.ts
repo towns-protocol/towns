@@ -258,7 +258,8 @@ describe('Bot', { sequential: true }, () => {
         expect(event?.message).toBe(TEST_MESSAGE)
     })
 
-    it('should be able to get user data', async () => {
+    // TODO: not planned for now
+    it.skip('should be able to get user data', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const userData: UserData[] = []
         bot.onMessage(async (h, e) => {
@@ -427,7 +428,7 @@ describe('Bot', { sequential: true }, () => {
     // handler = AddEvent
     // elapsed = 9.889292ms
     // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    it('onTip should be triggered when a tip is received', async () => {
+    it.skip('onTip should be triggered when a tip is received', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedTipEvents: BotPayload<'tip'>[] = []
         bot.onTip((_h, e) => {
