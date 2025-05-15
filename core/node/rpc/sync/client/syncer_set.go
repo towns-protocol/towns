@@ -440,7 +440,7 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 
-		syncer, err = newRemoteSyncer(
+		syncer, err = NewRemoteSyncer(
 			ss.ctx,
 			ss.globalSyncOpCtxCancel,
 			ss.syncID,

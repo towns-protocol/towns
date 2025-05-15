@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/nodes"
@@ -520,6 +521,7 @@ func (s *Service) addEventImpl(
 	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
 	ret, err := stub.AddEvent(ctx, newReq)
 	if err != nil {
+		stream.AdvanceStickyPeer(firstRemote)
 		return nil, err
 	}
 	return connect.NewResponse(ret.Msg), nil
