@@ -336,6 +336,7 @@ var histogramCmd = &cobra.Command{
 			TotalBytesInSample             int64
 			RawAverageBytesInSample        int64
 			FormattedAverageBytesPerStream string
+			SampledStreamSizes             []int64
 		}
 		var results []streamTypeStatsResults
 
@@ -343,18 +344,17 @@ var histogramCmd = &cobra.Command{
 
 		for typeByte, typeName := range streamTypeMap {
 			idsForType, ok := streamsByType[typeByte]
+			currentTypeResult := streamTypeStatsResults{
+				TypeName:                       typeName,
+				SampledStreamSizes:             []int64{},
+				FormattedAverageBytesPerStream: "N/A",
+			}
+
 			if !ok || len(idsForType) == 0 {
-				results = append(results, streamTypeStatsResults{
-					TypeName:                       typeName,
-					SampledStreamCount:             0,
-					TotalBytesInSample:             0,
-					RawAverageBytesInSample:        0,
-					FormattedAverageBytesPerStream: "N/A",
-				})
+				results = append(results, currentTypeResult)
 				continue
 			}
 
-			// Use the localized random source
 			localRand.Shuffle(len(idsForType), func(i, j int) {
 				idsForType[i], idsForType[j] = idsForType[j], idsForType[i]
 			})
@@ -364,27 +364,22 @@ var histogramCmd = &cobra.Command{
 				actualSampleSize = len(idsForType)
 			}
 			sample := idsForType[:actualSampleSize]
+			currentTypeResult.SampledStreamCount = actualSampleSize
 
-			var currentTypeTotalBytes int64 = 0
+			var currentTypeTotalBytesAggregate int64 = 0
 			for _, sID := range sample {
 				partitionSuffix := storage.CreatePartitionSuffix(sID, numPartitions)
 				tableName := fmt.Sprintf("miniblocks_%s", partitionSuffix)
 
-				// Ensure schema name is quoted if it contains special characters, though typically it won't for this tool's use cases.
-				// pgx handles quoting for table names if Identifier is used, but here we build it into the query string.
-				// Direct concatenation is generally safe if info.schema and tableName are controlled, which they are here.
 				query := fmt.Sprintf(
 					"SELECT COALESCE(SUM(octet_length(blockdata))::BIGINT, 0) FROM %s.%s WHERE stream_id = $1",
-					info.schema, // info.schema should be safe as it's derived from DB connection params or defaults
-					tableName,   // tableName is constructed from controlled inputs
+					info.schema,
+					tableName,
 				)
 
 				var streamTotalBytes int64
 				err := pool.QueryRow(ctx, query, sID.String()).Scan(&streamTotalBytes)
 				if err != nil {
-					// Log error but continue. This can happen if a stream_id is in the 'es' table
-					// but has not had any miniblocks written to its partition table yet, or if there's
-					// a schema issue (though less likely for a simple size query).
 					fmt.Fprintf(
 						os.Stderr,
 						"Warning: failed to query size for stream %s in table %s.%s: %v. Assuming 0 bytes for this stream.\n",
@@ -393,31 +388,25 @@ var histogramCmd = &cobra.Command{
 						tableName,
 						err,
 					)
-					// Treat as 0 bytes for this stream in the sample if query fails
 					streamTotalBytes = 0
 				}
-				currentTypeTotalBytes += streamTotalBytes
+				currentTypeResult.SampledStreamSizes = append(currentTypeResult.SampledStreamSizes, streamTotalBytes)
+				currentTypeTotalBytesAggregate += streamTotalBytes
 			}
 
-			avgBytesStr := "N/A"
-			var rawAvgBytes int64 = 0
-			if actualSampleSize > 0 {
-				rawAvgBytes = currentTypeTotalBytes / int64(actualSampleSize)
-				avgBytesStr = formatBytes(rawAvgBytes)
-			} else if currentTypeTotalBytes > 0 {
-				// This case (total bytes > 0 but sample size = 0) should ideally not be hit if logic is correct
-				// but if it is, treat average as total for a single effective item.
-				rawAvgBytes = currentTypeTotalBytes
-				avgBytesStr = formatBytes(currentTypeTotalBytes)
+			currentTypeResult.TotalBytesInSample = currentTypeTotalBytesAggregate
+			if currentTypeResult.SampledStreamCount > 0 {
+				currentTypeResult.RawAverageBytesInSample = currentTypeTotalBytesAggregate / int64(
+					currentTypeResult.SampledStreamCount,
+				)
+				currentTypeResult.FormattedAverageBytesPerStream = formatBytes(
+					currentTypeResult.RawAverageBytesInSample,
+				)
+			} else if currentTypeTotalBytesAggregate > 0 {
+				currentTypeResult.RawAverageBytesInSample = currentTypeTotalBytesAggregate
+				currentTypeResult.FormattedAverageBytesPerStream = formatBytes(currentTypeTotalBytesAggregate)
 			}
-
-			results = append(results, streamTypeStatsResults{
-				TypeName:                       typeName,
-				SampledStreamCount:             actualSampleSize,
-				TotalBytesInSample:             currentTypeTotalBytes,
-				RawAverageBytesInSample:        rawAvgBytes,
-				FormattedAverageBytesPerStream: avgBytesStr,
-			})
+			results = append(results, currentTypeResult)
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
@@ -434,41 +423,86 @@ var histogramCmd = &cobra.Command{
 		}
 		table.Render()
 
-		// Optionally render text histogram
-		if renderHistogram, _ := cmd.Flags().GetBool("render"); renderHistogram {
-			fmt.Println("\nText Histogram of Average Miniblock Size per Stream (Sampled):")
-
-			var maxRawAvgBytes int64 = 0
-			for _, r := range results {
-				if r.RawAverageBytesInSample > maxRawAvgBytes {
-					maxRawAvgBytes = r.RawAverageBytesInSample
-				}
-			}
-
-			const maxBarWidth = 50
-			histogramTable := tablewriter.NewWriter(os.Stdout)
-			histogramTable.SetHeader([]string{"Stream Type", "Histogram", "Avg Size"})
-			histogramTable.SetAlignment(tablewriter.ALIGN_LEFT)
-			// No borders for a cleaner histogram look, or keep them if preferred.
-			histogramTable.SetBorder(false)
-			histogramTable.SetColumnSeparator("|")
+		if renderDetailedHistograms, _ := cmd.Flags().GetBool("render"); renderDetailedHistograms {
+			const numBuckets = 10
+			const maxBarWidth = 40
 
 			for _, r := range results {
-				bar := "N/A"
-				if r.SampledStreamCount > 0 && maxRawAvgBytes > 0 {
-					barLength := int(
-						(float64(r.RawAverageBytesInSample) / float64(maxRawAvgBytes)) * float64(maxBarWidth),
-					)
-					if barLength < 0 {
-						barLength = 0
-					} // Ensure non-negative
-					bar = strings.Repeat("#", barLength)
-				} else if r.SampledStreamCount > 0 && r.RawAverageBytesInSample == 0 {
-					bar = "(empty)" // Indicates sampled, but size is zero
+				if r.SampledStreamCount == 0 {
+					continue
 				}
-				histogramTable.Append([]string{r.TypeName, bar, r.FormattedAverageBytesPerStream})
+
+				fmt.Printf("\nHistogram for Stream Type: %s (%d streams sampled)\n", r.TypeName, r.SampledStreamCount)
+
+				minSize, maxSize := r.SampledStreamSizes[0], r.SampledStreamSizes[0]
+				for _, size := range r.SampledStreamSizes {
+					if size < minSize {
+						minSize = size
+					}
+					if size > maxSize {
+						maxSize = size
+					}
+				}
+
+				histogramTable := tablewriter.NewWriter(os.Stdout)
+				histogramTable.SetHeader([]string{"Size Range", "Count", "Histogram"})
+				histogramTable.SetAlignment(tablewriter.ALIGN_LEFT)
+				histogramTable.SetBorder(true)
+				histogramTable.SetColumnSeparator("|")
+
+				if minSize == maxSize {
+					histogramTable.Append([]string{
+						formatBytes(minSize),
+						fmt.Sprintf("%d", r.SampledStreamCount),
+						strings.Repeat("#", maxBarWidth),
+					})
+				} else {
+					bucketWidth := (maxSize - minSize) / int64(numBuckets)
+					if bucketWidth == 0 {
+						bucketWidth = 1
+					}
+
+					bucketCounts := make([]int, numBuckets)
+					for _, size := range r.SampledStreamSizes {
+						bucketIndex := 0
+						if bucketWidth > 0 {
+							bucketIndex = int((size - minSize) / bucketWidth)
+						}
+						if bucketIndex >= numBuckets {
+							bucketIndex = numBuckets - 1
+						}
+						bucketCounts[bucketIndex]++
+					}
+
+					maxBucketCount := 0
+					for _, count := range bucketCounts {
+						if count > maxBucketCount {
+							maxBucketCount = count
+						}
+					}
+
+					for i := 0; i < numBuckets; i++ {
+						lowerBound := minSize + int64(i)*bucketWidth
+						upperBound := lowerBound + bucketWidth - 1
+						if i == numBuckets-1 {
+							upperBound = maxSize
+						}
+
+						rangeStr := fmt.Sprintf("%s - %s", formatBytes(lowerBound), formatBytes(upperBound))
+						count := bucketCounts[i]
+						bar := ""
+						if maxBucketCount > 0 && count > 0 {
+							barLength := int((float64(count) / float64(maxBucketCount)) * float64(maxBarWidth))
+							if barLength == 0 && count > 0 {
+								barLength = 1
+							}
+							bar = strings.Repeat("#", barLength)
+						}
+						histogramTable.Append([]string{rangeStr, fmt.Sprintf("%d", count), bar})
+					}
+				}
+				histogramTable.Render()
 			}
-			histogramTable.Render()
 		}
 
 		return nil
@@ -478,6 +512,6 @@ var histogramCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(usageCmd)
 	histogramCmd.Flags().IntP("sample-size", "s", 100, "Number of streams to sample per type for histogram analysis")
-	histogramCmd.Flags().BoolP("render", "H", false, "Render a text-based histogram of average sizes")
+	histogramCmd.Flags().BoolP("render", "H", false, "Render detailed histograms for each stream type")
 	rootCmd.AddCommand(histogramCmd)
 }
