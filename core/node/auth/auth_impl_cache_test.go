@@ -20,6 +20,10 @@ func (scr *simpleCacheResult) IsAllowed() bool {
 	return scr.allowed
 }
 
+func (scr *simpleCacheResult) IsExpired() bool {
+	return false
+}
+
 // Test for the newEntitlementCache function
 func TestCache(t *testing.T) {
 	ctx, cancel := test.NewTestContext()

@@ -110,11 +110,11 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 
 	// check entitlements
 	if csRules.ChainAuth != nil {
-		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
+		isEntitledResult, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
 			return nil, err
 		}
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			return nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",

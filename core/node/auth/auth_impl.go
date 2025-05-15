@@ -46,8 +46,29 @@ type ChainAuth interface {
 		6B. For channels, the space contract method `IsEntitledToChannel` is called for each linked wallet. If any of the
 			linked wallets are entitled to the channel, the permission check passes. Otherwise, it fails.
 	*/
-	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error)
+	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (IsEntitledResult, error)
 	VerifyReceipt(ctx context.Context, cfg *config.Config, receipt *BlockchainTransactionReceipt) (bool, error)
+}
+
+type isEntitledResult struct {
+	isAllowed bool
+	isExpired bool
+}
+
+type IsEntitledResult interface {
+	IsEntitled() bool
+	Reason() string
+}
+
+func (r *isEntitledResult) IsEntitled() bool {
+	return r.isAllowed && !r.isExpired
+}
+
+func (r *isEntitledResult) Reason() string {
+	if r.isExpired {
+		return "entitlement expired" // TODO replace with protobuf enum MembershipReason
+	}
+	return "not entitled"
 }
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
@@ -403,7 +424,11 @@ func (ca *chainAuth) VerifyReceipt(
 	return true, nil
 }
 
-func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+func (ca *chainAuth) IsEntitled(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (IsEntitledResult, error) {
 	// TODO: counter for cache hits here?
 	result, _, err := ca.entitlementCache.executeUsingCache(
 		ctx,
@@ -412,10 +437,13 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *C
 		ca.checkEntitlement,
 	)
 	if err != nil {
-		return false, AsRiverError(err).Func("IsEntitled")
+		return nil, AsRiverError(err).Func("IsEntitled")
 	}
 
-	return result.IsAllowed(), nil
+	return &isEntitledResult{
+		isAllowed: result.IsAllowed(),
+		isExpired: result.IsExpired(),
+	}, nil
 }
 
 func (ca *chainAuth) areLinkedWalletsEntitled(
@@ -518,6 +546,10 @@ type entitlementCacheResult struct {
 
 func (scr *entitlementCacheResult) IsAllowed() bool {
 	return scr.allowed
+}
+
+func (scr *entitlementCacheResult) IsExpired() bool {
+	return false
 }
 
 // If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may be cached.

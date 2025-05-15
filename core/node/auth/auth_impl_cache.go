@@ -25,11 +25,13 @@ type entitlementCache struct {
 
 type CacheResult interface {
 	IsAllowed() bool
+	IsExpired() bool
 }
 
 // Cached results of isEntitlement check with the TTL of the result
 type entitlementCacheValue interface {
 	IsAllowed() bool
+	IsExpired() bool
 	GetTimestamp() time.Time
 }
 
@@ -40,6 +42,10 @@ type timestampedCacheValue struct {
 
 func (ccv *timestampedCacheValue) IsAllowed() bool {
 	return ccv.result.IsAllowed()
+}
+
+func (ccv *timestampedCacheValue) IsExpired() bool {
+	return ccv.result.IsExpired()
 }
 
 func (ccv *timestampedCacheValue) Result() CacheResult {
@@ -54,6 +60,10 @@ type boolCacheResult bool
 
 func (b boolCacheResult) IsAllowed() bool {
 	return bool(b)
+}
+
+func (b boolCacheResult) IsExpired() bool {
+	return false
 }
 
 type membershipStatusCacheResult struct {
@@ -71,6 +81,10 @@ func (ms *membershipStatusCacheResult) GetMembershipStatus() *MembershipStatus {
 	return ms.status
 }
 
+func (ms *membershipStatusCacheResult) IsExpired() bool {
+	return ms.status.IsExpired
+}
+
 type linkedWalletCacheValue struct {
 	wallets []common.Address
 }
@@ -83,6 +97,10 @@ func (lwcv *linkedWalletCacheValue) GetLinkedWallets() []common.Address {
 // the node busts the cache. See the note on newLinkedWalletCache below.
 func (lwcv *linkedWalletCacheValue) IsAllowed() bool {
 	return true
+}
+
+func (lwcv *linkedWalletCacheValue) IsExpired() bool {
+	return false
 }
 
 func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
