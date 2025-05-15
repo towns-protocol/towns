@@ -35,6 +35,7 @@ type Subscription struct {
 	manager *Manager
 
 	duplicates sync.Map
+	//highestMiniblock sync.Map
 }
 
 func (s *Subscription) Close() {
@@ -63,6 +64,14 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	} else {
 		s.duplicates.Store(mshHash, struct{}{})
 	}
+
+	// TODO: For debugging purposes
+	/*if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+		streamId := StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId())
+		if highest, ok := s.highestMiniblock.Load(streamId); ok {
+			highest = highest.(int64)
+		}
+	}*/
 
 	select {
 	case <-s.Ctx.Done():
