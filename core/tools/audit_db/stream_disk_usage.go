@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -337,10 +338,47 @@ var histogramCmd = &cobra.Command{
 			RawAverageBytesInSample        int64
 			FormattedAverageBytesPerStream string
 			SampledStreamSizes             []int64
+			MinSizeInSample                int64
+			Q1SizeInSample                 int64
+			MedianSizeInSample             int64
+			Q3SizeInSample                 int64
+			MaxSizeInSample                int64
+			FormattedMinSize               string
+			FormattedQ1Size                string
+			FormattedMedianSize            string
+			FormattedQ3Size                string
+			FormattedMaxSize               string
 		}
 		var results []streamTypeStatsResults
 
 		localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+		// Percentile should be 0.0 to 1.0 (e.g., 0.25 for Q1, 0.5 for Median, 0.75 for Q3)
+		calculatePercentile := func(sortedSizes []int64, percentile float64) int64 {
+			n := len(sortedSizes)
+			if n == 0 {
+				return 0
+			}
+			if n == 1 {
+				return sortedSizes[0] // Min, Median, Max are all the same for a single element
+			}
+			// Calculate index (0-based). For simplicity, we'll use a common method:
+			// k = (n-1) * p. If k is integer, it's the index.
+			// If not, some methods interpolate. We'll take the floor and use that element.
+			// This is a simple approach; more complex methods exist for precise statistical percentiles.
+			// For p=0.5 (median) and n is even, (n-1)*0.5 is x.5. int() truncates to x.
+			// e.g. n=4, (3)*0.5 = 1.5, index = 1. sortedSizes[1] is chosen.
+			// A common median for n=4 (indices 0,1,2,3) would be (sortedSizes[1]+sortedSizes[2])/2.
+			// This method will pick sortedSizes[floor((n-1)*p)].
+			index := int(float64(n-1) * percentile)
+			if index < 0 {
+				index = 0
+			}
+			if index >= n {
+				index = n - 1
+			}
+			return sortedSizes[index]
+		}
 
 		for typeByte, typeName := range streamTypeMap {
 			idsForType, ok := streamsByType[typeByte]
@@ -348,6 +386,11 @@ var histogramCmd = &cobra.Command{
 				TypeName:                       typeName,
 				SampledStreamSizes:             []int64{},
 				FormattedAverageBytesPerStream: "N/A",
+				FormattedMinSize:               "N/A",
+				FormattedQ1Size:                "N/A",
+				FormattedMedianSize:            "N/A",
+				FormattedQ3Size:                "N/A",
+				FormattedMaxSize:               "N/A",
 			}
 
 			if !ok || len(idsForType) == 0 {
@@ -402,6 +445,26 @@ var histogramCmd = &cobra.Command{
 				currentTypeResult.FormattedAverageBytesPerStream = formatBytes(
 					currentTypeResult.RawAverageBytesInSample,
 				)
+
+				// Sort the collected sizes to calculate percentiles
+				sort.Slice(currentTypeResult.SampledStreamSizes, func(i, j int) bool {
+					return currentTypeResult.SampledStreamSizes[i] < currentTypeResult.SampledStreamSizes[j]
+				})
+
+				currentTypeResult.MinSizeInSample = currentTypeResult.SampledStreamSizes[0]
+				currentTypeResult.FormattedMinSize = formatBytes(currentTypeResult.MinSizeInSample)
+
+				currentTypeResult.MaxSizeInSample = currentTypeResult.SampledStreamSizes[currentTypeResult.SampledStreamCount-1]
+				currentTypeResult.FormattedMaxSize = formatBytes(currentTypeResult.MaxSizeInSample)
+
+				currentTypeResult.MedianSizeInSample = calculatePercentile(currentTypeResult.SampledStreamSizes, 0.5)
+				currentTypeResult.FormattedMedianSize = formatBytes(currentTypeResult.MedianSizeInSample)
+
+				currentTypeResult.Q1SizeInSample = calculatePercentile(currentTypeResult.SampledStreamSizes, 0.25)
+				currentTypeResult.FormattedQ1Size = formatBytes(currentTypeResult.Q1SizeInSample)
+
+				currentTypeResult.Q3SizeInSample = calculatePercentile(currentTypeResult.SampledStreamSizes, 0.75)
+				currentTypeResult.FormattedQ3Size = formatBytes(currentTypeResult.Q3SizeInSample)
 			} else if currentTypeTotalBytesAggregate > 0 {
 				currentTypeResult.RawAverageBytesInSample = currentTypeTotalBytesAggregate
 				currentTypeResult.FormattedAverageBytesPerStream = formatBytes(currentTypeTotalBytesAggregate)
@@ -410,15 +473,22 @@ var histogramCmd = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader(
-			[]string{"Stream Type", "Streams Sampled", "Total MB Bytes (Sample)", "Avg Bytes/Stream (Sample)"},
-		)
+		table.SetHeader([]string{
+			"Stream Type", "Streams Sampled",
+			"Total MB Bytes (Sample)", "Avg Bytes/Stream (Sample)",
+			"Min", "Q1", "Median", "Q3", "Max", // Added percentile headers
+		})
 		for _, r := range results {
 			table.Append([]string{
 				r.TypeName,
 				fmt.Sprintf("%d", r.SampledStreamCount),
 				formatBytes(r.TotalBytesInSample),
 				r.FormattedAverageBytesPerStream,
+				r.FormattedMinSize, // Added percentile data
+				r.FormattedQ1Size,
+				r.FormattedMedianSize,
+				r.FormattedQ3Size,
+				r.FormattedMaxSize,
 			})
 		}
 		table.Render()
