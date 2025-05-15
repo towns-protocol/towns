@@ -126,7 +126,6 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 				csRules.ChainAuth.String(),
 			).Func("createStream")
 		}
-
 	}
 
 	// create the stream
@@ -174,7 +173,10 @@ func (s *Service) createReplicatedStream(
 
 	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId))
+	sender := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId),
+	)
 
 	var localSyncCookie atomic.Pointer[SyncCookie]
 	if isLocal {
