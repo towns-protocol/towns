@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -75,6 +76,19 @@ func GetHttp11Client(ctx context.Context) (*http.Client, error) {
 			TLSClientConfig:   getTLSConfig(ctx),
 			ForceAttemptHTTP2: false,
 			TLSNextProto:      map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+		},
+	}, nil
+}
+
+func GetH2cHttpClient(ctx context.Context, cfg *config.Config) (*http.Client, error) {
+	// Define a custom HTTP/2 transport with h2c support
+	return &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// This bypasses TLS and just dials a plain TCP connection
+				return (&net.Dialer{}).DialContext(ctx, network, addr)
+			},
 		},
 	}, nil
 }

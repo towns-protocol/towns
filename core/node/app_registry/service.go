@@ -63,7 +63,7 @@ func NewService(
 	nodes []nodes.NodeRegistry,
 	metrics infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
-	httpClient *http.Client,
+	webhookHttpClient *http.Client,
 ) (*Service, error) {
 	if len(nodes) < 1 {
 		return nil, base.RiverError(
@@ -88,7 +88,7 @@ func NewService(
 	if len(nodes) > 1 {
 		streamTrackerNodeRegistries = nodes[1:]
 	}
-	appClient := app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks)
+	appClient := app_client.NewAppClient(webhookHttpClient, cfg.AllowInsecureWebhooks)
 	cache, err := NewCachedEncryptedMessageQueue(
 		ctx,
 		store,
