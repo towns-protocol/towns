@@ -54,6 +54,10 @@ type streamSyncInitRecord struct {
 // in it's care is syncing, and for putting the stream up for relocation if it fails to sync on
 // this node.
 type syncSessionRunner struct {
+	// This context is used to watch for cancellations that indicate the caller's desire to shut
+	// down the multi-sync runner and all created components.
+	rootCtx context.Context
+
 	// syncCtx is the context passed to the remote syncer. If we cancel this context it will cancel the
 	// sync.
 	syncCtx context.Context
@@ -74,7 +78,7 @@ type syncSessionRunner struct {
 
 	// relocateStreams accepts streams that failed to sync in this session, for the purpose
 	// of relocating the stream to another node.
-	relocateStreams chan<- streamSyncInitRecord
+	relocateStreams chan<- *streamSyncInitRecord
 
 	syncStarted sync.WaitGroup
 
@@ -314,9 +318,7 @@ func (ssr *syncSessionRunner) WaitUntilStarted() {
 }
 
 // To be launched via a go routine.
-func (ssr *syncSessionRunner) Run(
-	rootCtx context.Context,
-) {
+func (ssr *syncSessionRunner) Run() {
 	streamClient, err := ssr.nodeRegistry.GetStreamServiceClientForAddress(ssr.node)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
@@ -341,7 +343,7 @@ func (ssr *syncSessionRunner) Run(
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node").
 			Tag("targetNode", ssr.node).
-			LogError(logging.FromCtx(rootCtx)))
+			LogError(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
 	}
@@ -355,9 +357,9 @@ func (ssr *syncSessionRunner) Run(
 	var batch []*protocol.SyncStreamsResponse
 	for {
 		select {
-		// Caller context cancelled - this should propogate to the sync context and cause it to stop itself.
+		// Root context cancelled - this should propogate to the sync context and cause it to stop itself.
 		// We do not re-assign streams in this case because we infer the intent was to close the application.
-		case <-rootCtx.Done():
+		case <-ssr.rootCtx.Done():
 			return
 
 		// Remote syncer cancelled the sync context because it encountered a sync error. In this case,
@@ -408,7 +410,7 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	}
 
 	record.remotes.AdvanceStickyPeer(ssr.node)
-	ssr.relocateStreams <- *(record)
+	ssr.relocateStreams <- record
 }
 
 func (ssr *syncSessionRunner) GetSyncId() string {
@@ -438,6 +440,12 @@ func (ssr *syncSessionRunner) Close(err error) {
 		)
 	}
 
+	// If the user's intent was to close the runner, no need to relocate or to cancel the
+	// sync. It's already running from a derived context.
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+
 	// Kill the sync session if it is still running
 	if ssr.syncCtx.Err() == nil {
 		ssr.cancelSync(err)
@@ -460,7 +468,7 @@ type TrackedViewForStream func(streamId shared.StreamId, stream *protocol.Stream
 
 func NewSyncSessionRunner(
 	rootCtx context.Context,
-	relocateStreams chan<- streamSyncInitRecord,
+	relocateStreams chan<- *streamSyncInitRecord,
 	nodeRegistry nodes.NodeRegistry,
 	trackedViewForStream TrackedViewForStream,
 	maxStreamsPerSyncSession int,
@@ -470,6 +478,7 @@ func NewSyncSessionRunner(
 ) *syncSessionRunner {
 	ctx, cancel := context.WithCancelCause(rootCtx)
 	runner := syncSessionRunner{
+		rootCtx:                  rootCtx,
 		syncCtx:                  logging.CtxWithLog(ctx, logging.FromCtx(rootCtx).With("targetNode", targetNode)),
 		cancelSync:               cancel,
 		maxStreamsPerSyncSession: maxStreamsPerSyncSession,
@@ -497,7 +506,7 @@ type TrackedViewConstructorFn func(
 // is responsible for firing any callbacks needed by a service that is tracking the contents of remotely hosted streams.
 type MultiSyncRunner struct {
 	// Keep track of all streams that need to be added (or re-added) to a sync session
-	streamsToSync chan (streamSyncInitRecord)
+	streamsToSync chan (*streamSyncInitRecord)
 
 	metrics *TrackStreamsSyncMetrics
 
@@ -568,7 +577,7 @@ func NewMultiSyncRunner(
 		onChainConfig:          onChainConfig,
 		nodeRegistries:         nodeRegistries,
 		trackedViewConstructor: trackedStreamViewConstructor,
-		streamsToSync:          make(chan (streamSyncInitRecord), 2048),
+		streamsToSync:          make(chan (*streamSyncInitRecord), 2048),
 		config:                 streamTrackingConfig,
 		workerPool:             *workerpool.New(streamTrackingConfig.NumWorkers),
 		otelTracer:             otelTracer,
@@ -584,8 +593,8 @@ consume_loop:
 		select {
 		case <-rootCtx.Done():
 			break consume_loop
-		case streamSyncInitRecord := <-msr.streamsToSync:
-			msr.workerPool.Submit(func() { msr.addToSync(rootCtx, streamSyncInitRecord) })
+		case streamRecord := <-msr.streamsToSync:
+			msr.workerPool.Submit(func() { msr.addToSync(rootCtx, streamRecord) })
 		}
 	}
 
@@ -601,7 +610,7 @@ func (msr *MultiSyncRunner) getNodeRegistry() nodes.NodeRegistry {
 // node's peers if any attempt to add the stream to a sync session fails.
 func (msr *MultiSyncRunner) addToSync(
 	rootCtx context.Context,
-	record streamSyncInitRecord,
+	record *streamSyncInitRecord,
 ) {
 	targetNode := record.remotes.GetStickyPeer()
 	pool := msr.getNodeRequestPool(targetNode)
@@ -650,7 +659,7 @@ func (msr *MultiSyncRunner) addToSync(
 		if sessionRunner, loaded = msr.unfilledSyncs.LoadOrStore(targetNode, runner); !loaded {
 			// If our new runner won the race to be stored for this node, kick off the runner. Streams
 			// are not assignable until the sync session starts.
-			go runner.Run(rootCtx)
+			go runner.Run()
 			runner.WaitUntilStarted()
 		}
 		pool.Release(1)
@@ -681,7 +690,7 @@ func (msr *MultiSyncRunner) addToSync(
 	// The runner will continue to stay in memory until its go routine stops running, which will occur
 	// if the underlying sync fails or the root context is canceled.
 	// AddStream involves an rpc request to the node, so we use the node's worker pool to rate limit.
-	if err := runner.AddStream(rootCtx, record); err != nil {
+	if err := runner.AddStream(rootCtx, *record); err != nil {
 		// Aggressively release the lock on target node resources to maximize request throughput.
 		pool.Release(1)
 
@@ -722,7 +731,7 @@ func (msr *MultiSyncRunner) addToSync(
 			runner,
 			newRunner,
 		); swapped {
-			go newRunner.Run(rootCtx)
+			go newRunner.Run()
 			newRunner.WaitUntilStarted()
 		}
 		pool.Release(1)
@@ -764,7 +773,7 @@ func (msr *MultiSyncRunner) AddStream(
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
-	msr.streamsToSync <- streamSyncInitRecord{
+	msr.streamsToSync <- &streamSyncInitRecord{
 		streamId:                      stream.StreamId(),
 		applyHistoricalStreamContents: applyHistoricalStreamContents,
 		minipoolGen:                   math.MaxInt64,
