@@ -79,7 +79,7 @@ type MiniblockProducerOpts struct {
 // NewMiniblockProducer instantiates a new miniblockProducer instance that implements the MiniblockProducer interface.
 // It registers a callback on new RiverChain blocks, and every time this callback is called, it creates new miniblock
 // candidates and schedules these candidates for registration.
-func NewMiniblockProducer(
+func newMiniblockProducer(
 	ctx context.Context,
 	streamCache *StreamCache,
 	opts *MiniblockProducerOpts,
@@ -360,7 +360,7 @@ func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
 			return oldValue, xsync.CancelOp
 		},
 	)
-	if notFound {
+	if notFound && !j.skipPromotion {
 		logging.FromCtx(ctx).
 			Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
 	}
@@ -434,7 +434,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	streamsOutOfSync := make([]*mbJob, 0, len(invalidProposals))
 
 	for _, job := range proposals {
-		if slices.Contains(success, job.stream.streamId) {
+		if slices.Contains(success, job.stream.streamId) && !job.skipPromotion {
 			go func() {
 				err := job.stream.ApplyMiniblock(ctx, job.candidate)
 				if err != nil {
@@ -448,7 +448,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 				}
 				p.jobDone(ctx, job)
 			}()
-		} else if slices.Contains(invalidProposals, job.stream.streamId) {
+		} else if slices.Contains(invalidProposals, job.stream.streamId) && !job.skipPromotion {
 			streamsOutOfSync = append(streamsOutOfSync, job)
 		} else {
 			p.jobDone(ctx, job)
@@ -503,4 +503,21 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 	}
 
 	return nil
+}
+
+// writeLatestKnownMiniblock writes the latest known miniblock to the smart contract record for this
+// stream.
+// It is used in the very specific situation: stream was unreplicated and new reconcilation replicas were added.
+// Unreplicated streams write updates at reduced rate, but in this case write should be done immediately to
+// allow replicas to catch up to the correct state.
+func (p *miniblockProducer) writeLatestKnownMiniblock(ctx context.Context, stream *Stream, mb *MiniblockInfo) {
+	job := &mbJob{
+		stream:        stream,
+		cache:         p.streamCache,
+		replicated:    true,
+		candidate:     mb,
+		skipPromotion: true,
+	}
+
+	p.candidates.add(ctx, p, job)
 }

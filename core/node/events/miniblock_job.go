@@ -32,6 +32,8 @@ type mbJob struct {
 	replicated bool
 	// candidate is the produced miniblock candidate that is attempted to promote to a miniblock.
 	candidate *MiniblockInfo
+	// skipPromotion is true if the miniblock producer is skipping promotion, used by writeLatestKnownMiniblock.
+	skipPromotion bool
 }
 
 func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {

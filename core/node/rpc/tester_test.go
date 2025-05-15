@@ -13,6 +13,7 @@ import (
 	"os"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -332,9 +333,10 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 	cfg.ShutdownTimeout = 2 * time.Millisecond
 	cfg.StreamReconciliation = config.StreamReconciliationConfig{
-		InitialWorkerPoolSize: 4,
-		OnlineWorkerPoolSize:  8,
-		GetMiniblocksPageSize: 4,
+		InitialWorkerPoolSize:           4,
+		OnlineWorkerPoolSize:            8,
+		GetMiniblocksPageSize:           4,
+		ReconciliationTaskRetryDuration: 2 * time.Second,
 	}
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0
@@ -1144,6 +1146,30 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			"\n",
 			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
+	}
+}
+
+func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
+	resp, err := tc.client.Info(tc.ctx, connect.NewRequest(&InfoRequest{
+		Debug: []string{
+			"make_miniblock",
+			streamId.String(),
+			fmt.Sprintf("%t", forceSnapshot),
+			fmt.Sprintf("%d", lastKnownMiniblockNum),
+		},
+	}))
+	tc.require.NoError(err, "client.Info make_miniblock failed")
+	var hashBytes []byte
+	if resp.Msg.Graffiti != "" {
+		hashBytes = common.FromHex(resp.Msg.Graffiti)
+	}
+	num := int64(0)
+	if resp.Msg.Version != "" {
+		num, _ = strconv.ParseInt(resp.Msg.Version, 10, 64)
+	}
+	return &MiniblockRef{
+		Hash: common.BytesToHash(hashBytes),
+		Num:  num,
 	}
 }
 

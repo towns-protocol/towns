@@ -122,8 +122,8 @@ func GetHttp2LocalhostTLSClient(ctx context.Context, _ *config.Config) (*http.Cl
 	}, nil
 }
 
-// MakeTestListener creates a localhost listener on a random port and and validates proper
-// listener creation. It does not clean up the listener on test close.
+// MakeTestListener creates a TLS-configured localhost listener on a random port and and
+// validates proper listener creation. It does not clean up the listener on test close.
 func MakeTestListener(t *testing.T) (net.Listener, string) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)

@@ -78,7 +78,13 @@ type StreamCache struct {
 	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
+
+	retryableReconcilationTasks *retryableReconciliationTasks
+
+	mbProducer *miniblockProducer
 }
+
+var _ TestMiniblockProducer = (*StreamCache)(nil)
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	s := &StreamCache{
@@ -118,12 +124,15 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
+		retryableReconcilationTasks:  newRetryableReconciliationTasks(params.Config.StreamReconciliation.ReconciliationTaskRetryDuration),
 	}
 	s.params.streamCache = s
 	return s
 }
 
-func (s *StreamCache) Start(ctx context.Context) error {
+func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) error {
+	s.mbProducer = newMiniblockProducer(ctx, s, opts)
+
 	// schedule sync tasks for all streams that are local to this node.
 	// these tasks sync up the local db with the latest block in the registry.
 	var localStreamResults []*river.StreamWithId
@@ -195,6 +204,21 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	}
 
 	wp := workerpool.New(16)
+
+	wp.Submit(func() {
+		now := time.Now()
+		for {
+			reconTask := s.retryableReconcilationTasks.Peek()
+			if reconTask != nil && reconTask.retryAfter.Before(now) {
+				if stream, _ := s.GetStreamNoWait(ctx, reconTask.item.StreamId()); stream != nil {
+					s.SubmitSyncStreamTask(stream, reconTask.item)
+				}
+				s.retryableReconcilationTasks.Remove(reconTask)
+				continue
+			}
+			break
+		}
+	})
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
@@ -532,4 +556,19 @@ func (s *StreamCache) GetMbCandidateStreams(ctx context.Context) []*Stream {
 	})
 
 	return candidates
+}
+
+func (s *StreamCache) TestMakeMiniblock(ctx context.Context, streamId StreamId, forceSnapshot bool) (*MiniblockRef, error) {
+	return s.mbProducer.TestMakeMiniblock(ctx, streamId, forceSnapshot)
+}
+
+func (s *StreamCache) writeLatestMbToBlockchain(ctx context.Context, stream *Stream) {
+	view, err := stream.GetViewIfLocal(ctx)
+	if err != nil {
+		logging.FromCtx(ctx).
+			Errorw("writeLatestMbToBlockchain: failed to get stream view", "err", err, "streamId", stream.streamId)
+		return
+	}
+
+	s.mbProducer.writeLatestKnownMiniblock(ctx, stream, view.LastBlock())
 }

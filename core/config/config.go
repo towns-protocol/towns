@@ -40,9 +40,10 @@ func GetDefaultConfig() *Config {
 		// TODO: ArchitectContract: ContractConfig{},
 		// TODO: RegistryContract:  ContractConfig{},
 		StreamReconciliation: StreamReconciliationConfig{
-			InitialWorkerPoolSize: 4,
-			OnlineWorkerPoolSize:  32,
-			GetMiniblocksPageSize: 128,
+			InitialWorkerPoolSize:           4,
+			OnlineWorkerPoolSize:            32,
+			GetMiniblocksPageSize:           128,
+			ReconciliationTaskRetryDuration: 2 * time.Minute,
 		},
 		Log: LogConfig{
 			Level:   "info", // NOTE: this default is replaced by flag value
@@ -602,6 +603,10 @@ type StreamReconciliationConfig struct {
 
 	// GetMiniblocksPageSize is the number of miniblocks to read at once from the remote node.
 	GetMiniblocksPageSize int64
+
+	// ReconciliationTaskRetryDuration is the duration to wait before retrying a failed reconciliation task.
+	// default is 2 minutes.
+	ReconciliationTaskRetryDuration time.Duration
 }
 
 type FilterConfig struct {
