@@ -1020,6 +1020,12 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult(false), nil
 	}
 
+	if len(wallets) > ca.linkedWalletsLimit {
+		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
+			"too many wallets linked to the root key",
+			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
+	}
+
 	args = args.withLinkedWallets(wallets)
 
 	isMemberCtx, isMemberCancel := context.WithCancel(ctx)
@@ -1113,13 +1119,6 @@ func (ca *chainAuth) checkEntitlement(
 			)
 			return boolCacheResult(false), nil
 		}
-	}
-
-	// Now that we know the user is a member of the space, we can check entitlements.
-	if len(wallets) > ca.linkedWalletsLimit {
-		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
-			"too many wallets linked to the root key",
-			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
 	}
 
 	result, err := ca.areLinkedWalletsEntitled(ctx, cfg, args, &isExpired)
