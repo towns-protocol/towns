@@ -128,7 +128,6 @@ func (s *Service) addParsedEvent(
 		parsedEvent,
 		streamView,
 	)
-
 	if err != nil {
 		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
 			// TODO: REPLICATION: FIX: implement returning relevant EventRefs here. How are they used in SDK?
