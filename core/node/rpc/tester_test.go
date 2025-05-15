@@ -36,7 +36,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/events/dumpevents"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -1107,7 +1106,7 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 }
 
 func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
-	resp, err := tc.client.Info(tc.ctx, connect.NewRequest(&protocol.InfoRequest{
+	resp, err := tc.client.Info(tc.ctx, connect.NewRequest(&InfoRequest{
 		Debug: []string{
 			"make_miniblock",
 			streamId.String(),
