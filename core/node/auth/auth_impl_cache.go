@@ -56,6 +56,21 @@ func (b boolCacheResult) IsAllowed() bool {
 	return bool(b)
 }
 
+type membershipStatusCacheResult struct {
+	status *MembershipStatus
+}
+
+func (ms *membershipStatusCacheResult) IsAllowed() bool {
+	if ms.status == nil {
+		return false
+	}
+	return ms.status.IsMember && !ms.status.IsExpired
+}
+
+func (ms *membershipStatusCacheResult) GetMembershipStatus() *MembershipStatus {
+	return ms.status
+}
+
 type linkedWalletCacheValue struct {
 	wallets []common.Address
 }

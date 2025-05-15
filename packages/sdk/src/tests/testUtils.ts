@@ -1230,6 +1230,7 @@ export async function createTownWithRequirements(requirements: {
     everyone: boolean
     users: string[]
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
+    duration?: number
 }) {
     const {
         alice,
@@ -1262,7 +1263,7 @@ export async function createTownWithRequirements(requirements: {
             symbol: 'MEMBER',
             price,
             maxSupply: 1000,
-            duration: 0,
+            duration: requirements.duration ?? 0,
             currency: ETH_ADDRESS,
             feeRecipient: bob.userId,
             freeAllocation,

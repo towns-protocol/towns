@@ -422,17 +422,24 @@ func (ca *chainAuth) areLinkedWalletsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
+	isExpired *bool,
 ) (bool, error) {
 	log := logging.FromCtx(ctx)
 	if args.kind == chainAuthKindSpace {
-		log.Debugw("isWalletEntitled", "kind", "space", "args", args)
+		log.Debugw("isWalletEntitled", "kind", "space", "args", args, "isExpired", *isExpired)
+		if *isExpired {
+			return false, nil
+		}
 		return ca.isEntitledToSpace(ctx, cfg, args)
 	} else if args.kind == chainAuthKindChannel {
-		log.Debugw("isWalletEntitled", "kind", "channel", "args", args)
+		log.Debugw("isWalletEntitled", "kind", "channel", "args", args, "isExpired", *isExpired)
+		if *isExpired {
+			return false, nil
+		}
 		return ca.isEntitledToChannel(ctx, cfg, args)
 	} else if args.kind == chainAuthKindIsSpaceMember {
-		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args)
-		return true, nil // is space member is checked by the calling code in checkEntitlement
+		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args, "isExpired", *isExpired)
+		return !*isExpired, nil // is space member is checked by the calling code in checkEntitlement
 	} else {
 		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
 	}
@@ -892,11 +899,11 @@ func (ca *chainAuth) checkMembershipUncached(
 	_ *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
-	isMember, err := ca.spaceContract.IsMember(ctx, args.spaceId, args.principal)
+	membershipStatus, err := ca.spaceContract.GetMembershipStatus(ctx, args.spaceId, args.principal)
 	if err != nil {
-		return boolCacheResult(false), err
+		return &membershipStatusCacheResult{status: nil}, err
 	}
-	return boolCacheResult(isMember), nil
+	return &membershipStatusCacheResult{status: membershipStatus}, nil
 }
 
 func (ca *chainAuth) checkMembership(
@@ -904,7 +911,7 @@ func (ca *chainAuth) checkMembership(
 	cfg *config.Config,
 	address common.Address,
 	spaceId shared.StreamId,
-	results chan<- bool,
+	results chan<- *membershipStatusCacheResult,
 	errors chan<- error,
 	wg *sync.WaitGroup,
 ) {
@@ -946,11 +953,8 @@ func (ca *chainAuth) checkMembership(
 		ca.membershipCacheMiss.Inc()
 	}
 
-	if result.IsAllowed() {
-		results <- true
-	}
-	// We expect that all linked wallets except the wallet with the membership token will evaluate to
-	// false here and don't bother logging false membership checks.
+	cachedResult := result.(*timestampedCacheValue).result.(*membershipStatusCacheResult)
+	results <- cachedResult
 }
 
 func (ca *chainAuth) checkStreamIsEnabled(
@@ -1021,7 +1025,7 @@ func (ca *chainAuth) checkEntitlement(
 	isMemberCtx, isMemberCancel := context.WithCancel(ctx)
 	defer isMemberCancel()
 
-	isMemberResults := make(chan bool, len(wallets))
+	isMemberResults := make(chan *membershipStatusCacheResult, len(wallets))
 	isMemberError := make(chan error, len(wallets))
 
 	var isMemberWg sync.WaitGroup
@@ -1039,15 +1043,20 @@ func (ca *chainAuth) checkEntitlement(
 	}()
 
 	isMember := false
+	isExpired := true
 	var membershipError error = nil
 
 	// This loop will wait on at least one true result, and will exit if the channel is closed,
 	// meaning all checks have terminated, or if at least one check was positive.
 	for result := range isMemberResults {
-		if result {
+		if result.status.IsMember {
 			isMember = true
-			isMemberCancel() // Cancel all other goroutines
-			break
+			// if not expired, cancel other checks, otherwise continue
+			if !result.status.IsExpired {
+				isExpired = false
+				isMemberCancel()
+				break
+			}
 		}
 	}
 
@@ -1113,10 +1122,44 @@ func (ca *chainAuth) checkEntitlement(
 			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
 	}
 
-	result, err := ca.areLinkedWalletsEntitled(ctx, cfg, args)
+	result, err := ca.areLinkedWalletsEntitled(ctx, cfg, args, &isExpired)
 	if err != nil {
 		return nil, err
 	}
 
 	return boolCacheResult(result), nil
+}
+
+func (ca *chainAuth) GetMembershipStatus(ctx context.Context, cfg *config.Config, spaceId shared.StreamId, principal common.Address) (*MembershipStatus, error) {
+	args := ChainAuthArgs{
+		kind:      chainAuthKindIsSpaceMember,
+		spaceId:   spaceId,
+		principal: principal,
+	}
+	
+	result, cacheHit, err := ca.membershipCache.executeUsingCache(
+		ctx,
+		cfg,
+		&args,
+		ca.checkMembershipUncached,
+	)
+	
+	if err != nil {
+		return nil, AsRiverError(err).Func("GetMembershipStatus").
+			Tag("spaceId", spaceId).
+			Tag("principal", principal)
+	}
+	
+	if cacheHit {
+		ca.membershipCacheHit.Inc()
+	} else {
+		ca.membershipCacheMiss.Inc()
+	}
+	
+	if cachedResult, ok := result.(*timestampedCacheValue).result.(*membershipStatusCacheResult); ok {
+		return cachedResult.GetMembershipStatus(), nil
+	}
+	
+	// Fallback to direct contract call if cache type conversion fails
+	return ca.spaceContract.GetMembershipStatus(ctx, spaceId, principal)
 }
