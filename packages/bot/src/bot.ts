@@ -599,7 +599,9 @@ export const makeTownsBot = async (
     )
     const baseConfig = makeBaseChainConfig(env)
     const viemClient = createViemClient({
-        transport: baseRpcUrl ? http(baseRpcUrl) : http(baseConfig.rpcUrl),
+        transport: baseRpcUrl
+            ? http(baseRpcUrl, { batch: true })
+            : http(baseConfig.rpcUrl, { batch: true }),
         // TODO: would be nice if makeBaseChainConfig returned a viem chain
         chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
     })
