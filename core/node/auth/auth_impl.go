@@ -1020,7 +1020,6 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult(false), nil
 	}
 
-	// Now that we know the user is a member of the space, we can check entitlements.
 	if len(wallets) > ca.linkedWalletsLimit {
 		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
 			"too many wallets linked to the root key",
