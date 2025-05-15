@@ -16,7 +16,7 @@ import {
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload, UserData } from './bot'
 import { Bot as SyncAgentTest, AppRegistryService, makeSignerContext } from '@towns-protocol/sdk'
-import { bin_fromHexString, bin_toString, bin_toBase64 } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
@@ -51,7 +51,7 @@ describe('Bot', { sequential: true }, () => {
     let channelId: string
     let botWallet: ethers.Wallet
     let appPrivateDataBase64: string
-    let jwtSecret: string
+    let jwtSecretBase64: string
     let appRegistryRpcClient: AppRegistryRpcClient
     let appId: Uint8Array
     let bobDefaultChannel: Channel
@@ -142,12 +142,12 @@ describe('Bot', { sequential: true }, () => {
             appId,
             appOwnerId: bin_fromHexString(bob.userId),
         })
-        jwtSecret = bin_toString(hs256SharedSecret)
-        expect(jwtSecret).toBeDefined()
+        jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
+        expect(jwtSecretBase64).toBeDefined()
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecret, process.env.RIVER_ENV)
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botWallet.address)
         const { fetch } = await bot.start()
