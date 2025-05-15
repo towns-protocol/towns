@@ -1,10 +1,11 @@
-import { BigNumber, BigNumberish, ethers } from 'ethers'
-import { BaseContractShim } from '../BaseContractShim'
+import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
+import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
 import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 import { MembershipFacet__factory } from '@towns-protocol/generated/dev/typings/factories/MembershipFacet__factory'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IMulticallShim } from './IMulticallShim'
+import { TransactionOpts } from 'types/ContractTypes'
 const log = dlogger('csb:IMembershipShim')
 
 const { abi, connect } = MembershipFacet__factory
@@ -19,6 +20,28 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
         this.erc721Shim = new IERC721AShim(address, provider)
         this.metadata = new IMembershipMetadataShim(address, provider)
         this.multicall = new IMulticallShim(address, provider)
+    }
+
+    public async getMembershipRenewalPrice(tokenId: string) {
+        return (await this.read.getMembershipRenewalPrice(tokenId)).toBigInt()
+    }
+
+    public async renewMembership<T = ContractTransaction>(args: {
+        tokenId: string
+        signer: Signer
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }) {
+        const { tokenId, signer, overrideExecution, transactionOpts } = args
+        const renewalPrice = await this.getMembershipRenewalPrice(tokenId)
+
+        return this.executeCall({
+            signer,
+            functionName: 'renewMembership',
+            args: [tokenId, { value: renewalPrice }],
+            overrideExecution,
+            transactionOpts,
+        })
     }
 
     // If the caller doesn't provide an abort controller, create one and set a timeout

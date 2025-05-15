@@ -10,6 +10,8 @@ export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 const logger = dlogger('csb:BaseContractShim')
 
+export type OverrideExecution<T> = (args: { calldata: string; value?: bigint }) => Promise<T>
+
 export class BaseContractShim<
     connect extends Connect<ethers.Contract>,
     T_CONTRACT extends ContractType<connect> = ContractType<connect>,
@@ -87,13 +89,16 @@ export class BaseContractShim<
         signer: ethers.Signer
         functionName: FnName
         args: Args
-        overrideExecution?: (calldata: string) => Promise<T>
+        value?: bigint
+        overrideExecution?: OverrideExecution<T>
         transactionOpts?: TransactionOpts
     }): Promise<T extends undefined ? ContractTransaction : T> {
-        const callData = this.encodeFunctionData(params.functionName, params.args)
         return (
             params.overrideExecution
-                ? params.overrideExecution(callData)
+                ? params.overrideExecution({
+                      calldata: this.encodeFunctionData(params.functionName, params.args),
+                      value: params.value,
+                  })
                 : wrapTransaction(
                       () =>
                           (

@@ -855,6 +855,7 @@ export class SpaceDapp {
         permission: Permission,
     ): Promise<EntitledWallet> {
         const { isMember, isExpired } = await space.getMembershipStatus(allWallets)
+
         if (permission === Permission.JoinSpace) {
             // if you're joining a space with an expired membership, you're not entitled to join
             if (isMember && isExpired) {

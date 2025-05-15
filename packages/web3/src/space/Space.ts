@@ -8,6 +8,7 @@ import {
     Permission,
     RoleDetails,
     RoleEntitlements,
+    TransactionOpts,
     isRuleEntitlement,
     isRuleEntitlementV2,
     isUserEntitlement,
@@ -19,7 +20,7 @@ import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
 import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
-import { UNKNOWN_ERROR } from '../BaseContractShim'
+import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { UserEntitlementShim } from './entitlements/UserEntitlementShim'
 import { toPermissions, parseChannelMetadataJSON } from '../utils/ut'
 import { isRoleIdInArray } from '../utils/ContractHelpers'
@@ -499,15 +500,18 @@ export class Space {
         return Array.from(tokenIds)
     }
 
-    public async getMembershipStatus(wallets: string[]) {
+    public async getMembershipStatus(wallets: string[]): Promise<{
+        isMember: boolean
+        tokenId?: string
+        isExpired?: boolean
+        expiryTime?: bigint
+        expiredAt?: bigint
+    }> {
         const tokenIds = await this.getTokenIdsOfOwner(wallets)
 
         if (tokenIds.length === 0) {
             return {
                 isMember: false,
-                isExpired: undefined,
-                expiryTime: undefined,
-                expiredAt: undefined,
             }
         }
 
@@ -522,63 +526,85 @@ export class Space {
             })
         } catch (error) {
             log.error('getMembershipStatus::error', { error })
+            // Error evaluating expirations, assume not expired
             return {
                 isMember: true,
-                // error evaluating expirations so just assume its not expired
                 isExpired: false,
-                expiryTime: undefined,
-                expiredAt: undefined,
+                expiryTime: 0n,
             }
         }
-
-        let isExpired = true
-        let expiryTime: bigint | undefined = undefined
-        let expiredAt: bigint | undefined = undefined
 
         const currentTime = BigInt(Math.floor(Date.now() / 1000))
 
+        // Track status values
         let hasActiveToken = false
+        let expiryTime: bigint | undefined = undefined
+        let expiredAt: bigint | undefined = undefined
+        let tokenId: string | undefined = undefined
 
-        expirations.forEach((expiration, _index) => {
-            // Token is permanent (never expires)
-            if (expiration === 0n) {
+        // check for permanent tokens
+        for (let i = 0; i < expirations.length; i++) {
+            if (expirations[i] === 0n) {
                 hasActiveToken = true
-                // If a token is permanent, use 0n to indicate it never expires
-                if (expiryTime === undefined || expiryTime !== 0n) {
-                    expiryTime = 0n
-                }
-                return
+                expiryTime = 0n
+                tokenId = tokenIds[i]
+                break
             }
+        }
 
-            // Check if token is not expired yet
-            if (expiration > currentTime) {
-                hasActiveToken = true
+        // if no permanent tokens, check for active tokens
+        if (expiryTime !== 0n) {
+            for (let i = 0; i < expirations.length; i++) {
+                const expiration = expirations[i]
 
-                // Track the furthest future expiry
-                // Skip if we already have a permanent token
-                if (expiryTime !== 0n && (expiryTime === undefined || expiration > expiryTime)) {
-                    expiryTime = expiration
-                }
-            } else {
-                // This is an expired token, track the most recent expiry
-                if (expiredAt === undefined || expiration > expiredAt) {
-                    expiredAt = expiration
+                // check if token is not expired yet
+                if (expiration > currentTime) {
+                    hasActiveToken = true
+
+                    // track the furthest future expiry
+                    if (expiryTime === undefined || expiration > expiryTime) {
+                        expiryTime = expiration
+                        tokenId = tokenIds[i]
+                    }
+                } else {
+                    // this is an expired token, track the most recent expiry
+                    if (expiredAt === undefined || expiration > expiredAt) {
+                        expiredAt = expiration
+
+                        // only use this token if we don't have any active ones
+                        if (!hasActiveToken) {
+                            tokenId = tokenIds[i]
+                        }
+                    }
                 }
             }
-        })
-
-        isExpired = !hasActiveToken
+        }
 
         return {
             isMember: true,
-            isExpired,
-            expiryTime,
+            isExpired: !hasActiveToken,
             expiredAt,
+            expiryTime,
+            tokenId,
         }
     }
 
-    public async renewMembership(tokenId: string, signer: Signer) {
-        return await this.membership.write(signer).renewMembership(tokenId)
+    public async getMembershipRenewalPrice(tokenId: string): Promise<bigint> {
+        return this.membership.getMembershipRenewalPrice(tokenId)
+    }
+
+    public async renewMembership<T = ContractTransaction>(args: {
+        tokenId: string
+        signer: Signer
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }) {
+        return this.membership.renewMembership<T>({
+            tokenId: args.tokenId,
+            signer: args.signer,
+            overrideExecution: args.overrideExecution,
+            transactionOpts: args.transactionOpts,
+        })
     }
 
     public async getProtocolFee(): Promise<bigint> {
