@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"slices"
 
+	"connectrpc.com/connect"
 	"github.com/puzpuzpuz/xsync/v4"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -17,7 +19,9 @@ import (
 
 type Subscription struct {
 	// log is the logger for this stream sync operation
-	log      *logging.Log
+	log *logging.Log
+
+	Ctx      context.Context
 	Cancel   context.CancelCauseFunc
 	SyncOp   string
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -42,7 +46,7 @@ func (s *Subscription) Close() {
 
 // Send sends the given message to the subscription messages channel.
 func (s *Subscription) Send(msg *SyncStreamsResponse) {
-	if err := s.Messages.AddMessage(msg); err != nil {
+	if err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
 		rvrErr := AsRiverError(err).
 			Tag("syncId", s.SyncOp).
 			Tag("op", msg.GetSyncOp())
@@ -120,16 +124,19 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 		},
 	)
 
-	if streamAlreadyInSync && !updatedSubscribers {
-		// The given subscription already subscribed on the given stream, do nothing
-		return false
-	}
-
-	if updatedSubscribers {
-		// The given stream is already syncing but the client is not subscribed yet might
-		// want to get updates since a specific miniblock.
-		// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
-
+	if streamAlreadyInSync {
+		if !updatedSubscribers {
+			// The given subscription already subscribed on the given stream, do nothing
+			return false
+		} else {
+			// The given stream is already syncing but the client is not subscribed yet might
+			// want to get updates since a specific miniblock.
+			if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
+				// TODO: Handle this error
+				fmt.Println("failed to backfill stream", err)
+			}
+			// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
+		}
 	}
 
 	return !streamAlreadyInSync
@@ -176,6 +183,67 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	)
 
 	return removeFromRemote
+}
+
+// backfillByCookie sends the stream since the given cookie to the subscription.
+// TODO: There could be a gap between the given cookie and the latest stream update.
+func (s *Subscription) backfillByCookie(
+	ctx context.Context,
+	cookie *SyncCookie,
+) error {
+	streamID := StreamId(cookie.GetStreamId())
+
+	if cookie.GetMinipoolGen() > 0 {
+		var sc *StreamAndCookie
+
+		st, err := s.manager.streamCache.GetStreamNoWait(ctx, streamID)
+		if err != nil {
+			return AsRiverError(err).Func("startSyncingByCookie")
+		}
+
+		remotes, isLocal := st.GetRemotesAndIsLocal()
+		if isLocal {
+			v, err := st.GetViewIfLocal(ctx)
+			if err == nil {
+				sc, _ = v.GetStreamSince(ctx, s.manager.localNodeAddr, cookie)
+			}
+		}
+
+		if sc == nil {
+			for _, addr := range remotes {
+				cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
+				if err != nil {
+					continue
+				}
+
+				resp, err := cl.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
+					StreamId:   cookie.GetStreamId(),
+					SyncCookie: cookie,
+				}))
+				if err != nil {
+					continue
+				}
+
+				sc = resp.Msg.GetStream()
+				break
+			}
+		}
+
+		// TODO: What to do if the stream cannot be backfilled from the given cookie?
+		if sc != nil {
+			// Send the stream since the given cookie to the subscription
+			if err := s.Messages.AddMessage(&SyncStreamsResponse{
+				SyncId:   s.SyncOp,
+				SyncOp:   SyncOp_SYNC_UPDATE,
+				Stream:   sc,
+				StreamId: cookie.GetStreamId(),
+			}); err != nil {
+				return AsRiverError(err).Func("startSyncingByCookie")
+			}
+		}
+	}
+
+	return nil
 }
 
 // DebugDropStream drops the given stream from the subscription.

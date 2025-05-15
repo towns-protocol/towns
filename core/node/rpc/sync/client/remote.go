@@ -22,30 +22,30 @@ import (
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelCauseFunc
-	syncStreamCtx      context.Context
-	syncStreamCancel   context.CancelFunc
-	syncID             string
-	remoteAddr         common.Address
-	client             protocolconnect.StreamServiceClient
-	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams            sync.Map
-	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream        func(streamID StreamId)
+	globalCtxCancel  context.CancelCauseFunc
+	syncStreamCtx    context.Context
+	syncStreamCancel context.CancelFunc
+	syncID           string
+	remoteAddr       common.Address
+	client           protocolconnect.StreamServiceClient
+	messages         *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streams          sync.Map
+	responseStream   *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream      func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
 
 func newRemoteSyncer(
-	ctx context.Context,
-	cancelGlobalSyncOp context.CancelCauseFunc,
+	globalCtx context.Context,
+	globalCtxCancel context.CancelCauseFunc,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
-	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
+	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
 	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
 	if err != nil {
 		syncStreamCancel()
@@ -75,7 +75,7 @@ func newRemoteSyncer(
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(globalCtx)
 
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
 		log.Errorw("Received unexpected sync stream message",
@@ -86,16 +86,16 @@ func newRemoteSyncer(
 	}
 
 	return &remoteSyncer{
-		syncID:             responseStream.Msg().GetSyncId(),
-		cancelGlobalSyncOp: cancelGlobalSyncOp,
-		syncStreamCtx:      syncStreamCtx,
-		syncStreamCancel:   syncStreamCancel,
-		client:             client,
-		messages:           messages,
-		responseStream:     responseStream,
-		remoteAddr:         remoteAddr,
-		unsubStream:        unsubStream,
-		otelTracer:         otelTracer,
+		syncID:           responseStream.Msg().GetSyncId(),
+		globalCtxCancel:  globalCtxCancel,
+		syncStreamCtx:    syncStreamCtx,
+		syncStreamCancel: syncStreamCancel,
+		client:           client,
+		messages:         messages,
+		responseStream:   responseStream,
+		remoteAddr:       remoteAddr,
+		unsubStream:      unsubStream,
+		otelTracer:       otelTracer,
 	}, nil
 }
 
@@ -135,7 +135,6 @@ func (s *remoteSyncer) Run() {
 					}
 					return
 				}
-
 				s.streams.Delete(streamID)
 			}
 		}
@@ -174,7 +173,7 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 		return s.syncStreamCtx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			s.cancelGlobalSyncOp(err)
+			s.globalCtxCancel(err) // TODO: Wrong! Just cancel all subscriptions
 			return AsRiverError(err).
 				Tag("syncId", s.syncID).
 				Tag("op", msg.GetSyncOp()).

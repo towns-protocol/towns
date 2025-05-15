@@ -1370,7 +1370,7 @@ func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
 }
 
 func TestStartSyncWithWrongCookie(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true, replicationFactor: 1})
 
 	alice := tt.newTestClient(0, testClientOpts{enableSync: false})
 	_ = alice.createUserStreamGetCookie()
@@ -1399,8 +1399,10 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 		msg := updates.Msg()
 		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE &&
 			testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
+			fmt.Println("Update received")
 			syncCancel()
 		}
 	}
 	tt.require.ErrorIs(updates.Err(), context.Canceled)
+	time.Sleep(time.Second)
 }

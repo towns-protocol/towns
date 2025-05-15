@@ -3,13 +3,12 @@ package subscription
 import (
 	"context"
 	"slices"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/protobuf/proto"
 
-	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -24,6 +23,10 @@ type Manager struct {
 	log           *logging.Log
 	localNodeAddr common.Address
 	globalCtx     context.Context
+
+	streamCache  *StreamCache
+	nodeRegistry nodes.NodeRegistry
+	otelTracer   trace.Tracer
 
 	syncers  *client.SyncerSet
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -52,6 +55,9 @@ func NewManager(
 		log:                   log,
 		localNodeAddr:         localNodeAddr,
 		globalCtx:             globalCtx,
+		streamCache:           streamCache,
+		nodeRegistry:          nodeRegistry,
+		otelTracer:            otelTracer,
 		syncers:               syncers,
 		messages:              messages,
 		subscriptions:         xsync.NewMap[string, *Subscription](),
@@ -63,9 +69,10 @@ func NewManager(
 	return manager
 }
 
-func (m *Manager) Subscribe(cancel context.CancelCauseFunc, syncOp string) *Subscription {
+func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncOp string) *Subscription {
 	subscription := &Subscription{
 		log:      m.log.With("syncId", syncOp),
+		Ctx:      ctx,
 		Cancel:   cancel,
 		SyncOp:   syncOp,
 		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
@@ -93,7 +100,7 @@ func (m *Manager) start() {
 
 			for _, msg := range msgs {
 				// Distribute the messages to all relevant subscriptions.
-				m.distributeMessages(msg)
+				m.distributeMessage(msg)
 
 				// In case of the global context (the node itself) is done in the middle of the sending messages
 				// from the current batch, just interrupt the sending process and close.
@@ -115,8 +122,8 @@ func (m *Manager) start() {
 	}
 }
 
-// distributeMessages processes the given message and sends it to all relevant subscriptions.
-func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
+// distributeMessage processes the given message and sends it to all relevant subscriptions.
+func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
 	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
 		m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
@@ -136,37 +143,47 @@ func (m *Manager) distributeMessages(msg *SyncStreamsResponse) {
 		return
 	}
 
-	// Send the message to all subscriptions for this stream
-	subscriptions, ok := m.streamToSubscriptions.Load(streamID)
+	// Send the message to all subscriptions for this stream.
+	syncOps, ok := m.streamToSubscriptions.Load(streamID)
 	if !ok {
 		// No subscriptions for this stream, nothing to do.
+		// TODO: When this case might happen?
 		return
 	}
 
-	// TODO: Parallelize this?
-	for i, syncID := range subscriptions {
-		subscription, ok := m.subscriptions.Load(syncID)
-		if !ok {
-			// The given subscription has already been removed, just delete from list and update.
-			m.streamToSubscriptions.Store(streamID, slices.Delete(subscriptions, i, i+1))
-			continue
-		}
-
-		// Send message to subscriber.
-		// This is safe to clone the message, otherwise the message could be modified.
-		if err := subscription.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
-			rvrErr := AsRiverError(err).
-				Tag("syncId", subscription.SyncOp).
-				Tag("op", msg.GetSyncOp())
-			subscription.Cancel(rvrErr)
-			m.log.Errorw("Failed to add message to subscription",
-				"syncId", subscription.SyncOp, "op", msg.GetSyncOp(), "err", err)
-			continue
-		}
-	}
-
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		// The given stream is no longer needed, remove it from the subscription.
+		// The given stream is no longer needed, remove it from the subscriptions.
 		m.streamToSubscriptions.Delete(streamID)
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(syncOps))
+	for i, syncOp := range syncOps {
+		go func(i int, syncOp string) {
+			subscription, ok := m.subscriptions.Load(syncOp)
+			if !ok {
+				if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+					// The given subscription has already been cancelled, just delete from list and update stream subscribers.
+					m.streamToSubscriptions.Store(streamID, slices.Delete(syncOps, i, i+1))
+				}
+			} else {
+				// Send message to subscriber.
+				// This is safe to clone the message, otherwise the message could be modified.
+				subscription.Send(msg)
+			}
+			wg.Done()
+		}(i, syncOp)
+	}
+	wg.Wait()
 }
+
+/*func (m *Manager) cancelAllSubscriptions() {
+	m.streamToSubscriptions.Range(func(streamId StreamId, syncIds []string) bool {
+		for _, syncId := range syncIds {
+			sub, ok := m.subscriptions.Load(syncId)
+			if ok {
+				sub.Messages.AddMessage()
+			}
+		}
+	})
+}*/

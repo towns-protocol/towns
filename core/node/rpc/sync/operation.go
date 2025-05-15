@@ -105,7 +105,7 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	sub := syncOp.subscriptionManager.Subscribe(syncOp.cancel, syncOp.SyncID)
+	sub := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
 	defer sub.Close()
 
 	// Adding the initial sync position to the syncer

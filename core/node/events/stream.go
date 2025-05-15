@@ -812,7 +812,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 		return err
 	}
 
-	resp, err := view.GetStreamSince(ctx, s.params.Wallet, cookie)
+	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
 	if err != nil {
 		return err
 	}

@@ -35,10 +35,10 @@ type (
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
 	SyncerSet struct {
-		// ctx is the root context for all syncers in this set and used to cancel them
-		ctx context.Context
-		// globalSyncOpCtxCancel cancels ctx
-		globalSyncOpCtxCancel context.CancelCauseFunc
+		// globalCtx is the root context for all syncers in this set and used to cancel them
+		globalCtx context.Context
+		// globalCtxCancel cancels global node ctx
+		globalCtxCancel context.CancelCauseFunc
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
@@ -71,29 +71,29 @@ var (
 // A syncer can either be local or remote and writes received events to an internal messages channel from which events
 // are streamed to the client.
 func NewSyncers(
-	ctx context.Context,
-	globalSyncOpCtxCancel context.CancelCauseFunc,
+	globalCtx context.Context,
+	globalCtxCancel context.CancelCauseFunc,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
 	otelTracer trace.Tracer,
 ) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
 	ss := &SyncerSet{
-		ctx:                   ctx,
-		globalSyncOpCtxCancel: globalSyncOpCtxCancel,
-		streamCache:           streamCache,
-		nodeRegistry:          nodeRegistry,
-		localNodeAddress:      localNodeAddress,
-		syncers:               make(map[common.Address]StreamsSyncer),
-		streamID2Syncer:       make(map[StreamId]StreamsSyncer),
-		messages:              dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		otelTracer:            otelTracer,
+		globalCtx:        globalCtx,
+		globalCtxCancel:  globalCtxCancel,
+		streamCache:      streamCache,
+		nodeRegistry:     nodeRegistry,
+		localNodeAddress: localNodeAddress,
+		syncers:          make(map[common.Address]StreamsSyncer),
+		streamID2Syncer:  make(map[StreamId]StreamsSyncer),
+		messages:         dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		otelTracer:       otelTracer,
 	}
 	return ss, ss.messages
 }
 
 func (ss *SyncerSet) Run() {
-	<-ss.ctx.Done() // sync cancelled by client, client conn dropped or client send buffer full
+	<-ss.globalCtx.Done() // node went down
 
 	ss.muSyncers.Lock()
 	ss.stopped = true
@@ -404,8 +404,8 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 
 	if nodeAddress == ss.localNodeAddress {
 		syncer = newLocalSyncer(
-			ss.ctx,
-			ss.globalSyncOpCtxCancel,
+			ss.globalCtx,
+			ss.globalCtxCancel,
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messages,
@@ -418,8 +418,8 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 		}
 
 		syncer, err = newRemoteSyncer(
-			ss.ctx,
-			ss.globalSyncOpCtxCancel,
+			ss.globalCtx,
+			ss.globalCtxCancel,
 			nodeAddress,
 			client,
 			ss.rmStream,
