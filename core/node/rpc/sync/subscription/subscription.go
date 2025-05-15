@@ -2,8 +2,14 @@ package subscription
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
+	"sync"
+
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"connectrpc.com/connect"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -27,6 +33,8 @@ type Subscription struct {
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 
 	manager *Manager
+
+	duplicates sync.Map
 }
 
 func (s *Subscription) Close() {
@@ -46,6 +54,16 @@ func (s *Subscription) Close() {
 
 // Send sends the given message to the subscription messages channel.
 func (s *Subscription) Send(msg *SyncStreamsResponse) {
+	// TODO: This will be removed, for debugging purposes only
+	msgRaw, _ := json.Marshal(msg.GetStream())
+	mshHash := crypto.Keccak256Hash(msgRaw)
+	if _, ok := s.duplicates.Load(mshHash); ok {
+		fmt.Println("duplicate message", s.SyncOp)
+		return
+	} else {
+		s.duplicates.Store(mshHash, struct{}{})
+	}
+
 	select {
 	case <-s.Ctx.Done():
 		// Client context is cancelled, do not send the message.
@@ -126,6 +144,16 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 				return nil, xsync.CancelOp
 			}
 			updatedSubscribers = true
+			if streamAlreadyInSync {
+				// The given stream is already syncing but the client is not subscribed yet might
+				// want to get updates since a specific miniblock.
+				fmt.Println("backfilling", s.SyncOp, cookie.GetMinipoolGen())
+				if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
+					// TODO: Handle this error
+					fmt.Println("failed to backfill stream", err)
+				}
+				// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
+			}
 			return append(oldValue, s.SyncOp), xsync.UpdateOp
 		},
 	)
@@ -135,13 +163,7 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 			// The given subscription already subscribed on the given stream, do nothing
 			return false
 		} else {
-			// The given stream is already syncing but the client is not subscribed yet might
-			// want to get updates since a specific miniblock.
-			if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
-				// TODO: Handle this error
-				fmt.Println("failed to backfill stream", err)
-			}
-			// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
+			// BACKFILL
 		}
 	}
 
@@ -204,44 +226,64 @@ func (s *Subscription) backfillByCookie(
 
 		st, err := s.manager.streamCache.GetStreamNoWait(ctx, streamID)
 		if err != nil {
-			return AsRiverError(err).Func("startSyncingByCookie")
+			return err
 		}
 
-		remotes, isLocal := st.GetRemotesAndIsLocal()
-		if isLocal {
-			v, err := st.GetViewIfLocal(ctx)
-			if err == nil {
-				sc, _ = v.GetStreamSince(ctx, s.manager.localNodeAddr, cookie)
+		// Try address from cookie first
+		if len(cookie.GetNodeAddress()) > 0 {
+			addr := common.BytesToAddress(cookie.GetNodeAddress())
+			if s.manager.localNodeAddr.Cmp(addr) == 0 {
+				v, err := st.GetViewIfLocal(ctx)
+				if err == nil {
+					sc, _ = v.GetStreamSince(ctx, s.manager.localNodeAddr, cookie)
+				}
+			} else {
+				cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
+				if err == nil {
+					resp, err := cl.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
+						StreamId:   cookie.GetStreamId(),
+						SyncCookie: cookie,
+					}))
+					if err == nil {
+						sc = resp.Msg.GetStream()
+					}
+				}
 			}
 		}
 
 		if sc == nil {
-			for _, addr := range remotes {
-				cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
-				if err != nil {
-					continue
+			remotes, isLocal := st.GetRemotesAndIsLocal()
+			if isLocal {
+				v, err := st.GetViewIfLocal(ctx)
+				if err == nil {
+					sc, _ = v.GetStreamSince(ctx, s.manager.localNodeAddr, cookie)
 				}
+			}
 
-				resp, err := cl.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
-					StreamId:   cookie.GetStreamId(),
-					SyncCookie: cookie,
-				}))
-				if err != nil {
-					continue
+			if sc == nil {
+				for _, addr := range remotes {
+					cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
+					if err != nil {
+						continue
+					}
+
+					resp, err := cl.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
+						StreamId:   cookie.GetStreamId(),
+						SyncCookie: cookie,
+					}))
+					if err != nil {
+						continue
+					}
+
+					sc = resp.Msg.GetStream()
+					break
 				}
-
-				sc = resp.Msg.GetStream()
-				break
 			}
 		}
 
 		// TODO: What to do if the stream cannot be backfilled from the given cookie?
 		if sc != nil {
-			s.Send(&SyncStreamsResponse{
-				SyncId: s.SyncOp,
-				SyncOp: SyncOp_SYNC_UPDATE,
-				Stream: sc,
-			})
+			s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: sc, SyncId: s.SyncOp})
 		}
 	}
 
