@@ -53,7 +53,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
 		if err := b.processUserInboxMessage(ctx, event); err != nil {
-			log.Errorw("Error processing user inbox message", "err", err)
+			log.Errorw("Error processing user inbox message", "error", err)
 			return err
 		}
 		return nil

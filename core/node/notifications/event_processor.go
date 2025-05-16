@@ -150,7 +150,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 			p.log.Warnw("Unable to retrieve user preference to determine if notification must be send",
 				"channel", channelID,
 				"event", event.Hash,
-				"err", err,
+				"error", err,
 			)
 			return false
 		}
@@ -509,14 +509,14 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 			} else if !subscriptionExpired {
 				p.log.Errorw("Unable to send web push notification",
 					"user", user,
-					"err", err,
+					"error", err,
 					"event", event.Hash,
 					"channelID", channelID,
 				)
 			} else {
 				if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub); err != nil {
 					p.log.Errorw("Unable to remove expired webpush subscription",
-						"user", userPref.UserID, "err", err)
+						"user", userPref.UserID, "error", err)
 				} else {
 					p.log.Infow("Removed expired webpush subscription", "user", userPref.UserID)
 				}
@@ -532,7 +532,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
 				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
 					p.log.Errorw("Unable to remove expired APN subscription",
-						"user", userPref.UserID, "err", err)
+						"user", userPref.UserID, "error", err)
 					continue
 				}
 
@@ -568,7 +568,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 			}
 
 			if err != nil {
-				p.log.Errorw("Unable to prepare APN payload", "err", err)
+				p.log.Errorw("Unable to prepare APN payload", "error", err)
 				continue
 			}
 
@@ -628,11 +628,11 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 					"deviceToken", sub.DeviceToken,
 					"env", sub.Environment,
 					"version", sub.PushVersion,
-					"err", err)
+					"error", err)
 			} else {
 				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
 					p.log.Errorw("Unable to remove expired APN subscription",
-						"user", userPref.UserID, "err", err)
+						"user", userPref.UserID, "error", err)
 				} else {
 					p.log.Infow("Removed expired APN subscription", "user", userPref.UserID)
 				}

@@ -93,7 +93,7 @@ func (m *MetricsPublisher) serveHttp(ctx context.Context) {
 		if err == http.ErrServerClosed {
 			log.Infow("Metrics HTTP server closed")
 		} else {
-			log.Errorw("Metrics HTTP server error", "err", err)
+			log.Errorw("Metrics HTTP server error", "error", err)
 		}
 	}
 }
@@ -104,7 +104,7 @@ func (m *MetricsPublisher) waitForClose(ctx context.Context) {
 
 	err := m.httpServer.Close()
 	if err != nil {
-		log.Errorw("Error closing metrics HTTP server", "err", err)
+		log.Errorw("Error closing metrics HTTP server", "error", err)
 	} else {
 		log.Infow("Closing metrics HTTP server")
 	}

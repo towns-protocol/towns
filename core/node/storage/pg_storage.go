@@ -136,7 +136,7 @@ func (s *PostgresEventStore) txRunner(
 					pass = true
 					level = zapcore.DebugLevel
 				}
-				log.Logw(level, "pg.txRunner: transaction failed", "err", err)
+				log.Logw(level, "pg.txRunner: transaction failed", "error", err)
 			}
 
 			if pass {

@@ -213,7 +213,7 @@ func (s *Service) Start(ctx context.Context) {
 			log.Infow("Start app registry streams tracker")
 
 			if err := s.streamsTracker.Run(ctx); err != nil {
-				log.Errorw("tracking streams failed", "err", err)
+				log.Errorw("tracking streams failed", "error", err)
 			}
 
 			select {

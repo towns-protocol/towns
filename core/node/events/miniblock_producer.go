@@ -333,7 +333,7 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum cry
 				"MiniblockProducer: jobStart: Error creating new miniblock proposal",
 				"streamId",
 				j.stream.streamId,
-				"err",
+				"error",
 				err,
 			)
 		p.jobDone(ctx, j)
@@ -419,7 +419,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 				log.Errorw("processMiniblockProposalBatch: Failed to register some miniblocks", "failed", failed)
 			}
 		} else {
-			log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "err", err)
+			log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "error", err)
 		}
 	}
 
@@ -442,7 +442,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 						"processMiniblockProposalBatch: Error applying miniblock",
 						"streamId",
 						job.stream.streamId,
-						"err",
+						"error",
 						err,
 					)
 				}
@@ -456,7 +456,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	if err := p.promoteConfirmedCandidates(ctx, streamsOutOfSync); err != nil {
-		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "err", err)
+		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "error", err)
 	}
 }
 
@@ -480,7 +480,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 		stream, err := registry.GetStream(ctx, job.stream.streamId, crypto.BlockNumber(headNum))
 		if err != nil {
 			log.Errorw("Unable to retrieve stream details from registry",
-				"streamId", job.stream.streamId, "err", err)
+				"streamId", job.stream.streamId, "error", err)
 
 			p.jobDone(ctx, job)
 			continue
@@ -496,7 +496,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 			log.Errorw("Unable to promote candidate",
 				"streamId", job.stream.streamId,
 				"mb", committedLocalCandidateRef,
-				"err", err)
+				"error", err)
 		}
 
 		p.jobDone(ctx, job)

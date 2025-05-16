@@ -39,7 +39,7 @@ func getLinkedWallets(
 	}
 
 	if err != nil {
-		log.Errorw("Failed to GetRootKeyForWallet", "err", err, "wallet", wallet.Hex())
+		log.Errorw("Failed to GetRootKeyForWallet", "error", err, "wallet", wallet.Hex())
 		if getRootKeyForWalletCalls != nil {
 			getRootKeyForWalletCalls.IncFail()
 		}
@@ -124,7 +124,7 @@ func (e *Evaluator) getMainnetDelegators(
 		for _, wallet := range wallets {
 			delegationInfos, err := registry.GetDelegationsByDelegate(nil, wallet)
 			if err != nil {
-				log.Errorw("Unable to retrieve delegations for wallet", "chainId", chainId, "err", err)
+				log.Errorw("Unable to retrieve delegations for wallet", "chainId", chainId, "error", err)
 				return nil, err
 			}
 			for _, info := range delegationInfos {

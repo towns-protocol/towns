@@ -879,7 +879,7 @@ func (ca *chainAuth) getLinkedWalletsUncached(
 
 	wallets, err := ca.evaluator.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -918,7 +918,7 @@ func (ca *chainAuth) getLinkedWallets(
 		ca.getLinkedWalletsUncached,
 	)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -973,7 +973,7 @@ func (ca *chainAuth) checkMembership(
 		// linked wallet resulted in a positive membership check.
 		log.Infow(
 			"Error checking membership (due to early termination?)",
-			"err",
+			"error",
 			err,
 			"address",
 			address.Hex(),
@@ -1190,6 +1190,7 @@ func (ca *chainAuth) GetMembershipStatus(
 		&args,
 		ca.checkMembershipUncached,
 	)
+
 	if err != nil {
 		return nil, AsRiverError(err).Func("GetMembershipStatus").
 			Tag("spaceId", spaceId).

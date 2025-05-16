@@ -82,12 +82,12 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			creatorStreamView, err = stream.GetView(ctx)
 		}
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
+			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "error", err)
 		}
 		for _, streamIdBytes := range csRules.RequiredMemberships {
 			streamId, err := StreamIdFromBytes(streamIdBytes)
 			if err != nil {
-				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
+				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "error", err)
 			}
 			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
@@ -135,7 +135,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	for _, de := range csRules.DerivedEvents {
 		_, err = s.AddEventPayload(ctx, de.StreamId, de.Payload, de.Tags)
 		if err != nil {
-			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "err", err)
+			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "error", err)
 		}
 	}
 

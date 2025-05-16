@@ -185,11 +185,11 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 	}
 
 	status := &MembershipStatus{
-		IsMember: false,
-		IsExpired: true,
-		TokenIds: []*big.Int{},
+		IsMember:   false,
+		IsExpired:  true,
+		TokenIds:   []*big.Int{},
 		ExpiryTime: nil,
-		ExpiredAt: nil,
+		ExpiredAt:  nil,
 	}
 
 	spaceAsQueryable, err := base.NewErc721aQueryable(space.address, sc.backend)
@@ -217,7 +217,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 	}
 
 	currentTime := big.NewInt(time.Now().Unix())
-	
+
 	// Track active and expired tokens
 	var hasActiveToken bool
 	var furthestExpiryTime *big.Int
@@ -243,10 +243,10 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 		// Check if token is not expired yet
 		if expiresAt.Cmp(currentTime) > 0 {
 			hasActiveToken = true
-			
+
 			// Track the furthest future expiry
-			if furthestExpiryTime == nil || 
-			   (furthestExpiryTime.Cmp(big.NewInt(0)) != 0 && expiresAt.Cmp(furthestExpiryTime) > 0) {
+			if furthestExpiryTime == nil ||
+				(furthestExpiryTime.Cmp(big.NewInt(0)) != 0 && expiresAt.Cmp(furthestExpiryTime) > 0) {
 				furthestExpiryTime = expiresAt
 			}
 		} else {
@@ -259,7 +259,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 
 	status.IsExpired = !hasActiveToken
 	status.ExpiryTime = furthestExpiryTime
-	
+
 	if status.IsExpired && mostRecentExpiry != nil {
 		status.ExpiredAt = mostRecentExpiry
 	}
@@ -422,7 +422,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 	)
 	log.Debugw(
 		"Got entitlement data",
-		"err",
+		"error",
 		err,
 		"entitlement_data",
 		entitlementData,
@@ -553,4 +553,3 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 	}
 	return sc.spaces[spaceId], nil
 }
-

@@ -41,7 +41,7 @@ func (s *StreamCache) onStreamCreated(
 			event.Stream.IsSealed(),
 		); err != nil {
 			logging.FromCtx(ctx).
-				Errorw("Failed to normalize ephemeral stream", "err", err, "streamId", event.GetStreamId())
+				Errorw("Failed to normalize ephemeral stream", "error", err, "streamId", event.GetStreamId())
 		}
 
 		// Cache the stream
@@ -161,7 +161,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			stub, err := s.params.NodeRegistry.GetNodeToNodeClientForAddress(currentStickyPeer)
 			if err != nil {
 				logging.FromCtx(ctx).
-					Errorw("Failed to get node to node client", "err", err, "streamId", stream.streamId)
+					Errorw("Failed to get node to node client", "error", err, "streamId", stream.streamId)
 				currentStickyPeer = stream.AdvanceStickyPeer(currentStickyPeer)
 				continue
 			}
@@ -174,7 +174,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			))
 			if err != nil {
 				logging.FromCtx(ctx).
-					Errorw("Failed to get miniblocks from sticky peer", "err", err, "streamId", stream.streamId)
+					Errorw("Failed to get miniblocks from sticky peer", "error", err, "streamId", stream.streamId)
 				currentStickyPeer = stream.AdvanceStickyPeer(currentStickyPeer)
 				continue
 			}
@@ -196,7 +196,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 				)
 				if err != nil {
 					logging.FromCtx(ctx).
-						Errorw("Failed to parse miniblock info", "err", err, "streamId", stream.streamId)
+						Errorw("Failed to parse miniblock info", "error", err, "streamId", stream.streamId)
 					_ = resp.Close()
 					toNextPeer = true
 					break
@@ -205,7 +205,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 				storageMb, err := mbInfo.AsStorageMb()
 				if err != nil {
 					logging.FromCtx(ctx).
-						Errorw("Failed to serialize miniblock", "err", err, "streamId", stream.streamId)
+						Errorw("Failed to serialize miniblock", "error", err, "streamId", stream.streamId)
 					_ = resp.Close()
 					toNextPeer = true
 					break
@@ -213,7 +213,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 
 				if err = s.params.Storage.WriteEphemeralMiniblock(ctx, stream.streamId, storageMb); err != nil {
 					logging.FromCtx(ctx).
-						Errorw("Failed to write miniblock to storage", "err", err, "streamId", stream.streamId)
+						Errorw("Failed to write miniblock to storage", "error", err, "streamId", stream.streamId)
 					_ = resp.Close()
 					toNextPeer = true
 					break
@@ -246,7 +246,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			// current sticky peer. Try the next sticky peer for the rest of missing miniblocks.
 			if err = resp.Err(); err != nil {
 				logging.FromCtx(ctx).
-					Errorw("Failed to get miniblocks from sticky peer", "err", err, "streamId", stream.streamId)
+					Errorw("Failed to get miniblocks from sticky peer", "error", err, "streamId", stream.streamId)
 				currentStickyPeer = stream.AdvanceStickyPeer(currentStickyPeer)
 				continue
 			}

@@ -117,7 +117,7 @@ func sendRequestAndParseResponse(
 		webhookUrl,
 	)
 	if err != nil {
-		log.Errorw("marshalAndPostProto err", "err", err)
+		log.Errorw("marshalAndPostProto err", "error", err)
 		return nil, base.AsRiverError(err).
 			Message("Unable to send app request")
 	}

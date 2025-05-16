@@ -23,14 +23,14 @@ func getTLSConfig(ctx context.Context) *tls.Config {
 	// Load the system cert pool
 	sysCerts, err := x509.SystemCertPool()
 	if err != nil {
-		log.Warnw("getTLSConfig Error loading system certs", "err", err)
+		log.Warnw("getTLSConfig Error loading system certs", "error", err)
 		return nil
 	}
 
 	// Attempt to load ~/river-ca-cert.pem
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Warnw("getTLSConfig Failed to get user home directory:", "err", err)
+		log.Warnw("getTLSConfig Failed to get user home directory:", "error", err)
 		return nil
 	}
 	// TODO - hook this up to the config file

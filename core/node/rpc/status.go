@@ -200,7 +200,7 @@ func (s *Service) handleInfo(w http.ResponseWriter, r *http.Request) {
 		output, err = render.Execute(&render.InfoIndexData{Status: status, StatusJson: string(json)})
 	}
 	if err != nil {
-		s.defaultLogger.Error("unable to prepare info index response", "err", err)
+		s.defaultLogger.Error("unable to prepare info index response", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
