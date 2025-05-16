@@ -294,8 +294,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) Scrub(channelId StreamId) bool
 }
 
 func entitlementResultReasonToMembershipReason(entitlementResultReason auth.EntitlementResultReason) MembershipReason {
-	switch entitlementResultReason {
-	case auth.EntitlementResultReason_MEMBERSHIP_EXPIRED:
+	if entitlementResultReason == auth.EntitlementResultReason_MEMBERSHIP_EXPIRED {
 		return MembershipReason_MR_EXPIRED
 	}
 	return MembershipReason_MR_NOT_ENTITLED
