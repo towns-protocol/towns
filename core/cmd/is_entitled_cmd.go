@@ -87,7 +87,7 @@ func isEntitledForSpaceAndChannel(
 		auth.PermissionRead,
 	)
 
-	isEntitled, err := chainAuth.IsEntitled(
+	isEntitledResult, err := chainAuth.IsEntitled(
 		ctx,
 		&cfg,
 		args,
@@ -99,7 +99,7 @@ func isEntitledForSpaceAndChannel(
 	fmt.Printf("User %v entitled to read permission for\n", userId)
 	fmt.Printf(" - space   %v\n", spaceId.String())
 	fmt.Printf(" - channel %v\n", channelId.String())
-	fmt.Printf("%v\n", isEntitled)
+	fmt.Printf("isEntitled: %v, reason: %v\n", isEntitledResult.IsEntitled(), isEntitledResult.Reason())
 	return nil
 }
 
