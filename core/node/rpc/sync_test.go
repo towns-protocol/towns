@@ -624,7 +624,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
-		30*time.Second,
+		time.Second*10,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(
@@ -639,13 +639,13 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNStreamsDown(
 		t,
 		nodeToStreams[tt.nodes[1].address],
-		time.Minute,
+		time.Second*10,
 	)
 	tt.CloseNode(2)
 	syncClients.expectNStreamsDown(
 		t,
 		nodeToStreams[tt.nodes[2].address],
-		time.Minute,
+		time.Second*10,
 	)
 
 	// Add all cookies to the modify stream again and expect for updates
@@ -659,7 +659,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
-		30*time.Second,
+		time.Second*10,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(
