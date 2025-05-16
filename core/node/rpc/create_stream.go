@@ -205,7 +205,7 @@ func (s *Service) createReplicatedStream(
 			}
 			r, err := stub.AllocateStream(
 				ctx,
-				connect.NewRequest[AllocateStreamRequest](
+				connect.NewRequest(
 					&AllocateStreamRequest{
 						StreamId:  streamId[:],
 						Miniblock: mb,
