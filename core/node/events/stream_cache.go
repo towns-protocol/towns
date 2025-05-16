@@ -188,8 +188,8 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		<-ctx.Done()
 		s.stoppedMu.Lock()
 		s.stopped = true
-		s.onlineSyncWorkerPool.Stop()
 		s.stoppedMu.Unlock()
+		s.onlineSyncWorkerPool.Stop()
 		initialSyncWorkerPool.Stop()
 	}()
 
@@ -197,7 +197,7 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 }
 
 func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.BlockNumber, logs []*types.Log) {
-	streamEvents, errs := s.params.Registry.FilterStreamEvents(ctx, logs)
+	streamEvents, errs := s.params.Registry.FilterStreamUpdatedEvents(ctx, logs)
 	// Process parsed stream events even if some failed to parse
 	for _, err := range errs {
 		logging.FromCtx(ctx).Errorw("Failed to parse stream event", "error", err)

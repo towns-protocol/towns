@@ -110,14 +110,15 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 
 	// check entitlements
 	if csRules.ChainAuth != nil {
-		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
+		isEntitledResult, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
 			return nil, err
 		}
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			return nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
 			).Func("createStream")
@@ -197,7 +198,10 @@ func (s *Service) createReplicatedMediaStream(
 
 	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId))
+	sender := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId),
+	)
 
 	// Create ephemeral stream within the local node
 	if isLocal {
@@ -215,7 +219,7 @@ func (s *Service) createReplicatedMediaStream(
 
 		_, err = stub.AllocateEphemeralStream(
 			ctx,
-			connect.NewRequest[AllocateEphemeralStreamRequest](
+			connect.NewRequest(
 				&AllocateEphemeralStreamRequest{
 					StreamId:  streamId[:],
 					Miniblock: mb,

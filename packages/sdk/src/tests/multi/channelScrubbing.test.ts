@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { MembershipOp } from '@towns-protocol/proto'
+import { MembershipOp, MembershipReason } from '@towns-protocol/proto'
 import { makeUserStreamId } from '../../id'
 import {
     getNftRuleData,
@@ -61,10 +61,10 @@ describe('channelScrubbing', () => {
 
         const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
         // Wait for alice's user stream to have the leave event
-        await waitFor(() =>
-            expect(userStreamView.userContent.isMember(channelId!, MembershipOp.SO_LEAVE)).toBe(
-                true,
-            ),
-        )
+        await waitFor(() => {
+            const membership = userStreamView.userContent.getMembership(channelId!)
+            expect(membership?.op).toBe(MembershipOp.SO_LEAVE)
+            expect(membership?.reason).toBe(MembershipReason.MR_NOT_ENTITLED)
+        })
     })
 })

@@ -114,19 +114,19 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// check entitlements
 	if csRules.ChainAuth != nil {
-		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
+		isEntitledResult, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
 			return nil, nil, err
 		}
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			return nil, nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
 			).Func("createStream")
 		}
-
 	}
 
 	// create the stream
@@ -174,7 +174,10 @@ func (s *Service) createReplicatedStream(
 
 	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId))
+	sender := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId),
+	)
 
 	var localSyncCookie atomic.Pointer[SyncCookie]
 	if isLocal {
@@ -202,7 +205,7 @@ func (s *Service) createReplicatedStream(
 			}
 			r, err := stub.AllocateStream(
 				ctx,
-				connect.NewRequest[AllocateStreamRequest](
+				connect.NewRequest(
 					&AllocateStreamRequest{
 						StreamId:  streamId[:],
 						Miniblock: mb,
