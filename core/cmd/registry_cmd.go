@@ -4,10 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/core/types"
+	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"math"
 	"net/http"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -857,4 +861,117 @@ func init() {
 	addJsonFlag(eventsCmd)
 	eventsCmd.Flags().Bool("unknown", false, "Search for unknown events")
 	srCmd.AddCommand(eventsCmd)
+
+	srCmd.AddCommand(&cobra.Command{
+		Use:   "update-stream <wallet> <stream-id> <replication-factor> <node1> [node2] [node3] ...",
+		Short: "Update stream record in stream registry",
+		Long: `Update the stream record with the given replication factor. If the replication factor is less than the
+number of given nodes only the first replication factor nodes are quorum nodes. The other nodes will be sync nodes.
+	
+stream-placement <wallet> <stream-id> 1 0xaa..ff 0xbb..ff 0xcc..ff
+	
+Marks node 0xaa..ff as the single quorum node and node 0xbb..ff and 0xcc..ff as sync nodes.`,
+		Args: cobra.RangeArgs(4, 10),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runRegistryUpdateStream(args, cmdConfig)
+		},
+	})
+}
+
+func runRegistryUpdateStream(args []string, cfg *config.Config) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	walletFileContents, err := os.ReadFile(args[0])
+	if err != nil {
+		return err
+	}
+
+	key, err := keystore.DecryptKey(walletFileContents, "")
+	if err != nil {
+		return err
+	}
+
+	wallet := &crypto.Wallet{
+		PrivateKeyStruct: key.PrivateKey,
+		PrivateKey:       eth_crypto.FromECDSA(key.PrivateKey),
+		Address:          eth_crypto.PubkeyToAddress(key.PrivateKey.PublicKey),
+	}
+
+	streamID, err := StreamIdFromString(args[1])
+	if err != nil {
+		return err
+	}
+
+	replFactor, err := strconv.ParseInt(args[2], 10, 8)
+	if err != nil {
+		return err
+	}
+
+	var nodes []common.Address
+	for _, nodeAddrStr := range args[3:] {
+		nodes = append(nodes, common.HexToAddress(nodeAddrStr))
+	}
+
+	if replFactor > int64(len(nodes)) {
+		return RiverError(Err_INVALID_ARGUMENT, "stream replication factor must be less than or equal to the number of nodes")
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx, &cfg.RiverChain, wallet,
+		infra.NewMetricsFactory(nil, "river", "cmdline"), nil)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	configCaller, err := river.NewRiverConfigV1Caller(cfg.RegistryContract.Address, blockchain.Client)
+	if err != nil {
+		return err
+	}
+
+	isConfigurationManager, err := configCaller.IsConfigurationManager(nil, wallet.Address)
+	if err != nil {
+		return err
+	}
+
+	if !isConfigurationManager {
+		return RiverError(Err_PERMISSION_DENIED, "wallet is not a configuration manager", "wallet", wallet.Address)
+	}
+
+	pendingTx, err := blockchain.TxPool.Submit(ctx,
+		"StreamRegistry::SetStreamReplicationFactor", func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return registryContract.StreamRegistry.SetStreamReplicationFactor(opts, []river.SetStreamReplicationFactor{
+				{
+					StreamId:          streamID,
+					ReplicationFactor: uint8(replFactor),
+					Nodes:             nodes,
+				},
+			})
+		})
+
+	if err != nil {
+		return err
+	}
+
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("            stream: %s\n", streamID)
+	fmt.Printf("replication factor: %d\n", replFactor)
+	fmt.Printf("      node address: %v\n", nodes)
+	fmt.Printf("  transaction hash: %s\n", receipt.TxHash.Hex())
+	fmt.Printf("           success: %v\n", receipt.Status == types.ReceiptStatusSuccessful)
+
+	return nil
 }
