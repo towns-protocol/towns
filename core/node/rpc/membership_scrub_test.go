@@ -89,12 +89,28 @@ type MockChainAuth struct {
 	err    error
 }
 
+type mockChainAuthResult struct {
+	isAllowed bool
+	reason    auth.EntitlementResultReason
+}
+
+func (m *mockChainAuthResult) IsEntitled() bool {
+	return m.isAllowed
+}
+
+func (m *mockChainAuthResult) Reason() auth.EntitlementResultReason {
+	return m.reason
+}
+
 func (m *MockChainAuth) IsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *auth.ChainAuthArgs,
-) (bool, error) {
-	return m.result, m.err
+) (auth.IsEntitledResult, error) {
+	return &mockChainAuthResult{
+		isAllowed: m.result,
+		reason:    auth.EntitlementResultReason_NONE,
+	}, m.err
 }
 
 func NewMockChainAuth(expectedResult bool, expectedErr error) auth.ChainAuth {
@@ -116,13 +132,19 @@ func (m *MockChainAuthForWallets) IsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *auth.ChainAuthArgs,
-) (bool, error) {
+) (auth.IsEntitledResult, error) {
 	for wallet, result := range m.walletResults {
 		if args.Principal() == wallet.Address {
-			return result.expectedResult, result.expectedErr
+			return &mockChainAuthResult{
+				isAllowed: result.expectedResult,
+				reason:    auth.EntitlementResultReason_NONE,
+			}, result.expectedErr
 		}
 	}
-	return true, nil
+	return &mockChainAuthResult{
+		isAllowed: true,
+		reason:    auth.EntitlementResultReason_NONE,
+	}, nil
 }
 
 func NewMockChainAuthForWallets(
@@ -328,6 +350,10 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 									!slices.Contains(tc.expectedBootedUsers, wallet),
 									isMember,
 									"Membership result mismatch",
+									"wallet: %v, isMember: %v, expectedBootedUsers: %v",
+									wallet.Address,
+									isMember,
+									tc.expectedBootedUsers,
 								)
 							}
 						}
