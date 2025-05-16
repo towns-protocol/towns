@@ -18,3 +18,4 @@
 "stream.snapshotIntervalInMiniblocks",0,0
 "stream.defaultStreamTrimmingMiniblocksToKeep",0,0
 "stream.streamTrimmingMiniblocksToKeep.10",0,100
+"stream.streamTrimmingMiniblocksToKeep.a5",0,100
