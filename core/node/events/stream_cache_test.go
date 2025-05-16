@@ -476,7 +476,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 		})
 
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	genesisMb := MakeGenesisMiniblockForSpaceStream(t, instance.params.Wallet, instance.params.Wallet, spaceStreamId)
+	genesisMb := MakeGenesisMiniblockForSpaceStream(t, instance.params.Wallet, instance.params.Wallet, spaceStreamId, nil)
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 
 	// advance the stream with some miniblocks
