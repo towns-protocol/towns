@@ -551,11 +551,11 @@ type entitlementCacheResult struct {
 	owner           common.Address
 }
 
-func (scr *entitlementCacheResult) IsAllowed() bool {
-	return scr.allowed
+func (ecr *entitlementCacheResult) IsAllowed() bool {
+	return ecr.allowed
 }
 
-func (scr *entitlementCacheResult) Reason() EntitlementResultReason {
+func (ecr *entitlementCacheResult) Reason() EntitlementResultReason {
 	return EntitlementResultReason_NONE // entitlement cache results are a second layer of caching, so we don't need to return a reason
 }
 
