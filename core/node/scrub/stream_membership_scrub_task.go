@@ -158,8 +158,8 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			"spaceId",
 			spaceId,
 		)
-		
-		reason := MembershipReason_MR_NOT_ENTITLED
+
+		reason := entitlementResultReasonToMembershipReason(isEntitledResult.Reason())
 
 		if _, err = tp.eventAdder.AddEventPayload(
 			ctx,
@@ -291,4 +291,12 @@ func (tp *streamMembershipScrubTaskProcessorImpl) Scrub(channelId StreamId) bool
 		},
 	)
 	return !wasScheduled
+}
+
+func entitlementResultReasonToMembershipReason(entitlementResultReason auth.EntitlementResultReason) MembershipReason {
+	switch entitlementResultReason {
+	case auth.EntitlementResultReason_MEMBERSHIP_EXPIRED:
+		return MembershipReason_MR_EXPIRED
+	}
+	return MembershipReason_MR_NOT_ENTITLED
 }

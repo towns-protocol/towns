@@ -12,7 +12,7 @@ import {
 } from '../../testUtils'
 import { NoopRuleData } from '@towns-protocol/web3'
 import { makeUserStreamId } from '../../../id'
-import { MembershipOp } from '@towns-protocol/proto'
+import { MembershipOp, MembershipReason } from '@towns-protocol/proto'
 import { ethers } from 'ethers'
 
 const SHORT_MEMBERSHIP_DURATION = 10 // seconds
@@ -105,12 +105,12 @@ describe('membershipRenewals', () => {
         // should be booted from the stream since her membership has expired
         await expect(carol.joinStream(channelId)).resolves.not.toThrow()
         const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
+        const membership = userStreamView.userContent.getMembership(channelId)
 
         // Wait for alice's user stream to have the leave event
         await waitFor(async () => {
-            return expect(
-                userStreamView.userContent.isMember(channelId, MembershipOp.SO_LEAVE),
-            ).toBe(true)
+            expect(membership?.op).toBe(MembershipOp.SO_LEAVE)
+            expect(membership?.reason).toBe(MembershipReason.MR_EXPIRED)
         })
 
         // Clean up
