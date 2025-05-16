@@ -1085,7 +1085,7 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 		from,
 		events.Make_UserPayload_BlockchainTransaction(from.Address[:], &BlockchainTransaction{
 			// a very incomplete receipt
-			Receipt: makeTipReceipt(ctx, from, to, messageId, tc.gdmStreamID[:], amount, tokenId, currency),
+			Receipt: makeTipReceipt(from, to, messageId, tc.gdmStreamID[:], amount, tokenId, currency),
 			Content: &BlockchainTransaction_Tip_{
 				Tip: &BlockchainTransaction_Tip{
 					Event: &BlockchainTransaction_Tip_Event{
@@ -1131,7 +1131,6 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 }
 
 func makeTipReceipt(
-	ctx context.Context,
 	from *crypto.Wallet,
 	to *crypto.Wallet,
 	messageId []byte,

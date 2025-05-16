@@ -641,7 +641,6 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 
 	allowed, err := ca.evaluateWithEntitlements(
 		ctx,
-		cfg,
 		args,
 		entitlementData.owner,
 		entitlementData.entitlementData,
@@ -670,7 +669,6 @@ func deserializeWallets(serialized string) []common.Address {
 func (ca *chainAuth) evaluateEntitlementData(
 	ctx context.Context,
 	entitlements []types.Entitlement,
-	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (bool, error) {
 	log := logging.FromCtx(ctx).With("function", "evaluateEntitlementData")
@@ -740,7 +738,6 @@ func (ca *chainAuth) evaluateEntitlementData(
 // 3. Are they entitled to the space based on the entitlement data?
 func (ca *chainAuth) evaluateWithEntitlements(
 	ctx context.Context,
-	cfg *config.Config,
 	args *ChainAuthArgs,
 	owner common.Address,
 	entitlements []types.Entitlement,
@@ -785,7 +782,7 @@ func (ca *chainAuth) evaluateWithEntitlements(
 	}
 
 	// 3. Evaluate entitlement data to check if the user is entitled to the space.
-	allowed, err := ca.evaluateEntitlementData(ctx, entitlements, cfg, args)
+	allowed, err := ca.evaluateEntitlementData(ctx, entitlements, args)
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements")
 	} else {
@@ -820,7 +817,7 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 	temp := (result.(*timestampedCacheValue).Result())
 	entitlementData := temp.(*entitlementCacheResult) // Assuming result is of *entitlementCacheResult type
 
-	allowed, err := ca.evaluateWithEntitlements(ctx, cfg, args, entitlementData.owner, entitlementData.entitlementData)
+	allowed, err := ca.evaluateWithEntitlements(ctx, args, entitlementData.owner, entitlementData.entitlementData)
 	if err != nil {
 		return nil, AsRiverError(err).
 			Func("isEntitledToSpace").
