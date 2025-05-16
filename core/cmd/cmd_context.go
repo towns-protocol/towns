@@ -33,13 +33,15 @@ type cmdContext struct {
 	// Below are parsed values for optional common flags
 	// Value are parsed only if flag is present in the flagset
 	// If if command does not define a flag, value is not parsed
-	streamID    StreamId       // "stream"
-	nodeAddress common.Address // "node"
-	verbose     bool           // "verbose"
-	csv         bool           // "csv"
-	json        bool           // "json"
-	pageSize    int            // "page-size"
-	timeout     time.Duration  // "timeout" (if not set, default is 30 seconds)
+	streamID    StreamId           // "stream"
+	nodeAddress common.Address     // "node"
+	verbose     bool               // "verbose"
+	csv         bool               // "csv"
+	json        bool               // "json"
+	pageSize    int                // "page-size"
+	timeout     time.Duration      // "timeout" (if not set, default is 30 seconds) // TODO: move timeout to top-level cmd? What to do with long-running commands then?
+	blockNum    crypto.BlockNumber // "block" (if not set, default is latest block)
+	number      int                // "number", i.e. "n" (if not set, default is 1)
 }
 
 func newCmdContext(cmd *cobra.Command, cfg *config.Config) (*cmdContext, context.CancelFunc, error) {
@@ -110,8 +112,24 @@ func newCmdContext(cmd *cobra.Command, cfg *config.Config) (*cmdContext, context
 	if cc.timeout <= 0 {
 		cc.timeout = 30 * time.Second
 	}
-
 	cc.ctx, cc.ctxCancel = context.WithTimeout(cc.ctx, cc.timeout)
+
+	f = cmd.Flags().Lookup("block")
+	var cmdBlockNum int64
+	if f != nil {
+		cmdBlockNum, err = cmd.Flags().GetInt64("block")
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	f = cmd.Flags().Lookup("number")
+	if f != nil {
+		cc.number, err = cmd.Flags().GetInt("number")
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
@@ -124,6 +142,14 @@ func newCmdContext(cmd *cobra.Command, cfg *config.Config) (*cmdContext, context
 		return nil, nil, err
 	}
 	cc.blockchain = blockchain
+
+	if cmdBlockNum > 0 {
+		cc.blockNum = crypto.BlockNumber(cmdBlockNum)
+	} else if cmdBlockNum == 0 {
+		cc.blockNum = blockchain.InitialBlockNum
+	} else {
+		cc.blockNum = crypto.BlockNumber(int64(blockchain.InitialBlockNum) + cmdBlockNum)
+	}
 
 	registryContract, err := registries.NewRiverRegistryContract(
 		ctx,
@@ -196,4 +222,16 @@ func (cc *cmdContext) getStream(streamId StreamId, stub StreamServiceClient) (*S
 		return nil, err
 	}
 	return response.Msg.GetStream(), nil
+}
+
+func addBlockFlag(cmd *cobra.Command) {
+	cmd.Flags().Int64("block", 0, "Blockchain block number to use, 0 for latest block, negative for relative to latest block")
+}
+
+func addNumberFlag(cmd *cobra.Command) {
+	cmd.Flags().IntP("number", "n", 1, "Number of items to dump")
+}
+
+func addJsonFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool("json", false, "Dump in JSON format")
 }

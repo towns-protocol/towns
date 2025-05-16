@@ -2,15 +2,18 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -583,6 +586,117 @@ func getStreamsForNode(ctx context.Context, node common.Address) error {
 	return nil
 }
 
+func eventsDump(cmd *cobra.Command, cfg *config.Config) error {
+	cc, cancel, err := newCmdContext(cmd, cfg)
+	ctx := cc.ctx
+
+	if err != nil {
+		return err
+	}
+	defer cancel()
+
+	n := cc.number
+	if n <= 0 {
+		n = 1
+	}
+
+	logs, err := cc.blockchain.Client.FilterLogs(
+		ctx,
+		ethereum.FilterQuery{
+			FromBlock: cc.blockNum.Add(-int64(n - 1)).AsBigInt(),
+			ToBlock:   cc.blockNum.AsBigInt(),
+			Addresses: []common.Address{cc.registryContract.Address},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if !cc.json {
+		fmt.Println("TOTAL_LOGS:", len(logs))
+	}
+
+	unknown, err := cmd.Flags().GetBool("unknown")
+	if err != nil {
+		return err
+	}
+
+	for _, log := range logs {
+		if unknown {
+			if len(log.Topics) == 0 {
+				fmt.Printf("No topics: %d %d\n", log.BlockNumber, log.Index)
+				continue
+			}
+
+			if !slices.Contains(cc.registryContract.StreamEventTopics[0], log.Topics[0]) {
+				fmt.Printf("Not a stream event: %d %d %s\n", log.BlockNumber, log.Index, log.Topics[0])
+				continue
+			}
+
+			parsed, err := cc.registryContract.ParseEvent(ctx, cc.registryContract.StreamRegistry.BoundContract(), cc.registryContract.StreamEventInfo, &log)
+			if err != nil {
+				fmt.Printf("Error parsing event: %d %d %s\n", log.BlockNumber, log.Index, err)
+				continue
+			}
+
+			_, known1 := parsed.(*river.StreamUpdated)
+			_, known2 := parsed.(*river.StreamLastMiniblockUpdateFailed)
+
+			if known1 || known2 {
+				continue
+			}
+
+			fmt.Printf("Unknown event: %d %d %T\n", log.BlockNumber, log.Index, parsed)
+		} else if cc.json {
+			jsonBytes, err := json.MarshalIndent(log, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(jsonBytes))
+		} else {
+			if len(log.Topics) == 0 {
+				fmt.Printf("No topics: %d %d\n", log.BlockNumber, log.Index)
+				continue
+			}
+
+			if !slices.Contains(cc.registryContract.StreamEventTopics[0], log.Topics[0]) {
+				fmt.Printf("Not a stream event: %d %d %s\n", log.BlockNumber, log.Index, log.Topics[0])
+				continue
+			}
+
+			fmt.Println("STREAM EVENT:", log.Topics[0])
+
+			parsed, err := cc.registryContract.ParseEvent(ctx, cc.registryContract.StreamRegistry.BoundContract(), cc.registryContract.StreamEventInfo, &log)
+			if err != nil {
+				fmt.Printf("Error parsing event: %d %d %s\n", log.BlockNumber, log.Index, err)
+				continue
+			}
+
+			if streamUpdate, ok := parsed.(*river.StreamUpdated); ok {
+				ev, err := river.ParseStreamUpdatedEvent(streamUpdate)
+				if err != nil {
+					fmt.Printf("Error parsing stream update event: %d %d %s\n", log.BlockNumber, log.Index, err)
+					continue
+				}
+
+				for _, e := range ev {
+					fmt.Println(log.BlockNumber, log.Index, e.Reason(), e.GetStreamId())
+				}
+				continue
+			}
+
+			if f, ok := parsed.(*river.StreamLastMiniblockUpdateFailed); ok {
+				fmt.Println(log.BlockNumber, log.Index, "StreamLastMiniblockUpdateFailed", f.Reason, StreamId(f.StreamId), f.LastMiniblockNum)
+				continue
+			}
+
+			fmt.Printf("Unknown event: %d %d %T\n", log.BlockNumber, log.Index, parsed)
+		}
+	}
+
+	return nil
+}
+
 func init() {
 	srCmd := &cobra.Command{
 		Use:     "registry",
@@ -729,4 +843,18 @@ func init() {
 			return blockNumber(cmdConfig)
 		},
 	})
+
+	eventsCmd := &cobra.Command{
+		Use:   "events",
+		Short: "Dump stream events from the registry contract",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return eventsDump(cmd, cmdConfig)
+		},
+		Args: cobra.NoArgs,
+	}
+	addBlockFlag(eventsCmd)
+	addNumberFlag(eventsCmd)
+	addJsonFlag(eventsCmd)
+	eventsCmd.Flags().Bool("unknown", false, "Search for unknown events")
+	srCmd.AddCommand(eventsCmd)
 }
