@@ -188,8 +188,8 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		<-ctx.Done()
 		s.stoppedMu.Lock()
 		s.stopped = true
-		s.onlineSyncWorkerPool.Stop()
 		s.stoppedMu.Unlock()
+		s.onlineSyncWorkerPool.Stop()
 		initialSyncWorkerPool.Stop()
 	}()
 

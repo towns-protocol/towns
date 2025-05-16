@@ -20,10 +20,11 @@ func MakeGenesisMiniblockForSpaceStream(
 	userWallet *crypto.Wallet,
 	nodeWallet *crypto.Wallet,
 	streamId StreamId,
+	settings *StreamSettings,
 ) *MiniblockInfo {
 	inception, err := MakeParsedEventWithPayload(
 		userWallet,
-		Make_SpacePayload_Inception(streamId, nil),
+		Make_SpacePayload_Inception(streamId, settings),
 		&MiniblockRef{},
 	)
 	require.NoError(t, err)
@@ -203,6 +204,9 @@ func mbTest(
 		tt.instances[0].params.Wallet,
 		tt.instances[0].params.Wallet,
 		spaceStreamId,
+		&StreamSettings{
+			DisableMiniblockCreation: true,
+		},
 	)
 
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
@@ -281,6 +285,7 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 		tt.instances[0].params.Wallet,
 		tt.instances[0].params.Wallet,
 		spaceStreamId,
+		nil,
 	)
 
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
@@ -327,6 +332,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		params.Wallet,
 		params.Wallet,
 		spaceStreamId,
+		nil,
 	)
 
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
