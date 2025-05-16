@@ -24,7 +24,7 @@ type Subscription struct {
 
 	Ctx      context.Context
 	Cancel   context.CancelCauseFunc
-	SyncOp   string
+	SyncID   string
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 
 	manager *Manager
@@ -32,15 +32,15 @@ type Subscription struct {
 
 func (s *Subscription) close() {
 	s.Messages.Close()
-	s.manager.subscriptions.Delete(s.SyncOp)
-	s.manager.streamToSubscriptions.Range(func(streamID StreamId, syncOps []string) bool {
-		for i, op := range syncOps {
-			if op == s.SyncOp {
-				syncOps = append(syncOps[:i], syncOps[i+1:]...)
+	s.manager.subscriptions.Delete(s.SyncID)
+	s.manager.streamToSubscriptions.Range(func(streamID StreamId, syncIDs []string) bool {
+		for i, syncID := range syncIDs {
+			if syncID == s.SyncID {
+				syncIDs = append(syncIDs[:i], syncIDs[i+1:]...)
 				break
 			}
 		}
-		s.manager.streamToSubscriptions.Store(streamID, syncOps)
+		s.manager.streamToSubscriptions.Store(streamID, syncIDs)
 		return true
 	})
 }
@@ -54,7 +54,7 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	default:
 		if err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
 			rvrErr := AsRiverError(err).
-				Tag("syncId", s.SyncOp).
+				Tag("syncId", s.SyncID).
 				Tag("op", msg.GetSyncOp())
 			s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
 			s.log.Errorw("Failed to add message to subscription",
@@ -122,7 +122,7 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 			// The given stream is not syncing yet, add it to the syncer set.
 			// It is ok to use the entire cookie when subscribing at the first time.
 			streamAlreadyInSync = loaded && len(oldValue) > 0
-			if slices.Contains(oldValue, s.SyncOp) {
+			if slices.Contains(oldValue, s.SyncID) {
 				// The given stream is already subscribed, do nothing
 				return nil, xsync.CancelOp
 			}
@@ -130,14 +130,14 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 			if streamAlreadyInSync {
 				// The given stream is already syncing but the client is not subscribed yet might
 				// want to get updates since a specific miniblock.
-				fmt.Println("backfilling", s.SyncOp, cookie.GetMinipoolGen())
+				fmt.Println("backfilling", s.SyncID, cookie.GetMinipoolGen())
 				if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
 					// TODO: Handle this error
 					fmt.Println("failed to backfill stream", err)
 				}
 				// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
 			}
-			return append(oldValue, s.SyncOp), xsync.UpdateOp
+			return append(oldValue, s.SyncID), xsync.UpdateOp
 		},
 	)
 
@@ -172,7 +172,7 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 
 			// Remove the given subscriptions from the list of subscribers on the given stream
 			for i, sub := range oldValue {
-				if sub == s.SyncOp {
+				if sub == s.SyncID {
 					newValue = append(oldValue[:i], oldValue[i+1:]...)
 					break
 				}
@@ -266,7 +266,7 @@ func (s *Subscription) backfillByCookie(
 
 		// TODO: What to do if the stream cannot be backfilled from the given cookie?
 		if sc != nil {
-			s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: sc, SyncId: s.SyncOp})
+			s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: sc, SyncId: s.SyncID})
 		}
 	}
 
@@ -276,7 +276,7 @@ func (s *Subscription) backfillByCookie(
 // DebugDropStream drops the given stream from the subscription.
 // TODO: Doublecheck the complete behaviour
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	fmt.Println("debug drop stream", streamID, s.SyncOp)
+	fmt.Println("debug drop stream", streamID, s.SyncID)
 	/*removeFromRemote := s.removeStream(streamID[:])
 	if !removeFromRemote {
 		return nil

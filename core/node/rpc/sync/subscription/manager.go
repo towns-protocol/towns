@@ -69,12 +69,12 @@ func NewManager(
 	return manager
 }
 
-func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncOp string) *Subscription {
+func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) *Subscription {
 	subscription := &Subscription{
-		log:      m.log.With("syncId", syncOp),
+		log:      m.log.With("syncId", syncID),
 		Ctx:      ctx,
 		Cancel:   cancel,
-		SyncOp:   syncOp,
+		SyncID:   syncID,
 		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:  m,
 	}
@@ -82,7 +82,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		<-ctx.Done()
 		subscription.close()
 	}()
-	m.subscriptions.Store(syncOp, subscription)
+	m.subscriptions.Store(syncID, subscription)
 	return subscription
 }
 
@@ -148,7 +148,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	}
 
 	// Send the message to all subscriptions for this stream.
-	syncOps, ok := m.streamToSubscriptions.Load(streamID)
+	syncIDs, ok := m.streamToSubscriptions.Load(streamID)
 	if !ok {
 		// No subscriptions for this stream, nothing to do.
 		// TODO: When this case might happen?
@@ -161,14 +161,14 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(len(syncOps))
-	for i, syncOp := range syncOps {
-		go func(i int, syncOp string) {
-			subscription, ok := m.subscriptions.Load(syncOp)
+	wg.Add(len(syncIDs))
+	for i, syncID := range syncIDs {
+		go func(i int, syncID string) {
+			subscription, ok := m.subscriptions.Load(syncID)
 			if !ok {
 				if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
 					// The given subscription has already been cancelled, just delete from list and update stream subscribers.
-					m.streamToSubscriptions.Store(streamID, slices.Delete(syncOps, i, i+1))
+					m.streamToSubscriptions.Store(streamID, slices.Delete(syncIDs, i, i+1))
 				}
 			} else {
 				// Send message to subscriber.
@@ -176,7 +176,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 				subscription.Send(msg)
 			}
 			wg.Done()
-		}(i, syncOp)
+		}(i, syncID)
 	}
 	wg.Wait()
 }
