@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/auth"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -142,20 +143,20 @@ func (s *Service) addParsedEvent(
 	}
 
 	if len(verifications.OneOfChainAuths) > 0 {
-		isEntitled := false
+		var isEntitledResult auth.IsEntitledResult
 		var err error
 		// Determine if any chainAuthArgs grant entitlement
 		for _, chainAuthArgs := range verifications.OneOfChainAuths {
-			isEntitled, err = s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
+			isEntitledResult, err = s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
 			if err != nil {
 				return nil, err
 			}
-			if isEntitled {
+			if isEntitledResult.IsEntitled() {
 				break
 			}
 		}
 		// If no chainAuthArgs grant entitlement, execute the OnChainAuthFailure side effect.
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			var newEvents []*EventRef = nil
 			if sideEffects.OnChainAuthFailure != nil {
 				newEvents, err = s.AddEventPayload(
@@ -171,6 +172,7 @@ func (s *Service) addParsedEvent(
 			return newEvents, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgsList",
 				verifications.OneOfChainAuths,
 			).Func("addParsedEvent")
