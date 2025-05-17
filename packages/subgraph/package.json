@@ -17,7 +17,7 @@
         "dev:no-ui": "ponder dev --disable-ui"
     },
     "dependencies": {
-        "hono": "^4.5.0",
+        "hono": "^4.7.6",
         "ponder": "^0.9.27",
         "viem": "^2.21.51"
     },
