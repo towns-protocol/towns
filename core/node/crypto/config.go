@@ -53,8 +53,9 @@ const (
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
 	// StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey is the key for how many miniblocks to keep before the last
 	// snapshot for streams.
-	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey = "stream.defaultStreamTrimmingMiniblocksToKeep"
-	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey   = "stream.streamTrimmingMiniblocksToKeep.10"
+	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
+	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
+	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 )
 
 var (
@@ -177,14 +178,17 @@ func (m MembershipLimitsSettings) ForType(streamType byte) uint64 {
 }
 
 type StreamTrimmingMiniblocksToKeepSettings struct {
-	Default uint64 `mapstructure:"stream.defaultStreamTrimmingMiniblocksToKeep"`
-	Space   uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.10"`
+	Default     uint64 `mapstructure:"stream.defaultStreamTrimmingMiniblocksToKeep"`
+	Space       uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.10"`
+	UserSetting uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.a5"`
 }
 
 func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 {
 	switch streamType {
 	case shared.STREAM_SPACE_BIN:
 		return m.Space
+	case shared.STREAM_USER_SETTINGS_BIN:
+		return m.UserSetting
 	default:
 		return m.Default
 	}
@@ -210,8 +214,9 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		// 0 means space stream trimming is disabled
 		StreamTrimmingMiniblocksToKeep: StreamTrimmingMiniblocksToKeepSettings{
-			Default: 0,
-			Space:   0,
+			Default:     0,
+			Space:       0,
+			UserSetting: 0,
 		},
 
 		StreamCacheExpiration:    5 * time.Minute,
