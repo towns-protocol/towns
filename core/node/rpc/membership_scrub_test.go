@@ -87,6 +87,7 @@ type MockChainAuth struct {
 	auth.ChainAuth
 	result bool
 	err    error
+	reason auth.EntitlementResultReason
 }
 
 type mockChainAuthResult struct {
@@ -109,14 +110,15 @@ func (m *MockChainAuth) IsEntitled(
 ) (auth.IsEntitledResult, error) {
 	return &mockChainAuthResult{
 		isAllowed: m.result,
-		reason:    auth.EntitlementResultReason_NONE,
+		reason:    m.reason,
 	}, m.err
 }
 
-func NewMockChainAuth(expectedResult bool, expectedErr error) auth.ChainAuth {
+func NewMockChainAuth(expectedResult bool, reason auth.EntitlementResultReason, expectedErr error) auth.ChainAuth {
 	return &MockChainAuth{
 		result: expectedResult,
 		err:    expectedErr,
+		reason: reason,
 	}
 }
 
@@ -210,7 +212,7 @@ func (o *ObservingEventAdder) ObservedEvents() []struct {
 
 // checks if all observed events are membership leave events
 // with the expected scrubber reason
-func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT) {
+func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT, expectedReason *MembershipReason) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	
@@ -232,8 +234,11 @@ func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT) {
 		
 		// Check for scrubber reason
 		assert.NotNil(t, membershipPayload.UserMembership.Reason, "Event %d has no reason", i)
-		assert.Equal(t, MembershipReason_MR_NOT_ENTITLED, *membershipPayload.UserMembership.Reason,
-			"Event %d does not have the expected reason code", i)
+		
+		// Verify the reason matches the expected one
+		assert.Equal(t, *expectedReason, *membershipPayload.UserMembership.Reason, 
+			"Event %d has incorrect reason code. Expected: %v, Got: %v", 
+			i, *expectedReason, *membershipPayload.UserMembership.Reason)
 	}
 }
 
@@ -250,17 +255,19 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 	tests := map[string]struct {
 		mockChainAuth       auth.ChainAuth
 		expectedBootedUsers []*crypto.Wallet
+		expectedReasonCode  MembershipReason // Expected reason code for all booted users
 	}{
 		"always false chain auth boots all users": {
-			mockChainAuth:       NewMockChainAuth(false, nil),
+			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_NONE, nil),
 			expectedBootedUsers: allWallets,
+			expectedReasonCode:  MembershipReason_MR_NOT_ENTITLED,
 		},
 		"always true chain auth should boot no users": {
-			mockChainAuth:       NewMockChainAuth(true, nil),
+			mockChainAuth:       NewMockChainAuth(true, auth.EntitlementResultReason_NONE, nil),
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"error in chain auth should result in no booted users": {
-			mockChainAuth:       NewMockChainAuth(false, fmt.Errorf("this error should not cause a user to be booted")),
+			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_NONE, fmt.Errorf("this error should not cause a user to be booted")),
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"false or error result for individual users": {
@@ -278,6 +285,12 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 				},
 			),
 			expectedBootedUsers: []*crypto.Wallet{wallet1},
+			expectedReasonCode:  MembershipReason_MR_NOT_ENTITLED,
+		},
+		"expired membership should boot with MR_EXPIRED reason": {
+			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_MEMBERSHIP_EXPIRED, nil),
+			expectedBootedUsers: allWallets,
+			expectedReasonCode:  MembershipReason_MR_EXPIRED,
 		},
 	}
 	for name, tc := range tests {
@@ -364,8 +377,8 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 						// assert.Len(eventAdder.ObservedEvents(), len(tc.expectedBootedUsers))
 						assert.GreaterOrEqual(len(eventAdder.ObservedEvents()), len(tc.expectedBootedUsers))
 						
-						// Validate that all observed events are membership leave events with expected reason
-						eventAdder.ValidateMembershipLeaveEvents(t)
+						eventAdder.ValidateMembershipLeaveEvents(t, &tc.expectedReasonCode)
+
 					}
 				},
 				10*time.Second,
