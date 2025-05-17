@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
@@ -75,28 +74,28 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
 
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
         facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
         facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
         facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
         );
@@ -114,21 +113,21 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
         // Get deployed addresses and add facets
         address facet = facetHelper.getDeployedAddress("DropFacet");
         addFacet(
-            DeployDropFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDropFacet.selectors()),
             facet,
             DeployDropFacet.makeInitData(getBaseRegistry())
         );
 
         facet = facetHelper.getDeployedAddress("TownsPoints");
         addFacet(
-            DeployTownsPoints.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployTownsPoints.selectors()),
             facet,
             DeployTownsPoints.makeInitData(getSpaceFactory())
         );
 
         facet = facetHelper.getDeployedAddress("MetadataFacet");
         addFacet(
-            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
             facet,
             DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
         );
@@ -156,19 +155,19 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
 
             if (facetName.eq("DropFacet")) {
                 addFacet(
-                    DeployDropFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployDropFacet.selectors()),
                     facet,
                     DeployDropFacet.makeInitData(getBaseRegistry())
                 );
             } else if (facetName.eq("TownsPoints")) {
                 addFacet(
-                    DeployTownsPoints.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployTownsPoints.selectors()),
                     facet,
                     DeployTownsPoints.makeInitData(getSpaceFactory())
                 );
             } else if (facetName.eq("MetadataFacet")) {
                 addFacet(
-                    DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
                     facet,
                     DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
                 );
