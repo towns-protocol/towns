@@ -46,15 +46,12 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
     DeployFacet private facetHelper = new DeployFacet();
 
-    address private multiInit;
-
     function versionName() public pure override returns (string memory) {
         return "space";
     }
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
@@ -62,8 +59,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("TokenOwnableFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
@@ -98,6 +93,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up all feature facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("MembershipToken");
         facetHelper.add("ERC721AQueryable");
         facetHelper.add("Banning");
@@ -187,6 +183,8 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
             facet = facetHelper.getDeployedAddress("MockLegacyMembership");
             addCut(makeCut(facet, FacetCutAction.Add, DeployMockLegacyMembership.selectors()));
         }
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({

@@ -36,7 +36,6 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployMockMessenger private messengerHelper = new DeployMockMessenger();
 
-    address private multiInit;
     address public messenger;
     address private riverToken = 0x9172852305F32819469bf38A3772f29361d7b768;
 
@@ -50,15 +49,12 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
@@ -90,6 +86,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up all feature facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("ERC721ANonTransferable");
         facetHelper.add("NodeOperatorFacet");
         facetHelper.add("MetadataFacet");
@@ -167,6 +164,8 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             facet,
             DeployXChain.makeInitData()
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({

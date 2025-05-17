@@ -31,7 +31,6 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     address private SPACE_FACTORY;
 
     DeployFacet private facetHelper = new DeployFacet();
-    address private multiInit;
 
     function versionName() public pure override returns (string memory) {
         return "riverAirdrop";
@@ -63,15 +62,12 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
@@ -103,6 +99,7 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up all facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("DropFacet");
         facetHelper.add("TownsPoints");
         facetHelper.add("MetadataFacet");
@@ -131,6 +128,8 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
             facet,
             DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
