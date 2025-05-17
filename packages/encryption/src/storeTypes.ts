@@ -1,4 +1,4 @@
-import { InboundGroupSessionData } from './encryptionDevice'
+import { InboundGroupSessionData } from './encryptionDevice-olmlib'
 
 export interface AccountRecord {
     id: string
