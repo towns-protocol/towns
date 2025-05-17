@@ -106,12 +106,12 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MembershipMetadata");
         facetHelper.add("EntitlementDataQueryable");
         facetHelper.add("EntitlementsManager");
+        facetHelper.add("Roles");
+        facetHelper.add("Channels");
 
         // Deploy the first batch of facets
         facetHelper.deployBatch(deployer);
 
-        facetHelper.add("Roles");
-        facetHelper.add("Channels");
         facetHelper.add("TokenPausableFacet");
         facetHelper.add("PrepayFacet");
         facetHelper.add("ReferralsFacet");
@@ -120,6 +120,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("SwapFacet");
         facetHelper.add("TippingFacet");
         facetHelper.add("Treasury");
+        facetHelper.add("AppAccount");
 
         if (isAnvil()) {
             facetHelper.add("MockLegacyMembership");
@@ -180,7 +181,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facet = facetHelper.getDeployedAddress("Treasury");
         addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("AppAccount", deployer);
+        facet = facetHelper.getDeployedAddress("AppAccount");
         addCut(DeployAppAccount.makeCut(facet, IDiamond.FacetCutAction.Add));
 
         if (isAnvil()) {
@@ -244,7 +245,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
             } else if (facetName.eq("Treasury")) {
                 addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("AppAccount")) {
-                facet = facetHelper.deploy("AppAccount", deployer);
                 addCut(DeployAppAccount.makeCut(facet, IDiamond.FacetCutAction.Add));
             }
         }
