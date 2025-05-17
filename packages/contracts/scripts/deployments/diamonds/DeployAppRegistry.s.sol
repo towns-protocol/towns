@@ -27,8 +27,6 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     DeployFacet private facetHelper = new DeployFacet();
 
-    address private multiInit;
-
     string internal constant APP_REGISTRY_SCHEMA =
         "address app, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
 
@@ -38,7 +36,6 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
@@ -46,8 +43,6 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MetadataFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
@@ -86,6 +81,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up feature facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("AppRegistryFacet");
 
         // Deploy all facets in a batch
@@ -98,6 +94,8 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             facet,
             DeployAppRegistryFacet.makeInitData(APP_REGISTRY_SCHEMA, address(0))
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
