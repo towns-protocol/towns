@@ -64,7 +64,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
-		crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+		crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5, UserSetting: 5},
 		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
