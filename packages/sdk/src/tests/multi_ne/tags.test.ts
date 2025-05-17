@@ -21,9 +21,11 @@ import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { makeSignerContext, SignerContext } from '../../signerContext'
 import { makeParsedEvent } from '../../sign'
-import { makeRemoteTimelineEvent } from '../../types'
-import { bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
+import { makeRemoteTimelineEvent, StreamTimelineEvent } from '../../types'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
+import { StreamsView } from '../../streams-view/streamsView'
+import { toEvent } from '../../streams-view/timelineStoreEvents'
 
 // Mock the IStreamStateView interface
 
@@ -38,6 +40,7 @@ describe('makeTags', () => {
     const spaceId = makeUniqueSpaceStreamId()
     const streamId = makeUniqueChannelStreamId(spaceId)
     let mockStreamView: IStreamStateView
+    let streamsView: StreamsView
 
     let user1: TagsTestUser
     let user2: TagsTestUser
@@ -60,17 +63,39 @@ describe('makeTags', () => {
         user2 = await makeUser()
         user3 = await makeUser()
         user4 = await makeUser()
-
-        mockStreamView = new StreamStateView(userIdFromAddress(user1.address), streamId)
     })
 
     beforeEach(() => {
-        mockStreamView.events.clear()
+        streamsView = new StreamsView(userIdFromAddress(user1.address), undefined)
+        mockStreamView = new StreamStateView(
+            userIdFromAddress(user1.address),
+            streamId,
+            streamsView,
+        )
     })
 
     it('should create tags for a reply message', () => {
-        const threadId1Bytes = Uint8Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
-        const threadId1 = bin_toHexString(threadId1Bytes)
+        const threadRootEvent = {
+            ...makeRemoteTimelineEvent({
+                parsedEvent: makeParsedEvent(
+                    create(StreamEventSchema, {
+                        creatorAddress: user2.context.creatorAddress,
+                        salt: genIdBlob(),
+                        prevMiniblockHash: undefined,
+                        payload: { case: undefined, value: undefined },
+                        createdAtEpochMs: BigInt(Date.now()),
+                        tags: undefined,
+                    }),
+                    undefined,
+                    undefined,
+                ),
+                eventNum: 0n,
+                miniblockNum: 0n,
+                confirmedEventNum: 0n,
+            }),
+        }
+        const threadId1 = threadRootEvent.hashStr
+
         const replyMessage: PlainMessage<ChannelMessage> = {
             payload: {
                 case: 'post',
@@ -99,106 +124,94 @@ describe('makeTags', () => {
             },
         }
 
-        mockStreamView.events.set(threadId1, {
-            ...makeRemoteTimelineEvent({
-                parsedEvent: makeParsedEvent(
-                    create(StreamEventSchema, {
-                        creatorAddress: user2.context.creatorAddress,
-                        salt: genIdBlob(),
-                        prevMiniblockHash: undefined,
-                        payload: { case: undefined, value: undefined },
-                        createdAtEpochMs: BigInt(Date.now()),
-                        tags: undefined,
-                    }),
-                    undefined,
-                    undefined,
-                ),
-                eventNum: 0n,
-                miniblockNum: 0n,
-                confirmedEventNum: 0n,
-            }),
-        })
-        mockStreamView.timeline.push(mockStreamView.events.get(threadId1)!)
-
-        mockStreamView.events.set('event1', {
-            ...makeRemoteTimelineEvent({
-                parsedEvent: makeParsedEvent(
-                    create(StreamEventSchema, {
-                        creatorAddress: user3.context.creatorAddress,
-                        salt: genIdBlob(),
-                        prevMiniblockHash: undefined,
-                        payload: { case: undefined, value: undefined },
-                        createdAtEpochMs: BigInt(Date.now()),
-                        tags: undefined,
-                    }),
-                    undefined,
-                    undefined,
-                ),
-                eventNum: 0n,
-                miniblockNum: 0n,
-                confirmedEventNum: 0n,
-            }),
-            decryptedContent: {
-                kind: 'channelMessage',
-                content: create(ChannelMessageSchema, {
-                    payload: {
-                        case: 'post',
-                        value: {
-                            threadId: threadId1,
-                            content: {
-                                case: 'text',
-                                value: {
-                                    body: 'hello world',
-                                    mentions: [],
-                                    attachments: [],
+        const events: StreamTimelineEvent[] = [
+            // threadId1
+            threadRootEvent,
+            // event1
+            {
+                ...makeRemoteTimelineEvent({
+                    parsedEvent: makeParsedEvent(
+                        create(StreamEventSchema, {
+                            creatorAddress: user3.context.creatorAddress,
+                            salt: genIdBlob(),
+                            prevMiniblockHash: undefined,
+                            payload: { case: undefined, value: undefined },
+                            createdAtEpochMs: BigInt(Date.now()),
+                            tags: undefined,
+                        }),
+                        undefined,
+                        undefined,
+                    ),
+                    eventNum: 0n,
+                    miniblockNum: 0n,
+                    confirmedEventNum: 0n,
+                }),
+                decryptedContent: {
+                    kind: 'channelMessage',
+                    content: create(ChannelMessageSchema, {
+                        payload: {
+                            case: 'post',
+                            value: {
+                                threadId: threadId1,
+                                content: {
+                                    case: 'text',
+                                    value: {
+                                        body: 'hello world',
+                                        mentions: [],
+                                        attachments: [],
+                                    },
                                 },
                             },
                         },
-                    },
-                }),
-            },
-        })
-        mockStreamView.timeline.push(mockStreamView.events.get('event1')!)
-
-        mockStreamView.events.set('event2', {
-            ...makeRemoteTimelineEvent({
-                parsedEvent: makeParsedEvent(
-                    create(StreamEventSchema, {
-                        creatorAddress: user4.context.creatorAddress,
-                        salt: genIdBlob(),
-                        prevMiniblockHash: undefined,
-                        payload: { case: undefined, value: undefined },
-                        createdAtEpochMs: BigInt(Date.now()),
-                        tags: undefined,
                     }),
-                    undefined,
-                    undefined,
-                ),
-                eventNum: 0n,
-                miniblockNum: 0n,
-                confirmedEventNum: 0n,
-            }),
-            decryptedContent: {
-                kind: 'channelMessage',
-                content: create(ChannelMessageSchema, {
-                    payload: {
-                        case: 'post',
-                        value: {
-                            threadId: threadId1,
-                            content: {
-                                case: 'text',
-                                value: {
-                                    body: 'hello world',
-                                    mentions: [],
-                                    attachments: [],
+                },
+            },
+            // event 2
+            {
+                ...makeRemoteTimelineEvent({
+                    parsedEvent: makeParsedEvent(
+                        create(StreamEventSchema, {
+                            creatorAddress: user4.context.creatorAddress,
+                            salt: genIdBlob(),
+                            prevMiniblockHash: undefined,
+                            payload: { case: undefined, value: undefined },
+                            createdAtEpochMs: BigInt(Date.now()),
+                            tags: undefined,
+                        }),
+                        undefined,
+                        undefined,
+                    ),
+                    eventNum: 0n,
+                    miniblockNum: 0n,
+                    confirmedEventNum: 0n,
+                }),
+                decryptedContent: {
+                    kind: 'channelMessage',
+                    content: create(ChannelMessageSchema, {
+                        payload: {
+                            case: 'post',
+                            value: {
+                                threadId: threadId1,
+                                content: {
+                                    case: 'text',
+                                    value: {
+                                        body: 'hello world',
+                                        mentions: [],
+                                        attachments: [],
+                                    },
                                 },
                             },
                         },
-                    },
-                }),
+                    }),
+                },
             },
-        })
-        mockStreamView.timeline.push(mockStreamView.events.get('event2')!)
+        ]
+
+        streamsView.timelineStore.setState.appendEvents(
+            events.map((x) => toEvent(x, user1.userId)),
+            user1.userId,
+            streamId,
+        )
 
         const tags = makeTags(replyMessage, mockStreamView)
 
