@@ -6,6 +6,14 @@ import {
     createSpaceFacetAbi,
     spaceOwnerAbi,
     tokenPausableFacetAbi,
+    mainnetDelegationAbi,
+    entitlementCheckerAbi,
+    nodeOperatorFacetAbi,
+    spaceDelegationFacetAbi,
+    rewardsDistributionV2Abi,
+    xChainAbi,
+    swapFacetAbi,
+    swapRouterAbi,
 } from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
@@ -28,6 +36,16 @@ if (!spaceOwner) {
     throw new Error('Space owner address not found')
 }
 
+const swapRouter = getContractAddress('swapRouter')
+if (!swapRouter) {
+    throw new Error('Swap router address not found')
+}
+
+const baseRegistry = getContractAddress('baseRegistry')
+if (!baseRegistry) {
+    throw new Error('Base registry address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -42,14 +60,27 @@ export default createConfig({
         },
     },
     contracts: {
+        BaseRegistry: {
+            abi: mergeAbis([
+                mainnetDelegationAbi,
+                entitlementCheckerAbi,
+                nodeOperatorFacetAbi,
+                spaceDelegationFacetAbi,
+                rewardsDistributionV2Abi,
+                xChainAbi,
+            ]),
+            address: baseRegistry,
+            startBlock,
+            network: 'omega',
+        },
         SpaceFactory: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
             startBlock,
             network: 'omega',
         },
         Space: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: factory({
                 address: spaceFactory,
                 event: parseAbiItem([
@@ -63,6 +94,12 @@ export default createConfig({
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
+            startBlock,
+            network: 'omega',
+        },
+        SwapRouter: {
+            abi: swapRouterAbi,
+            address: swapRouter,
             startBlock,
             network: 'omega',
         },

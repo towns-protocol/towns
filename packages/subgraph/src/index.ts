@@ -99,3 +99,75 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
         )
     }
 })
+
+ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    const space = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, spaceId),
+    })
+    if (!space) {
+        console.warn(`Space not found for Space:SwapFeeConfigUpdated`, spaceId)
+        return
+    }
+    try {
+        // update swap fee table
+        const result = await context.db.sql
+            .update(schema.swapFee)
+            .set({
+                posterFeeBps: event.args.posterFeeBps,
+                collectPosterFeeToSpace: event.args.collectPosterFeeToSpace,
+                createdAt: blockNumber,
+            })
+            .where(eq(schema.swapFee.spaceId, spaceId))
+
+        if (result.changes === 0) {
+            // Insert a new record if it doesn't exist
+            await context.db.insert(schema.swapFee).values({
+                spaceId: spaceId,
+                posterFeeBps: event.args.posterFeeBps,
+                collectPosterFeeToSpace: event.args.collectPosterFeeToSpace,
+                createdAt: blockNumber,
+            })
+        }
+    } catch (error) {
+        console.error(
+            `Error processing Space:SwapFeeConfigUpdated at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('Space:SwapExecuted', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+    const transactionHash = event.transaction.hash
+
+    const space = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, spaceId),
+    })
+    if (!space) {
+        console.warn(`Space not found for Space:Swap`, spaceId)
+        return
+    }
+
+    try {
+        // update swap table
+        await context.db.insert(schema.swap).values({
+            txHash: transactionHash,
+            spaceId: spaceId,
+            recipient: event.args.recipient,
+            tokenIn: event.args.tokenIn,
+            tokenOut: event.args.tokenOut,
+            amountIn: event.args.amountIn,
+            amountOut: event.args.amountOut,
+            poster: event.args.poster,
+            createdAt: blockNumber,
+        })
+    } catch (error) {
+        console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
+    }
+})

@@ -10,8 +10,10 @@ import {
     entitlementCheckerAbi,
     nodeOperatorFacetAbi,
     spaceDelegationFacetAbi,
-    rewardsDistributionAbi,
+    rewardsDistributionV2Abi,
     xChainAbi,
+    swapFacetAbi,
+    swapRouterAbi,
 } from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
@@ -39,6 +41,11 @@ if (!baseRegistry) {
     throw new Error('Base registry address not found')
 }
 
+const swapRouter = getContractAddress('swapRouter')
+if (!swapRouter) {
+    throw new Error('Swap router address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -59,7 +66,7 @@ export default createConfig({
                 entitlementCheckerAbi,
                 nodeOperatorFacetAbi,
                 spaceDelegationFacetAbi,
-                rewardsDistributionAbi,
+                rewardsDistributionV2Abi,
                 xChainAbi,
             ]),
             address: baseRegistry,
@@ -67,13 +74,13 @@ export default createConfig({
             network: 'gamma',
         },
         SpaceFactory: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
             startBlock,
             network: 'gamma',
         },
         Space: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: factory({
                 address: spaceFactory,
                 event: parseAbiItem([
@@ -87,6 +94,12 @@ export default createConfig({
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
+            startBlock,
+            network: 'gamma',
+        },
+        SwapRouter: {
+            abi: swapRouterAbi,
+            address: swapRouter,
             startBlock,
             network: 'gamma',
         },

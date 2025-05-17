@@ -29,8 +29,10 @@ export default defineConfig({
         "**/EntitlementChecker.sol/*.json",
         "**/NodeOperatorFacet.sol/*.json",
         "**/SpaceDelegationFacet.sol/*.json",
-        "**/v2/RewardsDistribution.sol/*.json",
+        "**/RewardsDistributionV2.sol/*.json",
         "**/XChain.sol/*.json",
+        "**/SwapFacet.sol/*.json",
+        "**/SwapRouter.sol/*.json",
       ],
       forge: {
         build: false,
