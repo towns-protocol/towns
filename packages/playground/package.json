@@ -38,9 +38,9 @@
         "tailwind-merge": "^2.3.0",
         "tailwindcss-animate": "^1.0.7",
         "use-stick-to-bottom": "^1.1.0",
-        "viem": "^2.21.51",
+        "viem": "^2.29.3",
         "vite-plugin-node-polyfills": "^0.22.0",
-        "wagmi": "^2.13.0",
+        "wagmi": "^2.15.3",
         "zod": "^3.21.4"
     },
     "devDependencies": {
