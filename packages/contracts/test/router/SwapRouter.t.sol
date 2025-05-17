@@ -318,7 +318,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
 
         // execute swap
-        uint256 actualAmountOut = swapRouter.executeSwap(inputParams, routerParams, poster);
+        (uint256 actualAmountOut, ) = swapRouter.executeSwap(inputParams, routerParams, poster);
         vm.stopPrank();
 
         _verifySwapResults(
@@ -381,7 +381,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // execute swap with ETH
         deal(caller, amountIn);
         vm.prank(caller);
-        uint256 actualAmountOut = swapRouter.executeSwap{value: amountIn}(
+        (uint256 actualAmountOut, ) = swapRouter.executeSwap{value: amountIn}(
             inputParams,
             routerParams,
             poster
@@ -454,7 +454,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         deal(mockRouter, amountOut * 2);
 
         // execute swap
-        uint256 actualAmountOut = swapRouter.executeSwap(inputParams, routerParams, poster);
+        (uint256 actualAmountOut, ) = swapRouter.executeSwap(inputParams, routerParams, poster);
         vm.stopPrank();
 
         _verifySwapResults(
@@ -571,7 +571,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     //        token0.mint(owner, params.amountIn);
     //
     //        // execute swap with permit
-    //        uint256 actualAmountOut = swapRouter.executeSwapWithPermit(
+    //        (uint256 actualAmountOut, ) = swapRouter.executeSwapWithPermit(
     //            inputParams,
     //            routerParams,
     //            permitParams,
@@ -654,7 +654,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     //        deal(mockRouter, params.amountOut * 2);
     //
     //        // execute swap with permit
-    //        uint256 actualAmountOut = swapRouter.executeSwapWithPermit(
+    //        (uint256 actualAmountOut, ) = swapRouter.executeSwapWithPermit(
     //            inputParams,
     //            routerParams,
     //            permitParams,
