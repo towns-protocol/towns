@@ -2,40 +2,32 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
-
-// helpers
-
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-
-import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
 import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.sol";
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
-import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
-import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
+import {LibString} from "solady/utils/LibString.sol";
+import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
+import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
 
-// facets
+// contracts
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployAppRegistryFacet} from "scripts/deployments/facets/DeployAppRegistryFacet.s.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
-contract DeployAppRegistry is DiamondHelper, Deployer {
+// deployers
+import {DeployFacet} from "../../common/DeployFacet.s.sol";
+import {Deployer} from "../../common/Deployer.s.sol";
+
+contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
+    using LibString for string;
+
     DeployFacet private facetHelper = new DeployFacet();
 
-    address internal metadata;
-    address internal multiInit;
-    address internal diamondCut;
-    address internal diamondLoupe;
-    address internal introspection;
-    address internal ownable;
-    address internal appRegistry;
-
-    string internal APP_REGISTRY_SCHEMA =
+    string internal constant APP_REGISTRY_SCHEMA =
         "address app, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
 
     function versionName() public pure override returns (string memory) {
@@ -43,69 +35,104 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = facetHelper.deploy("MultiInit", deployer);
+        // Queue up all core facets for batch deployment
+        facetHelper.add("DiamondCutFacet");
+        facetHelper.add("DiamondLoupeFacet");
+        facetHelper.add("IntrospectionFacet");
+        facetHelper.add("OwnableFacet");
+        facetHelper.add("MetadataFacet");
 
-        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
+        // Get predicted addresses
+        address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
-            diamondCut,
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
+            facet,
             DeployDiamondCut.makeInitData()
         );
 
-        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
-            diamondLoupe,
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
+            facet,
             DeployDiamondLoupe.makeInitData()
         );
 
-        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
+        facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
-            introspection,
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
+            facet,
             DeployIntrospection.makeInitData()
         );
 
-        ownable = facetHelper.deploy("OwnableFacet", deployer);
+        facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
-            ownable,
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
+            facet,
             DeployOwnable.makeInitData(deployer)
         );
 
-        metadata = facetHelper.deploy("MetadataFacet", deployer);
+        facet = facetHelper.predictAddress("MetadataFacet");
         addFacet(
-            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
-            metadata,
+            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
+            facet,
             DeployMetadata.makeInitData(bytes32("AppRegistry"), "")
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        appRegistry = facetHelper.deploy("AppRegistryFacet", deployer);
+        // Queue up feature facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("AppRegistryFacet");
+
+        // Deploy all facets in a batch
+        facetHelper.deployBatch(deployer);
+
+        // Add feature facets
+        address facet = facetHelper.getDeployedAddress("AppRegistryFacet");
         addFacet(
-            DeployAppRegistryFacet.makeCut(appRegistry, IDiamond.FacetCutAction.Add),
-            appRegistry,
+            makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
+            facet,
             DeployAppRegistryFacet.makeInitData(APP_REGISTRY_SCHEMA, address(0))
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
+    }
+
+    function diamondInitHelper(
+        address deployer,
+        string[] memory facetNames
+    ) external override returns (FacetCut[] memory) {
+        // Queue up all requested facets for batch deployment
+        for (uint256 i; i < facetNames.length; ++i) {
+            facetHelper.add(facetNames[i]);
+        }
+
+        // Deploy all requested facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
+        for (uint256 i; i < facetNames.length; ++i) {
+            string memory facetName = facetNames[i];
+            address facet = facetHelper.getDeployedAddress(facetName);
+
+            if (facetName.eq("AppRegistryFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()));
+            }
+        }
+
+        return baseFacets();
     }
 
     function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
-
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
 
