@@ -88,6 +88,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         );
 
         facet = facetHelper.predictAddress("TokenOwnableFacet");
+        // TokenOwnableFacet doesn't require global initialization during deployment.
+        // Unlike other facets with immediate initialization, TokenOwnableFacet is initialized
+        // individually for each Space instance at creation time rather than globally.
         addCut(makeCut(facet, FacetCutAction.Add, DeployTokenOwnable.selectors()));
     }
 
