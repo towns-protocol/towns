@@ -19,5 +19,6 @@ reviews:
             - 'ai'
             - 'rabbit'
             - 'coderabbit'
+            - 'area/contracts'
 chat:
     auto_reply: true
