@@ -19,7 +19,7 @@ export default [
       {
         "name": "condition",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.ClaimCondition",
+        "internalType": "struct DropGroup.ClaimCondition",
         "components": [
           {
             "name": "currency",
@@ -69,7 +69,7 @@ export default [
       {
         "name": "claim",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.Claim",
+        "internalType": "struct DropClaim.Claim",
         "components": [
           {
             "name": "conditionId",
@@ -116,7 +116,7 @@ export default [
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -130,7 +130,7 @@ export default [
       {
         "name": "claim",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.Claim",
+        "internalType": "struct DropClaim.Claim",
         "components": [
           {
             "name": "conditionId",
@@ -201,7 +201,7 @@ export default [
       {
         "name": "condition",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.ClaimCondition",
+        "internalType": "struct DropGroup.ClaimCondition",
         "components": [
           {
             "name": "currency",
@@ -251,7 +251,7 @@ export default [
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct DropClaimLib.ClaimCondition[]",
+        "internalType": "struct DropGroup.ClaimCondition[]",
         "components": [
           {
             "name": "currency",
@@ -348,7 +348,7 @@ export default [
       {
         "name": "conditions",
         "type": "tuple[]",
-        "internalType": "struct DropClaimLib.ClaimCondition[]",
+        "internalType": "struct DropGroup.ClaimCondition[]",
         "components": [
           {
             "name": "currency",
@@ -405,7 +405,7 @@ export default [
         "name": "condition",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct DropClaimLib.ClaimCondition",
+        "internalType": "struct DropGroup.ClaimCondition",
         "components": [
           {
             "name": "currency",
@@ -461,7 +461,7 @@ export default [
         "name": "conditions",
         "type": "tuple[]",
         "indexed": false,
-        "internalType": "struct DropClaimLib.ClaimCondition[]",
+        "internalType": "struct DropGroup.ClaimCondition[]",
         "components": [
           {
             "name": "currency",
@@ -676,11 +676,6 @@ export default [
   {
     "type": "error",
     "name": "DropFacet__NoActiveClaimCondition",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "DropFacet__PointsMustBeGreaterThanZero",
     "inputs": []
   },
   {
