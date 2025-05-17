@@ -339,7 +339,7 @@ export abstract class BaseDecryptionExtensions {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
                 }
-                if (keySolicitation.sessionIds.length === 0 && !keySolicitation.isNewDevice) {
+                if (keySolicitation.sessionIds.length === 0) {
                     continue
                 }
                 const selectedQueue =
@@ -879,9 +879,10 @@ export abstract class BaseDecryptionExtensions {
             streamId,
             userAddress: item.fromUserAddress,
             deviceKey: item.solicitation.deviceKey,
-            sessionIds: item.solicitation.isNewDevice
-                ? []
-                : allSessions.map((x) => x.sessionId).sort(),
+            sessionIds: allSessions
+                .map((x) => x.sessionId)
+                .filter((x) => requestedSessionIds.has(x))
+                .sort(),
         })
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
