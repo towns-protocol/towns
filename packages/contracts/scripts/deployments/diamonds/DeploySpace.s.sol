@@ -120,6 +120,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("SwapFacet");
         facetHelper.add("TippingFacet");
         facetHelper.add("Treasury");
+        facetHelper.add("AppAccount");
 
         if (isAnvil()) {
             facetHelper.add("MockLegacyMembership");
@@ -180,7 +181,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facet = facetHelper.getDeployedAddress("Treasury");
         addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("AppAccount", deployer);
+        facet = facetHelper.getDeployedAddress("AppAccount");
         addCut(DeployAppAccount.makeCut(facet, IDiamond.FacetCutAction.Add));
 
         if (isAnvil()) {
