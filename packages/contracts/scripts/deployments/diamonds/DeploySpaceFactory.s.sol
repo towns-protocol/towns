@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
@@ -52,7 +51,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployTieredLogPricingV3 private deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
 
     // helpers
-    address private multiInit;
     address[] private pricingModules;
 
     // external contracts
@@ -79,7 +77,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         spaceOwner = deploySpaceOwner.deploy(deployer);
 
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
@@ -107,44 +104,38 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         pricingModules.push(tieredLogPricingV3);
         pricingModules.push(fixedPricing);
 
-        multiInit = facetHelper.getDeployedAddress("MultiInit");
-
         address facet = facetHelper.getDeployedAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        if (isAnvil()) {
-            facetHelper.add("MockDelegationRegistry");
-            facetHelper.add("MockLegacyArchitect");
-        }
-
         // Queue up all feature facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("MetadataFacet");
         facetHelper.add("Architect");
         facetHelper.add("CreateSpaceFacet");
@@ -161,6 +152,11 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("SpaceProxyInitializer");
         facetHelper.add("SpaceFactoryInit");
 
+        if (isAnvil()) {
+            facetHelper.add("MockDelegationRegistry");
+            facetHelper.add("MockLegacyArchitect");
+        }
+
         // Deploy the feature facets in a batch
         facetHelper.deployBatch(deployer);
 
@@ -168,7 +164,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             mockDelegationRegistry = facetHelper.getDeployedAddress("MockDelegationRegistry");
             address legacyArchitect = facetHelper.getDeployedAddress("MockLegacyArchitect");
             addFacet(
-                DeployMockLegacyArchitect.makeCut(legacyArchitect, IDiamond.FacetCutAction.Add),
+                makeCut(legacyArchitect, FacetCutAction.Add, DeployMockLegacyArchitect.selectors()),
                 legacyArchitect,
                 DeployMockLegacyArchitect.makeInitData()
             );
@@ -178,14 +174,14 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
 
         address facet = facetHelper.getDeployedAddress("MetadataFacet");
         addFacet(
-            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
             facet,
             DeployMetadata.makeInitData(bytes32("SpaceFactory"), "")
         );
 
         facet = facetHelper.getDeployedAddress("Architect");
         addFacet(
-            DeployArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployArchitect.selectors()),
             facet,
             DeployArchitect.makeInitData(
                 spaceOwner,
@@ -197,28 +193,28 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
 
         facet = facetHelper.getDeployedAddress("CreateSpaceFacet");
         addFacet(
-            DeployCreateSpace.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployCreateSpace.selectors()),
             facet,
             DeployCreateSpace.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("ProxyManager");
         addFacet(
-            DeployProxyManager.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployProxyManager.selectors()),
             facet,
             DeployProxyManager.makeInitData(spaceImpl)
         );
 
         facet = facetHelper.getDeployedAddress("PausableFacet");
         addFacet(
-            DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployPausable.selectors()),
             facet,
             DeployPausable.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("PlatformRequirementsFacet");
         addFacet(
-            DeployPlatformRequirements.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployPlatformRequirements.selectors()),
             facet,
             DeployPlatformRequirements.makeInitData(
                 deployer, // feeRecipient
@@ -232,14 +228,14 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
 
         facet = facetHelper.getDeployedAddress("PricingModulesFacet");
         addFacet(
-            DeployPricingModules.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployPricingModules.selectors()),
             facet,
             DeployPricingModules.makeInitData(pricingModules)
         );
 
         facet = facetHelper.getDeployedAddress("ImplementationRegistryFacet");
         addFacet(
-            DeployImplementationRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployImplementationRegistry.selectors()),
             facet,
             DeployImplementationRegistry.makeInitData()
         );
@@ -247,28 +243,28 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         address sclEip6565 = facetHelper.getDeployedAddress("SCL_EIP6565");
         facet = facetHelper.getDeployedAddress("WalletLink");
         addFacet(
-            DeployWalletLink.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployWalletLink.selectors()),
             facet,
             DeployWalletLink.makeInitData(sclEip6565)
         );
 
         facet = facetHelper.getDeployedAddress("EIP712Facet");
         addFacet(
-            DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployEIP712Facet.selectors()),
             facet,
             DeployEIP712Facet.makeInitData("SpaceFactory", "1")
         );
 
         facet = facetHelper.getDeployedAddress("PartnerRegistry");
         addFacet(
-            DeployPartnerRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployPartnerRegistry.selectors()),
             facet,
             DeployPartnerRegistry.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("FeatureManagerFacet");
         addFacet(
-            DeployFeatureManager.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployFeatureManager.selectors()),
             facet,
             DeployFeatureManager.makeInitData()
         );
@@ -277,6 +273,8 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         spaceFactoryInit = facetHelper.getDeployedAddress("SpaceFactoryInit");
         spaceFactoryInitData = DeploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
         addInit(spaceFactoryInit, spaceFactoryInitData);
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
@@ -305,13 +303,13 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
 
             if (facetName.eq("MetadataFacet")) {
                 addFacet(
-                    DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
                     facet,
                     DeployMetadata.makeInitData(bytes32("SpaceFactory"), "")
                 );
             } else if (facetName.eq("Architect")) {
                 addFacet(
-                    DeployArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployArchitect.selectors()),
                     facet,
                     DeployArchitect.makeInitData(
                         spaceOwner,
@@ -322,25 +320,25 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                 );
             } else if (facetName.eq("MockLegacyArchitect")) {
                 addFacet(
-                    DeployMockLegacyArchitect.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployMockLegacyArchitect.selectors()),
                     facet,
                     DeployMockLegacyArchitect.makeInitData()
                 );
             } else if (facetName.eq("ProxyManager")) {
                 addFacet(
-                    DeployProxyManager.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployProxyManager.selectors()),
                     facet,
                     DeployProxyManager.makeInitData(spaceImpl)
                 );
             } else if (facetName.eq("PausableFacet")) {
                 addFacet(
-                    DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployPausable.selectors()),
                     facet,
                     DeployPausable.makeInitData()
                 );
             } else if (facetName.eq("PlatformRequirementsFacet")) {
                 addFacet(
-                    DeployPlatformRequirements.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployPlatformRequirements.selectors()),
                     facet,
                     DeployPlatformRequirements.makeInitData(
                         deployer, // feeRecipient
@@ -353,44 +351,44 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                 );
             } else if (facetName.eq("PricingModulesFacet")) {
                 addFacet(
-                    DeployPricingModules.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployPricingModules.selectors()),
                     facet,
                     DeployPricingModules.makeInitData(pricingModules)
                 );
             } else if (facetName.eq("ImplementationRegistryFacet")) {
                 addFacet(
-                    DeployImplementationRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployImplementationRegistry.selectors()),
                     facet,
                     DeployImplementationRegistry.makeInitData()
                 );
             } else if (facetName.eq("WalletLink")) {
                 address sclEip6565 = facetHelper.getDeployedAddress("SCL_EIP6565");
                 addFacet(
-                    DeployWalletLink.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployWalletLink.selectors()),
                     facet,
                     DeployWalletLink.makeInitData(sclEip6565)
                 );
             } else if (facetName.eq("EIP712Facet")) {
                 addFacet(
-                    DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployEIP712Facet.selectors()),
                     facet,
                     DeployEIP712Facet.makeInitData("SpaceFactory", "1")
                 );
             } else if (facetName.eq("PartnerRegistry")) {
                 addFacet(
-                    DeployPartnerRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployPartnerRegistry.selectors()),
                     facet,
                     DeployPartnerRegistry.makeInitData()
                 );
             } else if (facetName.eq("CreateSpaceFacet")) {
                 addFacet(
-                    DeployCreateSpace.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployCreateSpace.selectors()),
                     facet,
                     DeployCreateSpace.makeInitData()
                 );
             } else if (facetName.eq("FeatureManagerFacet")) {
                 addFacet(
-                    DeployFeatureManager.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployFeatureManager.selectors()),
                     facet,
                     DeployFeatureManager.makeInitData()
                 );

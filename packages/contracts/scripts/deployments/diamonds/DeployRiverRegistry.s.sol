@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
@@ -29,7 +28,6 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
-    address private multiInit;
 
     function versionName() public pure override returns (string memory) {
         return "riverRegistry";
@@ -37,39 +35,36 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
         facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
         facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
         facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
         );
@@ -77,6 +72,7 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up all feature facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("OperatorRegistry");
         facetHelper.add("RiverConfig");
         facetHelper.add("NodeRegistry");
@@ -90,7 +86,7 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         operators[0] = deployer;
         address facet = facetHelper.getDeployedAddress("OperatorRegistry");
         addFacet(
-            DeployOperatorRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOperatorRegistry.selectors()),
             facet,
             DeployOperatorRegistry.makeInitData(operators)
         );
@@ -100,16 +96,18 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         configManagers[0] = deployer;
         facet = facetHelper.getDeployedAddress("RiverConfig");
         addFacet(
-            DeployRiverConfig.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployRiverConfig.selectors()),
             facet,
             DeployRiverConfig.makeInitData(configManagers)
         );
 
         facet = facetHelper.getDeployedAddress("NodeRegistry");
-        addCut(DeployNodeRegistry.makeCut(facet, IDiamond.FacetCutAction.Add));
+        addCut(makeCut(facet, FacetCutAction.Add, DeployNodeRegistry.selectors()));
 
         facet = facetHelper.getDeployedAddress("StreamRegistry");
-        addCut(DeployStreamRegistry.makeCut(facet, IDiamond.FacetCutAction.Add));
+        addCut(makeCut(facet, FacetCutAction.Add, DeployStreamRegistry.selectors()));
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
@@ -137,7 +135,7 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
                 address[] memory operators = new address[](1);
                 operators[0] = deployer;
                 addFacet(
-                    DeployOperatorRegistry.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployOperatorRegistry.selectors()),
                     facet,
                     DeployOperatorRegistry.makeInitData(operators)
                 );
@@ -145,14 +143,14 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
                 address[] memory configManagers = new address[](1);
                 configManagers[0] = deployer;
                 addFacet(
-                    DeployRiverConfig.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployRiverConfig.selectors()),
                     facet,
                     DeployRiverConfig.makeInitData(configManagers)
                 );
             } else if (facetName.eq("NodeRegistry")) {
-                addCut(DeployNodeRegistry.makeCut(facet, IDiamond.FacetCutAction.Add));
+                addCut(makeCut(facet, FacetCutAction.Add, DeployNodeRegistry.selectors()));
             } else if (facetName.eq("StreamRegistry")) {
-                addCut(DeployStreamRegistry.makeCut(facet, IDiamond.FacetCutAction.Add));
+                addCut(makeCut(facet, FacetCutAction.Add, DeployStreamRegistry.selectors()));
             }
         }
     }

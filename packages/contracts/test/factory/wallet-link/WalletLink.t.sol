@@ -13,12 +13,11 @@ import {WalletLib} from "src/factory/facets/wallet-link/libraries/WalletLib.sol"
 import {SolanaUtils} from "src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 
 // contracts
-import {DeployBase} from "scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
-contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
+contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     Vm.Wallet internal rootWallet;
     Vm.Wallet internal wallet;
     Vm.Wallet internal smartAccount;

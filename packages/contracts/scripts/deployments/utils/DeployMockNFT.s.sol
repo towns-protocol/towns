@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
@@ -24,7 +23,6 @@ contract DeployMockNFT is DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
-    address private multiInit;
 
     function versionName() public pure override returns (string memory) {
         return "utils/mockNFT";
@@ -42,33 +40,32 @@ contract DeployMockNFT is DiamondHelper, Deployer {
         facetHelper.deployBatch(deployer);
 
         // Get deployed addresses
-        multiInit = facetHelper.getDeployedAddress("MultiInit");
-
-        // Add core facets
         address facet = facetHelper.getDeployedAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
         facet = facetHelper.getDeployedAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
         // Add ERC721A mock
         facet = facetHelper.getDeployedAddress("MockERC721A");
-        addCut(DeployMockERC721A.makeCut(facet, IDiamond.FacetCutAction.Add));
+        addCut(makeCut(facet, FacetCutAction.Add, DeployMockERC721A.selectors()));
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({

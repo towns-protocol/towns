@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
@@ -26,7 +25,6 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
     address private NEW_TOKEN;
 
     DeployFacet private facetHelper = new DeployFacet();
-    address private multiInit;
 
     function versionName() public pure override returns (string memory) {
         return "riverMigration";
@@ -47,7 +45,6 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
@@ -55,39 +52,37 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
         facetHelper.add("PausableFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
         facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
         facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
         facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
         );
 
         facet = facetHelper.predictAddress("PausableFacet");
         addFacet(
-            DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployPausable.selectors()),
             facet,
             DeployPausable.makeInitData()
         );
@@ -95,6 +90,7 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up feature facet for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("TokenMigrationFacet");
 
         // Deploy all facets in a single batch transaction
@@ -106,10 +102,12 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
         (address oldToken, address newToken) = getTokens();
 
         addFacet(
-            DeployTokenMigration.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployTokenMigration.selectors()),
             facet,
             DeployTokenMigration.makeInitData(oldToken, newToken)
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
