@@ -12,7 +12,7 @@ library DropStorage {
         address rewardsDistribution;
         uint48 conditionStartId;
         uint48 conditionCount;
-        mapping(uint256 conditionId => DropGroup.Layout) conditionById;
+        mapping(uint256 groupId => DropGroup.Layout) groupById;
     }
 
     function getLayout() internal pure returns (Layout storage l) {

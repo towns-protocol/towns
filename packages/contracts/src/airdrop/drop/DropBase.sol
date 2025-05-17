@@ -21,20 +21,15 @@ abstract contract DropBase is IDropFacetBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _setRewardsDistribution(address rewardsDistribution) internal {
-        DropStorage.Layout storage self = DropStorage.getLayout();
         if (rewardsDistribution == address(0)) {
             DropFacet__RewardsDistributionNotSet.selector.revertWith();
         }
 
-        self.rewardsDistribution = rewardsDistribution;
+        _getLayout().rewardsDistribution = rewardsDistribution;
     }
 
     function _addClaimCondition(DropGroup.ClaimCondition calldata newCondition) internal {
-        DropStorage.Layout storage self = DropStorage.getLayout();
-        (uint48 existingStartId, uint48 existingCount) = (
-            self.conditionStartId,
-            self.conditionCount
-        );
+        (uint48 existingStartId, uint48 existingCount) = _getStartIdAndCount();
         uint48 newConditionId = existingStartId + existingCount;
 
         // Check timestamp order
@@ -51,21 +46,18 @@ abstract contract DropBase is IDropFacetBase {
         // verify enough balance
         _verifyEnoughBalance(newCondition.currency, newCondition.maxClaimableSupply);
 
-        _getDropCondition(newConditionId).condition = newCondition;
+        _getDropGroup(newConditionId).condition = newCondition;
 
         // Update condition count
-        self.conditionCount = existingCount + 1;
+        _getLayout().conditionCount = existingCount + 1;
 
         emit DropFacet_ClaimConditionAdded(newConditionId, newCondition);
     }
 
     function _setClaimConditions(DropGroup.ClaimCondition[] calldata conditions) internal {
-        DropStorage.Layout storage self = DropStorage.getLayout();
+        DropStorage.Layout storage self = _getLayout();
         // get the existing claim condition count and start id
-        (uint48 newStartId, uint48 existingConditionCount) = (
-            self.conditionStartId,
-            self.conditionCount
-        );
+        (uint48 newStartId, uint48 existingConditionCount) = _getStartIdAndCount();
 
         if (uint256(newStartId) + conditions.length > type(uint48).max) {
             DropFacet__CannotSetClaimConditions.selector.revertWith();
@@ -83,7 +75,7 @@ abstract contract DropBase is IDropFacetBase {
             }
 
             // check that amount already claimed is less than or equal to the max claimable supply
-            DropGroup.Layout storage drop = self.conditionById[newStartId + i];
+            DropGroup.Layout storage drop = self.groupById[newStartId + i];
             uint256 amountAlreadyClaimed = drop.condition.supplyClaimed;
 
             if (amountAlreadyClaimed > newCondition.maxClaimableSupply) {
@@ -103,7 +95,7 @@ abstract contract DropBase is IDropFacetBase {
         if (existingConditionCount > newConditionCount) {
             for (uint256 i = newConditionCount; i < existingConditionCount; ++i) {
                 unchecked {
-                    delete self.conditionById[newStartId + i];
+                    delete self.groupById[newStartId + i];
                 }
             }
         }
@@ -140,31 +132,37 @@ abstract contract DropBase is IDropFacetBase {
     }
 
     function _approveClaimToken(address token, uint256 amount) internal {
-        DropStorage.Layout storage self = DropStorage.getLayout();
-        token.safeApprove(self.rewardsDistribution, amount);
+        token.safeApprove(_getLayout().rewardsDistribution, amount);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getDropCondition(
-        uint256 conditionId
-    ) internal view returns (DropGroup.Layout storage) {
-        return DropStorage.getLayout().conditionById[conditionId];
+    function _getLayout() internal pure returns (DropStorage.Layout storage) {
+        return DropStorage.getLayout();
+    }
+
+    function _getDropGroup(uint256 conditionId) internal view returns (DropGroup.Layout storage) {
+        return _getLayout().groupById[conditionId];
     }
 
     function _getClaimConditionById(
         uint256 conditionId
     ) internal view returns (DropGroup.ClaimCondition storage) {
-        return _getDropCondition(conditionId).condition;
+        return _getDropGroup(conditionId).condition;
     }
 
     function _getSupplyClaimedByWallet(
         uint256 conditionId,
         address account
     ) internal view returns (DropGroup.Claimed storage) {
-        return _getDropCondition(conditionId).supplyClaimedByWallet[account];
+        return _getDropGroup(conditionId).supplyClaimedByWallet[account];
+    }
+
+    function _getStartIdAndCount() internal view returns (uint48 startId, uint48 count) {
+        DropStorage.Layout storage self = _getLayout();
+        (startId, count) = (self.conditionStartId, self.conditionCount);
     }
 
     function _getClaimConditions()
@@ -172,21 +170,16 @@ abstract contract DropBase is IDropFacetBase {
         view
         returns (DropGroup.ClaimCondition[] memory conditions)
     {
-        DropStorage.Layout storage self = DropStorage.getLayout();
-        conditions = new DropGroup.ClaimCondition[](self.conditionCount);
-        for (uint256 i; i < self.conditionCount; ++i) {
-            conditions[i] = _getClaimConditionById(self.conditionStartId + i);
+        (uint48 conditionStartId, uint48 conditionCount) = _getStartIdAndCount();
+        conditions = new DropGroup.ClaimCondition[](conditionCount);
+        for (uint256 i; i < conditionCount; ++i) {
+            conditions[i] = _getClaimConditionById(conditionStartId + i);
         }
         return conditions;
     }
 
     function _getActiveConditionId() internal view returns (uint256) {
-        DropStorage.Layout storage self = DropStorage.getLayout();
-
-        (uint48 conditionStartId, uint48 conditionCount) = (
-            self.conditionStartId,
-            self.conditionCount
-        );
+        (uint48 conditionStartId, uint48 conditionCount) = _getStartIdAndCount();
 
         if (conditionCount == 0) {
             DropFacet__NoActiveClaimCondition.selector.revertWith();

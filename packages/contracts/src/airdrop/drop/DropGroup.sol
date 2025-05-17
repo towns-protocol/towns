@@ -14,7 +14,7 @@ library DropGroup {
     using DropClaim for DropClaim.Claim;
     using CustomRevert for bytes4;
 
-    /// @notice The layout of the drop condition
+    /// @notice The layout of the drop group
     /// @param supplyClaimedByWallet A mapping of addresses to their claimed amounts and deposit IDs
     /// @param condition The current claim condition
     struct Layout {
@@ -49,7 +49,7 @@ library DropGroup {
     }
 
     /// @notice Updates to the claim condition except for `supplyClaimed`
-    /// @param self The drop condition
+    /// @param self The drop group
     /// @param newCondition The new claim condition
     function updateClaimCondition(
         Layout storage self,
@@ -65,7 +65,7 @@ library DropGroup {
     }
 
     /// @notice Claims the amount of tokens for the claim
-    /// @param self The drop condition
+    /// @param self The drop group
     /// @param claim_ The claim
     /// @param amount The amount of tokens to claim
     function claim(Layout storage self, DropClaim.Claim calldata claim_, uint256 amount) internal {

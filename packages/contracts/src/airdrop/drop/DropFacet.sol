@@ -54,7 +54,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         DropClaim.Claim calldata claim,
         uint16 expectedPenaltyBps
     ) external returns (uint256 amount) {
-        DropGroup.Layout storage drop = _getDropCondition(claim.conditionId);
+        DropGroup.Layout storage drop = _getDropGroup(claim.conditionId);
 
         amount = _deductPenalty(claim.quantity, drop.condition.penaltyBps, expectedPenaltyBps);
 
@@ -75,7 +75,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         uint256 deadline,
         bytes calldata signature
     ) external returns (uint256 amount) {
-        DropGroup.Layout storage drop = _getDropCondition(claim.conditionId);
+        DropGroup.Layout storage drop = _getDropGroup(claim.conditionId);
 
         amount = claim.quantity;
         drop.claim(claim, amount);
