@@ -13,6 +13,7 @@ import (
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,6 +26,12 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// maxWorkerPoolPendingTasks is the maximum number of pending tasks in the worker pool.
+	// Background workers must respect this limit to avoid overloading.
+	maxWorkerPoolPendingTasks = 10000
+)
+
 type PostgresStreamStore struct {
 	PostgresEventStore
 
@@ -35,8 +42,10 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	esm           *ephemeralStreamMonitor
-	streamTrimmer *streamTrimmer
+	// workers
+	esm             *ephemeralStreamMonitor
+	streamTrimmer   *streamTrimmer
+	snapshotTrimmer *snapshotTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -115,8 +124,7 @@ func NewPostgresStreamStore(
 	instanceId string,
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
-	ephemeralStreamTtl time.Duration,
-	streamMiniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
+	config crypto.OnChainConfiguration,
 	trimmingBatchSize int64,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
@@ -143,17 +151,39 @@ func NewPostgresStreamStore(
 	store.cleanupListenFunc = cancel
 	go store.listenForNewNodes(cancelCtx)
 
+	// Create shared worker pool for background workers
+	workerPool := workerpool.New(8)
+	go func() {
+		<-ctx.Done()
+		workerPool.Stop()
+	}()
+
 	// Start the ephemeral stream monitor.
-	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	store.esm, err = newEphemeralStreamMonitor(
+		ctx,
+		config.Get().StreamEphemeralStreamTTL,
+		store,
+	)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
 	// Start the stream trimmer
-	store.streamTrimmer, err = newStreamTrimmer(ctx, store, streamMiniblocksToKeep, trimmingBatchSize)
-	if err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
-	}
+	store.streamTrimmer = newStreamTrimmer(
+		ctx,
+		store,
+		workerPool,
+		config.Get().StreamTrimmingMiniblocksToKeep,
+		trimmingBatchSize,
+	)
+
+	// Start the snapshot trimmer
+	store.snapshotTrimmer = newSnapshotTrimmer(
+		ctx,
+		store,
+		workerPool,
+		config,
+	)
 
 	return store, nil
 }
@@ -1622,7 +1652,11 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 		// Let the stream trimmer know that a new snapshot miniblock was created.
 		if s.streamTrimmer != nil {
-			s.streamTrimmer.tryScheduleTrimming(ctx, tx, streamId)
+			s.streamTrimmer.tryScheduleTrimming(streamId)
+		}
+		// Let the snapshot trimmer know that a new snapshot miniblock was created.
+		if s.snapshotTrimmer != nil {
+			s.snapshotTrimmer.tryScheduleTrimming(streamId)
 		}
 	}
 
@@ -1686,6 +1720,9 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	}
 	if s.streamTrimmer != nil {
 		s.streamTrimmer.close()
+	}
+	if s.snapshotTrimmer != nil {
+		s.snapshotTrimmer.close()
 	}
 	s.PostgresEventStore.Close(ctx)
 }
@@ -2235,6 +2272,23 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	}
 
 	return maxSeqNum, nil
+}
+
+// getLowestStreamMiniblockTx retrieves the lowest miniblock number for a given stream
+func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (int64, error) {
+	var lowestMiniblock int64
+	err := tx.QueryRow(ctx,
+		s.sqlForStream(
+			`SELECT MIN(seq_num) FROM {{miniblocks}} WHERE stream_id = $1`,
+			streamId,
+		),
+		streamId,
+	).Scan(&lowestMiniblock)
+	return lowestMiniblock, err
 }
 
 func getCurrentNodeProcessInfo(currentSchemaName string) string {

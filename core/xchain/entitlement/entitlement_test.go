@@ -8,18 +8,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/contracts/types"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/xchain/examples"
-
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/towns-protocol/towns/core/contracts/river"
-	. "github.com/towns-protocol/towns/core/contracts/types"
 )
 
 const (
