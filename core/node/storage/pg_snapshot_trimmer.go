@@ -248,7 +248,7 @@ func determineSnapshotsToNullify(
 	for _, seq := range snapshotSeqs {
 		// skip anything in the protected tail
 		if seq > cutoff {
-			continue
+			break
 		}
 		bucket := seq / retentionInterval
 		if bucket != lastBucket {
