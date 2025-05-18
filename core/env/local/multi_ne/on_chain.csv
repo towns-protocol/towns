@@ -17,4 +17,5 @@
 "stream.ephemeralStreamTTLMs",0,600000
 "stream.snapshotIntervalInMiniblocks",0,0
 "stream.defaultStreamTrimmingMiniblocksToKeep",0,0
-"stream.streamTrimmingMiniblocksToKeep.10",0,100
+"stream.streamTrimmingMiniblocksToKeep.10",0,1000
+"stream.streamTrimmingMiniblocksToKeep.a5",0,1000

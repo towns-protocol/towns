@@ -233,8 +233,6 @@ func compareStreamsMiniblocks(
 // requireNoCorruptStreams confirms that the scrubber detected no corrupt streams.
 // Call after the archiver has downloaded all of the latest miniblocks.
 func requireNoCorruptStreams(
-	name string,
-	t *testing.T,
 	ctx context.Context,
 	require *require.Assertions,
 	archiver *Archiver,
@@ -517,7 +515,7 @@ func TestArchiveContinuous(t *testing.T) {
 	)
 
 	require.NoError(compareStreamsMiniblocks(t, ctx, []StreamId{streamId, streamId2}, arch.Storage(), client))
-	requireNoCorruptStreams("TestArchiveContinuous", t, ctx, require, arch.Archiver)
+	requireNoCorruptStreams(ctx, require, arch.Archiver)
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()

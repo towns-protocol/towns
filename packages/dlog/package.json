@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/dlog",
-    "version": "0.0.219",
+    "version": "0.0.224",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -24,7 +24,7 @@
         "@bufbuild/protobuf": "^2.2.2",
         "@towns-protocol/proto": "workspace:^",
         "debug": "^4.3.4",
-        "ethereum-cryptography": "^1.2.0"
+        "ethereum-cryptography": "^3.2.0"
     },
     "devDependencies": {
         "@types/debug": "^4.1.8",

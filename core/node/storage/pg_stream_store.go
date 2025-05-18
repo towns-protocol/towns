@@ -1417,9 +1417,6 @@ func (s *PostgresStreamStore) getMiniblockCandidateCountTx(
 		streamId,
 		miniblockNumber,
 	).Scan(&count); err != nil {
-		// if errors.Is(err, pgx.ErrNoRows) {
-		// 	return 0, RiverError(Err_NOT_FOUND, "Miniblock candidate not found")
-		// }
 		return 0, err
 	}
 	return count, nil

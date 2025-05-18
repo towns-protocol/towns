@@ -67,7 +67,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		&mocks.MockOnChainCfg{
 			Settings: &crypto.OnChainSettings{
 				StreamEphemeralStreamTTL:           time.Minute * 10,
-				StreamTrimmingMiniblocksToKeep:     crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+				StreamTrimmingMiniblocksToKeep:     crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5, UserSetting: 5},
 				StreamSnapshotIntervalInMiniblocks: 110,
 			},
 		},

@@ -881,6 +881,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamValidateCmd,
 	}
+
 	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
 	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
 	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
