@@ -17,11 +17,6 @@ export type EmbeddedMessageLink = {
     url: string
 }
 
-export interface GoogleMeetAttachment extends UnfurledLinkAttachment {
-    dialInLink?: string
-    isGoogleMeet?: boolean
-}
-
 export type LoadingUnfurledLinkAttachment = UnfurledLinkAttachment & { isLoading: true }
 
 export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => {
@@ -72,53 +67,15 @@ export const useExtractExternalLinks = (
                 } as LoadingUnfurledLinkAttachment
             })
         } else {
-            const phoneNumbers: Record<string, string> = {}
-
-            unfurledLinksQuery.forEach((value) => {
-                try {
-                    const url = new URL(value.url)
-                    if (url.hostname === 'tel.meet') {
-                        const parts = url.pathname.split('/')
-                        if (parts.length > 2) {
-                            const meetingId = parts[1]
-                            const phoneNumber = parts[2]
-                            if (meetingId && phoneNumber) {
-                                phoneNumbers[meetingId] = phoneNumber
-                            }
-                        }
-                    }
-                } catch (e) {
-                    /* Ignore URL parsing errors */
-                }
-            })
-
             return unfurledLinksQuery
                 .map((value) => {
                     try {
                         const url = new URL(value.url)
-
+                        
                         if (url.hostname === 'tel.meet') {
                             return null
                         }
-
-                        if (url.hostname === 'meet.google.com') {
-                            const meetingId = url.pathname.split('/')[1] || ''
-                            const phoneNumber = phoneNumbers[meetingId]
-
-                            return {
-                                type: 'unfurled_link',
-                                url: value.url,
-                                title: value.title ?? '',
-                                description: value.description ?? '',
-                                image: value.image,
-                                id: value.url,
-                                dialInLink: phoneNumber
-                                    ? `tel.meet/${meetingId}/${phoneNumber}`
-                                    : undefined,
-                                isGoogleMeet: true,
-                            } satisfies GoogleMeetAttachment
-                        }
-
+                        
                         return {
                             type: 'unfurled_link',
                             url: value.url,
