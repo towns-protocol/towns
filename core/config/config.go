@@ -419,6 +419,19 @@ type AuthenticationConfig struct {
 	SessionToken SessionTokenConfig
 }
 
+type StreamTrackingConfig struct {
+	// Maximum number of streams to include in each sync session when tracking streams. If
+	// unset, this defaults to 100.
+	StreamsPerSyncSession int
+
+	// Default to 50
+	MaxConcurrentNodeRequests int
+
+	// NumWorkers configures the number of workers placing streams in syncs on the sync runner. If
+	// unset, this will default to 20.
+	NumWorkers int
+}
+
 type NotificationsConfig struct {
 	// SubscriptionExpirationDuration if the client isn't seen within this duration stop sending
 	// notifications to it. Defaults to 90 days.
@@ -434,6 +447,8 @@ type NotificationsConfig struct {
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig
+
+	StreamTracking StreamTrackingConfig
 }
 
 type AppRegistryConfig struct {
@@ -459,6 +474,8 @@ type AppRegistryConfig struct {
 	// workers empty the queue of outgoing webhook calls, whether they are for message sends or key
 	// solicitations. If unset or set to < 1, it will default to 50.
 	NumMessageSendWorkers int
+
+	StreamTracking StreamTrackingConfig
 }
 
 type LogConfig struct {
