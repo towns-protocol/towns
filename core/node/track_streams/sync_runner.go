@@ -134,7 +134,7 @@ func (sr *SyncRunner) Run(
 		// backoff, remote service client could not be created
 		if client == nil {
 			syncCancel()
-			log.Errorw("unable to obtain stream service client", "err", err)
+			log.Errorw("unable to obtain stream service client", "error", err)
 			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
@@ -148,7 +148,7 @@ func (sr *SyncRunner) Run(
 			metrics.SyncSessionInFlight.Dec()
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
-				log.Errorw("unable to acquire worker pool task", "err", err)
+				log.Errorw("unable to acquire worker pool task", "error", err)
 			}
 			if sr.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 				return
@@ -178,11 +178,11 @@ func (sr *SyncRunner) Run(
 		metrics.SyncSessionInFlight.Dec()
 
 		if err != nil {
-			log.Debugw("start sync err", "err", err)
+			log.Debugw("start sync err", "error", err)
 			remotes.AdvanceStickyPeer(remoteAddr)
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
-				log.Debugw("unable to start stream sync session", "err", err)
+				log.Debugw("unable to start stream sync session", "error", err)
 			}
 			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
@@ -228,7 +228,7 @@ func (sr *SyncRunner) Run(
 				// if remote node is down this gets fired
 				log.Debugw(
 					"Unable to receive first sync message",
-					"err",
+					"error",
 					err,
 					"stream",
 					stream.StreamId,
@@ -305,7 +305,7 @@ func (sr *SyncRunner) Run(
 					trackedStream, err = newTrackedStreamView(syncCtx, streamID, onChainConfig, update.GetStream())
 					if err != nil {
 						syncCancel()
-						log.Errorw("Unable to instantiate tracked stream", "err", err)
+						log.Errorw("Unable to instantiate tracked stream", "error", err)
 						continue
 					}
 
@@ -325,7 +325,7 @@ func (sr *SyncRunner) Run(
 							block,
 							update.GetStream().GetSnapshotByMiniblockIndex(i),
 						); err != nil {
-							log.Errorw("Unable to apply block", "err", err)
+							log.Errorw("Unable to apply block", "error", err)
 						}
 					}
 					// If the stream was just allocated, process the miniblocks and events for notifications.
@@ -362,14 +362,14 @@ func (sr *SyncRunner) Run(
 									"Error sending notification for historical event",
 									"hash",
 									parsedEvent.Hash,
-									"err",
+									"error",
 									err,
 								)
 							}
 						}
 					} else {
 						if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
-							log.Errorw("Unable to apply event", "err", err)
+							log.Errorw("Unable to apply event", "error", err)
 						}
 					}
 				}
@@ -416,7 +416,7 @@ func (sr *SyncRunner) Run(
 				return
 			default:
 				if !errors.Is(err, context.Canceled) {
-					log.Debugw("Stream sync session ended unexpected", "err", err)
+					log.Debugw("Stream sync session ended unexpected", "error", err)
 				}
 			}
 		}
@@ -501,7 +501,7 @@ func (sr *SyncRunner) liveness(
 			if err != nil {
 				metrics.SyncPing.With(prometheus.Labels{"status": "failure"}).Inc()
 				if !errors.Is(err, context.Canceled) {
-					log.Errorw("Unable to ping stream session", "err", err)
+					log.Errorw("Unable to ping stream session", "error", err)
 				}
 				return
 			}

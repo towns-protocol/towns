@@ -358,7 +358,7 @@ func (x *xchain) onEntitlementCheckRequested(
 	// try to decode the EntitlementCheckRequested event
 	if err := x.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequested", event); err != nil {
 		x.entitlementCheckRequested.IncFail()
-		log.Errorw("Unable to decode EntitlementCheckRequested event", "err", err)
+		log.Errorw("Unable to decode EntitlementCheckRequested event", "error", err)
 		return
 	}
 
@@ -382,7 +382,7 @@ func (x *xchain) onEntitlementCheckRequested(
 	if err != nil {
 		x.entitlementCheckRequested.IncFail()
 		log.Errorw("Entitlement check failed to process",
-			"err", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
+			"error", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
 		return
 	}
 
@@ -426,7 +426,7 @@ func (x *xchain) onEntitlementCheckRequestedV2(
 	// try to decode the EntitlementCheckRequested event
 	if err := x.checkerContract.UnpackLog(&entitlementCheckRequestV2, "EntitlementCheckRequestedV2", event); err != nil {
 		x.entitlementCheckRequested.IncFail()
-		log.Errorw("Unable to decode EntitlementCheckRequestedV2 event", "err", err)
+		log.Errorw("Unable to decode EntitlementCheckRequestedV2 event", "error", err)
 		return
 	}
 
@@ -438,7 +438,7 @@ func (x *xchain) onEntitlementCheckRequestedV2(
 	if err != nil {
 		x.entitlementCheckRequested.IncFail()
 		log.Errorw("Entitlement check failed to process",
-			"err", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequestV2.TransactionId[:]))
+			"error", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequestV2.TransactionId[:]))
 		return
 	}
 	if outcome != nil { // request was not intended for this xchain instance.
@@ -560,7 +560,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 				if err != nil {
 					log.Warnw(
 						"Failed to estimate gas for PostEntitlementCheckResult (entitlement check complete?)",
-						"err",
+						"error",
 						err,
 					)
 				}
@@ -582,7 +582,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 					ce.DecodedError.Sig == "EntitlementGated_NodeAlreadyVoted()" ||
 					ce.DecodedError.Sig == "EntitlementGated_TransactionCheckAlreadyCompleted()") {
 					log.Debugw("Unable to submit entitlement check outcome",
-						"err", ce.DecodedError.Name,
+						"error", ce.DecodedError.Name,
 						"txid", receipt.TransactionID.Hex())
 					continue
 				}
@@ -602,7 +602,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 		receipt, err := task.ptx.Wait(ctx) // Base transaction receipt
 		if err != nil {
 			log.Warnw("waiting for entitlement check response receipt failed",
-				"err", err, "tx.hash", task.ptx.TransactionHash())
+				"error", err, "tx.hash", task.ptx.TransactionHash())
 			x.entitlementCheckProcessed.IncFail()
 			continue
 		}
@@ -639,13 +639,13 @@ func (x *xchain) handleContractError(log *logging.Log, err error, msg string) er
 	ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
 	switch {
 	case ce != nil:
-		log.Errorw(msg, "err", ce)
+		log.Errorw(msg, "error", ce)
 		return ce
 	case se != nil:
-		log.Errorw(msg, "err", se)
+		log.Errorw(msg, "error", se)
 		return se
 	case err != nil:
-		log.Errorw(msg, "err", err)
+		log.Errorw(msg, "error", err)
 		return err
 	}
 	return nil
@@ -679,7 +679,7 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 	if err != nil {
 		log.Errorw(
 			"Failed to get linked wallets",
-			"err",
+			"error",
 			err,
 			"wallet",
 			wallet.Hex(),
@@ -771,7 +771,7 @@ func (x *xchain) process(
 	log.Info("Evaluating rule data", "wallets", wallets, "ruleData", ruleData)
 	result, err = x.evaluator.EvaluateRuleData(ctx, wallets, ruleData)
 	if err != nil {
-		log.Errorw("Failed to EvaluateRuleData", "err", err)
+		log.Errorw("Failed to EvaluateRuleData", "error", err)
 		return false, err
 	}
 

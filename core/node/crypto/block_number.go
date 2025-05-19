@@ -12,6 +12,10 @@ func (bn BlockNumber) AsUint64() uint64 {
 	return uint64(bn)
 }
 
+func (bn BlockNumber) Add(n int64) BlockNumber {
+	return BlockNumber(int64(bn) + n)
+}
+
 func BlockNumberFromBigInt(v *big.Int) BlockNumber {
 	if !v.IsUint64() {
 		panic("block number is too large")

@@ -93,7 +93,7 @@ func (s *Service) Start(ctx context.Context) {
 			log.Infow("Start notification streams tracker")
 
 			if err := s.streamsTracker.Run(ctx); err != nil {
-				log.Errorw("tracking streams failed", "err", err)
+				log.Errorw("tracking streams failed", "error", err)
 			}
 
 			select {

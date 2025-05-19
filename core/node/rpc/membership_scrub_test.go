@@ -42,6 +42,7 @@ func addUserToChannel(
 			channelId,
 			nil,
 			spaceId[:],
+			nil,
 		),
 		&MiniblockRef{
 			Hash: common.BytesToHash(resUser.PrevMiniblockHash),
@@ -88,12 +89,28 @@ type MockChainAuth struct {
 	err    error
 }
 
+type mockChainAuthResult struct {
+	isAllowed bool
+	reason    auth.EntitlementResultReason
+}
+
+func (m *mockChainAuthResult) IsEntitled() bool {
+	return m.isAllowed
+}
+
+func (m *mockChainAuthResult) Reason() auth.EntitlementResultReason {
+	return m.reason
+}
+
 func (m *MockChainAuth) IsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *auth.ChainAuthArgs,
-) (bool, error) {
-	return m.result, m.err
+) (auth.IsEntitledResult, error) {
+	return &mockChainAuthResult{
+		isAllowed: m.result,
+		reason:    auth.EntitlementResultReason_NONE,
+	}, m.err
 }
 
 func NewMockChainAuth(expectedResult bool, expectedErr error) auth.ChainAuth {
@@ -115,13 +132,19 @@ func (m *MockChainAuthForWallets) IsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *auth.ChainAuthArgs,
-) (bool, error) {
+) (auth.IsEntitledResult, error) {
 	for wallet, result := range m.walletResults {
 		if args.Principal() == wallet.Address {
-			return result.expectedResult, result.expectedErr
+			return &mockChainAuthResult{
+				isAllowed: result.expectedResult,
+				reason:    auth.EntitlementResultReason_NONE,
+			}, result.expectedErr
 		}
 	}
-	return true, nil
+	return &mockChainAuthResult{
+		isAllowed: true,
+		reason:    auth.EntitlementResultReason_NONE,
+	}, nil
 }
 
 func NewMockChainAuthForWallets(
@@ -183,6 +206,35 @@ func (o *ObservingEventAdder) ObservedEvents() []struct {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	return slices.Clone(o.observedEvents)
+}
+
+// checks if all observed events are membership leave events
+// with the expected scrubber reason
+func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	
+	for i, e := range o.observedEvents {
+		userPayload, ok := e.payload.(*StreamEvent_UserPayload)
+		assert.True(t, ok, "Event %d is not a UserPayload", i)
+		if !ok {
+			continue
+		}
+		
+		membershipPayload, ok := userPayload.UserPayload.Content.(*UserPayload_UserMembership_)
+		assert.True(t, ok, "Event %d is not a MembershipPayload", i)
+		if !ok {
+			continue
+		}
+		
+		assert.Equal(t, MembershipOp_SO_LEAVE, membershipPayload.UserMembership.Op, 
+			"Event %d is not a LEAVE operation", i)
+		
+		// Check for scrubber reason
+		assert.NotNil(t, membershipPayload.UserMembership.Reason, "Event %d has no reason", i)
+		assert.Equal(t, MembershipReason_MR_NOT_ENTITLED, *membershipPayload.UserMembership.Reason,
+			"Event %d does not have the expected reason code", i)
+	}
 }
 
 func TestScrubStreamTaskProcessor(t *testing.T) {
@@ -298,6 +350,10 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 									!slices.Contains(tc.expectedBootedUsers, wallet),
 									isMember,
 									"Membership result mismatch",
+									"wallet: %v, isMember: %v, expectedBootedUsers: %v",
+									wallet.Address,
+									isMember,
+									tc.expectedBootedUsers,
 								)
 							}
 						}
@@ -307,6 +363,9 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 						// event for one of the users is emitted twice. Why?
 						// assert.Len(eventAdder.ObservedEvents(), len(tc.expectedBootedUsers))
 						assert.GreaterOrEqual(len(eventAdder.ObservedEvents()), len(tc.expectedBootedUsers))
+						
+						// Validate that all observed events are membership leave events with expected reason
+						eventAdder.ValidateMembershipLeaveEvents(t)
 					}
 				},
 				10*time.Second,

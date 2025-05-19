@@ -21,6 +21,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 type testStreamStoreParams struct {
@@ -63,8 +64,13 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		instanceId,
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
-		crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:           time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep:     crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5, UserSetting: 5},
+				StreamSnapshotIntervalInMiniblocks: 110,
+			},
+		},
 		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
@@ -664,8 +670,12 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			instanceId2,
 			exitSignal2,
 			infra.NewMetricsFactory(nil, "", ""),
-			time.Minute*10,
-			crypto.StreamTrimmingMiniblocksToKeepSettings{},
+			&mocks.MockOnChainCfg{
+				Settings: &crypto.OnChainSettings{
+					StreamEphemeralStreamTTL:       time.Minute * 10,
+					StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
+				},
+			},
 			5,
 		)
 		require.NoError(err)
