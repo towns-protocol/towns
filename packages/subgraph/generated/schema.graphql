@@ -23,6 +23,12 @@ type Query {
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage!
   swapFee(spaceId: String!): swapFee
   swapFees(where: swapFeeFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapFeePage!
+  swapRouter(txHash: String!): swapRouter
+  swapRouters(where: swapRouterFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapRouterPage!
+  swapRouterSwap(txHash: String!): swapRouterSwap
+  swapRouterSwaps(where: swapRouterSwapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapRouterSwapPage!
+  feeDistribution(txHash: String!): feeDistribution
+  feeDistributions(where: feeDistributionFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): feeDistributionPage!
   _meta: Meta
 }
 
@@ -64,6 +70,26 @@ type swap {
   poster: String
   createdAt: BigInt
   space: space
+  swapRouter: swapRouter
+  swapRouterSwap: swapRouterSwap
+}
+
+type swapRouter {
+  txHash: String!
+  spaceFactory: String
+  createdAt: BigInt
+}
+
+type swapRouterSwap {
+  txHash: String!
+  router: String
+  caller: String
+  tokenIn: String
+  tokenOut: String
+  amountIn: BigInt
+  amountOut: BigInt
+  recipient: String
+  createdAt: BigInt
 }
 
 input swapFilter {
@@ -277,6 +303,226 @@ input swapFeeFilter {
   collectPosterFeeToSpace_not: Boolean
   collectPosterFeeToSpace_in: [Boolean]
   collectPosterFeeToSpace_not_in: [Boolean]
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+}
+
+type swapRouterPage {
+  items: [swapRouter!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input swapRouterFilter {
+  AND: [swapRouterFilter]
+  OR: [swapRouterFilter]
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  spaceFactory: String
+  spaceFactory_not: String
+  spaceFactory_in: [String]
+  spaceFactory_not_in: [String]
+  spaceFactory_contains: String
+  spaceFactory_not_contains: String
+  spaceFactory_starts_with: String
+  spaceFactory_ends_with: String
+  spaceFactory_not_starts_with: String
+  spaceFactory_not_ends_with: String
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+}
+
+type swapRouterSwapPage {
+  items: [swapRouterSwap!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input swapRouterSwapFilter {
+  AND: [swapRouterSwapFilter]
+  OR: [swapRouterSwapFilter]
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  router: String
+  router_not: String
+  router_in: [String]
+  router_not_in: [String]
+  router_contains: String
+  router_not_contains: String
+  router_starts_with: String
+  router_ends_with: String
+  router_not_starts_with: String
+  router_not_ends_with: String
+  caller: String
+  caller_not: String
+  caller_in: [String]
+  caller_not_in: [String]
+  caller_contains: String
+  caller_not_contains: String
+  caller_starts_with: String
+  caller_ends_with: String
+  caller_not_starts_with: String
+  caller_not_ends_with: String
+  tokenIn: String
+  tokenIn_not: String
+  tokenIn_in: [String]
+  tokenIn_not_in: [String]
+  tokenIn_contains: String
+  tokenIn_not_contains: String
+  tokenIn_starts_with: String
+  tokenIn_ends_with: String
+  tokenIn_not_starts_with: String
+  tokenIn_not_ends_with: String
+  tokenOut: String
+  tokenOut_not: String
+  tokenOut_in: [String]
+  tokenOut_not_in: [String]
+  tokenOut_contains: String
+  tokenOut_not_contains: String
+  tokenOut_starts_with: String
+  tokenOut_ends_with: String
+  tokenOut_not_starts_with: String
+  tokenOut_not_ends_with: String
+  amountIn: BigInt
+  amountIn_not: BigInt
+  amountIn_in: [BigInt]
+  amountIn_not_in: [BigInt]
+  amountIn_gt: BigInt
+  amountIn_lt: BigInt
+  amountIn_gte: BigInt
+  amountIn_lte: BigInt
+  amountOut: BigInt
+  amountOut_not: BigInt
+  amountOut_in: [BigInt]
+  amountOut_not_in: [BigInt]
+  amountOut_gt: BigInt
+  amountOut_lt: BigInt
+  amountOut_gte: BigInt
+  amountOut_lte: BigInt
+  recipient: String
+  recipient_not: String
+  recipient_in: [String]
+  recipient_not_in: [String]
+  recipient_contains: String
+  recipient_not_contains: String
+  recipient_starts_with: String
+  recipient_ends_with: String
+  recipient_not_starts_with: String
+  recipient_not_ends_with: String
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+}
+
+type feeDistribution {
+  txHash: String!
+  token: String
+  treasury: String
+  poster: String
+  treasuryAmount: BigInt
+  posterAmount: BigInt
+  createdAt: BigInt
+  swapRouterSwap: swapRouterSwap
+}
+
+type feeDistributionPage {
+  items: [feeDistribution!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input feeDistributionFilter {
+  AND: [feeDistributionFilter]
+  OR: [feeDistributionFilter]
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  token: String
+  token_not: String
+  token_in: [String]
+  token_not_in: [String]
+  token_contains: String
+  token_not_contains: String
+  token_starts_with: String
+  token_ends_with: String
+  token_not_starts_with: String
+  token_not_ends_with: String
+  treasury: String
+  treasury_not: String
+  treasury_in: [String]
+  treasury_not_in: [String]
+  treasury_contains: String
+  treasury_not_contains: String
+  treasury_starts_with: String
+  treasury_ends_with: String
+  treasury_not_starts_with: String
+  treasury_not_ends_with: String
+  poster: String
+  poster_not: String
+  poster_in: [String]
+  poster_not_in: [String]
+  poster_contains: String
+  poster_not_contains: String
+  poster_starts_with: String
+  poster_ends_with: String
+  poster_not_starts_with: String
+  poster_not_ends_with: String
+  treasuryAmount: BigInt
+  treasuryAmount_not: BigInt
+  treasuryAmount_in: [BigInt]
+  treasuryAmount_not_in: [BigInt]
+  treasuryAmount_gt: BigInt
+  treasuryAmount_lt: BigInt
+  treasuryAmount_gte: BigInt
+  treasuryAmount_lte: BigInt
+  posterAmount: BigInt
+  posterAmount_not: BigInt
+  posterAmount_in: [BigInt]
+  posterAmount_not_in: [BigInt]
+  posterAmount_gt: BigInt
+  posterAmount_lt: BigInt
+  posterAmount_gte: BigInt
+  posterAmount_lte: BigInt
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_in: [BigInt]
