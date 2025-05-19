@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
@@ -28,7 +27,6 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
-    address private multiInit;
     address private spaceFactory;
 
     function versionName() public pure override returns (string memory) {
@@ -46,39 +44,36 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         // Queue up all core facets for batch deployment
-        facetHelper.add("MultiInit");
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
 
         // Get predicted addresses
-        multiInit = facetHelper.predictAddress("MultiInit");
-
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
         facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
         facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
         facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
         );
@@ -86,6 +81,7 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue additional facets for batch deployment
+        facetHelper.add("MultiInit");
         facetHelper.add("SwapRouter");
         facetHelper.add("MetadataFacet");
         facetHelper.add("PausableFacet");
@@ -96,24 +92,26 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
         // Add each facet to the diamond cut using its deployment library
         address facet = facetHelper.getDeployedAddress("SwapRouter");
         addFacet(
-            DeploySwapRouterFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeploySwapRouterFacet.selectors()),
             facet,
             DeploySwapRouterFacet.makeInitData(getSpaceFactory())
         );
 
         facet = facetHelper.getDeployedAddress("MetadataFacet");
         addFacet(
-            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
             facet,
             DeployMetadata.makeInitData(bytes32("SwapRouter"), "")
         );
 
         facet = facetHelper.getDeployedAddress("PausableFacet");
         addFacet(
-            DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployPausable.selectors()),
             facet,
             DeployPausable.makeInitData()
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
@@ -138,19 +136,19 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
 
             if (facetName.eq("SwapRouter")) {
                 addFacet(
-                    DeploySwapRouterFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeploySwapRouterFacet.selectors()),
                     facet,
                     DeploySwapRouterFacet.makeInitData(getSpaceFactory())
                 );
             } else if (facetName.eq("MetadataFacet")) {
                 addFacet(
-                    DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
                     facet,
                     DeployMetadata.makeInitData(bytes32("SwapRouter"), "")
                 );
             } else if (facetName.eq("PausableFacet")) {
                 addFacet(
-                    DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployPausable.selectors()),
                     facet,
                     DeployPausable.makeInitData()
                 );

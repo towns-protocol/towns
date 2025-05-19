@@ -27,6 +27,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 )
 
@@ -310,8 +311,12 @@ func TestArchiveOneStream(t *testing.T) {
 		GenShortNanoid(),
 		make(chan error, 1),
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
-		crypto.StreamTrimmingMiniblocksToKeepSettings{},
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:       time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+			},
+		},
 		100,
 	)
 	require.NoError(err)
