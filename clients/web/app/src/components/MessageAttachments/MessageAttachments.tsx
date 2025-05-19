@@ -39,7 +39,6 @@ import { isTownBanned } from 'utils'
 import { Ticker } from '@components/TradingChart/Ticker'
 import { useMessageEditContext } from '@components/MessageTimeIineItem/items/MessageEditContext'
 import { useDevice } from 'hooks/useDevice'
-import { GoogleMeetContent } from './GoogleMeetContent'
 import {
     EmbeddedAttachmentsContext,
     MessageAttachmentPresentationContext,
@@ -282,15 +281,10 @@ const UnfurledLinkAttachmentContainer = (props: {
     const { url } = attachment
     const townData = getTownParamsFromUrl(url)
 
-    // Check if it's a Google Meet link
-    const isGoogleMeet = 'isGoogleMeet' in attachment && attachment.isGoogleMeet
-
     return (
         <ErrorBoundary FallbackComponent={() => <UnfurlErrorContainer url={url} />}>
             {townData?.townId && townData?.townPath ? (
                 <TownsContent {...townData} />
-            ) : isGoogleMeet ? (
-                <GoogleMeetContent attachment={attachment as UnfurledLinkAttachment} />
             ) : (
                 <Box
                     as="a"
