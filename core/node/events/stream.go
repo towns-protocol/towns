@@ -1023,7 +1023,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	view, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "err", err)
+		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
@@ -1052,7 +1052,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
 					s.params.streamCache.SubmitSyncStreamTask(s, nil)
 				} else {
-					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
 			}
 		} else {

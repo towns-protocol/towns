@@ -13,6 +13,7 @@ import (
 	"os"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -686,7 +687,7 @@ func (tc *testClient) createUserStream(
 	}
 }
 
-func (tcs testClients) requireSubscribed(streamId StreamId, expectedMemberships ...[]common.Address) {
+func (tcs testClients) requireSubscribed(streamId StreamId) {
 	tcs.parallelForAll(func(tc *testClient) {
 		tc.requireSubscribed(streamId)
 	})
@@ -807,6 +808,7 @@ func (tc *testClient) joinChannel(
 			channelId,
 			nil,
 			spaceId[:],
+			nil,
 		),
 		userStreamMb,
 	)
@@ -1101,6 +1103,30 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			"\n",
 			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
+	}
+}
+
+func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
+	resp, err := tc.client.Info(tc.ctx, connect.NewRequest(&InfoRequest{
+		Debug: []string{
+			"make_miniblock",
+			streamId.String(),
+			fmt.Sprintf("%t", forceSnapshot),
+			fmt.Sprintf("%d", lastKnownMiniblockNum),
+		},
+	}))
+	tc.require.NoError(err, "client.Info make_miniblock failed")
+	var hashBytes []byte
+	if resp.Msg.Graffiti != "" {
+		hashBytes = common.FromHex(resp.Msg.Graffiti)
+	}
+	num := int64(0)
+	if resp.Msg.Version != "" {
+		num, _ = strconv.ParseInt(resp.Msg.Version, 10, 64)
+	}
+	return &MiniblockRef{
+		Hash: common.BytesToHash(hashBytes),
+		Num:  num,
 	}
 }
 
@@ -1556,20 +1582,6 @@ func (tcs testClients) compareNowImpl(
 		return streams
 	}
 	return nil
-}
-
-//nolint:unused
-func (tcs testClients) compareNow(streamId StreamId, miniBlockChain bool, sync bool) {
-	if len(tcs) < 2 {
-		panic("need at least 2 clients to compare")
-	}
-	streams := tcs.compareNowImpl(tcs[0].t, streamId, miniBlockChain, sync)
-	if streams != nil {
-		for i, s := range streams {
-			tcs[i].maybeDumpStream(s)
-		}
-		tcs[0].t.FailNow()
-	}
 }
 
 func (tcs testClients) compare(streamId StreamId, miniBlockChain bool, sync bool) {

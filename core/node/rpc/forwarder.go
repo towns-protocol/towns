@@ -259,7 +259,7 @@ func (s *Service) getStreamImpl(
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get stream from local node, falling back to remotes",
-				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
 			return nil, err
 		}
@@ -301,7 +301,7 @@ func (s *Service) getStreamExImpl(
 			return nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to stream the stream from local node, falling back to remotes",
-				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
 			return err
 		}
@@ -384,7 +384,7 @@ func (s *Service) getMiniblocksImpl(
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes",
-				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
 			return nil, err
 		}
@@ -440,7 +440,7 @@ func (s *Service) getLastMiniblockHashImpl(
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get last miniblock hash from local node, falling back to remotes",
-				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
 			return nil, err
 		}
@@ -498,7 +498,7 @@ func (s *Service) addEventImpl(
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to add event with local node, falling back to remotes",
-				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
 			return nil, err
 		}
@@ -558,7 +558,7 @@ func (s *Service) addMediaEventImpl(
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to add media event with local node, falling back to remotes",
-				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
 			return nil, err
 		}

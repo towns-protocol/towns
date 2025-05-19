@@ -32,6 +32,8 @@ type mbJob struct {
 	replicated bool
 	// candidate is the produced miniblock candidate that is attempted to promote to a miniblock.
 	candidate *MiniblockInfo
+	// skipPromotion is true if the miniblock producer is skipping promotion, used by writeLatestKnownMiniblock.
+	skipPromotion bool
 }
 
 func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {
@@ -217,7 +219,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		for _, e := range p.response.MissingEvents {
 			parsed, err := ParseEvent(e)
 			if err != nil {
-				logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error parsing event", "err", err)
+				logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error parsing event", "error", err)
 				continue
 			}
 			if _, ok := added[parsed.Hash]; !ok {
@@ -230,7 +232,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 					} else {
 						logging.FromCtx(ctx).Errorw(
 							"mbJob.processRemoteProposals: error adding event",
-							"err",
+							"error",
 							err,
 							"source",
 							p.source,

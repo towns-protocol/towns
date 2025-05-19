@@ -210,7 +210,7 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, startMiniblockNum in
 				"stream", task.streamId,
 				"startMiniblockNum", task.startMiniblockNum,
 				"miniblocksToKeep", task.miniblocksToKeep,
-				"err", err,
+				"error", err,
 			)
 		}
 	})
@@ -228,7 +228,7 @@ func (t *streamTrimmer) tryScheduleTrimming(
 		startMiniblockNum, err := t.getLowestStreamMiniblock(ctx, tx, streamId)
 		if err != nil {
 			t.log.Errorw("Failed to get lowest stream miniblock to schedule trimming, starting from miniblock 0",
-				"stream", streamId, "err", err)
+				"stream", streamId, "error", err)
 			startMiniblockNum = 0 // Just to explicitly reset if getLowestStreamMiniblock returns non 0 value
 		}
 

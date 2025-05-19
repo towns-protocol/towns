@@ -86,7 +86,7 @@ func (m *ephemeralStreamMonitor) monitor(ctx context.Context) {
 			return
 		case <-ctx.Done():
 			if err := ctx.Err(); !errors.Is(err, context.Canceled) {
-				logging.FromCtx(ctx).Error("dead ephemeral stream monitor stopped", "err", err)
+				logging.FromCtx(ctx).Error("dead ephemeral stream monitor stopped", "error", err)
 			}
 			m.close()
 			return
@@ -133,7 +133,7 @@ func (m *ephemeralStreamMonitor) handleStream(ctx context.Context, streamId Stre
 		"streamId", streamId,
 	); err != nil {
 		if !IsRiverErrorCode(err, Err_NOT_FOUND) {
-			logging.FromCtx(ctx).Error("failed to delete dead ephemeral stream", "err", err, "streamId", streamId)
+			logging.FromCtx(ctx).Error("failed to delete dead ephemeral stream", "error", err, "streamId", streamId)
 		}
 	}
 

@@ -177,7 +177,7 @@ func (s *Service) debugInfoMakeMiniblock(
 		return nil, err
 	}
 	if stream.IsLocal() {
-		ref, err := s.mbProducer.TestMakeMiniblock(ctx, streamId, forceSnapshot)
+		ref, err := s.cache.TestMakeMiniblock(ctx, streamId, forceSnapshot)
 		if err != nil {
 			return nil, err
 		}

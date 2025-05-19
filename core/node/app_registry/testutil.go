@@ -15,7 +15,10 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -25,7 +28,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -125,12 +127,13 @@ func NewTestAppServer(
 	client protocolconnect.StreamServiceClient,
 	enableLogging bool,
 ) *TestAppServer {
-	listener, url := testcert.MakeTestListener(t)
+	listener, err := net.Listen("tcp", "localhost:0")
+	require.NoError(t, err)
 
 	b := &TestAppServer{
 		t:             t,
 		listener:      listener,
-		url:           url,
+		url:           "https://" + listener.Addr().String(),
 		appWallet:     appWallet,
 		client:        client,
 		enableLogging: enableLogging,
@@ -259,7 +262,7 @@ func parseEncryptionEnvelope(envelope *protocol.Envelope) (*protocol.UserInboxPa
 }
 
 func logAndReturnErr(log *logging.Log, err error) error {
-	log.Errorw("TestAppServer error encountered", "err", err)
+	log.Errorw("TestAppServer error encountered", "error", err)
 	return err
 }
 
@@ -616,8 +619,15 @@ func (b *TestAppServer) Serve(ctx context.Context) error {
 	// Register the handler for the root path
 	mux.HandleFunc("/", b.rootHandler)
 
+	// Define the h2c server
+	h2s := &http2.Server{}
+
+	// Wrap the mux in an h2c handler
+	h2cHandler := h2c.NewHandler(mux, h2s)
+
+	// Create and start the server
 	b.httpServer = &http.Server{
-		Handler: mux,
+		Handler: h2cHandler,
 		BaseContext: func(listener net.Listener) context.Context {
 			return ctx
 		},

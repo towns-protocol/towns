@@ -251,9 +251,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -309,6 +306,10 @@ jobs:
             - name: Run multiple nodes
               working-directory: core
               run: just RUN_ENV=multi_ne config-and-start
+
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi_ne start-and-wait-app-registry
 
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
@@ -403,9 +404,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -458,6 +456,10 @@ jobs:
             - name: Run multiple nodes
               run: just RUN_ENV=multi config-and-start
               working-directory: core
+
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -551,9 +553,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -606,6 +605,10 @@ jobs:
             - name: Run multiple nodes
               run: just RUN_ENV=multi config-and-start
               working-directory: core
+
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -687,9 +690,6 @@ jobs:
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1

@@ -552,7 +552,7 @@ func (s *Service) runHttpServer() error {
 func (s *Service) serve() {
 	err := s.httpServer.Serve(s.listener)
 	if err != nil && err != http.ErrServerClosed {
-		s.defaultLogger.Errorw("Serve failed", "err", err)
+		s.defaultLogger.Errorw("Serve failed", "error", err)
 	} else {
 		s.defaultLogger.Infow("Serve stopped")
 	}
@@ -728,12 +728,10 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		)
 	}
 
-	err := s.cache.Start(s.serverCtx)
+	err := s.cache.Start(s.serverCtx, nil)
 	if err != nil {
 		return err
 	}
-
-	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
 
 	s.syncHandler = sync.NewHandler(
 		s.wallet.Address,

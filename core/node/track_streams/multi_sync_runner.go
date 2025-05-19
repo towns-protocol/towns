@@ -193,7 +193,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				block,
 				streamAndCookie.GetSnapshotByMiniblockIndex(i),
 			); err != nil {
-				log.Errorw("Unable to apply block", "err", err)
+				log.Errorw("Unable to apply block", "error", err)
 			}
 		}
 		// If the stream was just allocated, process the miniblocks and events for notifications.
@@ -230,14 +230,14 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 						"Error sending notification for historical event",
 						"hash",
 						parsedEvent.Hash,
-						"err",
+						"error",
 						err,
 					)
 				}
 			}
 		} else {
 			if err := trackedView.ApplyEvent(ssr.syncCtx, event); err != nil {
-				log.Errorw("Unable to apply event", "err", err)
+				log.Errorw("Unable to apply event", "error", err)
 			}
 		}
 	}
@@ -258,7 +258,7 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 		{
 			streamID, err := shared.StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
 			if err != nil {
-				log.Errorw("Received corrupt update, invalid stream ID", "err", err)
+				log.Errorw("Received corrupt update, invalid stream ID", "error", err)
 				ssr.cancelSync(fmt.Errorf("invalid SYNC_UPDATE, missing stream id"))
 			}
 
