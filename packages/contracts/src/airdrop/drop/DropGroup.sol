@@ -6,12 +6,10 @@ import {IDropFacetBase} from "./IDropFacet.sol";
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
-import {DropClaim} from "./DropClaim.sol";
 
 // contracts
 
 library DropGroup {
-    using DropClaim for DropClaim.Claim;
     using CustomRevert for bytes4;
 
     /// @notice The layout of the drop group
@@ -66,33 +64,29 @@ library DropGroup {
 
     /// @notice Claims the amount of tokens for the claim
     /// @param self The drop group
-    /// @param claim_ The claim
+    /// @param account The claiming account
     /// @param amount The amount of tokens to claim
-    function claim(Layout storage self, DropClaim.Claim calldata claim_, uint256 amount) internal {
-        Claimed storage claimed = self.supplyClaimedByWallet[claim_.account];
+    function claim(Layout storage self, address account, uint256 amount) internal {
+        Claimed storage claimed = self.supplyClaimedByWallet[account];
         // check if already claimed
         if (claimed.amount > 0) {
             IDropFacetBase.DropFacet__AlreadyClaimed.selector.revertWith();
         }
 
-        verifyClaim(self.condition, claim_);
-
         self.condition.supplyClaimed += amount;
         claimed.amount = amount;
     }
 
-    /// @notice Verifies the claim
-    /// @param condition The claim condition
-    /// @param claim_ The claim
-    function verifyClaim(
-        ClaimCondition storage condition,
-        DropClaim.Claim calldata claim_
-    ) internal view {
+    /// @notice Verifies the claim condition
+    /// @param self The drop group
+    /// @param amount The amount of tokens to claim
+    function verify(Layout storage self, uint256 amount) internal view {
+        ClaimCondition storage condition = self.condition;
         if (condition.merkleRoot == bytes32(0)) {
             IDropFacetBase.DropFacet__MerkleRootNotSet.selector.revertWith();
         }
 
-        if (claim_.quantity == 0) {
+        if (amount == 0) {
             IDropFacetBase.DropFacet__QuantityMustBeGreaterThanZero.selector.revertWith();
         }
 
@@ -102,7 +96,7 @@ library DropGroup {
 
         // check if the total claimed supply (including the current claim) exceeds the maximum
         // claimable supply
-        if (condition.supplyClaimed + claim_.quantity > condition.maxClaimableSupply) {
+        if (condition.supplyClaimed + amount > condition.maxClaimableSupply) {
             IDropFacetBase.DropFacet__ExceedsMaxClaimableSupply.selector.revertWith();
         }
 
@@ -113,7 +107,5 @@ library DropGroup {
         if (condition.endTimestamp > 0 && block.timestamp >= condition.endTimestamp) {
             IDropFacetBase.DropFacet__ClaimHasEnded.selector.revertWith();
         }
-
-        claim_.verify(condition.merkleRoot);
     }
 }

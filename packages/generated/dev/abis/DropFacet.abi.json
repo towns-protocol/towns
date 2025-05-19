@@ -67,7 +67,7 @@
     "name": "claimAndStake",
     "inputs": [
       {
-        "name": "claim",
+        "name": "req",
         "type": "tuple",
         "internalType": "struct DropClaim.Claim",
         "components": [
@@ -128,7 +128,7 @@
     "name": "claimWithPenalty",
     "inputs": [
       {
-        "name": "claim",
+        "name": "req",
         "type": "tuple",
         "internalType": "struct DropClaim.Claim",
         "components": [

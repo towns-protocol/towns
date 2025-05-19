@@ -74,22 +74,22 @@ interface IDropFacet is IDropFacetBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Claims tokens with a penalty
-    /// @param claim The claim to process
+    /// @param req The claim request
     /// @param expectedPenaltyBps The expected penalty in basis points
     /// @return The amount of tokens claimed
     function claimWithPenalty(
-        DropClaim.Claim calldata claim,
+        DropClaim.Claim calldata req,
         uint16 expectedPenaltyBps
     ) external returns (uint256);
 
     /// @notice Claims tokens and stakes them in the staking contract
-    /// @param claim The claim to process
+    /// @param req The claim request
     /// @param delegatee The address of the delegatee
     /// @param deadline The deadline for the transaction
     /// @param signature The signature of the delegatee
     /// @return The amount of tokens claimed
     function claimAndStake(
-        DropClaim.Claim calldata claim,
+        DropClaim.Claim calldata req,
         address delegatee,
         uint256 deadline,
         bytes calldata signature

@@ -62,7 +62,7 @@ const _abi = [
     name: "claimAndStake",
     inputs: [
       {
-        name: "claim",
+        name: "req",
         type: "tuple",
         internalType: "struct DropClaim.Claim",
         components: [
@@ -123,7 +123,7 @@ const _abi = [
     name: "claimWithPenalty",
     inputs: [
       {
-        name: "claim",
+        name: "req",
         type: "tuple",
         internalType: "struct DropClaim.Claim",
         components: [

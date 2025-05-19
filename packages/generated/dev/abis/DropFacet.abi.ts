@@ -67,7 +67,7 @@ export default [
     "name": "claimAndStake",
     "inputs": [
       {
-        "name": "claim",
+        "name": "req",
         "type": "tuple",
         "internalType": "struct DropClaim.Claim",
         "components": [
@@ -128,7 +128,7 @@ export default [
     "name": "claimWithPenalty",
     "inputs": [
       {
-        "name": "claim",
+        "name": "req",
         "type": "tuple",
         "internalType": "struct DropClaim.Claim",
         "components": [

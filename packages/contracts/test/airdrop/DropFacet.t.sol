@@ -408,8 +408,8 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         givenTokensMinted(TOTAL_TOKEN_AMOUNT)
     {
         DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
-        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
-        conditions[0].maxClaimableSupply = 100; // 100 tokens in total for this condition
+        // 50 tokens in total for this condition
+        conditions[0] = _createClaimCondition(block.timestamp, root, 50);
         conditions[0].penaltyBps = PENALTY_BPS;
 
         vm.prank(deployer);
@@ -649,8 +649,8 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         givenTokensMinted(TOTAL_TOKEN_AMOUNT)
     {
         DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
-        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
-        conditions[0].maxClaimableSupply = 100; // 100 tokens in total for this condition
+        // 100 tokens in total for this condition
+        conditions[0] = _createClaimCondition(block.timestamp, root, 100);
 
         vm.prank(deployer);
         dropFacet.setClaimConditions(conditions);

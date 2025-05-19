@@ -19,6 +19,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
+    using DropClaim for DropClaim.Claim;
     using DropGroup for DropGroup.Layout;
     using SafeTransferLib for address;
 
@@ -51,37 +52,47 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
 
     /// @inheritdoc IDropFacet
     function claimWithPenalty(
-        DropClaim.Claim calldata claim,
+        DropClaim.Claim calldata req,
         uint16 expectedPenaltyBps
     ) external returns (uint256 amount) {
-        DropGroup.Layout storage drop = _getDropGroup(claim.conditionId);
+        DropGroup.Layout storage drop = _getDropGroup(req.conditionId);
 
-        amount = _deductPenalty(claim.quantity, drop.condition.penaltyBps, expectedPenaltyBps);
+        amount = _deductPenalty(req.quantity, drop.condition.penaltyBps, expectedPenaltyBps);
 
-        drop.claim(claim, amount);
+        drop.verify(amount);
+
+        // verify the Merkle proof of the claim
+        req.verify(drop.condition.merkleRoot);
+
+        drop.claim(req.account, amount);
 
         TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
-        points.inner.burn(claim.account, claim.points);
+        points.inner.burn(req.account, req.points);
 
-        drop.condition.currency.safeTransfer(claim.account, amount);
+        drop.condition.currency.safeTransfer(req.account, amount);
 
-        emit DropFacet_Claimed_WithPenalty(claim.conditionId, msg.sender, claim.account, amount);
+        emit DropFacet_Claimed_WithPenalty(req.conditionId, msg.sender, req.account, amount);
     }
 
     /// @inheritdoc IDropFacet
     function claimAndStake(
-        DropClaim.Claim calldata claim,
+        DropClaim.Claim calldata req,
         address delegatee,
         uint256 deadline,
         bytes calldata signature
     ) external returns (uint256 amount) {
-        DropGroup.Layout storage drop = _getDropGroup(claim.conditionId);
+        DropGroup.Layout storage drop = _getDropGroup(req.conditionId);
 
-        amount = claim.quantity;
-        drop.claim(claim, amount);
+        amount = req.quantity;
+        drop.verify(amount);
+
+        // verify the Merkle proof of the claim
+        req.verify(drop.condition.merkleRoot);
+
+        drop.claim(req.account, amount);
 
         TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
-        points.inner.burn(claim.account, claim.points);
+        points.inner.burn(req.account, req.points);
 
         _approveClaimToken(drop.condition.currency, amount);
 
@@ -89,19 +100,16 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
             .stakeOnBehalf(
                 SafeCastLib.toUint96(amount),
                 delegatee,
-                claim.account,
-                claim.account,
+                req.account,
+                req.account,
                 deadline,
                 signature
             );
 
-        DropGroup.Claimed storage claimed = _getSupplyClaimedByWallet(
-            claim.conditionId,
-            claim.account
-        );
+        DropGroup.Claimed storage claimed = drop.supplyClaimedByWallet[req.account];
         claimed.depositId = depositId;
 
-        emit DropFacet_Claimed_And_Staked(claim.conditionId, msg.sender, claim.account, amount);
+        emit DropFacet_Claimed_And_Staked(req.conditionId, msg.sender, req.account, amount);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

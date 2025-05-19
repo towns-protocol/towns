@@ -292,7 +292,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     claimAndStake(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -300,7 +300,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     claimWithPenalty(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -340,7 +340,7 @@ export interface IDropFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   claimAndStake(
-    claim: DropClaim.ClaimStruct,
+    req: DropClaim.ClaimStruct,
     delegatee: PromiseOrValue<string>,
     deadline: PromiseOrValue<BigNumberish>,
     signature: PromiseOrValue<BytesLike>,
@@ -348,7 +348,7 @@ export interface IDropFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   claimWithPenalty(
-    claim: DropClaim.ClaimStruct,
+    req: DropClaim.ClaimStruct,
     expectedPenaltyBps: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -388,7 +388,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<void>;
 
     claimAndStake(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -396,7 +396,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     claimWithPenalty(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -483,7 +483,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     claimAndStake(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -491,7 +491,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     claimWithPenalty(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -530,7 +530,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     claimAndStake(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -538,7 +538,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     claimWithPenalty(
-      claim: DropClaim.ClaimStruct,
+      req: DropClaim.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
