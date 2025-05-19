@@ -74,7 +74,7 @@ contract InteractRiverAlphaSparse is AlphaHelper {
 
         string memory jsonPath;
         try vm.envString("INTERACTION_INPUT_PATH") returns (string memory path) {
-            jsonPath = string.concat(vm.projectRoot(), path);
+            jsonPath = path;
         } catch {
             jsonPath = string.concat(vm.projectRoot(), DEFAULT_REPORT_PATH, DEFAULT_JSON_FILE);
         }
