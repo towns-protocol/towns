@@ -1190,10 +1190,6 @@ func (ca *chainAuth) GetMembershipStatus(
 		&args,
 		ca.checkMembershipUncached,
 	)
-<<<<<<< HEAD
-=======
-
->>>>>>> main
 	if err != nil {
 		return nil, AsRiverError(err).Func("GetMembershipStatus").
 			Tag("spaceId", spaceId).
