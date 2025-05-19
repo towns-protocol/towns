@@ -213,15 +213,15 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
 
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster);
+        swapFacet.executeSwap(params, routerParams, poster);
 
         _verifySwapResults(
             address(token0),
             address(token1),
             caller,
             recipient,
+            amountIn,
             amountOut,
-            actualAmountOut,
             treasuryBps,
             posterBps
         );
@@ -240,22 +240,19 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         amountIn = bound(amountIn, 1 ether / 100, 10 ether);
         amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
 
+        (uint256 amountInAfterFees, , ) = swapRouter.getETHInputFees(amountIn, caller, poster);
+
         // get swap parameters
         (ExactInputParams memory params, RouterParams memory routerParams) = _createSwapParams(
             address(swapRouter),
             mockRouter,
             CurrencyTransfer.NATIVE_TOKEN,
             address(token1),
-            amountIn,
+            amountInAfterFees,
             amountOut,
             recipient
         );
-
-        (
-            uint256 expectedAmountOut,
-            uint16 treasuryBps,
-            uint16 posterBps
-        ) = _calculateExpectedAmountOut(amountOut);
+        params.amountIn = amountIn;
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -263,27 +260,23 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             params.tokenIn,
             params.tokenOut,
             params.amountIn,
-            expectedAmountOut,
+            amountOut,
             poster
         );
 
         deal(caller, amountIn);
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap{value: amountIn}(
-            params,
-            routerParams,
-            poster
-        );
+        swapFacet.executeSwap{value: amountIn}(params, routerParams, poster);
 
         _verifySwapResults(
             CurrencyTransfer.NATIVE_TOKEN,
             address(token1),
             caller,
             recipient,
+            amountIn,
             amountOut,
-            actualAmountOut,
-            treasuryBps,
-            posterBps
+            TREASURY_BPS,
+            POSTER_BPS
         );
     }
 
@@ -337,15 +330,15 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
 
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster);
+        swapFacet.executeSwap(params, routerParams, poster);
 
         _verifySwapResults(
             address(token0),
             CurrencyTransfer.NATIVE_TOKEN,
             caller,
             recipient,
+            amountIn,
             amountOut,
-            actualAmountOut,
             treasuryBps,
             posterBps
         );
@@ -391,7 +384,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         vm.prank(caller);
         token0.approve(everyoneSpace, amountIn);
 
-        (uint256 posterFee, uint256 treasuryFee) = _calculateFees(
+        (uint256 treasuryFee, uint256 posterFee) = _calculateFees(
             amountOut,
             TREASURY_BPS,
             posterBps
@@ -443,7 +436,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 amountOut
     ) internal view returns (uint256 expectedAmountOut, uint16 treasuryBps, uint16 posterBps) {
         (treasuryBps, posterBps, ) = swapFacet.getSwapFees();
-        (uint256 posterFee, uint256 treasuryFee) = _calculateFees(
+        (uint256 treasuryFee, uint256 posterFee) = _calculateFees(
             amountOut,
             treasuryBps,
             posterBps

@@ -92,47 +92,50 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         address tokenOut,
         address payer,
         address recipient,
+        uint256 amountIn,
         uint256 amountOut,
-        uint256 actualAmountOut,
-        uint16 treasuryBps,
+        uint16 protocolBps,
         uint16 posterBps
     ) internal view {
-        // calculate expected fees
-        uint256 expectedPosterFee = BasisPoints.calculate(amountOut, posterBps);
-        uint256 expectedTreasuryFee = BasisPoints.calculate(amountOut, treasuryBps);
-        uint256 expectedAmountOut = amountOut - expectedPosterFee - expectedTreasuryFee;
+        uint256 amount = tokenIn == CurrencyTransfer.NATIVE_TOKEN ? amountIn : amountOut;
+        uint256 expectedProtocolFee = BasisPoints.calculate(amount, protocolBps);
+        uint256 expectedPosterFee = BasisPoints.calculate(amount, posterBps);
+
+        if (tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
+            assertEq(payer.balance, 0, "Incorrect ETH balance");
+            assertEq(feeRecipient.balance, expectedProtocolFee, "Incorrect ETH protocol fee");
+            assertEq(poster.balance, expectedPosterFee, "Incorrect ETH poster fee");
+            assertEq(tokenOut.balanceOf(recipient), amountOut, "Incorrect tokenOut balance");
+            return;
+        }
+
+        assertEq(tokenIn.balanceOf(payer), 0, "Incorrect tokenIn balance");
+
+        uint256 expectedAmountOut = amountOut - expectedPosterFee - expectedProtocolFee;
 
         // assert balances after swap
-        if (tokenOut != CurrencyTransfer.NATIVE_TOKEN) {
-            assertEq(tokenOut.balanceOf(recipient), expectedAmountOut, "Incorrect token1 balance");
-            assertEq(tokenOut.balanceOf(poster), expectedPosterFee, "Incorrect poster fee");
-            assertEq(
-                tokenOut.balanceOf(feeRecipient),
-                expectedTreasuryFee,
-                "Incorrect treasury fee"
-            );
-        } else {
-            assertEq(recipient.balance, expectedAmountOut, "Incorrect ETH balance");
-            assertEq(poster.balance, expectedPosterFee, "Incorrect ETH poster fee");
-            assertEq(feeRecipient.balance, expectedTreasuryFee, "Incorrect ETH treasury fee");
-        }
+        assertEq(_getBalance(tokenOut, recipient), expectedAmountOut, "Incorrect tokenOut balance");
+        assertEq(
+            _getBalance(tokenOut, feeRecipient),
+            expectedProtocolFee,
+            "Incorrect protocol fee"
+        );
+        assertEq(_getBalance(tokenOut, poster), expectedPosterFee, "Incorrect poster fee");
+    }
 
-        if (tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
-            assertEq(tokenIn.balanceOf(payer), 0, "Incorrect token0 balance");
-        } else {
-            assertEq(payer.balance, 0, "Incorrect ETH balance");
+    function _getBalance(address token, address account) internal view returns (uint256) {
+        if (token == CurrencyTransfer.NATIVE_TOKEN) {
+            return account.balance;
         }
-
-        // assert returned amount is correct
-        assertEq(actualAmountOut, expectedAmountOut, "Incorrect returned amount");
+        return token.balanceOf(account);
     }
 
     function _calculateFees(
         uint256 amount,
-        uint16 treasuryBps,
+        uint16 protocolBps,
         uint16 posterBps
-    ) internal pure returns (uint256 posterFee, uint256 treasuryFee) {
+    ) internal pure returns (uint256 protocolFee, uint256 posterFee) {
+        protocolFee = BasisPoints.calculate(amount, protocolBps);
         posterFee = BasisPoints.calculate(amount, posterBps);
-        treasuryFee = BasisPoints.calculate(amount, treasuryBps);
     }
 }
