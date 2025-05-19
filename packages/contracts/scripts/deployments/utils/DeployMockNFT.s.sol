@@ -2,13 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
 import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.sol";
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
 import {DeployMockERC721A} from "../../deployments/utils/DeployMockERC721A.s.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
@@ -20,40 +20,52 @@ import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 
 contract DeployMockNFT is DiamondHelper, Deployer {
-    DeployFacet private facetHelper = new DeployFacet();
+    using LibString for string;
 
-    address diamondCut;
-    address diamondLoupe;
-    address introspection;
-    address erc721aMock;
+    DeployFacet private facetHelper = new DeployFacet();
 
     function versionName() public pure override returns (string memory) {
         return "utils/mockNFT";
     }
 
-    function diamondInitParams(address deployer) internal returns (Diamond.InitParams memory) {
-        address multiInit = facetHelper.deploy("MultiInit", deployer);
-        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
-        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
-        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
-        erc721aMock = facetHelper.deploy("MockERC721A", deployer);
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        // Queue up all facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("DiamondCutFacet");
+        facetHelper.add("DiamondLoupeFacet");
+        facetHelper.add("IntrospectionFacet");
+        facetHelper.add("MockERC721A");
 
+        // Deploy all facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
+        // Get deployed addresses
+        address facet = facetHelper.getDeployedAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
-            diamondCut,
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
+            facet,
             DeployDiamondCut.makeInitData()
         );
+
+        facet = facetHelper.getDeployedAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
-            diamondLoupe,
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
+            facet,
             DeployDiamondLoupe.makeInitData()
         );
+
+        facet = facetHelper.getDeployedAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
-            introspection,
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
+            facet,
             DeployIntrospection.makeInitData()
         );
-        addCut(DeployMockERC721A.makeCut(erc721aMock, IDiamond.FacetCutAction.Add));
+
+        // Add ERC721A mock
+        facet = facetHelper.getDeployedAddress("MockERC721A");
+        addCut(makeCut(facet, FacetCutAction.Add, DeployMockERC721A.selectors()));
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
@@ -65,6 +77,7 @@ contract DeployMockNFT is DiamondHelper, Deployer {
 
     function __deploy(address deployer) internal override returns (address) {
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
+
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
 

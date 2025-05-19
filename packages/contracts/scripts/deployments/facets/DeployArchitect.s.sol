@@ -2,27 +2,31 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IArchitect} from "src/factory/facets/architect/IArchitect.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {Architect} from "src/factory/facets/architect/Architect.sol";
 
-contract DeployArchitect is FacetHelper, Deployer {
-    constructor() {
-        addSelector(IArchitect.getSpaceByTokenId.selector);
-        addSelector(IArchitect.getTokenIdBySpace.selector);
-        addSelector(IArchitect.setSpaceArchitectImplementations.selector);
-        addSelector(IArchitect.getSpaceArchitectImplementations.selector);
-        addSelector(IArchitect.setProxyInitializer.selector);
-        addSelector(IArchitect.getProxyInitializer.selector);
+library DeployArchitect {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](6);
+        _selectors[0] = IArchitect.getSpaceByTokenId.selector;
+        _selectors[1] = IArchitect.getTokenIdBySpace.selector;
+        _selectors[2] = IArchitect.setSpaceArchitectImplementations.selector;
+        _selectors[3] = IArchitect.getSpaceArchitectImplementations.selector;
+        _selectors[4] = IArchitect.setProxyInitializer.selector;
+        _selectors[5] = IArchitect.getProxyInitializer.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return Architect.__Architect_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData(
@@ -30,10 +34,10 @@ contract DeployArchitect is FacetHelper, Deployer {
         address _userEntitlement,
         address _ruleEntitlement,
         address _legacyRuleEntitlement
-    ) public pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         return
             abi.encodeWithSelector(
-                initializer(),
+                Architect.__Architect_init.selector,
                 _spaceOwnerToken,
                 _userEntitlement,
                 _ruleEntitlement,
@@ -41,14 +45,7 @@ contract DeployArchitect is FacetHelper, Deployer {
             );
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/architectFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        Architect architect = new Architect();
-        vm.stopBroadcast();
-        return address(architect);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("Architect.sol", "");
     }
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 )
 
@@ -232,8 +233,6 @@ func compareStreamsMiniblocks(
 // requireNoCorruptStreams confirms that the scrubber detected no corrupt streams.
 // Call after the archiver has downloaded all of the latest miniblocks.
 func requireNoCorruptStreams(
-	name string,
-	t *testing.T,
 	ctx context.Context,
 	require *require.Assertions,
 	archiver *Archiver,
@@ -312,7 +311,13 @@ func TestArchiveOneStream(t *testing.T) {
 		GenShortNanoid(),
 		make(chan error, 1),
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:       time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+			},
+		},
+		100,
 	)
 	require.NoError(err)
 
@@ -510,7 +515,7 @@ func TestArchiveContinuous(t *testing.T) {
 	)
 
 	require.NoError(compareStreamsMiniblocks(t, ctx, []StreamId{streamId, streamId2}, arch.Storage(), client))
-	requireNoCorruptStreams("TestArchiveContinuous", t, ctx, require, arch.Archiver)
+	requireNoCorruptStreams(ctx, require, arch.Archiver)
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()

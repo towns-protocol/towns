@@ -64,7 +64,7 @@ func MakeSpaceId() (StreamId, error) {
 	b[0] = STREAM_SPACE_BIN
 	_, err := rand.Read(b[1:21])
 	if err != nil {
-		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "error", err)
 	}
 	return StreamIdFromBytes(b[:])
 }
@@ -79,7 +79,7 @@ func MakeChannelId(spaceId StreamId) (StreamId, error) {
 	}
 	_, err = rand.Read(b[21:])
 	if err != nil {
-		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "error", err)
 	}
 	return StreamIdFromBytes(b[:])
 }

@@ -713,6 +713,7 @@ func (r *StreamView) ValidateNextEvent(
 				"expNum", lastBlock.Ref.Num,
 				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
 				"requestedBlock", parsedEvent.MiniblockRef.Hash,
+				"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -750,6 +751,7 @@ func (r *StreamView) ValidateNextEvent(
 				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
+				"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -772,6 +774,7 @@ func (r *StreamView) ValidateNextEvent(
 			"requestedBlock", parsedEvent.MiniblockRef.Hash,
 			"expected", lastBlock.Ref.Hash,
 			"expNum", lastBlock.Ref.Num,
+			"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 			"streamId", r.streamId,
 			"event", parsedEvent.Hash,
 		).Func("ValidateNextEvent")

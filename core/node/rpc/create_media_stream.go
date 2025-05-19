@@ -82,12 +82,12 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			creatorStreamView, err = stream.GetView(ctx)
 		}
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
+			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "error", err)
 		}
 		for _, streamIdBytes := range csRules.RequiredMemberships {
 			streamId, err := StreamIdFromBytes(streamIdBytes)
 			if err != nil {
-				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
+				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "error", err)
 			}
 			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
@@ -110,14 +110,15 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 
 	// check entitlements
 	if csRules.ChainAuth != nil {
-		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
+		isEntitledResult, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
 			return nil, err
 		}
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			return nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
 			).Func("createStream")
@@ -126,7 +127,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 
 	// create the stream
 	resp, err := s.createReplicatedMediaStream(ctx, streamId, []*ParsedEvent{parsedEvents[0]})
-	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
+	if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 		return nil, err
 	}
 
@@ -134,7 +135,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	for _, de := range csRules.DerivedEvents {
 		_, err = s.AddEventPayload(ctx, de.StreamId, de.Payload, de.Tags)
 		if err != nil {
-			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "err", err)
+			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "error", err)
 		}
 	}
 
@@ -164,7 +165,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			resp,
 			parsedEvents[0].Event.GetMediaPayload().GetInception().GetChunkCount() == 1,
 		)
-		if err != nil {
+		if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 			return nil, AsRiverError(err).Func("createMediaStream")
 		}
 
@@ -197,7 +198,10 @@ func (s *Service) createReplicatedMediaStream(
 
 	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId))
+	sender := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId),
+	)
 
 	// Create ephemeral stream within the local node
 	if isLocal {
@@ -215,7 +219,7 @@ func (s *Service) createReplicatedMediaStream(
 
 		_, err = stub.AllocateEphemeralStream(
 			ctx,
-			connect.NewRequest[AllocateEphemeralStreamRequest](
+			connect.NewRequest(
 				&AllocateEphemeralStreamRequest{
 					StreamId:  streamId[:],
 					Miniblock: mb,

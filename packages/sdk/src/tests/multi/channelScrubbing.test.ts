@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { MembershipOp } from '@towns-protocol/proto'
+import { MembershipOp, MembershipReason } from '@towns-protocol/proto'
 import { makeUserStreamId } from '../../id'
 import {
     getNftRuleData,
@@ -14,7 +14,7 @@ import {
 } from '../testUtils'
 import { dlog } from '@towns-protocol/dlog'
 import { Address, TestERC721 } from '@towns-protocol/web3'
-
+import { ethers } from 'ethers'
 const log = dlog('csb:test:channelsWithEntitlements')
 
 describe('channelScrubbing', () => {
@@ -23,36 +23,48 @@ describe('channelScrubbing', () => {
         const TestNftAddress = await TestERC721.getContractAddress(TestNftName)
         const {
             alice,
-            bob,
             aliceSpaceDapp,
             aliceProvider,
-            carolsWallet: alicesLinkedWallet,
-            carolProvider: alicesLinkedProvider,
+            carol,
+            carolSpaceDapp,
+            carolProvider,
             spaceId,
             channelId,
         } = await setupChannelWithCustomRole([], getNftRuleData(TestNftAddress))
 
-        // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, alicesLinkedProvider.wallet)
+        const aliceLinkedWallet = ethers.Wallet.createRandom()
+        const carolLinkedWallet = ethers.Wallet.createRandom()
 
-        // Mint the needed asset to Alice's linked wallet
+        // link wallets
+        await Promise.all([
+            linkWallets(aliceSpaceDapp, aliceProvider.wallet, aliceLinkedWallet),
+            linkWallets(carolSpaceDapp, carolProvider.wallet, carolLinkedWallet),
+        ])
+        // Mint the needed asset to Alice and Carol's linked wallets
         log('Minting an NFT to alices linked wallet')
-        await TestERC721.publicMint(TestNftName, alicesLinkedWallet.address as Address)
+        await Promise.all([
+            TestERC721.publicMint(TestNftName, aliceLinkedWallet.address as Address),
+            TestERC721.publicMint(TestNftName, carolLinkedWallet.address as Address),
+        ])
 
         // Join alice to the channel based on her linked wallet credentials
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
 
-        await unlinkWallet(aliceSpaceDapp, aliceProvider.wallet, alicesLinkedProvider.wallet)
+        await unlinkWallet(aliceSpaceDapp, aliceProvider.wallet, aliceLinkedWallet)
 
         // Wait 5 seconds so the channel stream will become eligible for scrubbing
         await new Promise((f) => setTimeout(f, 5000))
 
-        // When bob's join event is added to the stream, it should trigger a scrub, and Alice
+        // When carol's join event is added to the stream, it should trigger a scrub, and Alice
         // should be booted from the stream since she unlinked her entitled wallet.
-        await expect(bob.joinStream(channelId!)).resolves.not.toThrow()
+        await expectUserCanJoinChannel(carol, carolSpaceDapp, spaceId, channelId!)
 
         const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
         // Wait for alice's user stream to have the leave event
-        await waitFor(() => userStreamView.userContent.isMember(channelId!, MembershipOp.SO_LEAVE))
+        await waitFor(() => {
+            const membership = userStreamView.userContent.getMembership(channelId!)
+            expect(membership?.op).toBe(MembershipOp.SO_LEAVE)
+            expect(membership?.reason).toBe(MembershipReason.MR_NOT_ENTITLED)
+        })
     })
 })

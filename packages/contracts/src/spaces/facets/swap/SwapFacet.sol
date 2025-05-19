@@ -26,8 +26,8 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
-    /// @notice Maximum fee in basis points (1%)
-    uint16 internal constant MAX_FEE_BPS = 100;
+    /// @notice Maximum fee in basis points (2%)
+    uint16 internal constant MAX_FEE_BPS = 200;
 
     /// @dev The implementation ID for the SwapRouter
     bytes32 internal constant SWAP_ROUTER_DIAMOND = bytes32("SwapRouter");

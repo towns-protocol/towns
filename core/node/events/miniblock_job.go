@@ -32,6 +32,8 @@ type mbJob struct {
 	replicated bool
 	// candidate is the produced miniblock candidate that is attempted to promote to a miniblock.
 	candidate *MiniblockInfo
+	// skipPromotion is true if the miniblock producer is skipping promotion, used by writeLatestKnownMiniblock.
+	skipPromotion bool
 }
 
 func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {
@@ -39,13 +41,24 @@ func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {
 		return false
 	}
 
-	if candidateCount < 10 {
+	cc := candidateCount / 10
+
+	if cc <= 0 {
 		return false
+	}
+
+	if cc > 10 {
+		cc = 10
 	}
 
 	// slow down candidate production by 2x for every 10 candidates for up to 450x slowdown.
 	// i.e. 900 seconds -> once every 15 minutes.
-	slowDownFactor := min(1<<(candidateCount/10), 450)
+	slowDownFactor := min(1<<cc, 450)
+
+	// Really shouldn't happen, but just in case.
+	if slowDownFactor <= 1 {
+		return false
+	}
 
 	return uint64(blockNum)%uint64(slowDownFactor) != 0
 }
@@ -199,23 +212,27 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	for i, p := range proposals {
 		converted[i] = mbProposalFromProto(p.response.Proposal)
 
+		if converted[i].newMiniblockNum != view.minipool.generation {
+			continue
+		}
+
 		for _, e := range p.response.MissingEvents {
 			parsed, err := ParseEvent(e)
 			if err != nil {
-				logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error parsing event", "err", err)
+				logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error parsing event", "error", err)
 				continue
 			}
 			if _, ok := added[parsed.Hash]; !ok {
 				added[parsed.Hash] = true
 
 				if !view.minipool.events.Has(parsed.Hash) {
-					newView, err := j.stream.AddEvent2(ctx, parsed)
+					newView, err := j.stream.addEvent(ctx, parsed, true)
 					if err == nil {
 						view = newView
 					} else {
 						logging.FromCtx(ctx).Errorw(
 							"mbJob.processRemoteProposals: error adding event",
-							"err",
+							"error",
 							err,
 							"source",
 							p.source,

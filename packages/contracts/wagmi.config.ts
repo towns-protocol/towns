@@ -7,6 +7,7 @@ export default defineConfig({
     foundry({
       project: "./",
       artifacts: "out",
+      exclude: ["/out/RewardsDistribution.sol/*.json"],
       include: [
         "**/CreateSpace.sol/*.json",
         "**/SpaceOwner.sol/*.json",
@@ -24,6 +25,12 @@ export default defineConfig({
         "**/ReviewFacet.sol/*.json",
         "**/SpaceEntitlementGated.sol/*.json",
         "**/TippingFacet.sol/*.json",
+        "**/MainnetDelegation.sol/*.json",
+        "**/EntitlementChecker.sol/*.json",
+        "**/NodeOperatorFacet.sol/*.json",
+        "**/SpaceDelegationFacet.sol/*.json",
+        "**/v2/RewardsDistribution.sol/*.json",
+        "**/XChain.sol/*.json",
       ],
       forge: {
         build: false,

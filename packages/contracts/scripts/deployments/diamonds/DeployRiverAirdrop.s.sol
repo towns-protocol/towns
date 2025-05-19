@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
@@ -11,6 +10,8 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
+import {DeployDropFacet} from "../facets/DeployDropFacet.s.sol";
+import {DeployTownsPoints} from "../facets/DeployTownsPoints.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
@@ -22,8 +23,6 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
-import {DeployDropFacet} from "scripts/deployments/facets/DeployDropFacet.s.sol";
-import {DeployTownsPoints} from "scripts/deployments/facets/DeployTownsPoints.s.sol";
 
 contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
@@ -32,16 +31,6 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     address private SPACE_FACTORY;
 
     DeployFacet private facetHelper = new DeployFacet();
-    DeployDropFacet private dropHelper = new DeployDropFacet();
-    DeployTownsPoints private pointsHelper = new DeployTownsPoints();
-
-    address private multiInit;
-    mapping(string => address) private facetDeployments;
-
-    constructor() {
-        facetDeployments["DropFacet"] = address(dropHelper);
-        facetDeployments["TownsPoints"] = address(pointsHelper);
-    }
 
     function versionName() public pure override returns (string memory) {
         return "riverAirdrop";
@@ -72,58 +61,75 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = facetHelper.deploy("MultiInit", deployer);
+        // Queue up all core facets for batch deployment
+        facetHelper.add("DiamondCutFacet");
+        facetHelper.add("DiamondLoupeFacet");
+        facetHelper.add("IntrospectionFacet");
+        facetHelper.add("OwnableFacet");
 
-        address facet = facetHelper.deploy("DiamondCutFacet", deployer);
+        // Get predicted addresses
+        address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
-            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondCut.selectors()),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
-        facet = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
-            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDiamondLoupe.selectors()),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
-        facet = facetHelper.deploy("IntrospectionFacet", deployer);
+        facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
-            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployIntrospection.selectors()),
             facet,
             DeployIntrospection.makeInitData()
         );
 
-        facet = facetHelper.deploy("OwnableFacet", deployer);
+        facet = facetHelper.predictAddress("OwnableFacet");
         addFacet(
-            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        address facet = dropHelper.deploy(deployer);
+        // Queue up all facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("DropFacet");
+        facetHelper.add("TownsPoints");
+        facetHelper.add("MetadataFacet");
+
+        // Deploy the batch of facets
+        facetHelper.deployBatch(deployer);
+
+        // Get deployed addresses and add facets
+        address facet = facetHelper.getDeployedAddress("DropFacet");
         addFacet(
-            dropHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployDropFacet.selectors()),
             facet,
-            dropHelper.makeInitData(getBaseRegistry())
+            DeployDropFacet.makeInitData(getBaseRegistry())
         );
 
-        facet = pointsHelper.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("TownsPoints");
         addFacet(
-            pointsHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployTownsPoints.selectors()),
             facet,
-            pointsHelper.makeInitData(getSpaceFactory())
+            DeployTownsPoints.makeInitData(getSpaceFactory())
         );
 
-        facet = facetHelper.deploy("MetadataFacet", deployer);
+        facet = facetHelper.getDeployedAddress("MetadataFacet");
         addFacet(
-            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
             facet,
             DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
         );
+
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
             Diamond.InitParams({
@@ -134,24 +140,33 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
+        // Queue up all requested facets for batch deployment
+        for (uint256 i; i < facets.length; ++i) {
+            facetHelper.add(facets[i]);
+        }
+
+        // Deploy all requested facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
-            address facetHelperAddress = facetDeployments[facetName];
+            address facet = facetHelper.getDeployedAddress(facetName);
 
-            if (facetHelperAddress != address(0)) {
-                // deploy facet
-                address facetAddress = Deployer(facetHelperAddress).deploy(deployer);
-                (FacetCut memory cut, bytes memory config) = FacetHelper(facetHelperAddress)
-                    .facetInitHelper(deployer, facetAddress);
-                if (config.length > 0) {
-                    addFacet(cut, facetAddress, config);
-                } else {
-                    addCut(cut);
-                }
-            } else if (facetName.eq("MetadataFacet")) {
-                address facet = facetHelper.deploy("MetadataFacet", deployer);
+            if (facetName.eq("DropFacet")) {
                 addFacet(
-                    DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    makeCut(facet, FacetCutAction.Add, DeployDropFacet.selectors()),
+                    facet,
+                    DeployDropFacet.makeInitData(getBaseRegistry())
+                );
+            } else if (facetName.eq("TownsPoints")) {
+                addFacet(
+                    makeCut(facet, FacetCutAction.Add, DeployTownsPoints.selectors()),
+                    facet,
+                    DeployTownsPoints.makeInitData(getSpaceFactory())
+                );
+            } else if (facetName.eq("MetadataFacet")) {
+                addFacet(
+                    makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
                     facet,
                     DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
                 );
