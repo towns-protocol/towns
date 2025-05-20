@@ -268,7 +268,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     public async ackNewGroupSession(
         _session: UserInboxPayload_GroupEncryptionSessions,
     ): Promise<void> {
-        return this.client.ackInboxStream()
+        await this.client.ackInboxStream()
+        await this.client.setPendingUsernames()
     }
 
     public async encryptAndShareGroupSessions({

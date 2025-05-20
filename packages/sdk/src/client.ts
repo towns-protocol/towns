@@ -235,6 +235,7 @@ export class Client
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
     private logId: string
+    private pendingUsernames: Map<string, string> = new Map()
 
     constructor(
         signerContext: SignerContext,
@@ -1153,11 +1154,20 @@ export class Client
         )
     }
 
-    async setUsername(streamId: string, username: string) {
+    async setUsername(streamId: string, username: string, force: boolean = false) {
         check(isDefined(this.cryptoBackend))
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
         stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
+
+        // be very careful about setting a username for a large group, we don't want to inject
+        // more sessions than needed into the group
+        const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
+        if (stream.view.membershipContent.joined.size > 100 && !hasHybridSession && !force) {
+            this.pendingUsernames.set(streamId, username)
+            return
+        }
+
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(
             streamId,
             new TextEncoder().encode(username),
@@ -1176,6 +1186,15 @@ export class Client
             stream.view.getMemberMetadata().usernames.resetLocalUsername(this.userId)
             throw err
         }
+    }
+
+    async setPendingUsernames() {
+        await Promise.all(
+            Array.from(this.pendingUsernames.entries()).map(([streamId, pendingUsername]) => {
+                this.pendingUsernames.delete(streamId)
+                return this.setUsername(streamId, pendingUsername)
+            }),
+        )
     }
 
     async setEnsAddress(streamId: string, walletAddress: string | Uint8Array) {
