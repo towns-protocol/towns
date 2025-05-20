@@ -6,7 +6,7 @@ import { assert } from '../../check'
 import { Client } from '../../client'
 import { makeTestClient } from '../testUtils'
 import { SessionKeysSchema } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { bin_fromHexString, dlog } from '@towns-protocol/dlog'
 import { create, fromJsonString, toJsonString } from '@bufbuild/protobuf'
 
 const log = dlog('test:clientCrypto')
@@ -78,5 +78,20 @@ describe('clientCrypto', () => {
             const keys2 = fromJsonString(SessionKeysSchema, clear)
             expect(keys2.keys[0]).toEqual(message)
         }
+    })
+
+    test('client can check if a hybrid session exists', async () => {
+        const bob = await makeTestClient()
+        if (!bob.cryptoBackend) {
+            throw new Error('bob.cryptoBackend is undefined')
+        }
+
+        const streamId = '0xabcd'
+        let hasSession = await bob.cryptoBackend.hasHybridSession(streamId)
+        expect(hasSession).toBe(false)
+
+        await bob.ensureOutboundSession(streamId, { awaitInitialShareSession: false })
+        hasSession = await bob.cryptoBackend.hasHybridSession(streamId)
+        expect(hasSession).toBe(true)
     })
 })
