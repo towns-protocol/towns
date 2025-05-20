@@ -500,26 +500,26 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub.Sub, event, webPayload)
 			if err == nil {
-				p.log.Infow("Successfully sent web push notification",
+				p.log.Debugw("Successfully sent web push notification",
 					"user", user,
 					"event", event.Hash,
 					"channelID", channelID,
 					"user", user,
 				)
-			} else if !subscriptionExpired {
-				p.log.Errorw("Unable to send web push notification",
-					"user", user,
-					"error", err,
-					"event", event.Hash,
-					"channelID", channelID,
-				)
-			} else {
+			} else if subscriptionExpired {
 				if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub); err != nil {
 					p.log.Errorw("Unable to remove expired webpush subscription",
 						"user", userPref.UserID, "error", err)
 				} else {
 					p.log.Infow("Removed expired webpush subscription", "user", userPref.UserID)
 				}
+			} else {
+				p.log.Errorw("Unable to send web push notification",
+					"user", user,
+					"error", err,
+					"event", event.Hash,
+					"channelID", channelID,
+				)
 			}
 		}
 	}
