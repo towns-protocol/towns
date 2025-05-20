@@ -70,9 +70,9 @@ func NewManager(
 func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) *Subscription {
 	return &Subscription{
 		log:      m.log.With("syncId", syncID),
-		Ctx:      ctx,
-		Cancel:   cancel,
-		SyncID:   syncID,
+		ctx:      ctx,
+		cancel:   cancel,
+		syncID:   syncID,
 		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:  m,
 	}

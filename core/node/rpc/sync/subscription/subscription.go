@@ -21,15 +21,17 @@ import (
 type Subscription struct {
 	// log is the logger for this stream sync operation
 	log *logging.Log
-
-	Ctx      context.Context
-	Cancel   context.CancelCauseFunc
-	SyncID   string
+	// ctx is the context of the sync operation
+	ctx context.Context
+	// cancel is the cancellation function of the sync op context
+	cancel context.CancelCauseFunc
+	// syncID is the subscription/sync ID
+	syncID string
+	// Messages is the channel for the subscription messages
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-
+	// closed is the indicator of the subscription status. 1 means the subscription is closed.
+	closed  uint32
 	manager *Manager
-
-	closed uint32
 }
 
 func (s *Subscription) Close() {
@@ -51,9 +53,9 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse))
 	if err != nil {
 		rvrErr := AsRiverError(err).
-			Tag("syncId", s.SyncID).
+			Tag("syncId", s.syncID).
 			Tag("op", msg.GetSyncOp())
-		s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
+		s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
 		s.log.Errorw("Failed to add message to subscription",
 			"op", msg.GetSyncOp(), "err", err)
 	}
@@ -121,7 +123,7 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 	} else {
 		streamAlreadyInSync = true
 		if !slices.ContainsFunc(subscriptions, func(sub *Subscription) bool {
-			return sub.SyncID == s.SyncID
+			return sub.syncID == s.syncID
 		}) {
 			updatedSubscribers = true
 			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
@@ -136,11 +138,11 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 		} else {
 			// TODO: BACKFILL
 			go func() {
-				if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
+				if err := s.backfillByCookie(cookie); err != nil {
 					rvrErr := AsRiverError(err).
-						Tag("syncId", s.SyncID).
+						Tag("syncId", s.syncID).
 						Tag("op", cookie.GetStreamId())
-					s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
+					s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
 					s.log.Errorw("Failed to backfill stream by the given cookie",
 						"op", cookie.GetStreamId(), "err", err)
 				}
@@ -158,7 +160,7 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
 		s.manager.subscriptions[StreamId(streamID)],
 		func(sub *Subscription) bool {
-			return sub.SyncID == s.SyncID
+			return sub.syncID == s.syncID
 		},
 	)
 	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
@@ -171,16 +173,13 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 
 // backfillByCookie sends the stream since the given cookie to the subscription.
 // TODO: There could be a gap between the given cookie and the latest stream update.
-func (s *Subscription) backfillByCookie(
-	ctx context.Context,
-	cookie *SyncCookie,
-) error {
+func (s *Subscription) backfillByCookie(cookie *SyncCookie) error {
 	streamID := StreamId(cookie.GetStreamId())
 
 	if cookie.GetMinipoolGen() > 0 {
 		var sc *StreamAndCookie
 
-		st, err := s.manager.streamCache.GetStreamNoWait(ctx, streamID)
+		st, err := s.manager.streamCache.GetStreamNoWait(s.ctx, streamID)
 		if err != nil {
 			return err
 		}
@@ -189,14 +188,14 @@ func (s *Subscription) backfillByCookie(
 		if len(cookie.GetNodeAddress()) > 0 {
 			addr := common.BytesToAddress(cookie.GetNodeAddress())
 			if s.manager.localNodeAddr.Cmp(addr) == 0 {
-				v, err := st.GetViewIfLocal(ctx)
+				v, err := st.GetViewIfLocal(s.ctx)
 				if err == nil {
-					sc, _ = v.GetStreamSince(ctx, s.manager.localNodeAddr, cookie)
+					sc, _ = v.GetStreamSince(s.ctx, s.manager.localNodeAddr, cookie)
 				}
 			} else {
 				cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
 				if err == nil {
-					resp, err := cl.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
+					resp, err := cl.GetStream(s.ctx, connect.NewRequest(&GetStreamRequest{
 						StreamId:   cookie.GetStreamId(),
 						SyncCookie: cookie,
 					}))
@@ -210,9 +209,9 @@ func (s *Subscription) backfillByCookie(
 		if sc == nil {
 			remotes, isLocal := st.GetRemotesAndIsLocal()
 			if isLocal {
-				v, err := st.GetViewIfLocal(ctx)
+				v, err := st.GetViewIfLocal(s.ctx)
 				if err == nil {
-					sc, _ = v.GetStreamSince(ctx, s.manager.localNodeAddr, cookie)
+					sc, _ = v.GetStreamSince(s.ctx, s.manager.localNodeAddr, cookie)
 				}
 			}
 
@@ -223,7 +222,7 @@ func (s *Subscription) backfillByCookie(
 						continue
 					}
 
-					resp, err := cl.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
+					resp, err := cl.GetStream(s.ctx, connect.NewRequest(&GetStreamRequest{
 						StreamId:   cookie.GetStreamId(),
 						SyncCookie: cookie,
 					}))
@@ -239,7 +238,7 @@ func (s *Subscription) backfillByCookie(
 
 		// TODO: What to do if the stream cannot be backfilled from the given cookie?
 		if sc != nil {
-			s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: sc, SyncId: s.SyncID})
+			s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: sc, SyncId: s.syncID})
 		}
 	}
 
@@ -249,7 +248,7 @@ func (s *Subscription) backfillByCookie(
 // DebugDropStream drops the given stream from the subscription.
 // TODO: Doublecheck the complete behaviour
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	fmt.Println("debug drop stream", streamID, s.SyncID)
+	fmt.Println("debug drop stream", streamID, s.syncID)
 	/*removeFromRemote := s.removeStream(streamID[:])
 	if !removeFromRemote {
 		return nil
