@@ -1936,7 +1936,7 @@ export class SpaceDapp {
      * @param args.operatorAddress - The operator address
      * @returns The transaction
      */
-       public async addSpaceDelegation<T = ContractTransaction>(args: {
+    public async addSpaceDelegation<T = ContractTransaction>(args: {
         spaceId: `0x${string}`
         operatorAddress: `0x${string}`
         signer: ethers.Signer
