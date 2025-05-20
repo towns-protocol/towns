@@ -236,6 +236,7 @@ export class Client
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
     private logId: string
     private pendingUsernames: Map<string, string> = new Map()
+    private pendingUsernameTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
     constructor(
         signerContext: SignerContext,
@@ -1161,12 +1162,20 @@ export class Client
         stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
 
         // be very careful about setting a username for a large group, we don't want to inject
-        // more sessions than needed into the group
+        // more sessions than needed into the group. unless a session has been received in 60 seconds,
+        // we will force set the username.
         const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
         if (stream.view.membershipContent.joined.size > 100 && !hasHybridSession && !force) {
             this.pendingUsernames.set(streamId, username)
+            const prevTimeout = this.pendingUsernameTimeouts.get(streamId)
+            if (prevTimeout) clearTimeout(prevTimeout)
+            const timeout = setTimeout(() => {
+                void this.setUsername(streamId, username, true)
+            }, 60000)
+            this.pendingUsernameTimeouts.set(streamId, timeout)
             return
         }
+        this.pendingUsernameTimeouts.delete(streamId)
 
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(
             streamId,
