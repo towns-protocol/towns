@@ -24,7 +24,7 @@
         "@bufbuild/protobuf": "^2.2.2",
         "@ethereumjs/util": "^8.0.1",
         "@towns-protocol/dlog": "workspace:^",
-        "@towns-protocol/olm": "3.2.21",
+        "@towns-protocol/olm": "3.2.22",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "debug": "^4.3.4",
