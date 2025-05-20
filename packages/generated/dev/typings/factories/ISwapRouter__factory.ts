@@ -235,6 +235,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SwapRouter__InvalidBps",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SwapRouter__InvalidRouter",
     inputs: [],
   },

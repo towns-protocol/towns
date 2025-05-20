@@ -64,6 +64,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when ETH is sent but not expected (tokenIn is not the native token)
     error SwapRouter__UnexpectedETH();
 
+    /// @notice Error thrown when an invalid BPS value is provided
+    error SwapRouter__InvalidBps();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

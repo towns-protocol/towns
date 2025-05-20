@@ -292,6 +292,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         uint16 posterBps,
         address poster
     ) internal pure returns (uint256 amountAfterFees, uint256 protocolFee, uint256 posterFee) {
+        if (protocolBps + posterBps > BasisPoints.MAX_BPS) {
+            SwapRouter__InvalidBps.selector.revertWith();
+        }
+
         // calculate protocol fee
         protocolFee = BasisPoints.calculate(amount, protocolBps);
 
