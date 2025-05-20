@@ -22,7 +22,7 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "treasuryAmount",
+        "name": "protocolAmount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"

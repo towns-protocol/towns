@@ -86,7 +86,7 @@ const _abi = [
     inputs: [],
     outputs: [
       {
-        name: "treasuryBps",
+        name: "protocolBps",
         type: "uint16",
         internalType: "uint16",
       },
@@ -157,7 +157,7 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "treasuryAmount",
+        name: "protocolAmount",
         type: "uint256",
         indexed: false,
         internalType: "uint256",

@@ -77,8 +77,52 @@ const _abi = [
         type: "uint256",
         internalType: "uint256",
       },
+      {
+        name: "protocolFee",
+        type: "uint256",
+        internalType: "uint256",
+      },
     ],
     stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "getETHInputFees",
+    inputs: [
+      {
+        name: "amountIn",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "caller",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "poster",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "amountInAfterFees",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "protocolFee",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "posterFee",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
   },
   {
     type: "event",
@@ -103,7 +147,7 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "treasuryAmount",
+        name: "protocolAmount",
         type: "uint256",
         indexed: false,
         internalType: "uint256",

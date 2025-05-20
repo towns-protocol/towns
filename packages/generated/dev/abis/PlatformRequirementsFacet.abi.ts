@@ -420,7 +420,7 @@ export default [
     "name": "PlatformSwapFeesSet",
     "inputs": [
       {
-        "name": "treasuryBps",
+        "name": "protocolBps",
         "type": "uint16",
         "indexed": false,
         "internalType": "uint16"

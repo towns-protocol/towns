@@ -366,7 +366,7 @@ export type PlatformMembershipMintLimitSetEventFilter =
   TypedEventFilter<PlatformMembershipMintLimitSetEvent>;
 
 export interface PlatformSwapFeesSetEventObject {
-  treasuryBps: number;
+  protocolBps: number;
   posterBps: number;
 }
 export type PlatformSwapFeesSetEvent = TypedEvent<
@@ -710,11 +710,11 @@ export interface PlatformRequirementsFacet extends BaseContract {
     ): PlatformMembershipMintLimitSetEventFilter;
 
     "PlatformSwapFeesSet(uint16,uint16)"(
-      treasuryBps?: null,
+      protocolBps?: null,
       posterBps?: null
     ): PlatformSwapFeesSetEventFilter;
     PlatformSwapFeesSet(
-      treasuryBps?: null,
+      protocolBps?: null,
       posterBps?: null
     ): PlatformSwapFeesSetEventFilter;
 

@@ -66,9 +66,12 @@ export declare namespace ISwapRouterBase {
 export interface ISwapRouterInterface extends utils.Interface {
   functions: {
     "executeSwap((address,address,uint256,uint256,address),(address,address,bytes),address)": FunctionFragment;
+    "getETHInputFees(uint256,address,address)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "executeSwap"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "executeSwap" | "getETHInputFees"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "executeSwap",
@@ -78,9 +81,21 @@ export interface ISwapRouterInterface extends utils.Interface {
       PromiseOrValue<string>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "getETHInputFees",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "executeSwap",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getETHInputFees",
     data: BytesLike
   ): Result;
 
@@ -99,7 +114,7 @@ export interface FeeDistributionEventObject {
   token: string;
   treasury: string;
   poster: string;
-  treasuryAmount: BigNumber;
+  protocolAmount: BigNumber;
   posterAmount: BigNumber;
 }
 export type FeeDistributionEvent = TypedEvent<
@@ -169,6 +184,19 @@ export interface ISwapRouter extends BaseContract {
       poster: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    getETHInputFees(
+      amountIn: PromiseOrValue<BigNumberish>,
+      caller: PromiseOrValue<string>,
+      poster: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber] & {
+        amountInAfterFees: BigNumber;
+        protocolFee: BigNumber;
+        posterFee: BigNumber;
+      }
+    >;
   };
 
   executeSwap(
@@ -178,13 +206,41 @@ export interface ISwapRouter extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getETHInputFees(
+    amountIn: PromiseOrValue<BigNumberish>,
+    caller: PromiseOrValue<string>,
+    poster: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber] & {
+      amountInAfterFees: BigNumber;
+      protocolFee: BigNumber;
+      posterFee: BigNumber;
+    }
+  >;
+
   callStatic: {
     executeSwap(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
       poster: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<
+      [BigNumber, BigNumber] & { amountOut: BigNumber; protocolFee: BigNumber }
+    >;
+
+    getETHInputFees(
+      amountIn: PromiseOrValue<BigNumberish>,
+      caller: PromiseOrValue<string>,
+      poster: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber] & {
+        amountInAfterFees: BigNumber;
+        protocolFee: BigNumber;
+        posterFee: BigNumber;
+      }
+    >;
   };
 
   filters: {
@@ -192,14 +248,14 @@ export interface ISwapRouter extends BaseContract {
       token?: PromiseOrValue<string> | null,
       treasury?: PromiseOrValue<string> | null,
       poster?: PromiseOrValue<string> | null,
-      treasuryAmount?: null,
+      protocolAmount?: null,
       posterAmount?: null
     ): FeeDistributionEventFilter;
     FeeDistribution(
       token?: PromiseOrValue<string> | null,
       treasury?: PromiseOrValue<string> | null,
       poster?: PromiseOrValue<string> | null,
-      treasuryAmount?: null,
+      protocolAmount?: null,
       posterAmount?: null
     ): FeeDistributionEventFilter;
 
@@ -237,6 +293,13 @@ export interface ISwapRouter extends BaseContract {
       poster: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    getETHInputFees(
+      amountIn: PromiseOrValue<BigNumberish>,
+      caller: PromiseOrValue<string>,
+      poster: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -245,6 +308,13 @@ export interface ISwapRouter extends BaseContract {
       routerParams: ISwapRouterBase.RouterParamsStruct,
       poster: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    getETHInputFees(
+      amountIn: PromiseOrValue<BigNumberish>,
+      caller: PromiseOrValue<string>,
+      poster: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

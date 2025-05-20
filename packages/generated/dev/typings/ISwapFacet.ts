@@ -137,7 +137,7 @@ export interface FeeDistributionEventObject {
   token: string;
   treasury: string;
   poster: string;
-  treasuryAmount: BigNumber;
+  protocolAmount: BigNumber;
   posterAmount: BigNumber;
 }
 export type FeeDistributionEvent = TypedEvent<
@@ -239,7 +239,7 @@ export interface ISwapFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [number, number, boolean] & {
-        treasuryBps: number;
+        protocolBps: number;
         posterBps: number;
         collectPosterFeeToSpace: boolean;
       }
@@ -265,7 +265,7 @@ export interface ISwapFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<
     [number, number, boolean] & {
-      treasuryBps: number;
+      protocolBps: number;
       posterBps: number;
       collectPosterFeeToSpace: boolean;
     }
@@ -291,7 +291,7 @@ export interface ISwapFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [number, number, boolean] & {
-        treasuryBps: number;
+        protocolBps: number;
         posterBps: number;
         collectPosterFeeToSpace: boolean;
       }
@@ -311,14 +311,14 @@ export interface ISwapFacet extends BaseContract {
       token?: PromiseOrValue<string> | null,
       treasury?: PromiseOrValue<string> | null,
       poster?: PromiseOrValue<string> | null,
-      treasuryAmount?: null,
+      protocolAmount?: null,
       posterAmount?: null
     ): FeeDistributionEventFilter;
     FeeDistribution(
       token?: PromiseOrValue<string> | null,
       treasury?: PromiseOrValue<string> | null,
       poster?: PromiseOrValue<string> | null,
-      treasuryAmount?: null,
+      protocolAmount?: null,
       posterAmount?: null
     ): FeeDistributionEventFilter;
 
