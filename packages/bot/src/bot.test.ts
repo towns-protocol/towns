@@ -27,6 +27,15 @@ import { serve } from '@hono/node-server'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
+const getAppRegistryUrl = () => {
+    if (process.env.RIVER_ENV === 'local_multi') {
+        return process.env.APP_REGISTRY_LOCAL_MULTI_URL!
+    } else if (process.env.RIVER_ENV === 'local_multi_ne') {
+        return process.env.APP_REGISTRY_LOCAL_MULTI_NE_URL!
+    }
+    throw new Error(`Unknown river env: ${process.env.RIVER_ENV}`)
+}
+
 type OnMessageType = BotPayload<'message'>
 type OnChannelJoin = BotPayload<'channelJoin'>
 type OnMessageEditType = BotPayload<'messageEdit'>
@@ -133,7 +142,7 @@ describe('Bot', { sequential: true }, () => {
         const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
             bob.userId,
             bob.signer,
-            process.env.APP_REGISTRY_URL!,
+            getAppRegistryUrl(),
         )
         appRegistryRpcClient = rpcClient
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
