@@ -1937,13 +1937,13 @@ export class SpaceDapp {
      * @returns The transaction
      */
     public async addSpaceDelegation<T = ContractTransaction>(args: {
-        spaceId: `0x${string}`
-        operatorAddress: `0x${string}`
+        spaceId: string
+        operatorAddress: string
         signer: ethers.Signer
-        txnOpts?: TransactionOpts
+        transactionOpts?: TransactionOpts
         overrideExecution?: (calldata: string) => Promise<T>
     }) {
-        const { spaceId, operatorAddress, signer, txnOpts, overrideExecution } = args
+        const { spaceId, operatorAddress, signer, transactionOpts, overrideExecution } = args
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1955,7 +1955,7 @@ export class SpaceDapp {
             functionName: 'addSpaceDelegation',
             args: [spaceAddress, operatorAddress],
             overrideExecution,
-            transactionOpts: txnOpts,
+            transactionOpts,
         })
     }
 }
