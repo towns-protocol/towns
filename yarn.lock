@@ -1074,7 +1074,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@connectrpc/connect-web@npm:^2.0.2":
+"@connectrpc/connect-web@npm:^2.0.0, @connectrpc/connect-web@npm:^2.0.2":
   version: 2.0.2
   resolution: "@connectrpc/connect-web@npm:2.0.2"
   peerDependencies:
@@ -8616,6 +8616,7 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": "npm:^2.2.5"
     "@connectrpc/connect": "npm:^2.0.2"
+    "@connectrpc/connect-web": "npm:^2.0.0"
     "@ethereumjs/util": "npm:^8.0.1"
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
