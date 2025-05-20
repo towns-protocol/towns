@@ -154,7 +154,7 @@ config-app-registry: _require_run_env
     INSTANCE_DIR="${INSTANCE_BASE}/app-registry"
     mkdir -p ${INSTANCE_DIR}/{config,logs,certs}
     # Take the next available port after all stream nodes have been assigned.
-    echo "RIVER_PORT=$((${RPC_PORT} + ${NUM_INSTANCES}))" > ${INSTANCE_DIR}/config/config.env
+    echo "RIVER_PORT=$((${APP_REGISTRY_PORT}))" > ${INSTANCE_DIR}/config/config.env
     if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
     ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
     fi
