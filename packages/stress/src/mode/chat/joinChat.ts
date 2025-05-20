@@ -16,7 +16,8 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
 
     // wait for the user to have a membership nft
     await client.waitFor(
-        () => client.spaceDapp.hasSpaceMembership(cfg.spaceId, client.baseProvider.wallet.address),
+        () =>
+            client.spaceDapp.getMembershipStatus(cfg.spaceId, [client.baseProvider.wallet.address]),
         {
             interval: 1000 + Math.random() * 1000,
             timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
