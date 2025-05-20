@@ -135,7 +135,7 @@ export interface ISwapFacetInterface extends utils.Interface {
 
 export interface FeeDistributionEventObject {
   token: string;
-  treasury: string;
+  protocol: string;
   poster: string;
   protocolAmount: BigNumber;
   posterAmount: BigNumber;
@@ -309,14 +309,14 @@ export interface ISwapFacet extends BaseContract {
   filters: {
     "FeeDistribution(address,address,address,uint256,uint256)"(
       token?: PromiseOrValue<string> | null,
-      treasury?: PromiseOrValue<string> | null,
+      protocol?: PromiseOrValue<string> | null,
       poster?: PromiseOrValue<string> | null,
       protocolAmount?: null,
       posterAmount?: null
     ): FeeDistributionEventFilter;
     FeeDistribution(
       token?: PromiseOrValue<string> | null,
-      treasury?: PromiseOrValue<string> | null,
+      protocol?: PromiseOrValue<string> | null,
       poster?: PromiseOrValue<string> | null,
       protocolAmount?: null,
       posterAmount?: null

@@ -92,13 +92,13 @@ interface ISwapRouterBase {
 
     /// @notice Emitted when fees are distributed after a swap
     /// @param token The token in which fees are paid
-    /// @param treasury The address receiving the protocol fee
+    /// @param protocol The address receiving the protocol fee
     /// @param poster The address receiving the poster fee (if any)
     /// @param protocolAmount The amount of tokens sent as protocol fee
     /// @param posterAmount The amount of tokens sent to the poster
     event FeeDistribution(
         address indexed token,
-        address indexed treasury,
+        address indexed protocol,
         address indexed poster,
         uint256 protocolAmount,
         uint256 posterAmount

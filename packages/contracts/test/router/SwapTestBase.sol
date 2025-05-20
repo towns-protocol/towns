@@ -19,7 +19,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     using SafeTransferLib for address;
 
     uint16 internal constant MAX_FEE_BPS = 200; // 2%
-    uint16 internal constant TREASURY_BPS = 50; // 0.5%
+    uint16 internal constant PROTOCOL_BPS = 50; // 0.5%
     uint16 internal constant POSTER_BPS = 50; // 0.5%
 
     address internal feeRecipient;

@@ -135,7 +135,7 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "treasury",
+        name: "protocol",
         type: "address",
         indexed: true,
         internalType: "address",

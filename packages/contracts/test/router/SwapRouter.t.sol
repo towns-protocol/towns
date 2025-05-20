@@ -250,7 +250,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             address(this),
             100 ether,
             95 ether,
-            TREASURY_BPS,
+            PROTOCOL_BPS,
             POSTER_BPS
         );
     }
@@ -342,7 +342,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             address(this),
             1 ether,
             0.95 ether,
-            TREASURY_BPS,
+            PROTOCOL_BPS,
             POSTER_BPS
         );
     }
@@ -355,7 +355,13 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint16 treasuryBps,
         uint16 posterBps
     ) public {
-        vm.assume(caller != address(0) && caller != address(swapRouter) && caller != mockRouter);
+        vm.assume(
+            caller != address(0) &&
+                caller != address(swapRouter) &&
+                caller != mockRouter &&
+                caller != feeRecipient &&
+                caller != poster
+        );
         vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != poster);
 
         // ensure amountIn and amountOut are reasonable
@@ -407,7 +413,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             makeAddr("recipient"),
             100 ether,
             0.95 ether,
-            TREASURY_BPS,
+            PROTOCOL_BPS,
             POSTER_BPS
         );
     }
