@@ -99,13 +99,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
-        address owner = ITownsApp(app).owner();
-        if (msg.sender != owner) NotAppOwner.selector.revertWith();
-
         bytes32[] memory permissions = ITownsApp(app).requiredPermissions();
         ExecutionManifest memory manifest = ITownsApp(app).executionManifest();
 
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
+
+        address owner = ITownsApp(app).moduleOwner();
 
         AttestationRequest memory request;
         request.schema = _getSchemaId();
@@ -204,8 +203,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (
             !IERC165(app).supportsInterface(type(IERC6900Module).interfaceId) ||
             !IERC165(app).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
-            !IERC165(app).supportsInterface(type(ITownsApp).interfaceId) ||
-            !IERC165(app).supportsInterface(type(IERC173).interfaceId)
+            !IERC165(app).supportsInterface(type(ITownsApp).interfaceId)
         ) {
             AppDoesNotImplementInterface.selector.revertWith();
         }
