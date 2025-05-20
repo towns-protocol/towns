@@ -81,17 +81,17 @@ describe('clientCrypto', () => {
     })
 
     test('client can check if a hybrid session exists', async () => {
-        const bob = await makeTestClient()
-        if (!bob.cryptoBackend) {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        if (!bobsClient.cryptoBackend) {
             throw new Error('bob.cryptoBackend is undefined')
         }
 
         const streamId = '0xabcd'
-        let hasSession = await bob.cryptoBackend.hasHybridSession(streamId)
+        let hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
         expect(hasSession).toBe(false)
 
-        await bob.ensureOutboundSession(streamId, { awaitInitialShareSession: false })
-        hasSession = await bob.cryptoBackend.hasHybridSession(streamId)
+        await bobsClient.ensureOutboundSession(streamId, { awaitInitialShareSession: false })
+        hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
         expect(hasSession).toBe(true)
     })
 })
