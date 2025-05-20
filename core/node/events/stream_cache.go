@@ -188,8 +188,8 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		<-ctx.Done()
 		s.stoppedMu.Lock()
 		s.stopped = true
-		s.onlineSyncWorkerPool.Stop()
 		s.stoppedMu.Unlock()
+		s.onlineSyncWorkerPool.Stop()
 		initialSyncWorkerPool.Stop()
 	}()
 
@@ -197,10 +197,10 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 }
 
 func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.BlockNumber, logs []*types.Log) {
-	streamEvents, errs := s.params.Registry.FilterStreamEvents(ctx, logs)
+	streamEvents, errs := s.params.Registry.FilterStreamUpdatedEvents(ctx, logs)
 	// Process parsed stream events even if some failed to parse
 	for _, err := range errs {
-		logging.FromCtx(ctx).Errorw("Failed to parse stream event", "err", err)
+		logging.FromCtx(ctx).Errorw("Failed to parse stream event", "error", err)
 	}
 
 	wp := workerpool.New(16)
@@ -268,7 +268,7 @@ func (s *StreamCache) onStreamAllocated(
 
 	_, err := s.readGenesisAndCreateLocalStream(ctx, event.Stream.StreamId(), blockNum)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream", "err", err)
+		logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream", "error", err)
 	}
 }
 
@@ -496,7 +496,7 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
 			logging.FromCtx(ctx).
-				Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "err", err)
+				Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "error", err)
 		} else {
 			return nil, err
 		}
@@ -566,7 +566,7 @@ func (s *StreamCache) writeLatestMbToBlockchain(ctx context.Context, stream *Str
 	view, err := stream.GetViewIfLocal(ctx)
 	if err != nil {
 		logging.FromCtx(ctx).
-			Errorw("writeLatestMbToBlockchain: failed to get stream view", "err", err, "streamId", stream.streamId)
+			Errorw("writeLatestMbToBlockchain: failed to get stream view", "error", err, "streamId", stream.streamId)
 		return
 	}
 

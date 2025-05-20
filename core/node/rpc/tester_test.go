@@ -758,7 +758,7 @@ func (tc *testClient) createUserStream(
 	}
 }
 
-func (tcs testClients) requireSubscribed(streamId StreamId, expectedMemberships ...[]common.Address) {
+func (tcs testClients) requireSubscribed(streamId StreamId) {
 	tcs.parallelForAll(func(tc *testClient) {
 		tc.requireSubscribed(streamId)
 	})
@@ -887,6 +887,7 @@ func (tc *testClient) joinChannel(
 			channelId,
 			nil,
 			spaceId[:],
+			nil,
 		),
 		userStreamMb,
 	)
@@ -1786,20 +1787,6 @@ func (tcs testClients) compareNowImpl(
 		return streams
 	}
 	return nil
-}
-
-//nolint:unused
-func (tcs testClients) compareNow(streamId StreamId, miniBlockChain bool, sync bool) {
-	if len(tcs) < 2 {
-		panic("need at least 2 clients to compare")
-	}
-	streams := tcs.compareNowImpl(tcs[0].t, streamId, miniBlockChain, sync)
-	if streams != nil {
-		for i, s := range streams {
-			tcs[i].maybeDumpStream(s)
-		}
-		tcs[0].t.FailNow()
-	}
 }
 
 func (tcs testClients) compare(streamId StreamId, miniBlockChain bool, sync bool) {

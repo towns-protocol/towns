@@ -37,7 +37,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func newRemoteSyncer(
+func NewRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,
@@ -102,6 +102,10 @@ func newRemoteSyncer(
 	}, nil
 }
 
+func (s *remoteSyncer) GetSyncId() string {
+	return s.syncID
+}
+
 func (s *remoteSyncer) Run() {
 	log := logging.FromCtx(s.syncStreamCtx)
 
@@ -125,7 +129,7 @@ func (s *remoteSyncer) Run() {
 		if res.GetSyncOp() == SyncOp_SYNC_UPDATE {
 			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
+					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 					s.cancelGlobalSyncOp(err)
 				}
 				return
@@ -135,7 +139,7 @@ func (s *remoteSyncer) Run() {
 				s.unsubStream(streamID)
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
-						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
+						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 						s.cancelGlobalSyncOp(err)
 					}
 					return
@@ -158,7 +162,7 @@ func (s *remoteSyncer) Run() {
 
 			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
-				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
+				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				s.cancelGlobalSyncOp(err)
 				return false
 			}
@@ -225,7 +229,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
 			})); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					log.Errorw("ping sync failed", "remote", s.remoteAddr, "err", err)
+					log.Errorw("ping sync failed", "remote", s.remoteAddr, "error", err)
 				}
 				s.syncStreamCancel()
 				return

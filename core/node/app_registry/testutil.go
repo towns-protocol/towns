@@ -399,7 +399,7 @@ func parseEncryptionEnvelope(envelope *protocol.Envelope) (*protocol.UserInboxPa
 }
 
 func logAndReturnErr(log *logging.Log, err error) error {
-	log.Errorw("TestAppServer error encountered", "err", err)
+	log.Errorw("TestAppServer error encountered", "error", err)
 	return err
 }
 

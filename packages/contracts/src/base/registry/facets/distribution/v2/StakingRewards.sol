@@ -5,15 +5,13 @@ pragma solidity ^0.8.18;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
-
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 
 /// @notice Staking rewards library that encapsulates the minimal logic for staking and rewards
-/// distribution with
-/// delegation commission
+/// distribution with delegation commission
 /// @dev The library does not handle the transfer of stakeToken and rewardToken.
 /// @dev The library is designed to be compatible with ERC-7201.
 /// @dev The data structures should be modified with caution.
@@ -342,8 +340,7 @@ library StakingRewards {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Increases the earning power of the beneficiary and the delegatee, taking into account
-    /// the
-    /// commission rate
+    /// the commission rate
     /// @dev Must be called after `updateReward(self, beneficiaryTreasure)`
     function _increaseEarningPower(
         Layout storage self,
@@ -371,8 +368,7 @@ library StakingRewards {
     }
 
     /// @dev Decreases the earning power of the beneficiary and the delegatee, taking into account
-    /// the
-    /// commission rate
+    /// the commission rate
     /// @dev Must be called after `updateReward(self, beneficiaryTreasure)`
     function _decreaseEarningPower(
         Layout storage self,

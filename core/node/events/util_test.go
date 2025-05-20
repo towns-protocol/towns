@@ -281,7 +281,7 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 			defer wg.Done()
 
 			streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID)
+			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID, nil)
 			ctc.createStreamNoCache(streamID, mb.Proto)
 
 			mu.Lock()

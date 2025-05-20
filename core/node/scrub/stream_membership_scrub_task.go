@@ -115,7 +115,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	tp.membershipChecks.Inc()
 
 	spaceId := channelId.SpaceID()
-	isEntitled, err := tp.chainAuth.IsEntitled(
+	isEntitledResult, err := tp.chainAuth.IsEntitled(
 		ctx,
 		tp.config,
 		auth.NewChainAuthArgsForChannel(
@@ -130,12 +130,12 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	}
 
 	if span != nil {
-		span.SetAttributes(attribute.Bool("isEntitled", isEntitled))
+		span.SetAttributes(attribute.Bool("isEntitled", isEntitledResult.IsEntitled()))
 	}
 
 	// In the case that the user is not entitled, they must have lost their entitlement
 	// after joining the channel, so let's go ahead and boot them.
-	if !isEntitled {
+	if !isEntitledResult.IsEntitled() {
 		tp.entitlementLosses.Inc()
 
 		userId, err := AddressFromUserId(member)
@@ -158,6 +158,8 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			"spaceId",
 			spaceId,
 		)
+		
+		reason := MembershipReason_MR_NOT_ENTITLED
 
 		if _, err = tp.eventAdder.AddEventPayload(
 			ctx,
@@ -167,6 +169,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 				channelId,
 				&member,
 				spaceId[:],
+				&reason,
 			),
 			nil,
 		); err != nil {
