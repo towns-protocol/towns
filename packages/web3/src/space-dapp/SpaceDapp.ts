@@ -847,11 +847,19 @@ export class SpaceDapp {
     }
 
     private async evaluateEntitledWallet(
+        space: Space,
         rootKey: string,
         allWallets: string[],
         entitlements: EntitlementData[],
         xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
+        const { isExpired } = await space.getMembershipStatus(allWallets)
+
+        // otherwise you're trying to do something with an expired membership
+        if (isExpired) {
+            return
+        }
+
         const isEveryOneSpace = entitlements.some((e) =>
             e.userEntitlement?.includes(EVERYONE_ADDRESS),
         )
@@ -971,7 +979,13 @@ export class SpaceDapp {
         }
 
         const entitlements = await this.getEntitlementsForPermission(spaceId, Permission.JoinSpace)
-        return await this.evaluateEntitledWallet(rootKey, allWallets, entitlements, xchainConfig)
+        return await this.evaluateEntitledWallet(
+            space,
+            rootKey,
+            allWallets,
+            entitlements,
+            xchainConfig,
+        )
     }
 
     public async isEntitledToSpace(
@@ -1075,6 +1089,7 @@ export class SpaceDapp {
             permission,
         )
         const entitledWallet = await this.evaluateEntitledWallet(
+            space,
             user,
             linkedWallets,
             entitlements,
@@ -1594,12 +1609,24 @@ export class SpaceDapp {
         return issued
     }
 
-    public async hasSpaceMembership(spaceId: string, address: string): Promise<boolean> {
+    /**
+     * @deprecated use getMembershipStatus instead
+     */
+    public async hasSpaceMembership(spaceId: string, addresses: string[]): Promise<boolean> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Membership.hasMembership(address)
+        const membershipStatus = await this.getMembershipStatus(spaceId, addresses)
+        return membershipStatus.isMember && !membershipStatus.isExpired
+    }
+
+    public async getMembershipStatus(spaceId: string, addresses: string[]) {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return space.getMembershipStatus(addresses)
     }
 
     public async getMembershipSupply(spaceId: string) {

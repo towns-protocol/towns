@@ -9,6 +9,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func TestMigrateExistingDb(t *testing.T) {
@@ -38,8 +39,12 @@ func TestMigrateExistingDb(t *testing.T) {
 		instanceId2,
 		exitSignal2,
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
-		crypto.StreamTrimmingMiniblocksToKeepSettings{},
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:       time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
+			},
+		},
 		100,
 	)
 	require.NoError(err)

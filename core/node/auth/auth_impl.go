@@ -879,7 +879,7 @@ func (ca *chainAuth) getLinkedWalletsUncached(
 
 	wallets, err := ca.evaluator.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -918,7 +918,7 @@ func (ca *chainAuth) getLinkedWallets(
 		ca.getLinkedWalletsUncached,
 	)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -973,7 +973,7 @@ func (ca *chainAuth) checkMembership(
 		// linked wallet resulted in a positive membership check.
 		log.Infow(
 			"Error checking membership (due to early termination?)",
-			"err",
+			"error",
 			err,
 			"address",
 			address.Hex(),
@@ -1055,6 +1055,13 @@ func (ca *chainAuth) checkEntitlement(
 			}
 		}
 		return boolCacheResult{false, EntitlementResultReason_WALLET_NOT_LINKED}, nil
+	}
+
+	// If the user has more linked wallets than we can evaluate, go ahead and short-circuit the evaluation.
+	if len(wallets) > ca.linkedWalletsLimit {
+		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
+			"too many wallets linked to the root key",
+			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
 	}
 
 	args = args.withLinkedWallets(wallets)
@@ -1150,13 +1157,6 @@ func (ca *chainAuth) checkEntitlement(
 			)
 			return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP}, nil
 		}
-	}
-
-	// Now that we know the user is a member of the space, we can check entitlements.
-	if len(wallets) > ca.linkedWalletsLimit {
-		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
-			"too many wallets linked to the root key",
-			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
 	}
 
 	if isExpired {
