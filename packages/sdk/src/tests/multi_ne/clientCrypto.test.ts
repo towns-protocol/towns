@@ -4,11 +4,11 @@
 
 import { assert } from '../../check'
 import { Client } from '../../client'
-import { makeTestClient } from '../testUtils'
+import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { SessionKeysSchema } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
 import { create, fromJsonString, toJsonString } from '@bufbuild/protobuf'
-
+import { dlog } from '@towns-protocol/dlog'
+import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 const log = dlog('test:clientCrypto')
 
 describe('clientCrypto', () => {
@@ -78,5 +78,25 @@ describe('clientCrypto', () => {
             const keys2 = fromJsonString(SessionKeysSchema, clear)
             expect(keys2.keys[0]).toEqual(message)
         }
+    })
+
+    test('client can check if a hybrid session exists', async () => {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        if (!bobsClient.cryptoBackend) {
+            throw new Error('bob.cryptoBackend is undefined')
+        }
+
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
+        let hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
+        expect(hasSession).toBe(false)
+
+        await bobsClient.cryptoBackend.ensureOutboundSession(
+            streamId,
+            GroupEncryptionAlgorithmId.HybridGroupEncryption,
+            { awaitInitialShareSession: false },
+        )
+        hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
+        expect(hasSession).toBe(true)
     })
 })

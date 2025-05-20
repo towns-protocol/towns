@@ -350,4 +350,13 @@ export class GroupEncryptionCrypto {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return await this.importRoomKeys(JSON.parse(keys))
     }
+
+    public async hasHybridSession(streamId: string): Promise<boolean> {
+        try {
+            await this.encryptionDevice.getHybridGroupSessionKeyForStream(streamId)
+            return true
+        } catch {
+            return false
+        }
+    }
 }
