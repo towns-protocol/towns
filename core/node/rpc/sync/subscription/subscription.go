@@ -134,7 +134,17 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 			// The given subscription already subscribed on the given stream, do nothing
 			return false
 		} else {
-			// BACKFILL
+			// TODO: BACKFILL
+			go func() {
+				if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
+					rvrErr := AsRiverError(err).
+						Tag("syncId", s.SyncID).
+						Tag("op", cookie.GetStreamId())
+					s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
+					s.log.Errorw("Failed to backfill stream by the given cookie",
+						"op", cookie.GetStreamId(), "err", err)
+				}
+			}()
 		}
 	}
 
