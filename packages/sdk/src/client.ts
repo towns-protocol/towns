@@ -1534,6 +1534,12 @@ export class Client
             if (!isSpaceStreamId(streamId)) {
                 return
             }
+
+            const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
+            if (!hasHybridSession) {
+                return
+            }
+
             const stream = this.stream(streamId)
             if (!stream) {
                 return
