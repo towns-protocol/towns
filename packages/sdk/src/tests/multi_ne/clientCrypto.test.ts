@@ -6,9 +6,8 @@ import { assert } from '../../check'
 import { Client } from '../../client'
 import { makeTestClient } from '../testUtils'
 import { SessionKeysSchema } from '@towns-protocol/proto'
-import { bin_fromHexString, dlog } from '@towns-protocol/dlog'
 import { create, fromJsonString, toJsonString } from '@bufbuild/protobuf'
-
+import { dlog } from '@towns-protocol/dlog'
 const log = dlog('test:clientCrypto')
 
 describe('clientCrypto', () => {
