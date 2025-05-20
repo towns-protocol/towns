@@ -79,6 +79,8 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 }
 
 func (m *Manager) start() {
+	defer m.cancelAllSubscriptions(m.globalCtx.Err())
+
 	var msgs []*SyncStreamsResponse
 	for {
 		select {
@@ -145,6 +147,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	if !ok {
 		// No subscriptions for this stream, nothing to do.
 		// TODO: When this case might happen?
+		// TODO: Remove the given stream from the syncer set to no longer receive updates for the given stream.
 		m.sLock.Unlock()
 		return
 	}
@@ -174,13 +177,15 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	wg.Wait()
 }
 
-/*func (m *Manager) cancelAllSubscriptions() {
-	m.streamToSubscriptions.Range(func(streamId StreamId, syncIds []string) bool {
-		for _, syncId := range syncIds {
-			sub, ok := m.subscriptions.Load(syncId)
-			if ok {
-				sub.Messages.AddMessage()
+func (m *Manager) cancelAllSubscriptions(err error) {
+	m.sLock.Lock()
+	for _, subscriptions := range m.subscriptions {
+		for _, sub := range subscriptions {
+			if !sub.isClosed() {
+				sub.cancel(err)
 			}
 		}
-	})
-}*/
+	}
+	m.subscriptions = make(map[StreamId][]*Subscription)
+	m.sLock.Unlock()
+}
