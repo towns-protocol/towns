@@ -213,9 +213,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -366,9 +363,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -514,9 +508,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -673,9 +664,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat libsecp256k1-dev
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -744,9 +732,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y zstd make netcat libsecp256k1-dev gcc
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Setup Go
               uses: actions/setup-go@v5
