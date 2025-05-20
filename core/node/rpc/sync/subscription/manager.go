@@ -2,11 +2,9 @@ package subscription
 
 import (
 	"context"
-	"slices"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -26,13 +24,14 @@ type Manager struct {
 
 	streamCache  *StreamCache
 	nodeRegistry nodes.NodeRegistry
-	otelTracer   trace.Tracer
 
 	syncers  *client.SyncerSet
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 
-	subscriptions         *xsync.Map[string, *Subscription]
-	streamToSubscriptions *xsync.Map[StreamId, []string]
+	sLock         sync.Mutex
+	subscriptions map[StreamId][]*Subscription
+
+	otelTracer trace.Tracer
 }
 
 func NewManager(
@@ -52,16 +51,15 @@ func NewManager(
 	go syncers.Run()
 
 	manager := &Manager{
-		log:                   log,
-		localNodeAddr:         localNodeAddr,
-		globalCtx:             globalCtx,
-		streamCache:           streamCache,
-		nodeRegistry:          nodeRegistry,
-		otelTracer:            otelTracer,
-		syncers:               syncers,
-		messages:              messages,
-		subscriptions:         xsync.NewMap[string, *Subscription](),
-		streamToSubscriptions: xsync.NewMap[StreamId, []string](),
+		log:           log,
+		localNodeAddr: localNodeAddr,
+		globalCtx:     globalCtx,
+		streamCache:   streamCache,
+		nodeRegistry:  nodeRegistry,
+		otelTracer:    otelTracer,
+		syncers:       syncers,
+		messages:      messages,
+		subscriptions: make(map[StreamId][]*Subscription),
 	}
 
 	go manager.start()
@@ -70,7 +68,7 @@ func NewManager(
 }
 
 func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) *Subscription {
-	subscription := &Subscription{
+	return &Subscription{
 		log:      m.log.With("syncId", syncID),
 		Ctx:      ctx,
 		Cancel:   cancel,
@@ -78,12 +76,6 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:  m,
 	}
-	go func() {
-		<-ctx.Done()
-		subscription.close()
-	}()
-	m.subscriptions.Store(syncID, subscription)
-	return subscription
 }
 
 func (m *Manager) start() {
@@ -148,35 +140,36 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	}
 
 	// Send the message to all subscriptions for this stream.
-	syncIDs, ok := m.streamToSubscriptions.Load(streamID)
+	m.sLock.Lock()
+	subscriptions, ok := m.subscriptions[streamID]
 	if !ok {
 		// No subscriptions for this stream, nothing to do.
 		// TODO: When this case might happen?
+		m.sLock.Unlock()
 		return
 	}
 
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The given stream is no longer needed, remove it from the subscriptions.
-		m.streamToSubscriptions.Delete(streamID)
+		delete(m.subscriptions, streamID)
 	}
+	m.sLock.Unlock()
 
+	// FIXME: Potentially, a single subscription might block the entire sending process.
 	var wg sync.WaitGroup
-	wg.Add(len(syncIDs))
-	for i, syncID := range syncIDs {
-		go func(i int, syncID string) {
-			subscription, ok := m.subscriptions.Load(syncID)
-			if !ok {
-				if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-					// The given subscription has already been cancelled, just delete from list and update stream subscribers.
-					m.streamToSubscriptions.Store(streamID, slices.Delete(syncIDs, i, i+1))
-				}
+	wg.Add(len(subscriptions))
+	for i, subscription := range subscriptions {
+		go func(i int, subscription *Subscription) {
+			if subscription.isClosed() {
+				// Remove the given subscriptions from the list of subscriptions of the given stream
+				m.sLock.Lock()
+				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
+				m.sLock.Unlock()
 			} else {
-				// Send message to subscriber.
-				// This is safe to clone the message, otherwise the message could be modified.
 				subscription.Send(msg)
 			}
 			wg.Done()
-		}(i, syncID)
+		}(i, subscription)
 	}
 	wg.Wait()
 }

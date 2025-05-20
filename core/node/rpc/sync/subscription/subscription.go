@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sync/atomic"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/puzpuzpuz/xsync/v4"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -28,38 +28,34 @@ type Subscription struct {
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 
 	manager *Manager
+
+	closed uint32
 }
 
-func (s *Subscription) close() {
+func (s *Subscription) Close() {
+	atomic.StoreUint32(&s.closed, 1)
 	s.Messages.Close()
-	s.manager.subscriptions.Delete(s.SyncID)
-	s.manager.streamToSubscriptions.Range(func(streamID StreamId, syncIDs []string) bool {
-		for i, syncID := range syncIDs {
-			if syncID == s.SyncID {
-				syncIDs = append(syncIDs[:i], syncIDs[i+1:]...)
-				break
-			}
-		}
-		s.manager.streamToSubscriptions.Store(streamID, syncIDs)
-		return true
-	})
+	// The given subscription is going to be removed from the list (s.subscriptions) automatically during the next stream update.
+}
+
+func (s *Subscription) isClosed() bool {
+	return atomic.LoadUint32(&s.closed) == 1
 }
 
 // Send sends the given message to the subscription messages channel.
 func (s *Subscription) Send(msg *SyncStreamsResponse) {
-	select {
-	case <-s.Ctx.Done():
-		// Client context is cancelled, do not send the message.
+	if s.isClosed() {
 		return
-	default:
-		if err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse)); err != nil {
-			rvrErr := AsRiverError(err).
-				Tag("syncId", s.SyncID).
-				Tag("op", msg.GetSyncOp())
-			s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
-			s.log.Errorw("Failed to add message to subscription",
-				"op", msg.GetSyncOp(), "err", err)
-		}
+	}
+
+	err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse))
+	if err != nil {
+		rvrErr := AsRiverError(err).
+			Tag("syncId", s.SyncID).
+			Tag("op", msg.GetSyncOp())
+		s.Cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
+		s.log.Errorw("Failed to add message to subscription",
+			"op", msg.GetSyncOp(), "err", err)
 	}
 }
 
@@ -112,34 +108,26 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
 func (s *Subscription) addStream(cookie *SyncCookie) bool {
+	streamID := StreamId(cookie.GetStreamId())
 	var streamAlreadyInSync bool
 	var updatedSubscribers bool
 
 	// Add the stream to the subscription if not added yet
-	s.manager.streamToSubscriptions.Compute(
-		StreamId(cookie.GetStreamId()),
-		func(oldValue []string, loaded bool) (newValue []string, op xsync.ComputeOp) {
-			// The given stream is not syncing yet, add it to the syncer set.
-			// It is ok to use the entire cookie when subscribing at the first time.
-			streamAlreadyInSync = loaded && len(oldValue) > 0
-			if slices.Contains(oldValue, s.SyncID) {
-				// The given stream is already subscribed, do nothing
-				return nil, xsync.CancelOp
-			}
+	s.manager.sLock.Lock()
+	subscriptions, ok := s.manager.subscriptions[streamID]
+	if !ok || len(subscriptions) == 0 {
+		s.manager.subscriptions[streamID] = []*Subscription{s}
+		updatedSubscribers = true
+	} else {
+		streamAlreadyInSync = true
+		if !slices.ContainsFunc(subscriptions, func(sub *Subscription) bool {
+			return sub.SyncID == s.SyncID
+		}) {
 			updatedSubscribers = true
-			if streamAlreadyInSync {
-				// The given stream is already syncing but the client is not subscribed yet might
-				// want to get updates since a specific miniblock.
-				fmt.Println("backfilling", s.SyncID, cookie.GetMinipoolGen())
-				if err := s.backfillByCookie(s.Ctx, cookie); err != nil {
-					// TODO: Handle this error
-					fmt.Println("failed to backfill stream", err)
-				}
-				// TODO: Load stream updates based on the sync cookie, properly merge loaded results with latest sync updates
-			}
-			return append(oldValue, s.SyncID), xsync.UpdateOp
-		},
-	)
+			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
+		}
+	}
+	s.manager.sLock.Unlock()
 
 	if streamAlreadyInSync {
 		if !updatedSubscribers {
@@ -156,42 +144,17 @@ func (s *Subscription) addStream(cookie *SyncCookie) bool {
 // removeStream removes the given stream from the current subscription.
 // Returns true if the given stream must be removed from the main syncer set.
 func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
-	// Remove the stream from the subscription
-	s.manager.streamToSubscriptions.Compute(
-		StreamId(streamID),
-		func(oldValue []string, loaded bool) (newValue []string, op xsync.ComputeOp) {
-			if !loaded {
-				// No record found for the given stream, just cancel
-				return nil, xsync.CancelOp
-			}
-
-			if len(oldValue) == 0 {
-				// No subscriptions for the given stream, just delete the record from cache
-				return nil, xsync.DeleteOp
-			}
-
-			// Remove the given subscriptions from the list of subscribers on the given stream
-			for i, sub := range oldValue {
-				if sub == s.SyncID {
-					newValue = append(oldValue[:i], oldValue[i+1:]...)
-					break
-				}
-			}
-
-			if len(newValue) == len(oldValue) {
-				// The given subscriber is not subscribed on the given stream
-				return nil, xsync.CancelOp
-			}
-
-			if len(newValue) == 0 {
-				// No more subscriptions for the given stream, remove it from the entire sync
-				removeFromRemote = true
-				return nil, xsync.DeleteOp
-			}
-
-			return newValue, xsync.UpdateOp
+	s.manager.sLock.Lock()
+	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
+		s.manager.subscriptions[StreamId(streamID)],
+		func(sub *Subscription) bool {
+			return sub.SyncID == s.SyncID
 		},
 	)
+	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
+		delete(s.manager.subscriptions, StreamId(streamID))
+	}
+	s.manager.sLock.Unlock()
 
 	return removeFromRemote
 }

@@ -106,6 +106,7 @@ func (syncOp *StreamSyncOperation) Run(
 	syncOp.log.Debugw("Stream sync operation start")
 
 	sub := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
+	defer sub.Close()
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
