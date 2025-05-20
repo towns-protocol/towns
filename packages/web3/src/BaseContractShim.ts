@@ -10,6 +10,8 @@ export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 const logger = dlogger('csb:BaseContractShim')
 
+export type OverrideExecution<T> = (args: { calldata: string; value?: bigint }) => Promise<T>
+
 export class BaseContractShim<
     connect extends Connect<ethers.Contract>,
     T_CONTRACT extends ContractType<connect> = ContractType<connect>,
@@ -87,13 +89,16 @@ export class BaseContractShim<
         signer: ethers.Signer
         functionName: FnName
         args: Args
-        overrideExecution?: (calldata: string) => Promise<T>
+        value?: bigint
+        overrideExecution?: OverrideExecution<T>
         transactionOpts?: TransactionOpts
     }): Promise<T extends undefined ? ContractTransaction : T> {
-        const callData = this.encodeFunctionData(params.functionName, params.args)
         return (
             params.overrideExecution
-                ? params.overrideExecution(callData)
+                ? params.overrideExecution({
+                      calldata: this.encodeFunctionData(params.functionName, params.args),
+                      value: params.value,
+                  })
                 : wrapTransaction(
                       () =>
                           (
@@ -109,14 +114,16 @@ export class BaseContractShim<
     public decodeFunctionResult<FnName extends keyof T_CONTRACT['functions']>(
         functionName: FnName,
         data: BytesLike,
-    ) {
+    ): Awaited<ReturnType<T_CONTRACT['functions'][FnName]>> {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')
         }
         if (!this.interface.getFunction(functionName)) {
             throw new Error(`Function ${functionName} not found in contract interface`)
         }
-        return this.interface.decodeFunctionResult(functionName, data)
+        const decoded = this.interface.decodeFunctionResult(functionName, data)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return decoded as Awaited<ReturnType<T_CONTRACT['functions'][FnName]>>
     }
 
     public decodeFunctionData<FnName extends keyof T_CONTRACT['functions']>(
