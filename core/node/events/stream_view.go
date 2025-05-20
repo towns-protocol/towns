@@ -108,10 +108,10 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 
 func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if stream == nil {
-		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
+		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeRemoteStreamView")
 	}
 	if len(stream.Miniblocks) <= 0 {
-		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
+		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeRemoteStreamView")
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
@@ -421,6 +421,46 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
+}
+
+// TestApplyUpdate applies a subsequent update to a stream view that was created and maintained
+// by applying updates from a synced stream. So far this method is used for convenience in implementing
+// tests and should not be used in production without more auditing.
+func (r *StreamView) TestApplyUpdate(
+	update *SyncStreamsResponse,
+	cfg *crypto.OnChainSettings,
+) (*StreamView, error) {
+	view := r
+
+	for i, block := range update.GetStream().GetMiniblocks() {
+		info, err := NewMiniblockInfoFromProto(
+			block,
+			update.GetStream().GetSnapshotByMiniblockIndex(i),
+			NewParsedMiniblockInfoOpts().
+				WithDoNotParseEvents(true),
+		)
+		if err != nil {
+			return nil, AsRiverError(err).Message("Error constructing miniblock info from stream sync update")
+		}
+
+		view, _, err = view.copyAndApplyBlock(info, cfg)
+		if err != nil {
+			return nil, AsRiverError(err).Message("Error applying miniblock from stream sync update to view")
+		}
+	}
+
+	for _, event := range update.GetStream().GetEvents() {
+		parsedEvent, err := ParseEvent(event)
+		if err != nil {
+			return nil, AsRiverError(err).Message("Unable to parse event from stream sync update")
+		}
+		view, err = view.copyAndAddEvent(parsedEvent)
+		if err != nil {
+			return nil, AsRiverError(err).Message("Error applying event from stream sync update to view")
+		}
+	}
+
+	return view, nil
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.

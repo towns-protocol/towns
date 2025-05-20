@@ -90,7 +90,6 @@ func (ar *appRegistryServiceTester) RegisterBotServices(
 ) {
 	for i := range ar.botCredentials {
 		ar.RegisterBotService(i, forwardSetting)
-		ar.t.Logf("Registered bot %d", i)
 	}
 }
 
@@ -170,12 +169,15 @@ func (ar *appRegistryServiceTester) BotNodeClient(botIndex int, opts testClientO
 	return ar.serviceTester.newTestClientWithWallet(0, opts, ar.botCredentials[botIndex].botWallet)
 }
 
-func (ar *appRegistryServiceTester) BotNodeTestClients(opts testClientOpts) *testClients {
+func (ar *appRegistryServiceTester) BotNodeTestClients(opts testClientOpts) testClients {
 	clients := make([]*testClient, len(ar.botCredentials))
 	for i := range ar.botCredentials {
 		clients[i] = ar.BotNodeClient(i, opts)
+		if opts.enableSync {
+			clients[i].startSync()
+		}
 	}
-	return (*testClients)(&clients)
+	return clients
 }
 
 func (ar *appRegistryServiceTester) NodeClient(i int, opts testClientOpts) *testClient {
@@ -410,7 +412,11 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 
 	// Once the key material is sent, the app service can forward the undelivered message to the
 	// bot and this is the reply message we expect it to make in-channel.
-	replyText := app_registry.FormatTestAppMessageReply(testSession, testMessageText, testCiphertexts)
+	replyText := app_registry.FormatTestAppMessageReply(
+		testSession,
+		testMessageText,
+		testCiphertexts,
+	)
 
 	// Final channel content should include original message as well as the reply.
 	participantClient.listen(
@@ -764,7 +770,11 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 						continue
 					}
 					// Final channel content should include original message as well as the reply.
-					replyText := app_registry.FormatTestAppMessageReply(testSession, messageText, testCiphertexts)
+					replyText := app_registry.FormatTestAppMessageReply(
+						testSession,
+						messageText,
+						testCiphertexts,
+					)
 					conversation = append(conversation, []string{"", replyText})
 				}
 

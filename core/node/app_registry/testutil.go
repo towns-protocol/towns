@@ -33,6 +33,16 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
+var placeHolderSessionBytes []byte
+
+func init() {
+	var err error
+	placeHolderSessionBytes, err = hex.DecodeString("00000000")
+	if err != nil {
+		panic(fmt.Sprintf("oops - placeholder session id hex could not be decoded: %v", err))
+	}
+}
+
 type AppServiceRequestEnvelope struct {
 	Command string          `json:"command"`
 	Data    json.RawMessage `json:",omitempty"`
@@ -56,16 +66,88 @@ type TestAppServer struct {
 	exitSignal    chan (error)
 }
 
-func FormatTestAppMessageReply(session string, messageText string, sessionKeys string) string {
-	return fmt.Sprintf("ChannelMessage session(%v) cipherText(%v) sessionKeys(%v)", session, messageText, sessionKeys)
+func FormatTestAppMessageReply(
+	session string,
+	messageText string,
+	sessionKeys string,
+) string {
+	return fmt.Sprintf(
+		"ChannelMessage session(%v) cipherText(%v) sessionKeys(%v)",
+		session,
+		messageText,
+		sessionKeys,
+	)
 }
 
-func FormatKeySolicitationReply(solicitation *protocol.MemberPayload_KeySolicitation) string {
+func FormatKeySolicitationReply(
+	solicitation *protocol.MemberPayload_KeySolicitation,
+) string {
 	return fmt.Sprintf(
 		"KeySolicitation deviceKey(%v) fallbackKey(%v) sessionIds(%v)",
 		solicitation.DeviceKey,
 		solicitation.FallbackKey,
 		solicitation.SessionIds,
+	)
+}
+
+func FormatKeyFulfillmentReply(fulfillment *protocol.MemberPayload_KeyFulfillment) string {
+	return fmt.Sprintf(
+		"KeyFulfillment userAddress(%v) deviceKey(%v) sessionIds(%v)",
+		common.BytesToAddress(fulfillment.UserAddress),
+		fulfillment.DeviceKey,
+		fulfillment.SessionIds,
+	)
+}
+
+func FormatUsernameReply(username *protocol.EncryptedData) string {
+	return fmt.Sprintf("Username ciphertext(%v)", username.Ciphertext)
+}
+
+func FormatDisplayNameReply(displayName *protocol.EncryptedData) string {
+	return fmt.Sprintf("DisplayName ciphertext(%v)", displayName.Ciphertext)
+}
+
+func FormatEnsAddressReply(ensAddress []byte) string {
+	return fmt.Sprintf("EnsAddress ensAddress(%s)", string(ensAddress))
+}
+
+func FormatNftReply(nft *protocol.MemberPayload_Nft) string {
+	return fmt.Sprintf(
+		"Nft chainId(%v) contractAddress(%v) tokenId(%v)",
+		nft.ChainId,
+		common.BytesToAddress(nft.ContractAddress),
+		common.Bytes2Hex(nft.TokenId),
+	)
+}
+
+func FormatPinReply(pin *protocol.MemberPayload_Pin) string {
+	return fmt.Sprintf("Pin eventId(%v)", common.Bytes2Hex(pin.EventId))
+}
+
+func FormatUnpinReply(unpin *protocol.MemberPayload_Unpin) string {
+	return fmt.Sprintf("Unpin eventId(%v)", common.Bytes2Hex(unpin.EventId))
+}
+
+func FormatMemberBlockchainTransactionReply(
+	tx *protocol.MemberPayload_MemberBlockchainTransaction,
+) string {
+	return fmt.Sprintf(
+		"MemberBlockchainTransaction fromUserAddress(%v) txHash(%v)",
+		common.BytesToAddress(tx.FromUserAddress),
+		common.Bytes2Hex(tx.Transaction.GetReceipt().GetTransactionHash()),
+	)
+}
+
+func FormatEncryptionAlgorithmReply(
+	algo *protocol.MemberPayload_EncryptionAlgorithm,
+) string {
+	return fmt.Sprintf("EncryptionAlgorithm algorithm(%s)", algo.GetAlgorithm())
+}
+
+func FormatChannelRedactionReply(redaction *protocol.ChannelPayload_Redaction) string {
+	return fmt.Sprintf(
+		"ChannelRedaction eventId(%v)",
+		common.Bytes2Hex(redaction.EventId),
 	)
 }
 
@@ -220,13 +302,22 @@ func (b *TestAppServer) Close() {
 func (b *TestAppServer) solicitKeys(ctx context.Context, botIndex int, data *protocol.EventPayload_SolicitKeys) error {
 	botConfig := b.botConfig[botIndex]
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
+	// log := logging.DefaultLogger(zapcore.DebugLevel).With("func", "TestAppServer.solicitKeys")
 
 	streamId, err := shared.StreamIdFromBytes(data.StreamId)
 	if err != nil {
 		return logAndReturnErr(log, fmt.Errorf("failed to parse stream for key solicitation: %w", err))
 	}
 
-	log.Debugw("soliciting keys for channel", "streamId", streamId, "sessionIds", data.SessionIds)
+	log.Debugw(
+		"soliciting keys for channel",
+		"streamId",
+		streamId,
+		"sessionIds",
+		data.SessionIds,
+		"deviceKey",
+		botConfig.encryptionDevice.DeviceKey,
+	)
 	resp, err := b.client.GetLastMiniblockHash(
 		ctx,
 		&connect.Request[protocol.GetLastMiniblockHashRequest]{
@@ -329,20 +420,13 @@ func (b *TestAppServer) respondToKeySolicitation(
 			)
 		}
 	}
-	return b.sendChannelMessage(ctx, botIndex, channelId, FormatKeySolicitationReply(solicitation), sessionIdBytes)
-}
-
-func (b *TestAppServer) respondToMembershipEvent(
-	ctx context.Context,
-	botIndex int,
-	channelId shared.StreamId,
-	membership *protocol.MemberPayload_Membership,
-) error {
-	placeHolderSessionBytes, err := hex.DecodeString("00000000")
-	if err != nil {
-		return fmt.Errorf("oops - placeholder session id hex could not be decoded: %w", err)
-	}
-	return b.sendChannelMessage(ctx, botIndex, channelId, FormatMembershipReply(membership), placeHolderSessionBytes)
+	return b.sendChannelMessage(
+		ctx,
+		botIndex,
+		channelId,
+		FormatKeySolicitationReply(solicitation),
+		sessionIdBytes,
+	)
 }
 
 func (b *TestAppServer) respondToChannelMessage(
@@ -461,26 +545,101 @@ func (b *TestAppServer) respondToSendMessages(
 			return logAndReturnErr(log, fmt.Errorf("could not parse message envelope: %w", err))
 		}
 		streamEvent := parsedEvent.Event
-		log.Infow("testAppServer observed streamEvent", "streamEvent", parsedEvent.Event, "envelope", envelope)
+		log.Infow("testAppServer observed streamEvent", "streamEvent", parsedEvent, "envelope", envelope)
 
 		switch payload := streamEvent.Payload.(type) {
 		case *protocol.StreamEvent_MemberPayload:
 			switch content := payload.MemberPayload.Content.(type) {
 			case *protocol.MemberPayload_KeySolicitation_:
 				{
-					if err := b.respondToKeySolicitation(ctx, botIndex, shared.StreamId(data.StreamId), content.KeySolicitation); err != nil {
+					err := b.respondToKeySolicitation(ctx, botIndex, shared.StreamId(data.StreamId), content.KeySolicitation)
+					if err != nil {
 						return logAndReturnErr(log, fmt.Errorf("could not respond to key solicitation: %w", err))
 					}
 					continue
 				}
 			case *protocol.MemberPayload_Membership_:
 				{
-					if err := b.respondToMembershipEvent(ctx, botIndex, shared.StreamId(data.StreamId), content.Membership); err != nil {
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatMembershipReply(content.Membership), placeHolderSessionBytes)
+					if err != nil {
 						return logAndReturnErr(log, fmt.Errorf("could not respond to membership event: %w", err))
 					}
+					continue
+				}
+			case *protocol.MemberPayload_DisplayName:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatDisplayNameReply(content.DisplayName), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to display name event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_KeyFulfillment_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatKeyFulfillmentReply(content.KeyFulfillment), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to key fulfillment event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_Username:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatUsernameReply(content.Username), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to username event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_EnsAddress:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatEnsAddressReply(content.EnsAddress), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to ens address event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_Nft_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatNftReply(content.Nft), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to nft event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_Pin_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatPinReply(content.Pin), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to pin event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_Unpin_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatUnpinReply(content.Unpin), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to unpin event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_MemberBlockchainTransaction_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatMemberBlockchainTransactionReply(content.MemberBlockchainTransaction), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to member blockchain transaction event: %w", err))
+					}
+					continue
+				}
+			case *protocol.MemberPayload_EncryptionAlgorithm_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatEncryptionAlgorithmReply(content.EncryptionAlgorithm), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to encryption algorithm event: %w", err))
+					}
+					continue
 				}
 			default:
-				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream member payload content (%v)", content))
+				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream member payload content (%T)", content))
 			}
 
 		case *protocol.StreamEvent_ChannelPayload:
@@ -492,8 +651,16 @@ func (b *TestAppServer) respondToSendMessages(
 					}
 					continue
 				}
+			case *protocol.ChannelPayload_Redaction_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatChannelRedactionReply(content.Redaction), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to channel redaction event: %w", err))
+					}
+					continue
+				}
 			default:
-				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream payload content: (%v)", content))
+				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream payload content: (%T)", content))
 			}
 
 		default:
@@ -554,10 +721,10 @@ func (b *TestAppServer) sendChannelMessage(
 		},
 	)
 	if err != nil {
-		return logAndReturnErr(log, fmt.Errorf("AddEvent failed for reply: %w", err))
+		return logAndReturnErr(log, fmt.Errorf("addEvent failed for reply: %w", err))
 	}
 	if addResp.Msg.Error != nil {
-		return logAndReturnErr(log, fmt.Errorf("AddEvent failed for reply: %v", addResp.Msg.Error.Msg))
+		return logAndReturnErr(log, fmt.Errorf("addEvent failed for reply: %v", addResp.Msg.Error.Msg))
 	}
 
 	return nil
@@ -568,10 +735,10 @@ func extractBotIndexFromUrl(path string) (int, error) {
 	path = strings.TrimSuffix(path, "/")
 	botIndex, err := strconv.ParseInt(path, 10, 32)
 	if err != nil {
-		return 0, fmt.Errorf("Failed to parse URL path for bot index, path(%v), error(%w)", path, err)
+		return 0, fmt.Errorf("failed to parse URL path for bot index, path(%v), error(%w)", path, err)
 	}
 	if botIndex < 0 {
-		return 0, fmt.Errorf("Invalid bot index %v; bot index must be nonnegative", botIndex)
+		return 0, fmt.Errorf("invalid bot index %v; bot index must be nonnegative", botIndex)
 	}
 	return int(botIndex), nil
 }
@@ -587,11 +754,11 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	botIndex, err := extractBotIndexFromUrl(r.URL.Path)
 	if err != nil {
-		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("Invalid bot index in url path: %w", err))
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("invalid bot index in url path: %w", err))
 		http.Error(w, "Invalid bot index in URL path", http.StatusRequestedRangeNotSatisfiable)
 	}
 	if botIndex >= len(b.botConfig) {
-		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("Invalid bot index in url path: url index was %d, test app server has %d bots", botIndex, len(b.botConfig)))
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("invalid bot index in url path: url index was %d, test app server has %d bots", botIndex, len(b.botConfig)))
 		http.Error(w, "Invalid bot index in URL path; bot index too large", http.StatusRequestedRangeNotSatisfiable)
 	}
 
@@ -691,7 +858,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	// Write the protobuf data to the response.
 	if _, err = w.Write(respData); err != nil {
-		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("Error writing response: %w", err))
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("error writing response: %w", err))
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"maps"
+	"math"
 	"math/big"
 	"net"
 	"net/http"
@@ -34,14 +35,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/events/dumpevents"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/shared"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -557,6 +555,35 @@ func (r *receivedStreamUpdates) Clone() []*SyncStreamsResponse {
 	return slices.Clone(r.updates)
 }
 
+func (r *receivedStreamUpdates) ForEachEvent(
+	t *testing.T,
+	op func(e *ParsedEvent) bool,
+) {
+	if r == nil {
+		return
+	}
+
+	for _, update := range r.updates {
+		stream := update.GetStream()
+		for _, block := range stream.GetMiniblocks() {
+			for _, event := range block.Events {
+				parsedEvent, err := ParseEvent(event)
+				require.NoError(t, err)
+				if !op(parsedEvent) {
+					return
+				}
+			}
+		}
+		for _, event := range stream.GetEvents() {
+			parsedEvent, err := ParseEvent(event)
+			require.NoError(t, err)
+			if !op(parsedEvent) {
+				return
+			}
+		}
+	}
+}
+
 type testClient struct {
 	t                     *testing.T
 	ctx                   context.Context
@@ -577,6 +604,7 @@ type testClient struct {
 	fallbackKey           string
 	defaultSessionId      string
 	defaultSessionIdBytes []byte
+	serviceTester         *serviceTester // Reference to the service tester
 }
 
 type testClientOpts struct {
@@ -622,10 +650,11 @@ func (st *serviceTester) newTestClientWithWallet(i int, opts testClientOpts, wal
 		enableSync:            opts.enableSync,
 		updates:               xsync.NewMap[StreamId, *receivedStreamUpdates](),
 		disableMiniblockComp:  opts.disableMiniblockComp,
-		deviceKey:             opts.deviceKey,
-		fallbackKey:           opts.fallbackKey,
+		deviceKey:             deviceKey,
+		fallbackKey:           fallbackKey,
 		defaultSessionId:      fmt.Sprintf("%0x", wallet.Address[:6]),
 		defaultSessionIdBytes: wallet.Address[:6],
+		serviceTester:         st, // Set the service tester reference
 	}
 
 	if opts.createUserStreamsWithEncryptionDevice {
@@ -661,9 +690,9 @@ func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
 	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
 	tc.require.NoError(err, "Error creating user metadata stream for testClient")
 
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
+	event, err := MakeEnvelopeWithPayloadAndTags(
 		tc.wallet,
-		events.Make_UserMetadataPayload_EncryptionDevice(
+		Make_UserMetadataPayload_EncryptionDevice(
 			tc.deviceKey,
 			tc.fallbackKey,
 		),
@@ -677,8 +706,8 @@ func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
 
 	addEventResp, err := tc.client.AddEvent(
 		tc.ctx,
-		&connect.Request[protocol.AddEventRequest]{
-			Msg: &protocol.AddEventRequest{
+		&connect.Request[AddEventRequest]{
+			Msg: &AddEventRequest{
 				StreamId: cookie.StreamId,
 				Event:    event,
 			},
@@ -757,6 +786,14 @@ func (tc *testClient) syncChannel(cookie *SyncCookie) {
 	}))
 
 	tc.require.NoError(err)
+}
+
+func (tc *testClient) syncChannelFromInit(streamId StreamId) {
+	tc.syncChannel(&SyncCookie{
+		StreamId:          streamId[:],
+		MinipoolGen:       math.MaxInt64,
+		PrevMiniblockHash: common.Hash{}.Bytes(),
+	})
 }
 
 // startSync initiates a sync session without streams.
@@ -1021,6 +1058,30 @@ func TestDiffUserMessages(t *testing.T) {
 	assert.ElementsMatch(b, umAll[:2])
 }
 
+func (tc *testClient) getAllSyncedMessages(streamId StreamId) userMessages {
+	require.True(tc.t, tc.enableSync, "Sync must be enabled on the client for getAllSyncedMessages")
+
+	updates, ok := tc.updates.Load(streamId)
+	if !ok {
+		tc.syncChannelFromInit(streamId)
+		return userMessages{} // Return empty initially as sync starts
+	}
+
+	messages := userMessages{}
+	updates.ForEachEvent(tc.t, func(e *ParsedEvent) bool {
+		payload := e.GetChannelMessage()
+		if payload != nil {
+			messages = append(messages, usersMessage{
+				userId:  crypto.PublicKeyToAddress(e.SignerPubKey),
+				message: string(payload.Message.Ciphertext),
+			})
+		}
+		return true // Continue processing events
+	})
+
+	return messages
+}
+
 func (tc *testClient) getAllMessages(channelId StreamId) userMessages {
 	_, view := tc.getStreamAndView(channelId, true)
 
@@ -1273,6 +1334,7 @@ func findKeySolicitation(
 			return isKeySolicitation(event, deviceKey, sessionId)
 		},
 	)
+
 	require.True(exists)
 }
 
@@ -1280,22 +1342,83 @@ func containsKeySolicitation(
 	require *require.Assertions,
 	channel *StreamAndCookie,
 	deviceKey string,
+	sessionId string,
 ) bool {
 	return overAllEvents(
 		require, channel,
 		func(event *ParsedEvent) bool {
-			return isKeySolicitation(event, deviceKey, "")
+			return isKeySolicitation(event, deviceKey, sessionId)
 		},
 	)
 }
 
-func (tc *testClient) requireKeySolicitationFromClients(channelId StreamId, tcs testClients) {
-	tc.eventually(func(tc *testClient) {
-		channel := tc.getStream(channelId)
-		for _, c := range tcs {
-			findKeySolicitation(tc.require, channel, c.deviceKey, tc.defaultSessionId)
+func (tcs testClients) waitForKeySolicitationsFrom(t *testing.T, channelId StreamId, senders testClients) {
+	tcs.waitForAll(
+		t,
+		func(t require.TestingT, tc *testClient) {
+			tc.hasKeySolicitationsFromClients(t, channelId, senders)
+		},
+		10*time.Second,
+		1*time.Second,
+	)
+}
+
+func (tcs testClients) sendSolicitationResponsesTo(channelId StreamId, receivers testClients) {
+	tcs.parallelForAll(func(senderClient *testClient) {
+		for _, receiverClient := range receivers {
+			// senderClient sends a solicitation response to receiverClient's user inbox.
+			// The response is for the receiverClient's deviceKey and concerns a session
+			// identified by receiverClient.defaultSessionId for the given channelId.
+			senderClient.sendSolicitationResponse(
+				receiverClient.userId,                   // The user (receiver) to whom the response is addressed.
+				channelId,                               // The channel context for these encryption sessions.
+				receiverClient.deviceKey,                // The specific device key of the receiver this response is for.
+				[]string{senderClient.defaultSessionId}, // The session ID(s) this response pertains to.
+				fmt.Sprintf(
+					"%s:%s",
+					senderClient.defaultSessionId,
+					receiverClient.deviceKey,
+				),
+			)
 		}
 	})
+}
+
+func (tc *testClient) hasKeySolicitationsFromClients(t require.TestingT, channelId StreamId, tcs testClients) {
+	var updates *receivedStreamUpdates
+	var ok bool
+	if updates, ok = tc.updates.Load(channelId); !ok {
+		tc.syncChannelFromInit(channelId)
+	}
+
+	type missingSolicitation struct {
+		deviceKey string
+		sessionId string
+	}
+	var missingSolicitations []missingSolicitation
+	for _, c := range tcs {
+		var found bool
+		findSolicitation := func(e *ParsedEvent) bool {
+			if isKeySolicitation(e, c.deviceKey, tc.defaultSessionId) {
+				found = true
+			}
+			return !found
+		}
+		updates.ForEachEvent(tc.t, findSolicitation)
+		if updates == nil || !found {
+			missingSolicitations = append(missingSolicitations, missingSolicitation{
+				deviceKey: c.deviceKey,
+				sessionId: tc.defaultSessionId,
+			})
+		}
+	}
+	for _, missingSolicitation := range missingSolicitations {
+		t.Errorf(
+			"missing key solicitation from device(%v) for session(%v)",
+			missingSolicitation.deviceKey,
+			missingSolicitation.sessionId,
+		)
+	}
 }
 
 func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey string, sessionId string) {
@@ -1313,7 +1436,7 @@ func (tc *testClient) requireNoKeySolicitation(
 ) {
 	tc.require.Never(func() bool {
 		channel := tc.getStream(channelId)
-		return containsKeySolicitation(tc.require, channel, deviceKey)
+		return containsKeySolicitation(tc.require, channel, deviceKey, "")
 	}, waitTime, tick, "Expected no key solicitation for device in channel")
 }
 
@@ -1414,12 +1537,6 @@ func (tcs testClients) say(channelId StreamId, messages ...string) {
 	}, messages...)
 }
 
-func (tcs testClients) requireKeySolicitationFromClients(channel shared.StreamId, clients testClients) {
-	tcs.parallelForAll(func(tc *testClient) {
-		tc.requireKeySolicitationFromClients(channel, clients)
-	})
-}
-
 // parallel spreads params over clients calling provided function in parallel.
 func parallel[Params any](tcs testClients, f func(*testClient, Params), params ...Params) {
 	tcs[0].require.LessOrEqual(len(params), len(tcs))
@@ -1491,7 +1608,7 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 // The first client is the creator of both the space and the channel.
 // Other clients join the channel.
 // Clients are connected to nodes in a round-robin fashion.
-func (tcs testClients) createChannelAndJoin(spaceId StreamId) (StreamId, *protocol.SyncCookie) {
+func (tcs testClients) createChannelAndJoin(spaceId StreamId) (StreamId, *SyncCookie) {
 	alice := tcs[0]
 	channelId, _, syncCookie := alice.createChannel(spaceId)
 
@@ -1512,9 +1629,9 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) (StreamId, *protoc
 }
 
 func (tcs testClients) joinChannel(
-	spaceId shared.StreamId,
-	channelId shared.StreamId,
-	channelSyncCookie *protocol.SyncCookie,
+	spaceId StreamId,
+	channelId StreamId,
+	channelSyncCookie *SyncCookie,
 	extraMembers testClients,
 ) {
 	tcs.parallelForAll(func(tc *testClient) {
@@ -1727,5 +1844,105 @@ func (c *collectT) Failed() bool {
 func (c *collectT) copyErrorsTo(t require.TestingT) {
 	for _, err := range c.errors {
 		t.Errorf("%v", err)
+	}
+}
+
+// attemptRunOnAll performs one attempt to run f on all clients
+// and returns true if all succeeded, false otherwise, along with any errors.
+func (tcs testClients) attemptRunOnAll(f func(require.TestingT, *testClient)) (bool, []error) {
+	collects := make([]*collectT, len(tcs))
+	for i := range tcs {
+		collects[i] = &collectT{} // Each client gets its own error collector for this attempt
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(tcs))
+
+	for i, tc := range tcs {
+		go func(clientIdx int, currentClient *testClient) {
+			defer wg.Done()
+			// The function f will use collects[clientIdx] via withRequireFor
+			f(collects[clientIdx], currentClient)
+		}(i, tc)
+	}
+
+	wg.Wait() // Wait for all goroutines for this attempt to complete
+
+	allSucceededThisAttempt := true
+	var allErrorsThisAttempt []error
+	for _, collector := range collects {
+		if collector.Failed() {
+			allSucceededThisAttempt = false
+			allErrorsThisAttempt = append(allErrorsThisAttempt, collector.errors...)
+		}
+	}
+	return allSucceededThisAttempt, allErrorsThisAttempt
+}
+
+// waitForAll repeatedly executes the function f on all testClients in parallel.
+// It checks for success at each checkInterval. If f succeeds for all clients
+// in any given attempt, waitForAll returns. If maxWaitDuration is reached
+// without a fully successful attempt, it fails the test t with the errors
+// from the last attempt.
+func (tcs testClients) waitForAll(
+	t require.TestingT,
+	f func(require.TestingT, *testClient),
+	maxWaitDuration time.Duration,
+	checkInterval time.Duration,
+) {
+	if len(tcs) == 0 {
+		return // Nothing to wait for
+	}
+
+	if checkInterval <= 0 {
+		t.Errorf("waitForAll: checkInterval must be positive, got %v", checkInterval)
+		t.FailNow()
+		return
+	}
+
+	timeout := time.NewTimer(maxWaitDuration)
+	defer timeout.Stop()
+
+	ticker := time.NewTicker(checkInterval)
+	defer ticker.Stop()
+
+	var lastErrors []error
+
+	// Perform the first check immediately
+	allSucceeded, currentErrors := tcs.attemptRunOnAll(f)
+	lastErrors = currentErrors
+	if allSucceeded {
+		return
+	}
+
+	// If the first check failed and maxWaitDuration is very short,
+	// ensure we don't miss the timeout before the first tick.
+	// This select handles both timeout and subsequent ticks.
+	for {
+		select {
+		case <-timeout.C:
+			// Timeout reached
+			t.Errorf("waitForAll timed out after %v. Last errors from final attempt:", maxWaitDuration)
+			if len(lastErrors) == 0 {
+				t.Errorf(
+					" (No specific errors reported in the final attempt, but condition was not met across all clients)",
+				)
+			} else {
+				for _, err := range lastErrors {
+					t.Errorf("  - %v", err) // Indent errors for clarity
+				}
+			}
+			t.FailNow()
+			return // Should be unreachable due to FailNow
+		case <-ticker.C:
+			// Time for another check
+			allSucceeded, currentErrors = tcs.attemptRunOnAll(f)
+			lastErrors = currentErrors // Store errors from this latest attempt
+
+			if allSucceeded {
+				return // Success!
+			}
+			// Continue loop to wait for next tick or timeout
+		}
 	}
 }
