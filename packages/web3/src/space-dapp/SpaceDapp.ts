@@ -54,7 +54,7 @@ import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
-import { UNKNOWN_ERROR } from '../BaseContractShim'
+import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'
 import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 
@@ -1936,27 +1936,26 @@ export class SpaceDapp {
      * @param args.operatorAddress - The operator address
      * @returns The transaction
      */
-    public async addSpaceDelegation(
-        args: {
-            spaceId: `0x${string}`
-            operatorAddress: `0x${string}`
-        },
-        signer: ethers.Signer,
-        txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
-        const { spaceId, operatorAddress } = args
+    public async addSpaceDelegation<T = ContractTransaction>(args: {
+        spaceId: string
+        operatorAddress: string
+        signer: ethers.Signer
+        transactionOpts?: TransactionOpts
+        overrideExecution?: OverrideExecution<T>
+    }) {
+        const { spaceId, operatorAddress, signer, transactionOpts, overrideExecution } = args
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         const spaceAddress = space.Address
 
-        return wrapTransaction(
-            () =>
-                this.baseRegistry.spaceDelegation
-                    .write(signer)
-                    .addSpaceDelegation(spaceAddress, operatorAddress),
-            txnOpts,
-        )
+        return this.baseRegistry.spaceDelegation.executeCall({
+            signer,
+            functionName: 'addSpaceDelegation',
+            args: [spaceAddress, operatorAddress],
+            overrideExecution,
+            transactionOpts,
+        })
     }
 }
