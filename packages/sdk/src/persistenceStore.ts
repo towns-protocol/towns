@@ -356,7 +356,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             }
             miniblocks.push(parsedMiniblock)
         }
-        return miniblocks.length === Number(rangeEnd - rangeStart) ? miniblocks : []
+        return miniblocks.length === Number(rangeEnd - rangeStart + 1n) ? miniblocks : []
     }
 
     async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
