@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {ITownsPoints, ITownsPointsBase} from "../../../src/airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IImplementationRegistry} from "../../../src/factory/facets/registry/IImplementationRegistry.sol";
 import {ISwapRouter} from "../../../src/router/ISwapRouter.sol";
@@ -196,11 +197,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             recipient
         );
 
-        (
-            uint256 expectedAmountOut,
-            uint16 treasuryBps,
-            uint16 posterBps
-        ) = _calculateExpectedAmountOut(amountOut);
+        uint256 expectedAmountOut = _calculateExpectedAmountOut(amountOut);
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -222,8 +219,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             recipient,
             amountIn,
             amountOut,
-            treasuryBps,
-            posterBps
+            TREASURY_BPS,
+            POSTER_BPS
         );
     }
 
@@ -233,14 +230,21 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         address caller,
         address recipient
     ) external givenMembership(caller) {
-        vm.assume(caller != founder);
+        vm.assume(caller != founder && caller != poster && caller != feeRecipient);
         vm.assume(recipient != address(0) && recipient != poster && recipient != feeRecipient);
 
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1 ether / 100, 10 ether);
         amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
 
-        (uint256 amountInAfterFees, , ) = swapRouter.getETHInputFees(amountIn, caller, poster);
+        (uint256 amountInAfterFees, uint256 protocolFee, ) = swapRouter.getETHInputFees(
+            amountIn,
+            caller,
+            poster
+        );
+
+        // calculate expected points for ETH input
+        uint256 expectedPoints = _getPoints(protocolFee);
 
         // get swap parameters
         (ExactInputParams memory params, RouterParams memory routerParams) = _createSwapParams(
@@ -278,6 +282,13 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             TREASURY_BPS,
             POSTER_BPS
         );
+
+        // verify points were minted correctly
+        assertEq(
+            riverAirdrop.balanceOf(caller),
+            expectedPoints,
+            "ETH input swap should mint correct points"
+        );
     }
 
     function test_executeSwap_swapTokenToEth(
@@ -313,11 +324,11 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         // fund mockRouter with ETH to swap out
         deal(mockRouter, amountOut * 2);
 
-        (
-            uint256 expectedAmountOut,
-            uint16 treasuryBps,
-            uint16 posterBps
-        ) = _calculateExpectedAmountOut(amountOut);
+        uint256 expectedAmountOut = _calculateExpectedAmountOut(amountOut);
+
+        // calculate protocol fee and expected points
+        uint256 protocolFee = BasisPoints.calculate(amountOut, TREASURY_BPS);
+        uint256 expectedPoints = _getPoints(protocolFee);
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -339,8 +350,15 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             recipient,
             amountIn,
             amountOut,
-            treasuryBps,
-            posterBps
+            TREASURY_BPS,
+            POSTER_BPS
+        );
+
+        // verify points were minted correctly
+        assertEq(
+            riverAirdrop.balanceOf(caller),
+            expectedPoints,
+            "ETH output swap should mint correct points"
         );
     }
 
@@ -434,13 +452,21 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
     function _calculateExpectedAmountOut(
         uint256 amountOut
-    ) internal view returns (uint256 expectedAmountOut, uint16 treasuryBps, uint16 posterBps) {
-        (treasuryBps, posterBps, ) = swapFacet.getSwapFees();
+    ) internal view returns (uint256 expectedAmountOut) {
+        (uint16 treasuryBps, uint16 posterBps, ) = swapFacet.getSwapFees();
         (uint256 treasuryFee, uint256 posterFee) = _calculateFees(
             amountOut,
             treasuryBps,
             posterBps
         );
         expectedAmountOut = amountOut - posterFee - treasuryFee;
+    }
+
+    function _getPoints(uint256 protocolFee) internal view returns (uint256) {
+        return
+            ITownsPoints(riverAirdrop).getPoints(
+                ITownsPointsBase.Action.Swap,
+                abi.encode(protocolFee)
+            );
     }
 }
