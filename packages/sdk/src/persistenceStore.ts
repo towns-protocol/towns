@@ -293,7 +293,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock, 'forward')
         await this.miniblocks.put({
             streamId: streamId,
-            miniblockNum: miniblock.header.miniblockNum.toString(),
+            miniblockNum: miniblock.header.miniblockNum.toString().padStart(20, '0'),
             data: toBinary(PersistedMiniblockSchema, cachedMiniblock),
         })
     }
@@ -307,7 +307,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             miniblocks.map((mb) => {
                 return {
                     streamId: streamId,
-                    miniblockNum: mb.header.miniblockNum.toString(),
+                    miniblockNum: mb.header.miniblockNum.toString().padStart(20, '0'),
                     data: toBinary(
                         PersistedMiniblockSchema,
                         parsedMiniblockToPersistedMiniblock(mb, direction),
@@ -321,7 +321,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         streamId: string,
         miniblockNum: bigint,
     ): Promise<ParsedMiniblock | undefined> {
-        const record = await this.miniblocks.get([streamId, miniblockNum.toString()])
+        const record = await this.miniblocks.get([streamId, miniblockNum.toString().padStart(20, '0')])
         if (!record) {
             return undefined
         }
@@ -334,22 +334,29 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         rangeStart: bigint,
         rangeEnd: bigint,
     ): Promise<ParsedMiniblock[]> {
-        const ids: [string, string][] = []
-        for (let i = rangeStart; i <= rangeEnd; i++) {
-            ids.push([streamId, i.toString()])
-        }
-        const records = await this.miniblocks.bulkGet(ids)
+        const records = await this.miniblocks
+        .where('[streamId+miniblockNum]')
+            .between(
+                // padStart to fix lexicographic ordering
+                [streamId, rangeStart.toString().padStart(20, '0')],
+                [streamId, rangeEnd.toString().padStart(20, '0')],
+            )
+            .toArray()
+
+        const miniblocks: ParsedMiniblock[] = []
         // All or nothing
-        const miniblocks = records
-            .map((record) => {
-                if (!record) {
-                    return undefined
-                }
-                const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
-                return persistedMiniblockToParsedMiniblock(cachedMiniblock)
-            })
-            .filter(isDefined)
-        return miniblocks.length === ids.length ? miniblocks : []
+        for (const record of records) {
+            if (!record) {
+                return []
+            }
+            const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
+            const parsedMiniblock = persistedMiniblockToParsedMiniblock(cachedMiniblock)
+            if (!parsedMiniblock) {
+                return []
+            }
+            miniblocks.push(parsedMiniblock)
+        }
+        return miniblocks.length === Number(rangeEnd - rangeStart) ? miniblocks : []
     }
 
     async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
