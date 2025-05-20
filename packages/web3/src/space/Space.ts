@@ -525,12 +525,10 @@ export class Space {
                 },
             })
         } catch (error) {
-            log.error('getMembershipStatus::error', { error })
+            log.error('getMembershipStatus expirations::error', { error })
             // Error evaluating expirations, assume not expired
             return {
-                isMember: true,
-                isExpired: false,
-                expiryTime: 0n,
+                isMember: false,
             }
         }
 

@@ -203,11 +203,12 @@ describe('membershipRenewals', () => {
             await expect(carol.joinStream(channelId)).resolves.not.toThrow()
             const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
 
-            // wait for any caches to be invalidated
-            await new Promise((f) => setTimeout(f, 5_000))
-
             // Wait for alice's user stream to have the leave event
-            expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+            await waitFor(async () => {
+                return expect(
+                    userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+                ).toBe(true)
+            })
 
             // Clean up
             await alice.stopSync()

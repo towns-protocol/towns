@@ -852,18 +852,11 @@ export class SpaceDapp {
         allWallets: string[],
         entitlements: EntitlementData[],
         xchainConfig: XchainConfig,
-        permission: Permission,
     ): Promise<EntitledWallet> {
-        const { isMember, isExpired } = await space.getMembershipStatus(allWallets)
+        const { isExpired } = await space.getMembershipStatus(allWallets)
 
-        if (permission === Permission.JoinSpace) {
-            // if you're joining a space with an expired membership, you're not entitled to join
-            if (isMember && isExpired) {
-                return
-            }
-        }
         // otherwise you're trying to do something with an expired membership
-        else if (isExpired) {
+        if (isExpired) {
             return
         }
 
@@ -992,7 +985,6 @@ export class SpaceDapp {
             allWallets,
             entitlements,
             xchainConfig,
-            Permission.JoinSpace,
         )
     }
 
@@ -1102,7 +1094,6 @@ export class SpaceDapp {
             linkedWallets,
             entitlements,
             xchainConfig,
-            permission,
         )
         return entitledWallet !== undefined
     }
