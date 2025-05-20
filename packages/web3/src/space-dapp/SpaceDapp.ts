@@ -1941,7 +1941,7 @@ export class SpaceDapp {
         operatorAddress: `0x${string}`
         signer: ethers.Signer
         txnOpts?: TransactionOpts
-        overrideExecution?: ((calldata: string) => Promise<T>) | undefined
+        overrideExecution?: (calldata: string) => Promise<T>
     }) {
         const { spaceId, operatorAddress, signer, txnOpts, overrideExecution } = args
         const space = this.getSpace(spaceId)
