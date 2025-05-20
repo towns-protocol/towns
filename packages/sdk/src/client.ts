@@ -1415,7 +1415,7 @@ export class Client
         const existingRequest = this.initStreamRequests.get(streamIdStr)
         if (existingRequest) {
             this.logCall('initStream: had existing request for', streamIdStr, 'returning promise')
-            return existingRequest
+            return await existingRequest
         }
         const request = this._initStream(streamIdStr, allowGetStream, persistedData)
         this.initStreamRequests.set(streamIdStr, request)
@@ -1530,6 +1530,13 @@ export class Client
     }
 
     private onStreamUpToDate = (streamId: string): void => {
+        // we're migrating away from the old megolm based encryption to the new `grpaes` encryption,
+        // this is to avoid too many active crypto sessions active in the same stream
+        // this function will:
+        // - check if the user's username is encrypted with the old algorithm
+        // - check if the user has a hybrid session ready to go (hasHybridSession)
+        // - re-encrypt the username with the new algorithm
+
         const updateUsernameEncryptionIfNeeded = async () => {
             if (!isSpaceStreamId(streamId)) {
                 return
