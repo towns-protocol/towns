@@ -251,7 +251,7 @@ func (e *Evaluator) evaluateEthBalanceOperation(
 		client, err := e.clients.Get(chainID)
 		if err != nil {
 			log.Errorw("Provider for Chain ID not found", "chainID", chainID)
-			return false, fmt.Errorf("evaluateEthBalanceOperation: Providerfor chain ID %v not found", chainID)
+			return false, fmt.Errorf("evaluateEthBalanceOperation: Provider for chain ID %v not found", chainID)
 		}
 		params, err := types.DecodeThresholdParams(op.Params)
 		if err != nil {
