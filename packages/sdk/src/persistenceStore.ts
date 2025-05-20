@@ -25,6 +25,8 @@ const log = dlog('csb:persistence', { defaultEnabled: false })
 const logWarn = dlog('csb:persistence:warn', { defaultEnabled: true })
 const logError = dlogError('csb:persistence:error')
 
+const KEY_PAD_WIDTH = 20
+
 export interface LoadedStream {
     persistedSyncedStream: ParsedPersistedSyncedStream
     miniblocks: ParsedMiniblock[]
@@ -293,7 +295,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock, 'forward')
         await this.miniblocks.put({
             streamId: streamId,
-            miniblockNum: miniblock.header.miniblockNum.toString().padStart(20, '0'),
+            miniblockNum: miniblock.header.miniblockNum.toString().padStart(KEY_PAD_WIDTH, '0'),
             data: toBinary(PersistedMiniblockSchema, cachedMiniblock),
         })
     }
@@ -307,7 +309,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             miniblocks.map((mb) => {
                 return {
                     streamId: streamId,
-                    miniblockNum: mb.header.miniblockNum.toString().padStart(20, '0'),
+                    miniblockNum: mb.header.miniblockNum.toString().padStart(KEY_PAD_WIDTH, '0'),
                     data: toBinary(
                         PersistedMiniblockSchema,
                         parsedMiniblockToPersistedMiniblock(mb, direction),
@@ -321,7 +323,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         streamId: string,
         miniblockNum: bigint,
     ): Promise<ParsedMiniblock | undefined> {
-        const record = await this.miniblocks.get([streamId, miniblockNum.toString().padStart(20, '0')])
+        const record = await this.miniblocks.get([streamId, miniblockNum.toString().padStart(KEY_PAD_WIDTH, '0')])
         if (!record) {
             return undefined
         }
@@ -338,8 +340,8 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         .where('[streamId+miniblockNum]')
             .between(
                 // padStart to fix lexicographic ordering
-                [streamId, rangeStart.toString().padStart(20, '0')],
-                [streamId, rangeEnd.toString().padStart(20, '0')],
+                [streamId, rangeStart.toString().padStart(KEY_PAD_WIDTH, '0')],
+                [streamId, rangeEnd.toString().padStart(KEY_PAD_WIDTH, '0')],
             )
             .toArray()
 
