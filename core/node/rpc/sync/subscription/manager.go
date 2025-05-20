@@ -160,7 +160,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	wg.Add(len(subscriptions))
 	for i, subscription := range subscriptions {
 		go func(i int, subscription *Subscription) {
-			if subscription.isClosed() {
+			if subscription.isClosed() && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
 				// Remove the given subscriptions from the list of subscriptions of the given stream
 				m.sLock.Lock()
 				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
