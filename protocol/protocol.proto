@@ -677,6 +677,7 @@ message Snapshot {
         DmChannelPayload.Snapshot dm_channel_content = 107;
         GdmChannelPayload.Snapshot gdm_channel_content = 108;
         UserInboxPayload.Snapshot user_inbox_content = 109;
+        MetadataPayload.Snapshot metadata_content = 110;
     }
 }
 
