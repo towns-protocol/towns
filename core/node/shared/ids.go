@@ -3,11 +3,13 @@ package shared
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -271,4 +273,30 @@ func ValidGDMChannelStreamId(streamId *StreamId) bool {
 
 func ValidUserIdBytes(userId []byte) bool {
 	return len(userId) == 20
+}
+
+type StreamShard uint16
+
+func ShardFromMetadataStreamId(streamId StreamId) (StreamShard, error) {
+	if streamId.Type() != STREAM_METADATA_BIN {
+		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream type for metadata", "streamId", streamId)
+	}
+	// 1 byte prefix, 2 byte big endian shard number
+	return StreamShard(binary.BigEndian.Uint16(streamId[1:3])), nil
+}
+
+func MetadataStreamIdFromShard(shard StreamShard) StreamId {
+	var b StreamId
+	b[0] = STREAM_METADATA_BIN
+	binary.BigEndian.PutUint16(b[1:3], uint16(shard))
+	return b
+}
+
+func ShardForStreamId(streamId StreamId, shardMask uint16) (StreamShard, error) {
+	if shardMask == 0 {
+		shardMask = 0x3ff // 1023
+	}
+	hash := xxhash.Sum64(streamId[:])
+	shard := StreamShard(hash) & StreamShard(shardMask)
+	return shard, nil
 }

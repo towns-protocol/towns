@@ -31,6 +31,8 @@ const (
 	STREAM_USER_PREFIX                   = "a8"
 	STREAM_USER_SETTINGS_BIN        byte = 0xa5
 	STREAM_USER_SETTINGS_PREFIX          = "a5"
+	STREAM_METADATA_BIN             byte = 0xdd
+	STREAM_METADATA_PREFIX               = "dd"
 
 	STREAM_ID_BYTES_LENGTH  = 32
 	STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
@@ -58,6 +60,8 @@ func StreamTypeToString(streamType byte) string {
 		return "user"
 	case STREAM_USER_SETTINGS_BIN:
 		return "user_settings"
+	case STREAM_METADATA_BIN:
+		return "metadata"
 	}
 	return fmt.Sprintf("%02x", streamType)
 }
@@ -164,6 +168,8 @@ func StreamIdContentLengthForType(t byte) (int, error) {
 		return 32, nil
 	case STREAM_SPACE_BIN:
 		return 21, nil
+	case STREAM_METADATA_BIN:
+		return 5, nil // 1 byte prefix, 3 byte big endian shard number
 	default:
 		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream prefix", "prefix", t)
 	}
