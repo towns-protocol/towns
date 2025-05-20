@@ -1083,6 +1083,7 @@ enum MembershipOp {
 enum MembershipReason {
     MR_NONE = 0;
     MR_NOT_ENTITLED = 1;
+    MR_EXPIRED = 2;
 }
 
 enum ChannelOp {
