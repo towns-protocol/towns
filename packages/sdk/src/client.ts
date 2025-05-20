@@ -1415,7 +1415,7 @@ export class Client
         const existingRequest = this.initStreamRequests.get(streamIdStr)
         if (existingRequest) {
             this.logCall('initStream: had existing request for', streamIdStr, 'returning promise')
-            return await existingRequest
+            return existingRequest
         }
         const request = this._initStream(streamIdStr, allowGetStream, persistedData)
         this.initStreamRequests.set(streamIdStr, request)
