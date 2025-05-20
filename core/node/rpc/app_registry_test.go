@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -88,9 +89,15 @@ func (ar *appRegistryServiceTester) RegisterApp(
 func (ar *appRegistryServiceTester) RegisterBotServices(
 	forwardSetting protocol.ForwardSettingValue,
 ) {
+	var wg sync.WaitGroup
+	wg.Add(len(ar.botCredentials))
 	for i := range ar.botCredentials {
-		ar.RegisterBotService(i, forwardSetting)
+		go func() {
+			ar.RegisterBotService(i, forwardSetting)
+			wg.Done()
+		}()
 	}
+	wg.Wait()
 }
 
 func (ar *appRegistryServiceTester) RegisterBotService(

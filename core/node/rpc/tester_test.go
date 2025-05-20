@@ -1946,3 +1946,12 @@ func (tcs testClients) waitForAll(
 		}
 	}
 }
+
+func (tc *testClient) clearUpdatesForChannel(streamId StreamId) {
+	// Store a new empty updates object
+	tc.updates.Store(streamId, &receivedStreamUpdates{})
+}
+
+func (tcs testClients) clearUpdatesForChannel(streamId StreamId) {
+	tcs.parallelForAll(func(tc *testClient) { tc.clearUpdatesForChannel(streamId) })
+}
