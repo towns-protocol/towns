@@ -10,24 +10,32 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
-
-import {ExecutorBase} from "../executor/ExecutorBase.sol";
-import {HookBase} from "../executor/hooks/HookBase.sol";
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {AppAccountStorage} from "./AppAccountStorage.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
+// contracts
+import {ExecutorBase} from "../executor/ExecutorBase.sol";
+import {HookBase} from "../executor/hooks/HookBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+
 abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorBase, HookBase {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
+    using SafeTransferLib for address;
+    uint256 internal constant MAX_ALLOWANCE_FACTOR = 2;
+    uint256 internal constant MAX_ALLOWANCE_INCREASE_DELAY = 1 days;
 
     function _installApp(
         bytes32 appId,
@@ -148,18 +156,6 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
     }
 
-    function _setAppAllowance(bytes32 appId, uint256 allowance) internal {
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        if (!_isGroupActive(appId)) AppNotInstalled.selector.revertWith();
-        _setGroupAllowance(appId, allowance);
-    }
-
-    function _getAppAllowance(bytes32 appId) internal view returns (uint256) {
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        if (!_isGroupActive(appId)) AppNotInstalled.selector.revertWith();
-        return _getGroupAllowance(appId);
-    }
-
     // Getters
     function _isEntitled(
         bytes32 appId,
@@ -215,6 +211,64 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             att.data,
             (address, address, address[], bytes32[], ExecutionManifest)
         );
+    }
+
+    function _getTokenAllowance(bytes32 groupId, address token) internal view returns (uint256) {
+        if (groupId == EMPTY_UID) InvalidAppId.selector.revertWith();
+        if (!_isGroupActive(groupId)) AppNotInstalled.selector.revertWith();
+        AppAccountStorage.Layout storage db = AppAccountStorage.getLayout();
+        return db.allowances[groupId][token].allowance;
+    }
+
+    function _setTokenAllowance(bytes32 groupId, address token, uint256 allowance) internal {
+        // Basic validation checks
+        if (groupId == EMPTY_UID) InvalidAppId.selector.revertWith();
+        if (!_isGroupActive(groupId)) AppNotInstalled.selector.revertWith();
+
+        // Check if the token is a valid ERC20 contract
+        if (token == address(0)) InvalidToken.selector.revertWith();
+
+        // Prevent setting allowance to max uint256 to avoid potential overflow issues
+        if (allowance == type(uint256).max) {
+            allowance = type(uint256).max - 1;
+        }
+
+        // Get app information
+        (address module, , , , ) = _getApp(groupId);
+        if (module == address(0)) InvalidAppAddress.selector.revertWith();
+
+        AppAccountStorage.Layout storage db = AppAccountStorage.getLayout();
+        AppAccountStorage.TokenAllowance storage allowances = db.allowances[groupId][token];
+
+        // Check for significant allowance changes
+        uint256 currentAllowance = allowances.allowance;
+        if (currentAllowance > 0 && allowance > (currentAllowance * MAX_ALLOWANCE_FACTOR)) {
+            // If increasing allowance by more than 2x, require a delay
+            uint256 timeSinceLastUpdate = block.timestamp - allowances.lastUpdated;
+            if (timeSinceLastUpdate < MAX_ALLOWANCE_INCREASE_DELAY)
+                LargeAllowanceIncrease.selector.revertWith();
+        }
+
+        // Update allowance
+        allowances.allowance = allowance;
+        allowances.lastUpdated = block.timestamp;
+
+        // Handle native ETH and ERC20 tokens differently
+        if (token == CurrencyTransfer.NATIVE_TOKEN) {
+            if (allowance > address(this).balance) NotEnoughEth.selector.revertWith();
+            _setGroupAllowance(groupId, allowance);
+        } else {
+            // Check token balance
+            uint256 tokenBalance = token.balanceOf(address(this));
+            if (allowance > tokenBalance) NotEnoughToken.selector.revertWith();
+
+            // Set approval
+            token.safeApprove(module, 0);
+            token.safeApprove(module, allowance);
+        }
+
+        // Emit event for tracking
+        emit TokenAllowanceSet(groupId, token, allowance, block.timestamp);
     }
 
     // Checks

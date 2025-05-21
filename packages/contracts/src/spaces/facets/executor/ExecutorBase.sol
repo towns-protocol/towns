@@ -17,6 +17,9 @@ import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 abstract contract ExecutorBase is IExecutorBase {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
@@ -529,6 +532,10 @@ abstract contract ExecutorBase is IExecutorBase {
         if (data.length < 4) InvalidDataLength.selector.revertWith();
         return bytes4(data[0:4]);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Hooks                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Internal function to get the owner
     function _getOwner() internal view virtual returns (address);

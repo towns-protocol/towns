@@ -30,6 +30,19 @@ interface IAppAccountBase {
     error AppNotInstalled();
     error AppNotRegistered();
     error AppRevoked();
+    error InvalidToken();
+    error NotEnoughToken();
+    error LargeAllowanceIncrease();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    event TokenAllowanceSet(
+        bytes32 indexed groupId,
+        address indexed token,
+        uint256 allowance,
+        uint256 timestamp
+    );
 }
 
 interface IAppAccount is IAppAccountBase {

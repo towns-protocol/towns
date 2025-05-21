@@ -6,9 +6,9 @@ import {IAppAccount} from "./IAppAccount.sol";
 
 // libraries
 import {AppAccountBase} from "./AppAccountBase.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
@@ -73,10 +73,22 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function setAppAllowance(bytes32 appId, uint256 allowance) external onlyOwner {
-        _setAppAllowance(appId, allowance);
+        _setTokenAllowance(appId, CurrencyTransfer.NATIVE_TOKEN, allowance);
     }
 
     function getAppAllowance(bytes32 appId) external view returns (uint256) {
-        return _getAppAllowance(appId);
+        return _getTokenAllowance(appId, CurrencyTransfer.NATIVE_TOKEN);
+    }
+
+    function setTokenAllowance(
+        bytes32 groupId,
+        address token,
+        uint256 allowance
+    ) external onlyOwner {
+        _setTokenAllowance(groupId, token, allowance);
+    }
+
+    function getTokenAllowance(bytes32 groupId, address token) external view returns (uint256) {
+        return _getTokenAllowance(groupId, token);
     }
 }

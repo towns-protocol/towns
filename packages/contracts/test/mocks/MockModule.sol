@@ -5,7 +5,7 @@ import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, M
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // contracts
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
@@ -19,7 +19,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     event OnInstallCalled(address caller, bytes data);
     event OnUninstallCalled(address caller, bytes data);
     event HookFunctionCalled(address caller, uint256 value);
-
+    event MockFunctionWithTokenCalled(address caller, uint256 value, address token, uint256 amount);
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STATE                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -67,6 +67,11 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         emit MockFunctionWithParamsCalled(msg.sender, msg.value, param);
     }
 
+    function mockFunctionWithToken(address token, uint256 amount) external payable {
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        emit MockFunctionWithTokenCalled(msg.sender, msg.value, token, amount);
+    }
+
     function preExecutionHook(
         uint32,
         address,
@@ -100,7 +105,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     }
 
     function executionManifest() external pure virtual returns (ExecutionManifest memory) {
-        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](3);
         ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
 
         executionFunctions[0] = ManifestExecutionFunction({
@@ -118,6 +123,12 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
 
         executionFunctions[1] = ManifestExecutionFunction({
             executionSelector: this.mockFunctionWithParams.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        executionFunctions[2] = ManifestExecutionFunction({
+            executionSelector: this.mockFunctionWithToken.selector,
             skipRuntimeValidation: false,
             allowGlobalValidation: true
         });

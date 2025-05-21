@@ -24,6 +24,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
 import {MockSavingsModule} from "test/mocks/MockSavingsModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
+import {MockERC20} from "test/mocks/MockERC20.sol";
 
 contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
     AppRegistryFacet internal registry;
@@ -229,6 +230,9 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
     function test_allowance() external givenAppIsInstalled {
         uint256 allowance = 1 ether;
+
+        vm.deal(address(appAccount), 100 ether);
+
         vm.prank(founder);
         appAccount.setAppAllowance(appId, allowance);
 
@@ -248,6 +252,35 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(founder);
         vm.expectRevert(IAppAccountBase.AppNotInstalled.selector);
         appAccount.setAppAllowance(invalidModule, allowance);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Token Allowance                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_tokenAllowance() external givenAppIsInstalled {
+        MockERC20 token = new MockERC20("Token", "TKN");
+
+        uint256 allowance = 100 ether;
+        token.mint(address(appAccount), allowance);
+
+        vm.prank(founder);
+        appAccount.setTokenAllowance(appId, address(token), allowance);
+
+        assertEq(appAccount.getTokenAllowance(appId, address(token)), allowance);
+
+        vm.prank(client);
+        appAccount.execute({
+            target: address(mockModule),
+            value: 0,
+            data: abi.encodeWithSelector(
+                mockModule.mockFunctionWithToken.selector,
+                address(token),
+                allowance
+            )
+        });
+
+        assertEq(token.balanceOf(address(mockModule)), allowance);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
