@@ -389,7 +389,7 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	return s.promoteCandidateLocked(ctx, mb)
 }
 
-// promoteCandidateLocked shouldbe called with a lock held.
+// promoteCandidateLocked should be called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
@@ -441,7 +441,7 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 			return RiverError(
 				Err_STREAM_RECONCILIATION_REQUIRED,
 				"schedulePromotionNoLock: next promotion is not for the next block",
-			)
+			).Tags("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	} else if len(s.local.pendingCandidates) > 3 {
@@ -450,6 +450,8 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
 			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
+			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive").
+				Tag("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
@@ -710,7 +712,11 @@ func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicat
 // old to be in the cache and thus can't complete the duplicate check.
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+func (s *Stream) addEventLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	relaxDuplicateCheck bool,
+) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
 		return nil, err
