@@ -26,7 +26,7 @@ library PlatformRequirementsStorage {
         // slot 3
         uint256 membershipMinPrice;
         // slot 4
-        uint16 swapTreasuryBps;
+        uint16 swapProtocolBps;
         uint16 swapPosterBps;
         // slot 5
         mapping(address => bool) whitelistedRouters;

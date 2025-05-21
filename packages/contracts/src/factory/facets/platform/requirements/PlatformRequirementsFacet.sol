@@ -101,13 +101,13 @@ contract PlatformRequirementsFacet is
     }
 
     /// @inheritdoc IPlatformRequirements
-    function getSwapFees() external view returns (uint16 treasuryBps, uint16 posterBps) {
+    function getSwapFees() external view returns (uint16 protocolBps, uint16 posterBps) {
         return _getSwapFees();
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setSwapFees(uint16 treasuryBps, uint16 posterBps) external onlyOwner {
-        _setSwapFees(treasuryBps, posterBps);
+    function setSwapFees(uint16 protocolBps, uint16 posterBps) external onlyOwner {
+        _setSwapFees(protocolBps, posterBps);
     }
 
     /// @inheritdoc IPlatformRequirements

@@ -47,7 +47,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster
-    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut) {
+    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
         // for standard swaps, the msg.sender provides the tokens
         return _executeSwap(params, routerParams, msg.sender, poster);
     }
@@ -69,6 +69,25 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     //    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc ISwapRouter
+    function getETHInputFees(
+        uint256 amountIn,
+        address caller,
+        address poster
+    ) external view returns (uint256 amountInAfterFees, uint256 protocolFee, uint256 posterFee) {
+        address spaceFactory = _getSpaceFactory();
+
+        // get fee rates based on whether the caller is a space
+        (uint16 protocolBps, uint16 posterBps) = _getSwapFees(spaceFactory, caller);
+
+        // calculate fees and amount after fees
+        return _calculateSwapFees(amountIn, protocolBps, posterBps, poster);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -78,12 +97,13 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param payer The address providing the input tokens
     /// @param poster The address that posted this swap opportunity
     /// @return amountOut The amount of tokenOut received
+    /// @return protocolFee The protocol fee amount
     function _executeSwap(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address payer,
         address poster
-    ) internal returns (uint256 amountOut) {
+    ) internal returns (uint256 amountOut, uint256 protocolFee) {
         // only allow whitelisted routers
         if (!_isRouterWhitelisted(routerParams.router)) {
             SwapRouter__InvalidRouter.selector.revertWith();
@@ -98,10 +118,11 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
 
+        bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
         {
             uint256 value;
             uint256 amountIn = params.amountIn;
-            bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
+
             if (!isNativeToken) {
                 // ensure no ETH is sent when tokenIn is not native
                 if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
@@ -115,7 +136,13 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             } else {
                 // for native token, the value should be sent with the transaction
                 if (msg.value != amountIn) SwapRouter__InvalidAmount.selector.revertWith();
-                value = amountIn;
+
+                // calculate and collect fees before the swap for ETH input
+                (value, protocolFee, ) = _collectFees(
+                    CurrencyTransfer.NATIVE_TOKEN,
+                    msg.value,
+                    poster
+                );
             }
 
             // execute swap with the router
@@ -130,14 +157,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // use the actual received amount to handle fee-on-transfer tokens
         amountOut = _getBalance(params.tokenOut) - balanceBefore;
 
-        // calculate and distribute fees
-        {
-            (uint256 posterFee, uint256 treasuryFee) = _collectFees(
-                params.tokenOut,
-                amountOut,
-                poster
-            );
-            amountOut = amountOut - posterFee - treasuryFee;
+        // calculate and distribute fees only for non-ETH inputs
+        // for ETH inputs, fees were already collected before the swap
+        if (!isNativeToken) {
+            (amountOut, protocolFee, ) = _collectFees(params.tokenOut, amountOut, poster);
         }
 
         // slippage check after fees
@@ -174,43 +197,50 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         }
     }
 
-    /// @notice Collects and distributes both poster and treasury fees
+    /// @notice Collects and distributes both protocol and poster fees
     /// @param token The token to collect fees in
     /// @param amount The amount to calculate fees from
     /// @param poster The address that posted this swap opportunity
-    /// @return posterFee Amount collected as poster fee
-    /// @return treasuryFee Amount collected as treasury fee
+    /// @return amountAfterFees The amount after deducting protocol and poster fees
+    /// @return protocolFee The protocol fee amount collected
+    /// @return posterFee The poster fee amount collected
     function _collectFees(
         address token,
         uint256 amount,
         address poster
-    ) internal returns (uint256 posterFee, uint256 treasuryFee) {
+    ) internal returns (uint256 amountAfterFees, uint256 protocolFee, uint256 posterFee) {
         address spaceFactory = _getSpaceFactory();
-        (uint16 treasuryBps, uint16 posterBps) = _getSwapFees(spaceFactory);
+        (uint16 protocolBps, uint16 posterBps) = _getSwapFees(spaceFactory, msg.sender);
 
-        // only take poster fee if the address is not zero
-        if (poster != address(0)) {
-            posterFee = BasisPoints.calculate(amount, posterBps);
+        // calculate fees
+        (amountAfterFees, protocolFee, posterFee) = _calculateSwapFees(
+            amount,
+            protocolBps,
+            posterBps,
+            poster
+        );
+
+        // transfer fees
+        address feeRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
+        CurrencyTransfer.transferCurrency(token, address(this), feeRecipient, protocolFee);
+
+        if (posterFee > 0) {
             CurrencyTransfer.transferCurrency(token, address(this), poster, posterFee);
         }
 
-        // transfer treasury fee
-        treasuryFee = BasisPoints.calculate(amount, treasuryBps);
-        address feeRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
-        CurrencyTransfer.transferCurrency(token, address(this), feeRecipient, treasuryFee);
-
-        emit FeeDistribution(token, feeRecipient, poster, treasuryFee, posterFee);
+        emit FeeDistribution(token, feeRecipient, poster, protocolFee, posterFee);
     }
 
     function _getSwapFees(
-        address spaceFactory
-    ) internal view returns (uint16 treasuryBps, uint16 posterBps) {
+        address spaceFactory,
+        address caller
+    ) internal view returns (uint16 protocolBps, uint16 posterBps) {
         // check if caller is a space
-        bool isSpace = IArchitect(spaceFactory).getTokenIdBySpace(msg.sender) != 0;
+        bool isSpace = IArchitect(spaceFactory).getTokenIdBySpace(caller) != 0;
 
         // get fee configuration based on whether caller is a space
         if (isSpace) {
-            try ISwapFacet(msg.sender).getSwapFees() returns (
+            try ISwapFacet(caller).getSwapFees() returns (
                 uint16 spaceTreasuryBps,
                 uint16 spacePosterBps,
                 bool
@@ -246,5 +276,37 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             return address(this).balance;
         }
         return token.balanceOf(address(this));
+    }
+
+    /// @notice Calculates swap fees and the amount after fees
+    /// @param amount The original amount to calculate fees from
+    /// @param protocolBps Protocol fee in basis points
+    /// @param posterBps Poster fee in basis points
+    /// @param poster The address that posted this swap opportunity
+    /// @return amountAfterFees The amount after deducting protocol and poster fees
+    /// @return protocolFee The protocol fee amount computed
+    /// @return posterFee The poster fee amount computed
+    function _calculateSwapFees(
+        uint256 amount,
+        uint16 protocolBps,
+        uint16 posterBps,
+        address poster
+    ) internal pure returns (uint256 amountAfterFees, uint256 protocolFee, uint256 posterFee) {
+        if (protocolBps + posterBps > BasisPoints.MAX_BPS) {
+            SwapRouter__InvalidBps.selector.revertWith();
+        }
+
+        // calculate protocol fee
+        protocolFee = BasisPoints.calculate(amount, protocolBps);
+
+        // only calculate poster fee if the address is not zero
+        if (poster != address(0)) {
+            posterFee = BasisPoints.calculate(amount, posterBps);
+        }
+
+        // calculate amount after fees
+        unchecked {
+            amountAfterFees = amount - protocolFee - posterFee;
+        }
     }
 }

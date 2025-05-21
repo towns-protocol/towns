@@ -64,6 +64,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when ETH is sent but not expected (tokenIn is not the native token)
     error SwapRouter__UnexpectedETH();
 
+    /// @notice Error thrown when an invalid BPS value is provided
+    error SwapRouter__InvalidBps();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -92,15 +95,15 @@ interface ISwapRouterBase {
 
     /// @notice Emitted when fees are distributed after a swap
     /// @param token The token in which fees are paid
-    /// @param treasury The address receiving the treasury fee
+    /// @param protocol The address receiving the protocol fee
     /// @param poster The address receiving the poster fee (if any)
-    /// @param treasuryAmount The amount of tokens sent to the treasury
+    /// @param protocolAmount The amount of tokens sent as protocol fee
     /// @param posterAmount The amount of tokens sent to the poster
     event FeeDistribution(
         address indexed token,
-        address indexed treasury,
+        address indexed protocol,
         address indexed poster,
-        uint256 treasuryAmount,
+        uint256 protocolAmount,
         uint256 posterAmount
     );
 }
@@ -119,11 +122,12 @@ interface ISwapRouter is ISwapRouterBase {
     /// swapData The calldata to execute on the router
     /// @param poster The address that posted this swap opportunity
     /// @return amountOut The amount of tokenOut received
+    /// @return protocolFee The amount of protocol fee collected
     function executeSwap(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster
-    ) external payable returns (uint256 amountOut);
+    ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
     //    /// @notice Executes a swap using EIP-2612 permit for token approval
     //    /// @param params The parameters for the swap
@@ -145,4 +149,23 @@ interface ISwapRouter is ISwapRouterBase {
     //        PermitParams calldata permit,
     //        address poster
     //    ) external payable returns (uint256 amountOut);
+
+    /// @notice Calculate fees for ETH input swaps before execution
+    /// @dev This function helps integrators determine the actual amount that will be sent to external
+    /// routers after protocol and poster fees are deducted. Integration flow:
+    /// 1. Call this function to get `amountInAfterFees`
+    /// 2. Use `amountInAfterFees` to get quotes from aggregator
+    /// 3. Construct RouterParams with the aggregator quote
+    /// 4. Call executeSwap with original amountIn and the prepared RouterParams
+    /// @param amountIn The original ETH amount before fees
+    /// @param caller The address that will call executeSwap (to calculate correct fees based on space status)
+    /// @param poster The address that posted this swap opportunity
+    /// @return amountInAfterFees The ETH amount that will be sent to external router after fees
+    /// @return protocolFee The amount collected as protocol fee
+    /// @return posterFee The amount collected as poster fee
+    function getETHInputFees(
+        uint256 amountIn,
+        address caller,
+        address poster
+    ) external view returns (uint256 amountInAfterFees, uint256 protocolFee, uint256 posterFee);
 }

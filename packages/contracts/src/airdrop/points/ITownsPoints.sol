@@ -5,7 +5,8 @@ interface ITownsPointsBase {
     enum Action {
         JoinSpace,
         CheckIn,
-        Tip
+        Tip,
+        Swap
     }
 
     /// @notice Emitted when a user successfully checks in and receives points

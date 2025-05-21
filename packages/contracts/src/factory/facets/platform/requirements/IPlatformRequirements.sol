@@ -23,7 +23,7 @@ interface IPlatformRequirementsBase {
     event PlatformMembershipMintLimitSet(uint256 limit);
     event PlatformMembershipDurationSet(uint256 duration);
     event PlatformMembershipMinPriceSet(uint256 minPrice);
-    event PlatformSwapFeesSet(uint16 treasuryBps, uint16 posterBps);
+    event PlatformSwapFeesSet(uint16 protocolBps, uint16 posterBps);
     event RouterWhitelistUpdated(address indexed router, bool whitelisted);
 }
 
@@ -115,17 +115,17 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
 
     /**
      * @notice Get the swap fees in basis points
-     * @return treasuryBps Basis points for treasury fee
+     * @return protocolBps Basis points for protocol fee
      * @return posterBps Basis points for poster fee
      */
-    function getSwapFees() external view returns (uint16 treasuryBps, uint16 posterBps);
+    function getSwapFees() external view returns (uint16 protocolBps, uint16 posterBps);
 
     /**
      * @notice Set the swap fees in basis points
-     * @param treasuryBps Basis points for treasury fee
+     * @param protocolBps Basis points for protocol fee
      * @param posterBps Basis points for poster fee
      */
-    function setSwapFees(uint16 treasuryBps, uint16 posterBps) external;
+    function setSwapFees(uint16 protocolBps, uint16 posterBps) external;
 
     /**
      * @notice Check if a router is whitelisted
