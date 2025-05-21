@@ -21,6 +21,7 @@ export const swap = onchainTable('swaps', (t) => ({
     amountIn: t.bigint(),
     amountOut: t.bigint(),
     poster: t.hex(),
+    createdDate: t.timestamp(),
     createdAt: t.bigint(),
 }))
 
@@ -66,6 +67,7 @@ export const swapRouterSwap = onchainTable('swap_router_swap', (t) => ({
     amountIn: t.bigint(),
     amountOut: t.bigint(),
     recipient: t.hex(),
+    createdDate: t.timestamp(),
     createdAt: t.bigint(),
 }))
 

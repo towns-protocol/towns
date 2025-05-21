@@ -68,6 +68,7 @@ type swap {
   amountIn: BigInt
   amountOut: BigInt
   poster: String
+  createdDate: String
   createdAt: BigInt
   space: space
   swapRouter: swapRouter
@@ -89,6 +90,7 @@ type swapRouterSwap {
   amountIn: BigInt
   amountOut: BigInt
   recipient: String
+  createdDate: String
   createdAt: BigInt
 }
 
@@ -171,6 +173,16 @@ input swapFilter {
   poster_ends_with: String
   poster_not_starts_with: String
   poster_not_ends_with: String
+  createdDate: String
+  createdDate_not: String
+  createdDate_in: [String]
+  createdDate_not_in: [String]
+  createdDate_contains: String
+  createdDate_not_contains: String
+  createdDate_starts_with: String
+  createdDate_ends_with: String
+  createdDate_not_starts_with: String
+  createdDate_not_ends_with: String
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_in: [BigInt]
@@ -437,6 +449,16 @@ input swapRouterSwapFilter {
   recipient_ends_with: String
   recipient_not_starts_with: String
   recipient_not_ends_with: String
+  createdDate: String
+  createdDate_not: String
+  createdDate_in: [String]
+  createdDate_not_in: [String]
+  createdDate_contains: String
+  createdDate_not_contains: String
+  createdDate_starts_with: String
+  createdDate_ends_with: String
+  createdDate_not_starts_with: String
+  createdDate_not_ends_with: String
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_in: [BigInt]
