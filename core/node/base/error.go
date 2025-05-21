@@ -15,11 +15,12 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/protocol"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/exp/slices"
+
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.
@@ -228,17 +229,15 @@ func (e *RiverErrorImpl) Message(msg string) *RiverErrorImpl {
 	return e
 }
 
-func IsRiverError(err error) bool {
-	_, ok := err.(*RiverErrorImpl)
-	return ok
-}
-
 func IsRiverErrorCode(err error, code protocol.Err) bool {
-	return AsRiverError(err).Code == code
+	return err != nil && AsRiverError(err).Code == code
 }
 
 // IsCodeWithBases checks if the error or any of base errors match the given code.
 func (e *RiverErrorImpl) IsCodeWithBases(code protocol.Err) bool {
+	if e == nil {
+		return false
+	}
 	if e.Code == code {
 		return true
 	}
@@ -251,7 +250,7 @@ func (e *RiverErrorImpl) IsCodeWithBases(code protocol.Err) bool {
 }
 
 func IsConnectNetworkError(err error) bool {
-	if ce, ok := err.(*connect.Error); ok {
+	if ce, ok := err.(*connect.Error); ok && ce != nil {
 		return IsConnectNetworkErrorCode(ce.Code())
 	}
 	return false
@@ -266,6 +265,10 @@ func IsConnectNetworkErrorCode(code connect.Code) bool {
 // If there is information to be extracted from the error, then code is set accordingly.
 // If not, then provided defaultCode is used.
 func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
+	if err == nil {
+		return nil
+	}
+
 	e, ok := err.(*RiverErrorImpl)
 	if ok {
 		return e
@@ -331,21 +334,15 @@ func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
 		}
 	}
 
-	if err != nil {
-		if err == context.Canceled {
-			code = protocol.Err_CANCELED
-		} else if err == context.DeadlineExceeded {
-			code = protocol.Err_DEADLINE_EXCEEDED
-		}
-		return &RiverErrorImpl{
-			Code:  code,
-			Bases: []error{err},
-		}
-	} else {
-		return &RiverErrorImpl{
-			Code: protocol.Err_UNKNOWN,
-			Msg:  "nil error",
-		}
+	if err == context.Canceled {
+		code = protocol.Err_CANCELED
+	} else if err == context.DeadlineExceeded {
+		code = protocol.Err_DEADLINE_EXCEEDED
+	}
+
+	return &RiverErrorImpl{
+		Code:  code,
+		Bases: []error{err},
 	}
 }
 
