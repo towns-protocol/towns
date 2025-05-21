@@ -54,7 +54,7 @@ import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
-import { UNKNOWN_ERROR } from '../BaseContractShim'
+import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'
 import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 
@@ -71,6 +71,7 @@ import {
 } from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
 import { wrapTransaction } from '../space-dapp/wrapTransaction'
+import { BaseRegistry } from '../base-registry/BaseRegistry'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -156,6 +157,7 @@ type EntitledWallet = string | undefined
 export class SpaceDapp {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
+    public readonly baseRegistry: BaseRegistry
     public readonly provider: ethers.providers.Provider
     public readonly spaceRegistrar: SpaceRegistrar
     public readonly pricingModules: PricingModules
@@ -175,6 +177,7 @@ export class SpaceDapp {
         this.isLegacySpaceCache = new Map()
         this.config = config
         this.provider = provider
+        this.baseRegistry = new BaseRegistry(config, provider)
         this.spaceRegistrar = new SpaceRegistrar(config, provider)
         this.walletLink = new WalletLink(config, provider)
         this.pricingModules = new PricingModules(config, provider)
@@ -1924,5 +1927,35 @@ export class SpaceDapp {
                 ),
             txnOpts,
         )
+    }
+
+    /**
+     * Delegate staking within a space to an operator
+     * @param args
+     * @param args.spaceId - The space id
+     * @param args.operatorAddress - The operator address
+     * @returns The transaction
+     */
+    public async addSpaceDelegation<T = ContractTransaction>(args: {
+        spaceId: string
+        operatorAddress: string
+        signer: ethers.Signer
+        transactionOpts?: TransactionOpts
+        overrideExecution?: OverrideExecution<T>
+    }) {
+        const { spaceId, operatorAddress, signer, transactionOpts, overrideExecution } = args
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const spaceAddress = space.Address
+
+        return this.baseRegistry.spaceDelegation.executeCall({
+            signer,
+            functionName: 'addSpaceDelegation',
+            args: [spaceAddress, operatorAddress],
+            overrideExecution,
+            transactionOpts,
+        })
     }
 }
