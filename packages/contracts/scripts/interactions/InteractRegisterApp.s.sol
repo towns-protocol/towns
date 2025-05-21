@@ -6,9 +6,10 @@ import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
 
 //contracts
 import {Interaction} from "../common/Interaction.s.sol";
-import {SimpleApp} from "./helpers/SimpleApp.sol";
+import {SimpleApp} from "src/apps/helpers/SimpleApp.sol";
+import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 
-contract InteractRegisterApp is Interaction {
+contract InteractRegisterApp is Interaction, IAppRegistryBase {
     function __interact(address deployer) internal override {
         address appRegistry = getDeployment("appRegistry");
 
@@ -20,15 +21,16 @@ contract InteractRegisterApp is Interaction {
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
 
-        vm.broadcast(deployer);
-        SimpleApp app = new SimpleApp({
-            owner: deployer, // update with the owner of the app
-            appId: "simple.app",
-            permissions: permissions
+        AppData memory appData = AppData({
+            name: "simple.app",
+            permissions: permissions,
+            clients: bots
         });
 
         vm.broadcast(deployer);
-        bytes32 appId = IAppRegistry(appRegistry).registerApp(address(app), bots);
+        (address app, bytes32 appId) = IAppRegistry(appRegistry).createSimpleApp(
+            abi.encode(appData)
+        );
 
         saveApp("SimpleApp", appId, address(app));
     }
