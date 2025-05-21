@@ -46,6 +46,11 @@ contract MockSavingsModule is OwnableFacet, ITownsApp {
             interfaceId == type(IERC173).interfaceId;
     }
 
+    /// @inheritdoc ITownsApp
+    function moduleOwner() external view returns (address) {
+        return _owner();
+    }
+
     /**
      * @notice Returns the required permissions for the module
      * @return permissions The required permissions for the module

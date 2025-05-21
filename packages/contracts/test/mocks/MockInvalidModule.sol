@@ -25,6 +25,10 @@ contract MockInvalidModule is OwnableFacet, ITownsApp {
         return "invalid-module";
     }
 
+    function moduleOwner() external view returns (address) {
+        return _owner();
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PERMISSIONS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

@@ -34,7 +34,13 @@ abstract contract BaseApp is ITownsApp {
         _onUninstall(postUninstallData);
     }
 
+    function moduleOwner() external view returns (address) {
+        return _moduleOwner();
+    }
+
     function _onInstall(bytes calldata postInstallData) internal virtual {}
 
     function _onUninstall(bytes calldata postUninstallData) internal virtual {}
+
+    function _moduleOwner() internal view virtual returns (address) {}
 }
