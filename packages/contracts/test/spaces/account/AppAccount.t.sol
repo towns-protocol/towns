@@ -14,7 +14,7 @@ import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 //contracts
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
@@ -80,13 +80,11 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(founder);
         emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
         _;
     }
 
@@ -124,47 +122,43 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
     function test_revertWhen_installApp_notOwner() external givenAppIsRegistered {
         address notOwner = _randomAddress();
 
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
     }
 
     function test_revertWhen_installApp_emptyModuleId() external {
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(founder);
         vm.expectRevert(IAppAccountBase.InvalidAppId.selector);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
     }
 
     function test_revertWhen_installApp_invalidManifest() external givenAppIsRegistered {
         MockModuleV2 mockModuleV2 = new MockModuleV2();
         mockModule.upgradeToAndCall(address(mockModuleV2), "");
 
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(founder);
         vm.expectRevert(
             abi.encodeWithSelector(IAppAccountBase.InvalidManifest.selector, address(mockModule))
         );
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
     }
 
     function test_revertWhen_installApp_moduleNotRegistered() external {
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(founder);
         vm.expectRevert(IAppRegistryBase.AppNotRegistered.selector);
         appAccount.installApp(
             _randomBytes32(),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: delays, allowances: allowances})
         );
     }
 
@@ -172,16 +166,16 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(dev);
         registry.removeApp(appId);
 
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(founder);
         vm.expectRevert(IAppRegistryBase.AppRevoked.selector);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
     }
 
     function test_revertWhen_installApp_invalidSelector() external {
+        Allowance[] memory allowances = new Allowance[](0);
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
         vm.prank(dev);
         MockInvalidModule invalidModule = new MockInvalidModule();
 
@@ -193,11 +187,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         vm.prank(founder);
         vm.expectRevert(IAppAccountBase.UnauthorizedSelector.selector);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
     }
 
     // uninstallApp
@@ -302,12 +292,13 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.deal(address(savingsModule), 5 ether);
         vm.deal(address(appAccount), 1 ether);
 
+        Allowance[] memory allowances = new Allowance[](1);
+        allowances[0] = Allowance({token: CurrencyTransfer.NATIVE_TOKEN, allowance: maxEtherValue});
+
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
+
         vm.startPrank(founder);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: maxEtherValue})
-        );
+        appAccount.installApp(appId, "", AppParams({delays: delays, allowances: allowances}));
         vm.stopPrank();
 
         vm.prank(client);

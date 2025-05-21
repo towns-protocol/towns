@@ -6,6 +6,7 @@ pragma solidity ^0.8.29;
 // types
 
 // libraries
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
 
@@ -22,7 +23,8 @@ library AppAccountStorage {
     }
 
     struct Layout {
-        mapping(bytes32 groupId => mapping(address token => TokenAllowance allowance)) allowances;
+        mapping(bytes32 groupId => EnumerableSetLib.AddressSet) allowedTokens;
+        mapping(bytes32 groupId => mapping(address token => TokenAllowance)) allowances;
     }
 
     function getLayout() internal pure returns (Layout storage l) {

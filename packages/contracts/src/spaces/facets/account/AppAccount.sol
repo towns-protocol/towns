@@ -48,7 +48,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         bytes calldata data,
         AppParams calldata params
     ) external onlyOwner {
-        _installApp(appId, params.grantDelay, params.executionDelay, params.allowance, data);
+        _installApp(appId, params.delays, params.allowances, data);
     }
 
     function uninstallApp(bytes32 appId, bytes calldata data) external onlyOwner {

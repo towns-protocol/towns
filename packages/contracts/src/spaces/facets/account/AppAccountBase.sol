@@ -10,7 +10,6 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -20,6 +19,7 @@ import {LibCall} from "solady/utils/LibCall.sol";
 import {AppAccountStorage} from "./AppAccountStorage.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -34,14 +34,12 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
     using SafeTransferLib for address;
-    uint256 internal constant MAX_ALLOWANCE_FACTOR = 2;
-    uint256 internal constant MAX_ALLOWANCE_INCREASE_DELAY = 1 days;
+    using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
     function _installApp(
         bytes32 appId,
-        uint32 grantDelay,
-        uint32 executionDelay,
-        uint256 allowance,
+        Delays calldata delays,
+        Allowance[] calldata allowances,
         bytes calldata postInstallData
     ) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
@@ -66,15 +64,34 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             _grantGroupAccess({
                 groupId: appId,
                 account: clients[i],
-                grantDelay: grantDelay > 0 ? grantDelay : _getGroupGrantDelay(appId),
-                executionDelay: executionDelay > 0 ? executionDelay : 0
+                grantDelay: delays.grantDelay > 0 ? delays.grantDelay : _getGroupGrantDelay(appId),
+                executionDelay: delays.executionDelay > 0 ? delays.executionDelay : 0
             });
         }
 
+        _setExecutionFunctions(module, appId, cachedManifest);
+        _setHooks(module, cachedManifest.executionHooks);
+        _setAllowances(module, appId, allowances);
+
+        // Call module's onInstall if it has install data using LibCall
+        // revert if it fails
+        if (postInstallData.length > 0) {
+            bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (postInstallData));
+            LibCall.callContract(module, 0, callData);
+        }
+
+        emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
+    }
+
+    function _setExecutionFunctions(
+        address module,
+        bytes32 appId,
+        ExecutionManifest memory manifest
+    ) internal {
         // Set up execution functions with the same module groupId
-        uint256 executionFunctionsLength = cachedManifest.executionFunctions.length;
+        uint256 executionFunctionsLength = manifest.executionFunctions.length;
         for (uint256 i; i < executionFunctionsLength; ++i) {
-            ManifestExecutionFunction memory func = cachedManifest.executionFunctions[i];
+            ManifestExecutionFunction memory func = manifest.executionFunctions[i];
 
             // check if the function is a native function
             if (_isInvalidSelector(func.executionSelector)) {
@@ -87,11 +104,14 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
                 _setTargetFunctionDisabled(module, func.executionSelector, true);
             }
         }
+    }
 
+    function _setHooks(address module, ManifestExecutionHook[] memory hooks) internal {
         // Set up hooks
-        uint256 executionHooksLength = cachedManifest.executionHooks.length;
+        uint256 executionHooksLength = hooks.length;
+        if (executionHooksLength == 0) return;
         for (uint256 i; i < executionHooksLength; ++i) {
-            ManifestExecutionHook memory hook = cachedManifest.executionHooks[i];
+            ManifestExecutionHook memory hook = hooks[i];
             _addHook(
                 module,
                 hook.executionSelector,
@@ -100,21 +120,18 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
                 hook.isPostHook
             );
         }
+    }
 
-        // Set the allowance for the module group
-        if (allowance > 0) {
-            if (address(this).balance < allowance) NotEnoughEth.selector.revertWith();
-            _setGroupAllowance(appId, allowance);
+    function _setAllowances(
+        address module,
+        bytes32 appId,
+        Allowance[] calldata allowances
+    ) internal {
+        uint256 allowancesLength = allowances.length;
+        for (uint256 i; i < allowancesLength; ++i) {
+            Allowance memory allowance = allowances[i];
+            _setAllowance(module, appId, allowance.token, allowance.allowance);
         }
-
-        // Call module's onInstall if it has install data using LibCall
-        // revert if it fails
-        if (postInstallData.length > 0) {
-            bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (postInstallData));
-            LibCall.callContract(module, 0, callData);
-        }
-
-        emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
     }
 
     function _uninstallApp(bytes32 appId, bytes calldata uninstallData) internal {
@@ -141,6 +158,16 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
             _revokeGroupAccess(appId, clients[i]);
+        }
+
+        // Remove all allowances
+        AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
+        EnumerableSetLib.AddressSet storage allowedTokens = $.allowedTokens[appId];
+        for (uint256 i; i < allowedTokens.length(); ++i) {
+            address token = allowedTokens.at(i);
+            $.allowances[appId][token].allowance = 0;
+            allowedTokens.remove(token);
+            token.safeApprove(module, 0);
         }
 
         // Call module's onUninstall if uninstall data is provided
@@ -237,17 +264,22 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         (address module, , , , ) = _getApp(groupId);
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
-        AppAccountStorage.Layout storage db = AppAccountStorage.getLayout();
-        AppAccountStorage.TokenAllowance storage allowances = db.allowances[groupId][token];
+        // Handle native ETH and ERC20 tokens differently
+        _setAllowance(module, groupId, token, allowance);
 
-        // Check for significant allowance changes
-        uint256 currentAllowance = allowances.allowance;
-        if (currentAllowance > 0 && allowance > (currentAllowance * MAX_ALLOWANCE_FACTOR)) {
-            // If increasing allowance by more than 2x, require a delay
-            uint256 timeSinceLastUpdate = block.timestamp - allowances.lastUpdated;
-            if (timeSinceLastUpdate < MAX_ALLOWANCE_INCREASE_DELAY)
-                LargeAllowanceIncrease.selector.revertWith();
-        }
+        // Emit event for tracking
+        emit TokenAllowanceSet(groupId, token, allowance, block.timestamp);
+    }
+
+    function _setAllowance(
+        address module,
+        bytes32 groupId,
+        address token,
+        uint256 allowance
+    ) internal {
+        AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
+        AppAccountStorage.TokenAllowance storage allowances = $.allowances[groupId][token];
+        EnumerableSetLib.AddressSet storage allowedTokens = $.allowedTokens[groupId];
 
         // Update allowance
         allowances.allowance = allowance;
@@ -264,11 +296,10 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
 
             // Set approval
             token.safeApprove(module, 0);
-            token.safeApprove(module, allowance);
+            if (allowance > 0) token.safeApprove(module, allowance);
         }
 
-        // Emit event for tracking
-        emit TokenAllowanceSet(groupId, token, allowance, block.timestamp);
+        allowedTokens.add(token);
     }
 
     // Checks

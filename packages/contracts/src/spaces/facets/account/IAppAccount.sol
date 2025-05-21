@@ -8,13 +8,27 @@ pragma solidity ^0.8.23;
 // contracts
 interface IAppAccountBase {
     /// @notice Params for installing an app
-    /// @param allowance The maximum amount of ETH that can be spent by the app
+    /// @param delays The delays for installing an app
+    /// @param allowances The token allowances for a module
+    struct AppParams {
+        Delays delays;
+        Allowance[] allowances;
+    }
+
+    /// @notice Delays for installing an app
     /// @param grantDelay The delay before the app can be granted access to the group
     /// @param executionDelay The delay before the app can execute a transaction
-    struct AppParams {
-        uint256 allowance;
+    struct Delays {
         uint32 grantDelay;
         uint32 executionDelay;
+    }
+
+    /// @notice Allowance for a token
+    /// @param token The token to set the allowance for
+    /// @param allowance The maximum amount of the token that can be spent by the app
+    struct Allowance {
+        address token;
+        uint256 allowance;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
