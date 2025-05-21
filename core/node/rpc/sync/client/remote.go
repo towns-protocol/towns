@@ -37,7 +37,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func NewRemoteSyncer(
+func newRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,
@@ -100,10 +100,6 @@ func NewRemoteSyncer(
 		unsubStream:        unsubStream,
 		otelTracer:         otelTracer,
 	}, nil
-}
-
-func (s *remoteSyncer) GetSyncId() string {
-	return s.syncID
 }
 
 func (s *remoteSyncer) Run() {
