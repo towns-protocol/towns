@@ -150,6 +150,35 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         facet.removeApp(appId);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SIMPLE APP TESTS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_createSimpleApp() external {
+        address owner = _randomAddress();
+
+        address[] memory clients = new address[](1);
+        clients[0] = _randomAddress();
+
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+
+        AppData memory appData = AppData({
+            name: "simple.app",
+            permissions: permissions,
+            clients: clients
+        });
+
+        vm.prank(owner);
+        (address app, bytes32 appId) = facet.createSimpleApp(abi.encode(appData));
+
+        vm.prank(owner);
+        facet.createSimpleApp(abi.encode(appData));
+
+        assertEq(app, address(app));
+        assertEq(appId, facet.getLatestAppId(app));
+    }
+
     // ==================== ADMIN FUNCTIONS TESTS ====================
 
     function test_adminRegisterAppSchema() external {
