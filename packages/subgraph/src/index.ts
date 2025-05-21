@@ -143,6 +143,7 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
 ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const transactionHash = event.transaction.hash
 
@@ -168,6 +169,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 poster: event.args.poster,
+                createdDate: new Date(Number(blockTimestamp) * 1000),
                 createdAt: blockNumber,
             })
         }
@@ -179,6 +181,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
 ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
 
     try {
@@ -196,6 +199,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 recipient: event.args.recipient,
+                createdDate: new Date(Number(blockTimestamp) * 1000),
                 createdAt: blockNumber,
             })
         }
