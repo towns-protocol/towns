@@ -14,18 +14,25 @@ import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {MembershipBase} from "../membership/MembershipBase.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
-import {PointsProxyLib} from "../points/PointsProxyLib.sol";
 import {SwapFacetStorage} from "./SwapFacetStorage.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {Entitled} from "../Entitled.sol";
+import {PointsBase} from "../points/PointsBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
 /// @title SwapFacet
 /// @notice Facet for executing swaps within a space
-contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, MembershipBase, Facet {
+contract SwapFacet is
+    ISwapFacet,
+    ReentrancyGuardTransient,
+    Entitled,
+    MembershipBase,
+    PointsBase,
+    Facet
+{
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
@@ -107,12 +114,13 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
                 params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
                 params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
             ) {
-                uint256 points = PointsProxyLib.getPoints(
+                address airdropDiamond = _getAirdropDiamond();
+                uint256 points = _getPoints(
+                    airdropDiamond,
                     ITownsPointsBase.Action.Swap,
                     abi.encode(protocolFee)
                 );
-
-                PointsProxyLib.mint(msg.sender, points);
+                _mintPoints(airdropDiamond, msg.sender, points);
             }
             emit SwapExecuted(
                 params.recipient,
