@@ -86,7 +86,7 @@ const _abi = [
     inputs: [],
     outputs: [
       {
-        name: "treasuryBps",
+        name: "protocolBps",
         type: "uint16",
         internalType: "uint16",
       },
@@ -145,7 +145,7 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "treasury",
+        name: "protocol",
         type: "address",
         indexed: true,
         internalType: "address",
@@ -157,7 +157,7 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "treasuryAmount",
+        name: "protocolAmount",
         type: "uint256",
         indexed: false,
         internalType: "uint256",
@@ -318,6 +318,11 @@ const _abi = [
   {
     type: "error",
     name: "SwapRouter__InvalidAmount",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SwapRouter__InvalidBps",
     inputs: [],
   },
   {

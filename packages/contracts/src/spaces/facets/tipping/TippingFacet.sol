@@ -8,7 +8,6 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 
 // libraries
 import {TippingBase} from "./TippingBase.sol";
-
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
 import {PointsProxyLib} from "src/spaces/facets/points/PointsProxyLib.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
@@ -16,7 +15,6 @@ import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";

@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {ITownsPoints, ITownsPointsBase} from "../../../src/airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IImplementationRegistry} from "../../../src/factory/facets/registry/IImplementationRegistry.sol";
 import {ISwapRouter} from "../../../src/router/ISwapRouter.sol";
@@ -57,7 +58,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         // set swap fees
         vm.prank(deployer);
-        IPlatformRequirements(spaceFactory).setSwapFees(TREASURY_BPS, POSTER_BPS);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
 
         // deploy and initialize SwapRouter
         DeploySwapRouter deploySwapRouter = new DeploySwapRouter();
@@ -99,7 +100,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
     function test_setSwapFeeConfig_revertIf_totalFeeTooHigh() external {
         // Total fee = TREASURY_BPS + posterFeeBps must be <= MAX_FEE_BPS (2%)
-        uint16 tooHighPosterFeeBps = MAX_FEE_BPS - TREASURY_BPS + 1;
+        uint16 tooHighPosterFeeBps = MAX_FEE_BPS - PROTOCOL_BPS + 1;
 
         vm.prank(founder);
         vm.expectRevert(SwapFacet__TotalFeeTooHigh.selector);
@@ -107,7 +108,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
     }
 
     function test_setSwapFeeConfig(uint16 newPosterFeeBps, bool collectToSpace) public {
-        newPosterFeeBps = uint16(bound(newPosterFeeBps, 0, MAX_FEE_BPS - TREASURY_BPS));
+        newPosterFeeBps = uint16(bound(newPosterFeeBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
 
         vm.expectEmit(everyoneSpace);
         emit SwapFeeConfigUpdated(newPosterFeeBps, collectToSpace);
@@ -115,9 +116,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         vm.prank(founder);
         swapFacet.setSwapFeeConfig(newPosterFeeBps, collectToSpace);
 
-        (uint16 treasuryBps, uint16 posterBps, bool collectPosterFeeToSpace) = swapFacet
+        (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace) = swapFacet
             .getSwapFees();
-        assertEq(treasuryBps, TREASURY_BPS, "Treasury fee should match platform fee");
+        assertEq(protocolBps, PROTOCOL_BPS, "Treasury fee should match platform fee");
         // if newPosterFeeBps is 0, it will be set to the platform's default
         assertEq(
             posterBps,
@@ -196,11 +197,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             recipient
         );
 
-        (
-            uint256 expectedAmountOut,
-            uint16 treasuryBps,
-            uint16 posterBps
-        ) = _calculateExpectedAmountOut(amountOut);
+        uint256 expectedAmountOut = _calculateExpectedAmountOut(amountOut);
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -213,17 +210,17 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
 
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster);
+        swapFacet.executeSwap(params, routerParams, poster);
 
         _verifySwapResults(
             address(token0),
             address(token1),
             caller,
             recipient,
+            amountIn,
             amountOut,
-            actualAmountOut,
-            treasuryBps,
-            posterBps
+            PROTOCOL_BPS,
+            POSTER_BPS
         );
     }
 
@@ -233,12 +230,21 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         address caller,
         address recipient
     ) external givenMembership(caller) {
-        vm.assume(caller != founder);
+        vm.assume(caller != founder && caller != poster && caller != feeRecipient);
         vm.assume(recipient != address(0) && recipient != poster && recipient != feeRecipient);
 
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1 ether / 100, 10 ether);
         amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        (uint256 amountInAfterFees, uint256 protocolFee, ) = swapRouter.getETHInputFees(
+            amountIn,
+            caller,
+            poster
+        );
+
+        // calculate expected points for ETH input
+        uint256 expectedPoints = _getPoints(protocolFee);
 
         // get swap parameters
         (ExactInputParams memory params, RouterParams memory routerParams) = _createSwapParams(
@@ -246,16 +252,11 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             mockRouter,
             CurrencyTransfer.NATIVE_TOKEN,
             address(token1),
-            amountIn,
+            amountInAfterFees,
             amountOut,
             recipient
         );
-
-        (
-            uint256 expectedAmountOut,
-            uint16 treasuryBps,
-            uint16 posterBps
-        ) = _calculateExpectedAmountOut(amountOut);
+        params.amountIn = amountIn;
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -263,27 +264,30 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             params.tokenIn,
             params.tokenOut,
             params.amountIn,
-            expectedAmountOut,
+            amountOut,
             poster
         );
 
         deal(caller, amountIn);
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap{value: amountIn}(
-            params,
-            routerParams,
-            poster
-        );
+        swapFacet.executeSwap{value: amountIn}(params, routerParams, poster);
 
         _verifySwapResults(
             CurrencyTransfer.NATIVE_TOKEN,
             address(token1),
             caller,
             recipient,
+            amountIn,
             amountOut,
-            actualAmountOut,
-            treasuryBps,
-            posterBps
+            PROTOCOL_BPS,
+            POSTER_BPS
+        );
+
+        // verify points were minted correctly
+        assertEq(
+            riverAirdrop.balanceOf(caller),
+            expectedPoints,
+            "ETH input swap should mint correct points"
         );
     }
 
@@ -320,11 +324,11 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         // fund mockRouter with ETH to swap out
         deal(mockRouter, amountOut * 2);
 
-        (
-            uint256 expectedAmountOut,
-            uint16 treasuryBps,
-            uint16 posterBps
-        ) = _calculateExpectedAmountOut(amountOut);
+        uint256 expectedAmountOut = _calculateExpectedAmountOut(amountOut);
+
+        // calculate protocol fee and expected points
+        uint256 protocolFee = BasisPoints.calculate(amountOut, PROTOCOL_BPS);
+        uint256 expectedPoints = _getPoints(protocolFee);
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -337,17 +341,24 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
 
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster);
+        swapFacet.executeSwap(params, routerParams, poster);
 
         _verifySwapResults(
             address(token0),
             CurrencyTransfer.NATIVE_TOKEN,
             caller,
             recipient,
+            amountIn,
             amountOut,
-            actualAmountOut,
-            treasuryBps,
-            posterBps
+            PROTOCOL_BPS,
+            POSTER_BPS
+        );
+
+        // verify points were minted correctly
+        assertEq(
+            riverAirdrop.balanceOf(caller),
+            expectedPoints,
+            "ETH output swap should mint correct points"
         );
     }
 
@@ -365,7 +376,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
                 recipient != feeRecipient &&
                 recipient != everyoneSpace
         );
-        posterBps = uint16(bound(posterBps, 0, MAX_FEE_BPS - TREASURY_BPS));
+        posterBps = uint16(bound(posterBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
 
         // set fee config to collect to space
         vm.prank(founder);
@@ -391,12 +402,12 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         vm.prank(caller);
         token0.approve(everyoneSpace, amountIn);
 
-        (uint256 posterFee, uint256 treasuryFee) = _calculateFees(
+        (uint256 protocolFee, uint256 posterFee) = _calculateFees(
             amountOut,
-            TREASURY_BPS,
+            PROTOCOL_BPS,
             posterBps
         );
-        uint256 expectedAmountOut = amountOut - posterFee - treasuryFee;
+        uint256 expectedAmountOut = amountOut - posterFee - protocolFee;
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -420,8 +431,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         assertEq(params.tokenOut.balanceOf(poster), 0, "Poster should not receive fee");
         assertEq(
             params.tokenOut.balanceOf(feeRecipient),
-            treasuryFee,
-            "Treasury fee should be sent to treasury"
+            protocolFee,
+            "Treasury fee should be sent to protocol"
         );
         assertEq(actualAmountOut, expectedAmountOut, "Returned amount should match expected");
         assertEq(token0.balanceOf(caller), 0, "Token0 should be spent");
@@ -441,13 +452,21 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
     function _calculateExpectedAmountOut(
         uint256 amountOut
-    ) internal view returns (uint256 expectedAmountOut, uint16 treasuryBps, uint16 posterBps) {
-        (treasuryBps, posterBps, ) = swapFacet.getSwapFees();
-        (uint256 posterFee, uint256 treasuryFee) = _calculateFees(
+    ) internal view returns (uint256 expectedAmountOut) {
+        (uint16 protocolBps, uint16 posterBps, ) = swapFacet.getSwapFees();
+        (uint256 protocolFee, uint256 posterFee) = _calculateFees(
             amountOut,
-            treasuryBps,
+            protocolBps,
             posterBps
         );
-        expectedAmountOut = amountOut - posterFee - treasuryFee;
+        expectedAmountOut = amountOut - posterFee - protocolFee;
+    }
+
+    function _getPoints(uint256 protocolFee) internal view returns (uint256) {
+        return
+            ITownsPoints(riverAirdrop).getPoints(
+                ITownsPointsBase.Action.Swap,
+                abi.encode(protocolFee)
+            );
     }
 }
