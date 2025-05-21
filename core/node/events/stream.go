@@ -449,7 +449,6 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
-			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
 			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive").
 				Tag("stream", s.streamId)
 		}
