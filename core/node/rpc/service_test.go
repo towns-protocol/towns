@@ -316,10 +316,6 @@ func joinChannel(
 	return nil
 }
 
-// createChannel creates a channel and adds the creator to the channel. It checks the derived
-// events of the stream creation to validate that the creator's user stream has the join event,
-// and the space stream also contains an event for the channel, returning error conditions if
-// either check fails.
 func createChannel(
 	ctx context.Context,
 	wallet *crypto.Wallet,
@@ -430,8 +426,6 @@ func addUserBlockedFillerEvent(
 	return err
 }
 
-// makeMiniblock uses debug commands on the info endpoint of the stream service client to provoke
-// the stream node into making a miniblock for the specified stream.
 func makeMiniblock(
 	ctx context.Context,
 	client protocolconnect.StreamServiceClient,
