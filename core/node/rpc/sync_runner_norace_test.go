@@ -1,5 +1,3 @@
-//go:build !race
-
 // This file contains tests that are skipped when the race detector is enabled
 // because they are too resource-intensive.
 
@@ -14,6 +12,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -585,6 +584,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		return true
 	}, 30*time.Second, 100*time.Millisecond, "Not all messages from first batch were received")
 
+	// tt.t.Logf("Closing node 1... %v", hex.EncodeToString(tt.nodes[1].address[:]))
 	// Stop first node to force stream relocation
 	tt.CloseNode(1)
 
@@ -596,7 +596,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	}
 
 	// Wait until all second batch messages are received
-	require.Eventually(func() bool {
+	require.EventuallyWithT(func(t *assert.CollectT) {
 		eventTrackerMu.Lock()
 		defer eventTrackerMu.Unlock()
 
@@ -604,18 +604,18 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		for channelId, expectedMsgsSlice := range expectedMessages {
 			messageCounts, ok := eventTracker[channelId]
 			if !ok {
-				return false // Channel not yet in tracker
+				t.Errorf("Channel %v not seen yet in tracker", channelId)
 			}
 			for _, expectedMsg := range expectedMsgsSlice {
 				if count, found := messageCounts[expectedMsg]; !found || count == 0 {
-					return false // Expected message not found or count is zero
+					t.Errorf("Channel %v missing message: '%v'", channelId, expectedMsg)
 				}
 			}
 		}
-		return true
 	}, 30*time.Second, 100*time.Millisecond, "Not all messages were received after first node failure")
 
 	// Stop second node to force another stream relocation
+	// tt.t.Logf("Closing node 2... %v", hex.EncodeToString(tt.nodes[2].address[:]))
 	tt.CloseNode(2)
 
 	// Send third batch of messages after second node failure
@@ -626,7 +626,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	}
 
 	// Wait until all third batch messages are received
-	require.Eventually(func() bool {
+	require.EventuallyWithT(func(t *assert.CollectT) {
 		eventTrackerMu.Lock()
 		defer eventTrackerMu.Unlock()
 
@@ -634,15 +634,14 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		for channelId, expectedMsgsSlice := range expectedMessages {
 			messageCounts, ok := eventTracker[channelId]
 			if !ok {
-				return false // Channel not yet in tracker
+				t.Errorf("Channel %v not seen yet in tracker", channelId)
 			}
 			for _, expectedMsg := range expectedMsgsSlice {
 				if count, found := messageCounts[expectedMsg]; !found || count == 0 {
-					return false // Expected message not found or count is zero
+					t.Errorf("Channel %v missing message: '%v'", channelId, expectedMsg)
 				}
 			}
 		}
-		return true
 	}, 15*time.Second, 100*time.Millisecond, "Not all messages were received after second node failure")
 
 	// Shutdown cleanly

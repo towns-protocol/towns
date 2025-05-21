@@ -116,7 +116,13 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Debugw("Adding stream with cookie", "stream", record.streamId, "minipoolGen", record.minipoolGen, "prevMiniblockHash", record.prevMiniblockHash)
+		Debugw("Adding stream with cookie",
+			"stream", record.streamId,
+			"minipoolGen", record.minipoolGen,
+			"prevMiniblockHash", record.prevMiniblockHash,
+			"syncId", ssr.GetSyncId(),
+			"targetNode", ssr.node,
+		)
 	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
@@ -252,8 +258,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
 	log := logging.FromCtx(ssr.syncCtx)
 	switch update.SyncOp {
-	case protocol.SyncOp_SYNC_DOWN:
-		ssr.relocateStream(shared.StreamId(update.StreamId))
 	case protocol.SyncOp_SYNC_UPDATE:
 		{
 			streamID, err := shared.StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
@@ -283,6 +287,9 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 			}
 			ssr.applyUpdateToStream(update.GetStream(), record)
 		}
+	case protocol.SyncOp_SYNC_DOWN:
+		// Stream relocation is invoked by the remote syncer.
+		return
 	case protocol.SyncOp_SYNC_CLOSE:
 		fallthrough
 	case protocol.SyncOp_SYNC_PONG:
@@ -373,7 +380,9 @@ func (ssr *syncSessionRunner) Run() {
 func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	ssr.mu.Lock()
 	rawRecordPtr, ok := ssr.streamRecords.LoadAndDelete(streamID)
-	ssr.streamCount--
+	if ok {
+		ssr.streamCount--
+	}
 
 	// Cancel the remote sync session if all streams have been relocated.
 	if ssr.streamCount <= 0 {
@@ -400,7 +409,8 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 		return
 	}
 
-	record.remotes.AdvanceStickyPeer(ssr.node)
+	newTarget := record.remotes.AdvanceStickyPeer(ssr.node)
+	log.Debugw("Relocating stream", "oldNode", ssr.node, "newTarget", newTarget)
 	ssr.relocateStreams <- record
 }
 
@@ -414,11 +424,17 @@ func (ssr *syncSessionRunner) GetSyncId() string {
 
 // Close shuts down the runner and relocates all streams.
 func (ssr *syncSessionRunner) Close(err error) {
+	log := logging.FromCtx(ssr.rootCtx)
+
 	ssr.mu.Lock()
+	if ssr.closeErr != nil {
+		defer ssr.mu.Unlock()
+		log.Debugw("syncSessionRunner.Close already called", "existingError", ssr.closeErr, "newError", err)
+		return
+	}
 	ssr.closeErr = err
 	ssr.mu.Unlock()
 
-	log := logging.FromCtx(ssr.rootCtx)
 	if !errors.Is(err, context.Canceled) {
 		log.Errorw(
 			"Sync session was closed due to error",
