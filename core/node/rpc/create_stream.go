@@ -162,12 +162,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	mbBytes, err := proto.Marshal(mb)
-	if err != nil {
-		return nil, err
-	}
-
-	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId, common.BytesToHash(mb.Header.Hash), mbBytes)
+	nodesList, err := s.createStreamRecord(ctx, streamId, mb, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -236,4 +231,33 @@ func (s *Service) createReplicatedStream(
 		NextSyncCookie: cookie,
 		Miniblocks:     []*Miniblock{mb},
 	}, nil
+}
+
+func (s *Service) createStreamRecord(
+	ctx context.Context,
+	streamId StreamId,
+	mb *Miniblock,
+	events []*ParsedEvent,
+) ([]common.Address, error) {
+	mbBytes, err := proto.Marshal(mb)
+	if err != nil {
+		return nil, err
+	}
+
+	isLightStream := events[0].Event.GetInceptionPayload().GetSettings().GetLightStream()
+
+	if isLightStream {
+		return s.createLightStreamRecord(ctx, streamId, mb, events)
+	} else {
+		return s.streamRegistry.AllocateStream(ctx, streamId, common.BytesToHash(mb.Header.Hash), mbBytes)
+	}
+}
+
+func (s *Service) createLightStreamRecord(
+	ctx context.Context,
+	streamId StreamId,
+	mb *Miniblock,
+	events []*ParsedEvent,
+) ([]common.Address, error) {
+	return nil, nil
 }
