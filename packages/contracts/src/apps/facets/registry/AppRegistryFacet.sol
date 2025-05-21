@@ -13,6 +13,10 @@ import {AppRegistryBase} from "./AppRegistryBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {SimpleApp} from "../../helpers/SimpleApp.sol";
+
+// libraries
+import {LibClone} from "solady/utils/LibClone.sol";
 
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
@@ -66,6 +70,27 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @return version The version ID that was removed
     function removeApp(bytes32 versionId) external nonReentrant returns (bytes32 version) {
         (, version) = _removeApp(msg.sender, versionId);
+    }
+
+    /// @notice Create an upgradeable simple app contract
+    /// @param data The data of the app
+    /// @return app The address of the new app
+    /// @dev The data is a tuple of (name, permissions, clients)
+    function createSimpleApp(
+        bytes calldata data
+    ) external payable nonReentrant returns (address app, bytes32 versionId) {
+        AppData memory appData = abi.decode(data, (AppData));
+
+        if (bytes(appData.name).length == 0) revert InvalidAppName();
+        if (appData.permissions.length == 0) revert InvalidArrayInput();
+        if (appData.clients.length == 0) revert InvalidArrayInput();
+
+        address implementation = address(new SimpleApp());
+        app = LibClone.deployERC1967(implementation);
+        SimpleApp(app).__SimpleApp_init(msg.sender, appData.name, appData.permissions);
+
+        versionId = _registerApp(app, appData.clients);
+        emit AppCreated(app, versionId);
     }
 
     /// @notice Get the schema structure used for registering modules

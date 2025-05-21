@@ -91,7 +91,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
     function _registerApp(
         address app,
-        address[] calldata clients
+        address[] memory clients
     ) internal returns (bytes32 version) {
         _verifyAddAppInputs(app, clients);
 
