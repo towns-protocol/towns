@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {BaseApp} from "../BaseApp.sol";
+import {BaseApp} from "src/apps/BaseApp.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
