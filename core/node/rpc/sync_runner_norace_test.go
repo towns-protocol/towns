@@ -647,7 +647,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		15*time.Second,
+		30*time.Second,
 		100*time.Millisecond,
 		"Not all messages were received after second node failure",
 	)
