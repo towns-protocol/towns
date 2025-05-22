@@ -13,18 +13,13 @@ import {AppRegistryBase} from "./AppRegistryBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {SimpleApp} from "../../helpers/SimpleApp.sol";
-
-// libraries
-import {LibClone} from "solady/utils/LibClone.sol";
 
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
-        address beacon,
         string calldata schema,
         ISchemaResolver resolver
     ) external onlyInitializing {
-        __AppRegistry_init_unchained(beacon, schema, resolver);
+        __AppRegistry_init_unchained(schema, resolver);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -48,12 +43,6 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external onlyOwner returns (bytes32) {
         return _banApp(app);
-    }
-
-    /// @notice Register a beacon for creating upgradeable apps
-    /// @param beacon The address of the beacon to register
-    function adminRegisterAppBeacon(address beacon) external onlyOwner {
-        _registerBeacon(beacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -100,15 +89,15 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     }
 
     /// @notice Get the attestation for a app
-    /// @param versionId The app ID
+    /// @param appId The app ID
     /// @return attestation The attestation
-    function getAppById(bytes32 versionId) external view returns (Attestation memory attestation) {
-        return _getApp(versionId);
+    function getAttestation(bytes32 appId) external view returns (Attestation memory attestation) {
+        return _getApp(appId);
     }
 
     /// @notice Get the latest version ID for a app
     /// @param app The app address
-    /// @return versionId The version ID of the registered app
+    /// @return appId The version ID of the registered app
     function getLatestAppId(address app) external view returns (bytes32) {
         return _getLatestAppId(app);
     }
