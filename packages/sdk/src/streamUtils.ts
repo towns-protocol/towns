@@ -117,6 +117,14 @@ export function parsedMiniblockToPersistedMiniblock(
 }
 
 function parsedEventToPersistedEvent(event: ParsedEvent) {
+    // always zero out the snapshot since we save it separately
+    if (event.event?.payload.case === 'miniblockHeader') {
+        event.event.payload.value = {
+            ...event.event.payload.value,
+            snapshot: undefined,
+        }
+    }
+
     return create(PersistedEventSchema, {
         event: event.event,
         hash: event.hash,
