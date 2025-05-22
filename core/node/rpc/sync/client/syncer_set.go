@@ -37,8 +37,6 @@ type (
 	SyncerSet struct {
 		// globalCtx is the root context for all syncers in this set and used to cancel them
 		globalCtx context.Context
-		// globalCtxCancel cancels global node ctx
-		globalCtxCancel context.CancelCauseFunc
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
@@ -72,7 +70,6 @@ var (
 // are streamed to the client.
 func NewSyncers(
 	globalCtx context.Context,
-	globalCtxCancel context.CancelCauseFunc,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
@@ -80,7 +77,6 @@ func NewSyncers(
 ) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
 	ss := &SyncerSet{
 		globalCtx:        globalCtx,
-		globalCtxCancel:  globalCtxCancel,
 		streamCache:      streamCache,
 		nodeRegistry:     nodeRegistry,
 		localNodeAddress: localNodeAddress,
@@ -405,7 +401,6 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 	if nodeAddress == ss.localNodeAddress {
 		syncer = newLocalSyncer(
 			ss.globalCtx,
-			ss.globalCtxCancel,
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messages,
@@ -419,7 +414,6 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 
 		syncer, err = newRemoteSyncer(
 			ss.globalCtx,
-			ss.globalCtxCancel,
 			nodeAddress,
 			client,
 			ss.rmStream,

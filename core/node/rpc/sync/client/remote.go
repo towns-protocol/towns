@@ -22,7 +22,6 @@ import (
 )
 
 type remoteSyncer struct {
-	globalCtxCancel  context.CancelCauseFunc
 	syncStreamCtx    context.Context
 	syncStreamCancel context.CancelFunc
 	syncID           string
@@ -38,7 +37,6 @@ type remoteSyncer struct {
 
 func newRemoteSyncer(
 	globalCtx context.Context,
-	globalCtxCancel context.CancelCauseFunc,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
@@ -75,10 +73,8 @@ func newRemoteSyncer(
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
-	log := logging.FromCtx(globalCtx)
-
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		log.Errorw("Received unexpected sync stream message",
+		logging.FromCtx(globalCtx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
@@ -87,7 +83,6 @@ func newRemoteSyncer(
 
 	return &remoteSyncer{
 		syncID:           responseStream.Msg().GetSyncId(),
-		globalCtxCancel:  globalCtxCancel,
 		syncStreamCtx:    syncStreamCtx,
 		syncStreamCancel: syncStreamCancel,
 		client:           client,
@@ -173,11 +168,12 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 		return s.syncStreamCtx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			s.globalCtxCancel(err) // TODO: Wrong! Just cancel all subscriptions
-			return AsRiverError(err).
+			rvrErr := AsRiverError(err).
 				Tag("syncId", s.syncID).
 				Tag("op", msg.GetSyncOp()).
 				Func("sendSyncStreamResponseToClient")
+			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
+			s.syncStreamCancel()
 		}
 
 		return nil

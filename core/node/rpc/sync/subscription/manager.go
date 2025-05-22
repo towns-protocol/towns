@@ -41,19 +41,16 @@ func NewManager(
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) *Manager {
-	globalCtx, cancel := context.WithCancelCause(ctx)
-	log := logging.FromCtx(globalCtx).With("node", localNodeAddr)
+	log := logging.FromCtx(ctx).With("node", localNodeAddr)
 
-	syncers, messages := client.NewSyncers(
-		globalCtx, cancel, streamCache,
-		nodeRegistry, localNodeAddr, otelTracer)
+	syncers, messages := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, otelTracer)
 
 	go syncers.Run()
 
 	manager := &Manager{
 		log:           log,
 		localNodeAddr: localNodeAddr,
-		globalCtx:     globalCtx,
+		globalCtx:     ctx,
 		streamCache:   streamCache,
 		nodeRegistry:  nodeRegistry,
 		otelTracer:    otelTracer,

@@ -16,8 +16,7 @@ import (
 )
 
 type localSyncer struct {
-	globalCtx       context.Context
-	globalCtxCancel context.CancelCauseFunc
+	globalCtx context.Context
 
 	streamCache *StreamCache
 	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -32,20 +31,18 @@ type localSyncer struct {
 
 func newLocalSyncer(
 	globalCtx context.Context,
-	globalCtxCancel context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		globalCtx:       globalCtx,
-		globalCtxCancel: globalCtxCancel,
-		streamCache:     streamCache,
-		localAddr:       localAddr,
-		messages:        messages,
-		activeStreams:   make(map[StreamId]*Stream),
-		otelTracer:      otelTracer,
+		globalCtx:     globalCtx,
+		streamCache:   streamCache,
+		localAddr:     localAddr,
+		messages:      messages,
+		activeStreams: make(map[StreamId]*Stream),
+		otelTracer:    otelTracer,
 	}
 }
 
@@ -158,13 +155,11 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 		return
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			err := AsRiverError(err).
+			rvrErr := AsRiverError(err).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
-
-			_ = err.LogError(logging.FromCtx(s.globalCtx))
-
-			s.globalCtxCancel(err) // TODO: WRONG! Just cancel all subscriptions
+			_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
+			s.OnSyncError(err)
 		}
 	}
 }
