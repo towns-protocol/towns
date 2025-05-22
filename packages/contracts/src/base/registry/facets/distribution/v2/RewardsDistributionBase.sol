@@ -137,7 +137,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     function _getCommissionRate(address delegatee) internal view returns (uint256) {
         // if the delegatee is a space, get the active operator or revert
         if (_isSpace(delegatee)) {
-            delegatee = _getActiveOperatorOrRevert(delegatee);
+            delegatee = _getValidOperatorOrRevert(delegatee);
         }
         NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
         return nos.commissionByOperator[delegatee];
@@ -150,10 +150,11 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     }
 
     /// @dev Checks if the delegatee is an active operator
-    function _isActiveOperator(address delegatee) internal view returns (bool) {
+    function _isValidOperator(address delegatee) internal view returns (bool) {
         NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
         if (!nos.operators.contains(delegatee)) return false;
-        return nos.statusByOperator[delegatee] == NodeOperatorStatus.Active;
+        NodeOperatorStatus status = nos.statusByOperator[delegatee];
+        return status == NodeOperatorStatus.Approved || status == NodeOperatorStatus.Active;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -193,9 +194,9 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     }
 
     /// @dev Returns the active operator of the space or reverts
-    function _getActiveOperatorOrRevert(address space) internal view returns (address operator) {
+    function _getValidOperatorOrRevert(address space) internal view returns (address operator) {
         operator = _getOperatorBySpace(space);
-        if (!_isActiveOperator(operator)) {
+        if (!_isValidOperator(operator)) {
             CustomRevert.revertWith(RewardsDistribution__NotActiveOperator.selector);
         }
     }
@@ -230,7 +231,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     /// @dev Reverts if the delegatee is not an operator or space
     function _revertIfNotOperatorOrSpace(address delegatee) internal view {
         if (_isSpace(delegatee)) return;
-        if (!_isActiveOperator(delegatee)) {
+        if (!_isValidOperator(delegatee)) {
             CustomRevert.revertWith(RewardsDistribution__NotOperatorOrSpace.selector);
         }
     }
