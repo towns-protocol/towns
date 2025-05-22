@@ -21,16 +21,14 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
 
-        AppData memory appData = AppData({
+        AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
             clients: bots
         });
 
         vm.broadcast(deployer);
-        (address app, bytes32 appId) = IAppRegistry(appRegistry).createSimpleApp(
-            abi.encode(appData)
-        );
+        (address app, bytes32 appId) = IAppRegistry(appRegistry).createApp(appData);
 
         saveApp("SimpleApp", appId, address(app));
     }

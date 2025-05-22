@@ -8,7 +8,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 interface IAppRegistryBase {
-    struct AppData {
+    struct AppParams {
         string name;
         bytes32[] permissions;
         address[] clients;
@@ -66,11 +66,11 @@ interface IAppRegistry is IAppRegistryBase {
     function isAppBanned(address app) external view returns (bool);
 
     /// @notice Create a new app
-    /// @param appData The app data
+    /// @param params The parameters of the app
     /// @return app The app address
     /// @return appId The attestation UID of the registered app
-    function createSimpleApp(
-        bytes calldata appData
+    function createApp(
+        AppParams calldata params
     ) external payable returns (address app, bytes32 appId);
 
     /// @notice Register a new app with permissions
@@ -103,4 +103,8 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address to ban
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external returns (bytes32);
+
+    /// @notice Register a beacon for creating upgradeable apps
+    /// @param beacon The address of the beacon to register
+    function adminRegisterAppBeacon(address beacon) external;
 }

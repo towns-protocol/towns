@@ -163,19 +163,15 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
 
-        AppData memory appData = AppData({
+        AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
             clients: clients
         });
 
         vm.prank(owner);
-        (address app, bytes32 appId) = facet.createSimpleApp(abi.encode(appData));
+        (address app, bytes32 appId) = facet.createApp(appData);
 
-        vm.prank(owner);
-        facet.createSimpleApp(abi.encode(appData));
-
-        assertEq(app, address(app));
         assertEq(appId, facet.getLatestAppId(app));
     }
 
