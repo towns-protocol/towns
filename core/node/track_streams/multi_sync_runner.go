@@ -318,9 +318,9 @@ func (ssr *syncSessionRunner) Run() {
 	streamClient, err := ssr.nodeRegistry.GetStreamServiceClientForAddress(ssr.node)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to create a StreamServiceClient for node").
+			Message("Unable to create a StreamServiceClient for node, closing sync session runner").
 			Tag("node", ssr.node).
-			LogError(logging.FromCtx(ssr.syncCtx)))
+			LogWarn(logging.FromCtx(ssr.syncCtx)))
 
 		ssr.syncStarted.Done()
 		return
@@ -337,9 +337,9 @@ func (ssr *syncSessionRunner) Run() {
 	)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to create a remote syncer for node").
+			Message("Unable to create a remote syncer for node, closing sync session runner").
 			Tag("targetNode", ssr.node).
-			LogError(logging.FromCtx(ssr.syncCtx)))
+			LogWarn(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
 	}
