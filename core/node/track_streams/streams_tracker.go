@@ -185,7 +185,6 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 }
 
 func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
-	ctx context.Context,
 	streamId shared.StreamId,
 	nodes []common.Address,
 ) {
@@ -211,7 +210,7 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 
 	// Use tracker.ctx here so that the stream continues to  be synced after
 	// the originating request expires
-	tracker.forwardStreamEventsFromInception(tracker.ctx, streamId, stream.Nodes)
+	tracker.forwardStreamEventsFromInception(streamId, stream.Nodes)
 	return nil
 }
 
@@ -227,7 +226,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
+	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -242,7 +241,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
+	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
