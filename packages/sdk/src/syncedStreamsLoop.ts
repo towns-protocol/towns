@@ -19,7 +19,7 @@ import {
     streamIdAsString,
     isChannelStreamId,
 } from './id'
-import { ParsedEvent, ParsedStreamResponse } from './types'
+import { ParsedEvent, ParsedSnapshot, ParsedStreamResponse } from './types'
 import { isDefined, logNever } from './check'
 
 export enum SyncState {
@@ -66,6 +66,7 @@ export interface ISyncedStream {
     appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
+        snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void>
     resetUpToDate(): void
@@ -830,6 +831,7 @@ export class SyncedStreamsLoop {
                         await streamRecord.stream.appendEvents(
                             streamAndCookie.events,
                             streamAndCookie.nextSyncCookie,
+                            streamAndCookie.snapshot,
                             undefined,
                         )
                     }
