@@ -65,10 +65,26 @@ export type AttestationStructOutput = [
   data: string;
 };
 
+export declare namespace IAppRegistryBase {
+  export type AppParamsStruct = {
+    name: PromiseOrValue<string>;
+    permissions: PromiseOrValue<BytesLike>[];
+    clients: PromiseOrValue<string>[];
+  };
+
+  export type AppParamsStructOutput = [string, string[], string[]] & {
+    name: string;
+    permissions: string[];
+    clients: string[];
+  };
+}
+
 export interface IAppRegistryInterface extends utils.Interface {
   functions: {
     "adminBanApp(address)": FunctionFragment;
+    "adminRegisterAppBeacon(address)": FunctionFragment;
     "adminRegisterAppSchema(string,address,bool)": FunctionFragment;
+    "createApp((string,bytes32[],address[]))": FunctionFragment;
     "getAppById(bytes32)": FunctionFragment;
     "getAppSchema()": FunctionFragment;
     "getAppSchemaId()": FunctionFragment;
@@ -81,7 +97,9 @@ export interface IAppRegistryInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "adminBanApp"
+      | "adminRegisterAppBeacon"
       | "adminRegisterAppSchema"
+      | "createApp"
       | "getAppById"
       | "getAppSchema"
       | "getAppSchemaId"
@@ -96,12 +114,20 @@ export interface IAppRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "adminRegisterAppBeacon",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "adminRegisterAppSchema",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<boolean>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createApp",
+    values: [IAppRegistryBase.AppParamsStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "getAppById",
@@ -137,9 +163,14 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "adminRegisterAppBeacon",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "adminRegisterAppSchema",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "createApp", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getAppById", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getAppSchema",
@@ -165,6 +196,7 @@ export interface IAppRegistryInterface extends utils.Interface {
 
   events: {
     "AppBanned(address,bytes32)": EventFragment;
+    "AppCreated(address,bytes32)": EventFragment;
     "AppRegistered(address,bytes32)": EventFragment;
     "AppSchemaSet(bytes32)": EventFragment;
     "AppUnregistered(address,bytes32)": EventFragment;
@@ -172,6 +204,7 @@ export interface IAppRegistryInterface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "AppBanned"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AppCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppSchemaSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppUnregistered"): EventFragment;
@@ -185,6 +218,17 @@ export interface AppBannedEventObject {
 export type AppBannedEvent = TypedEvent<[string, string], AppBannedEventObject>;
 
 export type AppBannedEventFilter = TypedEventFilter<AppBannedEvent>;
+
+export interface AppCreatedEventObject {
+  app: string;
+  uid: string;
+}
+export type AppCreatedEvent = TypedEvent<
+  [string, string],
+  AppCreatedEventObject
+>;
+
+export type AppCreatedEventFilter = TypedEventFilter<AppCreatedEvent>;
 
 export interface AppRegisteredEventObject {
   app: string;
@@ -258,11 +302,21 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    adminRegisterAppBeacon(
+      beacon: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
       revocable: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    createApp(
+      params: IAppRegistryBase.AppParamsStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     getAppById(
@@ -301,11 +355,21 @@ export interface IAppRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  adminRegisterAppBeacon(
+    beacon: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   adminRegisterAppSchema(
     schema: PromiseOrValue<string>,
     resolver: PromiseOrValue<string>,
     revocable: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  createApp(
+    params: IAppRegistryBase.AppParamsStruct,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   getAppById(
@@ -344,12 +408,22 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    adminRegisterAppBeacon(
+      beacon: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
       revocable: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    createApp(
+      params: IAppRegistryBase.AppParamsStruct,
+      overrides?: CallOverrides
+    ): Promise<[string, string] & { app: string; appId: string }>;
 
     getAppById(
       appId: PromiseOrValue<BytesLike>,
@@ -392,6 +466,15 @@ export interface IAppRegistry extends BaseContract {
       uid?: null
     ): AppBannedEventFilter;
 
+    "AppCreated(address,bytes32)"(
+      app?: PromiseOrValue<string> | null,
+      uid?: null
+    ): AppCreatedEventFilter;
+    AppCreated(
+      app?: PromiseOrValue<string> | null,
+      uid?: null
+    ): AppCreatedEventFilter;
+
     "AppRegistered(address,bytes32)"(
       app?: PromiseOrValue<string> | null,
       uid?: null
@@ -429,11 +512,21 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    adminRegisterAppBeacon(
+      beacon: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
       revocable: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    createApp(
+      params: IAppRegistryBase.AppParamsStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getAppById(
@@ -473,11 +566,21 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    adminRegisterAppBeacon(
+      beacon: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
       revocable: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    createApp(
+      params: IAppRegistryBase.AppParamsStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     getAppById(

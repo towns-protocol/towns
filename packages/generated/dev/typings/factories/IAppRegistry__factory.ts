@@ -28,6 +28,19 @@ const _abi = [
   },
   {
     type: "function",
+    name: "adminRegisterAppBeacon",
+    inputs: [
+      {
+        name: "beacon",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "adminRegisterAppSchema",
     inputs: [
       {
@@ -54,6 +67,47 @@ const _abi = [
       },
     ],
     stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "createApp",
+    inputs: [
+      {
+        name: "params",
+        type: "tuple",
+        internalType: "struct IAppRegistryBase.AppParams",
+        components: [
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "permissions",
+            type: "bytes32[]",
+            internalType: "bytes32[]",
+          },
+          {
+            name: "clients",
+            type: "address[]",
+            internalType: "address[]",
+          },
+        ],
+      },
+    ],
+    outputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "appId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+    ],
+    stateMutability: "payable",
   },
   {
     type: "function",
@@ -254,6 +308,25 @@ const _abi = [
   },
   {
     type: "event",
+    name: "AppCreated",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "uid",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "AppRegistered",
     inputs: [
       {
@@ -355,6 +428,11 @@ const _abi = [
   {
     type: "error",
     name: "InvalidAppId",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvalidAppName",
     inputs: [],
   },
   {
