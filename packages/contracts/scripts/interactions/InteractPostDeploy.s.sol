@@ -51,7 +51,6 @@ contract InteractPostDeploy is Interaction {
         INodeOperator operatorFacet = INodeOperator(baseRegistry);
         operatorFacet.registerOperator(OPERATOR);
         operatorFacet.setOperatorStatus(OPERATOR, NodeOperatorStatus.Approved);
-        operatorFacet.setOperatorStatus(OPERATOR, NodeOperatorStatus.Active);
         vm.stopBroadcast();
     }
 }
