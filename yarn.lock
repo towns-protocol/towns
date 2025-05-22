@@ -8564,8 +8564,8 @@ __metadata:
     "@towns-protocol/diamond": ^0.5.4
     "@towns-protocol/prettier-config": "workspace:^"
     "@wagmi/cli": ^2.2.0
-    account-abstraction: "github:eth-infinitism/account-abstraction#v0.7.0"
-    crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
+    account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
+    crypto-lib: "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
     forge-std: "github:foundry-rs/forge-std#v1.9.7"
     prettier: ^3.5.3
     prettier-plugin-solidity: ^1.4.2
@@ -10653,9 +10653,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"account-abstraction@github:eth-infinitism/account-abstraction#v0.7.0":
+"account-abstraction@https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz":
   version: 0.7.0
-  resolution: "account-abstraction@https://github.com/eth-infinitism/account-abstraction.git#commit=d99245ddb2d7bde4d2132757c4394818f1d11da0"
+  resolution: "account-abstraction@https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
   dependencies:
     "@nomiclabs/hardhat-etherscan": ^2.1.6
     "@openzeppelin/contracts": ^5.0.0
@@ -10672,7 +10672,7 @@ __metadata:
     source-map-support: ^0.5.19
     table: ^6.8.0
     typescript: ^4.3.5
-  checksum: bdca754160deb9b34a6b668bbcb80477c1c596cdaa90ed4966e0b557f32d26f1d973033a468dca016ad8e5d909c68f15859408208b70602bdee0619c6208bd02
+  checksum: 5ec9d1a6ee076d7785f5e07896d632066d559c29efcf6a689d4e26d19f7a8ab4abe43703077f94fdc07fd9f89add768ef763ea0b77b30ee906f345c45c0ba484
   languageName: node
   linkType: hard
 
@@ -13359,12 +13359,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crypto-lib@github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef":
+"crypto-lib@https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz":
   version: 1.0.0
-  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=f40c5f6944a55583a687b672ba680db3bfabb0ef"
+  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
   dependencies:
     forge-std: "github:foundry-rs/forge-std#v1.9.5"
-  checksum: 3c532fcdf54bf202dea49afad7e96dc90653635169cd51694344d83a568806554c7e734f3a73fa5892e10cd69f33ae4805e75cecc53c79dd9f2b9c96d6f81d4b
+  checksum: 3d03d36e77a4665ff17eecc4fb905cb8f7edbef18fe06b77fb08cae6231fdbea935d493eaedd519de985f39535c4dbfa970b0872c5d7481126d5d5f446c4d332
   languageName: node
   linkType: hard
 
