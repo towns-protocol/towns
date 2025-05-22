@@ -527,7 +527,7 @@ type MultiSyncRunner struct {
 
 	// workerPool tracks workers that empty the queue of streams to relocate and place them in
 	// new or existing syncs
-	workerPool workerpool.WorkerPool
+	workerPool *workerpool.WorkerPool
 
 	otelTracer trace.Tracer
 
@@ -586,7 +586,7 @@ func NewMultiSyncRunner(
 		trackedViewConstructor: trackedStreamViewConstructor,
 		streamsToSync:          make(chan (*streamSyncInitRecord), 2048),
 		config:                 streamTrackingConfig,
-		workerPool:             *workerpool.New(streamTrackingConfig.NumWorkers),
+		workerPool:             workerpool.New(streamTrackingConfig.NumWorkers),
 		otelTracer:             otelTracer,
 	}
 }
