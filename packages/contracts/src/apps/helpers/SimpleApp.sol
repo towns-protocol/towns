@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
+import {ISimpleApp} from "src/apps/helpers/ISimpleApp.sol";
 // libraries
 
 // contracts
@@ -10,15 +10,14 @@ import {BaseApp} from "src/apps/BaseApp.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Initializable} from "solady/utils/Initializable.sol";
-import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 
 // libraries
 import {SimpleAppStorage} from "src/apps/helpers/SimpleAppStorage.sol";
 
-contract SimpleApp is Ownable, BaseApp, Initializable, UUPSUpgradeable {
+contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     using SimpleAppStorage for SimpleAppStorage.Layout;
 
-    function __SimpleApp_init(
+    function initialize(
         address owner,
         string memory appId,
         bytes32[] memory permissions
@@ -46,6 +45,4 @@ contract SimpleApp is Ownable, BaseApp, Initializable, UUPSUpgradeable {
     function executionManifest() external pure returns (ExecutionManifest memory) {
         // solhint-disable no-empty-blocks
     }
-
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

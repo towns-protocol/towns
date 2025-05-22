@@ -20,10 +20,11 @@ import {LibClone} from "solady/utils/LibClone.sol";
 
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
+        address beacon,
         string calldata schema,
         ISchemaResolver resolver
     ) external onlyInitializing {
-        __AppRegistry_init_unchained(schema, resolver);
+        __AppRegistry_init_unchained(beacon, schema, resolver);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -47,6 +48,12 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external onlyOwner returns (bytes32) {
         return _banApp(app);
+    }
+
+    /// @notice Register a beacon for creating upgradeable apps
+    /// @param beacon The address of the beacon to register
+    function adminRegisterAppBeacon(address beacon) external onlyOwner {
+        _registerBeacon(beacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -73,24 +80,11 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     }
 
     /// @notice Create an upgradeable simple app contract
-    /// @param data The data of the app
-    /// @return app The address of the new app
-    /// @dev The data is a tuple of (name, permissions, clients)
-    function createSimpleApp(
-        bytes calldata data
+    /// @param params The parameters of the app
+    function createApp(
+        AppParams calldata params
     ) external payable nonReentrant returns (address app, bytes32 versionId) {
-        AppData memory appData = abi.decode(data, (AppData));
-
-        if (bytes(appData.name).length == 0) revert InvalidAppName();
-        if (appData.permissions.length == 0) revert InvalidArrayInput();
-        if (appData.clients.length == 0) revert InvalidArrayInput();
-
-        address implementation = address(new SimpleApp());
-        app = LibClone.deployERC1967(implementation);
-        SimpleApp(app).__SimpleApp_init(msg.sender, appData.name, appData.permissions);
-
-        versionId = _registerApp(app, appData.clients);
-        emit AppCreated(app, versionId);
+        return _createApp(params);
     }
 
     /// @notice Get the schema structure used for registering modules

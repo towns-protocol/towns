@@ -9,10 +9,12 @@ import {ITownsApp} from "../../ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 
 // libraries
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+import {LibClone} from "solady/utils/LibClone.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -27,16 +29,31 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     using CustomRevert for bytes4;
 
     function __AppRegistry_init_unchained(
+        address beacon,
         string calldata schema,
         ISchemaResolver resolver
     ) internal {
         bytes32 schemaId = _registerSchema(schema, resolver, true);
         _setSchemaId(schemaId);
+        _registerBeacon(beacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Registers a beacon for simple apps
+    /// @param beacon The address of the beacon to register
+    function _registerBeacon(address beacon) internal {
+        AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
+        db.beacon = beacon;
+    }
+
+    /// @notice Gets the beacon for simple apps
+    /// @return The address of the beacon
+    function _getBeacon() internal view returns (address) {
+        return AppRegistryStorage.getLayout().beacon;
+    }
 
     /// @notice Sets the schema ID for the app registry
     /// @param schemaId The schema ID to set
@@ -82,6 +99,19 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @return True if the app is banned, false otherwise
     function _isBanned(address app) internal view returns (bool) {
         return AppRegistryStorage.getLayout().apps[app].isBanned;
+    }
+
+    function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
+        if (bytes(params.name).length == 0) revert InvalidAppName();
+        if (params.permissions.length == 0) revert InvalidArrayInput();
+        if (params.clients.length == 0) revert InvalidArrayInput();
+
+        address beacon = _getBeacon();
+        app = LibClone.deployERC1967BeaconProxy(beacon);
+        ISimpleApp(app).initialize(msg.sender, params.name, params.permissions);
+
+        version = _registerApp(app, params.clients);
+        emit AppCreated(app, version);
     }
 
     /// @notice Registers a new app in the registry
