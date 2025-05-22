@@ -4,7 +4,7 @@
 "media.streamMembershipLimits.88",0,2
 "stream.recencyConstraints.ageSeconds",0,11
 "stream.recencyConstraints.generations",0,5
-"stream.replicationFactor",0,1
+"stream.replicationFactor",0,5
 "stream.defaultMinEventsPerSnapshot",0,100
 "stream.minEventsPerSnapshot.a1",0,10
 "stream.minEventsPerSnapshot.a5",0,10
