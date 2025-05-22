@@ -1,4 +1,4 @@
-import * as Olm from '@towns-protocol/olm'
+import Olm from '@towns-protocol/olm'
 import {
     Account,
     InboundGroupSession,
@@ -29,7 +29,7 @@ export class EncryptionDelegate {
             return
         }
 
-        await Olm.initAsync({})
+        await Olm.initAsync()
         this.delegate = Olm
         this._initialized = typeof this.delegate.get_library_version === 'function'
     }
