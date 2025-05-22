@@ -304,7 +304,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             deviceKey: this.userDevice.deviceKey,
             fallbackKey: this.userDevice.fallbackKey,
             isNewDevice,
-            sessionIds: isNewDevice ? [] : missingSessionIds,
+            sessionIds: missingSessionIds,
         })
         await this.client.makeEventAndAddToStream(streamId, keySolicitation)
     }
