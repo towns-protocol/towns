@@ -12,7 +12,7 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
-
+import {DeploySimpleApp} from "../facets/DeploySimpleApp.s.sol";
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
@@ -87,12 +87,15 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         // Deploy all facets in a batch
         facetHelper.deployBatch(deployer);
 
+        vm.broadcast(deployer);
+        address simpleApp = DeploySimpleApp.deploy(deployer);
+
         // Add feature facets
         address facet = facetHelper.getDeployedAddress("AppRegistryFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
             facet,
-            DeployAppRegistryFacet.makeInitData(APP_REGISTRY_SCHEMA, address(0))
+            DeployAppRegistryFacet.makeInitData(simpleApp, APP_REGISTRY_SCHEMA, address(0))
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -133,6 +136,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
+
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
 
