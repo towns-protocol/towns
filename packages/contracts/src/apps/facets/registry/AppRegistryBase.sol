@@ -29,31 +29,16 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     using CustomRevert for bytes4;
 
     function __AppRegistry_init_unchained(
-        address beacon,
         string calldata schema,
         ISchemaResolver resolver
     ) internal {
         bytes32 schemaId = _registerSchema(schema, resolver, true);
         _setSchemaId(schemaId);
-        _registerBeacon(beacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Registers a beacon for simple apps
-    /// @param beacon The address of the beacon to register
-    function _registerBeacon(address beacon) internal {
-        AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
-        db.beacon = beacon;
-    }
-
-    /// @notice Gets the beacon for simple apps
-    /// @return The address of the beacon
-    function _getBeacon() internal view returns (address) {
-        return AppRegistryStorage.getLayout().beacon;
-    }
 
     /// @notice Sets the schema ID for the app registry
     /// @param schemaId The schema ID to set
@@ -106,11 +91,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (params.permissions.length == 0) revert InvalidArrayInput();
         if (params.clients.length == 0) revert InvalidArrayInput();
 
-        address beacon = _getBeacon();
-        app = LibClone.deployERC1967BeaconProxy(beacon);
+        app = LibClone.deployERC1967BeaconProxy(address(this));
         ISimpleApp(app).initialize(msg.sender, params.name, params.permissions);
 
         version = _registerApp(app, params.clients);
+
         emit AppCreated(app, version);
     }
 

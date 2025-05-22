@@ -53,7 +53,7 @@ interface IAppRegistry is IAppRegistryBase {
     /// @notice Get the attestation for a app
     /// @param appId The app ID
     /// @return The attestation
-    function getAppById(bytes32 appId) external view returns (Attestation memory);
+    function getAttestation(bytes32 appId) external view returns (Attestation memory);
 
     /// @notice Get the current version (attestation UID) for a app
     /// @param app The app address
@@ -103,8 +103,4 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address to ban
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external returns (bytes32);
-
-    /// @notice Register a beacon for creating upgradeable apps
-    /// @param beacon The address of the beacon to register
-    function adminRegisterAppBeacon(address beacon) external;
 }

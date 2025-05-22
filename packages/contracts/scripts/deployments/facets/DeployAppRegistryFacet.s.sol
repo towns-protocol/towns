@@ -16,10 +16,10 @@ library DeployAppRegistryFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(11);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
         arr.p(AppRegistryFacet.getAppSchema.selector);
         arr.p(AppRegistryFacet.getAppSchemaId.selector);
-        arr.p(AppRegistryFacet.getAppById.selector);
+        arr.p(AppRegistryFacet.getAttestation.selector);
         arr.p(AppRegistryFacet.getLatestAppId.selector);
         arr.p(AppRegistryFacet.registerApp.selector);
         arr.p(AppRegistryFacet.removeApp.selector);
@@ -27,7 +27,7 @@ library DeployAppRegistryFacet {
         arr.p(AppRegistryFacet.adminRegisterAppSchema.selector);
         arr.p(AppRegistryFacet.adminBanApp.selector);
         arr.p(AppRegistryFacet.isAppBanned.selector);
-        arr.p(AppRegistryFacet.adminRegisterAppBeacon.selector);
+
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_
@@ -47,14 +47,13 @@ library DeployAppRegistryFacet {
     }
 
     function makeInitData(
-        address beacon,
         string memory schema,
         address resolver
     ) internal pure returns (bytes memory) {
         return
             abi.encodeCall(
                 AppRegistryFacet.__AppRegistry_init,
-                (beacon, schema, ISchemaResolver(resolver))
+                (schema, ISchemaResolver(resolver))
             );
     }
 

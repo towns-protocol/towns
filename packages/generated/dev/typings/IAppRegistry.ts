@@ -82,12 +82,11 @@ export declare namespace IAppRegistryBase {
 export interface IAppRegistryInterface extends utils.Interface {
   functions: {
     "adminBanApp(address)": FunctionFragment;
-    "adminRegisterAppBeacon(address)": FunctionFragment;
     "adminRegisterAppSchema(string,address,bool)": FunctionFragment;
     "createApp((string,bytes32[],address[]))": FunctionFragment;
-    "getAppById(bytes32)": FunctionFragment;
     "getAppSchema()": FunctionFragment;
     "getAppSchemaId()": FunctionFragment;
+    "getAttestation(bytes32)": FunctionFragment;
     "getLatestAppId(address)": FunctionFragment;
     "isAppBanned(address)": FunctionFragment;
     "registerApp(address,address[])": FunctionFragment;
@@ -97,12 +96,11 @@ export interface IAppRegistryInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "adminBanApp"
-      | "adminRegisterAppBeacon"
       | "adminRegisterAppSchema"
       | "createApp"
-      | "getAppById"
       | "getAppSchema"
       | "getAppSchemaId"
+      | "getAttestation"
       | "getLatestAppId"
       | "isAppBanned"
       | "registerApp"
@@ -111,10 +109,6 @@ export interface IAppRegistryInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "adminBanApp",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "adminRegisterAppBeacon",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -130,16 +124,16 @@ export interface IAppRegistryInterface extends utils.Interface {
     values: [IAppRegistryBase.AppParamsStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "getAppById",
-    values: [PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getAppSchema",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getAppSchemaId",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAttestation",
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getLatestAppId",
@@ -163,21 +157,20 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "adminRegisterAppBeacon",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "adminRegisterAppSchema",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createApp", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getAppById", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getAppSchema",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getAppSchemaId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAttestation",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -302,11 +295,6 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    adminRegisterAppBeacon(
-      beacon: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
@@ -319,14 +307,14 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    getAppById(
-      appId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[AttestationStructOutput]>;
-
     getAppSchema(overrides?: CallOverrides): Promise<[string]>;
 
     getAppSchemaId(overrides?: CallOverrides): Promise<[string]>;
+
+    getAttestation(
+      appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[AttestationStructOutput]>;
 
     getLatestAppId(
       app: PromiseOrValue<string>,
@@ -355,11 +343,6 @@ export interface IAppRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  adminRegisterAppBeacon(
-    beacon: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   adminRegisterAppSchema(
     schema: PromiseOrValue<string>,
     resolver: PromiseOrValue<string>,
@@ -372,14 +355,14 @@ export interface IAppRegistry extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  getAppById(
-    appId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<AttestationStructOutput>;
-
   getAppSchema(overrides?: CallOverrides): Promise<string>;
 
   getAppSchemaId(overrides?: CallOverrides): Promise<string>;
+
+  getAttestation(
+    appId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<AttestationStructOutput>;
 
   getLatestAppId(
     app: PromiseOrValue<string>,
@@ -408,11 +391,6 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    adminRegisterAppBeacon(
-      beacon: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
@@ -425,14 +403,14 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string, string] & { app: string; appId: string }>;
 
-    getAppById(
-      appId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<AttestationStructOutput>;
-
     getAppSchema(overrides?: CallOverrides): Promise<string>;
 
     getAppSchemaId(overrides?: CallOverrides): Promise<string>;
+
+    getAttestation(
+      appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<AttestationStructOutput>;
 
     getLatestAppId(
       app: PromiseOrValue<string>,
@@ -512,11 +490,6 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    adminRegisterAppBeacon(
-      beacon: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
@@ -529,14 +502,14 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    getAppById(
-      appId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getAppSchema(overrides?: CallOverrides): Promise<BigNumber>;
 
     getAppSchemaId(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getAttestation(
+      appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getLatestAppId(
       app: PromiseOrValue<string>,
@@ -566,11 +539,6 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    adminRegisterAppBeacon(
-      beacon: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     adminRegisterAppSchema(
       schema: PromiseOrValue<string>,
       resolver: PromiseOrValue<string>,
@@ -583,14 +551,14 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    getAppById(
-      appId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getAppSchema(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getAppSchemaId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getAttestation(
+      appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getLatestAppId(
       app: PromiseOrValue<string>,
