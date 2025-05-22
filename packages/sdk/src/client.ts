@@ -2153,6 +2153,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
         try {
@@ -2189,11 +2190,13 @@ export class Client
             this.opts?.unpackEnvelopeOpts,
         )
 
-        await this.persistenceStore.saveMiniblocks(
-            streamIdAsString(streamId),
-            miniblocks,
-            'backward',
-        )
+        if (opts?.skipPersistence !== true) {
+            await this.persistenceStore.saveMiniblocks(
+                streamIdAsString(streamId),
+                miniblocks,
+                'backward',
+            )
+        }
 
         return {
             terminus: terminus,
@@ -2331,6 +2334,7 @@ export class Client
                 this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
+                { skipPersistence: true },
             )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
