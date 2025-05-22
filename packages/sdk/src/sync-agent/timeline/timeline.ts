@@ -48,8 +48,6 @@ export class MessageTimeline {
         stream.on('streamUpdated', this.onStreamUpdated)
         stream.on('streamLocalEventUpdated', this.onStreamLocalEventUpdated)
         const events = stream.view.timeline
-            .map((event) => toEventSA(event, this.userId))
-            .filter((event) => this.filterFn(event, stream.view.contentKind))
         this.appendEvents(events, this.userId)
     }
 

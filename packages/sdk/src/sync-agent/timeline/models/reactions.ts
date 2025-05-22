@@ -2,9 +2,9 @@ import { Observable } from '../../../observable/observable'
 import { TimelineEvent, RiverTimelineEvent, type MessageReactions } from './timeline-types'
 
 // { parentEventId -> { reactionName: { userId: { eventId: string } } } }
-export type ReactionsMap = Record<string, MessageReactions>
-export class Reactions extends Observable<ReactionsMap> {
-    constructor(initialValue: ReactionsMap = {}) {
+export type ReactionsMapModel = Record<string, MessageReactions>
+export class Reactions extends Observable<ReactionsMapModel> {
+    constructor(initialValue: ReactionsMapModel = {}) {
         super(initialValue)
     }
 
@@ -14,7 +14,7 @@ export class Reactions extends Observable<ReactionsMap> {
         return reactions && Object.keys(reactions).length > 0 ? reactions : undefined
     }
 
-    update(fn: (current: ReactionsMap) => ReactionsMap): void {
+    update(fn: (current: ReactionsMapModel) => ReactionsMapModel): void {
         this.setValue(fn(this.value))
     }
 

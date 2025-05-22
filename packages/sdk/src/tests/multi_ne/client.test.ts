@@ -28,6 +28,7 @@ import {
     TestClient,
     cloneTestClient,
     SignerContextWithWallet,
+    getTimelineMessagePayload,
 } from '../testUtils'
 import {
     CancelSyncResponse,
@@ -55,6 +56,7 @@ import {
 } from '../../types'
 import { deriveKeyAndIV } from '../../crypto_utils'
 import { nanoid } from 'nanoid'
+import { RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
 
 const log = dlog('csb:test')
 
@@ -150,10 +152,10 @@ describe('clientTest', () => {
 
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) => getChannelMessagePayload(e.localEvent?.channelMessage) === 'Hello, world!',
+                (e) => getTimelineMessagePayload(e) === 'Hello, world!',
             )
             expect(event).toBeDefined()
-            expect(event?.remoteEvent).toBeDefined()
+            expect(event?.confirmedInBlockNum).toBeDefined()
         })
 
         await bobsClient.stopSync()
@@ -483,19 +485,10 @@ describe('clientTest', () => {
                     channelWithContentIdPromise.done()
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('!!!channel content')
-                    log(channel.view)
-                    channel.view.timeline.forEach((x) => {
-                        log('@@@', {
-                            c1: x.remoteEvent?.event.payload.case,
-                            v1: x.remoteEvent?.event.payload.value,
-                            c2: x.remoteEvent?.event.payload.value?.content.case,
-                            b2: x.remoteEvent?.event.payload.value?.content.value,
-                        })
-                    })
+                    log(channel.view.timeline)
+
                     const messages = channel.view.timeline.filter(
-                        (x) =>
-                            x.remoteEvent?.event.payload.case === 'channelPayload' &&
-                            x.remoteEvent?.event.payload.value.content.case === 'message',
+                        (x) => x.content?.kind === RiverTimelineEvent.ChannelMessage,
                     )
                     expect(messages).toHaveLength(1)
                     //This done should be inside of the if statement to be sure that check happened.
@@ -552,12 +545,10 @@ describe('clientTest', () => {
         ).resolves.not.toThrow()
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) =>
-                    getChannelMessagePayload(e.localEvent?.channelMessage) ===
-                    'Hello, world from Bob!',
+                (e) => getTimelineMessagePayload(e) === 'Hello, world from Bob!',
             )
             expect(event).toBeDefined()
-            expect(event?.remoteEvent).toBeDefined()
+            expect(event?.confirmedInBlockNum).toBeDefined()
         })
 
         log('bobSendsSingleMessage done')

@@ -9,12 +9,17 @@ import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { waitFor } from '../testUtils'
-import { StreamTimelineEvent } from '../../types'
-import { userIdFromAddress, makeUniqueChannelStreamId } from '../../id'
+import { makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from 'crypto'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { deepCopy } from 'ethers/lib/utils'
 import { cloneDeep } from 'lodash'
+import {
+    MemberBlockchainTransactionEvent,
+    RiverTimelineEvent,
+    TimelineEvent,
+    UserReceivedBlockchainTransactionEvent,
+} from '../../sync-agent/timeline/models/timeline-types'
 
 const base_log = dlog('csb:test:transactions_Tip')
 
@@ -163,19 +168,15 @@ describe('transactions_Tip', () => {
         const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
         if (!stream) throw new Error('no stream found')
         const tipEvent = await waitFor(() => {
-            const isUserBlockchainTransaction = (e: StreamTimelineEvent) =>
-                e.remoteEvent?.event.payload.case === 'userPayload' &&
-                e.remoteEvent.event.payload.value.content.case === 'blockchainTransaction'
+            const isUserBlockchainTransaction = (e: TimelineEvent) =>
+                e.content?.kind === RiverTimelineEvent.UserBlockchainTransaction
             const tipEvents = stream.view.timeline.filter(isUserBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             // make it compile
-            if (
-                !tip ||
-                tip.remoteEvent?.event.payload.value?.content.case !== 'blockchainTransaction'
-            )
+            if (!tip || tip.content?.kind !== RiverTimelineEvent.UserBlockchainTransaction)
                 throw new Error('no tip event found')
-            return tip.remoteEvent.event.payload.value.content.value
+            return tip.content?.transaction
         })
         expect(tipEvent?.receipt).toBeDefined()
         // the view should have been updated with the tip
@@ -190,25 +191,20 @@ describe('transactions_Tip', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
-            const isUserReceivedBlockchainTransaction = (e: StreamTimelineEvent) =>
-                e.remoteEvent?.event.payload.case === 'userPayload' &&
-                e.remoteEvent.event.payload.value.content.case === 'receivedBlockchainTransaction'
+        const tipEvent: UserReceivedBlockchainTransactionEvent = await waitFor(() => {
+            const isUserReceivedBlockchainTransaction = (e: TimelineEvent) =>
+                e.content?.kind === RiverTimelineEvent.UserReceivedBlockchainTransaction
             const tipEvents = stream.view.timeline.filter(isUserReceivedBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             // make it compile
-            if (
-                !tip ||
-                tip.remoteEvent?.event.payload.value?.content.case !==
-                    'receivedBlockchainTransaction'
-            )
+            if (!tip || tip.content?.kind !== RiverTimelineEvent.UserReceivedBlockchainTransaction)
                 throw new Error('no tip event found')
-            return tip.remoteEvent.event.payload.value.content.value
+            return tip.content
         })
         if (!tipEvent) throw new Error('no tip event found')
-        expect(tipEvent.transaction?.receipt).toBeDefined()
-        expect(tipEvent?.transaction?.content?.case).toEqual('tip')
+        expect(tipEvent.receivedTransaction.transaction?.receipt).toBeDefined()
+        expect(tipEvent?.receivedTransaction.transaction?.content?.case).toEqual('tip')
         // the view should have been updated with the tip
         expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(1n)
@@ -218,22 +214,22 @@ describe('transactions_Tip', () => {
         // get the channel "stream" that is being synced by bob
         const stream = bob.riverConnection.client!.stream(defaultChannelId)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
-            const isMemberBlockchainTransaction = (e: StreamTimelineEvent) =>
-                e.remoteEvent?.event.payload.case === 'memberPayload' &&
-                e.remoteEvent.event.payload.value.content.case === 'memberBlockchainTransaction'
+        const tipEvent: MemberBlockchainTransactionEvent = await waitFor(() => {
+            const isMemberBlockchainTransaction = (e: TimelineEvent) =>
+                e.content?.kind === RiverTimelineEvent.MemberBlockchainTransaction
             const tipEvents = stream.view.timeline.filter(isMemberBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             // make it compile
             if (
                 !tip ||
-                tip.remoteEvent?.event.payload.value?.content.case !== 'memberBlockchainTransaction'
+                tip.content?.kind !== RiverTimelineEvent.MemberBlockchainTransaction ||
+                !tip.content.transaction
             )
                 throw new Error('no tip event found')
-            return tip.remoteEvent.event.payload.value.content.value
+            return tip.content
         })
-        expect(userIdFromAddress(tipEvent.fromUserAddress)).toEqual(bobIdentity.rootWallet.address)
+        expect(tipEvent.fromUserId).toEqual(bobIdentity.rootWallet.address)
         expect(stream.view.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.view.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
         expect(

@@ -72,7 +72,7 @@ function streamViewFromUnpackedResponse(
 	streamId: string | Uint8Array,
 	unpackedResponse: ParsedStreamResponse,
 ): StreamStateView {
-	const streamView = new StreamStateView('userId', streamIdAsString(streamId))
+	const streamView = new StreamStateView('userId', streamIdAsString(streamId), undefined)
 	streamView.initialize(
 		unpackedResponse.streamAndCookie.nextSyncCookie,
 		unpackedResponse.streamAndCookie.events,
