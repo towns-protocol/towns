@@ -21,19 +21,27 @@ import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
 import { toBinary, create } from '@bufbuild/protobuf'
-import { ETH_ADDRESS, SpaceDapp } from '@towns-protocol/web3'
+import {
+    AppRegistryDapp,
+    ETH_ADDRESS,
+    Permission,
+    SpaceDapp,
+    type Address,
+} from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
 const getAppRegistryUrl = () => {
-    if (process.env.RIVER_ENV === 'local_multi') {
+    const env = 'local_multi' // TODO: change to process.env.RIVER_ENV
+
+    if (env === 'local_multi') {
         return process.env.APP_REGISTRY_LOCAL_MULTI_URL!
-    } else if (process.env.RIVER_ENV === 'local_multi_ne') {
+    } else if (env === 'local_multi_ne') {
         return process.env.APP_REGISTRY_LOCAL_MULTI_NE_URL!
     }
-    throw new Error(`Unknown river env: ${process.env.RIVER_ENV}`)
+    throw new Error(`Unknown river env: ${env}`)
 }
 
 type OnMessageType = BotPayload<'message'>
@@ -46,6 +54,10 @@ describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
 
     const bob = new SyncAgentTest(undefined, riverConfig)
+    const appRegistryDapp = new AppRegistryDapp(
+        riverConfig.base.chainConfig,
+        makeBaseProvider(riverConfig),
+    )
     let bobClient: SyncAgent
 
     const alice = new SyncAgentTest(undefined, riverConfig)
@@ -62,10 +74,12 @@ describe('Bot', { sequential: true }, () => {
     let appRegistryRpcClient: AppRegistryRpcClient
     let appId: Uint8Array
     let bobDefaultChannel: Channel
+    let botAppAddress: Address
 
     beforeAll(async () => {
         await shouldInitializeBotOwner()
         await shouldCreateBotClient()
+        await shouldMintBot()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
     })
@@ -93,6 +107,25 @@ describe('Bot', { sequential: true }, () => {
         await bobDefaultChannel.members.myself.setDisplayName(BOB_DISPLAY_NAME)
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()
+    }
+
+    const shouldMintBot = async () => {
+        const botClientAddress = botWallet.address as Address
+
+        const tx = await appRegistryDapp.createApp(
+            bob.signer,
+            'bot-witness-of-infinity',
+            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
+            [botClientAddress],
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        await appRegistryDapp.registerApp(bob.signer, foundAppAddress as Address, [
+            botClientAddress,
+        ])
+        botAppAddress = foundAppAddress as Address
     }
 
     const shouldCreateBotClient = async () => {

@@ -206,7 +206,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     {
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
         address appRegistry = ms.getDependency("AppRegistry");
-        Attestation memory att = IAppRegistry(appRegistry).getAppById(appId);
+        Attestation memory att = IAppRegistry(appRegistry).getAttestation(appId);
 
         if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
         if (att.revocationTime != 0) AppRevoked.selector.revertWith();
