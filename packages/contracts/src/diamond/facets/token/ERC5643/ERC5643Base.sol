@@ -19,7 +19,7 @@ abstract contract ERC5643Base is IERC5643Base {
         if (currentExpiration == 0) {
             newExpiration = uint64(block.timestamp) + duration;
         } else if (currentExpiration <= block.timestamp) {
-             if (!_isRenewable(tokenId)) {
+            if (!_isRenewable(tokenId)) {
                 revert ERC5643__SubscriptionNotRenewable(tokenId);
             }
             newExpiration = uint64(block.timestamp) + duration;
