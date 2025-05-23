@@ -2518,6 +2518,15 @@ export class Client
                 errorContainsMessage(err, 'Transaction has 0 confirmations') &&
                 retryCount < 3
             ) {
+                this.logInfo(
+                    'RETRYING event after PERMISSION_DENIED (transaction has 0 confirmations) response',
+                    {
+                        syncStats: this.streams.stats(),
+                        retryCount,
+                        prevMiniblockHash,
+                        prevMiniblockNum,
+                    },
+                )
                 await new Promise((resolve) => setTimeout(resolve, 2000))
                 return await makeRetry(prevMiniblockHash, prevMiniblockNum)
             } else {
