@@ -5,15 +5,16 @@
     "type": "module",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "default": "./dist/index.js"
+            "types": "./dist/esm/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
         }
     },
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "vite build",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "dev": "my-node src/index.ts",
@@ -52,6 +53,8 @@
         "vitest": "3.0.5"
     },
     "devDependencies": {
+        "@tanstack/config": "^0.18.0",
+        "@towns-protocol/config": "workspace:^",
         "@types/debug": "^4.1.8",
         "@types/lodash": "^4.14.186",
         "@types/node": "^20.14.8",
@@ -69,6 +72,7 @@
         "seedrandom": "^3.0.5",
         "typed-emitter": "^2.1.0",
         "typescript": "^5.8.2",
+        "vite": "^6.3.5",
         "vite-plugin-wasm": "^3.4.1",
         "vitest-fetch-mock": "^0.4.3"
     },

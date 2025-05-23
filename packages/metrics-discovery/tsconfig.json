@@ -1,4 +1,5 @@
 {
+    "extends": "../tsconfig.app.json",
     "compilerOptions": {
         "target": "es2020",
         "noImplicitAny": true,
@@ -6,8 +7,6 @@
         "preserveConstEnums": true,
         "noEmit": true,
         "sourceMap": false,
-        "module": "commonjs",
-        "moduleResolution": "node",
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,

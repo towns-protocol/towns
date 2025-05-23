@@ -1,4 +1,4 @@
-import DeploymentsJson from '@towns-protocol/generated/config/deployments.json' assert { type: 'json' }
+import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
 
 import { Address } from '../types/ContractTypes'
 

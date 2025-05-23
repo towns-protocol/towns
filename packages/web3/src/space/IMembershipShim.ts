@@ -5,7 +5,7 @@ import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 import { MembershipFacet__factory } from '@towns-protocol/generated/dev/typings/factories/MembershipFacet__factory'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IMulticallShim } from './IMulticallShim'
-import { TransactionOpts } from 'types/ContractTypes'
+import { TransactionOpts } from '../types/ContractTypes'
 const log = dlogger('csb:IMembershipShim')
 
 const { abi, connect } = MembershipFacet__factory

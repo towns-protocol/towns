@@ -3,13 +3,18 @@
     "version": "0.0.228",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/esm/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
+        }
+    },
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "vite build",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
@@ -18,7 +23,7 @@
         "test:watch": "vitest --watch",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
-        "watch": "tsc --watch"
+        "watch": "vite build --watch"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
@@ -27,6 +32,7 @@
         "ethereum-cryptography": "^3.2.0"
     },
     "devDependencies": {
+        "@tanstack/config": "^0.18.0",
         "@types/debug": "^4.1.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
@@ -35,6 +41,7 @@
         "eslint-plugin-import-x": "^4.10.2",
         "ts-node": "^10.9.1",
         "typescript": "^5.8.2",
+        "vite": "^6.3.5",
         "vitest": "3.0.5"
     },
     "files": [

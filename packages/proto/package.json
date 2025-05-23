@@ -3,8 +3,13 @@
     "version": "0.0.228",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/esm/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
+        }
+    },
     "publishConfig": {
         "access": "public"
     },
@@ -12,7 +17,7 @@
         "buf:clean": "rm -rf ./src/gen/*",
         "buf:generate": "cd ../.. && buf generate --template packages/proto/buf.gen.yaml --path protocol/protocol.proto --path protocol/payloads.proto --path packages/proto/internal.proto --path protocol/notifications.proto --path protocol/auth.proto --path protocol/apps.proto",
         "buf:lint": "cd ../.. && buf lint --path protocol/protocol.proto --path protocol/payloads.proto --path packages/proto/internal.proto --path protocol/notifications.proto --path protocol/auth.proto --path protocol/apps.proto",
-        "build": "yarn buf:generate && tsc",
+        "build": "yarn buf:generate && vite build",
         "cb": "yarn clean && yarn build",
         "clean": "yarn buf:clean && rm -rf ./dist",
         "test": "vitest run",
@@ -27,11 +32,13 @@
     "devDependencies": {
         "@bufbuild/buf": "^1.32.0",
         "@bufbuild/protoc-gen-es": "^2.2.2",
+        "@tanstack/config": "^0.18.0",
         "@towns-protocol/proto-source": "workspace:^",
         "@types/node": "^20.14.8",
         "lodash.debounce": "^4.0.8",
         "ts-node": "^10.9.1",
         "typescript": "^5.8.2",
+        "vite": "^6.3.5",
         "vitest": "3.0.5"
     },
     "files": [

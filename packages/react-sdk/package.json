@@ -3,14 +3,18 @@
     "description": "React Hooks for Towns Protocol SDK",
     "version": "0.0.228",
     "type": "module",
-    "main": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/esm/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
+        }
+    },
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
-        "build": "yarn run clean && yarn run build:esm+types",
-        "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
+        "build": "vite build",
         "lint": "eslint ./src --max-warnings=0",
         "gen": "yarn gen:extractor && yarn gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
@@ -29,6 +33,7 @@
         "@microsoft/api-extractor-model": "^7.30.5",
         "@microsoft/tsdoc": "^0.15.0",
         "@microsoft/tsdoc-config": "^0.17.0",
+        "@tanstack/config": "^0.18.0",
         "@types/node": "^20.14.8",
         "@types/react": "^18.2.11",
         "@types/react-dom": "^18.2.4",
@@ -43,7 +48,8 @@
         "react-dom": "^18.2.0",
         "ts-morph": "^24.0.0",
         "tsx": "^4.7.1",
-        "typescript": "^5.8.2"
+        "typescript": "^5.8.2",
+        "vite": "^6.3.5"
     },
     "files": [
         "dist/**",

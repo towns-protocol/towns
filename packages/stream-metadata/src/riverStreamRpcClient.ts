@@ -242,6 +242,7 @@ export async function getStream(
 		) {
 			return undefined
 		}
+		throw e
 	} finally {
 		streamRequests.delete(streamId)
 	}
