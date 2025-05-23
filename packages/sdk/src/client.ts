@@ -2515,7 +2515,8 @@ export class Client
                 // for blockchain transactions: if we get a permission denied error, and the error message contains 'Transaction has 0 confirmations',
                 // we need to retry the event, since the node is likely lagging behind, and waiting a few seconds will allow it to catch up
                 errorContains(err, Err.PERMISSION_DENIED) &&
-                errorContainsMessage(err, 'Transaction has 0 confirmations.') &&
+                (errorContainsMessage(err, 'Transaction has 0 confirmations.') ||
+                    errorContainsMessage(err, 'Transaction receipt not found')) &&
                 retryCount < 3
             ) {
                 this.logInfo(
