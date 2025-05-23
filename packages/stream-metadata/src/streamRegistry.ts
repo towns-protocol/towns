@@ -2,7 +2,7 @@ import { BigNumber } from 'ethers'
 import { FastifyBaseLogger } from 'fastify'
 import { streamIdAsBytes } from '@towns-protocol/sdk'
 
-import { getRiverRegistry } from './evmRpcClient'
+import { getRiverRegistry } from './evmRpcClient.js'
 
 type CachedStreamData = {
 	url: string

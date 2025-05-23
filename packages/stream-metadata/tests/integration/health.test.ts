@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { dlog } from '@towns-protocol/dlog'
 
-import { getTestServerUrl } from '../testUtils'
+import { getTestServerUrl } from '../testUtils.js'
 
 const log = dlog('stream-metadata:test:health', {
 	allowJest: true,

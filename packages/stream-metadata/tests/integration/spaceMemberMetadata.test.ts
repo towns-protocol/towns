@@ -8,7 +8,7 @@ import {
 	makeCreateSpaceParams,
 	makeEthersProvider,
 	SpaceMetadataParams,
-} from '../testUtils'
+} from '../testUtils.js'
 import { SpaceMemberMetadataResponse } from '../../src/routes/spaceMemberMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 

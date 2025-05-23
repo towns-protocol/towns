@@ -2,8 +2,8 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
 
-import { getStream } from '../riverStreamRpcClient'
-import { isValidEthereumAddress } from '../validators'
+import { getStream } from '../riverStreamRpcClient.js'
+import { isValidEthereumAddress } from '../validators.js'
 
 const paramsSchema = z.object({
 	userId: z.string().min(1, 'userId parameter is required'),
