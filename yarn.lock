@@ -9481,15 +9481,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^20.2.5":
-  version: 20.11.24
-  resolution: "@types/node@npm:20.11.24"
-  dependencies:
-    undici-types: ~5.26.4
-  checksum: b11a650e09e254f4725c94f226752b69949a9ac4a5e004e98f109437ac50b02df3ab4d12b2086722fedf2cb62e68b9e723abd3f358a7d7d90d741a0d3bee90c2
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:>=10.0.0":
   version: 22.9.0
   resolution: "@types/node@npm:22.9.0"
@@ -9532,15 +9523,6 @@ __metadata:
   dependencies:
     undici-types: ~6.19.2
   checksum: e3afa4dcc70a833d6a93c1d7824f4a406b920bdd57eaae82d11e2524fe157bf1c4f0ffd3f9f6ee76b5452737d20233e7d5ad0c98e0198ba1332a2989f0bd9fb9
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^20.5.0":
-  version: 20.17.46
-  resolution: "@types/node@npm:20.17.46"
-  dependencies:
-    undici-types: ~6.19.2
-  checksum: dbc6eb5a28d4237892cbd9de7b014970a9edcb5beb4339660d71e80d8ab9b6cd77f9523c4a37c5e2e28b91761339a02d6dc30466b60d89e71e4e87bbeec6770f
   languageName: node
   linkType: hard
 
@@ -27150,15 +27132,6 @@ __metadata:
     es-errors: ^1.3.0
     is-regex: ^1.1.4
   checksum: 6c7d392ff1ae7a3ae85273450ed02d1d131f1d2c76e177d6b03eb88e6df8fa062639070e7d311802c1615f351f18dc58f9454501c58e28d5ffd9b8f502ba6489
-  languageName: node
-  linkType: hard
-
-"safe-regex2@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "safe-regex2@npm:3.1.0"
-  dependencies:
-    ret: ~0.5.0
-  checksum: 61c061da3382e3fb9c1c5e50932da6926684132f69ef40da753ce2ae2746ef1be1e7d4d0c6b788d11c4596e8e3ce95775f147915a4893e1d129b86e7bec01ef2
   languageName: node
   linkType: hard
 
