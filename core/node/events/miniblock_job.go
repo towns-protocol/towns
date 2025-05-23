@@ -315,7 +315,8 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 	events := make([]common.Hash, 0, len(eventCounts))
 
 	// walk over all event hashes again, adding them to the events list if they have quorum.
-	// do it this way to preserve order of events as they were received.
+	// do it this way to preserve order of events as they were received in a single proposal.
+	// we do not attempt to order events across proposals.
 	for _, p := range proposals {
 		for _, h := range p.eventHashes {
 			if c, ok := eventCounts[h]; ok {
