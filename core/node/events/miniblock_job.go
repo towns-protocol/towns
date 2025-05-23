@@ -73,14 +73,28 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum crypto.BlockNumber)
 		return err
 	}
 
-	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(ctx, j.stream.StreamId(), view.minipool.generation)
+	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(
+		ctx,
+		j.stream.StreamId(),
+		view.minipool.generation,
+	)
 	if err != nil {
 		return err
 	}
 
 	if skipCandidate(candidateCount, blockNum) {
-		return RiverError(Err_RESOURCE_EXHAUSTED, "mbJob.shouldContinue: candidate production is slowed down",
-			"candidateCount", candidateCount, "blockNum", blockNum, "streamId", j.stream.streamId, "miniblockGeneration", view.minipool.generation)
+		return RiverError(
+			Err_RESOURCE_EXHAUSTED,
+			"mbJob.shouldContinue: candidate production is slowed down",
+			"candidateCount",
+			candidateCount,
+			"blockNum",
+			blockNum,
+			"streamId",
+			j.stream.streamId,
+			"miniblockGeneration",
+			view.minipool.generation,
+		)
 	}
 
 	return nil
@@ -433,7 +447,8 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 
 	err := qp.Wait()
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
+		logging.FromCtx(ctx).
+			Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
 		return err
 	}
 
