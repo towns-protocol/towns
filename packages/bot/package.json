@@ -16,7 +16,7 @@
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch",
         "test": "vitest",
-        "test:ci": "vitest run",
+        "test:ci:multi:ent": "vitest run",
         "test:watch": "vitest --watch"
     },
     "dependencies": {
