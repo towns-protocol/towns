@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ITownsPoints, ITownsPointsBase} from "../../../src/airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
@@ -258,6 +259,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
         params.amountIn = amountIn;
 
+        vm.expectEmit(address(riverAirdrop));
+        emit IERC20.Transfer(address(0), caller, expectedPoints);
+
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
             recipient,
@@ -329,6 +333,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         // calculate protocol fee and expected points
         uint256 protocolFee = BasisPoints.calculate(amountOut, PROTOCOL_BPS);
         uint256 expectedPoints = _getPoints(protocolFee);
+
+        vm.expectEmit(address(riverAirdrop));
+        emit IERC20.Transfer(address(0), caller, expectedPoints);
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
