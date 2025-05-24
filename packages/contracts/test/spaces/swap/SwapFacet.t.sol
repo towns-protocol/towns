@@ -362,25 +362,28 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
     }
 
-    function test_executeSwap_collectPosterFeeToSpace(
+    function test_executeSwap_posterFeeHandling(
         uint256 amountIn,
         uint256 amountOut,
         address caller,
         address recipient,
-        uint16 posterBps
+        address poster_,
+        uint16 posterBps,
+        bool collectToSpace
     ) external givenMembership(caller) {
         vm.assume(caller != founder);
         vm.assume(
             recipient != address(0) &&
-                recipient != poster &&
+                recipient != poster_ &&
                 recipient != feeRecipient &&
                 recipient != everyoneSpace
         );
+        vm.assume(poster_ != feeRecipient && poster_ != everyoneSpace);
         posterBps = uint16(bound(posterBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
 
-        // set fee config to collect to space
+        // set fee config
         vm.prank(founder);
-        swapFacet.setSwapFeeConfig(posterBps, true);
+        swapFacet.setSwapFeeConfig(posterBps, collectToSpace);
 
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
@@ -402,12 +405,21 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         vm.prank(caller);
         token0.approve(everyoneSpace, amountIn);
 
-        (uint256 protocolFee, uint256 posterFee) = _calculateFees(
-            amountOut,
-            PROTOCOL_BPS,
-            posterBps
-        );
-        uint256 expectedAmountOut = amountOut - posterFee - protocolFee;
+        // calculate expected fees and amounts based on configuration
+        uint256 protocolFee = BasisPoints.calculate(amountOut, PROTOCOL_BPS);
+        uint256 posterFee;
+
+        // determine poster fee based on configuration
+        if (collectToSpace) {
+            posterFee = BasisPoints.calculate(amountOut, posterBps);
+        } else if (poster_ != address(0)) {
+            // if posterBps is 0, SwapFacet falls back to platform default
+            uint16 actualPosterBps = posterBps == 0 ? POSTER_BPS : posterBps;
+            posterFee = BasisPoints.calculate(amountOut, actualPosterBps);
+        }
+        // else: poster_ == address(0), so no poster fee (posterFee remains 0)
+
+        uint256 expectedAmountOut = amountOut - protocolFee - posterFee;
 
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
@@ -416,23 +428,41 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             params.tokenOut,
             params.amountIn,
             expectedAmountOut,
-            poster // original poster still used in event
+            poster_ // original poster used in event
         );
 
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster);
+        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster_);
 
-        // poster fee should be sent to space, not poster
-        assertEq(
-            params.tokenOut.balanceOf(everyoneSpace),
-            posterFee,
-            "Poster fee should be sent to space"
-        );
-        assertEq(params.tokenOut.balanceOf(poster), 0, "Poster should not receive fee");
+        // verify fee distribution based on configuration
+        if (collectToSpace) {
+            assertEq(
+                params.tokenOut.balanceOf(everyoneSpace),
+                posterFee,
+                "Space should receive poster fee"
+            );
+            if (poster_ != address(0)) {
+                assertEq(params.tokenOut.balanceOf(poster_), 0, "Poster should not receive fee");
+            }
+        } else {
+            assertEq(
+                params.tokenOut.balanceOf(everyoneSpace),
+                0,
+                "Space should not receive poster fee"
+            );
+            if (poster_ != address(0)) {
+                assertEq(
+                    params.tokenOut.balanceOf(poster_),
+                    posterFee,
+                    "Poster should receive fee"
+                );
+            }
+        }
+
         assertEq(
             params.tokenOut.balanceOf(feeRecipient),
             protocolFee,
-            "Treasury fee should be sent to protocol"
+            "Protocol fee should always be sent to fee recipient"
         );
         assertEq(actualAmountOut, expectedAmountOut, "Returned amount should match expected");
         assertEq(token0.balanceOf(caller), 0, "Token0 should be spent");
