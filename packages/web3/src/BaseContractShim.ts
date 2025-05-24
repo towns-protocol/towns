@@ -10,7 +10,11 @@ export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 const logger = dlogger('csb:BaseContractShim')
 
-export type OverrideExecution<T> = (args: { calldata: string; value?: bigint }) => Promise<T>
+export type OverrideExecution<T> = (args: {
+    toAddress: string
+    calldata: string
+    value?: bigint
+}) => Promise<T>
 
 export class BaseContractShim<
     connect extends Connect<ethers.Contract>,
@@ -96,6 +100,7 @@ export class BaseContractShim<
         return (
             params.overrideExecution
                 ? params.overrideExecution({
+                      toAddress: this.address,
                       calldata: this.encodeFunctionData(params.functionName, params.args),
                       value: params.value,
                   })
