@@ -371,7 +371,7 @@ describe('clientTest', () => {
         // solicitation for isNewDevice should resolve
         payload = make_MemberPayload_KeySolicitation({
             deviceKey: 'foo',
-            sessionIds: [],
+            sessionIds: ['bar'],
             fallbackKey: 'baz',
             isNewDevice: true,
         })
@@ -393,7 +393,7 @@ describe('clientTest', () => {
         payload = make_MemberPayload_KeyFulfillment({
             deviceKey: 'foo',
             userAddress: addressFromUserId(bobsClient.userId),
-            sessionIds: [],
+            sessionIds: ['bar'],
         })
         await expect(
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
