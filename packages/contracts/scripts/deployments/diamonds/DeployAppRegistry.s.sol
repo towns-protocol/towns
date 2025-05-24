@@ -12,6 +12,8 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
+import {DeployUpgradeableBeacon} from "../facets/DeployUpgradeableBeacon.s.sol";
+import {DeploySimpleApp} from "../facets/DeploySimpleApp.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -82,13 +84,24 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up feature facets for batch deployment
         facetHelper.add("MultiInit");
+        facetHelper.add("UpgradeableBeaconFacet");
         facetHelper.add("AppRegistryFacet");
 
         // Deploy all facets in a batch
         facetHelper.deployBatch(deployer);
 
+        vm.broadcast(deployer);
+        address simpleApp = DeploySimpleApp.deploy();
+
         // Add feature facets
-        address facet = facetHelper.getDeployedAddress("AppRegistryFacet");
+        address facet = facetHelper.getDeployedAddress("UpgradeableBeaconFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployUpgradeableBeacon.selectors()),
+            facet,
+            DeployUpgradeableBeacon.makeInitData(simpleApp)
+        );
+
+        facet = facetHelper.getDeployedAddress("AppRegistryFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
             facet,
@@ -133,6 +146,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
+
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
 

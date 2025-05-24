@@ -68,6 +68,14 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         (, version) = _removeApp(msg.sender, versionId);
     }
 
+    /// @notice Create an upgradeable simple app contract
+    /// @param params The parameters of the app
+    function createApp(
+        AppParams calldata params
+    ) external payable nonReentrant returns (address app, bytes32 versionId) {
+        return _createApp(params);
+    }
+
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getAppSchema() external view returns (string memory) {
@@ -81,15 +89,15 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     }
 
     /// @notice Get the attestation for a app
-    /// @param versionId The app ID
+    /// @param appId The app ID
     /// @return attestation The attestation
-    function getAppById(bytes32 versionId) external view returns (Attestation memory attestation) {
-        return _getApp(versionId);
+    function getAttestation(bytes32 appId) external view returns (Attestation memory attestation) {
+        return _getApp(appId);
     }
 
     /// @notice Get the latest version ID for a app
     /// @param app The app address
-    /// @return versionId The version ID of the registered app
+    /// @return appId The version ID of the registered app
     function getLatestAppId(address app) external view returns (bytes32) {
         return _getLatestAppId(app);
     }
