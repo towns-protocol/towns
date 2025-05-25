@@ -2,7 +2,9 @@
     "extends": "../tsconfig.base.json",
     "compilerOptions": {
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "experimentalDecorators": true,
+        "types": ["vitest/globals"]
     },
-    "include": ["src/**/*"]
+    "include": ["./src/**/*", "*.config.ts"]
 }

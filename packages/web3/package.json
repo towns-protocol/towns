@@ -5,16 +5,22 @@
     "type": "module",
     "exports": {
         ".": {
-            "types": "./dist/esm/index.d.ts",
-            "import": "./dist/esm/index.js",
-            "require": "./dist/cjs/index.js"
-        }
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        },
+        "./package.json": "./package.json"
     },
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
-        "build": "vite build",
+        "build": "tsdown",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
@@ -23,7 +29,7 @@
         "test:watch": "vitest --watch",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
-        "watch": "vite build --watch"
+        "watch": "tsdown --watch"
     },
     "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
@@ -39,7 +45,6 @@
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "@tanstack/config": "^0.18.0",
         "@types/lodash": "^4.14.186",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
@@ -48,12 +53,14 @@
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
+        "tsdown": "^0.12.3",
         "typed-emitter": "^2.1.0",
         "typescript": "^5.8.2",
         "vite": "^6.3.5",
         "vitest": "3.0.5"
     },
     "files": [
-        "/dist"
+        "dist",
+        "src"
     ]
 }

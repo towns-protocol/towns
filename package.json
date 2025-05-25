@@ -51,6 +51,7 @@
         "publint": "^0.2.8",
         "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
+        "tsdown": "^0.12.3",
         "turbo": "^2.0.12",
         "typechain": "^8.1.1",
         "typescript": "^5.8.2",

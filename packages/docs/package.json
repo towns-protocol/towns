@@ -10,7 +10,8 @@
   },
   "devDependencies": {
     "cspell": "^8.8.1",
-    "mintlify": "4.0.274"
+    "mintlify": "4.0.274",
+    "tsdown": "^0.12.3"
   },
   "keywords": [],
   "author": "",
