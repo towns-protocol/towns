@@ -27,10 +27,12 @@ type (
 	}
 
 	ModifyRequest struct {
-		ToAdd                  []*SyncCookie
-		ToRemove               [][]byte
-		AddingFailureHandler   func(status *SyncStreamOpStatus)
-		RemovingFailureHandler func(status *SyncStreamOpStatus)
+		ToAdd                     []*SyncCookie
+		ToRemove                  [][]byte
+		ToBackfill                []*ModifySyncRequest_Backfill
+		AddingFailureHandler      func(status *SyncStreamOpStatus)
+		RemovingFailureHandler    func(status *SyncStreamOpStatus)
+		BackfillingFailureHandler func(status *SyncStreamOpStatus)
 	}
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
@@ -126,10 +128,12 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 	// First attempt with the provided cookies without modifications.
 	if err := ss.modify(ctx, ModifyRequest{
-		ToAdd:                  req.ToAdd,
-		ToRemove:               req.ToRemove,
-		AddingFailureHandler:   addingFailuresHandler,
-		RemovingFailureHandler: req.RemovingFailureHandler,
+		ToBackfill:                req.ToBackfill,
+		ToAdd:                     req.ToAdd,
+		ToRemove:                  req.ToRemove,
+		BackfillingFailureHandler: req.BackfillingFailureHandler,
+		AddingFailureHandler:      addingFailuresHandler,
+		RemovingFailureHandler:    req.RemovingFailureHandler,
 	}); err != nil {
 		return err
 	}
@@ -174,6 +178,32 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
+
+	for _, backfill := range req.ToBackfill {
+		for _, cookie := range backfill.GetStreams() {
+			streamID := StreamId(cookie.GetStreamId())
+			syncer, found := ss.streamID2Syncer[streamID]
+			if !found {
+				req.BackfillingFailureHandler(&SyncStreamOpStatus{
+					StreamId: streamID[:],
+					Code:     int32(Err_UNAVAILABLE),
+					Message:  "The given stream is not syncing",
+				})
+				continue
+			}
+
+			if _, ok := modifySyncs[syncer.Address()]; !ok {
+				modifySyncs[syncer.Address()] = &ModifySyncRequest{
+					BackfillStreams: &ModifySyncRequest_Backfill{SyncId: backfill.GetSyncId()},
+				}
+			}
+
+			modifySyncs[syncer.Address()].BackfillStreams.Streams = append(
+				modifySyncs[syncer.Address()].BackfillStreams.Streams,
+				cookie.CopyWithAddr(syncer.Address()),
+			)
+		}
+	}
 
 	// Group modify sync request by the remote syncer.
 	// Identifying which node to use for the given streams.
@@ -222,7 +252,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	if len(modifySyncs) > 0 {
-		ss.distributeSyncModifications(ctx, modifySyncs, req.AddingFailureHandler, req.RemovingFailureHandler)
+		ss.distributeSyncModifications(ctx, modifySyncs, req.BackfillingFailureHandler, req.AddingFailureHandler, req.RemovingFailureHandler)
 	}
 
 	return nil
@@ -232,6 +262,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 func (ss *SyncerSet) distributeSyncModifications(
 	ctx context.Context,
 	modifySyncs map[common.Address]*ModifySyncRequest,
+	failedToBackfill func(status *SyncStreamOpStatus),
 	failedToAdd func(status *SyncStreamOpStatus),
 	failedToRemove func(status *SyncStreamOpStatus),
 ) {
@@ -242,6 +273,13 @@ func (ss *SyncerSet) distributeSyncModifications(
 		syncer, err := ss.getOrCreateSyncerNoLock(nodeAddress)
 		if err != nil {
 			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
+			for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
+				failedToBackfill(&SyncStreamOpStatus{
+					StreamId: cookie.GetStreamId(),
+					Code:     int32(rvrErr.Code),
+					Message:  rvrErr.GetMessage(),
+				})
+			}
 			for _, cookie := range modifySync.GetAddStreams() {
 				failedToAdd(&SyncStreamOpStatus{
 					StreamId: cookie.GetStreamId(),
@@ -269,6 +307,13 @@ func (ss *SyncerSet) distributeSyncModifications(
 			resp, syncerStopped, err := syncer.Modify(ctx, modifySync)
 			if err != nil {
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
+				for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
+					failedToBackfill(&SyncStreamOpStatus{
+						StreamId: cookie.GetStreamId(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
+				}
 				for _, cookie := range modifySync.GetAddStreams() {
 					failedToAdd(&SyncStreamOpStatus{
 						StreamId: cookie.GetStreamId(),
@@ -285,6 +330,16 @@ func (ss *SyncerSet) distributeSyncModifications(
 				}
 				return
 			}
+
+			/*backfillingFailures := resp.GetBackfills()
+			successfullyBackfilled := slices.DeleteFunc(modifySync.GetBackfillStreams(), func(backfill *ModifySyncRequest_Backfill) bool {
+				return slices.ContainsFunc(backfillingFailures, func(status *SyncStreamOpStatus) bool {
+					return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
+				})
+			})
+			for _, status := range addingFailures {
+				failedToAdd(status)
+			}*/
 
 			addingFailures := resp.GetAdds()
 			successfullyAdded := slices.DeleteFunc(modifySync.GetAddStreams(), func(cookie *SyncCookie) bool {
@@ -447,7 +502,7 @@ func (ss *SyncerSet) rmStream(streamID StreamId) {
 // Validate checks the modify request for errors and returns an error if any are found.
 func (mr *ModifyRequest) Validate() error {
 	// Make sure the request is not empty
-	if len(mr.ToAdd) == 0 && len(mr.ToRemove) == 0 {
+	if len(mr.ToAdd) == 0 && len(mr.ToRemove) == 0 && len(mr.ToBackfill) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "Empty modify sync request")
 	}
 
@@ -459,6 +514,8 @@ func (mr *ModifyRequest) Validate() error {
 	}) {
 		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists")
 	}
+
+	// TODO: Add backfill validation
 
 	// Prevent duplicates in the add list
 	if len(mr.ToAdd) > 1 {

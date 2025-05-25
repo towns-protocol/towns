@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
 
@@ -66,12 +68,13 @@ func NewManager(
 
 func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) *Subscription {
 	return &Subscription{
-		log:      m.log.With("syncId", syncID),
-		ctx:      ctx,
-		cancel:   cancel,
-		syncID:   syncID,
-		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		manager:  m,
+		log:                 m.log.With("syncId", syncID),
+		ctx:                 ctx,
+		cancel:              cancel,
+		syncID:              syncID,
+		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		manager:             m,
+		initializingStreams: xsync.NewMap[StreamId, bool](),
 	}
 }
 
@@ -155,6 +158,9 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	}
 	m.sLock.Unlock()
 
+	// If the given message has a specific target subscription, just fetch the subscription by the sync ID
+	// TODO: Implement
+
 	// FIXME: Potentially, a single subscription might block the entire sending process.
 	var wg sync.WaitGroup
 	wg.Add(len(subscriptions))
@@ -165,7 +171,17 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 				m.sLock.Lock()
 				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
 				m.sLock.Unlock()
-			} else {
+			} else if msg.GetTargetSyncId() == "" || msg.GetTargetSyncId() == subscription.syncID {
+				if initializing, _ := subscription.initializingStreams.Load(streamID); initializing {
+					// The given stream is in initialization state for the given subscription.
+					if msg.GetSyncOp() == SyncOp_SYNC_UPDATE && msg.GetTargetSyncId() == subscription.syncID {
+						// Backfill of the stream targeted specifically to the given subscription
+						subscription.initializingStreams.Delete(streamID)
+					} else {
+						return
+					}
+				}
+
 				subscription.Send(msg)
 			}
 			wg.Done()

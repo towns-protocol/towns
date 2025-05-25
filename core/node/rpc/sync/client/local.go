@@ -64,6 +64,47 @@ func (s *localSyncer) Address() common.Address {
 func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
 	var resp ModifySyncResponse
 
+	for _, cookie := range request.GetBackfillStreams().GetStreams() {
+		stream, err := s.streamCache.GetStreamWaitForLocal(ctx, StreamId(cookie.GetStreamId()))
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
+		view, err := stream.GetView(ctx)
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
+		streamAndCookie, err := view.GetStreamSince(ctx, s.localAddr, cookie)
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
+		s.sendResponse(&SyncStreamsResponse{
+			SyncOp:       SyncOp_SYNC_UPDATE,
+			Stream:       streamAndCookie,
+			TargetSyncId: request.GetBackfillStreams().GetSyncId(),
+		})
+	}
+
 	for _, cookie := range request.GetAddStreams() {
 		if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
 			rvrErr := AsRiverError(err)
@@ -76,8 +117,6 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	for _, streamID := range request.GetRemoveStreams() {
 		syncStream, found := s.activeStreams[StreamId(streamID)]
 		if found {
@@ -85,6 +124,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
+	s.activeStreamsMu.Unlock()
 
 	return &resp, len(s.activeStreams) == 0, nil
 }

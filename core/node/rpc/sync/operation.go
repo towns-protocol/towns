@@ -337,8 +337,14 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	cmd := &subCommand{
 		Ctx: ctx,
 		ModifySyncReq: &client.ModifyRequest{
-			ToAdd:    req.Msg.GetAddStreams(),
-			ToRemove: req.Msg.GetRemoveStreams(),
+			ToAdd:      req.Msg.GetAddStreams(),
+			ToRemove:   req.Msg.GetRemoveStreams(),
+			ToBackfill: []*ModifySyncRequest_Backfill{req.Msg.GetBackfillStreams()},
+			BackfillingFailureHandler: func(status *SyncStreamOpStatus) {
+				respLock.Lock()
+				resp.Msg.Backfills = append(resp.Msg.Backfills, status)
+				respLock.Unlock()
+			},
 			AddingFailureHandler: func(status *SyncStreamOpStatus) {
 				respLock.Lock()
 				resp.Msg.Adds = append(resp.Msg.Adds, status)

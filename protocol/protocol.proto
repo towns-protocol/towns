@@ -970,6 +970,8 @@ message SyncStreamsResponse {
     // stream_id is set when sync_op = SYNC_DOWN and indicates it will not receive updates anymore for this stream.
     // If the client is still is interested in updates for this stream it must re-add the stream to the sync session.
     bytes stream_id = 5;
+    // target_sync_id ...
+    string target_sync_id = 6;
 }
 
 // AddStreamToSyncRequest is a request to add a stream to an existing streams sync session.
@@ -994,12 +996,20 @@ message RemoveStreamFromSyncResponse {}
 
 // ModifySyncRequest adds or removes streams from an existing sync session.
 message ModifySyncRequest {
+  message Backfill {
+    // backfill_streams is the list of sync cookies to backfill
+    repeated SyncCookie streams = 1;
+    string sync_id = 2;
+  }
+
   // sync_id is the id of the sync session.
   string sync_id = 1;
   // add_streams contains the stream cookies for streams to add to the stream sync session.
   repeated SyncCookie add_streams = 2;
   // remove_streams contains the stream id's to remove from the sync session.
   repeated bytes remove_streams = 3;
+  // backfill_streams ...
+  Backfill backfill_streams = 4;
 }
 
 // SyncStreamOpStatus contains details why adding or removing a stream to/from a sync session failed.
@@ -1018,6 +1028,8 @@ message ModifySyncResponse {
   repeated SyncStreamOpStatus adds = 1;
   // List with streams that failed to be removed from the sync operation.
   repeated SyncStreamOpStatus removals = 2;
+  // backfills ...
+  repeated SyncStreamOpStatus backfills = 3;
 }
 
 // CancelSyncRequest cancels the sync session.

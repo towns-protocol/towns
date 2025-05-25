@@ -6,6 +6,8 @@ import (
 	"slices"
 	"sync/atomic"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
@@ -32,6 +34,8 @@ type Subscription struct {
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.
 	closed  uint32
 	manager *Manager
+
+	initializingStreams *xsync.Map[StreamId, bool]
 }
 
 func (s *Subscription) Close() {
@@ -50,7 +54,11 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 		return
 	}
 
-	err := s.Messages.AddMessage(proto.Clone(msg).(*SyncStreamsResponse))
+	msg = proto.Clone(msg).(*SyncStreamsResponse)
+	if msg.GetTargetSyncId() != "" {
+		msg.TargetSyncId = ""
+	}
+	err := s.Messages.AddMessage(msg)
 	if err != nil {
 		rvrErr := AsRiverError(err).
 			Tag("syncId", s.syncID).
@@ -69,19 +77,36 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
+		ToBackfill:                req.ToBackfill, // TODO: Should be accepted by the stream nodes only?
+		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
 			req.AddingFailureHandler(status)
 			s.removeStream(status.GetStreamId())
 		},
 		RemovingFailureHandler: req.RemovingFailureHandler,
 	}
+	/*
+		ST1: to backfill
+		ST2: to add (backfilled by the node)
+		->
+		ToBackfill: {Streams: [ST1 (target sync ID specified), ST2 (target sync ID not specified)]}
+	*/
+
+	if len(req.ToBackfill) > 0 {
+		// TODO: Currently target sync ID is reset in the send function which is not correct for explicit backfill requests
+		fmt.Println("ToBackfill", len(req.ToBackfill))
+	}
 
 	// Handle streams that the clients wants to subscribe to.
+	var implicitBackfills []*SyncCookie
 	for _, toAdd := range req.ToAdd {
-		addToRemote := s.addStream(toAdd)
+		addToRemote, shouldBackfill := s.addStream(toAdd)
 		if addToRemote {
 			// The given stream must be added to the main syncer set
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
+		} else if shouldBackfill {
+			// The given stream must be backfilled implicitly only for the given subscription
+			implicitBackfills = append(implicitBackfills, toAdd)
 		}
 	}
 
@@ -94,9 +119,16 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		}
 	}
 
-	if len(modifiedReq.ToAdd) == 0 && len(modifiedReq.ToRemove) == 0 {
+	if len(implicitBackfills) == 0 && len(modifiedReq.ToAdd) == 0 && len(modifiedReq.ToRemove) == 0 {
 		// No changes to be made, just return
 		return nil
+	}
+
+	if len(implicitBackfills) > 0 {
+		modifiedReq.ToBackfill = append(modifiedReq.ToBackfill, &ModifySyncRequest_Backfill{
+			SyncId:  s.syncID,
+			Streams: implicitBackfills,
+		})
 	}
 
 	// Send the request to the syncer set
@@ -109,48 +141,30 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
-func (s *Subscription) addStream(cookie *SyncCookie) bool {
+func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBackfill bool) {
 	streamID := StreamId(cookie.GetStreamId())
-	var streamAlreadyInSync bool
-	var updatedSubscribers bool
 
 	// Add the stream to the subscription if not added yet
 	s.manager.sLock.Lock()
 	subscriptions, ok := s.manager.subscriptions[streamID]
 	if !ok || len(subscriptions) == 0 {
+		shouldAdd = true
 		s.manager.subscriptions[streamID] = []*Subscription{s}
-		updatedSubscribers = true
 	} else {
-		streamAlreadyInSync = true
 		if !slices.ContainsFunc(subscriptions, func(sub *Subscription) bool {
 			return sub.syncID == s.syncID
 		}) {
-			updatedSubscribers = true
+			if cookie.GetMinipoolGen() > 0 || len(cookie.GetPrevMiniblockHash()) > 0 {
+				// The given stream should be backfilled and then start syncing
+				shouldBackfill = true
+				s.initializingStreams.Store(streamID, true)
+			}
 			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
 		}
 	}
 	s.manager.sLock.Unlock()
 
-	if streamAlreadyInSync {
-		if !updatedSubscribers {
-			// The given subscription already subscribed on the given stream, do nothing
-			return false
-		} else {
-			// TODO: BACKFILL
-			go func() {
-				if err := s.backfillByCookie(cookie); err != nil {
-					rvrErr := AsRiverError(err).
-						Tag("syncId", s.syncID).
-						Tag("op", cookie.GetStreamId())
-					s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
-					s.log.Errorw("Failed to backfill stream by the given cookie",
-						"op", cookie.GetStreamId(), "err", err)
-				}
-			}()
-		}
-	}
-
-	return !streamAlreadyInSync
+	return
 }
 
 // removeStream removes the given stream from the current subscription.
