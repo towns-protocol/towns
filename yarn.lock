@@ -9327,6 +9327,38 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@towns-protocol/scratchpad@workspace:packages/scratchpad":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/scratchpad@workspace:packages/scratchpad"
+  dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect": ^2.0.0
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
+    "@ethereumjs/util": ^8.0.1
+    "@noble/curves": ^1.9.1
+    "@noble/hashes": ^1.8.0
+    "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    ethereum-cryptography: ^3.2.0
+    ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
+    tsx: ^4.19.4
+    typescript: ^5.8.2
+    vitest: 3.0.5
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/sdk@workspace:^, @towns-protocol/sdk@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/sdk@workspace:packages/sdk"

@@ -1,0 +1,12 @@
+{
+	"extends": "../tsconfig.app.json",
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"strict": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"types": ["vitest/globals"]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "dist", "tests"]
+}
