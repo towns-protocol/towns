@@ -9202,6 +9202,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/playground@workspace:packages/playground"
   dependencies:
+    "@connectrpc/connect-web": ^2.0.0
     "@emoji-mart/data": ^1.1.2
     "@hookform/resolvers": ^3.6.0
     "@radix-ui/react-dialog": ^1.1.1
@@ -9352,7 +9353,7 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     ethereum-cryptography: ^3.2.0
     ethers: ^5.7.2
-    fake-indexeddb: ^4.0.1
+    fake-indexeddb: ^6.0.1
     tsx: ^4.19.4
     typescript: ^5.8.2
     vitest: 3.0.5
@@ -9365,8 +9366,6 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect": ^2.0.0
-    "@connectrpc/connect-node": ^2.0.0
-    "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^8.0.1
     "@noble/curves": ^1.9.1
     "@noble/hashes": ^1.8.0
@@ -9404,6 +9403,9 @@ __metadata:
     typescript: ^5.8.2
     vitest: 3.0.5
     vitest-fetch-mock: ^0.4.3
+  peerDependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
   languageName: unknown
   linkType: soft
 
@@ -9414,6 +9416,7 @@ __metadata:
     "@aws-sdk/client-cloudfront": ^3.645.0
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@fastify/cors": ^11.0.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
@@ -9457,6 +9460,7 @@ __metadata:
   dependencies:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
@@ -16926,6 +16930,13 @@ __metadata:
   dependencies:
     realistic-structured-clone: ^3.0.0
   checksum: ad257e5cc6273d9ea667b4129d8b0798830d56a68c7c77ddba752b3fd0088cb33e34b9569b218d16dfc8a78733d360d325f89c2ce352b70a0587c1f46f6f881d
+  languageName: node
+  linkType: hard
+
+"fake-indexeddb@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "fake-indexeddb@npm:6.0.1"
+  checksum: c4b8a0576cf3165238494b67641539d4ff36194e038b36e6992449eb882923dfaadba78a62cfc7d5ae9a5c0ac2fa1e70af5cb6c2228dc764ac79b65f0e68e942
   languageName: node
   linkType: hard
 

@@ -34,7 +34,7 @@
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
-        "fake-indexeddb": "^4.0.1",
+        "fake-indexeddb": "^6.0.1",
         "tsx": "^4.19.4",
         "typescript": "^5.8.2"
     }
