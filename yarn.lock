@@ -8607,9 +8607,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/docs@workspace:packages/docs":
+"@towns-protocol/docs@workspace:apps/docs":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/docs@workspace:packages/docs"
+  resolution: "@towns-protocol/docs@workspace:apps/docs"
   dependencies:
     cspell: ^8.8.1
     mintlify: 4.0.274
@@ -8676,9 +8676,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/playground@workspace:packages/playground":
+"@towns-protocol/playground@workspace:apps/playground":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/playground@workspace:packages/playground"
+  resolution: "@towns-protocol/playground@workspace:apps/playground"
   dependencies:
     "@emoji-mart/data": ^1.1.2
     "@hookform/resolvers": ^3.6.0
@@ -8849,9 +8849,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/stream-metadata@workspace:packages/stream-metadata":
+"@towns-protocol/stream-metadata@workspace:apps/stream-metadata":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/stream-metadata@workspace:packages/stream-metadata"
+  resolution: "@towns-protocol/stream-metadata@workspace:apps/stream-metadata"
   dependencies:
     "@aws-sdk/client-cloudfront": ^3.645.0
     "@bufbuild/buf": ^1.32.0
@@ -8893,9 +8893,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/stress@workspace:packages/stress":
+"@towns-protocol/stress@workspace:apps/stress":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/stress@workspace:packages/stress"
+  resolution: "@towns-protocol/stress@workspace:apps/stress"
   dependencies:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^2.2.2
@@ -8927,9 +8927,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/subgraph@workspace:packages/subgraph":
+"@towns-protocol/subgraph@workspace:apps/subgraph":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/subgraph@workspace:packages/subgraph"
+  resolution: "@towns-protocol/subgraph@workspace:apps/subgraph"
   dependencies:
     "@towns-protocol/contracts": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
@@ -8975,9 +8975,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/xchain-monitor@workspace:packages/xchain-monitor":
+"@towns-protocol/xchain-monitor@workspace:apps/xchain-monitor":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/xchain-monitor@workspace:packages/xchain-monitor"
+  resolution: "@towns-protocol/xchain-monitor@workspace:apps/xchain-monitor"
   dependencies:
     "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
