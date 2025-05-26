@@ -1,3 +1,4 @@
+# TODO: fix this to use bun
 FROM node:20
 
 WORKDIR /app

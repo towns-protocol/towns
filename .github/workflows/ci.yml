@@ -86,11 +86,11 @@ jobs:
               with:
                   node-version: '20'
 
-            - name: Setup yarn
-              run: npm install -g yarn
+            - name: Setup bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Install node dependencies
-              run: yarn install --immutable
+              run: bun install --frozen-lockfile
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -118,20 +118,20 @@ jobs:
 
             - name: Syncpack
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn syncpack:check
+              run: bun run syncpack:check
 
             - name: Prettier
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn prettier:check
+              run: bun run prettier:check
 
             - name: Build
               id: ts_build
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn build
+              run: bun run build
 
             - name: Lint
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn lint
+              run: bun run lint
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
@@ -155,15 +155,15 @@ jobs:
             - name: Generate react-sdk docs
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               working-directory: packages/react-sdk
-              run: yarn gen
+              run: bun run gen
 
             - name: Docs checking broken links
               working-directory: packages/docs
-              run: yarn docs:broken-links
+              run: bun run docs:broken-links
 
             - name: Docs spellcheck
               working-directory: packages/docs
-              run: yarn spellcheck
+              run: bun run spellcheck
 
             - name: Staticcheck River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
@@ -179,7 +179,7 @@ jobs:
 
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
-              run: yarn test:unit
+              run: bun run test:unit
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
@@ -252,11 +252,11 @@ jobs:
               with:
                   node-version: '20'
 
-            - name: Setup yarn
-              run: npm install -g yarn
+            - name: Setup bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Install node dependencies
-              run: yarn install --immutable
+              run: bun install --frozen-lockfile
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -269,7 +269,7 @@ jobs:
                       ${{ runner.os }}-turbo-common-
 
             - name: Build all packages
-              run: yarn build
+              run: bun run build
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -282,8 +282,8 @@ jobs:
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
+            - name: Print all package versions
+              run: bun pm ls --all
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -310,16 +310,16 @@ jobs:
 
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
-              run: yarn run test:ci:multi:ne
+              run: bun run test:ci:multi:ne
               timeout-minutes: 10
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne &
-                  yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
+                  bun run -F @towns-protocol/stream-metadata dev:local_multi_ne &
+                  bunx wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
-              run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
+              run: bunx turbo run test:integration --filter=@towns-protocol/stream-metadata
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -402,11 +402,11 @@ jobs:
               with:
                   node-version: '20'
 
-            - name: Setup yarn
-              run: npm install -g yarn
+            - name: Setup bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Install node dependencies
-              run: yarn install --immutable
+              run: bun install --frozen-lockfile
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -419,8 +419,8 @@ jobs:
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
+            - name: Print all package versions
+              run: bun pm ls --all
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -456,13 +456,13 @@ jobs:
               run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
-              run: yarn csb:turbo-no-sdk
+              run: bun run csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
+              run: bunx turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
 
-            - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/stress
+            - name: Run Stress Test Tests (ts) (with entitlements)
+              run: bunx turbo run test:ci:multi:ent --filter=@towns-protocol/stress
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
@@ -548,11 +548,11 @@ jobs:
               with:
                   node-version: '20'
 
-            - name: Setup yarn
-              run: npm install -g yarn
+            - name: Setup bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Install node dependencies
-              run: yarn install --immutable
+              run: bun install --frozen-lockfile
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -565,8 +565,8 @@ jobs:
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
+            - name: Print all package versions
+              run: bun pm ls --all
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -602,10 +602,10 @@ jobs:
               run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
-              run: yarn csb:turbo-no-sdk
+              run: bun run csb:turbo-no-sdk
 
             - name: Run River Tests Against Legacy Spaces (with entitlements)
-              run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
+              run: bunx turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
             - name: Archive River Node Logs and Settings
               if: always()

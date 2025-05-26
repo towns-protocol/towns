@@ -1,3 +1,4 @@
+# TODO: fix this to use bun
 FROM node:lts-alpine3.20 AS builder
 
 WORKDIR /river

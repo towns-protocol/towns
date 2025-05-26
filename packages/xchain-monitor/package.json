@@ -2,7 +2,7 @@
     "name": "@towns-protocol/xchain-monitor",
     "type": "module",
     "version": "0.0.230",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "bun@1.2.14",
     "main": "dist/index.js",
     "publishConfig": {
         "access": "public"
@@ -22,7 +22,7 @@
     "scripts": {
         "build": "node ./esbuild.config.mjs",
         "clean": "rm -rf dist",
-        "dev": "yarn tsx src/index.ts"
+        "dev": "tsx src/index.ts"
     },
     "devDependencies": {
         "@types/uuid": "^10.0.0",

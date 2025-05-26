@@ -1,3 +1,4 @@
+# TODO: fix this to use bun
 # Use Node.js 20 as the base image
 FROM node:20-slim
 
