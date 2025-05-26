@@ -84,7 +84,7 @@ type ErrorResult = {
 
 type EventContentResult = SuccessResult | ErrorResult
 
-export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
+export function toEventSA(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
     const senderId = timelineEvent.creatorUserId
 
@@ -941,22 +941,6 @@ function toAttachment(
     }
 }
 
-// function isDMMessageEventBlocked(
-//     event: TimelineEvent,
-//     kind: SnapshotCaseType,
-//     streamClient: Client,
-// ) {
-//     if (kind !== 'dmChannelContent') {
-//         return false
-//     }
-//     if (!streamClient?.userSettingsStreamId) {
-//         return false
-//     }
-//     const stream = streamClient.stream(streamClient.userSettingsStreamId)
-//     check(isDefined(stream), 'stream must be defined')
-//     return stream.view.userSettingsContent.isUserBlockedAt(event.sender.id, event.eventNum)
-// }
-
 export function getFallbackContent(
     senderDisplayName: string,
     content?: TimelineEvent_OneOf,
@@ -986,6 +970,8 @@ export function getFallbackContent(
             return `${senderDisplayName}: ${content.body}`
         case RiverTimelineEvent.ChannelProperties:
             return `properties: ${content.properties.name ?? ''} ${content.properties.topic ?? ''}`
+        case RiverTimelineEvent.EncryptedChannelProperties:
+            return `Decrypting Channel Properties...`
         case RiverTimelineEvent.SpaceUsername:
             return `username: ${content.username}`
         case RiverTimelineEvent.SpaceDisplayName:
@@ -1010,14 +996,11 @@ export function getFallbackContent(
         case RiverTimelineEvent.SpaceImage:
             return `SpaceImage`
         case RiverTimelineEvent.Fulfillment:
-            return `Fulfillment sessionIds: ${
+            return `Fulfillment from: ${content.from} to: ${content.deviceKey} count: ${content.sessionIds.length} sessionIds: ${
                 content.sessionIds.length ? content.sessionIds.join(',') : 'forNewDevice: true'
-            }, from: ${content.from} to: ${content.deviceKey}`
+            }`
         case RiverTimelineEvent.KeySolicitation:
-            if (content.isNewDevice) {
-                return `KeySolicitation deviceKey: ${content.deviceKey}, newDevice: true`
-            }
-            return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
+            return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length} isNewDevice: ${content.isNewDevice}`
         case RiverTimelineEvent.ChannelMessageMissing:
             return `eventId: ${content.eventId}`
         case RiverTimelineEvent.ChannelMessageEncryptedWithRef:
@@ -1185,14 +1168,6 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
         .filter(isDefined)
 }
 
-// function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-//     return content?.kind === RiverEvent.ChannelMessage ? content.editsEventId : undefined
-// }
-
-// function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-//     return content?.kind === RiverEvent.RedactionActionEvent ? content.refEventId : undefined
-// }
-
 function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
     return content?.kind === RiverTimelineEvent.ChannelMessage ? content.threadId : undefined
 }
@@ -1314,16 +1289,6 @@ function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
         return true
     }
     return false
-}
-
-export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
-}
-
-export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.RedactionActionEvent
-        ? content.refEventId
-        : undefined
 }
 
 export function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {

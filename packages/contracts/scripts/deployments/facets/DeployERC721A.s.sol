@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IERC721A} from "../../../src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 // contracts
@@ -43,6 +43,6 @@ library DeployERC721A {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("ERC721A.sol", "");
+        return LibDeploy.deployCode("ERC721A.sol", "");
     }
 }

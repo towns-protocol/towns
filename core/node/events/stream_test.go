@@ -20,10 +20,11 @@ func MakeGenesisMiniblockForSpaceStream(
 	userWallet *crypto.Wallet,
 	nodeWallet *crypto.Wallet,
 	streamId StreamId,
+	settings *StreamSettings,
 ) *MiniblockInfo {
 	inception, err := MakeParsedEventWithPayload(
 		userWallet,
-		Make_SpacePayload_Inception(streamId, nil),
+		Make_SpacePayload_Inception(streamId, settings),
 		&MiniblockRef{},
 	)
 	require.NoError(t, err)
@@ -203,6 +204,9 @@ func mbTest(
 		tt.instances[0].params.Wallet,
 		tt.instances[0].params.Wallet,
 		spaceStreamId,
+		&StreamSettings{
+			DisableMiniblockCreation: true,
+		},
 	)
 
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
@@ -210,14 +214,26 @@ func mbTest(
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
 
-	candidate, err := tt.instances[0].makeAndSaveMbCandidate(ctx, stream)
+	candidate, err := tt.instances[0].makeAndSaveMbCandidate(ctx, stream, 0)
+	require.NoError(err)
 	mb := candidate.headerEvent.Event.GetMiniblockHeader()
 	events := candidate.Events()
-	require.NoError(err)
 	require.Equal(2, len(events))
 	require.Equal(2, len(mb.EventHashes))
 	require.EqualValues(view.LastBlock().Ref.Hash[:], mb.PrevMiniblockHash)
 	require.Equal(int64(1), mb.MiniblockNum)
+
+	// Test candidates are getting skipped after 10 candidates.
+	for range 9 {
+		_, err := tt.instances[0].makeAndSaveMbCandidate(ctx, stream, 1)
+		require.NoError(err)
+	}
+	// 11th candidate should be skipped on block 1 and produced on block 2.
+	_, err = tt.instances[0].makeAndSaveMbCandidate(ctx, stream, 1)
+	require.ErrorIs(err, RiverError(Err_RESOURCE_EXHAUSTED, ""))
+
+	_, err = tt.instances[0].makeAndSaveMbCandidate(ctx, stream, 2)
+	require.NoError(err)
 
 	if params.addAfterProposal {
 		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref)
@@ -269,6 +285,7 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 		tt.instances[0].params.Wallet,
 		tt.instances[0].params.Wallet,
 		spaceStreamId,
+		nil,
 	)
 
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
@@ -315,6 +332,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		params.Wallet,
 		params.Wallet,
 		spaceStreamId,
+		nil,
 	)
 
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)

@@ -389,7 +389,7 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	return s.promoteCandidateLocked(ctx, mb)
 }
 
-// promoteCandidateLocked shouldbe called with a lock held.
+// promoteCandidateLocked should be called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
@@ -441,7 +441,7 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 			return RiverError(
 				Err_STREAM_RECONCILIATION_REQUIRED,
 				"schedulePromotionNoLock: next promotion is not for the next block",
-			)
+			).Tags("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	} else if len(s.local.pendingCandidates) > 3 {
@@ -449,7 +449,8 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
-			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
+			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive").
+				Tag("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
@@ -670,13 +671,7 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) error {
 // AddEvent2 adds an event to the stream and returns the new stream view.
 // AddEvent2 is thread-safe.
 func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
-	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-
-	return s.addEventLocked(ctx, event)
+	return s.addEvent(ctx, event, false)
 }
 
 // notifySubscribersLocked updates all callers with unseen events and the new sync cookie.
@@ -698,9 +693,29 @@ func (s *Stream) notifySubscribersLocked(
 	}
 }
 
+func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+	_, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.addEventLocked(ctx, event, relaxDuplicateCheck)
+}
+
+// addEventLocked adds an event to the stream.
+// If relaxDuplicateCheck is true, it will not return an error if referenced miniblock can't be found in the cache.
+// In this case duplicate check can't be completed.
+// This options is used to add events that are reported by other nodes.
+// Without this option there are rare situations when events stay in minipools forever since they have mbs that too
+// old to be in the cache and thus can't complete the duplicate check.
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
+func (s *Stream) addEventLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	relaxDuplicateCheck bool,
+) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
 		return nil, err
@@ -712,7 +727,11 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
 			return oldSV, nil
 		}
-		return nil, AsRiverError(err).Func("copyAndAddEvent")
+		skipError := relaxDuplicateCheck && IsRiverErrorCode(err, Err_BAD_PREV_MINIBLOCK_HASH)
+		if !skipError {
+			return nil, AsRiverError(err).Func("copyAndAddEvent")
+		}
+		logging.FromCtx(ctx).Warnw("Stream.addEventLocked: adding event with relaxed duplicate check", "error", err)
 	}
 
 	// Check if event can be added before writing to storage.
@@ -1009,7 +1028,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	view, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "err", err)
+		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
@@ -1038,7 +1057,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
 					s.params.streamCache.SubmitSyncStreamTask(s, nil)
 				} else {
-					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
 			}
 		} else {

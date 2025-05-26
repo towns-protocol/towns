@@ -194,6 +194,7 @@ message MemberPayload {
         bytes user_address = 2;
         bytes initiator_address = 3;
         optional bytes stream_parent_id = 4;
+        MembershipReason reason = 5;
     }
     
     message KeySolicitation {
@@ -420,6 +421,7 @@ message UserPayload {
         MembershipOp op = 2;
         optional bytes inviter = 3;
         optional bytes stream_parent_id = 4;
+        optional MembershipReason reason = 5;
     }
 
     // update someone else's membership
@@ -428,6 +430,7 @@ message UserPayload {
         bytes user_id = 2; 
         MembershipOp op = 3;
         optional bytes stream_parent_id = 4;
+        optional MembershipReason reason = 5;
     }
 
     // derived event, only send from nodes
@@ -1077,6 +1080,12 @@ enum MembershipOp {
     SO_LEAVE = 3;
 }
 
+enum MembershipReason {
+    MR_NONE = 0;
+    MR_NOT_ENTITLED = 1;
+    MR_EXPIRED = 2;
+}
+
 enum ChannelOp {
     CO_UNSPECIFIED = 0;
     CO_CREATED = 1;
@@ -1246,4 +1255,12 @@ enum Err {
     // STREAM_RECONCILIATION_REQUIRED indicates that the stream is out of sync and must be 
     // reconciled before it can be used.
     STREAM_RECONCILIATION_REQUIRED = 69;
+
+    // SYNC_SESSION_RUNNER_EMPTY indicates that a sync session runner is being cancelled because
+    // it no longer hosts any streams. 
+    SYNC_SESSION_RUNNER_EMPTY = 70;
+
+    // SYNC_SESSION_RUNNER_UNASSIGNABLE occurs when an attempt is made to assign a stream to a
+    // sync session runner that is full or closed.
+    SYNC_SESSION_RUNNER_UNASSIGNABLE = 71;
 }

@@ -76,20 +76,19 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 
 	try {
 		const { key, iv } = getMediaEncryption(logger, spaceImage)
-		if (key?.length === 0 || iv?.length === 0) {
+		if (key?.length === 0) {
 			logger.error(
 				{
-					key: key?.length === 0 ? 'has key' : 'no key',
-					iv: iv?.length === 0 ? 'has iv' : 'no iv',
+					key: 'no key',
 					spaceAddress,
 					mediaStreamId: spaceImage.streamId,
 				},
-				'Invalid key or iv',
+				'Invalid key',
 			)
 			return reply
 				.code(422)
 				.header('Cache-Control', CACHE_CONTROL[422])
-				.send('Failed to get encryption key or iv')
+				.send('Failed to get encryption key')
 		}
 		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
 			spaceImage.streamId
@@ -103,12 +102,12 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 				spaceAddress,
 				mediaStreamId: spaceImage.streamId,
 			},
-			'Failed to get encryption key or iv',
+			'Failed to get encryption key',
 		)
 		return reply
 			.code(422)
 			.header('Cache-Control', CACHE_CONTROL['422'])
-			.send('Failed to get encryption key or iv')
+			.send('Failed to get encryption key')
 	}
 }
 

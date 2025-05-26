@@ -19,7 +19,9 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     FeatureManagerFacet featureManagerFacet;
     Towns towns;
 
-    bytes32 constant ZERO_SENTINEL_BYTES32 = bytes32(0);
+    uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
+    bytes32 constant ZERO_SENTINEL_BYTES32 = bytes32(_ZERO_SENTINEL);
+    address constant ZERO_SENTINEL_ADDRESS = address(uint160(_ZERO_SENTINEL));
 
     // keccak256("test.feature")
     bytes32 constant TEST_FEATURE_ID =
@@ -38,10 +40,8 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         address to,
         uint256 amount
     ) {
-        vm.assume(amount > 0 && amount < type(uint256).max);
-        vm.assume(condition.threshold > 0 && condition.threshold < amount);
-        vm.assume(to != ZERO_SENTINEL);
-        vm.assume(to != address(0));
+        amount = bound(amount, 1, type(uint256).max);
+        condition.threshold = bound(condition.threshold, 1, amount);
         vm.assume(featureId != ZERO_SENTINEL_BYTES32);
 
         condition.token = address(townsToken);
@@ -167,21 +167,16 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
     }
 
-    function test_disableFeatureCondition(
-        bytes32 featureId,
-        FeatureCondition memory condition,
-        address to,
-        uint256 amount
-    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
-        vm.assume(condition.active == true);
+    function test_disableFeatureCondition(address to) external {
+        setTestFeatureCondition(to);
 
         vm.prank(deployer);
         vm.expectEmit(address(featureManagerFacet));
-        emit FeatureConditionDisabled(featureId);
-        featureManagerFacet.disableFeatureCondition(featureId);
+        emit FeatureConditionDisabled(TEST_FEATURE_ID);
+        featureManagerFacet.disableFeatureCondition(TEST_FEATURE_ID);
 
         FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
-            featureId
+            TEST_FEATURE_ID
         );
         assertFalse(currentCondition.active);
     }
@@ -192,35 +187,26 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         featureManagerFacet.disableFeatureCondition(TEST_FEATURE_ID);
     }
 
-    function test_checkFeatureCondition(
-        bytes32 featureId,
-        FeatureCondition memory condition,
-        address to,
-        uint256 amount,
-        address space
-    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
-        vm.assume(condition.active == true);
-        vm.assume(space != address(0));
+    function test_checkFeatureCondition() external {
+        address space = _randomAddress();
+        address to = _randomAddress();
 
-        vm.assertFalse(featureManagerFacet.checkFeatureCondition(featureId, space));
+        setTestFeatureCondition(to);
+
+        vm.assertFalse(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space));
 
         vm.prank(to);
         towns.delegate(space);
 
-        vm.assertTrue(featureManagerFacet.checkFeatureCondition(featureId, space));
+        vm.assertTrue(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space));
     }
 
-    function test_getFeatureConditionsForSpace(
-        bytes32 featureId,
-        FeatureCondition memory condition,
-        address user,
-        uint256 amount,
-        address space
-    ) external givenFeatureConditionIsSet(featureId, condition, user, amount) {
-        vm.assume(user != address(0));
+    function test_getFeatureConditionsForSpace(address to, address space) external {
+        vm.assume(to != address(0));
         vm.assume(space != address(0));
-        vm.assume(user != space);
-        vm.assume(condition.active == true);
+        vm.assume(to != space);
+
+        setTestFeatureCondition(to);
 
         // get feature conditions for space
         FeatureCondition[] memory conditions = featureManagerFacet.getFeatureConditionsForSpace(
@@ -231,7 +217,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         assertEq(conditions.length, 0);
 
         // delegate to space
-        vm.prank(user);
+        vm.prank(to);
         towns.delegate(space);
 
         // get feature conditions for space
@@ -240,7 +226,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
 
         // disable feature condition
         vm.prank(deployer);
-        featureManagerFacet.disableFeatureCondition(featureId);
+        featureManagerFacet.disableFeatureCondition(TEST_FEATURE_ID);
 
         // get feature conditions for space
         conditions = featureManagerFacet.getFeatureConditionsForSpace(space);
@@ -269,5 +255,23 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
 
         vm.assertTrue(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space));
+    }
+
+    function setTestFeatureCondition(address to) internal {
+        vm.assume(to != address(0));
+        vm.assume(to != deployer);
+
+        FeatureCondition memory condition = FeatureCondition({
+            token: address(townsToken),
+            threshold: TEST_THRESHOLD,
+            active: true,
+            extraData: ""
+        });
+
+        vm.prank(bridge);
+        towns.mint(to, TEST_THRESHOLD);
+
+        vm.prank(deployer);
+        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
     }
 }

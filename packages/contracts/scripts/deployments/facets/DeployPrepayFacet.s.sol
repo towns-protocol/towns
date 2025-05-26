@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 
 //libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
 
@@ -26,6 +26,6 @@ library DeployPrepayFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("PrepayFacet.sol", "");
+        return LibDeploy.deployCode("PrepayFacet.sol", "");
     }
 }

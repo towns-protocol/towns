@@ -2,16 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistributionBase, IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
-
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {StdAssertions} from "forge-std/StdAssertions.sol";
 
@@ -19,7 +16,7 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     using FixedPointMathLib for uint256;
 
     Towns internal towns;
-    RewardsDistribution internal rewardsDistributionFacet;
+    IRewardsDistribution internal rewardsDistributionFacet;
 
     function verifyStake(
         address depositor,

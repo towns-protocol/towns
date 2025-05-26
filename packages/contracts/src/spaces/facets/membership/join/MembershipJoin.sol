@@ -2,34 +2,29 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-import {ITownsPoints, ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
+import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
 import {IPartnerRegistry, IPartnerRegistryBase} from "src/factory/facets/partner/IPartnerRegistry.sol";
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
-
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-
 import {Entitled} from "src/spaces/facets/Entitled.sol";
 import {DispatcherBase} from "src/spaces/facets/dispatcher/DispatcherBase.sol";
-
 import {EntitlementGatedBase} from "src/spaces/facets/gated/EntitlementGatedBase.sol";
 import {MembershipBase} from "src/spaces/facets/membership/MembershipBase.sol";
 import {PrepayBase} from "src/spaces/facets/prepay/PrepayBase.sol";
 import {ReferralsBase} from "src/spaces/facets/referrals/ReferralsBase.sol";
 import {RolesBase} from "src/spaces/facets/roles/RolesBase.sol";
+import {PointsBase} from "../../points/PointsBase.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -44,8 +39,11 @@ abstract contract MembershipJoin is
     RolesBase,
     EntitlementGatedBase,
     Entitled,
-    PrepayBase
+    PrepayBase,
+    PointsBase
 {
+    using CustomRevert for bytes4;
+
     /// @notice Constant representing the permission to join a space
     bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
 
@@ -318,18 +316,14 @@ abstract contract MembershipJoin is
         _captureData(transactionId, "");
 
         // calculate points and credit them
-        ITownsPoints pointsToken = ITownsPoints(
-            IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(
-                bytes32("RiverAirdrop")
-            )
-        );
-        uint256 points = pointsToken.getPoints(
+        address airdropDiamond = _getAirdropDiamond();
+        uint256 points = _getPoints(
+            airdropDiamond,
             ITownsPointsBase.Action.JoinSpace,
             abi.encode(membershipPrice)
         );
-
-        pointsToken.mint(receiver, points);
-        pointsToken.mint(_owner(), points);
+        _mintPoints(airdropDiamond, receiver, points);
+        _mintPoints(airdropDiamond, _owner(), points);
     }
 
     /// @notice Issues a membership token to the receiver
@@ -443,5 +437,37 @@ abstract contract MembershipJoin is
             partnerInfo.recipient,
             partnerFee
         );
+    }
+
+    function _renewMembership(address payer, uint256 tokenId) internal {
+        address receiver = _ownerOf(tokenId);
+
+        if (receiver == address(0)) {
+            Membership__InvalidAddress.selector.revertWith();
+        }
+
+        uint256 duration = _getMembershipDuration();
+        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+
+        if (membershipPrice > msg.value) {
+            Membership__InvalidPayment.selector.revertWith();
+        }
+
+        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
+
+        uint256 remainingDue = membershipPrice - protocolFee;
+        if (remainingDue > 0) _transferIn(payer, remainingDue);
+
+        uint256 excess = msg.value - membershipPrice;
+        if (excess > 0) {
+            CurrencyTransfer.transferCurrency(
+                _getMembershipCurrency(),
+                address(this),
+                payer,
+                excess
+            );
+        }
+
+        _renewSubscription(tokenId, uint64(duration));
     }
 }

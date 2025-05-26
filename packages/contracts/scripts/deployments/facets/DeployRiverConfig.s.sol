@@ -1,55 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {RiverConfig} from "src/river/registry/facets/config/RiverConfig.sol";
 
-contract DeployRiverConfig is FacetHelper, Deployer {
-    constructor() {
-        addSelector(RiverConfig.configurationExists.selector);
-        addSelector(RiverConfig.setConfiguration.selector);
-        addSelector(RiverConfig.deleteConfiguration.selector);
-        addSelector(RiverConfig.deleteConfigurationOnBlock.selector);
-        addSelector(RiverConfig.getConfiguration.selector);
-        addSelector(RiverConfig.getAllConfiguration.selector);
-        addSelector(RiverConfig.isConfigurationManager.selector);
-        addSelector(RiverConfig.approveConfigurationManager.selector);
-        addSelector(RiverConfig.removeConfigurationManager.selector);
+library DeployRiverConfig {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](9);
+        res[0] = RiverConfig.configurationExists.selector;
+        res[1] = RiverConfig.setConfiguration.selector;
+        res[2] = RiverConfig.deleteConfiguration.selector;
+        res[3] = RiverConfig.deleteConfigurationOnBlock.selector;
+        res[4] = RiverConfig.getConfiguration.selector;
+        res[5] = RiverConfig.getAllConfiguration.selector;
+        res[6] = RiverConfig.isConfigurationManager.selector;
+        res[7] = RiverConfig.approveConfigurationManager.selector;
+        res[8] = RiverConfig.removeConfigurationManager.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return RiverConfig.__RiverConfig_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function makeInitData(address[] memory configManagers) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), configManagers);
+    function makeInitData(address[] memory configManagers) internal pure returns (bytes memory) {
+        return abi.encodeCall(RiverConfig.__RiverConfig_init, (configManagers));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/riverConfigFacet";
-    }
-
-    function facetInitHelper(
-        address deployer,
-        address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
-        IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
-        address[] memory configManagers = new address[](1);
-        configManagers[0] = deployer;
-        return (facetCut, makeInitData(configManagers));
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        RiverConfig riverConfig = new RiverConfig();
-        vm.stopBroadcast();
-        return address(riverConfig);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("RiverConfig.sol", "");
     }
 }

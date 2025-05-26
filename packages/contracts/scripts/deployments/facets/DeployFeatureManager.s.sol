@@ -2,39 +2,37 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
-
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {FeatureManagerFacet} from "src/factory/facets/feature/FeatureManagerFacet.sol";
 
-contract DeployFeatureManager is Deployer, FacetHelper {
-    // FacetHelper
-    constructor() {
-        addSelector(FeatureManagerFacet.setFeatureCondition.selector);
-        addSelector(FeatureManagerFacet.getFeatureCondition.selector);
-        addSelector(FeatureManagerFacet.getFeatureConditions.selector);
-        addSelector(FeatureManagerFacet.getFeatureConditionsForSpace.selector);
-        addSelector(FeatureManagerFacet.checkFeatureCondition.selector);
-        addSelector(FeatureManagerFacet.disableFeatureCondition.selector);
+library DeployFeatureManager {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](6);
+        _selectors[0] = FeatureManagerFacet.setFeatureCondition.selector;
+        _selectors[1] = FeatureManagerFacet.getFeatureCondition.selector;
+        _selectors[2] = FeatureManagerFacet.getFeatureConditions.selector;
+        _selectors[3] = FeatureManagerFacet.getFeatureConditionsForSpace.selector;
+        _selectors[4] = FeatureManagerFacet.checkFeatureCondition.selector;
+        _selectors[5] = FeatureManagerFacet.disableFeatureCondition.selector;
     }
 
-    // Deploying
-    function versionName() public pure override returns (string memory) {
-        return "featureManagerFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return FeatureManagerFacet.__FeatureManagerFacet_init.selector;
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(FeatureManagerFacet.__FeatureManagerFacet_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        FeatureManagerFacet featureManagerFacet = new FeatureManagerFacet();
-        vm.stopBroadcast();
-        return address(featureManagerFacet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("FeatureManagerFacet.sol", "");
     }
 }

@@ -2,6 +2,8 @@ package events
 
 import (
 	"bytes"
+	"encoding/hex"
+	"encoding/json"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -180,4 +182,78 @@ func (e *ParsedEvent) GetEncryptedMessage() *EncryptedData {
 		}
 	}
 	return nil
+}
+
+// ParsedString prints the content of the ParsedEvent according to it's event type.
+func (e *ParsedEvent) ParsedString() string {
+	switch payload := e.Event.Payload.(type) {
+	case *StreamEvent_ChannelPayload:
+		{
+			switch content := payload.ChannelPayload.Content.(type) {
+			case *ChannelPayload_Inception_:
+				{
+					bytes, err := json.Marshal(struct {
+						Type     string
+						SpaceId  string
+						StreamId string
+					}{
+						Type:     "ChannelPayload_Inception",
+						SpaceId:  hex.EncodeToString(content.Inception.SpaceId),
+						StreamId: hex.EncodeToString(content.Inception.StreamId),
+					})
+					if err != nil {
+						return "<ChannelPayload_Inception>"
+					}
+					return string(bytes)
+				}
+			case *ChannelPayload_Message:
+				{
+					bytes, err := json.Marshal(struct {
+						Type           string
+						Message        string
+						SessionId      string
+						CreatorAddress string
+					}{
+						Type:           "ChannelPayload_Message",
+						Message:        content.Message.Ciphertext,
+						SessionId:      hex.EncodeToString(content.Message.SessionIdBytes),
+						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
+					})
+					if err != nil {
+						return "<ChannelPayload_Message>"
+					}
+					return string(bytes)
+				}
+			default:
+				return "<ChannelPayload>"
+			}
+		}
+	case *StreamEvent_MemberPayload:
+		{
+			switch content := payload.MemberPayload.Content.(type) {
+			case *MemberPayload_Membership_:
+				{
+					bytes, err := json.Marshal(struct {
+						Type             string
+						UserAddress      string
+						InitiatorAddress string
+						Op               string
+					}{
+						Type:             "MemberPayload_Membership",
+						UserAddress:      hex.EncodeToString(content.Membership.UserAddress),
+						InitiatorAddress: hex.EncodeToString(content.Membership.InitiatorAddress),
+						Op:               content.Membership.Op.String(),
+					})
+					if err != nil {
+						return "<MemberPayload_Membership>"
+					}
+					return string(bytes)
+				}
+			default:
+				return "<MemberPayload>"
+			}
+		}
+	default:
+		return "<StreamEvent>"
+	}
 }

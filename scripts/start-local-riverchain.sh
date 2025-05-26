@@ -6,13 +6,7 @@ cd ..
 echo "Starting local River chain..."
 
 RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
-
-# If RIVER_BLOCK_TIME is set assign "--block-time XX" to $OPTS
-if [ -z ${RIVER_BLOCK_TIME+x} ]; then
-  OPTS="${RIVER_ANVIL_OPTS:-}"
-else
-  OPTS="--block-time $RIVER_BLOCK_TIME ${RIVER_ANVIL_OPTS:-}"
-fi
+OPTS="--block-time $RIVER_BLOCK_TIME ${RIVER_ANVIL_OPTS:-}"
 
 echo "Block time: $RIVER_BLOCK_TIME"
 echo "Options: $OPTS"

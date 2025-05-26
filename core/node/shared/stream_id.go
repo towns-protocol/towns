@@ -65,7 +65,7 @@ func StreamTypeToString(streamType byte) string {
 func StreamIdFromString(s string) (StreamId, error) {
 	b, err := hex.DecodeString(s)
 	if err != nil {
-		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid address hex", "streamId", s)
+		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid stream id", "streamId", s)
 	}
 	return StreamIdFromBytes(b)
 }

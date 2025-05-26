@@ -1,8 +1,20 @@
-import { createConfig } from 'ponder'
-import { http } from 'viem'
+import { createConfig, mergeAbis, factory } from 'ponder'
+import { http, parseAbiItem } from 'viem'
 
 // import abis
-import { createSpaceFacetAbi } from '@towns-protocol/contracts/typings'
+import {
+    createSpaceFacetAbi,
+    spaceOwnerAbi,
+    tokenPausableFacetAbi,
+    mainnetDelegationAbi,
+    entitlementCheckerAbi,
+    nodeOperatorFacetAbi,
+    spaceDelegationFacetAbi,
+    rewardsDistributionV2Abi,
+    xChainAbi,
+    swapFacetAbi,
+    swapRouterAbi,
+} from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
 import { getContractAddress } from './utils/contractAddresses'
@@ -17,6 +29,20 @@ const startBlock = process.env.PONDER_START_BLOCK
 const spaceFactory = getContractAddress('spaceFactory')
 if (!spaceFactory) {
     throw new Error('Space factory address not found')
+}
+const spaceOwner = getContractAddress('spaceOwner')
+if (!spaceOwner) {
+    throw new Error('Space owner address not found')
+}
+
+const baseRegistry = getContractAddress('baseRegistry')
+if (!baseRegistry) {
+    throw new Error('Base registry address not found')
+}
+
+const swapRouter = getContractAddress('swapRouter')
+if (!swapRouter) {
+    throw new Error('Swap router address not found')
 }
 
 export default createConfig({
@@ -33,9 +59,46 @@ export default createConfig({
         },
     },
     contracts: {
-        CreateSpace: {
-            abi: createSpaceFacetAbi,
+        BaseRegistry: {
+            abi: mergeAbis([
+                mainnetDelegationAbi,
+                entitlementCheckerAbi,
+                nodeOperatorFacetAbi,
+                spaceDelegationFacetAbi,
+                rewardsDistributionV2Abi,
+                xChainAbi,
+            ]),
+            address: baseRegistry,
+            startBlock,
+            network: 'anvil',
+        },
+        SpaceFactory: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
+            startBlock,
+            network: 'anvil',
+        },
+        Space: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
+            address: factory({
+                address: spaceFactory,
+                event: parseAbiItem([
+                    'event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)',
+                ]),
+                parameter: 'space',
+            }),
+            startBlock,
+            network: 'anvil',
+        },
+        SpaceOwner: {
+            abi: spaceOwnerAbi,
+            address: spaceOwner,
+            startBlock,
+            network: 'anvil',
+        },
+        SwapRouter: {
+            abi: swapRouterAbi,
+            address: swapRouter,
             startBlock,
             network: 'anvil',
         },

@@ -15,6 +15,8 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
+    using CustomRevert for bytes4;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                            FUNDS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -47,28 +49,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function renewMembership(uint256 tokenId) external payable nonReentrant {
-        address receiver = _ownerOf(tokenId);
-
-        if (receiver == address(0)) {
-            CustomRevert.revertWith(Membership__InvalidAddress.selector);
-        }
-
-        // validate if the current expiration is 365 or more
-        uint256 expiration = _expiresAt(tokenId);
-        if (expiration - block.timestamp >= _getMembershipDuration()) {
-            CustomRevert.revertWith(Membership__NotExpired.selector);
-        }
-
-        // allocate protocol and membership fees
-        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
-
-        if (membershipPrice > 0) {
-            uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
-            uint256 remainingDue = membershipPrice - protocolFee;
-            if (remainingDue > 0) _transferIn(receiver, remainingDue);
-        }
-
-        _renewSubscription(tokenId, _getMembershipDuration());
+        _renewMembership(msg.sender, tokenId);
     }
 
     /// @inheritdoc IMembership
@@ -83,6 +64,10 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function getMembershipDuration() external view returns (uint64) {
         return _getMembershipDuration();
+    }
+
+    function setMembershipDuration(uint64 duration) external onlyOwner {
+        _setMembershipDuration(duration);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -136,7 +121,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
         // verify newLimit is not more than the max supply limit
         if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit) {
-            CustomRevert.revertWith(Membership__InvalidFreeAllocation.selector);
+            Membership__InvalidFreeAllocation.selector.revertWith();
         }
 
         // verify newLimit is not more than the allowed platform limit

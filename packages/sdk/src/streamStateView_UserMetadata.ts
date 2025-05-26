@@ -24,9 +24,9 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
     readonly streamId: string
     readonly streamCreatorId: string
     private profileImage: ChunkedMedia | undefined
-    private encryptedProfileImage: EncryptedData | undefined
+    encryptedProfileImage: EncryptedData | undefined
     private bio: UserBio | undefined
-    private encryptedBio: EncryptedData | undefined
+    encryptedBio: EncryptedData | undefined
     private decryptionInProgress: {
         bio: Promise<UserBio> | undefined
         image: Promise<ChunkedMedia> | undefined

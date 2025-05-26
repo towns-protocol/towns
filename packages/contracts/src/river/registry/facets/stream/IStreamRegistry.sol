@@ -32,30 +32,12 @@ interface IStreamRegistryBase {
     /// @param data The data of the stream event
     event StreamUpdated(StreamEventType indexed eventType, bytes data);
 
-    event StreamAllocated(
-        bytes32 streamId,
-        address[] nodes,
-        bytes32 genesisMiniblockHash,
-        bytes genesisMiniblock
-    );
-
-    event StreamCreated(bytes32 streamId, bytes32 genesisMiniblockHash, Stream stream);
-
-    event StreamLastMiniblockUpdated(
-        bytes32 streamId,
-        bytes32 lastMiniblockHash,
-        uint64 lastMiniblockNum,
-        bool isSealed
-    );
-
     event StreamLastMiniblockUpdateFailed(
         bytes32 streamId,
         bytes32 lastMiniblockHash,
         uint64 lastMiniblockNum,
         string reason
     );
-
-    event StreamPlacementUpdated(bytes32 streamId, address nodeAddress, bool isAdded);
 }
 
 interface IStreamRegistry is IStreamRegistryBase {

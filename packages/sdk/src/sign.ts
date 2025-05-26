@@ -23,8 +23,8 @@ import {
     EventRefSchema,
     SnapshotSchema,
 } from '@towns-protocol/proto'
-import { assertBytes } from 'ethereum-cryptography/utils'
-import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
+import { abytes } from '@noble/hashes/utils'
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
 import {
     ParsedEvent,
@@ -56,12 +56,14 @@ export const _impl_makeEvent_impl_ = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
     prevMiniblockHash?: Uint8Array,
+    prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
     const streamEvent = create(StreamEventSchema, {
         creatorAddress: context.creatorAddress,
         salt: genIdBlob(),
         prevMiniblockHash,
+        prevMiniblockNum,
         payload,
         createdAtEpochMs: BigInt(Date.now()),
         tags,
@@ -82,6 +84,7 @@ export const makeEvent = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
     prevMiniblockHash?: Uint8Array,
+    prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
     // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
@@ -99,8 +102,12 @@ export const makeEvent = async (
             Err.BAD_HASH_FORMAT,
         )
     }
+    if (prevMiniblockNum) {
+        check(isDefined(prevMiniblockNum), 'prevMiniblockNum is not set', Err.BAD_PAYLOAD)
+        check(prevMiniblockNum >= 0, 'prevMiniblockNum should be non-negative', Err.BAD_PAYLOAD)
+    }
 
-    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, tags)
+    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags)
 }
 
 export const makeEvents = async (
@@ -181,9 +188,10 @@ export const unpackStreamAndCookie = async (
         events: await unpackEnvelopes(streamAndCookie.events, opts),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
-            : undefined,
+        snapshot:
+            streamAndCookie.snapshot && miniblocks.length > 0 && miniblocks[0].header.snapshotHash
+                ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
+                : undefined,
     }
 }
 
@@ -397,15 +405,15 @@ function pushByteToUint8Array(arr: Uint8Array, byte: number): Uint8Array {
 }
 
 function checkSignature(signature: Uint8Array) {
-    assertBytes(signature, 65)
+    abytes(signature, 65)
 }
 
 function checkHash(hash: Uint8Array) {
-    assertBytes(hash, 32)
+    abytes(hash, 32)
 }
 
 export function riverHash(data: Uint8Array): Uint8Array {
-    assertBytes(data)
+    abytes(data)
     const hasher = keccak256.create()
     hasher.update(HASH_HEADER)
     hasher.update(numberToUint8Array64LE(data.length))
@@ -416,7 +424,7 @@ export function riverHash(data: Uint8Array): Uint8Array {
 }
 
 export function riverSnapshotHash(data: Uint8Array): Uint8Array {
-    assertBytes(data)
+    abytes(data)
     const hasher = keccak256.create()
     hasher.update(SNAPSHOT_HEADER)
     hasher.update(numberToUint8Array64LE(data.length))
@@ -430,7 +438,7 @@ export function riverDelegateHashSrc(
     devicePublicKey: Uint8Array,
     expiryEpochMs: bigint,
 ): Uint8Array {
-    assertBytes(devicePublicKey)
+    abytes(devicePublicKey)
     check(expiryEpochMs >= 0, 'Expiry should be positive')
     check(devicePublicKey.length === 64 || devicePublicKey.length === 65, 'Bad public key')
     const expiryBytes = bigintToUint8Array64(expiryEpochMs, 'littleEndian')
@@ -467,9 +475,12 @@ export async function riverSign(
     privateKey: Uint8Array | string,
 ): Promise<Uint8Array> {
     checkHash(hash)
-    // TODO(HNT-1380): why async sign doesn't work in node? Use async sign in the browser, sync sign in node?
-    const [sig, recovery] = signSync(hash, privateKey, { recovered: true, der: false })
-    return pushByteToUint8Array(sig, recovery)
+    const sig = secp256k1.sign(hash, privateKey)
+    const sigBytes = sig.toCompactRawBytes()
+    if (sig.recovery === undefined) {
+        throw new Error('Signature recovery bit is undefined')
+    }
+    return pushByteToUint8Array(sigBytes, sig.recovery)
 }
 
 export function riverVerifySignature(
@@ -479,17 +490,27 @@ export function riverVerifySignature(
 ): boolean {
     checkHash(hash)
     checkSignature(signature)
-    return verify(signature.slice(0, 64), hash, publicKey)
+    return secp256k1.verify(signature.slice(0, 64), hash, publicKey)
 }
 
 export function riverRecoverPubKey(hash: Uint8Array, signature: Uint8Array): Uint8Array {
     checkHash(hash)
     checkSignature(signature)
-    return recoverPublicKey(hash, signature.slice(0, 64), signature[64])
+    const rBytes = signature.slice(0, 32)
+    const sBytes = signature.slice(32, 64)
+    const recoveryId = signature[64]
+
+    const r = bytesToNumberBE(rBytes)
+    const s = bytesToNumberBE(sBytes)
+
+    const sig = new secp256k1.Signature(r, s).addRecoveryBit(recoveryId)
+
+    const publicKeyPoint = sig.recoverPublicKey(hash)
+    return publicKeyPoint.toRawBytes(false)
 }
 
 export function publicKeyToAddress(publicKey: Uint8Array): Uint8Array {
-    assertBytes(publicKey, 64, 65)
+    abytes(publicKey, 64, 65)
     if (publicKey.length === 65) {
         publicKey = publicKey.slice(1)
     }
@@ -504,4 +525,13 @@ export function publicKeyToUint8Array(publicKey: string): Uint8Array {
         Err.BAD_PUBLIC_KEY,
     )
     return bin_fromHexString(publicKey)
+}
+
+const bytesToNumberBE = (bytes: Uint8Array): bigint => {
+    return hexToNumber(bin_toHexString(bytes))
+}
+
+export function hexToNumber(hex: string) {
+    if (typeof hex !== 'string') throw new Error('hex string expected, got ' + typeof hex)
+    return BigInt(hex === '' ? '0' : `0x${hex}`)
 }

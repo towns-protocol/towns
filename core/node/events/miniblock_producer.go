@@ -21,6 +21,8 @@ const (
 	// MiniblockCandidateBatchSize keep track the max number of new miniblocks that are registered in the StreamRegistry
 	// in a single transaction.
 	MiniblockCandidateBatchSize = 50
+
+	MiniblockLeaderBlockInterval = 10
 )
 
 // RemoteMiniblockProvider abstracts communications required for coordinated miniblock production.
@@ -75,9 +77,9 @@ type MiniblockProducerOpts struct {
 }
 
 // NewMiniblockProducer instantiates a new miniblockProducer instance that implements the MiniblockProducer interface.
-// It registers a callback on new RiverChain blocks and everytime this callback is called it creates new miniblock
+// It registers a callback on new RiverChain blocks, and every time this callback is called, it creates new miniblock
 // candidates and schedules these candidates for registration.
-func NewMiniblockProducer(
+func newMiniblockProducer(
 	ctx context.Context,
 	streamCache *StreamCache,
 	opts *MiniblockProducerOpts,
@@ -191,7 +193,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 			)
 			continue
 		}
-		j := p.trySchedule(ctx, stream)
+		j := p.trySchedule(ctx, stream, blockNum)
 		if j != nil {
 			scheduled = append(scheduled, j)
 			log.Debugw(
@@ -219,18 +221,18 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	if len(streamNodes) == 0 {
 		return false
 	}
-	index := blockNum.AsUint64() % uint64(len(streamNodes))
+	index := (blockNum.AsUint64() / MiniblockLeaderBlockInterval) % uint64(len(streamNodes))
 	return streamNodes[index] == p.localNodeAddress
 }
 
-func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream) *mbJob {
+func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream, blockNum crypto.BlockNumber) *mbJob {
 	j := &mbJob{
 		stream: stream,
 		cache:  p.streamCache,
 	}
 	_, prevLoaded := p.jobs.LoadOrStore(stream.streamId, j)
 	if !prevLoaded {
-		go p.jobStart(ctx, j)
+		go p.jobStart(ctx, j, blockNum)
 		return j
 	}
 	return nil
@@ -282,7 +284,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	for {
 		actual, _ := p.jobs.LoadOrStore(streamId, job)
 		if actual == job {
-			go p.jobStart(ctx, job)
+			go p.jobStart(ctx, job, 0)
 			break
 		}
 
@@ -318,20 +320,20 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	return view.LastBlock().Ref, nil
 }
 
-func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob) {
+func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum crypto.BlockNumber) {
 	if ctx.Err() != nil {
 		p.jobDone(ctx, j)
 		return
 	}
 
-	err := j.produceCandidate(ctx)
+	err := j.produceCandidate(ctx, blockNum)
 	if err != nil {
 		logging.FromCtx(ctx).
-			Errorw(
+			Warnw(
 				"MiniblockProducer: jobStart: Error creating new miniblock proposal",
 				"streamId",
 				j.stream.streamId,
-				"err",
+				"error",
 				err,
 			)
 		p.jobDone(ctx, j)
@@ -358,7 +360,7 @@ func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
 			return oldValue, xsync.CancelOp
 		},
 	)
-	if notFound {
+	if notFound && !j.skipPromotion {
 		logging.FromCtx(ctx).
 			Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
 	}
@@ -417,7 +419,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 				log.Errorw("processMiniblockProposalBatch: Failed to register some miniblocks", "failed", failed)
 			}
 		} else {
-			log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "err", err)
+			log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "error", err)
 		}
 	}
 
@@ -432,7 +434,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	streamsOutOfSync := make([]*mbJob, 0, len(invalidProposals))
 
 	for _, job := range proposals {
-		if slices.Contains(success, job.stream.streamId) {
+		if slices.Contains(success, job.stream.streamId) && !job.skipPromotion {
 			go func() {
 				err := job.stream.ApplyMiniblock(ctx, job.candidate)
 				if err != nil {
@@ -440,13 +442,13 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 						"processMiniblockProposalBatch: Error applying miniblock",
 						"streamId",
 						job.stream.streamId,
-						"err",
+						"error",
 						err,
 					)
 				}
 				p.jobDone(ctx, job)
 			}()
-		} else if slices.Contains(invalidProposals, job.stream.streamId) {
+		} else if slices.Contains(invalidProposals, job.stream.streamId) && !job.skipPromotion {
 			streamsOutOfSync = append(streamsOutOfSync, job)
 		} else {
 			p.jobDone(ctx, job)
@@ -454,7 +456,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	if err := p.promoteConfirmedCandidates(ctx, streamsOutOfSync); err != nil {
-		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "err", err)
+		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "error", err)
 	}
 }
 
@@ -478,7 +480,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 		stream, err := registry.GetStream(ctx, job.stream.streamId, crypto.BlockNumber(headNum))
 		if err != nil {
 			log.Errorw("Unable to retrieve stream details from registry",
-				"streamId", job.stream.streamId, "err", err)
+				"streamId", job.stream.streamId, "error", err)
 
 			p.jobDone(ctx, job)
 			continue
@@ -494,11 +496,28 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 			log.Errorw("Unable to promote candidate",
 				"streamId", job.stream.streamId,
 				"mb", committedLocalCandidateRef,
-				"err", err)
+				"error", err)
 		}
 
 		p.jobDone(ctx, job)
 	}
 
 	return nil
+}
+
+// writeLatestKnownMiniblock writes the latest known miniblock to the smart contract record for this
+// stream.
+// It is used in the very specific situation: stream was unreplicated and new reconcilation replicas were added.
+// Unreplicated streams write updates at reduced rate, but in this case write should be done immediately to
+// allow replicas to catch up to the correct state.
+func (p *miniblockProducer) writeLatestKnownMiniblock(ctx context.Context, stream *Stream, mb *MiniblockInfo) {
+	job := &mbJob{
+		stream:        stream,
+		cache:         p.streamCache,
+		replicated:    true,
+		candidate:     mb,
+		skipPromotion: true,
+	}
+
+	p.candidates.add(ctx, p, job)
 }

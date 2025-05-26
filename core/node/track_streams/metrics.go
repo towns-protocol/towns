@@ -10,12 +10,13 @@ type TrackStreamsSyncMetrics struct {
 	ActiveStreamSyncSessions prometheus.Gauge
 	TotalStreams             *prometheus.GaugeVec
 	TrackedStreams           *prometheus.GaugeVec
-	SyncSessionInFlight      prometheus.Gauge
+	SyncSessionsInFlight     *prometheus.GaugeVec
 	SyncUpdate               *prometheus.CounterVec
-	SyncDown                 prometheus.Counter
+	SyncDown                 *prometheus.CounterVec
 	SyncPingInFlight         prometheus.Gauge
 	SyncPing                 *prometheus.CounterVec
 	SyncPong                 prometheus.Counter
+	StreamsPerSyncSession    prometheus.Histogram
 }
 
 func NewTrackStreamsSyncMetrics(metricsFactory infra.MetricsFactory) *TrackStreamsSyncMetrics {
@@ -30,29 +31,23 @@ func NewTrackStreamsSyncMetrics(metricsFactory infra.MetricsFactory) *TrackStrea
 			Name: "tracked_streams",
 			Help: "Number of streams to track for notification events",
 		}, []string{"type"}), // type= dm, gdm, space_channel, user_settings
-		SyncSessionInFlight: metricsFactory.NewGaugeEx(
-			"stream_session_inflight",
-			"Number of pending stream sync session requests in flight",
-		),
+		SyncSessionsInFlight: metricsFactory.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "syncs_inflight",
+			Help: "Number of pending sync session requests in flight",
+		}, []string{"target_node"}),
 		SyncUpdate: metricsFactory.NewCounterVec(prometheus.CounterOpts{
 			Name: "sync_update",
 			Help: "Number of received stream sync updates",
 		}, []string{"reset"}), // reset = true or false
-		SyncDown: metricsFactory.NewCounterEx(
+		SyncDown: metricsFactory.NewCounterVecEx(
 			"sync_down",
 			"Number of received stream sync downs",
+			"target_node",
 		),
-		SyncPingInFlight: metricsFactory.NewGaugeEx(
-			"stream_ping_inflight",
-			"Number of pings requests in flight",
-		),
-		SyncPing: metricsFactory.NewCounterVec(prometheus.CounterOpts{
-			Name: "sync_ping",
-			Help: "Number of send stream sync pings",
-		}, []string{"status"}), // status = success or failure
-		SyncPong: metricsFactory.NewCounterEx(
-			"sync_pong",
-			"Number of received stream sync pong replies",
+		StreamsPerSyncSession: metricsFactory.NewHistogramEx(
+			"streams_per_sync",
+			"Number of streams in each sync session, updated periodically",
+			[]float64{10, 20, 50, 90, 100, 110},
 		),
 	}
 }

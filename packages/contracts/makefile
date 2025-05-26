@@ -49,11 +49,12 @@ help:
 # ================================== GENERIC TARGETS ==================================
 
 # === Local network targets ===
+# The `--slow` flag solves race conditions caused by fluctuations in the local fee market.
 deploy-any-local :;
 	@echo "Running $(contract) on local chain"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
-	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
 
 deploy-facet-local :;
 	@echo "Deploying $(contract) on local chain"
@@ -81,6 +82,8 @@ deploy-any :;
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ffi --rpc-url ${rpc} --broadcast --verify \
 	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
 	$(if $(verifier),--verifier $(verifier),) \
 	$(if $(verifier-url),--verifier-url $(verifier-url),) \
 	$(if $(etherscan),--etherscan-api-key $(etherscan),)
@@ -92,6 +95,8 @@ deploy-facet :;
 	forge script scripts/common/DeployFacet.s.sol \
 	--ffi --rpc-url ${rpc} --broadcast --verify \
 	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
 	$(if $(verifier),--verifier $(verifier),) \
 	$(if $(verifier-url),--verifier-url $(verifier-url),) \
 	$(if $(etherscan),--etherscan-api-key $(etherscan),)
@@ -205,9 +210,9 @@ deploy-ledger-verify-both :;
 	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 deploy-facet-ledger-verify-both :;
-	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) \
+	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 	verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
-	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) \
+	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 resume-any-ledger :;

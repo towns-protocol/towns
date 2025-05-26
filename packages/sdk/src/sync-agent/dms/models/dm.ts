@@ -29,7 +29,11 @@ export interface DmModel extends Identifiable {
 export class Dm extends PersistedObservable<DmModel> {
     timeline: MessageTimeline
     members: Members
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+    ) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
         this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
         this.members = new Members(id, riverConnection, store)
@@ -147,12 +151,11 @@ export class Dm extends PersistedObservable<DmModel> {
             logger.log('Dm stream initialized', streamId)
             const stream = this.riverConnection.client?.stream(streamId)
             check(isDefined(stream), 'stream is not defined')
-            const view = stream.view.dmChannelContent
             const hasJoined = stream.view.getMembers().isMemberJoined(this.riverConnection.userId)
             this.setData({
                 initialized: true,
                 isJoined: hasJoined,
-                metadata: view.getChannelMetadata()?.channelProperties,
+                metadata: undefined,
             })
             this.timeline.initialize(stream)
         }

@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployERC721AQueryable {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -25,6 +25,6 @@ library DeployERC721AQueryable {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("ERC721AQueryable.sol", "");
+        return LibDeploy.deployCode("ERC721AQueryable.sol", "");
     }
 }

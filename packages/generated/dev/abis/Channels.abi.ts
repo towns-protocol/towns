@@ -948,6 +948,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Roles__RoleIsImmutable",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "TransferCallerNotOwnerNorApproved",
     "inputs": []
   },
@@ -969,11 +974,6 @@ export default [
   {
     "type": "error",
     "name": "URIQueryForNonexistentToken",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Validator__InvalidStringLength",
     "inputs": []
   }
 ] as const
