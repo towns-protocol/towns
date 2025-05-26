@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -117,6 +118,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	addingFailuresLock := sync.Mutex{}
 	addingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
 	addingFailuresHandler := func(status *SyncStreamOpStatus) {
+		fmt.Println("addingFailuresHandler", ss.localNodeAddress, status.GetCode(), status.GetMessage())
 		if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
 			req.AddingFailureHandler(status)
 			return
@@ -180,6 +182,8 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
+
+	fmt.Println("syncerset.modify", ss.localNodeAddress, req.ToBackfill, req.ToAdd)
 
 	for _, backfill := range req.ToBackfill {
 		for _, cookie := range backfill.GetStreams() {

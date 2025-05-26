@@ -198,7 +198,9 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
 				m.sLock.Unlock()
 			} else {
-				subscription.Send(msg)
+				if initializing, _ := subscription.initializingStreams.Load(streamID); !initializing {
+					subscription.Send(msg)
+				}
 			}
 		}(i, subscription)
 	}

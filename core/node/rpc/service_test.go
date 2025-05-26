@@ -1369,6 +1369,30 @@ func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
 	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie done")
 }
 
+/*
+=== CONT  TestStartSyncWithWrongCookie
+syncerset.modify 0x27F619dEE84CE048c41DfF3b934780Ee4Fb6f226 [] [node_address:"\xc7\xd25/\x94\xd26!\n\x1d\xb5z\xec\xf4\x96\x074\xbc\xa5<" stream_id:" \xbf B\x8f\x93w\xf9\xbe\x05\xc6\xc8\x0ex\xa9Ah\xe5sh\xcb(ʱK\xe6\x07G\x85X\x86\xb8" minipool_gen:1 prev_miniblock_hash:"\x1aˈj=L\xf3\xbdt\x17\x89\x85Qbz\xbd\xcbd958\xee\xddF\x13\xef\xd8\xf5\xab\xa6\x83l"]
+syncerset.modify 0xc7d2352f94D236210a1DB57aeCf4960734Bca53c [] [node_address:"\xc7\xd25/\x94\xd26!\n\x1d\xb5z\xec\xf4\x96\x074\xbc\xa5<" stream_id:" \xbf B\x8f\x93w\xf9\xbe\x05\xc6\xc8\x0ex\xa9Ah\xe5sh\xcb(ʱK\xe6\x07G\x85X\x86\xb8" minipool_gen:1 prev_miniblock_hash:"\x1aˈj=L\xf3\xbdt\x17\x89\x85Qbz\xbd\xcbd958\xee\xddF\x13\xef\xd8\xf5\xab\xa6\x83l"]
+syncerset.modify 0xc7d2352f94D236210a1DB57aeCf4960734Bca53c [] [stream_id:" \xbf B\x8f\x93w\xf9\xbe\x05\xc6\xc8\x0ex\xa9Ah\xe5sh\xcb(ʱK\xe6\x07G\x85X\x86\xb8" minipool_gen:1 prev_miniblock_hash:"\x1aˈj=L\xf3\xbdt\x17\x89\x85Qbz\xbd\xcbd958\xee\xddF\x13\xef\xd8\xf5\xab\xa6\x83l"]
+syncerset.modify 0x27F619dEE84CE048c41DfF3b934780Ee4Fb6f226 [] [stream_id:" \xbf B\x8f\x93w\xf9\xbe\x05\xc6\xc8\x0ex\xa9Ah\xe5sh\xcb(ʱK\xe6\x07G\x85X\x86\xb8" minipool_gen:1 prev_miniblock_hash:"\x1aˈj=L\xf3\xbdt\x17\x89\x85Qbz\xbd\xcbd958\xee\xddF\x13\xef\xd8\xf5\xab\xa6\x83l"]
+    service_test.go:1406:
+        	Error Trace:	/Users/romanbehma/go/src/github.com/towns-protocol/towns/core/node/rpc/service_test.go:1406
+        	Error:      	Target error should be in err chain:
+        	            	expected: "context canceled"
+        	            	in chain: "deadline_exceeded: context deadline exceeded"
+        	            		"context deadline exceeded"
+        	Test:       	TestStartSyncWithWrongCookie
+syncerset.modify 0x27F619dEE84CE048c41DfF3b934780Ee4Fb6f226 [streams:{node_address:"'\xf6\x19\xde\xe8L\xe0H\xc4\x1d\xff;\x93G\x80\xeeO\xb6\xf2&" stream_id:" \xbf B\x8f\x93w\xf9\xbe\x05\xc6\xc8\x0ex\xa9Ah\xe5sh\xcb(ʱK\xe6\x07G\x85X\x86\xb8" minipool_gen:1 prev_miniblock_hash:"\x1aˈj=L\xf3\xbdt\x17\x89\x85Qbz\xbd\xcbd958\xee\xddF\x13\xef\xd8\xf5\xab\xa6\x83l"} sync_id:"nUGaZYFdZ-obISXSwJUbr"] []
+--- FAIL: TestStartSyncWithWrongCookie (11.75s)
+
+
+=== CONT  TestStartSyncWithWrongCookie
+syncerset.modify 0x0d447D0ae45714539E91394148274006287Bdbb2 [] [node_address:"\rD}\n\xe4W\x14S\x9e\x919AH'@\x06({۲"  stream_id:" \x95m\xf4g{Kآ\x98G\xa4\xe3'\x11\xab\xba\x86a\x8esM\xe9Y~\xf0d\x86\x81\x18\xd3\xc3"  minipool_gen:1  prev_miniblock_hash:"\xb3\xa1\x80\x16Vѓt\xa10e\xb1\xa9ֲ5\xe7HO\x15\x1a\xfd\xa9\x00\x9dZ\x99\x03\x91)\xfag"]
+syncerset.modify 0x0d447D0ae45714539E91394148274006287Bdbb2 [] [stream_id:" \x95m\xf4g{Kآ\x98G\xa4\xe3'\x11\xab\xba\x86a\x8esM\xe9Y~\xf0d\x86\x81\x18\xd3\xc3"  minipool_gen:1  prev_miniblock_hash:"\xb3\xa1\x80\x16Vѓt\xa10e\xb1\xa9ֲ5\xe7HO\x15\x1a\xfd\xa9\x00\x9dZ\x99\x03\x91)\xfag"]
+syncerset.modify 0x4eB09C936F69DB072e119fAdbD80bcfBb1f58ed6 [] [node_address:"N\xb0\x9c\x93oi\xdb\x07.\x11\x9f\xad\xbd\x80\xbc\xfb\xb1\xf5\x8e\xd6"  stream_id:" \x95m\xf4g{Kآ\x98G\xa4\xe3'\x11\xab\xba\x86a\x8esM\xe9Y~\xf0d\x86\x81\x18\xd3\xc3"  minipool_gen:1  prev_miniblock_hash:"\xb3\xa1\x80\x16Vѓt\xa10e\xb1\xa9ֲ5\xe7HO\x15\x1a\xfd\xa9\x00\x9dZ\x99\x03\x91)\xfag"]
+Update received
+*/
+
 func TestStartSyncWithWrongCookie(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true, replicationFactor: 1})
 
