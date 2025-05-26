@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"iter"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -413,7 +414,16 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		if os.Getenv("ENABLE_NEW_SNAPSHOT_FORMAT") == "true" {
+			// TODO: Remove, this is temporary fix to test new snapshot format. Passing global config struct here is tricky.
+			header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		} else {
+			header.Snapshot = parsedSnapshot.Snapshot
+			// header.SnapshotHash = parsedSnapshot.Envelope.Hash
+			// TODO: Remove the following line.
+			// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
+			parsedSnapshot = nil
+		}
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
