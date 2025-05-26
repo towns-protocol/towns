@@ -16,6 +16,15 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     const blockNumber = await getLatestBlockNumber()
     const { SpaceFactory, SpaceOwner } = context.contracts
 
+    // Check if the space already exists
+    const existingSpace = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, event.args.space),
+    })
+    if (existingSpace) {
+        console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
+        return
+    }
+
     try {
         const paused = await context.client.readContract({
             abi: SpaceFactory.abi,
