@@ -98,10 +98,15 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			continue
 		}
 
+		targetSyncIds := []string{request.SyncId}
+		if request.GetBackfillStreams().GetSyncId() != "" && request.GetBackfillStreams().GetSyncId() != request.SyncId {
+			targetSyncIds = append(targetSyncIds, request.GetBackfillStreams().GetSyncId())
+		}
+
 		s.sendResponse(&SyncStreamsResponse{
-			SyncOp:       SyncOp_SYNC_UPDATE,
-			Stream:       streamAndCookie,
-			TargetSyncId: request.GetBackfillStreams().GetSyncId(),
+			SyncOp:        SyncOp_SYNC_UPDATE,
+			Stream:        streamAndCookie,
+			TargetSyncIds: targetSyncIds,
 		})
 	}
 

@@ -159,7 +159,31 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	m.sLock.Unlock()
 
 	// If the given message has a specific target subscription, just fetch the subscription by the sync ID
-	// TODO: Implement
+	if len(msg.GetTargetSyncIds()) > 0 {
+		// Applicable only for backfill operation
+		var sub *Subscription
+		for _, subscription := range subscriptions {
+			if subscription.syncID == msg.GetTargetSyncIds()[0] {
+				sub = subscription
+				break
+			}
+		}
+		if sub != nil {
+			if initializing, _ := sub.initializingStreams.Load(streamID); initializing {
+				// The given stream is in initialization state for the given subscription.
+				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+					// Backfill of the stream targeted specifically to the given subscription
+					sub.initializingStreams.Delete(streamID)
+				} else {
+					// Should not happen in theory
+					return
+				}
+			}
+			msg.TargetSyncIds = msg.TargetSyncIds[1:]
+			sub.Send(msg)
+		}
+		return
+	}
 
 	// FIXME: Potentially, a single subscription might block the entire sending process.
 	var wg sync.WaitGroup
@@ -173,17 +197,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 				m.sLock.Lock()
 				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
 				m.sLock.Unlock()
-			} else if msg.GetTargetSyncId() == "" || msg.GetTargetSyncId() == subscription.syncID {
-				if initializing, _ := subscription.initializingStreams.Load(streamID); initializing {
-					// The given stream is in initialization state for the given subscription.
-					if msg.GetSyncOp() == SyncOp_SYNC_UPDATE && msg.GetTargetSyncId() == subscription.syncID {
-						// Backfill of the stream targeted specifically to the given subscription
-						subscription.initializingStreams.Delete(streamID)
-					} else {
-						return
-					}
-				}
-
+			} else {
 				subscription.Send(msg)
 			}
 		}(i, subscription)

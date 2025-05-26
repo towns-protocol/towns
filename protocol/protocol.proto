@@ -970,8 +970,8 @@ message SyncStreamsResponse {
     // stream_id is set when sync_op = SYNC_DOWN and indicates it will not receive updates anymore for this stream.
     // If the client is still is interested in updates for this stream it must re-add the stream to the sync session.
     bytes stream_id = 5;
-    // target_sync_id ...
-    string target_sync_id = 6;
+    // target_sync_ids ... client->nodeA->nodeB->nodeA(target sync 1)->client(target sync 2)
+    repeated string target_sync_ids = 6;
 }
 
 // AddStreamToSyncRequest is a request to add a stream to an existing streams sync session.

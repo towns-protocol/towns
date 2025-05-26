@@ -8,8 +8,6 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v4"
 
-	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -55,9 +53,6 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	}
 
 	msg = proto.Clone(msg).(*SyncStreamsResponse)
-	if msg.GetTargetSyncId() != "" {
-		msg.TargetSyncId = ""
-	}
 	err := s.Messages.AddMessage(msg)
 	if err != nil {
 		rvrErr := AsRiverError(err).
@@ -77,6 +72,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
+		SyncID:                    s.syncID,
 		ToBackfill:                req.ToBackfill, // TODO: Should be accepted by the stream nodes only?
 		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
@@ -94,7 +90,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	if len(req.ToBackfill) > 0 {
 		// TODO: Currently target sync ID is reset in the send function which is not correct for explicit backfill requests
-		fmt.Println("ToBackfill", len(req.ToBackfill))
+		//fmt.Println("req.ToBackfill", s.manager.localNodeAddr, len(req.ToBackfill), s.syncID)
 	}
 
 	// Handle streams that the clients wants to subscribe to.
@@ -106,6 +102,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
 		} else if shouldBackfill {
 			// The given stream must be backfilled implicitly only for the given subscription
+			// TODO: In this case, there is only one target sync ID which is s.syncID
 			implicitBackfills = append(implicitBackfills, toAdd)
 		}
 	}
@@ -183,80 +180,6 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	s.manager.sLock.Unlock()
 
 	return removeFromRemote
-}
-
-// backfillByCookie sends the stream since the given cookie to the subscription.
-// TODO: There could be a gap between the given cookie and the latest stream update.
-func (s *Subscription) backfillByCookie(cookie *SyncCookie) error {
-	streamID := StreamId(cookie.GetStreamId())
-
-	if cookie.GetMinipoolGen() > 0 {
-		var sc *StreamAndCookie
-
-		st, err := s.manager.streamCache.GetStreamNoWait(s.ctx, streamID)
-		if err != nil {
-			return err
-		}
-
-		// Try address from cookie first
-		if len(cookie.GetNodeAddress()) > 0 {
-			addr := common.BytesToAddress(cookie.GetNodeAddress())
-			if s.manager.localNodeAddr.Cmp(addr) == 0 {
-				v, err := st.GetViewIfLocal(s.ctx)
-				if err == nil {
-					sc, _ = v.GetStreamSince(s.ctx, s.manager.localNodeAddr, cookie)
-				}
-			} else {
-				cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
-				if err == nil {
-					resp, err := cl.GetStream(s.ctx, connect.NewRequest(&GetStreamRequest{
-						StreamId:   cookie.GetStreamId(),
-						SyncCookie: cookie,
-					}))
-					if err == nil {
-						sc = resp.Msg.GetStream()
-					}
-				}
-			}
-		}
-
-		if sc == nil {
-			remotes, isLocal := st.GetRemotesAndIsLocal()
-			if isLocal {
-				v, err := st.GetViewIfLocal(s.ctx)
-				if err == nil {
-					sc, _ = v.GetStreamSince(s.ctx, s.manager.localNodeAddr, cookie)
-				}
-			}
-
-			if sc == nil {
-				for _, addr := range remotes {
-					cl, err := s.manager.nodeRegistry.GetStreamServiceClientForAddress(addr)
-					if err != nil {
-						continue
-					}
-
-					resp, err := cl.GetStream(s.ctx, connect.NewRequest(&GetStreamRequest{
-						StreamId:   cookie.GetStreamId(),
-						SyncCookie: cookie,
-					}))
-					if err != nil {
-						continue
-					}
-
-					sc = resp.Msg.GetStream()
-					break
-				}
-			}
-		}
-
-		// TODO: What to do if the stream cannot be backfilled from the given cookie?
-		if sc != nil {
-			s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: sc, SyncId: s.syncID})
-		}
-	}
-
-	return nil
 }
 
 // DebugDropStream drops the given stream from the subscription.

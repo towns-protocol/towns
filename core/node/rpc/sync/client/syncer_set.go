@@ -27,6 +27,7 @@ type (
 	}
 
 	ModifyRequest struct {
+		SyncID                    string
 		ToAdd                     []*SyncCookie
 		ToRemove                  [][]byte
 		ToBackfill                []*ModifySyncRequest_Backfill
@@ -128,6 +129,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 	// First attempt with the provided cookies without modifications.
 	if err := ss.modify(ctx, ModifyRequest{
+		SyncID:                    req.SyncID,
 		ToBackfill:                req.ToBackfill,
 		ToAdd:                     req.ToAdd,
 		ToRemove:                  req.ToRemove,
@@ -194,6 +196,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 			if _, ok := modifySyncs[syncer.Address()]; !ok {
 				modifySyncs[syncer.Address()] = &ModifySyncRequest{
+					SyncId:          req.SyncID,
 					BackfillStreams: &ModifySyncRequest_Backfill{SyncId: backfill.GetSyncId()},
 				}
 			}
