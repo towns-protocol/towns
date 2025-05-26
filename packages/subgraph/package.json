@@ -1,7 +1,7 @@
 {
     "name": "@towns-protocol/subgraph",
     "type": "module",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "bun@1.2.14",
     "private": true,
     "scripts": {
         "dev": "ponder dev",

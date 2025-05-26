@@ -2,9 +2,9 @@
     "name": "@towns-protocol/stress",
     "version": "0.0.1",
     "private": true,
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "bun@1.2.14",
     "scripts": {
-        "build": "yarn typecheck && yarn build-esbuild",
+        "build": "bun run typecheck && bun run build-esbuild",
         "build-esbuild": "node esbuild.config.mjs",
         "demo": "node --enable-source-maps ./dist/demo.cjs",
         "notifications": "node --enable-source-maps ./dist/notifications.cjs",

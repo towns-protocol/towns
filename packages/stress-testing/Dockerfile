@@ -1,3 +1,4 @@
+# TODO: fix this to use bun
 FROM docker.io/golang:1.22.2-bookworm
 
 # Install curl and software-properties-common, necessary for adding repositories

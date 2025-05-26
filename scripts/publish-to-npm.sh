@@ -26,29 +26,29 @@ VERSION_PREFIX="sdk-${COMMIT_HASH}-"
 
 git checkout -b "${BRANCH_NAME}"
 
-./scripts/yarn-clean.sh
-yarn install --immutable
-exit_status_yarn=$?
+./scripts/clean.sh
+bun install --frozen-lockfile
+exit_status_bun=$?
 
-if [ $exit_status_yarn -ne 0 ]; then
-    echo "yarn install failed."
+if [ $exit_status_bun -ne 0 ]; then
+    echo "bun install failed."
     exit 1
 fi
 
-yarn build
-exit_status_yarn=$?
+bun run build
+exit_status_bun=$?
 
-if [ $exit_status_yarn -ne 0 ]; then
-    echo "yarn build failed."
+if [ $exit_status_bun -ne 0 ]; then
+    echo "bun run build failed."
     exit 1
 fi
 
 # build docs
-yarn workspace @towns-protocol/react-sdk gen
+bun run -F @towns-protocol/react-sdk gen
 exit_status_docgen=$?
 
 if [ $exit_status_docgen -ne 0 ]; then
-    echo "yarn workspace @towns-protocol/react-sdk gen failed."
+    echo "bun run -F @towns-protocol/react-sdk gen failed."
     exit 1
 fi
 

@@ -10,6 +10,3 @@ contracts/lib/
 infra/
 
 vite.config.ts
-
-.yarn/*
-yarn.lock

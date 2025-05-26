@@ -86,15 +86,17 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Setup bun
+              uses: oven-sh/setup-bun@v2
+
             - name: Install node dependencies
-              run: yarn install --immutable
+              run: bun install --frozen-lockfile
 
             - name: Set up Go
               uses: actions/setup-go@v4
