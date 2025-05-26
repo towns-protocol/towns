@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 
 	"github.com/puzpuzpuz/xsync/v4"
-
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -88,11 +87,6 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		ToBackfill: {Streams: [ST1 (target sync ID specified), ST2 (target sync ID not specified)]}
 	*/
 
-	if len(req.ToBackfill) > 0 {
-		// TODO: Currently target sync ID is reset in the send function which is not correct for explicit backfill requests
-		//fmt.Println("req.ToBackfill", s.manager.localNodeAddr, len(req.ToBackfill), s.syncID)
-	}
-
 	// Handle streams that the clients wants to subscribe to.
 	var implicitBackfills []*SyncCookie
 	for _, toAdd := range req.ToAdd {
@@ -116,16 +110,18 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		}
 	}
 
-	if len(implicitBackfills) == 0 && len(modifiedReq.ToAdd) == 0 && len(modifiedReq.ToRemove) == 0 {
-		// No changes to be made, just return
-		return nil
-	}
-
 	if len(implicitBackfills) > 0 {
 		modifiedReq.ToBackfill = append(modifiedReq.ToBackfill, &ModifySyncRequest_Backfill{
 			SyncId:  s.syncID,
 			Streams: implicitBackfills,
 		})
+	}
+
+	if len(modifiedReq.ToBackfill) == 0 &&
+		len(modifiedReq.ToAdd) == 0 &&
+		len(modifiedReq.ToRemove) == 0 {
+		// No changes to be made, just return
+		return nil
 	}
 
 	// Send the request to the syncer set
