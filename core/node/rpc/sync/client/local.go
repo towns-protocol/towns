@@ -118,6 +118,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	s.activeStreamsMu.Lock()
+	defer s.activeStreamsMu.Unlock()
+
 	for _, streamID := range request.GetRemoveStreams() {
 		syncStream, found := s.activeStreams[StreamId(streamID)]
 		if found {
@@ -125,7 +127,6 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
-	s.activeStreamsMu.Unlock()
 
 	return &resp, len(s.activeStreams) == 0, nil
 }

@@ -707,12 +707,14 @@ func (tc *testClient) syncChannel(cookie *SyncCookie) {
 		return
 	}
 
-	_, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
+	resp, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
 		SyncId:     tc.SyncID(),
 		AddStreams: []*SyncCookie{cookie},
 	}))
-
 	tc.require.NoError(err)
+	tc.require.Len(resp.Msg.GetBackfills(), 0)
+	tc.require.Len(resp.Msg.GetAdds(), 0)
+	tc.require.Len(resp.Msg.GetRemovals(), 0)
 }
 
 // startSync initiates a sync session without streams.
