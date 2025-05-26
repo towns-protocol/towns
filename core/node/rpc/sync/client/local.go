@@ -76,38 +76,34 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			continue
 		}
 
-		view, err := stream.GetView(ctx)
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
+		err = stream.IsolatedGetView(ctx, func(view *StreamView) error {
+			streamAndCookie, err := view.GetStreamSince(ctx, s.localAddr, cookie)
+			if err != nil {
+				return err
+			}
+
+			targetSyncIds := []string{request.SyncId}
+			if request.GetBackfillStreams().GetSyncId() != "" && request.GetBackfillStreams().GetSyncId() != request.SyncId {
+				targetSyncIds = append(targetSyncIds, request.GetBackfillStreams().GetSyncId())
+			}
+
+			s.sendResponse(&SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				Stream:        streamAndCookie,
+				TargetSyncIds: targetSyncIds,
 			})
-			continue
-		}
 
-		streamAndCookie, err := view.GetStreamSince(ctx, s.localAddr, cookie)
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
-			})
-			continue
-		}
-
-		targetSyncIds := []string{request.SyncId}
-		if request.GetBackfillStreams().GetSyncId() != "" && request.GetBackfillStreams().GetSyncId() != request.SyncId {
-			targetSyncIds = append(targetSyncIds, request.GetBackfillStreams().GetSyncId())
-		}
-
-		s.sendResponse(&SyncStreamsResponse{
-			SyncOp:        SyncOp_SYNC_UPDATE,
-			Stream:        streamAndCookie,
-			TargetSyncIds: targetSyncIds,
+			return nil
 		})
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
 	}
 
 	for _, cookie := range request.GetAddStreams() {

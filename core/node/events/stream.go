@@ -771,6 +771,19 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent, relaxDu
 	return newSV, nil
 }
 
+func (s *Stream) IsolatedGetView(
+	ctx context.Context,
+	cb func(*StreamView) error,
+) error {
+	view, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	return cb(view)
+}
+
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.
 // This method is thread-safe.
 // Only local streams are allowed to subscribe.
