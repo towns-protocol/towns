@@ -1,7 +1,7 @@
 .env
 .envrc
 .dockerignore
-packages/stream-metadata/Dockerfile
-packages/stream-metadata/docker-compose.yml
-packages/metrics-discovery/Dockerfile
-packages/metrics-discovery/docker-compose.yml
+apps/stream-metadata/Dockerfile
+apps/stream-metadata/docker-compose.yml
+apps/metrics-discovery/Dockerfile
+apps/metrics-discovery/docker-compose.yml

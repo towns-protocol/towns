@@ -5,7 +5,7 @@ on:
         branches:
             - main
         paths:
-            - 'packages/stream-metadata/**'
+            - 'apps/stream-metadata/**'
             - 'packages/**'
     workflow_dispatch:
         inputs:
@@ -55,7 +55,7 @@ jobs:
               run: |
                   docker build \
                     --build-arg GIT_SHA=${{ github.sha }} \
-                    -f ./packages/stream-metadata/Dockerfile \
+                    -f ./apps/stream-metadata/Dockerfile \
                     -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest \
                     -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:${{ github.sha }} \
                     .

@@ -52,7 +52,7 @@ if [ $exit_status_docgen -ne 0 ]; then
     exit 1
 fi
 
-git add packages/docs/
+git add apps/docs/
 git commit -m "docs for version ${VERSION_PREFIX}"
 
 # copy contracts

@@ -82,11 +82,11 @@ bin/gen-bindings-remove-struct
 
 go.work.sum
 
-/packages/stress-testing/.env
-/packages/stress/*/.env*
+/apps/stress-testing/.env
+/apps/stress/*/.env*
 
 .idea
 
 # Ponder
-packages/subgraph/.ponder
+apps/subgraph/.ponder
 packages/generated/**/*.bin

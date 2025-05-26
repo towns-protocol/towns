@@ -8,8 +8,8 @@ import { resolve } from 'node:path'
 
 const config = {
     projectName: 'react-sdk',
-    pagesDir: '../../../docs/sdk/react-sdk',
-    mintlifyJson: '../../../docs/mint.json',
+    pagesDir: '../../../../apps/docs/sdk/react-sdk',
+    mintlifyJson: '../../../apps/docs/mint.json',
 }
 export type DocgenConfig = typeof config
 

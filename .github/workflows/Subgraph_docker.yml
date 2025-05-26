@@ -96,7 +96,7 @@ jobs:
                     --build-arg VER_BRANCH=$BRANCH \
                     --build-arg VER_COMMIT=$COMMIT_HASH \
                     -t subgraph:local-latest \
-                    -f packages/subgraph/Dockerfile \
+                    -f apps/subgraph/Dockerfile \
                     .
 
                   echo "::set-output name=tag_valid::false"

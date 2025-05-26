@@ -167,7 +167,7 @@
     {
       "label": "Start Stress Testing Redis",
       "type": "shell",
-      "command": "./packages/stress/scripts/start_redis.sh",
+      "command": "./apps/stress/scripts/start_redis.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -346,7 +346,7 @@
     {
       "label": "Playground",
       "type": "shell",
-      "command": "cd packages/playground && yarn dev",
+      "command": "cd apps/playground && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -406,7 +406,7 @@
     {
       "label": "WatchStress",
       "type": "shell",
-      "command": "cd packages/stress && yarn watch",
+      "command": "cd apps/stress && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

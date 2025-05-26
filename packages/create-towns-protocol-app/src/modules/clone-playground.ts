@@ -61,7 +61,7 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
     if (cloneResult.status !== 0) return cloneResult
 
     // Set up sparse checkout
-    const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', 'packages/playground'], {
+    const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', 'apps/playground'], {
         stdio: 'inherit',
         cwd: tempDir,
     })
@@ -75,8 +75,8 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
     if (checkoutResult.status !== 0) return checkoutResult
 
     // Verify playground directory exists
-    const playgroundDir = path.join(tempDir, 'packages/playground')
-    const baseTsConfigPath = path.join(tempDir, 'packages/tsconfig.base.json')
+    const playgroundDir = path.join(tempDir, 'apps/playground')
+    const baseTsConfigPath = path.join(tempDir, 'apps/tsconfig.base.json')
 
     if (!fs.existsSync(playgroundDir)) {
         console.error(picocolors.red(`\nPlayground directory not found at ${playgroundDir}`))

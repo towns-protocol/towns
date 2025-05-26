@@ -8,7 +8,7 @@ services:
     stress-00:
         build:
             context: ../../
-            dockerfile: ./packages/stress-testing/Dockerfile
+            dockerfile: ./apps/stress-testing/Dockerfile
         env_file: .env
         environment:
             - CONTAINER_COUNT=2
@@ -19,7 +19,7 @@ services:
     stress-01:
         build:
             context: ../../
-            dockerfile: ./packages/stress-testing/Dockerfile
+            dockerfile: ./apps/stress-testing/Dockerfile
         env_file: .env
         environment:
             - CONTAINER_COUNT=2

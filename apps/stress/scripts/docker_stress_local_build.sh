@@ -3,4 +3,4 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ../../..
 
-docker build -t stress-local -f packages/stress/scripts/Dockerfile .
+docker build -t stress-local -f apps/stress/scripts/Dockerfile .

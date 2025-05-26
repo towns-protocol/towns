@@ -34,9 +34,9 @@ packages/contracts/**/types/*
 packages/contracts/docgen/*
 packages/contract/out
 packages/contracts/coverage/*
-packages/subgraph/generated/*
-packages/subgraph/.ponder/*
-packages/subgraph/*.d.ts
+apps/subgraph/generated/*
+apps/subgraph/.ponder/*
+apps/subgraph/*.d.ts
 core/xchain/src/gen/*
 
 broadcast/*

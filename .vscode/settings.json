@@ -7,8 +7,8 @@
     "./packages/encryption",
     "./packages/proto",
     "./packages/sdk",
-    "./packages/stream-metadata",
-    "./packages/stress",
+    "./apps/stream-metadata",
+    "./apps/stress",
     "./packages/web3",
   ],
   "[solidity]": {

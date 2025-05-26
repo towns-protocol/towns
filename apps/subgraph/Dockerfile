@@ -30,12 +30,12 @@ COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
 
 # Copy the required packages
-COPY packages/subgraph ./packages/subgraph/
+COPY apps/subgraph ./apps/subgraph/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/contracts ./packages/contracts/
 
 # Add entrypoint script
-RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
+RUN chmod +x ./apps/subgraph/docker-entrypoint.sh
 
 # Install dependencies
 RUN yarn install
@@ -49,7 +49,7 @@ WORKDIR /river
 RUN yarn workspace @towns-protocol/contracts typings
 
 # Set working directory to subgraph package
-WORKDIR /river/packages/subgraph
+WORKDIR /river/apps/subgraph
 
 # Expose the default Ponder port
 EXPOSE 42069

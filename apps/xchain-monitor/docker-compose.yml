@@ -2,7 +2,7 @@ services:
     xchain-monitor:
         build:
             context: ../../
-            dockerfile: ./packages/xchain-monitor/Dockerfile
+            dockerfile: ./apps/xchain-monitor/Dockerfile
         environment:
             RIVER_ENV: omega
             INITIAL_BLOCK_NUM: 25750000

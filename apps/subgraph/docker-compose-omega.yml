@@ -19,15 +19,15 @@ services:
             - subgraph-db:/var/lib/postgresql/data
 
     subgraph:
-        # image: public.ecr.aws/h5v6m2x1/subgraph:dc7f113
+        # image: public.ecr.aws/h5v6m2x1/subgraph:update-subgraph-swap-route
         build:
             context: ../../
-            dockerfile: packages/subgraph/Dockerfile
+            dockerfile: apps/subgraph/Dockerfile
         depends_on:
             subgraph-db:
                 condition: service_healthy
         env_file:
-            - .env.gamma
+            - .env.omega
         environment:
             - NODE_ENV=development
             - DATABASE_SCHEMA=public

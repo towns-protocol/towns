@@ -26,7 +26,7 @@ COPY ./packages/generated /river/packages/generated
 COPY ./packages/dlog /river/packages/dlog
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/web3 /river/packages/web3
-COPY ./packages/xchain-monitor /river/packages/xchain-monitor
+COPY ./apps/xchain-monitor /river/apps/xchain-monitor
 
 # install dependencies and build
 RUN apk add --no-cache git curl
@@ -36,10 +36,10 @@ RUN yarn run turbo build --filter @towns-protocol/xchain-monitor
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner
-COPY --from=builder /river/packages/xchain-monitor/dist /river/packages/xchain-monitor/dist
+COPY --from=builder /river/apps/xchain-monitor/dist /river/apps/xchain-monitor/dist
 
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)
-WORKDIR /river/packages/xchain-monitor
+WORKDIR /river/apps/xchain-monitor
 RUN yarn init --yes
 RUN yarn add dd-trace@^5.19.0
 

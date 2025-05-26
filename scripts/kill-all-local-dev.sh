@@ -87,7 +87,7 @@ fi
 
 if prompt 'Stop Stress?:y/n '
 then
-    ./packages/stress/scripts/stop_redis.sh
+    ./apps/stress/scripts/stop_redis.sh
 fi
 
 do_kill run_files "$1" # get the tail command from the start stream node run-and-tail

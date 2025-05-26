@@ -28,7 +28,7 @@ COPY ./packages/dlog /river/packages/dlog
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/sdk /river/packages/sdk
 COPY ./packages/encryption /river/packages/encryption
-COPY ./packages/stream-metadata /river/packages/stream-metadata
+COPY ./apps/stream-metadata /river/apps/stream-metadata
 
 # install dependencies and build
 RUN apk add --no-cache git curl
@@ -38,10 +38,10 @@ RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 as runner
-COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-metadata/dist
+COPY --from=builder /river/apps/stream-metadata/dist /river/apps/stream-metadata/dist
 
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)
-WORKDIR /river/packages/stream-metadata
+WORKDIR /river/apps/stream-metadata
 RUN yarn init --yes
 RUN yarn add dd-trace@^5.19.0
 

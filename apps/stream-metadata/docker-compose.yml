@@ -2,7 +2,7 @@ services:
     stream-metadata:
         build:
             context: ../../
-            dockerfile: ./packages/stream-metadata/Dockerfile
+            dockerfile: ./apps/stream-metadata/Dockerfile
         environment:
             RIVER_ENV: alpha
             RIVER_CHAIN_RPC_URL: https://testnet.rpc.river.build/http

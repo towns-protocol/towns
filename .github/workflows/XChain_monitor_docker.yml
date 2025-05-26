@@ -5,7 +5,7 @@ on:
         branches:
             - main
         paths:
-            - 'packages/xchain-monitor/**'
+            - 'apps/xchain-monitor/**'
             - 'packages/**'
     workflow_dispatch:
         inputs:
@@ -55,7 +55,7 @@ jobs:
               run: |
                   docker build \
                     --build-arg GIT_SHA=${{ github.sha }} \
-                    -f ./packages/xchain-monitor/Dockerfile \
+                    -f ./apps/xchain-monitor/Dockerfile \
                     -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest \
                     -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:${{ github.sha }} \
                     .

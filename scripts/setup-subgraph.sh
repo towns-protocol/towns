@@ -8,7 +8,7 @@ FORK_URL="${FORK_URL:-https://sepolia.base.org}"
 FORK_BLOCK_NUMBER="${FORK_BLOCK_NUMBER:-}"
 CHAIN_ID="${CHAIN_ID:-84532}"  # Default to Base Sepolia testnet
 PORT="${PORT:-8545}"
-PONDER_ENV_FILE="packages/subgraph/.env.local"
+PONDER_ENV_FILE="apps/subgraph/.env.local"
 ENVIRONMENT="${ENVIRONMENT:-gamma}"  # Default environment
 
 # Parse command line arguments
@@ -130,7 +130,7 @@ echo "Updating Ponder configuration..."
 
 # Navigate to the subgraph directory and start Ponder
 echo "Starting Ponder development server..."
-cd packages/subgraph
+cd apps/subgraph
 yarn ponder dev
 
 # Note: The cleanup function will be called when this script exits
