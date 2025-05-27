@@ -56,6 +56,9 @@ const (
 	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
+
+	StreamDistributionVnodeCountKey      = "stream.distribution.vnodecount"
+	StreamDistributionCandidatesCountKey = "stream.distribution.candidatescount"
 )
 
 var (
@@ -132,6 +135,8 @@ type OnChainSettings struct {
 	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined with the default value and per stream type.
 	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
+	// StreamDistribution holds settings for the stream distribution algorithm.
+	StreamDistribution StreamDistribution `mapstructure:",squash"`
 }
 
 type XChainSettings struct {
@@ -192,6 +197,14 @@ func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 
 	default:
 		return m.Default
 	}
+}
+
+// StreamDistribution holds settings for the stream distribution algorithm.
+type StreamDistribution struct {
+	// VnodeCount is the number of virtual nodes to use for consistent hashing.
+	VnodeCount uint64 `mapstructure:"stream.distribution.vnodecount"`
+	// CandidatesCount is the number of candidate nodes to pick the best nodes from.
+	CandidatesCount uint64 `mapstructure:"stream.distribution.candidatescount"`
 }
 
 func DefaultOnChainSettings() *OnChainSettings {
@@ -680,8 +693,10 @@ func ABIDecodeAddressArray(data []byte) ([]common.Address, error) {
 	return args[0].([]common.Address), nil
 }
 
-var commonAddressType = reflect.TypeOf(common.Address{})
-var commonAddressArrayType = reflect.TypeOf([]common.Address{})
+var (
+	commonAddressType      = reflect.TypeOf(common.Address{})
+	commonAddressArrayType = reflect.TypeOf([]common.Address{})
+)
 
 func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
 	log := logging.FromCtx(ctx)
