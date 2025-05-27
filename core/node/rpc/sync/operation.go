@@ -381,30 +381,24 @@ func (syncOp *StreamSyncOperation) CancelSync(
 			Func("CancelSync")
 	}
 
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		ctx, span = syncOp.otelTracer.Start(ctx, "cancelSync",
+			trace.WithAttributes(attribute.String("syncId", req.Msg.GetSyncId())))
+		defer span.End()
+	}
+
 	cmd := &subCommand{
 		Ctx:       ctx,
 		CancelReq: req.Msg.GetSyncId(),
 		reply:     make(chan error, 1),
 	}
 
-	timeout := time.After(15 * time.Second)
-
-	select {
-	case syncOp.commands <- cmd:
-		select {
-		case err := <-cmd.reply:
-			if err == nil {
-				return connect.NewResponse(&CancelSyncResponse{}), nil
-			}
-			return nil, err
-		case <-timeout:
-			return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full").
-				Func("CancelSync")
-		}
-	case <-timeout:
-		return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full").
-			Func("CancelSync")
+	if err := syncOp.process(cmd); err != nil {
+		return nil, err
 	}
+
+	return connect.NewResponse(&CancelSyncResponse{}), nil
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
@@ -448,7 +442,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 			return RiverError(Err_CANCELED, "sync operation cancelled").
 				Tags("syncId", syncOp.SyncID)
 		}
-	case <-time.After(10 * time.Second):
+	case <-time.After(30 * time.Second):
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
 			Tags("syncId", syncOp.SyncID)
 		syncOp.log.Errorw("Sync operation command queue full", "err", err)

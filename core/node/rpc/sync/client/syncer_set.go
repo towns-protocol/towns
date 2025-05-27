@@ -357,7 +357,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 		go func(modifySync *ModifySyncRequest) {
 			defer wg.Done()
 
-			ctx, cancel := context.WithTimeout(ctx, time.Second*20)
+			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
 
 			resp, syncerStopped, err := syncer.Modify(ctx, modifySync)
