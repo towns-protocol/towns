@@ -85,14 +85,12 @@ func (m *Manager) start() {
 	for {
 		select {
 		case <-m.globalCtx.Done():
-			// TODO: Handle, cancel all subscriptions
 			return
 		case _, open := <-m.messages.Wait():
 			msgs = m.messages.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed
 			if msgs == nil {
-				// TODO: Handle, should not happen
 				return
 			}
 
@@ -104,7 +102,6 @@ func (m *Manager) start() {
 				// from the current batch, just interrupt the sending process and close.
 				select {
 				case <-m.globalCtx.Done():
-					// TODO: Handle, cancel all subscriptions
 					return
 				default:
 				}
@@ -113,7 +110,6 @@ func (m *Manager) start() {
 			// If the client sent a close message, stop sending messages to client from the buffer.
 			// In theory should not happen, but just in case.
 			if !open {
-				// TODO: Handle, cancel all subscriptions
 				return
 			}
 		}
@@ -187,20 +183,26 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	// FIXME: Potentially, a single subscription might block the entire sending process.
 	var wg sync.WaitGroup
 	for i, subscription := range subscriptions {
-		if subscription.isClosed() && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-			// Remove the given subscriptions from the list of subscriptions of the given stream
-			m.sLock.Lock()
-			m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
-			m.sLock.Unlock()
+		if subscription.isClosed() {
+			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+				// Remove the given subscriptions from the list of subscriptions of the given stream
+				m.sLock.Lock()
+				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
+				m.sLock.Unlock()
+			}
+			continue
+		}
+
+		if initializing, _ := subscription.initializingStreams.Load(streamID); initializing {
+			// If the subscription is still initializing, skip sending the message.
+			// It will be sent later when the subscription is ready.
 			continue
 		}
 
 		wg.Add(1)
 		go func(i int, subscription *Subscription) {
-			defer wg.Done()
-			if initializing, _ := subscription.initializingStreams.Load(streamID); !initializing {
-				subscription.Send(msg)
-			}
+			subscription.Send(msg)
+			wg.Done()
 		}(i, subscription)
 	}
 	wg.Wait()
