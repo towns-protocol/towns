@@ -110,7 +110,11 @@ export class BaseContractShim<
                               this.write(params.signer)[params.functionName] as (
                                   ...args: Args
                               ) => Promise<ContractTransaction>
-                          )(...params.args),
+                          )(
+                              ...((params.value
+                                  ? [...params.args, { value: params.value }]
+                                  : params.args) as Args),
+                          ),
                       params.transactionOpts,
                   )
         ) as Promise<T extends undefined ? ContractTransaction : T>
