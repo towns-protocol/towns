@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -162,6 +163,12 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
+	resetLabelValue := "false"
+	if reset {
+		resetLabelValue = "true"
+	}
+	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": resetLabelValue}).Inc()
+
 	if reset {
 		trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
 		if err != nil {
@@ -178,6 +185,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 			)
 			return
 		}
+		// Assuming each stream experiences a reset when it is first added to tracking, we would
+		// expect the reset to be the first event we see for each stream when tracking it.
 		ssr.metrics.TrackedStreams.With(labels).Inc()
 		record.trackedView = trackedView
 	}
@@ -288,7 +297,9 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 			ssr.applyUpdateToStream(update.GetStream(), record)
 		}
 	case protocol.SyncOp_SYNC_DOWN:
-		// Stream relocation is invoked by the remote syncer.
+		// Stream relocation is invoked by the remote syncer whenever a SYNC_DOWN is received, via a callback.
+		// We can count sync downs to get a sense of how often streams are relocated due to node unavailability.
+		ssr.metrics.SyncDown.With(prometheus.Labels{"target_node": ssr.node.Hex()}).Inc()
 		return
 	case protocol.SyncOp_SYNC_CLOSE:
 		fallthrough
@@ -347,12 +358,25 @@ func (ssr *syncSessionRunner) Run() {
 
 	go ssr.syncer.Run()
 
+	// Track active syncs spawned by the multi sync runner.
+	// There will be a bit of dlay between when the sync is cancelled and it is decremented, but on average these
+	// should be fairly accurate.
+	ssr.metrics.ActiveStreamSyncSessions.Inc()
+	defer ssr.metrics.ActiveStreamSyncSessions.Dec()
+
 	// This runner is now ready for streams to be added
 	ssr.syncStarted.Done()
 
 	var batch []*protocol.SyncStreamsResponse
+	metricsTicker := time.Tick(1 * time.Second)
+
 	for {
 		select {
+		case <-metricsTicker:
+			ssr.mu.Lock()
+			ssr.metrics.StreamsPerSyncSession.Observe(float64(ssr.streamCount))
+			ssr.mu.Unlock()
+
 		// Root context cancelled - this should propogate to the sync context and cause it to stop itself.
 		// We do not re-assign streams in this case because we infer the intent was to close the application.
 		case <-ssr.rootCtx.Done():
@@ -666,8 +690,10 @@ func (msr *MultiSyncRunner) addToSync(
 		if sessionRunner, loaded = msr.unfilledSyncs.LoadOrStore(targetNode, runner); !loaded {
 			// If our new runner won the race to be stored for this node, kick off the runner. Streams
 			// are not assignable until the sync session starts.
+			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Inc()
 			go runner.Run()
 			runner.WaitUntilStarted()
+			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Dec()
 		}
 		pool.Release(1)
 	}

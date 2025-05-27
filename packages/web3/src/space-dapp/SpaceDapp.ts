@@ -203,7 +203,12 @@ export class SpaceDapp {
         const bannedCacheOpts = {
             ttlSeconds: isLocalDev ? 5 : 15 * 60,
         }
-        this.entitlementCache = new EntitlementCache(entitlementCacheOpts)
+
+        // The caching of positive entitlements is shorter on both the node and client.
+        this.entitlementCache = new EntitlementCache({
+            positiveCacheTTLSeconds: isLocalDev ? 5 : 15,
+            negativeCacheTTLSeconds: 2,
+        })
         this.entitledWalletCache = new EntitlementCache(entitlementCacheOpts)
         this.entitlementEvaluationCache = new EntitlementCache(entitlementCacheOpts)
         this.bannedTokenIdsCache = new SimpleCache(bannedCacheOpts)
