@@ -3,12 +3,13 @@ package subscription
 import (
 	"context"
 	"sync"
-
-	"github.com/puzpuzpuz/xsync/v4"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -32,6 +33,8 @@ type Manager struct {
 
 	sLock         sync.Mutex
 	subscriptions map[StreamId][]*Subscription
+
+	stopped uint32
 
 	otelTracer trace.Tracer
 }
@@ -66,7 +69,11 @@ func NewManager(
 	return manager
 }
 
-func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) *Subscription {
+func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) (*Subscription, error) {
+	if atomic.LoadUint32(&m.stopped) == 1 {
+		return nil, RiverError(Err_UNAVAILABLE, "subscription manager is stopped").Tag("syncId", syncID)
+	}
+
 	return &Subscription{
 		log:                 m.log.With("syncId", syncID),
 		ctx:                 ctx,
@@ -75,11 +82,14 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:             m,
 		initializingStreams: xsync.NewMap[StreamId, bool](),
-	}
+	}, nil
 }
 
 func (m *Manager) start() {
-	defer m.cancelAllSubscriptions(m.globalCtx.Err())
+	defer func() {
+		atomic.StoreUint32(&m.stopped, 1)
+		m.cancelAllSubscriptions(m.globalCtx.Err())
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -209,6 +219,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 }
 
 func (m *Manager) cancelAllSubscriptions(err error) {
+	m.log.Info("Cancelling all subscriptions")
 	m.sLock.Lock()
 	for _, subscriptions := range m.subscriptions {
 		for _, sub := range subscriptions {
