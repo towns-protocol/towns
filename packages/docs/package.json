@@ -9,7 +9,7 @@
     "spellcheck": "cspell ."
   },
   "devDependencies": {
-    "cspell": "^8.8.1",
+    "cspell": "^8.19.4",
     "mintlify": "4.0.274"
   },
   "keywords": [],
