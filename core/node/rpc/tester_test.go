@@ -166,6 +166,12 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		crypto.StreamReplicationFactorConfigKey,
 		crypto.ABIEncodeUint64(uint64(opts.replicationFactor)),
 	)
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.StreamEnableNewSnapshotFormatConfigKey,
+		crypto.ABIEncodeUint64(1),
+	)
 
 	if opts.start {
 		st.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
