@@ -162,7 +162,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	// run the subscription in the background that takes a long time for each update to send to the client.
 	// this must cancel the sync op with a buffer too full error.
 	go func() {
-		slowSubscriber := slowStreamsResponseSender{sendDuration: 250 * time.Millisecond}
+		slowSubscriber := slowStreamsResponseSender{sendDuration: 500 * time.Millisecond}
 		syncOpErr := syncOp.Run(connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}), slowSubscriber)
 		syncOpStopped.Store(true)
 		syncOpResult <- syncOpErr
