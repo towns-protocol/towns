@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
-
 	ttlcache "github.com/patrickmn/go-cache"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -42,6 +40,7 @@ type (
 	Service struct {
 		authentication.AuthServiceMixin
 		cfg                           config.AppRegistryConfig
+		onChainConfig                 crypto.OnChainConfiguration
 		store                         *CachedEncryptedMessageQueue
 		streamsTracker                track_streams.StreamsTracker
 		sharedSecretDataEncryptionKey [32]byte
@@ -119,6 +118,7 @@ func NewService(
 
 	s := &Service{
 		cfg:                           cfg,
+		onChainConfig:                 onChainConfig,
 		store:                         cache,
 		streamsTracker:                tracker,
 		sharedSecretDataEncryptionKey: fixedWidthDataEncryptionKey,
@@ -440,7 +440,7 @@ waitLoop:
 				log.Warnw("Error fetching user metadata stream for app", "error", err, "streamId", userMetadataStreamId, "appId", appId)
 				continue
 			}
-			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream)
+			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream, s.onChainConfig)
 			if loopExitErr != nil {
 				break waitLoop
 			}
