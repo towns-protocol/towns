@@ -29,7 +29,7 @@ func TestStreamsToNodeAssignment(t *testing.T) {
 	t.Run("GreenState", testStreamDistributionFromGreenState)
 
 	t.Run("Alpha", func(t *testing.T) {
-		t.Skip("run manually :: requires live environment Alpha")
+		t.Skip("Requires live environment Alpha")
 
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
@@ -67,7 +67,7 @@ func TestStreamsToNodeAssignment(t *testing.T) {
 	})
 
 	t.Run("Omega", func(t *testing.T) {
-		t.Skip("run manually :: requires live environment Omega")
+		t.Skip("Requires live environment Omega")
 
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
@@ -229,7 +229,11 @@ func testStreamDistributionFromGreenState(t *testing.T) {
 
 	cfg := tt.getConfig()
 	riverContract, err := registries.NewRiverRegistryContract(
-		tt.ctx, tt.btc.DeployerBlockchain, &cfg.RegistryContract, &cfg.RiverRegistry)
+		tt.ctx,
+		tt.btc.DeployerBlockchain,
+		&config.ContractConfig{Address: tt.btc.RiverRegistryAddress},
+		&cfg.RiverRegistry,
+	)
 	tt.require.NoError(err)
 
 	distributor, err := stream.NewDistributor(
