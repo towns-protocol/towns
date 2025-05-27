@@ -395,14 +395,6 @@ func newImpl(
 		return nil, err
 	}
 
-	streamNodes := make([]*streamNode, 0, len(nodes))
-	for _, node := range nodes {
-		streamNodes = append(
-			streamNodes,
-			&streamNode{NodeRecord: node, virtualNodes: make([]uint64, 0, defaultVnodeCount)},
-		)
-	}
-
 	// sort them by node address to ensure consistent ordering in case of virtual node position clashes
 	slices.SortFunc(nodes, func(a, b registries.NodeRecord) int {
 		return a.NodeAddress.Cmp(b.NodeAddress)
