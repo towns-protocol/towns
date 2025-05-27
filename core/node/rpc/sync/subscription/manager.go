@@ -169,20 +169,16 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			}
 		}
 
-		msg.TargetSyncIds = msg.TargetSyncIds[1:]
 		if sub != nil {
+			msg.TargetSyncIds = msg.TargetSyncIds[1:]
+			sub.Send(msg)
+
 			if initializing, _ := sub.initializingStreams.Load(streamID); initializing {
 				// The given stream is in initialization state for the given subscription.
 				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 					// Backfill of the stream targeted specifically to the given subscription
-					sub.Send(msg)
 					sub.initializingStreams.Delete(streamID)
-				} else {
-					// Should not happen in theory
-					return
 				}
-			} else {
-				sub.Send(msg)
 			}
 		}
 		return

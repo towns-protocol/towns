@@ -72,7 +72,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
 		SyncID:                    s.syncID,
-		ToBackfill:                req.ToBackfill, // TODO: Should be accepted by the stream nodes only?
+		ToBackfill:                req.ToBackfill,
 		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
 			req.AddingFailureHandler(status)
@@ -80,12 +80,6 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		},
 		RemovingFailureHandler: req.RemovingFailureHandler,
 	}
-	/*
-		ST1: to backfill
-		ST2: to add (backfilled by the node)
-		->
-		ToBackfill: {Streams: [ST1 (target sync ID specified), ST2 (target sync ID not specified)]}
-	*/
 
 	// Handle streams that the clients wants to subscribe to.
 	var implicitBackfills []*SyncCookie
@@ -96,7 +90,6 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
 		} else if shouldBackfill {
 			// The given stream must be backfilled implicitly only for the given subscription
-			// TODO: In this case, there is only one target sync ID which is s.syncID
 			implicitBackfills = append(implicitBackfills, toAdd)
 		}
 	}
@@ -156,7 +149,6 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 		}
 	}
 	s.manager.sLock.Unlock()
-
 	return
 }
 
@@ -174,8 +166,7 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 		delete(s.manager.subscriptions, StreamId(streamID))
 	}
 	s.manager.sLock.Unlock()
-
-	return removeFromRemote
+	return
 }
 
 // DebugDropStream drops the given stream from the subscription.

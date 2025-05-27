@@ -127,30 +127,62 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		addingFailuresLock.Unlock()
 	}
 
+	backfillingFailuresLock := sync.Mutex{}
+	backfillingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
+	backfillingFailuresHandler := func(status *SyncStreamOpStatus) {
+		if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
+			req.BackfillingFailureHandler(status)
+			return
+		}
+
+		backfillingFailuresLock.Lock()
+		backfillingFailures = append(backfillingFailures, status)
+		backfillingFailuresLock.Unlock()
+	}
+
 	// First attempt with the provided cookies without modifications.
 	if err := ss.modify(ctx, ModifyRequest{
 		SyncID:                    req.SyncID,
 		ToBackfill:                req.ToBackfill,
 		ToAdd:                     req.ToAdd,
 		ToRemove:                  req.ToRemove,
-		BackfillingFailureHandler: req.BackfillingFailureHandler,
+		BackfillingFailureHandler: backfillingFailuresHandler,
 		AddingFailureHandler:      addingFailuresHandler,
 		RemovingFailureHandler:    req.RemovingFailureHandler,
 	}); err != nil {
 		return err
 	}
 
-	// If a stream was failed to add, try to fix the cookies and send the modify sync again.
+	// If a stream was failed to process, try to fix the cookies and send the modify sync again.
 	// There could be a case when a client specifies a wrong node address which leads to errors.
 	// This case should be properly handled by resetting the node address and retrying the operation.
-	if len(addingFailures) == 0 {
+	if len(addingFailures) == 0 && len(backfillingFailures) == 0 {
 		return nil
 	}
 
 	mr := ModifyRequest{
-		ToAdd:                make([]*SyncCookie, 0, len(addingFailures)),
-		AddingFailureHandler: req.AddingFailureHandler,
+		// ToBackfill:                make([]*ModifySyncRequest_Backfill, 0, len(backfillingFailures)),
+		ToAdd:                     make([]*SyncCookie, 0, len(addingFailures)),
+		BackfillingFailureHandler: req.BackfillingFailureHandler,
+		AddingFailureHandler:      req.AddingFailureHandler,
 	}
+
+	// Remove node addresses from failed to backfill streams
+	/*for _, status := range backfillingFailures {
+		preparedSyncCookie := &SyncCookie{
+			StreamId: status.StreamId,
+		}
+		for _, backfill := range req.ToBackfill {
+			for _, cookie := range backfill.GetStreams() {
+				if StreamId(cookie.GetStreamId()) == StreamId(status.StreamId) {
+					preparedSyncCookie = cookie
+					break
+				}
+			}
+		}
+		preparedSyncCookie.NodeAddress = nil
+		mr.ToBackfill = append(mr.ToBackfill, preparedSyncCookie)
+	}*/
 
 	// Remove node addresses from failed to add streams
 	for _, status := range addingFailures {
@@ -175,7 +207,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
 
-	if len(req.ToAdd) > 0 && ss.stopped {
+	if len(req.ToAdd)+len(req.ToBackfill) > 0 && ss.stopped {
 		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
 
