@@ -222,7 +222,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
 
-	if len(req.ToAdd)+len(req.ToBackfill) > 0 && ss.stopped {
+	if ss.stopped {
 		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
 

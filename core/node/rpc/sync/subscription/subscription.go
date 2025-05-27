@@ -69,6 +69,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		return err
 	}
 
+	s.manager.sLock.Lock()
+	defer s.manager.sLock.Unlock()
+
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
 		SyncID:                    s.syncID,
@@ -104,7 +107,6 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	if len(implicitBackfills) > 0 {
-
 		// TODO: AddingFailureHandler should be used for implicit backfills. Handle it properly.
 		if modifiedReq.BackfillingFailureHandler == nil {
 			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
@@ -137,7 +139,6 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 	streamID := StreamId(cookie.GetStreamId())
 
 	// Add the stream to the subscription if not added yet
-	s.manager.sLock.Lock()
 	subscriptions, ok := s.manager.subscriptions[streamID]
 	if !ok || len(subscriptions) == 0 {
 		shouldAdd = true
@@ -154,14 +155,12 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
 		}
 	}
-	s.manager.sLock.Unlock()
 	return
 }
 
 // removeStream removes the given stream from the current subscription.
 // Returns true if the given stream must be removed from the main syncer set.
 func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
-	s.manager.sLock.Lock()
 	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
 		s.manager.subscriptions[StreamId(streamID)],
 		func(sub *Subscription) bool {
@@ -171,7 +170,6 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
 		delete(s.manager.subscriptions, StreamId(streamID))
 	}
-	s.manager.sLock.Unlock()
 	return
 }
 
