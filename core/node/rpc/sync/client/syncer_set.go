@@ -161,28 +161,43 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	mr := ModifyRequest{
-		// ToBackfill:                make([]*ModifySyncRequest_Backfill, 0, len(backfillingFailures)),
+		ToBackfill:                make([]*ModifySyncRequest_Backfill, 0, len(backfillingFailures)),
 		ToAdd:                     make([]*SyncCookie, 0, len(addingFailures)),
 		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler:      req.AddingFailureHandler,
 	}
 
 	// Remove node addresses from failed to backfill streams
-	/*for _, status := range backfillingFailures {
-		preparedSyncCookie := &SyncCookie{
-			StreamId: status.StreamId,
-		}
-		for _, backfill := range req.ToBackfill {
-			for _, cookie := range backfill.GetStreams() {
-				if StreamId(cookie.GetStreamId()) == StreamId(status.StreamId) {
-					preparedSyncCookie = cookie
-					break
+	if len(backfillingFailures) > 0 {
+		backfills := make(map[string][]*SyncCookie, len(backfillingFailures))
+		for _, status := range backfillingFailures {
+			var syncID string
+			preparedSyncCookie := &SyncCookie{
+				StreamId: status.StreamId,
+			}
+			for _, backfill := range req.ToBackfill {
+				for _, cookie := range backfill.GetStreams() {
+					if StreamId(cookie.GetStreamId()) == StreamId(status.StreamId) {
+						preparedSyncCookie = cookie
+						syncID = backfill.GetSyncId()
+						break
+					}
 				}
 			}
+			preparedSyncCookie.NodeAddress = nil
+			if _, ok := backfills[syncID]; !ok {
+				backfills[syncID] = []*SyncCookie{preparedSyncCookie}
+			} else {
+				backfills[syncID] = append(backfills[syncID], preparedSyncCookie)
+			}
 		}
-		preparedSyncCookie.NodeAddress = nil
-		mr.ToBackfill = append(mr.ToBackfill, preparedSyncCookie)
-	}*/
+		for syncID, cookies := range backfills {
+			mr.ToBackfill = append(mr.ToBackfill, &ModifySyncRequest_Backfill{
+				SyncId:  syncID,
+				Streams: cookies,
+			})
+		}
+	}
 
 	// Remove node addresses from failed to add streams
 	for _, status := range addingFailures {
