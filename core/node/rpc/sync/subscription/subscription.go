@@ -104,6 +104,12 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	if len(implicitBackfills) > 0 {
+
+		// TODO: AddingFailureHandler should be used for implicit backfills. Handle it properly.
+		if modifiedReq.BackfillingFailureHandler == nil {
+			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
+		}
+
 		modifiedReq.ToBackfill = append(modifiedReq.ToBackfill, &ModifySyncRequest_Backfill{
 			SyncId:  s.syncID,
 			Streams: implicitBackfills,

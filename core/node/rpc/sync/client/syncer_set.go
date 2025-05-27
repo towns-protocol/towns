@@ -302,7 +302,13 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	if len(modifySyncs) > 0 {
-		ss.distributeSyncModifications(ctx, modifySyncs, req.BackfillingFailureHandler, req.AddingFailureHandler, req.RemovingFailureHandler)
+		ss.distributeSyncModifications(
+			ctx,
+			modifySyncs,
+			req.BackfillingFailureHandler,
+			req.AddingFailureHandler,
+			req.RemovingFailureHandler,
+		)
 	}
 
 	return nil
