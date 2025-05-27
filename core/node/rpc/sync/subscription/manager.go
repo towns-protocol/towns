@@ -186,20 +186,20 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 
 	// FIXME: Potentially, a single subscription might block the entire sending process.
 	var wg sync.WaitGroup
-	wg.Add(len(subscriptions))
 	for i, subscription := range subscriptions {
+		if subscription.isClosed() && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+			// Remove the given subscriptions from the list of subscriptions of the given stream
+			m.sLock.Lock()
+			m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
+			m.sLock.Unlock()
+			continue
+		}
+
+		wg.Add(1)
 		go func(i int, subscription *Subscription) {
 			defer wg.Done()
-
-			if subscription.isClosed() && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-				// Remove the given subscriptions from the list of subscriptions of the given stream
-				m.sLock.Lock()
-				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
-				m.sLock.Unlock()
-			} else {
-				if initializing, _ := subscription.initializingStreams.Load(streamID); !initializing {
-					subscription.Send(msg)
-				}
+			if initializing, _ := subscription.initializingStreams.Load(streamID); !initializing {
+				subscription.Send(msg)
 			}
 		}(i, subscription)
 	}
