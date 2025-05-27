@@ -51,6 +51,7 @@ type testParams struct {
 	recencyConstraintsGenerations int
 	recencyConstraintsAgeSec      int
 	defaultMinEventsPerSnapshot   int
+	enableNewSnapshotFormat       int
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -405,6 +406,12 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 		btc.SetConfigValue(t, ctx,
 			crypto.StreamDefaultMinEventsPerSnapshotConfigKey,
 			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
+		)
+	}
+	if p.enableNewSnapshotFormat != 0 {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamEnableNewSnapshotFormatConfigKey,
+			crypto.ABIEncodeUint64(uint64(p.enableNewSnapshotFormat)),
 		)
 	}
 }

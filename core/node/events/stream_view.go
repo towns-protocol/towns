@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"iter"
-	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -29,7 +28,10 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
+func MakeStreamView(
+	streamData *storage.ReadStreamFromLastSnapshotResult,
+	chainConfig crypto.OnChainConfiguration,
+) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -104,10 +106,14 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
+		chainConfig:   chainConfig,
 	}, nil
 }
 
-func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
+func MakeRemoteStreamView(
+	stream *StreamAndCookie,
+	chainConfig crypto.OnChainConfiguration,
+) (*StreamView, error) {
 	if stream == nil {
 		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
 	}
@@ -168,6 +174,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: 0,
+		chainConfig:   chainConfig,
 	}, nil
 }
 
@@ -177,6 +184,8 @@ type StreamView struct {
 	minipool      *minipoolInstance
 	snapshot      *Snapshot
 	snapshotIndex int
+
+	chainConfig crypto.OnChainConfiguration
 }
 
 func (r *StreamView) copyAndAddEvent(event *ParsedEvent) (*StreamView, error) {
@@ -199,6 +208,7 @@ func (r *StreamView) copyAndAddEvent(event *ParsedEvent) (*StreamView, error) {
 		minipool:      newMinipool,
 		snapshot:      r.snapshot,
 		snapshotIndex: r.snapshotIndex,
+		chainConfig:   r.chainConfig,
 	}
 	return ret, nil
 }
@@ -414,13 +424,11 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		if os.Getenv("ENABLE_NEW_SNAPSHOT_FORMAT") == "true" {
-			// TODO: Remove, this is temporary fix to test new snapshot format. Passing global config struct here is tricky.
+		if r.chainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
 			header.SnapshotHash = parsedSnapshot.Envelope.Hash
 		} else {
 			header.Snapshot = parsedSnapshot.Snapshot
 			// header.SnapshotHash = parsedSnapshot.Envelope.Hash
-			// TODO: Remove the following line.
 			// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
 			parsedSnapshot = nil
 		}
@@ -516,6 +524,7 @@ func (r *StreamView) copyAndApplyBlock(
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
+		chainConfig:   r.chainConfig,
 	}, newEvents, nil
 }
 
@@ -899,6 +908,7 @@ func (r *StreamView) CopyAndPrependMiniblocks(mbs []*MiniblockInfo) (*StreamView
 		minipool:      r.minipool,
 		snapshot:      r.snapshot,
 		snapshotIndex: r.snapshotIndex + len(mbs),
+		chainConfig:   r.chainConfig,
 	}, nil
 }
 

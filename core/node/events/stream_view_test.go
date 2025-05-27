@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,8 +30,11 @@ func TestLoad(t *testing.T) {
 	defer cancel()
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
+	cfg := crypto.DefaultOnChainSettings()
+	cfg.StreamEnableNewSnapshotFormat = 1
 	params := &StreamCacheParams{
-		Wallet: nodeWallet,
+		Wallet:      nodeWallet,
+		ChainConfig: &mocks.MockOnChainCfg{Settings: cfg},
 	}
 	streamId := UserStreamIdFromAddr(userWallet.Address)
 
@@ -69,6 +74,7 @@ func TestLoad(t *testing.T) {
 				{Data: miniblockProtoBytes},
 			},
 		},
+		params.ChainConfig,
 	)
 
 	assert.NoError(t, err)
@@ -122,8 +128,6 @@ func TestLoad(t *testing.T) {
 
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
-
-	cfg := crypto.DefaultOnChainSettings()
 
 	// check for invalid config
 	num := cfg.MinSnapshotEvents.ForType(0)
@@ -298,14 +302,15 @@ func TestMbHashConstraints(t *testing.T) {
 		prevMb = mb
 	}
 
+	cfg := crypto.DefaultOnChainSettings()
+
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbDescriptors,
 		},
+		&mocks.MockOnChainCfg{Settings: cfg},
 	)
 	require.NoError(err)
-
-	cfg := crypto.DefaultOnChainSettings()
 
 	for i, mb := range mbs {
 		err = view.ValidateNextEvent(

@@ -1168,7 +1168,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(stream)
+	view, err = MakeRemoteStreamView(stream, tc.serviceTester.btc.OnChainConfig)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 
@@ -1190,7 +1190,11 @@ func (tc *testClient) maybeDumpStreamView(view *StreamView) {
 			tc.name,
 			"Dumping stream view",
 			"\n",
-			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{
+				EventContent: true,
+				TestMessages: true,
+				ChainConfig:  tc.serviceTester.btc.OnChainConfig,
+			}),
 		)
 	}
 }
@@ -1204,7 +1208,11 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{
+				EventContent: true,
+				TestMessages: true,
+				ChainConfig:  tc.serviceTester.btc.OnChainConfig,
+			}),
 		)
 	}
 }

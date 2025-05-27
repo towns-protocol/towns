@@ -192,6 +192,7 @@ func leaveChannel_T(
 func TestSpaceViewState(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		defaultMinEventsPerSnapshot: 2,
+		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -260,6 +261,7 @@ func TestSpaceViewState(t *testing.T) {
 				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
+		tt.btc.OnChainConfig,
 	)
 	require.NoError(t, err)
 	require.NotNil(t, view3)
@@ -285,6 +287,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
+		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -327,6 +330,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
+		tt.btc.OnChainConfig,
 	)
 	require.NoError(t, err)
 
@@ -346,6 +350,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
+		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -390,6 +395,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
+		tt.btc.OnChainConfig,
 	)
 	require.NoError(t, err)
 
