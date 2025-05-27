@@ -36,6 +36,7 @@ type Subscription struct {
 }
 
 func (s *Subscription) Close() {
+	s.log.Info("Closing subscription", "err", s.ctx.Err())
 	atomic.StoreUint32(&s.closed, 1)
 	s.Messages.Close()
 	// The given subscription is going to be removed from the list (s.subscriptions) automatically during the next stream update.
