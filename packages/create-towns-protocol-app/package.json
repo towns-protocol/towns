@@ -20,12 +20,12 @@
         "@types/cross-spawn": "^6.0.6",
         "@types/minimist": "^1.2.5",
         "@types/prompts": "^2.4.9",
-        "cross-spawn": "^7.0.5",
+        "cross-spawn": "^7.0.6",
         "minimist": "^1.2.8",
         "picocolors": "^1.1.1",
         "prompts": "^2.4.2",
-        "tsup": "^8.3.5",
-        "typescript": "^5.8.2"
+        "tsup": "^8.5.0",
+        "typescript": "^5.8.3"
     },
     "dependencies": {
         "jsonc-parser": "^3.3.1"
