@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
