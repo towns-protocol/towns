@@ -9,7 +9,7 @@ import {IRiverConfig} from "src/river/registry/facets/config/IRiverConfig.sol";
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
 
-contract InteractRiverRegistrySetFreq is Interaction {
+contract InteractEnableNewSnapshotFormat is Interaction {
   function __interact(address deployer) internal override {
     address riverRegistry = getDeployment("riverRegistry");
 
