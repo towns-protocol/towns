@@ -69,7 +69,7 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 	err := pool.Pool.QueryRow(ctx, "SELECT version()").Scan(&version)
 	if err != nil {
 		version = fmt.Sprintf("Error: %v", err)
-		log.Errorw("failed to get PostgreSQL version", "err", err)
+		log.Errorw("failed to get PostgreSQL version", "error", err)
 	}
 
 	var systemId string

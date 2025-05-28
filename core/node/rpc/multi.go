@@ -115,7 +115,7 @@ func getHttpStatus(
 		"GET", url, nil)
 	req.Header.Set("Accept", "application/json")
 	if err != nil {
-		log.Errorw("Error creating request", "err", err, "url", url)
+		log.Errorw("Error creating request", "error", err, "url", url)
 		result.StatusText = err.Error()
 		return
 	}
@@ -143,7 +143,7 @@ func getHttpStatus(
 			result.StatusText = "No response"
 		}
 	} else {
-		log.Errorw("Error fetching URL", "err", err, "url", url)
+		log.Errorw("Error fetching URL", "error", err, "url", url)
 		result.StatusText = err.Error()
 	}
 
@@ -184,7 +184,7 @@ func getGrpcStatus(
 	record.Grpc.Timeline = timeline
 
 	if err != nil {
-		log.Errorw("Error fetching Info", "err", err, "url", record.Record.Url)
+		log.Errorw("Error fetching Info", "error", err, "url", record.Record.Url)
 		record.Grpc.StatusText = err.Error()
 		return
 	}
@@ -330,7 +330,7 @@ func (s *Service) handleDebugStorage(w http.ResponseWriter, r *http.Request) {
 		log.Infow("Node storage status", "data", status)
 	}
 	if err != nil {
-		log.Errorw("Error getting data or rendering template for debug/storage", "err", err)
+		log.Errorw("Error getting data or rendering template for debug/storage", "error", err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -360,7 +360,7 @@ func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		log.Errorw("Error getting data or rendering template for debug/multi", "err", err)
+		log.Errorw("Error getting data or rendering template for debug/multi", "error", err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -392,7 +392,7 @@ func (s *Service) handleDebugMultiJson(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		log.Errorw("Error getting data or writing json for debug/multi/json", "err", err)
+		log.Errorw("Error getting data or writing json for debug/multi/json", "error", err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }

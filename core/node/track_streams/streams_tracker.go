@@ -2,13 +2,13 @@ package track_streams
 
 import (
 	"context"
-	"math/rand"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -53,15 +53,15 @@ var _ StreamsTracker = (*StreamsTrackerImpl)(nil)
 // views, which are application-specific. The filter implementation struct embeds this tracker implementation
 // and provides these methods for encapsulation.
 type StreamsTrackerImpl struct {
-	ctx            context.Context
-	filter         StreamFilter
-	nodeRegistries []nodes.NodeRegistry
-	riverRegistry  *registries.RiverRegistryContract
-	onChainConfig  crypto.OnChainConfiguration
-	listener       StreamEventListener
-	metrics        *TrackStreamsSyncMetrics
-	tracked        sync.Map // map[shared.StreamId] = struct{}
-	syncRunner     *SyncRunner
+	ctx             context.Context
+	filter          StreamFilter
+	nodeRegistries  []nodes.NodeRegistry
+	riverRegistry   *registries.RiverRegistryContract
+	onChainConfig   crypto.OnChainConfiguration
+	listener        StreamEventListener
+	metrics         *TrackStreamsSyncMetrics
+	tracked         sync.Map // map[shared.StreamId] = struct{}
+	multiSyncRunner *MultiSyncRunner
 }
 
 // Init can be used by a struct embedding the StreamsTrackerImpl to initialize it.
@@ -73,6 +73,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	listener StreamEventListener,
 	filter StreamFilter,
 	metricsFactory infra.MetricsFactory,
+	streamTracking config.StreamTrackingConfig,
 ) error {
 	tracker.ctx = ctx
 	tracker.metrics = NewTrackStreamsSyncMetrics(metricsFactory)
@@ -81,7 +82,14 @@ func (tracker *StreamsTrackerImpl) Init(
 	tracker.nodeRegistries = nodeRegistries
 	tracker.listener = listener
 	tracker.filter = filter
-	tracker.syncRunner = NewSyncRunner()
+	tracker.multiSyncRunner = NewMultiSyncRunner(
+		tracker.metrics,
+		onChainConfig,
+		nodeRegistries,
+		filter.NewTrackedStream,
+		streamTracking,
+		nil,
+	)
 
 	// Subscribe to stream events in river registry
 	if err := tracker.riverRegistry.OnStreamEvent(
@@ -114,6 +122,8 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 		streamsLoadedProgress = 0
 		start                 = time.Now()
 	)
+
+	go tracker.multiSyncRunner.Run(ctx)
 
 	err := tracker.riverRegistry.ForAllStreams(
 		ctx,
@@ -150,19 +160,8 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 			// start stream sync session for stream if it hasn't seen before
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
-				// start tracking the stream until ctx expires
-				go func() {
-					idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
-					tracker.syncRunner.Run(
-						ctx,
-						stream,
-						false,
-						tracker.nodeRegistries[idx],
-						tracker.onChainConfig,
-						tracker.filter.NewTrackedStream,
-						tracker.metrics,
-					)
-				}()
+				// start tracking the stream, until the root ctx expires.
+				tracker.multiSyncRunner.AddStream(stream, false)
 			}
 
 			return true
@@ -186,29 +185,19 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 }
 
 func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
-	ctx context.Context,
 	streamId shared.StreamId,
 	nodes []common.Address,
 ) {
 	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
-		go func() {
-			stream := &river.StreamWithId{
-				Id:     streamId,
-				Stream: river.Stream{Nodes: nodes},
-			}
-
-			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
-			tracker.syncRunner.Run(
-				ctx,
-				stream,
-				true,
-				tracker.nodeRegistries[idx],
-				tracker.onChainConfig,
-				tracker.filter.NewTrackedStream,
-				tracker.metrics,
-			)
-		}()
+		stream := &river.StreamWithId{
+			Id: streamId,
+			Stream: river.Stream{
+				Reserved0: uint64(len(nodes)),
+				Nodes:     nodes,
+			},
+		}
+		tracker.multiSyncRunner.AddStream(stream, true)
 	}
 }
 
@@ -221,7 +210,7 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 
 	// Use tracker.ctx here so that the stream continues to  be synced after
 	// the originating request expires
-	tracker.forwardStreamEventsFromInception(tracker.ctx, streamId, stream.Nodes)
+	tracker.forwardStreamEventsFromInception(streamId, stream.Nodes)
 	return nil
 }
 
@@ -237,7 +226,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
+	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -252,7 +241,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
+	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(

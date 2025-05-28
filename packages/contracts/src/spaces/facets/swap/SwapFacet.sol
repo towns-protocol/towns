@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IImplementationRegistry} from "../../../factory/facets/registry/IImplementationRegistry.sol";
 import {ISwapRouter, ISwapRouterBase} from "../../../router/ISwapRouter.sol";
@@ -10,6 +11,7 @@ import {ISwapFacet} from "./ISwapFacet.sol";
 // libraries
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {MembershipBase} from "../membership/MembershipBase.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {SwapFacetStorage} from "./SwapFacetStorage.sol";
@@ -17,12 +19,20 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {Entitled} from "../Entitled.sol";
+import {PointsBase} from "../points/PointsBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
 /// @title SwapFacet
 /// @notice Facet for executing swaps within a space
-contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, MembershipBase, Facet {
+contract SwapFacet is
+    ISwapFacet,
+    ReentrancyGuardTransient,
+    Entitled,
+    MembershipBase,
+    PointsBase,
+    Facet
+{
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
@@ -43,10 +53,10 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
     ) external onlyOwner {
         // get protocol fee for validation
         IPlatformRequirements platform = _getPlatformRequirements();
-        (uint16 treasuryBps, ) = platform.getSwapFees();
+        (uint16 protocolBps, ) = platform.getSwapFees();
 
         // ensure total fee is reasonable
-        if (treasuryBps + posterFeeBps > MAX_FEE_BPS) {
+        if (protocolBps + posterFeeBps > MAX_FEE_BPS) {
             SwapFacet__TotalFeeTooHigh.selector.revertWith();
         }
 
@@ -98,7 +108,20 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
                 routerParams,
                 actualPoster
             )
-        returns (uint256 returnedAmount) {
+        returns (uint256 returnedAmount, uint256 protocolFee) {
+            // mint points based on the protocol fee if ETH is involved
+            if (
+                params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
+                params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
+            ) {
+                address airdropDiamond = _getAirdropDiamond();
+                uint256 points = _getPoints(
+                    airdropDiamond,
+                    ITownsPointsBase.Action.Swap,
+                    abi.encode(protocolFee)
+                );
+                _mintPoints(airdropDiamond, msg.sender, points);
+            }
             emit SwapExecuted(
                 params.recipient,
                 params.tokenIn,
@@ -175,13 +198,13 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
     function getSwapFees()
         external
         view
-        returns (uint16 treasuryBps, uint16 posterBps, bool collectPosterFeeToSpace)
+        returns (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace)
     {
         SwapFacetStorage.Layout storage ds = SwapFacetStorage.layout();
 
-        // get treasuryBps and posterBps from protocol config
+        // get protocolBps and posterBps from protocol config
         IPlatformRequirements platform = _getPlatformRequirements();
-        (treasuryBps, posterBps) = platform.getSwapFees();
+        (protocolBps, posterBps) = platform.getSwapFees();
 
         collectPosterFeeToSpace = ds.collectPosterFeeToSpace;
 

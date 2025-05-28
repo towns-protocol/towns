@@ -8,6 +8,12 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 interface IAppRegistryBase {
+    struct AppParams {
+        string name;
+        bytes32[] permissions;
+        address[] clients;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -16,6 +22,7 @@ interface IAppRegistryBase {
     error AppRevoked();
     error NotAppOwner();
     error AppDoesNotImplementInterface();
+    error InvalidAppName();
     error InvalidAddressInput();
     error InvalidArrayInput();
     error BannedApp();
@@ -29,6 +36,7 @@ interface IAppRegistryBase {
     event AppUpdated(address indexed app, bytes32 uid);
     event AppBanned(address indexed app, bytes32 uid);
     event AppSchemaSet(bytes32 uid);
+    event AppCreated(address indexed app, bytes32 uid);
 }
 
 /// @title IAppRegistry Interface
@@ -45,7 +53,7 @@ interface IAppRegistry is IAppRegistryBase {
     /// @notice Get the attestation for a app
     /// @param appId The app ID
     /// @return The attestation
-    function getAppById(bytes32 appId) external view returns (Attestation memory);
+    function getAttestation(bytes32 appId) external view returns (Attestation memory);
 
     /// @notice Get the current version (attestation UID) for a app
     /// @param app The app address
@@ -56,6 +64,14 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address
     /// @return isBanned True if the app is banned, false otherwise
     function isAppBanned(address app) external view returns (bool);
+
+    /// @notice Create a new app
+    /// @param params The parameters of the app
+    /// @return app The app address
+    /// @return appId The attestation UID of the registered app
+    function createApp(
+        AppParams calldata params
+    ) external payable returns (address app, bytes32 appId);
 
     /// @notice Register a new app with permissions
     /// @param app The app address to register

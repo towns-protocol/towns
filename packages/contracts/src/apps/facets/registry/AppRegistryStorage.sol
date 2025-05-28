@@ -23,6 +23,8 @@ library AppRegistryStorage {
         bytes32 schemaId;
         // App => AppInfo
         mapping(address => AppInfo) apps;
+        // Simple app beacon
+        address beacon;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

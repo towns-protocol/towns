@@ -52,7 +52,7 @@ func (h *debugHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to read memory stats", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to read memory stats", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -178,20 +178,20 @@ func (s *Service) startMemProfile(cfg config.DebugEndpointsConfig) {
 func (s *Service) writeMemProfile(index int) {
 	// Ensure the memory profile directory exists
 	if err := os.MkdirAll(s.config.DebugEndpoints.MemProfileDir, 0755); err != nil {
-		s.defaultLogger.Errorw("unable to create mem profile directory", "dir", s.config.DebugEndpoints.MemProfileDir, "err", err)
+		s.defaultLogger.Errorw("unable to create mem profile directory", "dir", s.config.DebugEndpoints.MemProfileDir, "error", err)
 		return
 	}
 	fileName := filepath.Join(s.config.DebugEndpoints.MemProfileDir, fmt.Sprintf("mem_profile_%s_%d.pb.gz", s.getServerName(), index))
 	f, err := os.Create(fileName)
 	if err != nil {
-		s.defaultLogger.Errorw("unable to create mem profile", "err", err)
+		s.defaultLogger.Errorw("unable to create mem profile", "error", err)
 		return
 	}
 	defer f.Close()
 	runtime.GC()
 	err = runtimePProf.Lookup("heap").WriteTo(f, 0)
 	if err != nil {
-		s.defaultLogger.Errorw("unable to write mem profile", "err", err)
+		s.defaultLogger.Errorw("unable to write mem profile", "error", err)
 	}
 }
 
@@ -244,7 +244,7 @@ func (h *corruptStreamsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render stack data", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to render stack data", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -308,7 +308,7 @@ func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if streamId, err = shared.StreamIdFromString(streamIdStr); err != nil {
 		log.Errorw(
 			"unable to convert url value to streamId",
-			"err",
+			"error",
 			err,
 			"streamIdString",
 			streamIdStr)
@@ -323,7 +323,7 @@ func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 
 		} else {
-			log.Errorw("unable to read stream statistics from db", "err", err)
+			log.Errorw("unable to read stream statistics from db", "error", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
@@ -332,7 +332,7 @@ func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reply.Result = *result
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render transaction pool data", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to render transaction pool data", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -357,7 +357,7 @@ func (h *onChainConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	settings := h.onChainConfig.All()
 	bb, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to marshall on-chain-config data", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to marshall on-chain-config data", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -365,7 +365,7 @@ func (h *onChainConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render on-chain-config data", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to render on-chain-config data", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -395,7 +395,7 @@ func (h *txpoolHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render transaction pool data", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to render transaction pool data", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -460,7 +460,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render cache data", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to render cache data", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

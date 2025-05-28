@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
 import {
     ChannelDetails,
     ChannelMetadata,
@@ -8,6 +8,7 @@ import {
     Permission,
     RoleDetails,
     RoleEntitlements,
+    TransactionOpts,
     isRuleEntitlement,
     isRuleEntitlementV2,
     isUserEntitlement,
@@ -19,7 +20,7 @@ import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
 import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
-import { UNKNOWN_ERROR } from '../BaseContractShim'
+import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { UserEntitlementShim } from './entitlements/UserEntitlementShim'
 import { toPermissions, parseChannelMetadataJSON } from '../utils/ut'
 import { isRoleIdInArray } from '../utils/ContractHelpers'
@@ -37,7 +38,8 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { ISwapShim } from './ISwapShim'
+import { dlogger } from '@towns-protocol/dlog'
+const log = dlogger('csb:Space')
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -63,7 +65,6 @@ export class Space {
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
     private readonly treasury: ITreasuryShim
-    private readonly swap: ISwapShim
 
     constructor(
         address: string,
@@ -92,7 +93,6 @@ export class Space {
         this.tipping = new ITippingShim(address, provider)
         this.review = new IReviewShim(address, provider)
         this.treasury = new ITreasuryShim(address, provider)
-        this.swap = new ISwapShim(address, provider)
     }
 
     private getAllShims() {
@@ -111,7 +111,6 @@ export class Space {
             this.erc721A,
             this.tipping,
             this.treasury,
-            this.swap,
         ] as const
     }
 
@@ -181,10 +180,6 @@ export class Space {
 
     public get Treasury(): ITreasuryShim {
         return this.treasury
-    }
-
-    public get Swap(): ISwapShim {
-        return this.swap
     }
 
     public async totalTips({ currency }: { currency: string }): Promise<{
@@ -384,7 +379,7 @@ export class Space {
 
     public async getEntitlementShims(): Promise<EntitlementShim[]> {
         // get all the entitlement addresses supported in the space
-        const entitlementInfo = await this.entitlements.read.getEntitlements()
+        const entitlementInfo = await this.entitlements.getEntitlements()
         const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
@@ -488,12 +483,126 @@ export class Space {
         }
     }
 
-    public async getTokenIdsOfOwner(linkedWallets: string[]): Promise<string[]> {
-        const tokenPromises = linkedWallets.map((wallet) =>
-            this.erc721AQueryable.read.tokensOfOwner(wallet),
-        )
-        const allTokenArrays = await Promise.all(tokenPromises)
-        return allTokenArrays.flat().map((token) => token.toString())
+    public async getTokenIdsOfOwner(wallets: string[]): Promise<string[]> {
+        const results = await this.multicall.makeCalls({
+            encoder: () =>
+                wallets.map((wallet) =>
+                    this.erc721AQueryable.encodeFunctionData('tokensOfOwner', [wallet]),
+                ),
+            decoder: (result) => {
+                return this.erc721AQueryable
+                    .decodeFunctionResult('tokensOfOwner', result)[0]
+                    .map((token) => token.toString())
+            },
+        })
+
+        const tokenIds = new Set(results.flat())
+        return Array.from(tokenIds)
+    }
+
+    public async getMembershipStatus(wallets: string[]): Promise<{
+        isMember: boolean
+        tokenId?: string
+        isExpired?: boolean
+        expiryTime?: bigint
+        expiredAt?: bigint
+    }> {
+        const tokenIds = await this.getTokenIdsOfOwner(wallets)
+
+        if (tokenIds.length === 0) {
+            return {
+                isMember: false,
+            }
+        }
+
+        let expirations: bigint[] = []
+        try {
+            expirations = await this.multicall.makeCalls({
+                encoder: () =>
+                    tokenIds.map((id) => this.membership.encodeFunctionData('expiresAt', [id])),
+                decoder: (result) => {
+                    return this.membership.decodeFunctionResult('expiresAt', result)[0].toBigInt()
+                },
+            })
+        } catch (error) {
+            log.error('getMembershipStatus expirations::error', { error })
+            // Error evaluating expirations, assume not expired
+            return {
+                isMember: false,
+            }
+        }
+
+        const currentTime = BigInt(Math.floor(Date.now() / 1000))
+
+        // Track status values
+        let hasActiveToken = false
+        let expiryTime: bigint | undefined = undefined
+        let expiredAt: bigint | undefined = undefined
+        let tokenId: string | undefined = undefined
+
+        // check for permanent tokens
+        for (let i = 0; i < expirations.length; i++) {
+            if (expirations[i] === 0n) {
+                hasActiveToken = true
+                expiryTime = 0n
+                tokenId = tokenIds[i]
+                break
+            }
+        }
+
+        // if no permanent tokens, check for active tokens
+        if (expiryTime !== 0n) {
+            for (let i = 0; i < expirations.length; i++) {
+                const expiration = expirations[i]
+
+                // check if token is not expired yet
+                if (expiration > currentTime) {
+                    hasActiveToken = true
+
+                    // track the furthest future expiry
+                    if (expiryTime === undefined || expiration > expiryTime) {
+                        expiryTime = expiration
+                        tokenId = tokenIds[i]
+                    }
+                } else {
+                    // this is an expired token, track the most recent expiry
+                    if (expiredAt === undefined || expiration > expiredAt) {
+                        expiredAt = expiration
+
+                        // only use this token if we don't have any active ones
+                        if (!hasActiveToken) {
+                            tokenId = tokenIds[i]
+                        }
+                    }
+                }
+            }
+        }
+
+        return {
+            isMember: true,
+            isExpired: !hasActiveToken,
+            expiredAt,
+            expiryTime,
+            tokenId,
+        }
+    }
+
+    public async getMembershipRenewalPrice(tokenId: string): Promise<bigint> {
+        return this.membership.getMembershipRenewalPrice(tokenId)
+    }
+
+    public async renewMembership<T = ContractTransaction>(args: {
+        tokenId: string
+        signer: Signer
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }) {
+        return this.membership.renewMembership<T>({
+            tokenId: args.tokenId,
+            signer: args.signer,
+            overrideExecution: args.overrideExecution,
+            transactionOpts: args.transactionOpts,
+        })
     }
 
     public async getProtocolFee(): Promise<bigint> {

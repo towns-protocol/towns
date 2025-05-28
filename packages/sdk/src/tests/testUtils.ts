@@ -34,7 +34,7 @@ import {
     userIdFromAddress,
 } from '../id'
 import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
-import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '@towns-protocol/encryption'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
@@ -249,7 +249,7 @@ export const makeRandomUserContext = async (): Promise<SignerContextWithWallet> 
 }
 
 export const makeRandomUserAddress = (): Uint8Array => {
-    return publicKeyToAddress(getPublicKey(utils.randomPrivateKey(), false))
+    return publicKeyToAddress(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey(), false))
 }
 
 export const makeUserContextFromWallet = async (
@@ -1230,6 +1230,7 @@ export async function createTownWithRequirements(requirements: {
     everyone: boolean
     users: string[]
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
+    duration?: number
 }) {
     const {
         alice,
@@ -1262,7 +1263,7 @@ export async function createTownWithRequirements(requirements: {
             symbol: 'MEMBER',
             price,
             maxSupply: 1000,
-            duration: 0,
+            duration: requirements.duration ?? 0,
             currency: ETH_ADDRESS,
             feeRecipient: bob.userId,
             freeAllocation,

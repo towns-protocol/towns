@@ -59,7 +59,7 @@ func NewEvaluatorFromConfigWithBlockchainInfo(
 		base.DiamondMetaData,
 	)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Unable to create EVM decoder for entitlement evaluator", "err", err)
+		logging.FromCtx(ctx).Errorw("Unable to create EVM decoder for entitlement evaluator", "error", err)
 		return nil, err
 	}
 	evaluator := Evaluator{
