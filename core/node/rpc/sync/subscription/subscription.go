@@ -70,9 +70,6 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		return err
 	}
 
-	s.manager.sLock.Lock()
-	defer s.manager.sLock.Unlock()
-
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
 		SyncID:                    s.syncID,
@@ -137,6 +134,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
 func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBackfill bool) {
+	s.manager.sLock.Lock()
+	defer s.manager.sLock.Unlock()
+
 	streamID := StreamId(cookie.GetStreamId())
 
 	// Add the stream to the subscription if not added yet
@@ -162,6 +162,9 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 // removeStream removes the given stream from the current subscription.
 // Returns true if the given stream must be removed from the main syncer set.
 func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
+	s.manager.sLock.Lock()
+	defer s.manager.sLock.Unlock()
+
 	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
 		s.manager.subscriptions[StreamId(streamID)],
 		func(sub *Subscription) bool {
