@@ -35,7 +35,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func newRemoteSyncer(
+func NewRemoteSyncer(
 	globalCtx context.Context,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
