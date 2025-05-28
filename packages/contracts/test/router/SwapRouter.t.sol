@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 import {IPlatformRequirements} from "../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ISwapRouter} from "../../src/router/ISwapRouter.sol";
 
@@ -41,7 +42,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint16 posterBps;
     }
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
         spaceFactory = deploySpaceFactory.deploy(deployer);
 

@@ -57,18 +57,18 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
         address poster
     ) external payable returns (uint256 amountOut);
 
-    //    /// @notice Execute a swap with EIP-2612 permit
-    //    /// @param params The parameters for the swap
-    //    /// @param routerParams The router parameters for the swap
-    //    /// @param permit The permit data for token approval
-    //    /// @param poster The address that posted this swap opportunity
-    //    /// @return amountOut The amount of tokenOut received
-    //    function executeSwapWithPermit(
-    //        ExactInputParams calldata params,
-    //        RouterParams calldata routerParams,
-    //        PermitParams calldata permit,
-    //        address poster
-    //    ) external payable returns (uint256 amountOut);
+    /// @notice Execute a swap with Permit2 witness binding permit to swap intent
+    /// @param params The parameters for the swap
+    /// @param routerParams The router parameters for the swap
+    /// @param permit The Permit2 permit data
+    /// @param poster The address that posted this swap opportunity
+    /// @return amountOut The amount of tokenOut received
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable returns (uint256 amountOut);
 
     /// @notice Get the current swap router address
     /// @return The address of the swap router

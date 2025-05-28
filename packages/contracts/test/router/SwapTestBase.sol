@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISwapRouterBase} from "../../src/router/ISwapRouter.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
@@ -13,10 +14,13 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {MockRouter} from "../mocks/MockRouter.sol";
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
+import {DeployPermit2} from "@uniswap/permit2/test/utils/DeployPermit2.sol";
 
 /// @notice Base contract for swap-related tests with shared utilities
 abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     using SafeTransferLib for address;
+
+    address internal constant permit2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     uint16 internal constant MAX_FEE_BPS = 200; // 2%
     uint16 internal constant PROTOCOL_BPS = 50; // 0.5%
@@ -24,6 +28,22 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
 
     address internal feeRecipient;
     address internal POSTER = makeAddr("POSTER");
+
+    bytes32 internal constant _TOKEN_PERMISSIONS_TYPEHASH =
+        keccak256("TokenPermissions(address token,uint256 amount)");
+
+    bytes32 internal constant _PERMIT_WITNESS_TRANSFER_FROM_TYPEHASH =
+        keccak256(
+            "PermitWitnessTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline,SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)"
+        );
+
+    string internal constant SWAP_WITNESS_TYPE_STRING =
+        "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)";
+
+    function setUp() public virtual {
+        DeployPermit2 deployer = new DeployPermit2();
+        deployer.deployPermit2();
+    }
 
     function _createSwapParams(
         address swapRouter,
@@ -60,6 +80,86 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         });
     }
 
+    function _createPermitTransferFrom(
+        address token,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    ) internal pure returns (ISignatureTransfer.PermitTransferFrom memory permit) {
+        permit = ISignatureTransfer.PermitTransferFrom(
+            ISignatureTransfer.TokenPermissions(token, amount),
+            nonce,
+            deadline
+        );
+    }
+
+    function _signPermitWitnessTransfer(
+        uint256 privateKey,
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        address spender,
+        ExactInputParams memory exactInputParams,
+        RouterParams memory routerParams,
+        address poster
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 witness = _witnessHash(exactInputParams, routerParams, poster);
+        bytes32 tokenPermissions = keccak256(
+            abi.encode(_TOKEN_PERMISSIONS_TYPEHASH, permit.permitted)
+        );
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _PERMIT_WITNESS_TRANSFER_FROM_TYPEHASH,
+                tokenPermissions,
+                spender,
+                permit.nonce,
+                permit.deadline,
+                witness
+            )
+        );
+
+        return signIntent(privateKey, permit2, structHash);
+    }
+
+    function _createPermitParams(
+        uint256 privateKey,
+        address owner,
+        address token,
+        uint256 amount,
+        address spender,
+        uint256 nonce,
+        uint256 deadline,
+        ExactInputParams memory exactInputParams,
+        RouterParams memory routerParams,
+        address poster
+    ) internal view returns (Permit2Params memory permitParams) {
+        (uint8 v, bytes32 r, bytes32 s) = _signPermitWitnessTransfer(
+            privateKey,
+            _createPermitTransferFrom(token, amount, nonce, deadline),
+            spender,
+            exactInputParams,
+            routerParams,
+            poster
+        );
+
+        permitParams = Permit2Params(
+            owner,
+            token,
+            amount,
+            nonce,
+            deadline,
+            bytes.concat(r, s, bytes1(v))
+        );
+    }
+
+    /// @notice Creates a witness hash binding permit signature to exact swap parameters
+    function _witnessHash(
+        ExactInputParams memory params,
+        RouterParams memory routerParams,
+        address poster
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(params, routerParams, poster));
+    }
+
     function _verifySwapResults(
         address tokenIn,
         address tokenOut,
@@ -86,7 +186,6 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
 
         uint256 expectedAmountOut = amountOut - expectedPosterFee - expectedProtocolFee;
 
-        // assert balances after swap
         assertEq(_getBalance(tokenOut, recipient), expectedAmountOut, "Incorrect tokenOut balance");
         assertEq(
             _getBalance(tokenOut, feeRecipient),

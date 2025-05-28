@@ -7,6 +7,7 @@ import {IArchitect} from "../factory/facets/architect/IArchitect.sol";
 import {ISwapFacet} from "../spaces/facets/swap/ISwapFacet.sol";
 import {ISwapRouter} from "./ISwapRouter.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
 import {BasisPoints} from "../utils/libraries/BasisPoints.sol";
@@ -21,11 +22,43 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
-/// @title SwapRouter
-/// @notice Handles swaps through whitelisted routers with fee collection
+/**
+ * @title SwapRouter
+ * @notice Handles swaps through whitelisted routers with fee collection
+ * @dev This contract provides two swap execution methods:
+ *
+ * Standard Swaps (`executeSwap`):
+ * - User transfers tokens to contract, then swap executes
+ * - Supports both ERC20 tokens and native ETH
+ * - Traditional approve/transferFrom flow
+ *
+ * Permit2 Swaps (`executeSwapWithPermit`):
+ * - Enhanced security using Uniswap's Permit2 protocol with witness data
+ * - Direct token transfer: User → SwapRouter → DEX (skips intermediate approvals)
+ * - ERC20 tokens only (native ETH not supported)
+ * - Cryptographically binds permit signatures to exact swap parameters
+ * - Prevents front-running attacks through witness data binding
+ * - Uses EIP-712 witness containing ExactInputParams, RouterParams, and poster
+ * - Requires pre-approval of tokens to Permit2 contract
+ * - Provides nonce-based replay protection and deadline-based time bounds
+ */
 contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
+
+    /// @notice Universal Permit2 contract address
+    /// @dev This contract implements Uniswap's Permit2 protocol for signature-based token transfers
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    string internal constant WITNESS_TYPE =
+        "SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)";
+    bytes32 internal constant WITNESS_TYPE_HASH = keccak256(bytes(WITNESS_TYPE));
+
+    /// @notice EIP-712 witness type string for SwapWitness
+    /// @dev This string defines the structure of the witness data that binds permit signatures
+    /// to specific swap parameters, preventing front-running and parameter manipulation attacks
+    string internal constant WITNESS_TYPE_STRING =
+        "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)";
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -50,6 +83,51 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
         // for standard swaps, the msg.sender provides the tokens
         return _executeSwap(params, routerParams, msg.sender, poster);
+    }
+
+    /// @inheritdoc ISwapRouter
+    /// @dev Uses Permit2 with witness data to bind permit signatures to exact swap parameters,
+    /// preventing front-running attacks. Requires user to pre-approve tokens to Permit2 contract.
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
+        // Permit2 only works with ERC20 tokens, not native ETH
+        if (params.tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
+            SwapRouter__NativeTokenNotSupportedWithPermit.selector.revertWith();
+        }
+
+        // verify permit token matches params tokenIn
+        if (permit.token != params.tokenIn) SwapRouter__PermitTokenMismatch.selector.revertWith();
+
+        // ensure permit amount is sufficient
+        if (permit.amount < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
+
+        // prepare Permit2 transfer from data
+        ISignatureTransfer.PermitTransferFrom memory permitTransferFrom = ISignatureTransfer
+            .PermitTransferFrom(
+                ISignatureTransfer.TokenPermissions(permit.token, permit.amount),
+                permit.nonce,
+                permit.deadline
+            );
+
+        ISignatureTransfer.SignatureTransferDetails memory transferDetails = ISignatureTransfer
+            .SignatureTransferDetails({to: address(this), requestedAmount: params.amountIn});
+
+        // execute permit transfer from owner to this contract via Permit2
+        ISignatureTransfer(PERMIT2).permitWitnessTransferFrom(
+            permitTransferFrom,
+            transferDetails,
+            permit.owner, // owner who signed the permit
+            _witnessHash(params, routerParams, poster),
+            WITNESS_TYPE_STRING,
+            permit.signature
+        );
+
+        // execute the swap with this contract having the tokens
+        (amountOut, protocolFee) = _executeSwap(params, routerParams, address(this), poster);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -269,5 +347,20 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         unchecked {
             amountAfterFees = amount - protocolFee - posterFee;
         }
+    }
+
+    /// @notice Creates a witness hash binding permit signature to exact swap parameters
+    /// @dev This function constructs a SwapWitness struct and hashes it to create witness data
+    /// that cryptographically binds the permit signature to specific swap parameters
+    /// @param params The parameters for the swap
+    /// @param routerParams The router parameters for the swap
+    /// @param poster The address that posted this swap opportunity
+    /// @return bytes32 The witness hash
+    function _witnessHash(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        address poster
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(params, routerParams, poster));
     }
 }

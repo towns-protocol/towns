@@ -41,8 +41,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
     ExactInputParams internal defaultParams;
     RouterParams internal defaultRouterParams;
 
-    function setUp() public override {
-        super.setUp();
+    function setUp() public override(BaseSetup, SwapTestBase) {
+        BaseSetup.setUp();
+        SwapTestBase.setUp();
 
         DeployMockERC20 deployERC20 = new DeployMockERC20();
         token0 = MockERC20(deployERC20.deploy(deployer));

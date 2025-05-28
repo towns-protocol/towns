@@ -124,6 +124,51 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         if (!isNativeToken) params.tokenIn.safeApprove(swapRouter, 0);
     }
 
+    /// @inheritdoc ISwapFacet
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable nonReentrant returns (uint256 amountOut) {
+        _validateMembership(msg.sender);
+
+        address swapRouter = getSwapRouter();
+        if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
+
+        // handle poster based on collectPosterFeeToSpace
+        address actualPoster = _resolveSwapPoster(poster);
+
+        // execute swap through the router with permit
+        uint256 protocolFee;
+        (amountOut, protocolFee) = ISwapRouter(swapRouter)
+            .executeSwapWithPermit{value: msg.value}(params, routerParams, permit, actualPoster);
+
+        // mint points based on the protocol fee if ETH is involved
+        if (
+            params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
+            params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
+        ) {
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Swap,
+                abi.encode(protocolFee)
+            );
+            _mintPoints(airdropDiamond, msg.sender, points);
+        }
+
+        // emit event for successful swap
+        emit SwapExecuted(
+            params.recipient,
+            params.tokenIn,
+            params.tokenOut,
+            params.amountIn,
+            amountOut,
+            poster // use original poster for the event
+        );
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
