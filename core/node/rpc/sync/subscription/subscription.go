@@ -2,7 +2,6 @@ package subscription
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync/atomic"
 
@@ -182,13 +181,8 @@ func (s *Subscription) removeStream(
 }
 
 // DebugDropStream drops the given stream from the subscription.
-// TODO: Doublecheck the complete behaviour
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	fmt.Println("debug drop stream", streamID, s.syncID)
-	/*removeFromRemote := s.removeStream(streamID[:])
-	if !removeFromRemote {
-		return nil
-	}*/
-
-	return s.manager.syncers.DebugDropStream(ctx, streamID)
+	s.removeStream(ctx, func(status *SyncStreamOpStatus) {}, streamID[:])
+	s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	return nil
 }
