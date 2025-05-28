@@ -70,62 +70,28 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		return err
 	}
 
-	// Prepare a request to be sent to the syncer set if needed
-	modifiedReq := client.ModifyRequest{
-		SyncID:                    s.syncID,
-		ToBackfill:                req.ToBackfill,
-		BackfillingFailureHandler: req.BackfillingFailureHandler,
-		AddingFailureHandler: func(status *SyncStreamOpStatus) {
-			req.AddingFailureHandler(status)
-			s.removeStream(status.GetStreamId())
-		},
-		RemovingFailureHandler: req.RemovingFailureHandler,
+	// Handle streams that the clients wants to backfill.
+	if len(req.ToBackfill) > 0 {
+		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
+			SyncID:                    s.syncID,
+			ToBackfill:                req.ToBackfill,
+			BackfillingFailureHandler: req.BackfillingFailureHandler,
+		}); err != nil {
+			return err
+		}
 	}
 
 	// Handle streams that the clients wants to subscribe to.
-	var implicitBackfills []*SyncCookie
 	for _, toAdd := range req.ToAdd {
-		addToRemote, shouldBackfill := s.addStream(toAdd)
-		if addToRemote {
-			// The given stream must be added to the main syncer set
-			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
-		} else if shouldBackfill {
-			// The given stream must be backfilled implicitly only for the given subscription
-			implicitBackfills = append(implicitBackfills, toAdd)
-		}
+		s.addStream(ctx, func(status *SyncStreamOpStatus) {
+			s.removeStream(ctx, req.RemovingFailureHandler, status.GetStreamId())
+			req.AddingFailureHandler(status)
+		}, toAdd)
 	}
 
 	// Handle streams that the clients wants to unsubscribe from.
 	for _, toRemove := range req.ToRemove {
-		removeFromRemote := s.removeStream(toRemove)
-		if removeFromRemote {
-			// The given stream must be removed from the main syncer set
-			modifiedReq.ToRemove = append(modifiedReq.ToRemove, toRemove)
-		}
-	}
-
-	if len(implicitBackfills) > 0 {
-		// TODO: AddingFailureHandler should be used for implicit backfills. Handle it properly.
-		if modifiedReq.BackfillingFailureHandler == nil {
-			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
-		}
-
-		modifiedReq.ToBackfill = append(modifiedReq.ToBackfill, &ModifySyncRequest_Backfill{
-			SyncId:  s.syncID,
-			Streams: implicitBackfills,
-		})
-	}
-
-	if len(modifiedReq.ToBackfill) == 0 &&
-		len(modifiedReq.ToAdd) == 0 &&
-		len(modifiedReq.ToRemove) == 0 {
-		// No changes to be made, just return
-		return nil
-	}
-
-	// Send the request to the syncer set
-	if err := s.manager.syncers.Modify(ctx, modifiedReq); err != nil {
-		return err
+		s.removeStream(ctx, req.RemovingFailureHandler, toRemove)
 	}
 
 	return nil
@@ -133,13 +99,16 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
-func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBackfill bool) {
-	s.manager.sLock.Lock()
-	defer s.manager.sLock.Unlock()
-
+func (s *Subscription) addStream(
+	ctx context.Context,
+	failureHandler func(status *SyncStreamOpStatus),
+	cookie *SyncCookie,
+) {
+	var shouldAdd, shouldBackfill bool
 	streamID := StreamId(cookie.GetStreamId())
 
 	// Add the stream to the subscription if not added yet
+	s.manager.sLock.Lock()
 	subscriptions, ok := s.manager.subscriptions[streamID]
 	if !ok || len(subscriptions) == 0 {
 		shouldAdd = true
@@ -156,15 +125,40 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
 		}
 	}
-	return
+	s.manager.sLock.Unlock()
+
+	if shouldAdd {
+		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
+			SyncID:               s.syncID,
+			ToAdd:                []*SyncCookie{cookie},
+			AddingFailureHandler: failureHandler,
+		}); err != nil {
+			s.log.Errorw("0 Failed to add stream to subscription", "err", err)
+		}
+	} else if shouldBackfill {
+		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
+			SyncID: s.syncID,
+			ToBackfill: []*ModifySyncRequest_Backfill{{
+				SyncId:  s.syncID,
+				Streams: []*SyncCookie{cookie},
+			}},
+			BackfillingFailureHandler: failureHandler,
+		}); err != nil {
+			s.log.Errorw("1 Failed to add message to subscription", "err", err)
+		}
+	}
 }
 
 // removeStream removes the given stream from the current subscription.
 // Returns true if the given stream must be removed from the main syncer set.
-func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
-	s.manager.sLock.Lock()
-	defer s.manager.sLock.Unlock()
+func (s *Subscription) removeStream(
+	ctx context.Context,
+	failureHandler func(status *SyncStreamOpStatus),
+	streamID []byte,
+) {
+	var removeFromRemote bool
 
+	s.manager.sLock.Lock()
 	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
 		s.manager.subscriptions[StreamId(streamID)],
 		func(sub *Subscription) bool {
@@ -174,7 +168,17 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
 		delete(s.manager.subscriptions, StreamId(streamID))
 	}
-	return
+	s.manager.sLock.Unlock()
+
+	if removeFromRemote {
+		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
+			SyncID:                 s.syncID,
+			ToRemove:               [][]byte{streamID},
+			RemovingFailureHandler: failureHandler,
+		}); err != nil {
+			s.log.Errorw("Failed to remove stream from subscription", "err", err)
+		}
+	}
 }
 
 // DebugDropStream drops the given stream from the subscription.
