@@ -739,6 +739,19 @@ const _abi = [
   },
   {
     type: "event",
+    name: "CrossDomainMessengerSet",
+    inputs: [
+      {
+        name: "messenger",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "DelegationDigestSet",
     inputs: [
       {
@@ -943,6 +956,19 @@ const _abi = [
         type: "uint256",
         indexed: false,
         internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ProxyDelegationSet",
+    inputs: [
+      {
+        name: "proxyDelegation",
+        type: "address",
+        indexed: false,
+        internalType: "address",
       },
     ],
     anonymous: false,
