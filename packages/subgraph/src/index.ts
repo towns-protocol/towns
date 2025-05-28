@@ -148,8 +148,12 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     const transactionHash = event.transaction.hash
     const createdDate = blockTimestamp ? new Date(Number(blockTimestamp) * 1000) : null
 
-    if (!createdDate) {
-        console.error(`SwapRouter:SwapExecuted blockTimestamp is invalid`, transactionHash, blockTimestamp)
+    if (!createdDate || isNaN(createdDate.getTime())) {
+        console.error(
+            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
+            transactionHash,
+            blockTimestamp,
+        )
         return
     }
 
@@ -191,7 +195,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     const transactionHash = event.transaction.hash
     const createdDate = blockTimestamp ? new Date(Number(blockTimestamp) * 1000) : null
 
-    if (!createdDate) {
+    if (!createdDate || isNaN(createdDate.getTime())) {
         console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
         return
     }
