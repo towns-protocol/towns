@@ -1,8 +1,8 @@
-import debug from 'debug'
+import { dlog } from '@towns-protocol/dlog'
 import { BASE_SEPOLIA } from '../src/utils/Web3Constants'
 import { LocalhostWeb3Provider } from '../src/test-helpers/LocalhostWeb3Provider'
 import { describe, it, expect } from 'vitest'
-const log = debug('web3:test')
+const log = dlog('web3:test')
 
 describe('Web3Constants', () => {
     it('BASE_SEPOLIA', () => {

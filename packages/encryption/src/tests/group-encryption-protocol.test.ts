@@ -1,8 +1,8 @@
 import { EncryptionDelegate } from '../encryptionDelegate'
-import debug from 'debug'
+import { dlog } from '@towns-protocol/dlog'
 import { InboundGroupSession, OutboundGroupSession } from '../encryptionTypes'
 
-const log = debug('test')
+const log = dlog('test')
 
 describe.concurrent('Group Encryption Protocol', () => {
     let aliceSession: OutboundGroupSession | undefined

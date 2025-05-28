@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { EncryptionDelegate } from '../encryptionDelegate'
-import debug from 'debug'
+import { dlog } from '@towns-protocol/dlog'
 import { Account, Session } from '../encryptionTypes'
 
-const log = debug('test')
+const log = dlog('test')
 
 describe.concurrent('Encryption Protocol', () => {
     let aliceAccount: Account | undefined

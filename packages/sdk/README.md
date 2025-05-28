@@ -14,7 +14,7 @@ bugs: https://github.com/towns-protocol/towns/issues
 
 Enabling logging for tests in the shell:
 
-    DEBUG=csb:* DEBUG_DEPTH=100 yarn test src/my.test.ts -t testCaseName
+    DEBUG=csb:* DEBUG_DEPTH=100 pnpm test src/my.test.ts -t testCaseName
 
 To enabling debug logging in the browser, set var in console:
 

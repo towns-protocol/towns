@@ -4,10 +4,8 @@ React Hooks for River SDK.
 
 # Installation
 
-in the future:
-
 ```sh
-yarn add @towns-protocol/react-sdk
+pnpm add @towns-protocol/react-sdk
 ```
 
 # Usage

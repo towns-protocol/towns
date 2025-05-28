@@ -62,6 +62,7 @@ import {
     DLogger,
     check,
     dlog,
+    dlogEnable,
     dlogError,
     bin_fromString,
 } from '@towns-protocol/dlog'
@@ -156,7 +157,6 @@ import {
     isSolanaTransactionReceipt,
 } from './types'
 
-import debug from 'debug'
 import { Stream } from './stream'
 import { getTime, usernameChecksum } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
@@ -245,7 +245,7 @@ export class Client
     ) {
         super()
         if (opts?.logNamespaceFilter) {
-            debug.enable(opts.logNamespaceFilter)
+            dlogEnable(opts.logNamespaceFilter)
         }
         assert(
             isDefined(signerContext.creatorAddress) && signerContext.creatorAddress.length === 20,

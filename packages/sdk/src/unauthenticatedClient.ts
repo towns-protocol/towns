@@ -1,5 +1,4 @@
-import debug from 'debug'
-import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
+import { DLogger, check, dlog, dlogEnable, dlogError } from '@towns-protocol/dlog'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream } from './sign'
@@ -29,7 +28,7 @@ export class UnauthenticatedClient {
         },
     ) {
         if (logNamespaceFilter) {
-            debug.enable(logNamespaceFilter)
+            dlogEnable(logNamespaceFilter)
         }
 
         this.rpcClient = rpcClient

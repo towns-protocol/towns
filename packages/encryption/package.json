@@ -1,7 +1,7 @@
 {
     "name": "@towns-protocol/encryption",
     "version": "0.0.231",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "pnpm@10.7.1",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -10,14 +10,14 @@
     },
     "scripts": {
         "build": "tsc",
-        "cb": "yarn clean && yarn build",
+        "cb": "pnpm clean && pnpm build",
         "clean": "rm -rf dist",
-        "lint": "yarn eslint --format unix ./src",
-        "lint:fix": "yarn lint --fix",
+        "lint": "pnpm eslint --format unix ./src",
+        "lint:fix": "pnpm lint --fix",
         "test": "vitest run",
         "test:watch": "vitest --watch",
-        "test:ci": "yarn test",
-        "test:debug": "DEBUG=test yarn test",
+        "test:ci": "pnpm test",
+        "test:debug": "DEBUG=test pnpm test",
         "watch": "tsc --watch"
     },
     "dependencies": {

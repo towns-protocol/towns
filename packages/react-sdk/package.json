@@ -9,19 +9,21 @@
         "access": "public"
     },
     "scripts": {
-        "build": "yarn run clean && yarn run build:esm+types",
+        "build": "pnpm run clean && pnpm run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
         "lint": "eslint ./src --max-warnings=0",
-        "gen": "yarn gen:extractor && yarn gen:docs",
+        "gen": "pnpm gen:extractor && pnpm gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
         "gen:extractor": "api-extractor run --local",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
-        "watch": "yarn build -w"
+        "watch": "pnpm build -w"
     },
     "dependencies": {
         "@towns-protocol/sdk": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
+        "@towns-protocol/proto": "workspace:^",
         "ethers": "^5.7.2"
     },
     "devDependencies": {

@@ -268,3 +268,7 @@ export const dlogger = (ns: string): ExtendedLogger => {
         },
     }
 }
+
+export const dlogEnable = (ns: string): void => {
+    debug.enable(ns)
+}

@@ -9,6 +9,7 @@ optimizer_runs = 4194303 # The amount of optimizer runs to perform.
 bytecode_hash = "none" # Determines the hash method for the metadata hash that is appended to the bytecode
 cbor_metadata = false # Remove all metadata hashes from your contract's bytecode.
 libs = ["node_modules"]
+allow_paths = ["node_modules"]
 out = "out" # The path to put contract artifacts in, relative to the root of the project.
 script = "scripts" # The path to the contract scripts relative to the root of the project.
 src = "src" # The path to the contract sources relative to the root of the project.

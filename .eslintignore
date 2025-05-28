@@ -13,3 +13,4 @@ vite.config.ts
 
 .yarn/*
 yarn.lock
+pnpm-lock.yaml

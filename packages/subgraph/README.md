@@ -29,7 +29,7 @@ The subgraph consists of:
 ## Prerequisites
 
 - Node.js >= 18.14
-- Yarn package manager
+- pnpm package manager
 - Access to an Ethereum RPC endpoint (local or remote)
 - Foundry tools (forge, anvil) for local blockchain development
 
@@ -43,7 +43,7 @@ The easiest way to get started is to use our automated setup script:
 
 ```bash
 # Start the subgraph with an Anvil fork
-yarn dev:fork
+pnpm dev:fork
 ```
 
 This script will:
@@ -74,7 +74,7 @@ If you prefer more control, you can set up each component manually:
 
    ```bash
    cd packages/subgraph
-   yarn dev
+   pnpm dev
    ```
 
 ## Interacting with Contracts
@@ -123,7 +123,7 @@ If you encounter issues with contract address resolution, you can use our debugg
 
 ```bash
 # Find the correct path to contract deployments
-yarn find-paths
+pnpm find-paths
 ```
 
 You can also enable debug mode in the code:
@@ -134,15 +134,15 @@ const address = getContractAddress("contractName", undefined, { debug: true });
 
 ## Available Commands
 
-- `yarn dev`: Start the development server with hot reloading
-- `yarn dev:fork`: Start with an Anvil fork of Base Sepolia
-- `yarn start`: Start the production server
-- `yarn db`: Access the database CLI
-- `yarn codegen`: Generate TypeScript types from the schema
-- `yarn serve`: Serve the API without indexing
-- `yarn lint`: Run ESLint
-- `yarn typecheck`: Run TypeScript type checking
-- `yarn find-paths`: Debug tool to find correct contract paths
+- `pnpm dev`: Start the development server with hot reloading
+- `pnpm dev:fork`: Start with an Anvil fork of Base Sepolia
+- `pnpm start`: Start the production server
+- `pnpm db`: Access the database CLI
+- `pnpm codegen`: Generate TypeScript types from the schema
+- `pnpm serve`: Serve the API without indexing
+- `pnpm lint`: Run ESLint
+- `pnpm typecheck`: Run TypeScript type checking
+- `pnpm find-paths`: Debug tool to find correct contract paths
 
 ## API Endpoints
 
@@ -182,11 +182,11 @@ To switch environments:
 
 ```bash
 # Using the fork script
-yarn dev:fork --environment gamma
+pnpm dev:fork --environment gamma
 
 # Or manually
 export PONDER_ENVIRONMENT=gamma
-yarn dev
+pnpm dev
 ```
 
 ## Troubleshooting
@@ -195,7 +195,7 @@ If you encounter issues:
 
 1. **Contract Address Resolution**:
 
-   - Run `yarn find-paths` to debug path resolution
+   - Run `pnpm find-paths` to debug path resolution
    - Enable debug mode: `getContractAddress('contractName', undefined, { debug: true })`
    - Check that the environment is correctly set
 
