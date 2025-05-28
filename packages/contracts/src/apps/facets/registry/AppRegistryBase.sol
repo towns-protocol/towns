@@ -167,9 +167,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         _revoke(att.schema, request, revoker, 0, true);
 
         version = appInfo.latestVersion;
-        if (version == appId) {
-            appInfo.latestVersion = EMPTY_UID;
-        }
 
         emit AppUnregistered(app, appId);
 

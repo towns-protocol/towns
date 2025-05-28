@@ -8,5 +8,9 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface ISimpleApp {
-    function initialize(address owner, string memory appId, bytes32[] memory permissions) external;
+    function initialize(
+        address owner,
+        string calldata appId,
+        bytes32[] calldata permissions
+    ) external;
 }

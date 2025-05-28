@@ -19,8 +19,8 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
 
     function initialize(
         address owner,
-        string memory appId,
-        bytes32[] memory permissions
+        string calldata appId,
+        bytes32[] calldata permissions
     ) external initializer {
         _setOwner(owner);
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();

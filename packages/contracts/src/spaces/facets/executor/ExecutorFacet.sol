@@ -36,12 +36,13 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
         address account,
         uint32 delay
     ) external onlyOwner returns (bool newMember) {
-        _createGroup(groupId);
+        _setGroupStatus(groupId, true);
         return _grantGroupAccess(groupId, account, _getGroupGrantDelay(groupId), delay);
     }
 
     /// @inheritdoc IExecutor
     function revokeAccess(bytes32 groupId, address account) external onlyOwner {
+        _setGroupStatus(groupId, false);
         _revokeGroupAccess(groupId, account);
     }
 
@@ -58,11 +59,6 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     /// @inheritdoc IExecutor
     function setGroupDelay(bytes32 groupId, uint32 delay) external onlyOwner {
         _setGroupGrantDelay(groupId, delay, 0);
-    }
-
-    /// @inheritdoc IExecutor
-    function setAllowance(bytes32 groupId, uint256 allowance) external onlyOwner {
-        _setGroupAllowance(groupId, allowance);
     }
 
     /// @inheritdoc IExecutor
@@ -85,11 +81,10 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     /// @inheritdoc IExecutor
     function scheduleOperation(
         address target,
-        uint256 value,
         bytes calldata data,
         uint48 when
     ) external payable returns (bytes32 operationId, uint32 nonce) {
-        return _scheduleExecution(target, value, data, when);
+        return _scheduleExecution(target, data, when);
     }
 
     /// @inheritdoc IExecutor
@@ -114,11 +109,7 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     function hasAccess(
         bytes32 groupId,
         address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
-    {
+    ) external view returns (bool isMember, uint32 executionDelay, bool active) {
         return _hasGroupAccess(groupId, account);
     }
 
@@ -137,11 +128,6 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     /// @inheritdoc IExecutor
     function getGroupDelay(bytes32 groupId) external view returns (uint32) {
         return _getGroupGrantDelay(groupId);
-    }
-
-    /// @inheritdoc IExecutor
-    function getAllowance(bytes32 groupId) external view returns (uint256) {
-        return _getGroupAllowance(groupId);
     }
 
     /// @inheritdoc IExecutor
