@@ -385,21 +385,22 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 	fmt.Printf("  Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
 	fmt.Printf("  Events: (%d)\n", len(info.Proto.Events))
 	for i, event := range info.Proto.GetEvents() {
-		var streamEvent protocol.StreamEvent
-		if err := proto.Unmarshal(event.Event, &streamEvent); err != nil {
+		parsedEvent, err := events.ParseEvent(event)
+		if err != nil {
 			return err
 		}
 
-		seconds := streamEvent.CreatedAtEpochMs / 1000
-		nanoseconds := (streamEvent.CreatedAtEpochMs % 1000) * 1e6 // 1 millisecond = 1e6 nanoseconds
+		seconds := parsedEvent.Event.CreatedAtEpochMs / 1000
+		nanoseconds := (parsedEvent.Event.CreatedAtEpochMs % 1000) * 1e6 // 1 millisecond = 1e6 nanoseconds
 		timestamp := time.Unix(seconds, nanoseconds)
 		fmt.Printf(
-			"    (%d) %v %v\n",
+			"    (%d) %v %v Len=(%d) %v\n",
 			i,
-			hex.EncodeToString(event.Hash),
 			timestamp.UTC(),
+			hex.EncodeToString(event.Hash),
+			len(event.Event),
+			parsedEvent.ParsedString(),
 		)
-		// fmt.Println(protojson.Format(&streamEvent))
 	}
 	return nil
 }
@@ -778,7 +779,16 @@ func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 			}
 
 			if len(resp.Msg.Miniblocks) == 0 {
-				return RiverError(protocol.Err_INTERNAL, "No miniblocks found in range", "stream", streamId, "from", fromInclusive, "to", toExclusive)
+				return RiverError(
+					protocol.Err_INTERNAL,
+					"No miniblocks found in range",
+					"stream",
+					streamId,
+					"from",
+					fromInclusive,
+					"to",
+					toExclusive,
+				)
 			}
 		}
 	}
