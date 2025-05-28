@@ -82,10 +82,14 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Handle streams that the clients wants to subscribe to.
 	for _, toAdd := range req.ToAdd {
+		var failedToAdd bool
 		s.addStream(ctx, func(status *SyncStreamOpStatus) {
-			s.removeStream(ctx, req.RemovingFailureHandler, status.GetStreamId())
+			failedToAdd = true
 			req.AddingFailureHandler(status)
 		}, toAdd)
+		if failedToAdd {
+			s.removeStream(ctx, func(status *SyncStreamOpStatus) {}, toAdd.GetStreamId())
+		}
 	}
 
 	// Handle streams that the clients wants to unsubscribe from.
