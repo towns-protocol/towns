@@ -315,7 +315,7 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  pnpm workspace @towns-protocol/stream-metadata dev:local_multi_ne &
+                  pnpm --filter @towns-protocol/stream-metadata dev:local_multi_ne &
                   pnpm wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
