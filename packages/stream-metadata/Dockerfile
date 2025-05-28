@@ -4,12 +4,10 @@ WORKDIR /river
 
 # monorepo root config
 COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
 COPY ./turbo.json ./turbo.json
 COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
 
@@ -42,8 +40,8 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)
 WORKDIR /river/packages/stream-metadata
-RUN yarn init --yes
-RUN yarn add dd-trace@^5.19.0
+RUN pnpm init --yes
+RUN pnpm add dd-trace@^5.19.0
 
 # run the service
 ARG GIT_SHA

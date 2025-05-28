@@ -4,12 +4,10 @@ WORKDIR /river
 
 # monorepo root config
 COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
 COPY ./turbo.json ./turbo.json
 COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
 
