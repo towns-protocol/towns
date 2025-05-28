@@ -76,25 +76,31 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 			ToBackfill:                req.ToBackfill,
 			BackfillingFailureHandler: req.BackfillingFailureHandler,
 		}); err != nil {
-			return err
+			s.log.Errorw("Failed to modify backfilling request", "err", err)
 		}
 	}
 
 	// Handle streams that the clients wants to subscribe to.
 	for _, toAdd := range req.ToAdd {
 		var failedToAdd bool
-		s.addStream(ctx, func(status *SyncStreamOpStatus) {
+		if err := s.addStream(ctx, func(status *SyncStreamOpStatus) {
 			failedToAdd = true
 			req.AddingFailureHandler(status)
-		}, toAdd)
+		}, toAdd); err != nil {
+			s.log.Errorw("Failed to add to add-stream", "toAdd", toAdd, "err", err)
+		}
 		if failedToAdd {
-			s.removeStream(ctx, func(status *SyncStreamOpStatus) {}, toAdd.GetStreamId())
+			if err := s.removeStream(ctx, func(status *SyncStreamOpStatus) {}, toAdd.GetStreamId()); err != nil {
+				s.log.Errorw("Failed to remove stream after failed add", "toAdd", toAdd, "err", err)
+			}
 		}
 	}
 
 	// Handle streams that the clients wants to unsubscribe from.
 	for _, toRemove := range req.ToRemove {
-		s.removeStream(ctx, req.RemovingFailureHandler, toRemove)
+		if err := s.removeStream(ctx, req.RemovingFailureHandler, toRemove); err != nil {
+			s.log.Errorw("Failed to remove stream", "toRemove", toRemove, "err", err)
+		}
 	}
 
 	return nil
@@ -106,7 +112,7 @@ func (s *Subscription) addStream(
 	ctx context.Context,
 	failureHandler func(status *SyncStreamOpStatus),
 	cookie *SyncCookie,
-) {
+) error {
 	var shouldAdd, shouldBackfill bool
 	streamID := StreamId(cookie.GetStreamId())
 
@@ -136,7 +142,7 @@ func (s *Subscription) addStream(
 			ToAdd:                []*SyncCookie{cookie},
 			AddingFailureHandler: failureHandler,
 		}); err != nil {
-			s.log.Errorw("0 Failed to add stream to subscription", "err", err)
+			return err
 		}
 	} else if shouldBackfill {
 		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
@@ -147,9 +153,11 @@ func (s *Subscription) addStream(
 			}},
 			BackfillingFailureHandler: failureHandler,
 		}); err != nil {
-			s.log.Errorw("1 Failed to add message to subscription", "err", err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 // removeStream removes the given stream from the current subscription.
@@ -158,7 +166,7 @@ func (s *Subscription) removeStream(
 	ctx context.Context,
 	failureHandler func(status *SyncStreamOpStatus),
 	streamID []byte,
-) {
+) error {
 	var removeFromRemote bool
 
 	s.manager.sLock.Lock()
@@ -171,6 +179,7 @@ func (s *Subscription) removeStream(
 	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
 		delete(s.manager.subscriptions, StreamId(streamID))
 	}
+	s.initializingStreams.Delete(StreamId(streamID))
 	s.manager.sLock.Unlock()
 
 	if removeFromRemote {
@@ -179,14 +188,18 @@ func (s *Subscription) removeStream(
 			ToRemove:               [][]byte{streamID},
 			RemovingFailureHandler: failureHandler,
 		}); err != nil {
-			s.log.Errorw("Failed to remove stream from subscription", "err", err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 // DebugDropStream drops the given stream from the subscription.
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	s.removeStream(ctx, func(status *SyncStreamOpStatus) {}, streamID[:])
+	if err := s.removeStream(ctx, func(status *SyncStreamOpStatus) {}, streamID[:]); err != nil {
+		return err
+	}
 	s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	return nil
 }

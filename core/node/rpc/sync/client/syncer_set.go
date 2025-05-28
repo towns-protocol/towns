@@ -233,6 +233,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			streamID := StreamId(cookie.GetStreamId())
 			syncer, found := ss.streamID2Syncer[streamID]
 			if !found {
+				// TODO: Find more elegant solution of handling the given data race
 				req.BackfillingFailureHandler(&SyncStreamOpStatus{
 					StreamId: streamID[:],
 					Code:     int32(Err_UNAVAILABLE),
