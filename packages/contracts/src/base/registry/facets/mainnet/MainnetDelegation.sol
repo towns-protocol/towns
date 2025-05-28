@@ -2,14 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {ICrossDomainMessenger} from "src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 
 // libraries
+import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {MainnetDelegationBase} from "src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
@@ -25,7 +24,9 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
 
     function __MainnetDelegation_init_unchained(address messenger) internal {
         _addInterface(type(IMainnetDelegation).interfaceId);
-        _setMessenger(ICrossDomainMessenger(messenger));
+        MainnetDelegationStorage.layout().messenger = messenger;
+
+        emit CrossDomainMessengerSet(messenger);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -33,11 +34,11 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     modifier onlyCrossDomainMessenger() {
-        ICrossDomainMessenger messenger = _getMessenger();
+        address messenger = _getMessenger();
 
         require(
-            msg.sender == address(messenger) &&
-                messenger.xDomainMessageSender() == address(_getProxyDelegation()),
+            msg.sender == messenger &&
+                ICrossDomainMessenger(messenger).xDomainMessageSender() == _getProxyDelegation(),
             "MainnetDelegation: sender is not the cross-domain messenger"
         );
         _;
@@ -48,7 +49,9 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function setProxyDelegation(address proxyDelegation) external onlyOwner {
-        _setProxyDelegation(proxyDelegation);
+        MainnetDelegationStorage.layout().proxyDelegation = proxyDelegation;
+
+        emit ProxyDelegationSet(proxyDelegation);
     }
 
     /// @inheritdoc IMainnetDelegation
@@ -62,7 +65,9 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
 
     /// @inheritdoc IMainnetDelegation
     function setDelegationDigest(bytes32 digest) external onlyCrossDomainMessenger {
-        _setDelegationDigest(digest);
+        MainnetDelegationStorage.layout().delegationDigest = digest;
+
+        emit DelegationDigestSet(digest);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -71,7 +76,7 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
 
     /// @inheritdoc IMainnetDelegation
     function getMessenger() external view returns (address) {
-        return address(_getMessenger());
+        return _getMessenger();
     }
 
     /// @inheritdoc IMainnetDelegation

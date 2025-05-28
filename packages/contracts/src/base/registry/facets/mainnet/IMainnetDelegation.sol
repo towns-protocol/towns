@@ -1,15 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
-// contracts
 interface IMainnetDelegationBase {
-    // =============================================================
-    //                           Structs
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STRUCTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Delegation struct
     /// @param operator The operator address
@@ -35,9 +30,9 @@ interface IMainnetDelegationBase {
         address claimer;
     }
 
-    // =============================================================
-    //                           Events
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     event DelegationSet(address indexed delegator, address indexed operator, uint256 quantity);
 
@@ -47,9 +42,13 @@ interface IMainnetDelegationBase {
 
     event DelegationDigestSet(bytes32 digest);
 
-    // =============================================================
-    //                           Errors
-    // =============================================================
+    event CrossDomainMessengerSet(address messenger);
+
+    event ProxyDelegationSet(address proxyDelegation);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error InvalidDelegator(address delegator);
     error InvalidOperator(address operator);
@@ -61,15 +60,31 @@ interface IMainnetDelegationBase {
 }
 
 interface IMainnetDelegation is IMainnetDelegationBase {
-    /// @notice Set delegation digest from L1
-    /// @dev Only the L2 messenger can call this function
-    /// @param digest The delegation digest
-    function setDelegationDigest(bytes32 digest) external;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set proxy delegation
+    /// @param proxyDelegation The proxy delegation address
+    function setProxyDelegation(address proxyDelegation) external;
 
     /// @notice Relay cross-chain delegations
     /// @dev Only the owner can call this function
     /// @param encodedMsgs The encoded delegation messages
     function relayDelegations(bytes calldata encodedMsgs) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         DELEGATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set delegation digest from L1
+    /// @dev Only the L2 messenger can call this function
+    /// @param digest The delegation digest
+    function setDelegationDigest(bytes32 digest) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Get delegation of a delegator
     /// @param delegator The delegator address
@@ -92,10 +107,6 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     /// @param owner The owner address
     /// @return address The claimer address
     function getAuthorizedClaimer(address owner) external view returns (address);
-
-    /// @notice Set proxy delegation
-    /// @param proxyDelegation The proxy delegation address
-    function setProxyDelegation(address proxyDelegation) external;
 
     /// @notice Get proxy delegation
     /// @return address The proxy delegation address
