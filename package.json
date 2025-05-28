@@ -48,6 +48,7 @@
         "turbo": "^2.0.12",
         "typechain": "^8.1.1",
         "typescript": "^5.8.2",
+        "vite-plugin-wasm": "^3.4.1",
         "vitest": "3.0.5",
         "wait-on": "^7.0.1"
     },

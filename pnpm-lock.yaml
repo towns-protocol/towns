@@ -59,6 +59,9 @@ importers:
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
+      vite-plugin-wasm:
+        specifier: ^3.4.1
+        version: 3.4.1(vite@6.1.0(@types/node@20.17.30)(jiti@1.21.0)(terser@5.39.2)(tsx@4.19.2)(yaml@2.6.0))
       vitest:
         specifier: 3.0.5
         version: 3.0.5(@types/debug@4.1.12)(@types/node@20.17.30)(happy-dom@15.11.7)(jiti@1.21.0)(terser@5.39.2)(tsx@4.19.2)(yaml@2.6.0)
