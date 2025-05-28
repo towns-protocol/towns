@@ -65,7 +65,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	var resp ModifySyncResponse
 
 	for _, cookie := range request.GetBackfillStreams().GetStreams() {
-		stream, err := s.streamCache.GetStreamWaitForLocal(ctx, StreamId(cookie.GetStreamId()))
+		stream, err := s.streamCache.GetStreamNoWait(ctx, StreamId(cookie.GetStreamId()))
 		if err != nil {
 			rvrErr := AsRiverError(err)
 			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
@@ -76,15 +76,15 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			continue
 		}
 
+		targetSyncIds := []string{request.SyncId}
+		if request.GetBackfillStreams().GetSyncId() != "" && request.GetBackfillStreams().GetSyncId() != request.SyncId {
+			targetSyncIds = append(targetSyncIds, request.GetBackfillStreams().GetSyncId())
+		}
+
 		err = stream.IsolatedGetView(ctx, func(view *StreamView) error {
 			streamAndCookie, err := view.GetStreamSince(ctx, s.localAddr, cookie)
 			if err != nil {
 				return err
-			}
-
-			targetSyncIds := []string{request.SyncId}
-			if request.GetBackfillStreams().GetSyncId() != "" && request.GetBackfillStreams().GetSyncId() != request.SyncId {
-				targetSyncIds = append(targetSyncIds, request.GetBackfillStreams().GetSyncId())
 			}
 
 			s.sendResponse(&SyncStreamsResponse{
