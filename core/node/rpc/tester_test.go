@@ -1174,7 +1174,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(stream, tc.serviceTester.btc.OnChainConfig)
+	view, err = MakeRemoteStreamView(stream)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 

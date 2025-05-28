@@ -414,11 +414,11 @@ func (r *StreamView) makeMiniblockCandidate(
 
 	if parsedSnapshot != nil {
 		if params.ChainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
+			// Snapshot is outside the miniblock header, new format
 			header.SnapshotHash = parsedSnapshot.Envelope.Hash
 		} else {
+			// Snapshot is inside miniblock header, legacy format
 			header.Snapshot = parsedSnapshot.Snapshot
-			// header.SnapshotHash = parsedSnapshot.Envelope.Hash
-			// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
 			parsedSnapshot = nil
 		}
 	}
