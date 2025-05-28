@@ -11,16 +11,16 @@ import {Interaction} from "scripts/common/Interaction.s.sol";
 
 contract InteractEnableNewSnapshotFormat is Interaction {
     function __interact(address deployer) internal override {
-  address riverRegistry = getDeployment("riverRegistry");
+        address riverRegistry = getDeployment("riverRegistry");
 
-  uint64 value = 1;
+        uint64 value = 1;
 
-  vm.startBroadcast(deployer);
-  IRiverConfig(riverRegistry).setConfiguration(
-    keccak256("stream.enableNewSnapshotFormat"),
-    0,
-    abi.encode(value)
-  );
-  vm.stopBroadcast();
+        vm.startBroadcast(deployer);
+        IRiverConfig(riverRegistry).setConfiguration(
+            keccak256("stream.enableNewSnapshotFormat"),
+            0,
+            abi.encode(value)
+        );
+        vm.stopBroadcast();
     }
 }
