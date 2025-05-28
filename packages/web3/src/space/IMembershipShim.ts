@@ -38,7 +38,8 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
         return this.executeCall({
             signer,
             functionName: 'renewMembership',
-            args: [tokenId, { value: renewalPrice }],
+            args: [tokenId],
+            value: renewalPrice,
             overrideExecution,
             transactionOpts,
         })
