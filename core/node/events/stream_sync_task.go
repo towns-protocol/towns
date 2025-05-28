@@ -1,12 +1,14 @@
 package events
 
 import (
+	"container/list"
 	"context"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
+	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -140,6 +142,7 @@ func (s *StreamCache) reconciliationTask(
 			return v, xsync.CancelOp
 		},
 	)
+
 	if corrupt {
 		logging.FromCtx(s.params.ServerCtx).Errorw("reconciliationTask: Corrupt task (double submission?)",
 			"stream", streamId,
@@ -156,6 +159,26 @@ func (s *StreamCache) reconciliationTask(
 				"stream", stream.streamId,
 				"error", err,
 				"streamRecord", streamRecord)
+
+		if IsRiverErrorCode(err, Err_DOWNSTREAM_NETWORK_ERROR) ||
+			IsRiverErrorCode(err, Err_UNAVAILABLE) {
+			s.scheduledReconciliationTasks.Compute(
+				streamId,
+				func(existingValue *reconcileTask, loaded bool) (newValue *reconcileTask, op xsync.ComputeOp) {
+					if loaded && existingValue.next != nil &&
+						existingValue.next.LastMbNum() > streamRecord.LastMbNum() {
+						streamRecord = existingValue.next
+					} else if loaded && existingValue.inProgress != nil && existingValue.inProgress.LastMbNum() > streamRecord.LastMbNum() {
+						streamRecord = existingValue.inProgress
+					}
+
+					s.retryableReconcilationTasks.Add(streamId, stream, streamRecord)
+
+					return nil, xsync.DeleteOp
+				})
+		}
+
+		return
 	}
 
 	schedule := false
@@ -175,6 +198,7 @@ func (s *StreamCache) reconciliationTask(
 			}
 		},
 	)
+
 	if corrupt {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
@@ -254,12 +278,21 @@ func (s *StreamCache) syncStreamFromPeers(
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
 		}
+
 		remote = stream.AdvanceStickyPeer(remote)
 	}
 
-	return AsRiverError(err, Err_UNAVAILABLE).
-		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExlusive", toExclusive).
-		Message("No peer could provide miniblocks for stream reconciliation")
+	if err != nil {
+		return AsRiverError(err, Err_UNAVAILABLE).
+			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
+			Message("No peer could provide miniblocks for stream reconciliation")
+	}
+
+	return RiverError(
+		Err_UNAVAILABLE,
+		"No peer could provide miniblocks for stream reconciliation",
+	).
+		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 }
 
 // syncStreamFromSinglePeer syncs the database for the given streamResult by fetching missing blocks from a single peer.
@@ -308,4 +341,112 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 
 		currentFromInclusive += int64(len(mbs))
 	}
+}
+
+// retryableReconciliationTasks holds a set of reconciliation tasks that failed and need
+// to be retried periodically until success.
+//
+// For example a reconciliation tasks that failed because it could not connect to nodes
+// due to a temporary network issue or remote outage.
+type retryableReconciliationTasks struct {
+	mu                deadlock.Mutex
+	pendingTasks      map[StreamId]*list.Element
+	pendingTasksFifo  *list.List
+	nextRetryDuration time.Duration
+}
+
+// retryableReconciliationTaskItem keeps a collection of reconciliation tasks that failed but need to be retried at a
+// later time. It uses a FIFO list to keep track of the order of tasks to ensure that the oldest task is retried first.
+// If a reconciliation task is added for a stream that already has a pending task the existing task is updated with the
+// new streamRecord and kept in the same place in the FIFO list.
+type retryableReconciliationTaskItem struct {
+	// retryAfter indicates after which interval the task in item should be retried
+	retryAfter time.Time
+	// item keeps the stream record for the task
+	item *river.StreamWithId
+}
+
+// newRetryableReconciliationTasks create a new retryableReconciliationTasks instance with the given nextRetry duration.
+// if nextRetry is less than or equal to 0 it will default to 2 minutes.
+func newRetryableReconciliationTasks(nextRetry time.Duration) *retryableReconciliationTasks {
+	if nextRetry <= 0 {
+		nextRetry = 2 * time.Minute
+	}
+
+	return &retryableReconciliationTasks{
+		pendingTasks:      make(map[StreamId]*list.Element),
+		pendingTasksFifo:  list.New(),
+		nextRetryDuration: nextRetry,
+	}
+}
+
+// Add adds or updates a retryable reconciliation task for the given streamId.
+// If a task already exists for the given stream  and the given streamRecord is newer the existing task is updated.
+func (r *retryableReconciliationTasks) Add(streamId StreamId, stream *Stream, streamRecord *river.StreamWithId) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if elem, ok := r.pendingTasks[streamId]; ok {
+		existing := elem.Value.(*retryableReconciliationTaskItem)
+		if existing.item.LastMbNum() < streamRecord.LastMbNum() {
+			elem.Value = &retryableReconciliationTaskItem{
+				retryAfter: time.Now().Add(r.nextRetryDuration),
+				item:       streamRecord,
+			}
+		}
+		return
+	}
+
+	elem := r.pendingTasksFifo.PushBack(&retryableReconciliationTaskItem{
+		retryAfter: time.Now().Add(r.nextRetryDuration),
+		item:       streamRecord,
+	})
+
+	r.pendingTasks[streamId] = elem
+}
+
+// Remove removes a task if the given task is the same or older than the pending task.
+// If there is not pending task for the given task this is a no-op.
+func (r *retryableReconciliationTasks) Remove(task *retryableReconciliationTaskItem) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if elem, ok := r.pendingTasks[task.item.StreamId()]; ok {
+		pendingTask := elem.Value.(*retryableReconciliationTaskItem)
+
+		// only remove if the given task is older than the pending task
+		if pendingTask.item.LastMbNum() <= task.item.LastMbNum() {
+			r.pendingTasksFifo.Remove(elem)
+			delete(r.pendingTasks, task.item.StreamId())
+		}
+	}
+}
+
+// Peek returns the oldest *retryableReconciliationTaskItem, or nil if empty.
+func (r *retryableReconciliationTasks) Peek() *retryableReconciliationTaskItem {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	elem := r.pendingTasksFifo.Front()
+	if elem == nil {
+		return nil
+	}
+	return elem.Value.(*retryableReconciliationTaskItem)
+}
+
+// Pop removes and returns the oldest *retryableReconciliationTaskItem, or nil if empty.
+func (r *retryableReconciliationTasks) Pop() *retryableReconciliationTaskItem {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	elem := r.pendingTasksFifo.Front()
+	if elem == nil {
+		return nil
+	}
+
+	streamRecord := elem.Value.(*retryableReconciliationTaskItem)
+
+	delete(r.pendingTasks, streamRecord.item.StreamId())
+	r.pendingTasksFifo.Remove(elem)
+
+	return streamRecord
 }

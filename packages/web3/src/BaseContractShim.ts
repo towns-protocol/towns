@@ -1,12 +1,20 @@
-import { BytesLike, ethers } from 'ethers'
+import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { dlogger } from '@towns-protocol/dlog'
 import { Connect, ContractType } from './types/typechain'
 import { Abi } from 'abitype'
+import { TransactionOpts } from './types/ContractTypes'
+import { wrapTransaction } from './space-dapp/wrapTransaction'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 const logger = dlogger('csb:BaseContractShim')
+
+export type OverrideExecution<T> = (args: {
+    toAddress: string
+    calldata: string
+    value?: bigint
+}) => Promise<T>
 
 export class BaseContractShim<
     connect extends Connect<ethers.Contract>,
@@ -63,17 +71,68 @@ export class BaseContractShim<
         return this.writeContract
     }
 
+    /**
+     * Executes a contract function call. If overrideExecution is provided, uses that instead of
+     * the default blockchain transaction. This allows for custom handling of the call, such as
+     * returning the raw calldata or implementing custom transaction logic.
+     *
+     * @param params.signer - The signer to use for the transaction
+     * @param params.functionName - The name of the contract function to call
+     * @param params.args - The arguments to pass to the function
+     * @param params.overrideExecution - Optional function to override the default execution
+     * @param params.transactionOpts - Optional transaction options
+     * @returns The result of the function call or the override execution
+     */
+    public executeCall<
+        T = ContractTransaction,
+        FnName extends keyof T_CONTRACT['functions'] = keyof T_CONTRACT['functions'],
+        Args extends Parameters<T_CONTRACT['functions'][FnName]> = Parameters<
+            T_CONTRACT['functions'][FnName]
+        >,
+    >(params: {
+        signer: ethers.Signer
+        functionName: FnName
+        args: Args
+        value?: bigint
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }): Promise<T extends undefined ? ContractTransaction : T> {
+        return (
+            params.overrideExecution
+                ? params.overrideExecution({
+                      toAddress: this.address,
+                      calldata: this.encodeFunctionData(params.functionName, params.args),
+                      value: params.value,
+                  })
+                : wrapTransaction(
+                      () =>
+                          (
+                              this.write(params.signer)[params.functionName] as (
+                                  ...args: Args
+                              ) => Promise<ContractTransaction>
+                          )(
+                              ...((params.value
+                                  ? [...params.args, { value: params.value }]
+                                  : params.args) as Args),
+                          ),
+                      params.transactionOpts,
+                  )
+        ) as Promise<T extends undefined ? ContractTransaction : T>
+    }
+
     public decodeFunctionResult<FnName extends keyof T_CONTRACT['functions']>(
         functionName: FnName,
         data: BytesLike,
-    ) {
+    ): Awaited<ReturnType<T_CONTRACT['functions'][FnName]>> {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')
         }
         if (!this.interface.getFunction(functionName)) {
             throw new Error(`Function ${functionName} not found in contract interface`)
         }
-        return this.interface.decodeFunctionResult(functionName, data)
+        const decoded = this.interface.decodeFunctionResult(functionName, data)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return decoded as Awaited<ReturnType<T_CONTRACT['functions'][FnName]>>
     }
 
     public decodeFunctionData<FnName extends keyof T_CONTRACT['functions']>(

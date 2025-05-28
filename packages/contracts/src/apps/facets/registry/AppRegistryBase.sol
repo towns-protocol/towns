@@ -9,10 +9,12 @@ import {ITownsApp} from "../../ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 
 // libraries
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+import {LibClone} from "solady/utils/LibClone.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -84,6 +86,19 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return AppRegistryStorage.getLayout().apps[app].isBanned;
     }
 
+    function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
+        if (bytes(params.name).length == 0) revert InvalidAppName();
+        if (params.permissions.length == 0) revert InvalidArrayInput();
+        if (params.clients.length == 0) revert InvalidArrayInput();
+
+        app = LibClone.deployERC1967BeaconProxy(address(this));
+        ISimpleApp(app).initialize(msg.sender, params.name, params.permissions);
+
+        version = _registerApp(app, params.clients);
+
+        emit AppCreated(app, version);
+    }
+
     /// @notice Registers a new app in the registry
     /// @param app The address of the app to register
     /// @param clients Array of client addresses that can use the app
@@ -91,7 +106,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
     function _registerApp(
         address app,
-        address[] calldata clients
+        address[] memory clients
     ) internal returns (bytes32 version) {
         _verifyAddAppInputs(app, clients);
 
@@ -99,13 +114,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
-        address owner = ITownsApp(app).owner();
-        if (msg.sender != owner) NotAppOwner.selector.revertWith();
-
         bytes32[] memory permissions = ITownsApp(app).requiredPermissions();
         ExecutionManifest memory manifest = ITownsApp(app).executionManifest();
 
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
+
+        address owner = ITownsApp(app).moduleOwner();
 
         AttestationRequest memory request;
         request.schema = _getSchemaId();
@@ -204,8 +218,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (
             !IERC165(app).supportsInterface(type(IERC6900Module).interfaceId) ||
             !IERC165(app).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
-            !IERC165(app).supportsInterface(type(ITownsApp).interfaceId) ||
-            !IERC165(app).supportsInterface(type(IERC173).interfaceId)
+            !IERC165(app).supportsInterface(type(ITownsApp).interfaceId)
         ) {
             AppDoesNotImplementInterface.selector.revertWith();
         }

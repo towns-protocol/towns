@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
-
 	ttlcache "github.com/patrickmn/go-cache"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -63,7 +61,7 @@ func NewService(
 	nodes []nodes.NodeRegistry,
 	metrics infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
-	httpClient *http.Client,
+	webhookHttpClient *http.Client,
 ) (*Service, error) {
 	if len(nodes) < 1 {
 		return nil, base.RiverError(
@@ -88,7 +86,7 @@ func NewService(
 	if len(nodes) > 1 {
 		streamTrackerNodeRegistries = nodes[1:]
 	}
-	appClient := app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks)
+	appClient := app_client.NewAppClient(webhookHttpClient, cfg.AllowInsecureWebhooks)
 	cache, err := NewCachedEncryptedMessageQueue(
 		ctx,
 		store,
@@ -213,7 +211,7 @@ func (s *Service) Start(ctx context.Context) {
 			log.Infow("Start app registry streams tracker")
 
 			if err := s.streamsTracker.Run(ctx); err != nil {
-				log.Errorw("tracking streams failed", "err", err)
+				log.Errorw("tracking streams failed", "error", err)
 			}
 
 			select {

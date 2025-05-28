@@ -19,7 +19,7 @@
     "dependencies": {
         "hono": "^4.5.0",
         "ponder": "^0.9.27",
-        "viem": "^2.21.51"
+        "viem": "^2.29.3"
     },
     "devDependencies": {
         "@towns-protocol/contracts": "workspace:^",

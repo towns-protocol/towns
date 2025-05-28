@@ -213,9 +213,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -250,9 +247,6 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - uses: actions/setup-node@v4
               with:
@@ -310,6 +304,10 @@ jobs:
               working-directory: core
               run: just RUN_ENV=multi_ne config-and-start
 
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi_ne start-and-wait-app-registry
+
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
               run: yarn run test:ci:multi:ne
@@ -365,9 +363,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -402,9 +397,6 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - uses: actions/setup-node@v4
               with:
@@ -458,6 +450,10 @@ jobs:
             - name: Run multiple nodes
               run: just RUN_ENV=multi config-and-start
               working-directory: core
+
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -513,9 +509,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -550,9 +543,6 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - uses: actions/setup-node@v4
               with:
@@ -606,6 +596,10 @@ jobs:
             - name: Run multiple nodes
               run: just RUN_ENV=multi config-and-start
               working-directory: core
+
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -670,9 +664,6 @@ jobs:
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat libsecp256k1-dev
 
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
-
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -687,9 +678,6 @@ jobs:
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -744,9 +732,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y zstd make netcat libsecp256k1-dev gcc
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Setup Go
               uses: actions/setup-go@v5

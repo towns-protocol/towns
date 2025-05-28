@@ -68,6 +68,7 @@ func NewAppRegistryStreamsTracker(
 		listener,
 		tracker,
 		metricsFactory,
+		config.StreamTracking,
 	); err != nil {
 		return nil, err
 	}
