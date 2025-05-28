@@ -30,7 +30,7 @@ COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 RUN apk add --no-cache git curl
 RUN corepack enable
 RUN pnpm install
-RUN pnpm run turbo build --filter @towns-protocol/metrics-discovery
+RUN pnpm turbo build --filter @towns-protocol/metrics-discovery
 
 WORKDIR /river/packages/metrics-discovery
 
