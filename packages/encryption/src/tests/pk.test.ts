@@ -1,8 +1,8 @@
 import { EncryptionDelegate } from '../encryptionDelegate'
-import debug from 'debug'
+import { dlog } from '@towns-protocol/dlog'
 import { PkDecryption, PkEncryption, PkSigning } from '../encryptionTypes'
 
-const log = debug('test')
+const log = dlog('test')
 
 describe.concurrent('Pk Signing and Encryption', () => {
     let encryption: PkEncryption | undefined

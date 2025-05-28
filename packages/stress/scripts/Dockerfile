@@ -5,24 +5,18 @@ WORKDIR /app
 # Copy all files from the root of the repo
 COPY . .
 
-# Enable Corepack and install Yarn
+# Enable Corepack and install Pnpm
 RUN corepack enable
 
-# Set the Yarn version
-ENV YARN_VERSION=3.8.0
+ENV PNPM_VERSION=10.7.1
+# Install pnpm v10.7 using corepack
+RUN corepack prepare pnpm@$PNPM_VERSION --activate
 
-# Install Yarn globally
-RUN corepack prepare yarn@$YARN_VERSION --activate
-
-# Verify Yarn installation
-RUN yarn --version
+# Verify pnpm installation
+RUN pnpm --version
 
 # Set the image name
 LABEL org.opencontainers.image.name="stress-local"
-
-# Set the default command (optional)
-# CMD ["yarn", "start"]
-# Copy CA files from host
 
 # Register CA files
 RUN mkdir -p /usr/local/share/ca-certificates && \
@@ -40,5 +34,5 @@ RUN /root/.foundry/bin/foundryup
 ENV PATH="/root/.foundry/bin:${PATH}"
 
 # Install dependencies
-RUN yarn install
-RUN yarn build
+RUN pnpm install
+RUN pnpm build

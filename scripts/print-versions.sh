@@ -17,7 +17,7 @@ function print_version() {
 
 print_version "go" "version"
 print_version "node" "--version"
-print_version "yarn" "--version"
+print_version "pnpm" "--version"
 print_version "anvil" "--version"
 print_version "forge" "--version"
 print_version "docker" "--version"

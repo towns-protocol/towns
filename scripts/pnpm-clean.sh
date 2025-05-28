@@ -23,7 +23,7 @@ fi
 echo "cleaning node"
 
 # remove large directories that we know we will rebuild. Git clean hangs if we try to remove these in one go
-find . -name "node_modules" -type d -exec rm -r "{}" \;
+find . -name "node_modules" -type d -exec rm -r "{}" \; # TODO: maybe we dont need to rmeove node modules..
 find . -name "dist" -type d -exec rm -r "{}" \;
 find . -name "coverage" -type d -exec rm -r "{}" \;
 find . -name "out" -type d -exec rm -r "{}" \;

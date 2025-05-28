@@ -7,7 +7,7 @@ pushd "$(git rev-parse --show-toplevel)"
 echo "building protobufs"
 
 # typescript: we need to build the protobufs and generate the river/proto package
-yarn csb:build
+pnpm csb:build
 popd
 
 # golang

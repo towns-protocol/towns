@@ -17,6 +17,7 @@ export default ({ mode }: { mode: string }) => {
             'process.browser': true,
         },
         plugins: [
+            react(),
             wasm(),
             tsconfigPaths(),
             replaceCodePlugin({
@@ -41,7 +42,6 @@ exports.randomFillSync = randomFillSync`,
                 },
             }),
             nodePolyfills(),
-            react(),
         ],
         resolve: {
             alias: {

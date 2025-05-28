@@ -41,11 +41,11 @@ import {
 import { zeroAddress } from 'viem'
 import { Address } from '../src/types/ContractTypes'
 
-import debug from 'debug'
+import { dlog } from '@towns-protocol/dlog'
 import { computeDelegatorsForProvider } from '../src/delegate-registry/DelegateRegistry'
 import { describe, it, expect } from 'vitest'
 
-const log = debug('test')
+const log = dlog('test')
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()

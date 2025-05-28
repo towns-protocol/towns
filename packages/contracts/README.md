@@ -77,7 +77,7 @@ foundryup
 Clone the repo, then:
 
 ```shell
-yarn
+pnpm i
 ```
 
 **To compile the smart contracts:**

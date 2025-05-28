@@ -22,12 +22,11 @@ RUN curl -L https://foundry.paradigm.xyz | bash && \
 # Add Foundry binaries to PATH
 ENV PATH="/root/.foundry/bin:${PATH}"
 
-# Enable Corepack for Yarn 3.x support
+# Enable Corepack for Pnpm 3.x support
 RUN corepack enable
 
 # Copy monorepo configuration from root
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy the required packages
 COPY packages/subgraph ./packages/subgraph/
@@ -38,7 +37,7 @@ COPY packages/contracts ./packages/contracts/
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 
 # Install dependencies
-RUN yarn install
+RUN pnpm install
 
 # Build contracts
 WORKDIR /river/packages/contracts
@@ -46,7 +45,7 @@ RUN make build
 WORKDIR /river
 
 # Generate contract typings
-RUN yarn workspace @towns-protocol/contracts typings
+RUN pnpm --filter=@towns-protocol/contracts typings
 
 # Set working directory to subgraph package
 WORKDIR /river/packages/subgraph

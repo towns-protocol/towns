@@ -2,12 +2,12 @@
  * @group main
  */
 
-import debug from 'debug'
+import { dlog } from '@towns-protocol/dlog'
 import { Client } from '../../client'
 import { makeDonePromise, makeTestClient } from '../testUtils'
 import { UserDevice } from '@towns-protocol/encryption'
 
-const log = debug('test')
+const log = dlog('test')
 
 describe('deviceKeyMessageTest', () => {
     let bobsClient: Client

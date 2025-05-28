@@ -12,7 +12,7 @@ const log = dlog('test:encryption')
 
 // To generate test data run as:
 //
-//   GENERATE_DATA=1 yarn test src/tests/unit/crypto.test.ts -t checkData
+//   GENERATE_DATA=1 pnpm test src/tests/unit/crypto.test.ts -t checkData
 //
 
 describe('crypto', () => {
