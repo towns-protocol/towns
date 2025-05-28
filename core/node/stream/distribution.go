@@ -26,11 +26,12 @@ import (
 )
 
 const (
-	// defaultVnodeCount is the number of virtual nodes per real node if not set in on chain config
+	// defaultVnodeCount is the number of virtual nodes per real node.
+	// this is also an on-chain setting
 	defaultVnodeCount = 150
 	// defaultCandidateCount is the number of candidate nodes to pick the best nodes from,
-	// this should be configurable on chain
-	defaultCandidateCount = 5
+	// this is also an on-chain setting
+	defaultCandidateCount = 4
 )
 
 type (
