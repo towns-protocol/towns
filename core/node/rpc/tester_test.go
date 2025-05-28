@@ -1199,7 +1199,6 @@ func (tc *testClient) maybeDumpStreamView(view *StreamView) {
 			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{
 				EventContent: true,
 				TestMessages: true,
-				ChainConfig:  tc.serviceTester.btc.OnChainConfig,
 			}),
 		)
 	}
@@ -1217,7 +1216,6 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			dumpevents.DumpStream(stream, dumpevents.DumpOpts{
 				EventContent: true,
 				TestMessages: true,
-				ChainConfig:  tc.serviceTester.btc.OnChainConfig,
 			}),
 		)
 	}

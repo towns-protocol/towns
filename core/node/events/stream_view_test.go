@@ -73,7 +73,6 @@ func TestLoad(t *testing.T) {
 				{Data: miniblockProtoBytes},
 			},
 		},
-		params.ChainConfig,
 	)
 
 	assert.NoError(t, err)
@@ -307,7 +306,6 @@ func TestMbHashConstraints(t *testing.T) {
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbDescriptors,
 		},
-		&mocks.MockOnChainCfg{Settings: cfg},
 	)
 	require.NoError(err)
 

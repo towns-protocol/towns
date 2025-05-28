@@ -6,7 +6,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -16,7 +15,6 @@ type DumpOpts struct {
 	EventPrevMiniblock bool
 	EventContent       bool
 	TestMessages       bool
-	ChainConfig        crypto.OnChainConfiguration
 }
 
 func GetPayloadName(p IsStreamEvent_Payload) string {
@@ -159,7 +157,7 @@ func DumpStreamView(view *StreamView, opts DumpOpts) string {
 }
 
 func DumpStreamW(w io.Writer, stream *StreamAndCookie, opts DumpOpts) {
-	view, err := MakeRemoteStreamView(stream, opts.ChainConfig)
+	view, err := MakeRemoteStreamView(stream)
 	if err != nil {
 		fmt.Fprintf(w, "error: %v\n", err)
 		return

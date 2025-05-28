@@ -40,7 +40,6 @@ type (
 	Service struct {
 		authentication.AuthServiceMixin
 		cfg                           config.AppRegistryConfig
-		onChainConfig                 crypto.OnChainConfiguration
 		store                         *CachedEncryptedMessageQueue
 		streamsTracker                track_streams.StreamsTracker
 		sharedSecretDataEncryptionKey [32]byte
@@ -118,7 +117,6 @@ func NewService(
 
 	s := &Service{
 		cfg:                           cfg,
-		onChainConfig:                 onChainConfig,
 		store:                         cache,
 		streamsTracker:                tracker,
 		sharedSecretDataEncryptionKey: fixedWidthDataEncryptionKey,
@@ -440,7 +438,7 @@ waitLoop:
 				log.Warnw("Error fetching user metadata stream for app", "error", err, "streamId", userMetadataStreamId, "appId", appId)
 				continue
 			}
-			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream, s.onChainConfig)
+			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream)
 			if loopExitErr != nil {
 				break waitLoop
 			}

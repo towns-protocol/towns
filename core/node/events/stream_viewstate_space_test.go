@@ -261,7 +261,6 @@ func TestSpaceViewState(t *testing.T) {
 				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
-		tt.btc.OnChainConfig,
 	)
 	require.NoError(t, err)
 	require.NotNil(t, view3)
@@ -330,7 +329,6 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
-		tt.btc.OnChainConfig,
 	)
 	require.NoError(t, err)
 
@@ -395,7 +393,6 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
-		tt.btc.OnChainConfig,
 	)
 	require.NoError(t, err)
 

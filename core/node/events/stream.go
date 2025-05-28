@@ -197,7 +197,7 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 		return nil, err
 	}
 
-	view, err := MakeStreamView(streamData, s.params.ChainConfig)
+	view, err := MakeStreamView(streamData)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +487,6 @@ func (s *Stream) initFromGenesisLocked(
 				Hash:   genesisInfo.Ref.Hash,
 			}},
 		},
-		s.params.ChainConfig,
 	)
 	if err != nil {
 		return err

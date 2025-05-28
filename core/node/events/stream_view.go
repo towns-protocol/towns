@@ -28,10 +28,7 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(
-	streamData *storage.ReadStreamFromLastSnapshotResult,
-	chainConfig crypto.OnChainConfiguration,
-) (*StreamView, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -106,14 +103,10 @@ func MakeStreamView(
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
-		chainConfig:   chainConfig,
 	}, nil
 }
 
-func MakeRemoteStreamView(
-	stream *StreamAndCookie,
-	chainConfig crypto.OnChainConfiguration,
-) (*StreamView, error) {
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if stream == nil {
 		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
 	}
@@ -174,7 +167,6 @@ func MakeRemoteStreamView(
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: 0,
-		chainConfig:   chainConfig,
 	}, nil
 }
 
@@ -184,8 +176,6 @@ type StreamView struct {
 	minipool      *minipoolInstance
 	snapshot      *Snapshot
 	snapshotIndex int
-
-	chainConfig crypto.OnChainConfiguration
 }
 
 func (r *StreamView) copyAndAddEvent(event *ParsedEvent) (*StreamView, error) {
@@ -208,7 +198,6 @@ func (r *StreamView) copyAndAddEvent(event *ParsedEvent) (*StreamView, error) {
 		minipool:      newMinipool,
 		snapshot:      r.snapshot,
 		snapshotIndex: r.snapshotIndex,
-		chainConfig:   r.chainConfig,
 	}
 	return ret, nil
 }
@@ -424,7 +413,7 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		if r.chainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
+		if params.ChainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
 			header.SnapshotHash = parsedSnapshot.Envelope.Hash
 		} else {
 			header.Snapshot = parsedSnapshot.Snapshot
@@ -524,7 +513,6 @@ func (r *StreamView) copyAndApplyBlock(
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
-		chainConfig:   r.chainConfig,
 	}, newEvents, nil
 }
 
@@ -908,7 +896,6 @@ func (r *StreamView) CopyAndPrependMiniblocks(mbs []*MiniblockInfo) (*StreamView
 		minipool:      r.minipool,
 		snapshot:      r.snapshot,
 		snapshotIndex: r.snapshotIndex + len(mbs),
-		chainConfig:   r.chainConfig,
 	}, nil
 }
 
