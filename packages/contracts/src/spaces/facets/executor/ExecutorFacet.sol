@@ -42,7 +42,6 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
 
     /// @inheritdoc IExecutor
     function revokeAccess(bytes32 groupId, address account) external onlyOwner {
-        _setGroupStatus(groupId, false);
         _revokeGroupAccess(groupId, account);
     }
 

@@ -18,8 +18,8 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @dev This account is used to execute transactions on behalf of a Space
  */
 contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
-    /// @notice Validates if the target address is allowed for delegate calls
-    /// @dev Prevents delegate calls to critical system contracts
+    /// @notice Validates if the target address is allowed for calls
+    /// @dev Prevents calls to critical system contracts
     /// @param target The contract address to check
     modifier onlyAuthorized(address target) {
         _checkAuthorized(target);

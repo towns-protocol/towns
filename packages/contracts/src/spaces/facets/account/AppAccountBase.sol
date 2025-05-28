@@ -81,7 +81,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             _setTargetFunctionGroup(app.module, func.executionSelector, app.appId);
 
             if (!func.allowGlobalValidation) {
-                _setTargetFunctionDisabled(module, func.executionSelector, true);
+                _setTargetFunctionDisabled(app.module, func.executionSelector, true);
             }
         }
 
@@ -89,7 +89,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         // revert if it fails
         if (postInstallData.length > 0) {
             bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (postInstallData));
-            LibCall.callContract(module, 0, callData);
+            LibCall.callContract(app.module, 0, callData);
         }
 
         emit IERC6900Account.ExecutionInstalled(app.module, app.manifest);
