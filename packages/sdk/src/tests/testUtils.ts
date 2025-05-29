@@ -17,7 +17,7 @@ import {
     BlockchainTransaction_TokenTransfer,
 } from '@towns-protocol/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
-import { IStreamStateView } from '../streamStateView'
+import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
 import {
     makeBaseChainConfig,
@@ -481,7 +481,7 @@ export async function createSpaceAndDefaultChannel(
 ): Promise<{
     spaceId: string
     defaultChannelId: string
-    userStreamView: IStreamStateView
+    userStreamView: StreamStateView
 }> {
     const transaction = await createVersionedSpaceFromMembership(
         client,
