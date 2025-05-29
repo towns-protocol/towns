@@ -12,6 +12,7 @@ import {
 
 export class EncryptionDelegate {
     private delegate: OlmImpl | undefined
+    public isInitialized = false
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     constructor() {}
@@ -21,8 +22,8 @@ export class EncryptionDelegate {
         if (this.delegate) {
             return
         }
-
         this.delegate = await Olm.initAsync()
+        this.isInitialized = this.delegate !== undefined
     }
 
     public createAccount(): Account {
