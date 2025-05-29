@@ -221,10 +221,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		return AsRiverError(err, Err_INVALID_ARGUMENT).Func("SyncerSet.Modify")
 	}
 
-	// Lock all affected streams
-	lockedStreams := ss.lockStreams(req)
-	defer ss.unlockStreams(lockedStreams)
-
 	addingFailuresLock := sync.Mutex{}
 	addingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
 	addingFailuresHandler := func(status *SyncStreamOpStatus) {
@@ -337,6 +333,10 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	if stopped {
 		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
+
+	// Lock all affected streams
+	lockedStreams := ss.lockStreams(req)
+	defer ss.unlockStreams(lockedStreams)
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -539,7 +539,10 @@ func (ss *SyncerSet) distributeSyncModifications(
 				ss.streamID2Syncer.Delete(StreamId(streamIdRaw))
 			}
 			if syncerStopped {
+				// TODO: Handle race condition properly
+				ss.muSyncers.Lock()
 				delete(ss.syncers, syncer.Address())
+				ss.muSyncers.Unlock()
 			}
 		}(modifySync)
 	}
