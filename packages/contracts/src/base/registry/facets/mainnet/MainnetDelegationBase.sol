@@ -232,8 +232,8 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         return ds.delegatorsByAuthorizedClaimer[claimer].values();
     }
 
-    function _getAuthorizedClaimer(address owner) internal view returns (address) {
-        return MainnetDelegationStorage.layout().claimerByDelegator[owner];
+    function _getAuthorizedClaimer(address delegator) internal view returns (address) {
+        return MainnetDelegationStorage.layout().claimerByDelegator[delegator];
     }
 
     function _getProxyDelegation() internal view returns (address) {

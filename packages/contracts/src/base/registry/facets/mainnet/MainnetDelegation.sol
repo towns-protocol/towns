@@ -48,6 +48,7 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     /*                       ADMIN FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @inheritdoc IMainnetDelegation
     function setProxyDelegation(address proxyDelegation) external onlyOwner {
         MainnetDelegationStorage.layout().proxyDelegation = proxyDelegation;
 
@@ -106,7 +107,8 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
         return _getDelegatedStakeByOperator(operator);
     }
 
-    function getAuthorizedClaimer(address owner) external view returns (address) {
-        return _getAuthorizedClaimer(owner);
+    /// @inheritdoc IMainnetDelegation
+    function getAuthorizedClaimer(address delegator) external view returns (address) {
+        return _getAuthorizedClaimer(delegator);
     }
 }
