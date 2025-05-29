@@ -61,7 +61,44 @@ func (s *localSyncer) Address() common.Address {
 	return s.localAddr
 }
 
-func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+// Backfill is used to backfill a stream with the given cookie and send the backfill to the final sync.
+// If client1 is connected to nodeA which syncs streamA from the nodeB, there will be 2 syncs in the chain:
+// 1. client1 -> nodeA: sync1
+// 2. nodeA -> nodeBL sync2
+// In this case, the targetSyncIds should be [sync2, sync1].
+func (s *localSyncer) Backfill(
+	ctx context.Context,
+	cookie *SyncCookie,
+	targetSyncIds []string,
+) error {
+	stream, err := s.streamCache.GetStreamNoWait(ctx, StreamId(cookie.GetStreamId()))
+	if err != nil {
+		return err
+	}
+
+	return stream.IsolatedGetView(ctx, func(view *StreamView) error {
+		streamAndCookie, err := view.GetStreamSince(ctx, s.localAddr, cookie)
+		if err != nil {
+			return err
+		}
+
+		s.sendResponse(&SyncStreamsResponse{
+			SyncOp:        SyncOp_SYNC_UPDATE,
+			Stream:        streamAndCookie,
+			TargetSyncIds: targetSyncIds,
+		})
+
+		return nil
+	})
+}
+
+func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::modify")
+		defer span.End()
+	}
+
 	var resp ModifySyncResponse
 
 	for _, cookie := range request.GetBackfillStreams().GetStreams() {
@@ -118,8 +155,6 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	for _, streamID := range request.GetRemoveStreams() {
 		syncStream, found := s.activeStreams[StreamId(streamID)]
 		if found {
@@ -127,8 +162,9 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
+	s.activeStreamsMu.Unlock()
 
-	return &resp, len(s.activeStreams) == 0, nil
+	return &resp, nil
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
