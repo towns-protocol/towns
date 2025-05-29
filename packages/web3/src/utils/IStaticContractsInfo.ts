@@ -10,7 +10,7 @@ export interface BaseChainConfig {
         baseRegistry: Address
         riverAirdrop?: Address
         swapRouter?: Address
-        towns: Address
+        towns?: Address
         utils: {
             mockNFT?: Address // mockErc721aAddress
             member?: Address // testGatingTokenAddress - For tesing token gating scenarios
