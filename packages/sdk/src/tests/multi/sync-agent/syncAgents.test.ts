@@ -138,6 +138,14 @@ describe('syncAgents.test.ts', () => {
         const space = bob.spaces.getSpace(spaceId)
         const channel = space.getDefaultChannel()
         const channelId = channel.data.id
+        logger.log(channel.timeline.events.value)
+        await waitFor(
+          () =>
+            expect(
+              findMessageByText(channel.timeline.events.value, 'Hello, World!'),
+            ).toBeDefined(),
+          { timeoutMS: 10000 },
+        )
         const event = findMessageByText(channel.timeline.events.value, 'Hello, World!')
         expect(event).toBeDefined()
         // bob can pin
