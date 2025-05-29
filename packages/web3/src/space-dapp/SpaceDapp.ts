@@ -166,7 +166,7 @@ export class SpaceDapp {
     public readonly platformRequirements: PlatformRequirements
     public readonly airdrop: RiverAirdropDapp
     public readonly spaceOwner: SpaceOwner
-    public readonly townsToken: TownsToken
+    public readonly townsToken?: TownsToken
 
     public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
     public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
@@ -188,7 +188,9 @@ export class SpaceDapp {
             provider,
         )
         this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
-        this.townsToken = new TownsToken(config.addresses.towns, provider)
+        if (config.addresses.towns) {
+            this.townsToken = new TownsToken(config.addresses.towns, provider)
+        }
         this.airdrop = new RiverAirdropDapp(config, provider)
 
         // For RPC providers that pool for events, we need to set the polling interval to a lower value
