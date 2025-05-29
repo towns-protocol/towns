@@ -338,8 +338,6 @@ func (ssr *syncSessionRunner) Run() {
 	}
 	syncer, err := client.NewRemoteSyncer(
 		ssr.syncCtx,
-		ssr.cancelSync,
-		"SyncSessionRunner",
 		ssr.node,
 		streamClient,
 		ssr.relocateStream,

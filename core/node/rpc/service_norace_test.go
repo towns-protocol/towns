@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
+
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
 
@@ -144,7 +146,14 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	syncPos := append(users, channels...)
 	syncOp, err := river_sync.NewStreamsSyncOperation(
-		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry, nil)
+		ctx,
+		syncID,
+		node1.address,
+		node1.service.cache,
+		node1.service.nodeRegistry,
+		subscription.NewManager(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil),
+		nil,
+	)
 	req.NoError(err, "NewStreamsSyncOperation")
 
 	syncOpResult := make(chan error)
@@ -446,7 +455,8 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		mu.Unlock()
 
 		return count == streamsDownCounter
-	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message: %d != %d",
+		streamsDownCounter, len(streamDownMessages))
 
 	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
 

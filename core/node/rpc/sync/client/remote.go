@@ -22,32 +22,28 @@ import (
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelCauseFunc
-	syncStreamCtx      context.Context
-	syncStreamCancel   context.CancelFunc
-	syncID             string
-	forwarderSyncID    string
-	remoteAddr         common.Address
-	client             protocolconnect.StreamServiceClient
-	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams            sync.Map
-	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream        func(streamID StreamId)
+	syncStreamCtx    context.Context
+	syncStreamCancel context.CancelFunc
+	syncID           string
+	remoteAddr       common.Address
+	client           protocolconnect.StreamServiceClient
+	messages         *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streams          sync.Map
+	responseStream   *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream      func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
 
 func NewRemoteSyncer(
-	ctx context.Context,
-	cancelGlobalSyncOp context.CancelCauseFunc,
-	forwarderSyncID string,
+	globalCtx context.Context,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
-	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
+	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
 	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
 	if err != nil {
 		syncStreamCancel()
@@ -77,10 +73,8 @@ func NewRemoteSyncer(
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
-	log := logging.FromCtx(ctx)
-
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		log.Errorw("Received unexpected sync stream message",
+		logging.FromCtx(globalCtx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
@@ -88,17 +82,15 @@ func NewRemoteSyncer(
 	}
 
 	return &remoteSyncer{
-		syncID:             responseStream.Msg().GetSyncId(),
-		forwarderSyncID:    forwarderSyncID,
-		cancelGlobalSyncOp: cancelGlobalSyncOp,
-		syncStreamCtx:      syncStreamCtx,
-		syncStreamCancel:   syncStreamCancel,
-		client:             client,
-		messages:           messages,
-		responseStream:     responseStream,
-		remoteAddr:         remoteAddr,
-		unsubStream:        unsubStream,
-		otelTracer:         otelTracer,
+		syncID:           responseStream.Msg().GetSyncId(),
+		syncStreamCtx:    syncStreamCtx,
+		syncStreamCancel: syncStreamCancel,
+		client:           client,
+		messages:         messages,
+		responseStream:   responseStream,
+		remoteAddr:       remoteAddr,
+		unsubStream:      unsubStream,
+		otelTracer:       otelTracer,
 	}, nil
 }
 
@@ -130,7 +122,6 @@ func (s *remoteSyncer) Run() {
 			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
-					s.cancelGlobalSyncOp(err)
 				}
 				return
 			}
@@ -140,11 +131,9 @@ func (s *remoteSyncer) Run() {
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
-						s.cancelGlobalSyncOp(err)
 					}
 					return
 				}
-
 				s.streams.Delete(streamID)
 			}
 		}
@@ -156,14 +145,13 @@ func (s *remoteSyncer) Run() {
 
 		s.streams.Range(func(key, value any) bool {
 			streamID := key.(StreamId)
-			log.Debugw("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
+			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
 			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
-				s.cancelGlobalSyncOp(err)
 				return false
 			}
 
@@ -184,10 +172,12 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 		return s.syncStreamCtx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			return AsRiverError(err).
+			rvrErr := AsRiverError(err).
 				Tag("syncId", s.syncID).
 				Tag("op", msg.GetSyncOp()).
 				Func("sendSyncStreamResponseToClient")
+			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
+			s.syncStreamCancel()
 		}
 
 		return nil

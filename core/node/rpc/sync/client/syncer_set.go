@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -36,12 +35,8 @@ type (
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
 	SyncerSet struct {
-		// ctx is the root context for all syncers in this set and used to cancel them
-		ctx context.Context
-		// globalSyncOpCtxCancel cancels ctx
-		globalSyncOpCtxCancel context.CancelCauseFunc
-		// syncID is the sync id as used between the client and this node
-		syncID string
+		// globalCtx is the root context for all syncers in this set and used to cancel them
+		globalCtx context.Context
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
@@ -63,9 +58,6 @@ type (
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
-
-	// SyncCookieSet maps from a stream id to a sync cookie
-	SyncCookieSet map[StreamId]*SyncCookie
 )
 
 var (
@@ -73,43 +65,31 @@ var (
 	_ StreamsSyncer = (*remoteSyncer)(nil)
 )
 
-func (cs SyncCookieSet) AsSlice() []*SyncCookie {
-	cookies := make([]*SyncCookie, 0, len(cs))
-	for _, cookie := range cs {
-		cookies = append(cookies, cookie)
-	}
-	return cookies
-}
-
 // NewSyncers creates the required syncer set that subscribe on all given cookies.
 // A syncer can either be local or remote and writes received events to an internal messages channel from which events
 // are streamed to the client.
 func NewSyncers(
-	ctx context.Context,
-	globalSyncOpCtxCancel context.CancelCauseFunc,
-	syncID string,
+	globalCtx context.Context,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
 	otelTracer trace.Tracer,
 ) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
 	ss := &SyncerSet{
-		ctx:                   ctx,
-		globalSyncOpCtxCancel: globalSyncOpCtxCancel,
-		syncID:                syncID,
-		streamCache:           streamCache,
-		nodeRegistry:          nodeRegistry,
-		localNodeAddress:      localNodeAddress,
-		syncers:               make(map[common.Address]StreamsSyncer),
-		streamID2Syncer:       make(map[StreamId]StreamsSyncer),
-		messages:              dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		otelTracer:            otelTracer,
+		globalCtx:        globalCtx,
+		streamCache:      streamCache,
+		nodeRegistry:     nodeRegistry,
+		localNodeAddress: localNodeAddress,
+		syncers:          make(map[common.Address]StreamsSyncer),
+		streamID2Syncer:  make(map[StreamId]StreamsSyncer),
+		messages:         dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		otelTracer:       otelTracer,
 	}
 	return ss, ss.messages
 }
 
 func (ss *SyncerSet) Run() {
-	<-ss.ctx.Done() // sync cancelled by client, client conn dropped or client send buffer full
+	<-ss.globalCtx.Done() // node went down
 
 	ss.muSyncers.Lock()
 	ss.stopped = true
@@ -122,14 +102,13 @@ func (ss *SyncerSet) Run() {
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	if ss.otelTracer != nil {
 		var span trace.Span
-		ctx, span = ss.otelTracer.Start(ctx, "Modify",
-			trace.WithAttributes(attribute.String("syncID", ss.syncID)))
+		ctx, span = ss.otelTracer.Start(ctx, "Modify")
 		defer span.End()
 	}
 
 	// Validate modify request
 	if err := req.Validate(); err != nil {
-		return AsRiverError(err, Err_INVALID_ARGUMENT).Tag("syncId", ss.syncID)
+		return AsRiverError(err, Err_INVALID_ARGUMENT).Func("SyncerSet.Modify")
 	}
 
 	addingFailuresLock := sync.Mutex{}
@@ -191,7 +170,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	defer ss.muSyncers.Unlock()
 
 	if len(req.ToAdd) > 0 && ss.stopped {
-		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
+		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -229,11 +208,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	for _, streamIDRaw := range req.ToRemove {
 		syncer, found := ss.streamID2Syncer[StreamId(streamIDRaw)]
 		if !found {
-			req.RemovingFailureHandler(&SyncStreamOpStatus{
-				StreamId: streamIDRaw,
-				Code:     int32(Err_NOT_FOUND),
-				Message:  "Stream not part of sync operation",
-			})
 			continue
 		}
 
@@ -355,7 +329,7 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 	syncer, found := ss.streamID2Syncer[streamID]
 	if !found {
 		return RiverError(Err_NOT_FOUND, "Stream not part of sync operation").
-			Tags("syncId", ss.syncID, "streamId", streamID)
+			Tag("streamId", streamID)
 	}
 
 	syncerStopped, err := syncer.DebugDropStream(ctx, streamID)
@@ -426,9 +400,7 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 
 	if nodeAddress == ss.localNodeAddress {
 		syncer = newLocalSyncer(
-			ss.ctx,
-			ss.syncID,
-			ss.globalSyncOpCtxCancel,
+			ss.globalCtx,
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messages,
@@ -441,9 +413,7 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 		}
 
 		syncer, err = NewRemoteSyncer(
-			ss.ctx,
-			ss.globalSyncOpCtxCancel,
-			ss.syncID,
+			ss.globalCtx,
 			nodeAddress,
 			client,
 			ss.rmStream,
