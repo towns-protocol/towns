@@ -165,13 +165,13 @@ export class Channel extends PersistedObservable<ChannelModel> {
     async redact(eventId: string, reason?: string) {
         const channelId = this.data.id
         const result = await this.riverConnection.withStream(channelId).call((client, stream) => {
-            const event = stream.view.events.get(eventId)
+            const event = stream.view.timeline.find((x) => x.eventId === eventId)
             if (!event) {
                 throw new Error(`ref event not found: ${eventId}`)
             }
-            if (event.creatorUserId !== this.riverConnection.userId) {
+            if (event.sender.id !== this.riverConnection.userId) {
                 throw new Error(
-                    `You can only redact your own messages. Message creator: ${event.creatorUserId} - Your id: ${this.riverConnection.userId}`,
+                    `You can only redact your own messages. Message creator: ${event.sender.id} - Your id: ${this.riverConnection.userId}`,
                 )
             }
             return client.sendChannelMessage_Redaction(channelId, {

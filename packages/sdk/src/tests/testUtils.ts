@@ -1061,6 +1061,13 @@ export function getChannelMessagePayload(event?: ChannelMessage) {
     return undefined
 }
 
+export function getTimelineMessagePayload(event?: TimelineEvent) {
+    if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return event.content.body
+    }
+    return undefined
+}
+
 export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(

@@ -3,7 +3,6 @@
  */
 
 import {
-    getChannelMessagePayload,
     waitFor,
     setupWalletsAndContexts,
     createSpaceAndDefaultChannel,
@@ -12,6 +11,7 @@ import {
     getXchainConfigForTesting,
     setupChannelWithCustomRole,
     expectUserCanJoinChannel,
+    getTimelineMessagePayload,
 } from '../../testUtils'
 import { dlog } from '@towns-protocol/dlog'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
@@ -121,11 +121,10 @@ describe('channelsWithEntitlements', () => {
         let eventId: string | undefined
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) =>
-                    getChannelMessagePayload(e.localEvent?.channelMessage) === 'Very bad message!',
+                (e) => getTimelineMessagePayload(e) === 'Very bad message!',
             )
             expect(event).toBeDefined()
-            eventId = event?.hashStr
+            eventId = event?.eventId
         })
 
         expect(stream).toBeDefined()
