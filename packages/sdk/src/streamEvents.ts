@@ -11,7 +11,6 @@ import {
 import {
     ClientInitStatus,
     ConfirmedTimelineEvent,
-    DecryptedTimelineEvent,
     LocalTimelineEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,

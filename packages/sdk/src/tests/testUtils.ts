@@ -33,7 +33,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from '../id'
-import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
+import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '@towns-protocol/encryption'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'

@@ -49,7 +49,6 @@ import { create, MessageInitShape, toBinary } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { vi } from 'vitest'
 import {
-    DecryptedTimelineEvent,
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
