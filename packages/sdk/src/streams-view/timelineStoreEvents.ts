@@ -979,56 +979,75 @@ export function toDecryptedEvent(
     decryptedContent: DecryptedContent,
     userId: string,
 ): TimelineEvent {
-    switch (event.content?.kind) {
+    if (!event.content) {
+        logger.error('$$$ timelineStoreEvents invalid event in toDecryptedEvent', {
+            event,
+            decryptedContent,
+        })
+        return event
+    }
+    switch (event.content.kind) {
         case RiverTimelineEvent.ChannelMessageEncrypted:
-        case RiverTimelineEvent.ChannelMessageEncryptedWithRef:
-            {
-                if (decryptedContent.kind === 'channelMessage') {
-                    const { content, error } = toTownsContent_FromChannelMessage(
-                        decryptedContent.content,
-                        `ChannelMessage: ${event.eventId}`,
-                        event.eventId,
-                    )
-                    if (error) {
-                        return event
-                    }
-                    return {
-                        ...event,
-                        content,
-                        threadParentId: getThreadParentId(content),
-                        replyParentId: getReplyParentId(content),
-                        reactionParentId: getReactionParentId(content),
-                        isMentioned: getIsMentioned(content, userId),
-                    }
+        case RiverTimelineEvent.ChannelMessageEncryptedWithRef: {
+            if (decryptedContent.kind === 'channelMessage') {
+                const { content, error } = toTownsContent_FromChannelMessage(
+                    decryptedContent.content,
+                    `ChannelMessage: ${event.eventId}`,
+                    event.eventId,
+                )
+                if (error) {
+                    return event
                 }
-            }
-            break
-        case RiverTimelineEvent.SpaceDisplayName:
-            {
-                if (decryptedContent.kind === 'text') {
-                    return {
-                        ...event,
-                        content: {
-                            ...event.content,
-                            displayName: decryptedContent.content,
-                        },
-                    }
+                return {
+                    ...event,
+                    content,
+                    threadParentId: getThreadParentId(content),
+                    replyParentId: getReplyParentId(content),
+                    reactionParentId: getReactionParentId(content),
+                    isMentioned: getIsMentioned(content, userId),
                 }
+            } else {
+                logger.error('$$$ timelineStoreEvents invalid channelMessageEncrypted', {
+                    event,
+                    decryptedContent,
+                })
+                return event
             }
-            break
-        case RiverTimelineEvent.SpaceUsername:
-            {
-                if (decryptedContent.kind === 'text') {
-                    return {
-                        ...event,
-                        content: {
-                            ...event.content,
-                            username: decryptedContent.content,
-                        },
-                    }
+        }
+        case RiverTimelineEvent.SpaceDisplayName: {
+            if (decryptedContent.kind === 'text') {
+                return {
+                    ...event,
+                    content: {
+                        ...event.content,
+                        displayName: decryptedContent.content,
+                    },
                 }
+            } else {
+                logger.error('$$$ timelineStoreEvents invalid spaceDisplayName', {
+                    event,
+                    decryptedContent,
+                })
+                return event
             }
-            break
+        }
+        case RiverTimelineEvent.SpaceUsername: {
+            if (decryptedContent.kind === 'text') {
+                return {
+                    ...event,
+                    content: {
+                        ...event.content,
+                        username: decryptedContent.content,
+                    },
+                }
+            } else {
+                logger.error('$$$ timelineStoreEvents invalid spaceUsername', {
+                    event,
+                    decryptedContent,
+                })
+                return event
+            }
+        }
         case RiverTimelineEvent.EncryptedChannelProperties: {
             if (decryptedContent.kind === 'channelProperties') {
                 return {
@@ -1038,10 +1057,45 @@ export function toDecryptedEvent(
                         properties: decryptedContent.content,
                     } satisfies ChannelPropertiesEvent,
                 }
+            } else {
+                logger.error('$$$ timelineStoreEvents invalid encryptedChannelProperties', {
+                    event,
+                    decryptedContent,
+                })
+                return event
             }
         }
+        case RiverTimelineEvent.ChannelCreate:
+        case RiverTimelineEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessageMissing:
+        case RiverTimelineEvent.ChannelProperties:
+        case RiverTimelineEvent.Inception:
+        case RiverTimelineEvent.KeySolicitation:
+        case RiverTimelineEvent.Fulfillment:
+        case RiverTimelineEvent.MemberBlockchainTransaction:
+        case RiverTimelineEvent.MiniblockHeader:
+        case RiverTimelineEvent.Pin:
+        case RiverTimelineEvent.Reaction:
+        case RiverTimelineEvent.RedactedEvent:
+        case RiverTimelineEvent.RedactionActionEvent:
+        case RiverTimelineEvent.SpaceEnsAddress:
+        case RiverTimelineEvent.SpaceNft:
+        case RiverTimelineEvent.SpaceReview:
+        case RiverTimelineEvent.TokenTransfer:
+        case RiverTimelineEvent.TipEvent:
+        case RiverTimelineEvent.SpaceUpdateAutojoin:
+        case RiverTimelineEvent.SpaceUpdateHideUserJoinLeaves:
+        case RiverTimelineEvent.SpaceImage:
+        case RiverTimelineEvent.StreamEncryptionAlgorithm:
+        case RiverTimelineEvent.StreamMembership:
+        case RiverTimelineEvent.Unpin:
+        case RiverTimelineEvent.UserBlockchainTransaction:
+        case RiverTimelineEvent.UserReceivedBlockchainTransaction:
+            return event
+        default:
+            logNever(event.content)
+            return event
     }
-    return event
 }
 
 export function toDecryptedContentErrorEvent(

@@ -53,6 +53,7 @@ import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './streams-view/streamsView'
 import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
+const logInfo = dlog('csb:streams:info', { defaultEnabled: true })
 const logError = dlogError('csb:streams:error')
 
 // it's very important that the Stream is the emitter for all events
@@ -509,9 +510,20 @@ export class StreamStateView implements IStreamStateView {
         this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
 
-        this.streamsView?.streamEventDecrypted(this.streamId, this.contentKind, eventId, content)
+        const timelineEvent = this.streamsView?.streamEventDecrypted(
+            this.streamId,
+            this.contentKind,
+            eventId,
+            content,
+        )
         // dispatching eventDecrypted makes it easier to test
-        //emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent) // todo change this to dispatch content
+        if (timelineEvent) {
+            emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent) // todo change this to dispatch content
+        } else {
+            logInfo(
+                `StreamStateView::eventDecrypted: timelineEvent is undefined ${this.streamId} ${eventId}`,
+            )
+        }
     }
 
     // update stream with decryption status

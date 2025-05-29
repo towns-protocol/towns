@@ -16,6 +16,11 @@ import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { StreamsView } from './streams-view/streamsView'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
+    readonly clientEmitter: TypedEmitter<StreamEvents>
+    readonly logEmitFromStream: DLogger
+    readonly userId: string
+    readonly streamId: string
+    readonly streamsView: StreamsView
     _view: StreamStateView
     get view(): IStreamStateView {
         return this._view
@@ -23,16 +28,18 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     private stopped = false
 
     constructor(
-        public readonly userId: string,
-        public readonly streamId: string,
-        public readonly streamsView: StreamsView,
-        public readonly clientEmitter: TypedEmitter<StreamEvents>,
-        public readonly logEmitFromStream: DLogger,
+        userId: string,
+        streamId: string,
+        streamsView: StreamsView,
+        clientEmitter: TypedEmitter<StreamEvents>,
+        logEmitFromStream: DLogger,
     ) {
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
         this.userId = userId
+        this.streamId = streamId
+        this.streamsView = streamsView
         this._view = new StreamStateView(userId, streamId, streamsView)
     }
 
@@ -80,7 +87,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
-        snapshot: ParsedSnapshot | undefined,
+        _snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         this._view.appendEvents(events, nextSyncCookie, cleartexts, this)

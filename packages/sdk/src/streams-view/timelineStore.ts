@@ -89,7 +89,11 @@ export class TimelineStore extends Observable<TimelineStoreStates> {
         }
     }
 
-    streamEventDecrypted(streamId: string, eventId: string, decryptedContent: DecryptedContent) {
+    streamEventDecrypted(
+        streamId: string,
+        eventId: string,
+        decryptedContent: DecryptedContent,
+    ): TimelineEvent | undefined {
         const prevEvent = this.getState().timelines[streamId].find(
             (event) => event.eventId === eventId,
         )
@@ -98,7 +102,9 @@ export class TimelineStore extends Observable<TimelineStoreStates> {
             if (newEvent !== prevEvent) {
                 this.setState.updateEvent(newEvent, this.userId, streamId, eventId)
             }
+            return newEvent
         }
+        return undefined
     }
 
     streamEventDecryptedContentError(

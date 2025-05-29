@@ -4,6 +4,7 @@ import { StreamChange } from '../streamEvents'
 import { LocalTimelineEvent, StreamTimelineEvent } from '../types'
 import { TimelineStore, TimelineStoreDelegate } from './timelineStore'
 import { SnapshotCaseType } from '@towns-protocol/proto'
+import { TimelineEvent } from '../sync-agent/timeline/models/timeline-types'
 
 export type StreamsViewDelegate = TimelineStoreDelegate
 
@@ -33,10 +34,11 @@ export class StreamsView {
         kind: SnapshotCaseType,
         eventId: string,
         decryptedContent: DecryptedContent,
-    ) {
+    ): TimelineEvent | undefined {
         if (hasTimelineContent(kind)) {
-            this.timelineStore.streamEventDecrypted(streamId, eventId, decryptedContent)
+            return this.timelineStore.streamEventDecrypted(streamId, eventId, decryptedContent)
         }
+        return undefined
     }
 
     streamEventDecryptedContentError(

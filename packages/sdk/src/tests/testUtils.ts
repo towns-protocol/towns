@@ -1072,12 +1072,11 @@ export function createEventDecryptedPromise(client: Client, expectedMessageText:
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(
         'eventDecrypted',
-        (streamId: string, contentKind: SnapshotCaseType, event: DecryptedTimelineEvent): void => {
+        (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
             recipientReceivesMessageWithoutError.runAndDone(() => {
-                const content = event.decryptedContent
-                expect(content).toBeDefined()
-                check(content.kind === 'channelMessage')
-                expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
+                expect(event.content).toBeDefined()
+                check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                expect(event.content.body).toEqual(expectedMessageText)
             })
         },
     )
