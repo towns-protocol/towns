@@ -187,9 +187,9 @@ func (ss *SyncerSet) waitForStreamUnlock(ctx context.Context, streamID StreamId)
 
 	// If lock is held, wait for it with timeout
 	done := make(chan struct{})
-	go func() { //nolint:staticcheck
-		lock.Lock()
-		lock.Unlock()
+	go func() {
+		lock.Lock()   //nolint:staticcheck
+		lock.Unlock() //nolint:staticcheck
 		close(done)
 	}()
 
