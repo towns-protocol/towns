@@ -23,7 +23,7 @@ type (
 	StreamsSyncer interface {
 		Run()
 		Address() common.Address
-		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
+		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error)
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
 	}
 
@@ -115,15 +115,18 @@ func (ss *SyncerSet) Backfill(
 		defer span.End()
 	}
 
-	// Lock all affected streams
-	lockedStreams := ss.lockStreams(ModifyRequest{ToBackfill: []*ModifySyncRequest_Backfill{req}})
-	defer ss.unlockStreams(lockedStreams)
-
 	for _, cookie := range req.GetStreams() {
 		streamID := StreamId(cookie.GetStreamId())
+
+		// Wait for the stream to be unlocked if it's currently locked
+		if ss.isStreamLocked(streamID) {
+			ss.waitForStreamUnlock(streamID)
+		}
+
 		syncerValue, found := ss.streamID2Syncer.Load(streamID)
 		if !found {
 			// TODO: Find more elegant solution of handling the given data race
+			// TODO: Try to add the stream to sync?
 			failureHandler(&SyncStreamOpStatus{
 				StreamId: streamID[:],
 				Code:     int32(Err_UNAVAILABLE),
@@ -133,7 +136,7 @@ func (ss *SyncerSet) Backfill(
 		}
 		syncer := syncerValue.(StreamsSyncer)
 
-		resp, _, err := syncer.Modify(ctx, &ModifySyncRequest{
+		resp, err := syncer.Modify(ctx, &ModifySyncRequest{
 			SyncId: syncID,
 			BackfillStreams: &ModifySyncRequest_Backfill{
 				SyncId:  req.GetSyncId(),
@@ -162,6 +165,23 @@ func (ss *SyncerSet) getStreamLock(streamID StreamId) *sync.Mutex {
 	return lock.(*sync.Mutex)
 }
 
+// isStreamLocked checks if a stream is currently locked and waits for it to be unlocked
+func (ss *SyncerSet) isStreamLocked(streamID StreamId) bool {
+	lock := ss.getStreamLock(streamID)
+	if acquired := lock.TryLock(); acquired {
+		lock.Unlock()
+		return false
+	}
+	return true
+}
+
+// waitForStreamUnlock waits for a stream to be unlocked
+func (ss *SyncerSet) waitForStreamUnlock(streamID StreamId) {
+	lock := ss.getStreamLock(streamID)
+	lock.Lock()
+	lock.Unlock()
+}
+
 // lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks
 func (ss *SyncerSet) lockStreams(req ModifyRequest) []StreamId {
 	// Collect all stream IDs that need to be locked
@@ -175,13 +195,6 @@ func (ss *SyncerSet) lockStreams(req ModifyRequest) []StreamId {
 	// Add streams from ToRemove
 	for _, streamID := range req.ToRemove {
 		streamIDs[StreamId(streamID)] = struct{}{}
-	}
-
-	// Add streams from ToBackfill
-	for _, backfill := range req.ToBackfill {
-		for _, cookie := range backfill.GetStreams() {
-			streamIDs[StreamId(cookie.GetStreamId())] = struct{}{}
-		}
 	}
 
 	// Convert to slice and sort for consistent locking order
@@ -334,17 +347,23 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
 
-	// Lock all affected streams
+	// Lock all affected streams (excluding backfill streams)
 	lockedStreams := ss.lockStreams(req)
 	defer ss.unlockStreams(lockedStreams)
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
 
-	// Process backfill requests
+	// Process backfill requests first (wait for locks to be released)
 	for _, backfill := range req.ToBackfill {
 		for _, cookie := range backfill.GetStreams() {
 			streamID := StreamId(cookie.GetStreamId())
+
+			// Wait for the stream to be unlocked if it's currently locked
+			if ss.isStreamLocked(streamID) {
+				ss.waitForStreamUnlock(streamID)
+			}
+
 			val, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
 				// TODO: Find more elegant solution of handling the given data race
@@ -475,7 +494,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
 
-			resp, syncerStopped, err := syncer.Modify(ctx, modifySync)
+			resp, err := syncer.Modify(ctx, modifySync)
 			if err != nil {
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
 				for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
@@ -537,12 +556,6 @@ func (ss *SyncerSet) distributeSyncModifications(
 			}
 			for _, streamIdRaw := range successfullyRemoved {
 				ss.streamID2Syncer.Delete(StreamId(streamIdRaw))
-			}
-			if syncerStopped {
-				// TODO: Handle race condition properly
-				ss.muSyncers.Lock()
-				delete(ss.syncers, syncer.Address())
-				ss.muSyncers.Unlock()
 			}
 		}(modifySync)
 	}

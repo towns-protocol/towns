@@ -76,17 +76,6 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		return err
 	}
 
-	// Handle streams that the clients wants to backfill.
-	if len(req.ToBackfill) > 0 {
-		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
-			SyncID:                    s.syncID,
-			ToBackfill:                req.ToBackfill,
-			BackfillingFailureHandler: req.BackfillingFailureHandler,
-		}); err != nil {
-			s.log.Errorw("Failed to modify backfilling request", "err", err)
-		}
-	}
-
 	// Handle streams that the clients wants to subscribe to.
 	for _, toAdd := range req.ToAdd {
 		var failedToAdd bool
@@ -108,6 +97,11 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		if err := s.removeStream(ctx, req.RemovingFailureHandler, toRemove); err != nil {
 			s.log.Errorw("Failed to remove stream", "toRemove", toRemove, "err", err)
 		}
+	}
+
+	// Handle streams that the clients wants to backfill.
+	for _, backfill := range req.ToBackfill {
+		s.manager.syncers.Backfill(ctx, s.syncID, backfill, req.BackfillingFailureHandler)
 	}
 
 	return nil
@@ -152,16 +146,10 @@ func (s *Subscription) addStream(
 			return err
 		}
 	} else if shouldBackfill {
-		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
-			SyncID: s.syncID,
-			ToBackfill: []*ModifySyncRequest_Backfill{{
-				SyncId:  s.syncID,
-				Streams: []*SyncCookie{cookie},
-			}},
-			BackfillingFailureHandler: failureHandler,
-		}); err != nil {
-			return err
-		}
+		s.manager.syncers.Backfill(ctx, s.syncID, &ModifySyncRequest_Backfill{
+			SyncId:  s.syncID,
+			Streams: []*SyncCookie{cookie},
+		}, failureHandler)
 	}
 
 	return nil
