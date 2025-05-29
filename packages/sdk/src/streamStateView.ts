@@ -674,21 +674,9 @@ export class StreamStateView implements IStreamStateView {
             ),
         )
 
-        // aellis 11/23 I don't know why we're getting dupes on scrollback,
-        // but this prevents us from throwing an error
         const prepended = prependedFull
-        // .filter((e) => !this.events.has(e.hashStr))
-        // if (prepended.length !== prependedFull.length) {
-        //     logError('StreamStateView::prependEvents: duplicate events found', {
-        //         dupes: prependedFull
-        //             .filter((e) => this.events.has(e.hashStr))
-        //             .map((e) => e.hashStr),
-        //     })
-        // }
-
-        // this.timeline.unshift(
-        //     ...prepended.filter((e) => e.remoteEvent.event.payload.case !== 'miniblockHeader'),
-        // )
+        // aellis 5/2025 we used to filter out dupes here, but stopped doing it because
+        // we don't want to track all events... 🤞
         // prepend the new block events in reverse order
         for (let i = prepended.length - 1; i >= 0; i--) {
             const event = prepended[i]
@@ -722,8 +710,6 @@ export class StreamStateView implements IStreamStateView {
             createdAtEpochMs: BigInt(Date.now()),
         } satisfies StreamTimelineEvent
         this.minipoolEvents.set(localId, timelineEvent)
-        //this.events.set(localId, timelineEvent)
-        //this.timeline.push(timelineEvent)
         this.getContent().onAppendLocalEvent(timelineEvent, emitter)
 
         this.streamsView?.streamUpdated(this.streamId, this.contentKind, {
