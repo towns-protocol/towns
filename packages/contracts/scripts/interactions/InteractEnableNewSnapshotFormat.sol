@@ -17,7 +17,7 @@ contract InteractEnableNewSnapshotFormat is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("stream.enableNewSnapshotFormat"),
+            keccak256("stream.enablenewsnapshotformat"),
             0,
             abi.encode(value)
         );
