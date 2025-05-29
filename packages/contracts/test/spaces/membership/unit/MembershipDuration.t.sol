@@ -15,9 +15,6 @@ import {Factory} from "src/utils/libraries/Factory.sol";
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract MembershipDurationTest is MembershipBaseSetup {
     uint64 CUSTOM_DURATION = 20 days;
 
