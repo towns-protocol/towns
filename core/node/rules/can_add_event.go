@@ -702,14 +702,28 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 		return false, err
 	}
 	if hasTransaction {
-		return false, RiverError(
-			Err_INVALID_ARGUMENT,
-			"duplicate transaction",
-			"streamId",
-			ru.params.streamView.StreamId(),
-			"transactionHash",
-			ru.transaction.GetReceipt().TransactionHash,
-		)
+		if ru.transaction.GetReceipt() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetReceipt().TransactionHash,
+			)
+		} else if ru.transaction.GetSolanaReceipt().GetTransaction() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetSolanaReceipt().GetTransaction().Signatures,
+			)
+		} else {
+			// should never happen
+			return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
+		}
 	}
 	return true, nil
 }
@@ -1488,7 +1502,12 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 	if ru.userMembership.Reason != nil && *ru.userMembership.Reason != MembershipReason_MR_NONE {
 		// at this time, the only reasons are for the scrubber so we need to make sure the membership op is leave
 		if ru.userMembership.Op != MembershipOp_SO_LEAVE {
-			return false, RiverError(Err_PERMISSION_DENIED, "reasons should be undefined for non-leave events", "op", ru.userMembership.Op)
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"reasons should be undefined for non-leave events",
+				"op",
+				ru.userMembership.Op,
+			)
 		}
 		// reasons should only be set by the scrubber at this time
 		canAdd, err := ru.params.creatorIsValidNode()
@@ -1497,7 +1516,6 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 		}
 	}
 
-	
 	switch currentMembershipOp {
 	case MembershipOp_SO_INVITE:
 		// from invite only join and leave are valid
