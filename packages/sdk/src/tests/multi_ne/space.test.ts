@@ -79,7 +79,7 @@ describe('spaceTests', () => {
             bobsClient.createChannel(spaceId, 'name', 'topic', channelId),
         ).resolves.not.toThrow()
 
-        // our space channels metatdata should reflect the new channel
+        // our space channels metadata should reflect the new channel
         await waitFor(() => {
             expect(spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)).toBeDefined()
             expect(
@@ -116,7 +116,7 @@ describe('spaceTests', () => {
         // update the channel metadata
         await bobsClient.updateChannel(spaceId, channelId, '', '')
 
-        // see the metadat update
+        // see the metadata update
         await waitFor(() => {
             expect(spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)).toBeDefined()
             expect(
