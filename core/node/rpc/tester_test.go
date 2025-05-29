@@ -166,6 +166,12 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		crypto.StreamReplicationFactorConfigKey,
 		crypto.ABIEncodeUint64(uint64(opts.replicationFactor)),
 	)
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.StreamEnableNewSnapshotFormatConfigKey,
+		crypto.ABIEncodeUint64(1),
+	)
 
 	if opts.start {
 		st.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
@@ -1190,7 +1196,10 @@ func (tc *testClient) maybeDumpStreamView(view *StreamView) {
 			tc.name,
 			"Dumping stream view",
 			"\n",
-			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{
+				EventContent: true,
+				TestMessages: true,
+			}),
 		)
 	}
 }
@@ -1204,7 +1213,10 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{
+				EventContent: true,
+				TestMessages: true,
+			}),
 		)
 	}
 }

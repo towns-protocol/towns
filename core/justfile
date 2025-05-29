@@ -154,7 +154,7 @@ config-app-registry: _require_run_env
     INSTANCE_DIR="${INSTANCE_BASE}/app-registry"
     mkdir -p ${INSTANCE_DIR}/{config,logs,certs}
     # Take the next available port after all stream nodes have been assigned.
-    echo "RIVER_PORT=$((${RPC_PORT} + ${NUM_INSTANCES}))" > ${INSTANCE_DIR}/config/config.env
+    echo "RIVER_PORT=$((${APP_REGISTRY_PORT}))" > ${INSTANCE_DIR}/config/config.env
     if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
     ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
     fi
@@ -164,27 +164,7 @@ _remove-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
 
 remove-instances: _require_run_env (_loop-instances "_remove-instance")
 
-just-config-base-chain: _require_run_env
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
-    if [ "${DISABLE_BASE_CHAIN}" != "true" ]; then
-        source ${RUN_BASE}/contracts.env
-        cast send \
-            --rpc-url ${RPC_BASE} \
-            --private-key $LOCAL_PRIVATE_KEY \
-            $RIVER_ENTITLEMENT_CONTRACT_ADDRESS \
-            "registerOperator(address)" \
-            $OPERATOR_ADDRESS > /dev/null
-        cast send \
-            --rpc-url ${RPC_BASE} \
-            --private-key $LOCAL_PRIVATE_KEY \
-            $RIVER_ENTITLEMENT_CONTRACT_ADDRESS \
-            "setOperatorStatus(address,uint8)" \
-            $OPERATOR_ADDRESS \
-            2 > /dev/null
-    fi
-
-config-base-chain: _require_run_env deploy-contracts just-config-base-chain
+config-base-chain: _require_run_env deploy-contracts
 
 # Run build node binary for environment
 [positional-arguments]

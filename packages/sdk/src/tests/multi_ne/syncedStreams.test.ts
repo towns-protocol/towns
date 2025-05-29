@@ -35,7 +35,7 @@ describe('syncStreams', () => {
         expect(stateConstraints[SyncState.Canceling].has(SyncState.Syncing)).toBe(false)
         expect(stateConstraints[SyncState.NotSyncing].has(SyncState.Syncing)).toBe(false)
 
-        // the starting, and retrying state should both be able to transition to syncing, othwerwise waitForSyncingState will break
+        // the starting, and retrying state should both be able to transition to syncing, otherwise waitForSyncingState will break
         expect(stateConstraints[SyncState.Starting].has(SyncState.Syncing)).toBe(true)
         expect(stateConstraints[SyncState.Retrying].has(SyncState.Syncing)).toBe(true) // if this breaks, we just need to change the two conditions in waitForSyncingState
     })

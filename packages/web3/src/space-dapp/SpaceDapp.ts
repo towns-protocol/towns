@@ -70,6 +70,7 @@ import {
     IsTokenBanned,
 } from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
+import { TownsToken } from '../towns-token/TownsToken'
 import { wrapTransaction } from '../space-dapp/wrapTransaction'
 import { BaseRegistry } from '../base-registry/BaseRegistry'
 
@@ -165,6 +166,7 @@ export class SpaceDapp {
     public readonly platformRequirements: PlatformRequirements
     public readonly airdrop: RiverAirdropDapp
     public readonly spaceOwner: SpaceOwner
+    public readonly townsToken?: TownsToken
 
     public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
     public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
@@ -186,6 +188,9 @@ export class SpaceDapp {
             provider,
         )
         this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
+        if (config.addresses.towns) {
+            this.townsToken = new TownsToken(config.addresses.towns, provider)
+        }
         this.airdrop = new RiverAirdropDapp(config, provider)
 
         // For RPC providers that pool for events, we need to set the polling interval to a lower value
@@ -203,7 +208,12 @@ export class SpaceDapp {
         const bannedCacheOpts = {
             ttlSeconds: isLocalDev ? 5 : 15 * 60,
         }
-        this.entitlementCache = new EntitlementCache(entitlementCacheOpts)
+
+        // The caching of positive entitlements is shorter on both the node and client.
+        this.entitlementCache = new EntitlementCache({
+            positiveCacheTTLSeconds: isLocalDev ? 5 : 15,
+            negativeCacheTTLSeconds: 2,
+        })
         this.entitledWalletCache = new EntitlementCache(entitlementCacheOpts)
         this.entitlementEvaluationCache = new EntitlementCache(entitlementCacheOpts)
         this.bannedTokenIdsCache = new SimpleCache(bannedCacheOpts)
@@ -933,18 +943,20 @@ export class SpaceDapp {
         spaceId: string,
         rootKey: string,
         xchainConfig: XchainConfig,
+        invalidateCache: boolean = false,
     ): Promise<EntitledWallet> {
-        const { value } = await this.entitledWalletCache.executeUsingCache(
-            newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace),
-            async (request) => {
-                const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
-                    request.spaceId,
-                    request.userId,
-                    xchainConfig,
-                )
-                return new EntitledWalletCacheResult(entitledWallet)
-            },
-        )
+        const key = newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace)
+        if (invalidateCache) {
+            this.entitlementEvaluationCache.invalidate(key)
+        }
+        const { value } = await this.entitledWalletCache.executeUsingCache(key, async (request) => {
+            const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
+                request.spaceId,
+                request.userId,
+                xchainConfig,
+            )
+            return new EntitledWalletCacheResult(entitledWallet)
+        })
         return value
     }
 
@@ -995,9 +1007,14 @@ export class SpaceDapp {
         spaceId: string,
         user: string,
         permission: Permission,
+        invalidateCache: boolean = false,
     ): Promise<boolean> {
+        const key = newSpaceEntitlementEvaluationRequest(spaceId, user, permission)
+        if (invalidateCache) {
+            this.entitlementEvaluationCache.invalidate(key)
+        }
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            newSpaceEntitlementEvaluationRequest(spaceId, user, permission),
+            key,
             async (request) => {
                 const isEntitled = await this.isEntitledToSpaceUncached(
                     request.spaceId,
@@ -1032,9 +1049,19 @@ export class SpaceDapp {
         user: string,
         permission: Permission,
         xchainConfig: XchainConfig = EmptyXchainConfig,
+        invalidateCache: boolean = false,
     ): Promise<boolean> {
+        const key = newChannelEntitlementEvaluationRequest(
+            spaceId,
+            channelNetworkId,
+            user,
+            permission,
+        )
+        if (invalidateCache) {
+            this.entitlementEvaluationCache.invalidate(key)
+        }
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            newChannelEntitlementEvaluationRequest(spaceId, channelNetworkId, user, permission),
+            key,
             async (request) => {
                 const isEntitled = await this.isEntitledToChannelUncached(
                     request.spaceId,

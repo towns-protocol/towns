@@ -5,10 +5,8 @@ pragma solidity ^0.8.23;
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 
 // libraries
-import "forge-std/console.sol";
 
 // contracts
-import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpace} from "scripts/deployments/diamonds/DeploySpace.s.sol";
@@ -38,54 +36,30 @@ contract InteractBaseAlpha is AlphaHelper {
         removeRemoteFacets(deployer, baseRegistry);
         removeRemoteFacets(deployer, riverAirdrop);
 
-        try this.deploySpaceCuts(deployer, space) {
-            console.log("Space deployment successful");
-        } catch Error(string memory reason) {
-            console.log("Space deployment failed:", reason);
-        }
-
-        try this.deploySpaceOwnerCuts(deployer, spaceOwner) {
-            console.log("Space Owner deployment successful");
-        } catch Error(string memory reason) {
-            console.log("Space Owner deployment failed:", reason);
-        }
-
-        try this.deploySpaceFactoryCuts(deployer, spaceFactory) {
-            console.log("Space Factory deployment successful");
-        } catch Error(string memory reason) {
-            console.log("Space Factory deployment failed:", reason);
-        }
-
-        try this.deployBaseRegistryCuts(deployer, baseRegistry) {
-            console.log("Base Registry deployment successful");
-        } catch Error(string memory reason) {
-            console.log("Base Registry deployment failed:", reason);
-        }
-
-        try this.deployRiverAirdropCuts(deployer, riverAirdrop) {
-            console.log("River Airdrop deployment successful");
-        } catch Error(string memory reason) {
-            console.log("River Airdrop deployment failed:", reason);
-        }
+        deploySpaceCuts(deployer, space);
+        deploySpaceOwnerCuts(deployer, spaceOwner);
+        deploySpaceFactoryCuts(deployer, spaceFactory);
+        deployBaseRegistryCuts(deployer, baseRegistry);
+        deployRiverAirdropCuts(deployer, riverAirdrop);
 
         vm.resumeGasMetering();
     }
 
-    function deploySpaceCuts(address deployer, address space) external {
+    function deploySpaceCuts(address deployer, address space) internal {
         deploySpace.diamondInitParams(deployer);
         FacetCut[] memory newCuts = deploySpace.getCuts();
         vm.broadcast(deployer);
         IDiamondCut(space).diamondCut(newCuts, address(0), "");
     }
 
-    function deploySpaceOwnerCuts(address deployer, address spaceOwner) external {
+    function deploySpaceOwnerCuts(address deployer, address spaceOwner) internal {
         deploySpaceOwner.diamondInitParams(deployer);
         FacetCut[] memory newCuts = deploySpaceOwner.getCuts();
         vm.broadcast(deployer);
         IDiamondCut(spaceOwner).diamondCut(newCuts, address(0), "");
     }
 
-    function deploySpaceFactoryCuts(address deployer, address spaceFactory) external {
+    function deploySpaceFactoryCuts(address deployer, address spaceFactory) internal {
         deploySpaceFactory.diamondInitParams(deployer);
         FacetCut[] memory newCuts = deploySpaceFactory.getCuts();
         address spaceFactoryInit = deploySpaceFactory.spaceFactoryInit();
@@ -94,14 +68,14 @@ contract InteractBaseAlpha is AlphaHelper {
         IDiamondCut(spaceFactory).diamondCut(newCuts, spaceFactoryInit, initData);
     }
 
-    function deployBaseRegistryCuts(address deployer, address baseRegistry) external {
+    function deployBaseRegistryCuts(address deployer, address baseRegistry) internal {
         deployBaseRegistry.diamondInitParams(deployer);
         FacetCut[] memory newCuts = deployBaseRegistry.getCuts();
         vm.broadcast(deployer);
         IDiamondCut(baseRegistry).diamondCut(newCuts, address(0), "");
     }
 
-    function deployRiverAirdropCuts(address deployer, address riverAirdrop) external {
+    function deployRiverAirdropCuts(address deployer, address riverAirdrop) internal {
         deployRiverAirdrop.diamondInitParams(deployer);
         FacetCut[] memory newCuts = deployRiverAirdrop.getCuts();
         vm.broadcast(deployer);
