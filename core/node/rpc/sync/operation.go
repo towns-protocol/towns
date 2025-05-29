@@ -331,7 +331,7 @@ func (syncOp *StreamSyncOperation) ModifySync(
 
 	if syncOp.otelTracer != nil {
 		var span trace.Span
-		ctx, span = syncOp.otelTracer.Start(ctx, "modifySync",
+		ctx, span = syncOp.otelTracer.Start(ctx, "streamsyncoperation::modifySync",
 			trace.WithAttributes(attribute.String("syncId", req.Msg.GetSyncId())))
 		defer span.End()
 	}

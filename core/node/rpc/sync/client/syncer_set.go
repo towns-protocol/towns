@@ -101,11 +101,61 @@ func (ss *SyncerSet) Run() {
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
+func (ss *SyncerSet) Backfill(
+	ctx context.Context,
+	syncID string,
+	req *ModifySyncRequest_Backfill,
+	failureHandler func(status *SyncStreamOpStatus),
+) {
+	if ss.otelTracer != nil {
+		var span trace.Span
+		ctx, span = ss.otelTracer.Start(ctx, "syncerset::backfill")
+		defer span.End()
+	}
+
+	for _, cookie := range req.GetStreams() {
+		streamID := StreamId(cookie.GetStreamId())
+		ss.muSyncers.Lock()
+		syncer, found := ss.streamID2Syncer[streamID]
+		ss.muSyncers.Unlock()
+		if !found {
+			// TODO: Find more elegant solution of handling the given data race
+			failureHandler(&SyncStreamOpStatus{
+				StreamId: streamID[:],
+				Code:     int32(Err_UNAVAILABLE),
+				Message:  "The given stream is not syncing",
+			})
+			continue
+		}
+
+		resp, _, err := syncer.Modify(ctx, &ModifySyncRequest{
+			SyncId: syncID,
+			BackfillStreams: &ModifySyncRequest_Backfill{
+				SyncId:  req.GetSyncId(),
+				Streams: []*SyncCookie{cookie},
+			},
+		})
+		if err != nil {
+			rvrErr := AsRiverError(err, Err_INTERNAL)
+			failureHandler(&SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
+		for _, status := range resp.GetBackfills() {
+			failureHandler(status)
+		}
+	}
+}
+
 // Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	if ss.otelTracer != nil {
 		var span trace.Span
-		ctx, span = ss.otelTracer.Start(ctx, "Modify")
+		ctx, span = ss.otelTracer.Start(ctx, "syncerset::modify")
 		defer span.End()
 	}
 
@@ -220,9 +270,10 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 // modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
+	stopped := ss.stopped
+	ss.muSyncers.Unlock()
 
-	if ss.stopped {
+	if stopped {
 		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
 
@@ -231,7 +282,9 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	for _, backfill := range req.ToBackfill {
 		for _, cookie := range backfill.GetStreams() {
 			streamID := StreamId(cookie.GetStreamId())
+			ss.muSyncers.Lock()
 			syncer, found := ss.streamID2Syncer[streamID]
+			ss.muSyncers.Unlock()
 			if !found {
 				// TODO: Find more elegant solution of handling the given data race
 				req.BackfillingFailureHandler(&SyncStreamOpStatus{
@@ -260,7 +313,10 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	// Identifying which node to use for the given streams.
 	for _, cookie := range req.ToAdd {
 		streamID := StreamId(cookie.GetStreamId())
-		if _, found := ss.streamID2Syncer[streamID]; found {
+		ss.muSyncers.Lock()
+		_, found := ss.streamID2Syncer[streamID]
+		ss.muSyncers.Unlock()
+		if found {
 			continue
 		}
 
@@ -287,7 +343,9 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	// Group remove sync request by the remote syncer.
 	// Identifying which node to use for the given streams to remove from sync.
 	for _, streamIDRaw := range req.ToRemove {
+		ss.muSyncers.Lock()
 		syncer, found := ss.streamID2Syncer[StreamId(streamIDRaw)]
+		ss.muSyncers.Unlock()
 		if !found {
 			continue
 		}
@@ -324,10 +382,9 @@ func (ss *SyncerSet) distributeSyncModifications(
 	failedToRemove func(status *SyncStreamOpStatus),
 ) {
 	var wg sync.WaitGroup
-	var localMuSyncers sync.Mutex
 	for nodeAddress, modifySync := range modifySyncs {
 		// Get syncer for the given node address
-		syncer, err := ss.getOrCreateSyncerNoLock(nodeAddress)
+		syncer, err := ss.getOrCreateSyncer(nodeAddress)
 		if err != nil {
 			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 			for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
@@ -418,7 +475,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 				failedToRemove(status)
 			}
 
-			localMuSyncers.Lock()
+			ss.muSyncers.Lock()
 			for _, cookie := range successfullyAdded {
 				ss.streamID2Syncer[StreamId(cookie.GetStreamId())] = syncer
 			}
@@ -428,7 +485,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 			if syncerStopped {
 				delete(ss.syncers, syncer.Address())
 			}
-			localMuSyncers.Unlock()
+			ss.muSyncers.Unlock()
 		}(modifySync)
 	}
 	wg.Wait()
@@ -469,7 +526,7 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	// 1. Try node from cookie first
 	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
 		selectedNode := common.BytesToAddress(addrRaw)
-		if _, err := ss.getOrCreateSyncerNoLock(selectedNode); err == nil {
+		if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
 			return selectedNode, true
 		}
 	}
@@ -482,7 +539,7 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	// 2. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
 	if isLocal {
-		if _, err = ss.getOrCreateSyncerNoLock(ss.localNodeAddress); err == nil {
+		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
 			return ss.localNodeAddress, true
 		}
 	}
@@ -491,7 +548,7 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	if len(remotes) > 0 {
 		selectedNode := stream.GetStickyPeer()
 		for range remotes {
-			if _, err = ss.getOrCreateSyncerNoLock(selectedNode); err == nil {
+			if _, err = ss.getOrCreateSyncer(selectedNode); err == nil {
 				return selectedNode, true
 			}
 			selectedNode = stream.AdvanceStickyPeer(selectedNode)
@@ -501,9 +558,12 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	return common.Address{}, false
 }
 
-// getOrCreateSyncerNoLock returns the syncer for the given node address.
+// getOrCreateSyncer returns the syncer for the given node address.
 // If the syncer does not exist, it creates a new one and starts it.
-func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (StreamsSyncer, error) {
+func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSyncer, error) {
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
+
 	if syncer, found := ss.syncers[nodeAddress]; found {
 		return syncer, nil
 	}

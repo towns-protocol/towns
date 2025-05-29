@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -64,20 +65,20 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 }
 
 func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) error {
+	if s.manager.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.manager.otelTracer.Start(ctx, "subscription::modify")
+		defer span.End()
+	}
+
 	// Validate the given request first
 	if err := req.Validate(); err != nil {
 		return err
 	}
 
 	// Handle streams that the clients wants to backfill.
-	if len(req.ToBackfill) > 0 {
-		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
-			SyncID:                    s.syncID,
-			ToBackfill:                req.ToBackfill,
-			BackfillingFailureHandler: req.BackfillingFailureHandler,
-		}); err != nil {
-			s.log.Errorw("Failed to modify backfilling request", "err", err)
-		}
+	for _, backfill := range req.ToBackfill {
+		s.manager.syncers.Backfill(ctx, s.syncID, backfill, req.BackfillingFailureHandler)
 	}
 
 	// Handle streams that the clients wants to subscribe to.
@@ -145,16 +146,10 @@ func (s *Subscription) addStream(
 			return err
 		}
 	} else if shouldBackfill {
-		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
-			SyncID: s.syncID,
-			ToBackfill: []*ModifySyncRequest_Backfill{{
-				SyncId:  s.syncID,
-				Streams: []*SyncCookie{cookie},
-			}},
-			BackfillingFailureHandler: failureHandler,
-		}); err != nil {
-			return err
-		}
+		s.manager.syncers.Backfill(ctx, s.syncID, &ModifySyncRequest_Backfill{
+			SyncId:  s.syncID,
+			Streams: []*SyncCookie{cookie},
+		}, failureHandler)
 	}
 
 	return nil
