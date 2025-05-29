@@ -742,7 +742,9 @@ export class StreamStateView implements IStreamStateView {
         emitter: TypedEmitter<StreamEvents>,
     ) {
         log('updateLocalEvent', { localId, parsedEventHash, status })
-        const timelineEvent = this.minipoolEvents.get(localId)
+        // we update local events multiple times, so we need to check both the localId and the parsedEventHash
+        const timelineEvent =
+            this.minipoolEvents.get(localId) || this.minipoolEvents.get(parsedEventHash)
         check(isDefined(timelineEvent), `Local event not found ${localId}`)
         check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)
         const previousId = timelineEvent.hashStr

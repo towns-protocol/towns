@@ -480,7 +480,10 @@ describe('clientTest', () => {
                     log(channel.view.timeline)
 
                     const messages = channel.view.timeline.filter(
-                        (x) => x.content?.kind === RiverTimelineEvent.ChannelMessage,
+                        (x) =>
+                            x.content?.kind === RiverTimelineEvent.ChannelMessage ||
+                            x.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                            x.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                     )
                     expect(messages).toHaveLength(1)
                     //This done should be inside of the if statement to be sure that check happened.

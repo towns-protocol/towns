@@ -1250,10 +1250,16 @@ export class Client
             .timelines[streamId]?.find((e) => e.eventId === eventId)
         check(isDefined(timelineEvent), 'event not found')
         const blockNumber = timelineEvent.confirmedInBlockNum
-        check(isDefined(blockNumber), 'block number not found')
-        const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
-        check(isDefined(miniblock), 'miniblock not found')
-        const event = miniblock.events.find((e) => e.hashStr === eventId)
+        let event: ParsedEvent | undefined
+        if (blockNumber) {
+            const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
+            check(isDefined(miniblock), 'miniblock not found')
+            event = miniblock.events.find((e) => e.hashStr === eventId)
+        } else {
+            const stream = this.stream(streamId)
+            check(isDefined(stream), 'stream not found')
+            event = stream.view.minipoolEvents.get(eventId)?.remoteEvent
+        }
         check(isDefined(event), 'event not found')
         const streamEvent = event.event
         check(isDefined(streamEvent), 'streamEvent not found')
