@@ -355,6 +355,11 @@ export class StreamStateView implements IStreamStateView {
         try {
             switch (payload.case) {
                 case 'miniblockHeader':
+                    if (this.miniblockInfo?.max == payload.value.miniblockNum) {
+                        logError(
+                            `StreamStateView::Error miniblock header already processed ${event.hashStr} ${payload.value.eventNumOffset}`,
+                        )
+                    }
                     check(
                         (this.miniblockInfo?.max ?? -1n) <= payload.value.miniblockNum,
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
@@ -366,6 +371,7 @@ export class StreamStateView implements IStreamStateView {
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
                     timelineEvent.miniblockNum = payload.value.miniblockNum
+                    logError(`StreamStateView::processAppendedEvent: miniblock header ${payload.value.miniblockNum} with event num offset ${payload.value.eventNumOffset} and hashes ${payload.value.eventHashes.length}`)
                     confirmed = this.processMiniblockHeader(
                         payload.value,
                         payload.value.eventHashes,

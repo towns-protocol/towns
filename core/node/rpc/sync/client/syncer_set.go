@@ -118,9 +118,14 @@ func (ss *SyncerSet) Backfill(
 	for _, cookie := range req.GetStreams() {
 		streamID := StreamId(cookie.GetStreamId())
 
-		// Wait for the stream to be unlocked if it's currently locked
-		if ss.isStreamLocked(streamID) {
-			ss.waitForStreamUnlock(streamID)
+		// Wait for the stream to be unlocked with timeout
+		if err := ss.waitForStreamUnlock(ctx, streamID); err != nil {
+			failureHandler(&SyncStreamOpStatus{
+				StreamId: streamID[:],
+				Code:     int32(Err_UNAVAILABLE),
+				Message:  "Timeout waiting for stream to be unlocked",
+			})
+			continue
 		}
 
 		syncerValue, found := ss.streamID2Syncer.Load(streamID)
@@ -165,21 +170,35 @@ func (ss *SyncerSet) getStreamLock(streamID StreamId) *sync.Mutex {
 	return lock.(*sync.Mutex)
 }
 
-// isStreamLocked checks if a stream is currently locked and waits for it to be unlocked
-func (ss *SyncerSet) isStreamLocked(streamID StreamId) bool {
-	lock := ss.getStreamLock(streamID)
+// waitForStreamUnlock waits for a stream to be unlocked with a timeout
+func (ss *SyncerSet) waitForStreamUnlock(ctx context.Context, streamID StreamId) error {
+	lockRaw, ok := ss.streamLocks.Load(streamID)
+	if !ok {
+		// If no lock exists for this stream, it means it's not currently locked
+		return nil
+	}
+	lock := lockRaw.(*sync.Mutex)
+
+	// Try to acquire the lock immediately first
 	if acquired := lock.TryLock(); acquired {
 		lock.Unlock()
-		return false
+		return nil
 	}
-	return true
-}
 
-// waitForStreamUnlock waits for a stream to be unlocked
-func (ss *SyncerSet) waitForStreamUnlock(streamID StreamId) {
-	lock := ss.getStreamLock(streamID)
-	lock.Lock()
-	lock.Unlock()
+	// If lock is held, wait for it with timeout
+	done := make(chan struct{})
+	go func() { //nolint:staticcheck
+		lock.Lock()
+		lock.Unlock()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks
@@ -217,7 +236,11 @@ func (ss *SyncerSet) lockStreams(req ModifyRequest) []StreamId {
 // unlockStreams releases locks for the given stream IDs
 func (ss *SyncerSet) unlockStreams(streamIDs []StreamId) {
 	for _, streamID := range streamIDs {
-		ss.getStreamLock(streamID).Unlock()
+		lockRaw, ok := ss.streamLocks.LoadAndDelete(streamID)
+		if !ok {
+			continue
+		}
+		lockRaw.(*sync.Mutex).Unlock()
 	}
 }
 
@@ -359,9 +382,14 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		for _, cookie := range backfill.GetStreams() {
 			streamID := StreamId(cookie.GetStreamId())
 
-			// Wait for the stream to be unlocked if it's currently locked
-			if ss.isStreamLocked(streamID) {
-				ss.waitForStreamUnlock(streamID)
+			// Wait for the stream to be unlocked with timeout
+			if err := ss.waitForStreamUnlock(ctx, streamID); err != nil {
+				req.BackfillingFailureHandler(&SyncStreamOpStatus{
+					StreamId: streamID[:],
+					Code:     int32(Err_UNAVAILABLE),
+					Message:  "Timeout waiting for stream to be unlocked",
+				})
+				continue
 			}
 
 			val, found := ss.streamID2Syncer.Load(streamID)
