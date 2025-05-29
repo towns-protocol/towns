@@ -361,7 +361,9 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	ctx context.Context,
 	streamId StreamId,
 ) error {
-	if !ValidChannelStreamId(&streamId) || !ValidSpaceStreamId(&streamId) {
+	isChannelStream := ValidChannelStreamId(&streamId)
+	isSpaceStream := ValidSpaceStreamId(&streamId)
+	if !isChannelStream && !isSpaceStream {
 		return RiverError(Err_INTERNAL, "Scrub scheduled for non-channel-or-space stream", "streamId", streamId)
 	}
 
@@ -384,10 +386,13 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	}
 
 	for member := range members.Iter() {
-		if ValidChannelStreamId(&streamId) {
+		if isChannelStream {
 			tp.processMembership(ctx, streamId, member)
-		} else {
+		} else if isSpaceStream {
 			tp.processSpaceMembership(ctx, streamId, member)
+		} else {
+			// should never happen
+			return RiverError(Err_INTERNAL, "Logic error in stream membership scrub", "streamId", streamId)
 		}
 	}
 
