@@ -10,26 +10,17 @@ import {RiverConfigValues} from "scripts/interactions/helpers/RiverConfigValues.
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
 
-contract InteractRiverRegistry is Interaction {
+contract InteractEnableNewSnapshotFormat is Interaction {
     function __interact(address deployer) internal override {
         address riverRegistry = getDeployment("riverRegistry");
 
-        uint64[] memory chains = new uint64[](9);
-        chains[0] = 1; // mainnet
-        chains[1] = 11_155_111; // sepolia
-        chains[2] = 8453; // base
-        chains[3] = 84_532; // base sepolia
-        chains[4] = 137; // polygon
-        chains[5] = 42_161; // arbitrum
-        chains[6] = 10; // optimism
-        chains[7] = 100; // gnosis
-        chains[8] = 10_200; // gnosis chiado
+        uint64 value = 1;
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            RiverConfigValues.XCHAIN_BLOCKCHAINS,
+            RiverConfigValues.ENABLE_NEW_SNAPSHOT_FORMAT,
             0,
-            abi.encode(chains)
+            abi.encode(value)
         );
         vm.stopBroadcast();
     }
