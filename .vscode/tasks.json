@@ -14,7 +14,6 @@
         "CheckVersions",
         "FoundryUp",
         "YarnInstall",
-        "Install Protobuf Dependencies",
         "BuildProtobufs",
       ],
       "group": {
@@ -131,7 +130,7 @@
     {
       "label": "CheckVersions",
       "type": "shell",
-      "command": "./scripts/check-node-version.sh && ./scripts/check-go-version.sh",
+      "command": "./scripts/check-node-version.sh && ./scripts/check-go-version.sh && ./scripts/install-protobuf-deps.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -335,18 +334,6 @@
       "label": "BuildContractTypes",
       "type": "shell",
       "command": "./scripts/build-contract-types.sh localhost",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Install Protobuf Dependencies",
-      "type": "shell",
-      "command": "./scripts/install-protobuf-deps.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
