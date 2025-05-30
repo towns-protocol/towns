@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
 import {IPartnerRegistry, IPartnerRegistryBase} from "src/factory/facets/partner/IPartnerRegistry.sol";
-import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
