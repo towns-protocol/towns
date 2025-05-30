@@ -1042,6 +1042,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
 	var miniblocks []*MiniblockDescriptor
 	if err := s.txRunner(
@@ -1050,7 +1051,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive)
+			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
 			return err
 		},
 		nil,
@@ -1070,15 +1071,23 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
+	var snapshotField string
+	if omitSnapshot {
+		snapshotField = "NULL as snapshot"
+	} else {
+		snapshotField = "snapshot"
+	}
+
 	miniblocksRow, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num",
+			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", snapshotField),
 			streamId,
 		),
 		fromInclusive,
@@ -1124,6 +1133,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 func (s *PostgresStreamStore) ReadMiniblocksByStream(
 	ctx context.Context,
 	streamId StreamId,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	return s.txRunner(
@@ -1131,7 +1141,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByStream(
 		"ReadMiniblocksByStream",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.readMiniblocksByStreamTx(ctx, tx, streamId, onEachMb)
+			return s.readMiniblocksByStreamTx(ctx, tx, streamId, omitSnapshot, onEachMb)
 		},
 		&txRunnerOpts{useStreamingPool: true},
 		"streamId", streamId,
@@ -1142,16 +1152,24 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
 	}
 
+	var snapshotField string
+	if omitSnapshot {
+		snapshotField = "NULL as snapshot"
+	} else {
+		snapshotField = "snapshot"
+	}
+
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num",
+			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num", snapshotField),
 			streamId,
 		),
 		streamId,
@@ -1182,6 +1200,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByIds(
 	ctx context.Context,
 	streamId StreamId,
 	mbs []int64,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	return s.txRunner(
@@ -1189,7 +1208,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByIds(
 		"ReadMiniblocksByIds",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.readMiniblocksByIdsTx(ctx, tx, streamId, mbs, onEachMb)
+			return s.readMiniblocksByIdsTx(ctx, tx, streamId, mbs, omitSnapshot, onEachMb)
 		},
 		&txRunnerOpts{useStreamingPool: true},
 		"streamId", streamId,
@@ -1202,6 +1221,7 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	mbs []int64,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	_, err := s.lockStream(ctx, tx, streamId, false)
@@ -1209,10 +1229,17 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 		return err
 	}
 
+	var snapshotField string
+	if omitSnapshot {
+		snapshotField = "NULL as snapshot"
+	} else {
+		snapshotField = "snapshot"
+	}
+
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num",
+			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num", snapshotField),
 			streamId,
 		),
 		streamId,
