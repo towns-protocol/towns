@@ -31,18 +31,18 @@
     "@prb/math": "^4.1.0",
     "@towns-protocol/diamond": "^0.5.4",
     "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
-    "solady": "^0.1.14"
+    "solady": "^0.1.19"
   },
   "devDependencies": {
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prb/test": "^0.6.4",
     "@towns-protocol/prettier-config": "workspace:^",
-    "@wagmi/cli": "^2.2.0",
+    "@wagmi/cli": "^2.3.1",
     "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
     "forge-std": "github:foundry-rs/forge-std#v1.9.7",
     "prettier": "^3.5.3",
-    "prettier-plugin-solidity": "^1.4.2",
-    "solhint": "^5.0.5",
-    "turbo": "^2.0.12"
+    "prettier-plugin-solidity": "^1.4.3",
+    "solhint": "^5.1.0",
+    "turbo": "^2.5.3"
   }
 }
