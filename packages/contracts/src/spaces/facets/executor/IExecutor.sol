@@ -97,6 +97,7 @@ interface IExecutorBase {
     event OperationScheduled(bytes32 indexed operationId, uint48 timepoint, uint32 nonce);
     event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
     event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
+    event GroupStatusSet(bytes32 indexed groupId, bool active);
 }
 
 interface IExecutor is IExecutorBase {

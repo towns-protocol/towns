@@ -61,10 +61,6 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         _uninstallApp(app, data);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       View Functions                     */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @inheritdoc IAppAccount
     function getInstalledApps() external view returns (address[] memory) {
         return _getApps();

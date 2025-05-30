@@ -42,6 +42,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param groupId The ID of the group to create.
     function _setGroupStatus(bytes32 groupId, bool status) internal {
         _getGroup(groupId).setStatus(status);
+        emit GroupStatusSet(groupId, status);
     }
 
     /// @notice Grants access to a group for an account.

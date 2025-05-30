@@ -33,6 +33,12 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     using DependencyLib for MembershipStorage.Layout;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
+    // Constants for dependency names
+    bytes32 private constant RIVER_AIRDROP = bytes32("RiverAirdrop");
+    bytes32 private constant SPACE_OPERATOR = bytes32("SpaceOperator");
+    bytes32 private constant MODULE_REGISTRY = bytes32("ModuleRegistry");
+    bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
+
     function _installApp(
         address module,
         Delays calldata delays,
@@ -149,7 +155,11 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        App memory app = _getApp(module);
+        bytes32 appId = _getAppId(module);
+        if (appId == EMPTY_UID) return false;
+
+        App memory app = _getAppFromAttestation(module, _getAttestation(appId));
+
         address[] memory clients = app.clients;
         bytes32[] memory permissions = app.permissions;
 
@@ -178,32 +188,17 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     function _getApp(address module) internal view returns (App memory app) {
         bytes32 appId = _getAppId(module);
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-
-        Attestation memory att = _getAttestation(appId);
-        if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
-        if (att.revocationTime != 0) AppRevoked.selector.revertWith();
-
-        (
-            ,
-            address owner,
-            address[] memory clients,
-            bytes32[] memory permissions,
-            ExecutionManifest memory manifest
-        ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
-
-        app = App({
-            appId: att.uid,
-            module: module,
-            owner: owner,
-            clients: clients,
-            permissions: permissions,
-            manifest: manifest
-        });
+        return _getAppFromAttestation(module, _getAttestation(appId));
     }
 
     function _getLatestApp(address module) internal view returns (App memory app) {
-        Attestation memory att = _getLatestAttestation(module);
+        return _getAppFromAttestation(module, _getLatestAttestation(module));
+    }
 
+    function _getAppFromAttestation(
+        address module,
+        Attestation memory att
+    ) private pure returns (App memory app) {
         if (att.uid == EMPTY_UID) InvalidAppId.selector.revertWith();
         if (att.revocationTime != 0) AppRevoked.selector.revertWith();
 
@@ -225,6 +220,29 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         });
     }
 
+    function _getAppRegistry() private view returns (IAppRegistry) {
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        return IAppRegistry(ms.getDependency("AppRegistry"));
+    }
+
+    function _getAttestation(bytes32 appId) internal view returns (Attestation memory) {
+        return _getAppRegistry().getAttestation(appId);
+    }
+
+    function _getLatestAttestation(address module) internal view returns (Attestation memory) {
+        IAppRegistry registry = _getAppRegistry();
+        bytes32 appId = registry.getLatestAppId(module);
+        return registry.getAttestation(appId);
+    }
+
+    function _getApps() internal view returns (address[] memory) {
+        return AppAccountStorage.getLayout().installedApps.values();
+    }
+
+    function _getAppId(address module) internal view returns (bytes32) {
+        return AppAccountStorage.getLayout().appIdByApp[module];
+    }
+
     // Checks
     function _checkAuthorized(address module) internal view {
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
@@ -233,26 +251,34 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         address factory = ms.spaceFactory;
 
         bytes32[] memory dependencies = new bytes32[](4);
-        dependencies[0] = bytes32("RiverAirdrop");
-        dependencies[1] = bytes32("SpaceOperator"); // BaseRegistry
-        dependencies[2] = bytes32("ModuleRegistry");
-        dependencies[3] = bytes32("AppRegistry");
+        dependencies[0] = RIVER_AIRDROP;
+        dependencies[1] = SPACE_OPERATOR;
+        dependencies[2] = MODULE_REGISTRY;
+        dependencies[3] = APP_REGISTRY;
         address[] memory deps = ms.getDependencies(dependencies);
 
+        // Check if app is banned
         if (IAppRegistry(deps[3]).isAppBanned(module)) {
             UnauthorizedApp.selector.revertWith(module);
         }
 
-        // Unauthorized targets
-        if (
-            module == factory ||
-            module == deps[0] ||
-            module == deps[1] ||
-            module == deps[2] ||
-            module == deps[3]
-        ) {
+        // Check against unauthorized targets
+        if (_isUnauthorizedTarget(module, factory, deps)) {
             UnauthorizedApp.selector.revertWith(module);
         }
+    }
+
+    function _isUnauthorizedTarget(
+        address module,
+        address factory,
+        address[] memory deps
+    ) private pure returns (bool) {
+        return
+            module == factory ||
+            module == deps[0] || // RiverAirdrop
+            module == deps[1] || // SpaceOperator
+            module == deps[2] || // ModuleRegistry
+            module == deps[3]; // AppRegistry
     }
 
     function _verifyManifests(
@@ -287,28 +313,6 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             selector == IERC6900ExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
             selector == ITownsApp.requiredPermissions.selector;
-    }
-
-    function _getAttestation(bytes32 appId) internal view returns (Attestation memory) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        address appRegistry = ms.getDependency("AppRegistry");
-        return IAppRegistry(appRegistry).getAttestation(appId);
-    }
-
-    function _getLatestAttestation(address module) internal view returns (Attestation memory) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        address appRegistry = ms.getDependency("AppRegistry");
-        bytes32 appId = IAppRegistry(appRegistry).getLatestAppId(module);
-
-        return IAppRegistry(appRegistry).getAttestation(appId);
-    }
-
-    function _getApps() internal view returns (address[] memory) {
-        return AppAccountStorage.getLayout().installedApps.values();
-    }
-
-    function _getAppId(address module) internal view returns (bytes32) {
-        return AppAccountStorage.getLayout().appIdByApp[module];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
