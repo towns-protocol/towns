@@ -109,25 +109,6 @@ describe('Bot', { sequential: true }, () => {
         expect(channelId).toBeDefined()
     }
 
-    const shouldMintBot = async () => {
-        const botClientAddress = botWallet.address as Address
-
-        const tx = await appRegistryDapp.createApp(
-            bob.signer,
-            'bot-witness-of-infinity',
-            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
-            [botClientAddress],
-        )
-        const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
-        expect(foundAppAddress).toBeDefined()
-
-        await appRegistryDapp.registerApp(bob.signer, foundAppAddress as Address, [
-            botClientAddress,
-        ])
-        botAppAddress = foundAppAddress as Address
-    }
-
     const shouldCreateBotClient = async () => {
         botWallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
@@ -139,6 +120,8 @@ describe('Bot', { sequential: true }, () => {
         const botUserId = userIdFromAddress(signerContext.creatorAddress)
         const cryptoStore = RiverDbManager.getCryptoDb(botUserId)
 
+        // we're not going to have the bot join the space here, because we're going to mint the bot in the app registry
+        // we want to mint the bot fist and join the space as a bot...
         const { issued } = await spaceDapp.joinSpace(spaceId, botWallet.address, bob.signer)
         expect(issued).toBe(true)
 
@@ -149,7 +132,10 @@ describe('Bot', { sequential: true }, () => {
             new MockEntitlementsDelegate(),
         )
         await botClient.initializeUser({ spaceId })
-        await botClient.joinUser(spaceId, botWallet.address)
+        await botClient.joinStream(spaceId, {
+            skipWaitForUserStreamUpdate: true,
+            skipWaitForMiniblockConfirmation: true,
+        })
         await botClient.joinStream(channelId, {
             skipWaitForUserStreamUpdate: true,
             skipWaitForMiniblockConfirmation: true,
@@ -169,6 +155,25 @@ describe('Bot', { sequential: true }, () => {
         )
         expect(appPrivateDataBase64).toBeDefined()
         appId = bin_fromHexString(botWallet.address)
+    }
+
+    const shouldMintBot = async () => {
+        const botClientAddress = botWallet.address as Address
+
+        const tx = await appRegistryDapp.createApp(
+            bob.signer,
+            'bot-witness-of-infinity',
+            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
+            [botClientAddress],
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        await appRegistryDapp.registerApp(bob.signer, foundAppAddress as Address, [
+            botClientAddress,
+        ])
+        botAppAddress = foundAppAddress as Address
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
