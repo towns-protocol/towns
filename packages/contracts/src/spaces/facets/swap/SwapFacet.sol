@@ -225,10 +225,12 @@ contract SwapFacet is
     /// @param poster The original poster address
     /// @return The actual poster address to use
     function _resolveSwapPoster(address poster) internal view returns (address) {
-        // if poster is zero or fees should be collected to space, return the space address
-        if (poster == address(0) || SwapFacetStorage.layout().collectPosterFeeToSpace) {
+        // if fees should be collected to space, return the space address
+        if (SwapFacetStorage.layout().collectPosterFeeToSpace) {
             return address(this);
         }
+        // if collectPosterFeeToSpace is false, return the poster as-is
+        // (including address(0) which will skip poster fee)
         return poster;
     }
 }

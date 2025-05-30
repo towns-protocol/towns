@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
 import {IRiverConfig} from "src/river/registry/facets/config/IRiverConfig.sol";
 
 // libraries
+import {RiverConfigValues} from "scripts/interactions/helpers/RiverConfigValues.sol";
 
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
@@ -17,7 +18,7 @@ contract InteractRiverRegistrySetFreq is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("stream.miniblockregistrationfrequency"),
+            RiverConfigValues.STREAM_MINIBLOCK_REGISTRATION_FREQUENCY,
             0,
             abi.encode(value)
         );

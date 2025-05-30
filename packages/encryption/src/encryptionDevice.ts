@@ -133,7 +133,8 @@ export class EncryptionDevice {
     public async init(opts?: EncryptionDeviceInitOpts): Promise<void> {
         const { fromExportedDevice, pickleKey } = opts ?? {}
         let e2eKeys
-        if (!this.delegate.initialized) {
+        if (!this.delegate.isInitialized) {
+            this.delegate = new EncryptionDelegate()
             await this.delegate.init()
         }
         const account = this.delegate.createAccount()
