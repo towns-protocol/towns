@@ -25,6 +25,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
     AppRegistryFacet internal facet;
 
+    uint256 private DEFAULT_INSTALL_PRICE = 0.001 ether;
+    uint64 private DEFAULT_ACCESS_DURATION = 365 days;
+
     function setUp() public override {
         super.setUp();
         facet = AppRegistryFacet(appRegistry);
@@ -162,10 +165,15 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
 
+        uint256 installPrice = 0.001 ether;
+        uint64 accessDuration = 365 days;
+
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients
+            clients: clients,
+            installPrice: installPrice,
+            accessDuration: accessDuration
         });
 
         vm.prank(owner);
@@ -190,7 +198,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         AppParams memory appData = AppParams({
             name: "",
             permissions: permissions,
-            clients: clients
+            clients: clients,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(owner);
         vm.expectRevert(InvalidAppName.selector);
@@ -205,7 +215,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients
+            clients: clients,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(owner);
         vm.expectRevert(InvalidArrayInput.selector);
@@ -220,7 +232,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients
+            clients: clients,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(owner);
         vm.expectRevert(InvalidArrayInput.selector);
@@ -237,7 +251,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients
+            clients: clients,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(owner);
         vm.expectRevert(InvalidAddressInput.selector);
