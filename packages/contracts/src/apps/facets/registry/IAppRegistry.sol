@@ -12,6 +12,8 @@ interface IAppRegistryBase {
         string name;
         bytes32[] permissions;
         address[] clients;
+        uint256 installPrice;
+        uint64 accessDuration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
