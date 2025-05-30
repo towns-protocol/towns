@@ -16,10 +16,11 @@ import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBas
 
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
+        address spaceFactory,
         string calldata schema,
         ISchemaResolver resolver
     ) external onlyInitializing {
-        __AppRegistry_init_unchained(schema, resolver);
+        __AppRegistry_init_unchained(spaceFactory, schema, resolver);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
