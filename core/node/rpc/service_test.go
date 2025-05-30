@@ -1394,7 +1394,8 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 	alice.say(channelId, "hello from Alice")
 
 	testfmt.Print(t, "StartSync with wrong cookie")
-	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 10*time.Second)
+	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify sync
+	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 25*time.Second)
 	defer syncCancel()
 	updates, err := alice.client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: []*protocol.SyncCookie{cookie},
@@ -1406,10 +1407,8 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 		msg := updates.Msg()
 		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE &&
 			testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
-			fmt.Println("Update received")
 			syncCancel()
 		}
 	}
 	tt.require.ErrorIs(updates.Err(), context.Canceled)
-	time.Sleep(time.Second)
 }
