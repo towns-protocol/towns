@@ -163,8 +163,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	subscriptions, ok := m.subscriptions[streamID]
 	if !ok {
 		// No subscriptions for this stream, nothing to do.
-		// TODO: When this case might happen?
-		// TODO: Remove the given stream from the syncer set to no longer receive updates for the given stream.
+		go m.dropStream(streamID)
 		m.sLock.Unlock()
 		return
 	}
@@ -231,6 +230,18 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 		}(i, subscription)
 	}
 	wg.Wait()
+}
+
+// dropStream removes the given stream from the syncers set and all subscriptions.
+func (m *Manager) dropStream(streamID StreamId) {
+	if err := m.syncers.Modify(m.globalCtx, client.ModifyRequest{
+		ToRemove: [][]byte{streamID[:]},
+		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+			m.log.Errorw("Failed to remove stream from syncer set", "streamId", streamID, "status", status)
+		},
+	}); err != nil {
+		m.log.Errorw("Failed to drop stream from syncer set", "streamId", streamID, "err", err)
+	}
 }
 
 // cancelAllSubscriptions cancels all subscriptions with the given error.
