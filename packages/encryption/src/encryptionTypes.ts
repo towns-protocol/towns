@@ -7,7 +7,7 @@ import {
     PkSigning as OlmPkSigning,
     Session as OlmSession,
     Utility as OlmUtility,
-} from '@towns-protocol/olm'
+} from '@matrix-org/olm'
 
 import { EncryptedData } from '@towns-protocol/proto'
 
