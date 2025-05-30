@@ -507,7 +507,9 @@ export async function createSpaceAndDefaultChannel(
 
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
-    expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+    await waitFor(() =>
+        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true),
+    )
 
     const channelReturnVal = await client.createChannel(
         spaceId,
