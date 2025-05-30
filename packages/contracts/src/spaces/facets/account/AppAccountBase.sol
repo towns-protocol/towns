@@ -21,11 +21,10 @@ import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
-import {HookBase} from "../executor/hooks/HookBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
 // types
-import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest, ManifestExecutionFunction} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorBase {
@@ -35,8 +34,8 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
 
     // Constants for dependency names
     bytes32 private constant RIVER_AIRDROP = bytes32("RiverAirdrop");
-    bytes32 private constant SPACE_OPERATOR = bytes32("SpaceOperator");
-    bytes32 private constant MODULE_REGISTRY = bytes32("ModuleRegistry");
+    bytes32 private constant SPACE_OPERATOR = bytes32("SpaceOperator"); // BaseRegistry
+    bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
     bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
 
     function _installApp(
@@ -134,8 +133,9 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     }
 
     function _addApp(address module, bytes32 appId) internal {
-        AppAccountStorage.getLayout().installedApps.add(module);
-        AppAccountStorage.getLayout().appIdByApp[module] = appId;
+        AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
+        $.installedApps.add(module);
+        $.appIdByApp[module] = appId;
     }
 
     function _removeApp(address module) internal {
@@ -253,7 +253,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         bytes32[] memory dependencies = new bytes32[](4);
         dependencies[0] = RIVER_AIRDROP;
         dependencies[1] = SPACE_OPERATOR;
-        dependencies[2] = MODULE_REGISTRY;
+        dependencies[2] = SPACE_OWNER;
         dependencies[3] = APP_REGISTRY;
         address[] memory deps = ms.getDependencies(dependencies);
 
@@ -277,7 +277,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             module == factory ||
             module == deps[0] || // RiverAirdrop
             module == deps[1] || // SpaceOperator
-            module == deps[2] || // ModuleRegistry
+            module == deps[2] || // SpaceOwner
             module == deps[3]; // AppRegistry
     }
 

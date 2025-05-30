@@ -47,7 +47,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         address app,
         bytes calldata data,
         AppParams calldata params
-    ) external onlyOwner {
+    ) external nonReentrant onlyOwner {
         _installApp(app, params.delays, data);
     }
 
