@@ -101,6 +101,10 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Create")), false);
+
+        address[] memory clients = appAccount.getClients(address(mockModule));
+        assertEq(clients.length, 1);
+        assertEq(clients[0], client);
     }
 
     function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {

@@ -72,6 +72,11 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
+    function getClients(address app) external view returns (address[] memory) {
+        return _getClients(app);
+    }
+
+    /// @inheritdoc IAppAccount
     function isAppEntitled(
         address app,
         address publicKey,
