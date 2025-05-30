@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 
-//libraries
+// libraries
+import {console} from "forge-std/console.sol";
 
-//contracts
+// contracts
 import {Deployer} from "../../common/Deployer.s.sol";
 import {ProxyBatchDelegation} from "src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 import {MockMessenger} from "test/mocks/MockMessenger.sol";
@@ -34,9 +35,12 @@ contract DeployProxyBatchDelegation is Deployer {
 
     function __deploy(address deployer) internal override returns (address) {
         townsToken = townsHelper.deploy(deployer);
+        console.log("DeployProxyBatchDelegation: townsToken: %s", townsToken);
+
         vault = townsHelper.vault();
-        vm.broadcast(deployer);
-        claimers = deployCode("AuthorizedClaimers.sol", "");
+
+        claimers = _getClaimers(deployer);
+        console.log("DeployProxyBatchDelegation: claimers: %s", claimers);
 
         if (messenger == address(0)) {
             if (isAnvil() || isTesting()) {
@@ -46,6 +50,7 @@ contract DeployProxyBatchDelegation is Deployer {
                 messenger = getMessenger();
             }
         }
+        console.log("DeployProxyBatchDelegation: messenger: %s", messenger);
 
         if (mainnetDelegation == address(0)) {
             mainnetDelegation = _getMainnetDelegation();
@@ -62,6 +67,15 @@ contract DeployProxyBatchDelegation is Deployer {
         vm.broadcast(deployer);
         return
             address(new ProxyBatchDelegation(townsToken, claimers, messenger, mainnetDelegation));
+    }
+
+    function _getClaimers(address deployer) internal returns (address) {
+        if (block.chainid == 1) {
+            return 0x0bEe55b52d01C4D5d4D0cfcE1d6e0baE6722db05;
+        }
+
+        vm.broadcast(deployer);
+        return deployCode("AuthorizedClaimers", "");
     }
 
     function _getMainnetDelegation() internal returns (address) {
