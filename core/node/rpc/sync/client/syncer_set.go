@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/trace"
@@ -58,9 +60,9 @@ type (
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers map[common.Address]StreamsSyncer
 		// streamID2Syncer maps from a stream to its syncer
-		streamID2Syncer sync.Map
+		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// streamLocks provides per-stream locking
-		streamLocks sync.Map
+		streamLocks *xsync.Map[StreamId, *sync.Mutex]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -88,6 +90,8 @@ func NewSyncers(
 		localNodeAddress: localNodeAddress,
 		syncers:          make(map[common.Address]StreamsSyncer),
 		messages:         dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
+		streamLocks:      xsync.NewMap[StreamId, *sync.Mutex](),
 		otelTracer:       otelTracer,
 	}
 	return ss, ss.messages
@@ -103,81 +107,19 @@ func (ss *SyncerSet) Run() {
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
-func (ss *SyncerSet) Backfill(
-	ctx context.Context,
-	syncID string,
-	req *ModifySyncRequest_Backfill,
-	failureHandler func(status *SyncStreamOpStatus),
-) {
-	if ss.otelTracer != nil {
-		var span trace.Span
-		ctx, span = ss.otelTracer.Start(ctx, "syncerset::backfill")
-		defer span.End()
-	}
-
-	for _, cookie := range req.GetStreams() {
-		streamID := StreamId(cookie.GetStreamId())
-
-		// Wait for the stream to be unlocked with timeout
-		if err := ss.waitForStreamUnlock(ctx, streamID); err != nil {
-			failureHandler(&SyncStreamOpStatus{
-				StreamId: streamID[:],
-				Code:     int32(Err_UNAVAILABLE),
-				Message:  "Timeout waiting for stream to be unlocked",
-			})
-			continue
-		}
-
-		syncerValue, found := ss.streamID2Syncer.Load(streamID)
-		if !found {
-			// TODO: Find more elegant solution of handling the given data race
-			// TODO: Try to add the stream to sync?
-			failureHandler(&SyncStreamOpStatus{
-				StreamId: streamID[:],
-				Code:     int32(Err_UNAVAILABLE),
-				Message:  "The given stream is not syncing",
-			})
-			continue
-		}
-		syncer := syncerValue.(StreamsSyncer)
-
-		resp, err := syncer.Modify(ctx, &ModifySyncRequest{
-			SyncId: syncID,
-			BackfillStreams: &ModifySyncRequest_Backfill{
-				SyncId:  req.GetSyncId(),
-				Streams: []*SyncCookie{cookie},
-			},
-		})
-		if err != nil {
-			rvrErr := AsRiverError(err, Err_INTERNAL)
-			failureHandler(&SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
-			})
-			continue
-		}
-
-		for _, status := range resp.GetBackfills() {
-			failureHandler(status)
-		}
-	}
-}
-
 // getStreamLock returns a lock for the given stream ID, creating it if it doesn't exist
 func (ss *SyncerSet) getStreamLock(streamID StreamId) *sync.Mutex {
 	lock, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
-	return lock.(*sync.Mutex)
+	return lock
 }
 
 // waitForStreamUnlock waits for a stream to be unlocked with a timeout
 func (ss *SyncerSet) waitForStreamUnlock(ctx context.Context, streamID StreamId) error {
-	lockRaw, ok := ss.streamLocks.Load(streamID)
+	lock, ok := ss.streamLocks.Load(streamID)
 	if !ok {
 		// If no lock exists for this stream, it means it's not currently locked
 		return nil
 	}
-	lock := lockRaw.(*sync.Mutex)
 
 	// Try to acquire the lock immediately first
 	if acquired := lock.TryLock(); acquired {
@@ -188,8 +130,8 @@ func (ss *SyncerSet) waitForStreamUnlock(ctx context.Context, streamID StreamId)
 	// If lock is held, wait for it with timeout
 	done := make(chan struct{})
 	go func() {
-		lock.Lock()   //nolint:staticcheck
-		lock.Unlock() //nolint:staticcheck
+		lock.Lock()
+		lock.Unlock() //lint:ignore SA2001 just waiting for the stream to be unlocked and then proceed
 		close(done)
 	}()
 
@@ -236,11 +178,11 @@ func (ss *SyncerSet) lockStreams(req ModifyRequest) []StreamId {
 // unlockStreams releases locks for the given stream IDs
 func (ss *SyncerSet) unlockStreams(streamIDs []StreamId) {
 	for _, streamID := range streamIDs {
-		lockRaw, ok := ss.streamLocks.LoadAndDelete(streamID)
+		lock, ok := ss.streamLocks.LoadAndDelete(streamID)
 		if !ok {
 			continue
 		}
-		lockRaw.(*sync.Mutex).Unlock()
+		lock.Unlock()
 	}
 }
 
@@ -371,8 +313,10 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	// Lock all affected streams (excluding backfill streams)
-	lockedStreams := ss.lockStreams(req)
-	defer ss.unlockStreams(lockedStreams)
+	if len(req.ToAdd) > 0 || len(req.ToRemove) > 0 {
+		lockedStreams := ss.lockStreams(req)
+		defer ss.unlockStreams(lockedStreams)
+	}
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -382,19 +326,21 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		for _, cookie := range backfill.GetStreams() {
 			streamID := StreamId(cookie.GetStreamId())
 
-			// Wait for the stream to be unlocked with timeout
+			// Wait for the stream to be unlocked with timeout.
+			// Parallel operations might lock the given stream by adding or removing it from/to sync.
 			if err := ss.waitForStreamUnlock(ctx, streamID); err != nil {
 				req.BackfillingFailureHandler(&SyncStreamOpStatus{
 					StreamId: streamID[:],
 					Code:     int32(Err_UNAVAILABLE),
-					Message:  "Timeout waiting for stream to be unlocked",
+					Message:  "Stream is temporarily unavailable for syncing",
 				})
 				continue
 			}
 
+			// The given stream must be syncing.
+			// TODO: Should it be added to the syncer set if it is not syncing yet?
 			val, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
-				// TODO: Find more elegant solution of handling the given data race
 				req.BackfillingFailureHandler(&SyncStreamOpStatus{
 					StreamId: streamID[:],
 					Code:     int32(Err_UNAVAILABLE),
@@ -549,15 +495,9 @@ func (ss *SyncerSet) distributeSyncModifications(
 				return
 			}
 
-			/*backfillingFailures := resp.GetBackfills()
-			successfullyBackfilled := slices.DeleteFunc(modifySync.GetBackfillStreams(), func(backfill *ModifySyncRequest_Backfill) bool {
-				return slices.ContainsFunc(backfillingFailures, func(status *SyncStreamOpStatus) bool {
-					return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
-				})
-			})
-			for _, status := range addingFailures {
-				failedToAdd(status)
-			}*/
+			for _, status := range resp.GetBackfills() {
+				failedToBackfill(status)
+			}
 
 			addingFailures := resp.GetAdds()
 			successfullyAdded := slices.DeleteFunc(modifySync.GetAddStreams(), func(cookie *SyncCookie) bool {
