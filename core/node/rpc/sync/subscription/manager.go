@@ -161,7 +161,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	// Send the message to all subscriptions for this stream.
 	m.sLock.Lock()
 	subscriptions, ok := m.subscriptions[streamID]
-	if !ok {
+	if !ok || len(subscriptions) == 0 {
 		// No subscriptions for this stream, nothing to do.
 		go m.dropStream(streamID)
 		m.sLock.Unlock()
