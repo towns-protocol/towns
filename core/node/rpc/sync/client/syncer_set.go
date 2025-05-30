@@ -313,10 +313,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	// Lock all affected streams (excluding backfill streams)
-	if len(req.ToAdd) > 0 || len(req.ToRemove) > 0 {
-		lockedStreams := ss.lockStreams(req)
-		defer ss.unlockStreams(lockedStreams)
-	}
+	lockedStreams := ss.lockStreams(req)
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -338,14 +335,11 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			}
 
 			// The given stream must be syncing.
-			// TODO: Should it be added to the syncer set if it is not syncing yet?
 			syncer, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
-				req.BackfillingFailureHandler(&SyncStreamOpStatus{
-					StreamId: streamID[:],
-					Code:     int32(Err_UNAVAILABLE),
-					Message:  "The given stream is not syncing",
-				})
+				// Stream is not part of any sync operation, so we can add it to the syncer set.
+				req.ToAdd = append(req.ToAdd, cookie)
+				lockedStreams = append(lockedStreams, ss.lockStreams(ModifyRequest{ToAdd: []*SyncCookie{cookie}})...)
 				continue
 			}
 
@@ -366,7 +360,23 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	// Process add requests
 	for _, cookie := range req.ToAdd {
 		streamID := StreamId(cookie.GetStreamId())
-		if _, found := ss.streamID2Syncer.Load(streamID); found {
+
+		// Backfill the given stream if it is added already.
+		if syncer, found := ss.streamID2Syncer.Load(streamID); found {
+			if _, ok := modifySyncs[syncer.Address()]; !ok {
+				modifySyncs[syncer.Address()] = &ModifySyncRequest{
+					SyncId:          req.SyncID,
+					BackfillStreams: &ModifySyncRequest_Backfill{SyncId: req.SyncID},
+				}
+			}
+			modifySyncs[syncer.Address()].BackfillStreams.Streams = append(
+				modifySyncs[syncer.Address()].BackfillStreams.Streams,
+				cookie.CopyWithAddr(syncer.Address()),
+			)
+			ss.unlockStreams([]StreamId{streamID})
+			lockedStreams = slices.DeleteFunc(lockedStreams, func(id StreamId) bool {
+				return id == streamID
+			})
 			continue
 		}
 
@@ -417,6 +427,8 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			req.RemovingFailureHandler,
 		)
 	}
+
+	ss.unlockStreams(lockedStreams)
 
 	return nil
 }
