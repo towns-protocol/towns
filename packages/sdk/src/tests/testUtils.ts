@@ -1003,10 +1003,10 @@ export function waitFor<T>(
                         },
                     )
                 } else {
-                    promiseStatus = 'resolved'
                     if (result) {
-                        // if result is not truthy, resolve
-                        resolve(result)
+                        promiseStatus = 'resolved'
+                        // if result is truthy, resolve
+                        onDone(result)
                     }
                     // otherwise let the polling continue
                 }
