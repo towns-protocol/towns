@@ -44,6 +44,14 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         return _owner();
     }
 
+    function installPrice() external pure returns (uint256) {
+        return 0;
+    }
+
+    function accessDuration() external pure returns (uint64) {
+        return 0;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PERMISSIONS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

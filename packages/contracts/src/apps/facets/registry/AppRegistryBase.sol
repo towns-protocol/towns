@@ -6,7 +6,6 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
-import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
@@ -29,16 +28,23 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     using CustomRevert for bytes4;
 
     function __AppRegistry_init_unchained(
+        address spaceFactory,
         string calldata schema,
         ISchemaResolver resolver
     ) internal {
         bytes32 schemaId = _registerSchema(schema, resolver, true);
         _setSchemaId(schemaId);
+        _setSpaceFactory(spaceFactory);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           FUNCTIONS                          */
+    /*                           FUNCTIONS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _setSpaceFactory(address spaceFactory) internal {
+        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
+        $.spaceFactory = spaceFactory;
+    }
 
     /// @notice Sets the schema ID for the app registry
     /// @param schemaId The schema ID to set
@@ -92,7 +98,13 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (params.clients.length == 0) revert InvalidArrayInput();
 
         app = LibClone.deployERC1967BeaconProxy(address(this));
-        ISimpleApp(app).initialize(msg.sender, params.name, params.permissions);
+        ISimpleApp(app).initialize(
+            msg.sender,
+            params.name,
+            params.permissions,
+            params.installPrice,
+            params.accessDuration
+        );
 
         version = _registerApp(app, params.clients);
 
