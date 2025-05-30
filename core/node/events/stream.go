@@ -660,7 +660,14 @@ func (s *Stream) GetMiniblocks(
 
 	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
-		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
+		opts := NewParsedMiniblockInfoOpts()
+		if block.Number > -1 {
+			opts = opts.WithExpectedBlockNumber(block.Number)
+		}
+		if omitSnapshot {
+			opts = opts.WithSkipSnapshotValidation()
+		}
+		miniblocks[i], err = NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 		if err != nil {
 			return nil, false, err
 		}
