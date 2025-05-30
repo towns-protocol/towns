@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
@@ -15,29 +14,23 @@ library DeployMainnetDelegation {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(11);
         arr.p(MainnetDelegation.setProxyDelegation.selector);
         arr.p(MainnetDelegation.setDelegationDigest.selector);
         arr.p(MainnetDelegation.relayDelegations.selector);
+        arr.p(MainnetDelegation.getMainnetDelegators.selector);
+        arr.p(MainnetDelegation.getDepositIdByDelegator.selector);
         arr.p(MainnetDelegation.getDelegationByDelegator.selector);
         arr.p(MainnetDelegation.getMainnetDelegationsByOperator.selector);
         arr.p(MainnetDelegation.getDelegatedStakeByOperator.selector);
         arr.p(MainnetDelegation.getAuthorizedClaimer.selector);
         arr.p(MainnetDelegation.getProxyDelegation.selector);
         arr.p(MainnetDelegation.getMessenger.selector);
-        arr.p(MainnetDelegation.getDepositIdByDelegator.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_
         }
-    }
-
-    function makeCut(
-        address facetAddress,
-        IDiamond.FacetCutAction action
-    ) internal pure returns (IDiamond.FacetCut memory) {
-        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData(address messenger) internal pure returns (bytes memory) {
