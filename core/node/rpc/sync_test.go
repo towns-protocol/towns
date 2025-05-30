@@ -98,6 +98,7 @@ func (c *syncClient) modify(t *testing.T, ctx context.Context, add []*protocol.S
 		RemoveStreams: remove,
 	}))
 	require.NoError(t, err, "failed to modify sync")
+	require.Len(t, resp.Msg.GetBackfills(), 0)
 	require.Len(t, resp.Msg.GetAdds(), 0)
 	require.Len(t, resp.Msg.GetRemovals(), 0)
 }

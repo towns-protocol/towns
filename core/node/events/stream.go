@@ -776,17 +776,57 @@ func (s *Stream) addEventLocked(
 	return newSV, nil
 }
 
-func (s *Stream) IsolatedGetView(
+// Backfill retrieves the stream content since the given cookie and sends it to the callback.
+func (s *Stream) Backfill(
 	ctx context.Context,
-	cb func(*StreamView) error,
+	cookie *SyncCookie,
+	cb func(*StreamAndCookie),
 ) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not found",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
+	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
+		return RiverError(
+			Err_BAD_SYNC_COOKIE,
+			"cookies is not for this node",
+			"cookie.NodeAddress",
+			cookie.NodeAddress,
+			"s.params.Wallet.AddressStr",
+			s.params.Wallet,
+		)
+	}
+	if !s.streamId.EqualsBytes(cookie.StreamId) {
+		return RiverError(
+			Err_BAD_SYNC_COOKIE,
+			"bad stream id",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
+
 	view, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
 	}
 
-	return cb(view)
+	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	if err != nil {
+		return err
+	}
+
+	cb(resp)
+
+	return nil
 }
 
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.

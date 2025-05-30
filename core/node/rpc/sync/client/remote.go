@@ -234,27 +234,6 @@ func (s *remoteSyncer) Address() common.Address {
 	return s.remoteAddr
 }
 
-/*func (s *remoteSyncer) Backfill(
-	ctx context.Context,
-	cookie *SyncCookie,
-	targetSyncIds []string,
-) error {
-	if s.otelTracer != nil {
-		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::backfill")
-		defer span.End()
-	}
-
-	// Force set the syncID to the current syncID
-	request := &ModifySyncRequest{
-		SyncId: s.syncID,
-		BackfillStreams: &ModifySyncRequest_Backfill{
-			SyncId:  "",
-			Streams: []*SyncCookie{cookie},
-		},
-	}
-}*/
-
 func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
 	if s.otelTracer != nil {
 		var span trace.Span

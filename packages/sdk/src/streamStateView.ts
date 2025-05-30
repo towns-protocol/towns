@@ -371,7 +371,6 @@ export class StreamStateView implements IStreamStateView {
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
                     timelineEvent.miniblockNum = payload.value.miniblockNum
-                    logError(`StreamStateView::processAppendedEvent: miniblock header ${payload.value.miniblockNum} with event num offset ${payload.value.eventNumOffset} and hashes ${payload.value.eventHashes.length}`)
                     confirmed = this.processMiniblockHeader(
                         payload.value,
                         payload.value.eventHashes,
