@@ -105,7 +105,9 @@ describe('withEntitlements', () => {
         const bobUserStreamView = bob.stream(bobsUserStreamId)!.view
         expect(bobUserStreamView).toBeDefined()
         await waitFor(() =>
-            expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true),
+            expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(
+                true,
+            ),
         )
 
         const waitForStreamPromise = makeDonePromise()
