@@ -368,6 +368,8 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 					SyncId:          req.SyncID,
 					BackfillStreams: &ModifySyncRequest_Backfill{SyncId: req.SyncID},
 				}
+			} else if modifySyncs[syncer.Address()].BackfillStreams == nil {
+				modifySyncs[syncer.Address()].BackfillStreams = &ModifySyncRequest_Backfill{SyncId: req.SyncID}
 			}
 			modifySyncs[syncer.Address()].BackfillStreams.Streams = append(
 				modifySyncs[syncer.Address()].BackfillStreams.Streams,
