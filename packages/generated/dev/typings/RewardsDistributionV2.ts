@@ -414,6 +414,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
     "ChangeBeneficiary(uint256,address)": EventFragment;
     "ClaimReward(address,address,uint256)": EventFragment;
     "ClaimerSet(address,address)": EventFragment;
+    "CrossDomainMessengerSet(address)": EventFragment;
     "DelegationDigestSet(bytes32)": EventFragment;
     "DelegationProxyDeployed(uint256,address,address)": EventFragment;
     "DelegationRemoved(address)": EventFragment;
@@ -426,6 +427,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
     "NotifyRewardAmount(address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "PeriodRewardAmountSet(uint256)": EventFragment;
+    "ProxyDelegationSet(address)": EventFragment;
     "Redelegate(uint256,address)": EventFragment;
     "RewardNotifierSet(address,bool)": EventFragment;
     "RewardsDistributionInitialized(address,address,uint256)": EventFragment;
@@ -438,6 +440,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "ChangeBeneficiary"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimReward"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimerSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "CrossDomainMessengerSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "DelegationDigestSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "DelegationProxyDeployed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "DelegationRemoved"): EventFragment;
@@ -450,6 +453,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "NotifyRewardAmount"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PeriodRewardAmountSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ProxyDelegationSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Redelegate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RewardNotifierSet"): EventFragment;
   getEvent(
@@ -495,6 +499,17 @@ export type ClaimerSetEvent = TypedEvent<
 >;
 
 export type ClaimerSetEventFilter = TypedEventFilter<ClaimerSetEvent>;
+
+export interface CrossDomainMessengerSetEventObject {
+  messenger: string;
+}
+export type CrossDomainMessengerSetEvent = TypedEvent<
+  [string],
+  CrossDomainMessengerSetEventObject
+>;
+
+export type CrossDomainMessengerSetEventFilter =
+  TypedEventFilter<CrossDomainMessengerSetEvent>;
 
 export interface DelegationDigestSetEventObject {
   digest: string;
@@ -629,6 +644,17 @@ export type PeriodRewardAmountSetEvent = TypedEvent<
 
 export type PeriodRewardAmountSetEventFilter =
   TypedEventFilter<PeriodRewardAmountSetEvent>;
+
+export interface ProxyDelegationSetEventObject {
+  proxyDelegation: string;
+}
+export type ProxyDelegationSetEvent = TypedEvent<
+  [string],
+  ProxyDelegationSetEventObject
+>;
+
+export type ProxyDelegationSetEventFilter =
+  TypedEventFilter<ProxyDelegationSetEvent>;
 
 export interface RedelegateEventObject {
   depositId: BigNumber;
@@ -1247,6 +1273,13 @@ export interface RewardsDistributionV2 extends BaseContract {
       claimer?: PromiseOrValue<string> | null
     ): ClaimerSetEventFilter;
 
+    "CrossDomainMessengerSet(address)"(
+      messenger?: null
+    ): CrossDomainMessengerSetEventFilter;
+    CrossDomainMessengerSet(
+      messenger?: null
+    ): CrossDomainMessengerSetEventFilter;
+
     "DelegationDigestSet(bytes32)"(
       digest?: null
     ): DelegationDigestSetEventFilter;
@@ -1340,6 +1373,11 @@ export interface RewardsDistributionV2 extends BaseContract {
       amount?: null
     ): PeriodRewardAmountSetEventFilter;
     PeriodRewardAmountSet(amount?: null): PeriodRewardAmountSetEventFilter;
+
+    "ProxyDelegationSet(address)"(
+      proxyDelegation?: null
+    ): ProxyDelegationSetEventFilter;
+    ProxyDelegationSet(proxyDelegation?: null): ProxyDelegationSetEventFilter;
 
     "Redelegate(uint256,address)"(
       depositId?: PromiseOrValue<BigNumberish> | null,
