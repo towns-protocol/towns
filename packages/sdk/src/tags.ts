@@ -6,7 +6,7 @@ import {
     Tags,
     PlainMessage,
 } from '@towns-protocol/proto'
-import { IStreamStateView } from './streamStateView'
+import { StreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
 import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
@@ -15,7 +15,7 @@ import { bytesToHex } from 'ethereum-cryptography/utils'
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): PlainMessage<Tags> {
     return {
         messageInteractionType: getMessageInteractionType(message),
@@ -29,7 +29,7 @@ export function makeTags(
 export function makeTipTags(
     event: TipEventObject,
     toUserId: string,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): PlainMessage<Tags> | undefined {
     check(isDefined(streamView), 'stream not found')
     return {
@@ -43,7 +43,7 @@ export function makeTipTags(
 
 export function makeTransferTags(
     event: PlainMessage<BlockchainTransaction_TokenTransfer>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): PlainMessage<Tags> | undefined {
     check(isDefined(streamView), 'stream not found')
     return {
@@ -60,7 +60,7 @@ export function makeTransferTags(
 
 function getThreadId(
     message: PlainMessage<ChannelMessage>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array | undefined {
     switch (message.payload.case) {
         case 'post':
@@ -126,7 +126,7 @@ function getMentionedUserAddresses(message: PlainMessage<ChannelMessage>): Uint8
 
 function getParticipatingUserAddresses(
     message: PlainMessage<ChannelMessage>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array[] {
     switch (message.payload.case) {
         case 'reaction': {
@@ -150,7 +150,7 @@ function getParticipatingUserAddresses(
 
 function participantsFromParentEventId(
     parentId: string,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array[] {
     const participating = new Set<Uint8Array>()
     const parentEvent = streamView.events.get(parentId)
@@ -172,7 +172,7 @@ function participantsFromParentEventId(
 
 function getParentThreadId(
     eventId: string | undefined,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array | undefined {
     if (!eventId) {
         return undefined
