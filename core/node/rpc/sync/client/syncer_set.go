@@ -339,7 +339,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 			// The given stream must be syncing.
 			// TODO: Should it be added to the syncer set if it is not syncing yet?
-			val, found := ss.streamID2Syncer.Load(streamID)
+			syncer, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
 				req.BackfillingFailureHandler(&SyncStreamOpStatus{
 					StreamId: streamID[:],
@@ -348,7 +348,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				})
 				continue
 			}
-			syncer := val.(StreamsSyncer)
 
 			if _, ok := modifySyncs[syncer.Address()]; !ok {
 				modifySyncs[syncer.Address()] = &ModifySyncRequest{
@@ -394,11 +393,10 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	// Group remove sync request by the remote syncer.
 	// Identifying which node to use for the given streams to remove from sync.
 	for _, streamIDRaw := range req.ToRemove {
-		val, found := ss.streamID2Syncer.Load(StreamId(streamIDRaw))
+		syncer, found := ss.streamID2Syncer.Load(StreamId(streamIDRaw))
 		if !found {
 			continue
 		}
-		syncer := val.(StreamsSyncer)
 
 		if _, ok := modifySyncs[syncer.Address()]; !ok {
 			modifySyncs[syncer.Address()] = &ModifySyncRequest{}
@@ -531,13 +529,12 @@ func (ss *SyncerSet) distributeSyncModifications(
 }
 
 func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	syncerValue, found := ss.streamID2Syncer.Load(streamID)
+	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if !found {
 		return RiverError(Err_NOT_FOUND, "Stream not part of sync operation").
 			Tag("stream", streamID).
 			Func("DebugDropStream")
 	}
-	syncer := syncerValue.(StreamsSyncer)
 
 	syncerStopped, err := syncer.DebugDropStream(ctx, streamID)
 	if err != nil {

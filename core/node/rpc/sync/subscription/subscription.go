@@ -196,7 +196,14 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 
 // DebugDropStream drops the given stream from the subscription.
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	_ = s.removeStream(streamID[:])
+	if remove := s.removeStream(streamID[:]); remove {
+		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
+			ToRemove:               [][]byte{streamID[:]},
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
+		}); err != nil {
+			s.log.Errorw("Failed to drop stream from common syncer set", "streamId", streamID, "err", err)
+		}
+	}
 	s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	return nil
 }
