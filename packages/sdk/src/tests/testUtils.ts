@@ -961,8 +961,9 @@ export function waitFor<T>(
     callback: (() => T) | (() => Promise<T>),
     options: { timeoutMS: number } = { timeoutMS: 5000 },
 ): Promise<T> {
+    const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
-        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
+        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
     )
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
@@ -1007,10 +1008,11 @@ export function waitFor<T>(
                         },
                     )
                 } else {
-                    promiseStatus = 'resolved'
-                    if (result) {
-                        // if result is not truthy, resolve
-                        resolve(result)
+                    // explicitly check for false, most of these will return void
+                    if (result !== false) {
+                        promiseStatus = 'resolved'
+                        // if result is truthy, resolve
+                        onDone(result)
                     }
                     // otherwise let the polling continue
                 }
