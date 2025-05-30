@@ -305,12 +305,11 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 // modify implements the actual modification logic
 func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	ss.muSyncers.Lock()
-	stopped := ss.stopped
-	ss.muSyncers.Unlock()
-
-	if stopped {
+	if ss.stopped {
+		ss.muSyncers.Unlock()
 		return RiverError(Err_CANCELED, "Sync operation stopped")
 	}
+	ss.muSyncers.Unlock()
 
 	// Lock all affected streams (excluding backfill streams)
 	lockedStreams := ss.lockStreams(req)

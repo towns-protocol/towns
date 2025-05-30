@@ -356,12 +356,12 @@ export class StreamStateView implements IStreamStateView {
             switch (payload.case) {
                 case 'miniblockHeader':
                     if (this.miniblockInfo?.max == payload.value.miniblockNum) {
-                        logError(
-                            `StreamStateView::Error miniblock header already processed ${event.hashStr} ${payload.value.eventNumOffset}`,
-                        )
+                        // This is a duplicate miniblock header, ignore it.
+                        // It can happen right after receiving a stream backfill message during sync initialization.
+                        break
                     }
                     check(
-                        (this.miniblockInfo?.max ?? -1n) <= payload.value.miniblockNum,
+                        (this.miniblockInfo?.max ?? -1n) < payload.value.miniblockNum,
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
