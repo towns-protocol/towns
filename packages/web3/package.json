@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.229",
+    "version": "0.0.230",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -30,7 +30,7 @@
         "lodash": "^4.17.21",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
-        "viem": "^2.21.51",
+        "viem": "^2.29.3",
         "zod": "^3.21.4"
     },
     "devDependencies": {

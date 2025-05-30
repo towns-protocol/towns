@@ -376,6 +376,14 @@ export function getRpcErrorProperty(err: unknown, prop: string): string | undefi
     return undefined
 }
 
+// check to see if the error contains a specific message
+export function errorContainsMessage(err: unknown, message: string): boolean {
+    if (err !== null && typeof err === 'object' && 'message' in err) {
+        return (err.message as string).includes(message)
+    }
+    return false
+}
+
 export function getRetryDelayMs(attempts: number, retryParams: RetryParams): number {
     return Math.min(
         retryParams.maxRetryDelay,

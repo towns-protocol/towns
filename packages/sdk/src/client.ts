@@ -81,7 +81,7 @@ import {
     type EncryptionDeviceInitOpts,
 } from '@towns-protocol/encryption'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
-import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
+import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -2473,15 +2473,8 @@ export class Client
             // if we had a localEventId, pass the last id so the ui can continue to update to the latest hash
             retryCount = retryCount ?? 0
 
-            if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
-                this.logInfo('RETRYING event after MINIBLOCK_TOO_NEW response', {
-                    syncStats: this.streams.stats(),
-                    retryCount,
-                    prevMiniblockHash,
-                    prevMiniblockNum,
-                })
-                await new Promise((resolve) => setTimeout(resolve, 1000))
-                return await this.makeEventWithHashAndAddToStream(
+            const makeRetry = async (prevMiniblockHash: Uint8Array, prevMiniblockNum: bigint) => {
+                return this.makeEventWithHashAndAddToStream(
                     streamId,
                     payload,
                     prevMiniblockHash,
@@ -2490,8 +2483,19 @@ export class Client
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
                     tags,
-                    retryCount + 1,
+                    (retryCount ?? 0) + 1,
                 )
+            }
+
+            if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
+                this.logInfo('RETRYING event after MINIBLOCK_TOO_NEW response', {
+                    syncStats: this.streams.stats(),
+                    retryCount,
+                    prevMiniblockHash,
+                    prevMiniblockNum,
+                })
+                await new Promise((resolve) => setTimeout(resolve, 1000))
+                return await makeRetry(prevMiniblockHash, prevMiniblockNum)
             } else if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH) && retryCount < 3) {
                 const expectedHash = getRpcErrorProperty(err, 'expected')
                 this.logInfo('RETRYING event after BAD_PREV_MINIBLOCK_HASH response', {
@@ -2503,17 +2507,29 @@ export class Client
                 check(isDefined(expectedHash), 'expected hash not found in error')
                 const expectedMiniblockNum = getRpcErrorProperty(err, 'expNum')
                 check(isDefined(expectedMiniblockNum), 'expected miniblock num not found in error')
-                return await this.makeEventWithHashAndAddToStream(
-                    streamId,
-                    payload,
+                return await makeRetry(
                     bin_fromHexString(expectedHash),
                     BigInt(expectedMiniblockNum),
-                    optional,
-                    isDefined(localId) ? eventId : undefined,
-                    cleartext,
-                    tags,
-                    retryCount + 1,
                 )
+            } else if (
+                // for blockchain transactions: if we get a permission denied error, and the error message contains 'Transaction has 0 confirmations',
+                // we need to retry the event, since the node is likely lagging behind, and waiting a few seconds will allow it to catch up
+                errorContains(err, Err.PERMISSION_DENIED) &&
+                (errorContainsMessage(err, 'Transaction has 0 confirmations.') ||
+                    errorContainsMessage(err, 'Transaction receipt not found')) &&
+                retryCount < 3
+            ) {
+                this.logInfo(
+                    'RETRYING event after PERMISSION_DENIED (transaction has 0 confirmations) response',
+                    {
+                        syncStats: this.streams.stats(),
+                        retryCount,
+                        prevMiniblockHash,
+                        prevMiniblockNum,
+                    },
+                )
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                return await makeRetry(prevMiniblockHash, prevMiniblockNum)
             } else {
                 if (localId) {
                     const stream = this.streams.get(streamId)

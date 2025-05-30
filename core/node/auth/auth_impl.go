@@ -3,7 +3,9 @@ package auth
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum"
 	"strings"
 	"sync"
 	"time"
@@ -321,8 +323,12 @@ func (ca *chainAuth) VerifyReceipt(
 	txHash := common.BytesToHash(userReceipt.GetTransactionHash())
 	chainReceipt, err := client.TransactionReceipt(ctx, txHash)
 	if err != nil {
-		return false, err
+		if errors.Is(err, ethereum.NotFound) {
+			return false, RiverError(Err_PERMISSION_DENIED, "Transaction receipt not found", "txHash", txHash.Hex())
+		}
+		return false, AsRiverError(err, Err_DOWNSTREAM_NETWORK_ERROR)
 	}
+
 	// Check if the block number matches:
 	if chainReceipt.BlockNumber.Uint64() != userReceipt.BlockNumber {
 		return false, RiverError(Err_PERMISSION_DENIED, "Block number mismatch", "got",

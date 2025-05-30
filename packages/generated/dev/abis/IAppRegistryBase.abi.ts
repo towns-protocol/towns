@@ -20,6 +20,25 @@ export default [
   },
   {
     "type": "event",
+    "name": "AppCreated",
+    "inputs": [
+      {
+        "name": "app",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "uid",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "AppRegistered",
     "inputs": [
       {
@@ -121,6 +140,11 @@ export default [
   {
     "type": "error",
     "name": "InvalidAppId",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidAppName",
     "inputs": []
   },
   {

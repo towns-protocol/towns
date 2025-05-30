@@ -151,6 +151,16 @@ func FormatChannelRedactionReply(redaction *protocol.ChannelPayload_Redaction) s
 	)
 }
 
+func FormatChannelInceptionReply(inception *protocol.ChannelPayload_Inception) string {
+	streamId := shared.StreamId(inception.StreamId)
+	spaceId := shared.StreamId(inception.SpaceId)
+	return fmt.Sprintf(
+		"ChannelInception streamId(%v) spaceId(%v)",
+		streamId,
+		spaceId,
+	)
+}
+
 func FormatMembershipReply(membership *protocol.MemberPayload_Membership) string {
 	userAddress := common.BytesToAddress(membership.UserAddress)
 	initiatorAddress := common.BytesToAddress(membership.InitiatorAddress)
@@ -656,6 +666,14 @@ func (b *TestAppServer) respondToSendMessages(
 					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatChannelRedactionReply(content.Redaction), placeHolderSessionBytes)
 					if err != nil {
 						return logAndReturnErr(log, fmt.Errorf("could not respond to channel redaction event: %w", err))
+					}
+					continue
+				}
+			case *protocol.ChannelPayload_Inception_:
+				{
+					err := b.sendChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), FormatChannelInceptionReply(content.Inception), placeHolderSessionBytes)
+					if err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to channel inception event: %w", err))
 					}
 					continue
 				}

@@ -44,7 +44,7 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
     }
 
     modifier givenHasAccess(bytes32 groupId, address account, uint32 delay) {
-        (bool isMember, , , ) = executor.hasAccess(groupId, account);
+        (bool isMember, , ) = executor.hasAccess(groupId, account);
         vm.assume(!isMember);
 
         uint48 since = Time.timestamp() + executor.getGroupDelay(groupId);
@@ -76,7 +76,7 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         address account,
         uint32 delay
     ) external givenHasAccess(groupId, account, delay) {
-        (bool isMember, uint32 executionDelay, , ) = executor.hasAccess(groupId, account);
+        (bool isMember, uint32 executionDelay, ) = executor.hasAccess(groupId, account);
         assertEq(isMember, true);
         assertEq(executionDelay, delay);
     }
@@ -121,8 +121,6 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
             mockERC721.mintWithPayment.selector,
             groupId
         );
-
-        executor.setAllowance(groupId, 1 ether);
         vm.stopPrank();
 
         // This will revert because the bot does not have access to the mint function
@@ -145,7 +143,6 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         vm.prank(bot);
         (bytes32 operationId, ) = executor.scheduleOperation(
             address(mockERC721),
-            0,
             mintWithPayment,
             Time.timestamp() + delay
         );

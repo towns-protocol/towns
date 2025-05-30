@@ -95,7 +95,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.prank(owner);
         bytes32 appId = facet.registerApp(app, clients);
 
-        Attestation memory att = facet.getAppById(appId);
+        Attestation memory att = facet.getAttestation(appId);
         (, , address[] memory retrievedClients, , ) = abi.decode(
             att.data,
             (address, address, address[], bytes32[], ExecutionManifest)
@@ -123,7 +123,6 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32 revokedUid = facet.removeApp(appId);
 
         assertEq(revokedUid, appId);
-        assertEq(facet.getLatestAppId(app), bytes32(0));
     }
 
     function test_removeApp_onlyOwner() external {
@@ -148,6 +147,101 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32 appId = bytes32(0);
         vm.expectRevert(InvalidAppId.selector);
         facet.removeApp(appId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SIMPLE APP TESTS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_createSimpleApp() external {
+        address owner = _randomAddress();
+
+        address[] memory clients = new address[](1);
+        clients[0] = _randomAddress();
+
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            clients: clients
+        });
+
+        vm.prank(owner);
+        (address app, bytes32 appId) = facet.createApp(appData);
+
+        Attestation memory att = facet.getAttestation(appId);
+        (address module, , , , ) = abi.decode(
+            att.data,
+            (address, address, address[], bytes32[], ExecutionManifest)
+        );
+
+        assertEq(appId, facet.getLatestAppId(app));
+        assertEq(module, app);
+    }
+
+    function test_revertWhen_createApp_EmptyName() external {
+        address owner = _randomAddress();
+        address[] memory clients = new address[](1);
+        clients[0] = _randomAddress();
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "",
+            permissions: permissions,
+            clients: clients
+        });
+        vm.prank(owner);
+        vm.expectRevert(InvalidAppName.selector);
+        facet.createApp(appData);
+    }
+
+    function test_revertWhen_createApp_EmptyPermissions() external {
+        address owner = _randomAddress();
+        address[] memory clients = new address[](1);
+        clients[0] = _randomAddress();
+        bytes32[] memory permissions = new bytes32[](0);
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            clients: clients
+        });
+        vm.prank(owner);
+        vm.expectRevert(InvalidArrayInput.selector);
+        facet.createApp(appData);
+    }
+
+    function test_revertWhen_createApp_EmptyClients() external {
+        address owner = _randomAddress();
+        address[] memory clients = new address[](0);
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            clients: clients
+        });
+        vm.prank(owner);
+        vm.expectRevert(InvalidArrayInput.selector);
+        facet.createApp(appData);
+    }
+
+    function test_revertWhen_createApp_ZeroAddressClient() external {
+        address owner = _randomAddress();
+        address[] memory clients = new address[](2);
+        clients[0] = _randomAddress();
+        clients[1] = address(0);
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            clients: clients
+        });
+        vm.prank(owner);
+        vm.expectRevert(InvalidAddressInput.selector);
+        facet.createApp(appData);
     }
 
     // ==================== ADMIN FUNCTIONS TESTS ====================

@@ -57,7 +57,74 @@ const _abi = [
   },
   {
     type: "function",
-    name: "getAppById",
+    name: "createApp",
+    inputs: [
+      {
+        name: "params",
+        type: "tuple",
+        internalType: "struct IAppRegistryBase.AppParams",
+        components: [
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "permissions",
+            type: "bytes32[]",
+            internalType: "bytes32[]",
+          },
+          {
+            name: "clients",
+            type: "address[]",
+            internalType: "address[]",
+          },
+        ],
+      },
+    ],
+    outputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "appId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+    ],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "getAppSchema",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getAppSchemaId",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getAttestation",
     inputs: [
       {
         name: "appId",
@@ -122,32 +189,6 @@ const _abi = [
             internalType: "bytes",
           },
         ],
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "getAppSchema",
-    inputs: [],
-    outputs: [
-      {
-        name: "",
-        type: "string",
-        internalType: "string",
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "getAppSchemaId",
-    inputs: [],
-    outputs: [
-      {
-        name: "",
-        type: "bytes32",
-        internalType: "bytes32",
       },
     ],
     stateMutability: "view",
@@ -236,6 +277,25 @@ const _abi = [
   {
     type: "event",
     name: "AppBanned",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "uid",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "AppCreated",
     inputs: [
       {
         name: "app",
@@ -355,6 +415,11 @@ const _abi = [
   {
     type: "error",
     name: "InvalidAppId",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvalidAppName",
     inputs: [],
   },
   {

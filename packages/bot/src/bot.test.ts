@@ -21,19 +21,27 @@ import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
 import { toBinary, create } from '@bufbuild/protobuf'
-import { ETH_ADDRESS, SpaceDapp } from '@towns-protocol/web3'
+import {
+    AppRegistryDapp,
+    ETH_ADDRESS,
+    Permission,
+    SpaceDapp,
+    type Address,
+} from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
 const getAppRegistryUrl = () => {
-    if (process.env.RIVER_ENV === 'local_multi') {
+    const env = 'local_multi' // TODO: change to process.env.RIVER_ENV
+
+    if (env === 'local_multi') {
         return process.env.APP_REGISTRY_LOCAL_MULTI_URL!
-    } else if (process.env.RIVER_ENV === 'local_multi_ne') {
+    } else if (env === 'local_multi_ne') {
         return process.env.APP_REGISTRY_LOCAL_MULTI_NE_URL!
     }
-    throw new Error(`Unknown river env: ${process.env.RIVER_ENV}`)
+    throw new Error(`Unknown river env: ${env}`)
 }
 
 type OnMessageType = BotPayload<'message'>
@@ -46,6 +54,10 @@ describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
 
     const bob = new SyncAgentTest(undefined, riverConfig)
+    const appRegistryDapp = new AppRegistryDapp(
+        riverConfig.base.chainConfig,
+        makeBaseProvider(riverConfig),
+    )
     let bobClient: SyncAgent
 
     const alice = new SyncAgentTest(undefined, riverConfig)
@@ -62,10 +74,12 @@ describe('Bot', { sequential: true }, () => {
     let appRegistryRpcClient: AppRegistryRpcClient
     let appId: Uint8Array
     let bobDefaultChannel: Channel
+    let botAppAddress: Address
 
     beforeAll(async () => {
         await shouldInitializeBotOwner()
         await shouldCreateBotClient()
+        await shouldMintBot()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
     })
@@ -106,6 +120,8 @@ describe('Bot', { sequential: true }, () => {
         const botUserId = userIdFromAddress(signerContext.creatorAddress)
         const cryptoStore = RiverDbManager.getCryptoDb(botUserId)
 
+        // we're not going to have the bot join the space here, because we're going to mint the bot in the app registry
+        // we want to mint the bot fist and join the space as a bot...
         const { issued } = await spaceDapp.joinSpace(spaceId, botWallet.address, bob.signer)
         expect(issued).toBe(true)
 
@@ -116,7 +132,10 @@ describe('Bot', { sequential: true }, () => {
             new MockEntitlementsDelegate(),
         )
         await botClient.initializeUser({ spaceId })
-        await botClient.joinUser(spaceId, botWallet.address)
+        await botClient.joinStream(spaceId, {
+            skipWaitForUserStreamUpdate: true,
+            skipWaitForMiniblockConfirmation: true,
+        })
         await botClient.joinStream(channelId, {
             skipWaitForUserStreamUpdate: true,
             skipWaitForMiniblockConfirmation: true,
@@ -136,6 +155,25 @@ describe('Bot', { sequential: true }, () => {
         )
         expect(appPrivateDataBase64).toBeDefined()
         appId = bin_fromHexString(botWallet.address)
+    }
+
+    const shouldMintBot = async () => {
+        const botClientAddress = botWallet.address as Address
+
+        const tx = await appRegistryDapp.createApp(
+            bob.signer,
+            'bot-witness-of-infinity',
+            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
+            [botClientAddress],
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        await appRegistryDapp.registerApp(bob.signer, foundAppAddress as Address, [
+            botClientAddress,
+        ])
+        botAppAddress = foundAppAddress as Address
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
@@ -234,7 +272,7 @@ describe('Bot', { sequential: true }, () => {
         const { streamId } = await bobClient.dms.createDM(bot.botId)
         const dm = bobClient.dms.getDm(streamId)
         const { eventId } = await dm.sendMessage(TEST_MESSAGE)
-        expect(await waitFor(() => receivedMessages.length > 0)).toBe(true)
+        await waitFor(() => expect(receivedMessages.length).toBeGreaterThan(0))
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.isDm).toBe(true)
         expect(event?.isGdm).toBe(false)
@@ -252,7 +290,7 @@ describe('Bot', { sequential: true }, () => {
         const { streamId } = await bobClient.gdms.createGDM([alice.userId, bot.botId])
         const gdm = bobClient.gdms.getGdm(streamId)
         const { eventId } = await gdm.sendMessage(TEST_MESSAGE)
-        expect(await waitFor(() => receivedMessages.length > 0)).toBe(true)
+        await waitFor(() => expect(receivedMessages.length).toBeGreaterThan(0))
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.isGdm).toBe(true)
         expect(event?.isDm).toBe(false)
