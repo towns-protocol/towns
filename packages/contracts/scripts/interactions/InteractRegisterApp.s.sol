@@ -21,10 +21,15 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
 
+        uint256 installPrice = 0.001 ether;
+        uint64 accessDuration = 365 days;
+
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: bots
+            clients: bots,
+            installPrice: installPrice,
+            accessDuration: accessDuration
         });
 
         vm.broadcast(deployer);
