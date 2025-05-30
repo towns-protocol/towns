@@ -75,7 +75,7 @@ export const MintBotDialog = ({
                 new MockEntitlementsDelegate(),
             )
             await botClient.initializeUser({ spaceId })
-            await botClient.joinUser(spaceId, botWallet.address)
+            await botClient.joinUser(spaceId, botWallet.address) // NOTE aellis - this should be the logged in user's client joining the bot to the space
             await Promise.all([
                 botClient.setUsername(spaceId, `bot-${userId}`),
                 botClient.setDisplayName(spaceId, `bot-${userId}`),
