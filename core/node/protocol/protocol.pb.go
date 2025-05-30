@@ -4759,7 +4759,8 @@ type SyncStreamsResponse struct {
 	// stream_id is set when sync_op = SYNC_DOWN and indicates it will not receive updates anymore for this stream.
 	// If the client is still is interested in updates for this stream it must re-add the stream to the sync session.
 	StreamId []byte `protobuf:"bytes,5,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
-	// target_sync_ids ... client->nodeA->nodeB->nodeA(target sync 1)->client(target sync 2)
+	// target_sync_ids is the chain of sync IDs that is used to deliver the backfill update to the right end client.
+	// For example: client->nodeA->nodeB->nodeA(target sync 1)->client(target sync 2)
 	TargetSyncIds []string `protobuf:"bytes,6,rep,name=target_sync_ids,json=targetSyncIds,proto3" json:"target_sync_ids,omitempty"`
 }
 
@@ -5182,7 +5183,7 @@ type ModifySyncResponse struct {
 	Adds []*SyncStreamOpStatus `protobuf:"bytes,1,rep,name=adds,proto3" json:"adds,omitempty"`
 	// List with streams that failed to be removed from the sync operation.
 	Removals []*SyncStreamOpStatus `protobuf:"bytes,2,rep,name=removals,proto3" json:"removals,omitempty"`
-	// backfills ...
+	// backfills is the list of backfills that were requested to be performed.
 	Backfills []*SyncStreamOpStatus `protobuf:"bytes,3,rep,name=backfills,proto3" json:"backfills,omitempty"`
 }
 
@@ -9311,7 +9312,10 @@ type ModifySyncRequest_Backfill struct {
 
 	// backfill_streams is the list of sync cookies to backfill
 	Streams []*SyncCookie `protobuf:"bytes,1,rep,name=streams,proto3" json:"streams,omitempty"`
-	SyncId  string        `protobuf:"bytes,2,opt,name=sync_id,json=syncId,proto3" json:"sync_id,omitempty"`
+	// sync_id is the id of the sync session to backfill.
+	// This is the sync ID between the end client and the node that initiated the sync session.
+	// The sync ID below is the sync ID between the node that initiated the sync session and the node that is backfilling.
+	SyncId string `protobuf:"bytes,2,opt,name=sync_id,json=syncId,proto3" json:"sync_id,omitempty"`
 }
 
 func (x *ModifySyncRequest_Backfill) Reset() {
