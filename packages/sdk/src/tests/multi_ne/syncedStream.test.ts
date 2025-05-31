@@ -5,6 +5,7 @@
 import { MembershipOp } from '@towns-protocol/proto'
 import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
+import isEqual from 'lodash/isEqual'
 
 describe('syncedStream', () => {
     test('clientRefreshesStreamOnBadSyncCookie', async () => {
@@ -67,7 +68,7 @@ describe('syncedStream', () => {
         // check that the events are the same
         const aliceEvents = aliceStream.view.timeline.map((e) => e.hashStr)
         const bobEvents = bobStreamFresh.view.timeline.map((e) => e.hashStr)
-        await waitFor(() => aliceEvents.sort() === bobEvents.sort())
+        await waitFor(() => isEqual(aliceEvents.sort(), bobEvents.sort()))
 
         const bobEventCount = bobEvents.length
         // Alice sends another 5 messages

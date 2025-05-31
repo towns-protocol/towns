@@ -49,7 +49,7 @@ describe('util.test', () => {
 
         const result = await waitFor(
             () => {
-                return myDelayedValue
+                return myDelayedValue || false
             },
             { timeoutMS: 2000 },
         )
