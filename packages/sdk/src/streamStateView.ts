@@ -186,7 +186,7 @@ export class StreamStateView {
         }
 
         this.prevSnapshotMiniblockNum = 0n
-        this.membershipContent = new StreamStateView_Members(streamId)
+        this.membershipContent = new StreamStateView_Members(streamId, userId)
     }
 
     private applySnapshot(
