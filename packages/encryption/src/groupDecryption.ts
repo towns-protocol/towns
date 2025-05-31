@@ -5,7 +5,7 @@ import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion } from '@towns-protocol/proto'
 import { bin_fromBase64, dlogError } from '@towns-protocol/dlog'
 import { LRUCache } from 'lru-cache'
-import type { InboundGroupSession } from './encryptionTypes'
+import { InboundGroupSession } from '@matrix-org/olm'
 
 const logError = dlogError('csb:encryption:groupDecryption')
 
