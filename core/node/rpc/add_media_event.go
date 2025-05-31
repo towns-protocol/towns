@@ -84,7 +84,7 @@ func (s *Service) localAddMediaEvent(
 }
 
 func (s *Service) getGenesisMediaEvent(ctx context.Context, streamId StreamId) (*StreamEvent, error) {
-	mbs, err := s.storage.ReadMiniblocks(ctx, streamId, 0, 1)
+	mbs, err := s.storage.ReadMiniblocks(ctx, streamId, 0, 1, true)
 	if err != nil {
 		return nil, err
 	}

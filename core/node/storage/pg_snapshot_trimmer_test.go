@@ -60,12 +60,17 @@ func TestSnapshotsTrimmer(t *testing.T) {
 	// Check if the snapshots are trimmed correctly
 	require.Eventually(func() bool {
 		mbsWithSnapshot := make([]int64, 0)
-		err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-			if len(snapshot) > 0 {
-				mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
-			}
-			return nil
-		})
+		err = pgStreamStore.ReadMiniblocksByStream(
+			ctx,
+			streamId,
+			false,
+			func(blockdata []byte, seqNum int64, snapshot []byte) error {
+				if len(snapshot) > 0 {
+					mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
+				}
+				return nil
+			},
+		)
 		require.NoError(err)
 		fmt.Println(mbsWithSnapshot)
 		return slices.Equal([]int64{0, 110, 220, 330, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)

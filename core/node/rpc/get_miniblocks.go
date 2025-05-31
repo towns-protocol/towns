@@ -26,7 +26,7 @@ func (s *Service) localGetMiniblocks(
 		toExclusive = req.Msg.FromInclusive + limit
 	}
 
-	mbsInfo, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, toExclusive)
+	mbsInfo, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, toExclusive, req.Msg.GetOmitSnapshots())
 	if err != nil {
 		return nil, err
 	}

@@ -1072,7 +1072,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		),
 	)
 
-	_, err := pgStreamStore.ReadMiniblocks(ctx, streamId, 1, 4)
+	_, err := pgStreamStore.ReadMiniblocks(ctx, streamId, 1, 4, true)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Miniblocks consistency violation")

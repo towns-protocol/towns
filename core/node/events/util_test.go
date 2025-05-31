@@ -354,7 +354,7 @@ func (ctc *cacheTestContext) GetMbs(
 				return nil, err
 			}
 
-			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive)
+			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
 			if err != nil {
 				return nil, err
 			}
