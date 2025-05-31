@@ -12,13 +12,14 @@ import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 
 library DeployAppAccount {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](6);
+        _selectors = new bytes4[](7);
         _selectors[0] = AppAccount.execute.selector;
         _selectors[1] = AppAccount.installApp.selector;
         _selectors[2] = AppAccount.uninstallApp.selector;
         _selectors[3] = AppAccount.isAppEntitled.selector;
-        _selectors[4] = AppAccount.setAppAllowance.selector;
-        _selectors[5] = AppAccount.getAppAllowance.selector;
+        _selectors[4] = AppAccount.disableApp.selector;
+        _selectors[5] = AppAccount.getInstalledApps.selector;
+        _selectors[6] = AppAccount.getAppId.selector;
     }
 
     function makeCut(

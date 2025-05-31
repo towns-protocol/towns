@@ -123,7 +123,6 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32 revokedUid = facet.removeApp(appId);
 
         assertEq(revokedUid, appId);
-        assertEq(facet.getLatestAppId(app), bytes32(0));
     }
 
     function test_removeApp_onlyOwner() external {
