@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.233",
+    "version": "0.0.234",
     "packageManager": "yarn@3.8.0",
     "publishConfig": {
         "access": "public"
