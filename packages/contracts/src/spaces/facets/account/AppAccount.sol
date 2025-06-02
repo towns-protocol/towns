@@ -18,14 +18,6 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @dev This account is used to execute transactions on behalf of a Space
  */
 contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
-    /// @notice Validates if the target address is allowed for calls
-    /// @dev Prevents calls to critical system contracts
-    /// @param target The contract address to check
-    modifier onlyAuthorized(address target) {
-        _checkAuthorized(target);
-        _;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Execution                             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -34,7 +26,8 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         address target,
         uint256 value,
         bytes calldata data
-    ) external payable onlyAuthorized(target) nonReentrant returns (bytes memory result) {
+    ) external payable nonReentrant returns (bytes memory result) {
+        _checkAuthorized(target);
         (result, ) = _execute(target, value, data);
     }
 
@@ -49,6 +42,11 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         AppParams calldata params
     ) external payable nonReentrant onlyOwner {
         _installApp(app, params.delays, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function enableApp(address app) external onlyOwner {
+        _enableApp(app);
     }
 
     /// @inheritdoc IAppAccount
@@ -72,7 +70,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
-    function getClients(address app) external view returns (address[] memory) {
+    function getAppClients(address app) external view returns (address[] memory) {
         return _getClients(app);
     }
 
