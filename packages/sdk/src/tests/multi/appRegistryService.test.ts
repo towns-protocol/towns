@@ -5,7 +5,7 @@ import { getAppRegistryUrl } from '../../riverConfig'
 
 const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
 
-describe('appRegistryService test', { skip: true }, () => {
+describe('appRegistryService test', () => {
     test('authenticate with primary key', async () => {
         const wallet = ethers.Wallet.createRandom()
         const { finishResponse } = await AppRegistryService.authenticateWithSigner(

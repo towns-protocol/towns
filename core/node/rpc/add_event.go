@@ -151,6 +151,14 @@ func (s *Service) addParsedEvent(
 			if err != nil {
 				return nil, err
 			}
+			logging.FromCtx(ctx).
+				Infow(
+					"-- isEntitled oneof",
+					"isEntitledResult", isEntitledResult.IsEntitled(),
+					"reason", isEntitledResult.Reason().String(),
+					"err", err,
+					"chainAuthArgs", chainAuthArgs,
+				)
 			if isEntitledResult.IsEntitled() {
 				break
 			}
