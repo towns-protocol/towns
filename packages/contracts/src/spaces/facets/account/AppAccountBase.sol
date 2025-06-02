@@ -149,6 +149,12 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         _setGroupStatus(appId, false);
     }
 
+    function _getClients(address app) internal view returns (address[] memory) {
+        bytes32 appId = _getAppId(app);
+        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
+        return _getAppFromAttestation(app, _getAttestation(appId)).clients;
+    }
+
     // Getters
     function _isEntitled(
         address module,
