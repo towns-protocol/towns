@@ -70,12 +70,22 @@ export declare namespace IAppRegistryBase {
     name: PromiseOrValue<string>;
     permissions: PromiseOrValue<BytesLike>[];
     clients: PromiseOrValue<string>[];
+    installPrice: PromiseOrValue<BigNumberish>;
+    accessDuration: PromiseOrValue<BigNumberish>;
   };
 
-  export type AppParamsStructOutput = [string, string[], string[]] & {
+  export type AppParamsStructOutput = [
+    string,
+    string[],
+    string[],
+    BigNumber,
+    BigNumber
+  ] & {
     name: string;
     permissions: string[];
     clients: string[];
+    installPrice: BigNumber;
+    accessDuration: BigNumber;
   };
 }
 
@@ -83,7 +93,7 @@ export interface IAppRegistryInterface extends utils.Interface {
   functions: {
     "adminBanApp(address)": FunctionFragment;
     "adminRegisterAppSchema(string,address,bool)": FunctionFragment;
-    "createApp((string,bytes32[],address[]))": FunctionFragment;
+    "createApp((string,bytes32[],address[],uint256,uint64))": FunctionFragment;
     "getAppSchema()": FunctionFragment;
     "getAppSchemaId()": FunctionFragment;
     "getAttestation(bytes32)": FunctionFragment;
