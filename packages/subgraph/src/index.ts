@@ -1,34 +1,7 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { createPublicClient, http } from 'viem'
-
-const publicClient = createPublicClient({
-    transport: http(process.env.PONDER_RPC_URL_1),
-})
-
-async function getLatestBlockNumber() {
-    return await publicClient.getBlockNumber()
-}
-
-function getCreatedDate(blockTimestamp: bigint): Date | null {
-    // 1970-01-01T00:00:00Z in ms
-    const MIN_PG_TIMESTAMP_MS = -62135596800000
-    // 2100-01-01T00:00:00Z in ms
-    const MAX_PG_TIMESTAMP_MS = 4102444800000
-    let timestamp: number | null = null
-    try {
-        timestamp = parseInt(blockTimestamp.toString(), 10) * 1000
-    } catch (error) {
-        console.warn(`Invalid blockTimestamp: ${blockTimestamp}`)
-        return null
-    }
-    if (timestamp < MIN_PG_TIMESTAMP_MS || timestamp > MAX_PG_TIMESTAMP_MS) {
-        console.warn(`Invalid range for blockTimestamp: ${blockTimestamp}`)
-        return null
-    }
-    return new Date(timestamp)
-}
+import { getLatestBlockNumber, getCreatedDate } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -183,12 +156,21 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         return
     }
 
+    const createdDate = getCreatedDate(blockTimestamp)
+    if (!createdDate || isNaN(createdDate.getTime())) {
+        console.error(
+            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
+            transactionHash,
+            blockTimestamp,
+        )
+        return
+    }
+
     try {
         const existing = await context.db.sql.query.swap.findFirst({
             where: eq(schema.swap.txHash, transactionHash),
         })
         if (!existing) {
-            const createdDate = getCreatedDate(blockTimestamp)
             await context.db.insert(schema.swap).values({
                 txHash: transactionHash,
                 spaceId: spaceId,
@@ -212,13 +194,19 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
 
+    const createdDate = getCreatedDate(blockTimestamp)
+
+    if (!createdDate || isNaN(createdDate.getTime())) {
+        console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
+        return
+    }
+
     try {
         // update swap router swap table
         const existing = await context.db.sql.query.swapRouterSwap.findFirst({
             where: eq(schema.swapRouterSwap.txHash, transactionHash),
         })
         if (!existing) {
-            const createdDate = getCreatedDate(blockTimestamp)
             await context.db.insert(schema.swapRouterSwap).values({
                 txHash: transactionHash,
                 router: event.args.router,
