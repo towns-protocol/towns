@@ -50,8 +50,10 @@ describe('spaceTests', () => {
 
         const userStreamView = alicesClient.stream(alicesClient.userStreamId!)!.view
         await waitFor(() => {
-            expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
-            expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+            expect(userStreamView.userContent.getMembership(spaceId)?.op).toBe(MembershipOp.SO_JOIN)
+            expect(userStreamView.userContent.getMembership(channelId)?.op).toBe(
+                MembershipOp.SO_JOIN,
+            )
         })
 
         // Bob can kick Alice
@@ -59,8 +61,12 @@ describe('spaceTests', () => {
 
         // Alice is no longer a member of the space or channel
         await waitFor(() => {
-            expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(false)
-            expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(false)
+            expect(userStreamView.userContent.getMembership(spaceId)?.op).toBe(
+                MembershipOp.SO_LEAVE,
+            )
+            expect(userStreamView.userContent.getMembership(channelId)?.op).toBe(
+                MembershipOp.SO_LEAVE,
+            )
         })
     })
 
@@ -106,11 +112,11 @@ describe('spaceTests', () => {
                 disableSignatureValidation: true,
             })
             const snapshot = stream.snapshot
-            expect(
-                snapshot?.content.case === 'spaceContent' &&
-                    snapshot.content.value.channels.length === 1 &&
-                    snapshot.content.value.channels[0].updatedAtEventNum === prevUpdatedAt,
-            ).toBe(true)
+            if (snapshot?.content.case !== 'spaceContent') {
+                throw new Error('snapshot is not a space content')
+            }
+            expect(snapshot.content.value.channels.length).toBe(1)
+            expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
         })
 
         // update the channel metadata
@@ -139,75 +145,53 @@ describe('spaceTests', () => {
                 disableSignatureValidation: true,
             })
             const snapshot = stream.snapshot
-            expect(
-                snapshot?.content.case === 'spaceContent' &&
-                    snapshot.content.value.channels.length === 1 &&
-                    snapshot.content.value.channels[0].updatedAtEventNum > prevUpdatedAt,
-            ).toBe(true)
+            if (snapshot?.content.case !== 'spaceContent') {
+                throw new Error('snapshot is not a space content')
+            }
+            expect(snapshot.content.value.channels.length).toBe(1)
+            expect(snapshot.content.value.channels[0].updatedAtEventNum).toBeGreaterThan(
+                prevUpdatedAt,
+            )
         })
     })
-
-    function spaceImageUpdated(spaceId: string, counter: { count: number }) {
-        counter.count++
-    }
 
     test('spaceImage', async () => {
         const spaceImageUpdatedCounter = {
             count: 0,
         }
+        function spaceImageUpdated(_spaceId: string) {
+            spaceImageUpdatedCounter.count++
+        }
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         const spaceStream = await bobsClient.waitForStream(spaceId)
 
-        spaceStream.on(
-            'spaceImageUpdated',
-            spaceImageUpdated.bind(null, spaceId, spaceImageUpdatedCounter),
-        )
+        spaceStream.on('spaceImageUpdated', spaceImageUpdated)
 
-        try {
-            // make a space image event
-            const mediaStreamId = makeUniqueMediaStreamId()
-            const image = create(MediaInfoSchema, {
-                mimetype: 'image/png',
-                filename: 'bob-1.png',
-            })
-            const { key, iv } = await deriveKeyAndIV(nanoid(128)) // if in browser please use window.crypto.subtle.generateKey
-            const chunkedMediaInfo = {
-                info: image,
-                streamId: mediaStreamId,
-                encryption: {
-                    case: 'aesgcm',
-                    value: { secretKey: key, iv },
-                },
-                thumbnail: undefined,
-            } satisfies PlainMessage<ChunkedMedia>
+        // make a space image event
+        const mediaStreamId = makeUniqueMediaStreamId()
+        const image = create(MediaInfoSchema, {
+            mimetype: 'image/png',
+            filename: 'bob-1.png',
+        })
+        const { key, iv } = await deriveKeyAndIV(nanoid(128)) // if in browser please use window.crypto.subtle.generateKey
+        const chunkedMediaInfo = {
+            info: image,
+            streamId: mediaStreamId,
+            encryption: {
+                case: 'aesgcm',
+                value: { secretKey: key, iv },
+            },
+            thumbnail: undefined,
+        } satisfies PlainMessage<ChunkedMedia>
 
-            await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo)
+        await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo)
 
-            // make a snapshot
-            await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        // make a snapshot
+        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
-            // see the space image in the snapshot
-            await waitFor(async () => {
-                // fetch the raw stream with new snapshot
-                const response = await bobsClient.rpcClient.getStream({
-                    streamId: streamIdToBytes(spaceId),
-                })
-                const stream = await unpackStream(response.stream, {
-                    disableHashValidation: true,
-                    disableSignatureValidation: true,
-                })
-                const snapshot = stream.snapshot
-
-                expect(
-                    snapshot?.content.case === 'spaceContent' &&
-                        snapshot.content.value.spaceImage !== undefined &&
-                        snapshot.content.value.spaceImage.data !== undefined,
-                ).toBe(true)
-            })
-            expect(spaceImageUpdatedCounter.count).toBe(1)
-
-            // decrypt the snapshot and assert the image values
+        // see the space image in the snapshot
+        await waitFor(async () => {
             // fetch the raw stream with new snapshot
             const response = await bobsClient.rpcClient.getStream({
                 streamId: streamIdToBytes(spaceId),
@@ -217,78 +201,95 @@ describe('spaceTests', () => {
                 disableSignatureValidation: true,
             })
             const snapshot = stream.snapshot
-            const encryptedData =
-                snapshot?.content.case === 'spaceContent'
-                    ? snapshot.content.value.spaceImage?.data
-                    : undefined
-            expect(
-                encryptedData !== undefined &&
-                    isEncryptedData(encryptedData) &&
-                    encryptedData.algorithm === AES_GCM_DERIVED_ALGORITHM,
-            ).toBe(true)
-            const decrypted = await spaceStream.view.spaceContent.getSpaceImage()
-            expect(
-                decrypted !== undefined &&
-                    decrypted.info?.mimetype === image.mimetype &&
-                    decrypted.info?.filename === image.filename &&
-                    decrypted.encryption.case === 'aesgcm' &&
-                    decrypted.encryption.value.secretKey !== undefined,
-            ).toBe(true)
 
-            // make another space image event
-            const mediaStreamId2 = makeUniqueMediaStreamId()
-            const image2 = create(MediaInfoSchema, {
-                mimetype: 'image/jpg',
-                filename: 'bob-2.jpg',
+            if (snapshot?.content.case !== 'spaceContent') {
+                throw new Error('snapshot is not a space content')
+            }
+            expect(snapshot.content.value.spaceImage).toBeDefined()
+            expect(snapshot.content.value.spaceImage?.data).toBeDefined()
+        })
+
+        await waitFor(() => {
+            expect(spaceImageUpdatedCounter.count).toBe(1)
+        })
+
+        // decrypt the snapshot and assert the image values
+        // fetch the raw stream with new snapshot
+        const response = await bobsClient.rpcClient.getStream({
+            streamId: streamIdToBytes(spaceId),
+        })
+        const stream = await unpackStream(response.stream, {
+            disableHashValidation: true,
+            disableSignatureValidation: true,
+        })
+        const snapshot = stream.snapshot
+        const encryptedData =
+            snapshot?.content.case === 'spaceContent'
+                ? snapshot.content.value.spaceImage?.data
+                : undefined
+        expect(
+            encryptedData !== undefined &&
+                isEncryptedData(encryptedData) &&
+                encryptedData.algorithm === AES_GCM_DERIVED_ALGORITHM,
+        ).toBe(true)
+        const decrypted = await spaceStream.view.spaceContent.getSpaceImage()
+        expect(
+            decrypted !== undefined &&
+                decrypted.info?.mimetype === image.mimetype &&
+                decrypted.info?.filename === image.filename &&
+                decrypted.encryption.case === 'aesgcm' &&
+                decrypted.encryption.value.secretKey !== undefined,
+        ).toBe(true)
+
+        // make another space image event
+        const mediaStreamId2 = makeUniqueMediaStreamId()
+        const image2 = create(MediaInfoSchema, {
+            mimetype: 'image/jpg',
+            filename: 'bob-2.jpg',
+        })
+        const chunkedMediaInfo2 = {
+            info: image2,
+            streamId: mediaStreamId2,
+            encryption: {
+                case: 'aesgcm',
+                value: { secretKey: key, iv },
+            },
+            thumbnail: undefined,
+        } satisfies PlainMessage<ChunkedMedia>
+
+        await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo2)
+
+        // make a snapshot
+        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+
+        // see the space image in the snapshot
+        await waitFor(async () => {
+            // fetch the raw stream with new snapshot
+            const response = await bobsClient.rpcClient.getStream({
+                streamId: streamIdToBytes(spaceId),
             })
-            const chunkedMediaInfo2 = {
-                info: image2,
-                streamId: mediaStreamId2,
-                encryption: {
-                    case: 'aesgcm',
-                    value: { secretKey: key, iv },
-                },
-                thumbnail: undefined,
-            } satisfies PlainMessage<ChunkedMedia>
-
-            await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo2)
-
-            // make a snapshot
-            await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
-
-            // see the space image in the snapshot
-            await waitFor(async () => {
-                // fetch the raw stream with new snapshot
-                const response = await bobsClient.rpcClient.getStream({
-                    streamId: streamIdToBytes(spaceId),
-                })
-                const stream = await unpackStream(response.stream, {
-                    disableHashValidation: true,
-                    disableSignatureValidation: true,
-                })
-                const snapshot = stream.snapshot
-                expect(
-                    snapshot?.content.case === 'spaceContent' &&
-                        snapshot.content.value.spaceImage !== undefined &&
-                        snapshot.content.value.spaceImage.data !== undefined,
-                ).toBe(true)
+            const stream = await unpackStream(response.stream, {
+                disableHashValidation: true,
+                disableSignatureValidation: true,
             })
+            const snapshot = stream.snapshot
+            if (snapshot?.content.case !== 'spaceContent') {
+                throw new Error('snapshot is not a space content')
+            }
+            expect(snapshot.content.value.spaceImage).toBeDefined()
+            expect(snapshot.content.value.spaceImage?.data).toBeDefined()
+        })
 
-            // decrypt the snapshot and assert the image values
-            const spaceImage = await spaceStream.view.spaceContent.getSpaceImage()
-            expect(
-                spaceImage !== undefined &&
-                    spaceImage?.info?.mimetype === image2.mimetype &&
-                    spaceImage?.info?.filename === image2.filename &&
-                    spaceImage.encryption.case === 'aesgcm' &&
-                    spaceImage.encryption.value.secretKey !== undefined,
-            ).toBe(true)
-            expect(spaceImageUpdatedCounter.count).toBe(2)
-        } finally {
-            spaceStream.off(
-                'spaceImageUpdated',
-                spaceImageUpdated.bind(null, spaceId, spaceImageUpdatedCounter),
-            )
+        // decrypt the snapshot and assert the image values
+        const spaceImage = await spaceStream.view.spaceContent.getSpaceImage()
+        expect(spaceImage).toBeDefined()
+        expect(spaceImage?.info?.mimetype).toBe(image2.mimetype)
+        expect(spaceImage?.info?.filename).toBe(image2.filename)
+        expect(spaceImage?.encryption.case).toBe('aesgcm')
+        if (spaceImage?.encryption.case !== 'aesgcm') {
+            throw new Error('space image encryption is not aesgcm') // to compile
         }
+        expect(spaceImage?.encryption.value.secretKey).toBeDefined()
+        expect(spaceImageUpdatedCounter.count).toBe(2)
     })
 })
