@@ -10,6 +10,7 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -18,6 +19,8 @@ import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {AppAccountStorage} from "./AppAccountStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
@@ -58,6 +61,9 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         }
 
         _verifyManifests(module, app.manifest);
+
+        // set the group status to active
+        _chargeForInstall(msg.sender, app.owner, app.installPrice);
         _setGroupStatus(app.appId, true);
         _addApp(module, app.appId);
 
@@ -204,7 +210,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     function _getAppFromAttestation(
         address module,
         Attestation memory att
-    ) private pure returns (App memory app) {
+    ) private view returns (App memory app) {
         if (att.uid == EMPTY_UID) InvalidAppId.selector.revertWith();
         if (att.revocationTime != 0) AppRevoked.selector.revertWith();
 
@@ -216,14 +222,24 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             ExecutionManifest memory manifest
         ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
 
+        uint256 installPrice = ITownsApp(module).installPrice();
+        uint64 accessDuration = ITownsApp(module).accessDuration();
+
         app = App({
             appId: att.uid,
             module: module,
             owner: owner,
             clients: clients,
             permissions: permissions,
-            manifest: manifest
+            manifest: manifest,
+            installPrice: installPrice,
+            accessDuration: accessDuration
         });
+    }
+
+    function _getPlatformRequirements() private view returns (IPlatformRequirements) {
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        return IPlatformRequirements(ms.spaceFactory);
     }
 
     function _getAppRegistry() private view returns (IAppRegistry) {
@@ -272,6 +288,59 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         if (_isUnauthorizedTarget(module, factory, deps)) {
             UnauthorizedApp.selector.revertWith(module);
         }
+    }
+
+    function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
+        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 minPrice = platform.getMembershipFee();
+        if (installPrice == 0) return minPrice;
+        uint256 basisPointsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
+        return basisPointsFee > minPrice ? basisPointsFee : minPrice;
+    }
+
+    function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
+        // Get the protocol fee - will be at least the membership fee
+        uint256 protocolFee = _getProtocolFee(installPrice);
+
+        // For free apps, we only need to cover protocol fee
+        uint256 totalRequired = installPrice == 0 ? protocolFee : installPrice;
+        if (msg.value < totalRequired) revert InsufficientPayment();
+
+        // Handle protocol fee first - this is always charged
+        CurrencyTransfer.transferCurrency(
+            CurrencyTransfer.NATIVE_TOKEN,
+            payer,
+            _getPlatformRequirements().getFeeRecipient(),
+            protocolFee
+        );
+
+        // Handle recipient payment
+        uint256 ownerProceeds = installPrice == 0 ? 0 : installPrice - protocolFee;
+        if (ownerProceeds > 0) {
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                payer,
+                recipient,
+                ownerProceeds
+            );
+        }
+
+        // Refund excess
+        uint256 excess = msg.value - totalRequired;
+        if (excess > 0) {
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                address(this),
+                payer,
+                excess
+            );
+        }
+    }
+
+    function _getInstallPrice(address app) internal view returns (uint256) {
+        uint256 installPrice = ITownsApp(app).installPrice();
+        if (installPrice == 0) return _getProtocolFee(installPrice);
+        return installPrice;
     }
 
     function _isUnauthorizedTarget(

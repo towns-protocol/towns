@@ -16,6 +16,8 @@ interface IAppAccountBase {
         address[] clients;
         bytes32[] permissions;
         ExecutionManifest manifest;
+        uint256 installPrice;
+        uint64 accessDuration;
     }
 
     /// @notice Params for installing an app
@@ -46,6 +48,8 @@ interface IAppAccountBase {
     error AppNotInstalled();
     error AppNotRegistered();
     error AppRevoked();
+    error InsufficientPayment();
+    error InvalidOwner();
 }
 
 interface IAppAccount is IAppAccountBase {
@@ -53,7 +57,11 @@ interface IAppAccount is IAppAccountBase {
     /// @param app The address of the app to install
     /// @param data The initialization data for the app
     /// @param params The parameters for the app installation including delays
-    function installApp(address app, bytes calldata data, AppParams calldata params) external;
+    function installApp(
+        address app,
+        bytes calldata data,
+        AppParams calldata params
+    ) external payable;
 
     /// @notice Disables an app
     /// @param app The address of the app to disable
@@ -77,6 +85,11 @@ interface IAppAccount is IAppAccountBase {
     /// @param app The address of the app to get the clients of
     /// @return The clients of the app
     function getClients(address app) external view returns (address[] memory);
+
+    /// @notice Gets the price of an app
+    /// @param app The address of the app to get the price of
+    /// @return The price of the app
+    function getAppPrice(address app) external view returns (uint256);
 
     /// @notice Checks if a client is entitled to a permission for an app
     /// @param app The address of the app to check
