@@ -125,8 +125,10 @@ func testDistributionWithStateFromEnv(
 	allNodes, err := riverRegistry.GetAllNodes(ctx, blockchain.InitialBlockNum)
 	require.NoError(err)
 
-	distributor, err := stream.NewDistributor(ctx, cfg, blockchain.InitialBlockNum,
-		blockchain.ChainMonitor, riverRegistry)
+	blockNumber, err := blockchain.GetBlockNumber(ctx)
+	require.NoError(err)
+
+	distributor, err := stream.NewDistributor(ctx, cfg, blockNumber, blockchain.ChainMonitor, riverRegistry)
 	require.NoError(err)
 
 	distributorSim := distributor.(stream.DistributorSimulator)
@@ -236,10 +238,13 @@ func testStreamDistributionFromGreenState(t *testing.T) {
 	)
 	tt.require.NoError(err)
 
+	blockNumber, err := tt.btc.DeployerBlockchain.GetBlockNumber(t.Context())
+	tt.require.NoError(err)
+
 	distributor, err := stream.NewDistributor(
 		t.Context(),
 		tt.btc.OnChainConfig,
-		tt.btc.DeployerBlockchain.InitialBlockNum,
+		blockNumber,
 		tt.btc.DeployerBlockchain.ChainMonitor,
 		riverContract,
 	)

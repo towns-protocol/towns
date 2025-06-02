@@ -135,11 +135,11 @@ var (
 func NewDistributor(
 	ctx context.Context,
 	cfg crypto.OnChainConfiguration,
-	appliedBlockNum crypto.BlockNumber,
+	blockNumber crypto.BlockNumber,
 	chainMonitor crypto.ChainMonitor,
 	riverRegistry *registries.RiverRegistryContract,
 ) (Distributor, error) {
-	impl, err := newImpl(ctx, cfg, riverRegistry, appliedBlockNum)
+	impl, err := newImpl(ctx, cfg, riverRegistry, blockNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func NewDistributor(
 	})
 
 	// update internal statistic for stream node calculation
-	chainMonitor.OnContractWithTopicsEvent(appliedBlockNum+1, riverRegistry.Address,
+	chainMonitor.OnContractWithTopicsEvent(blockNumber+1, riverRegistry.Address,
 		[][]common.Hash{{riverRegistry.StreamRegistryAbi.Events["StreamUpdated"].ID}}, d.onStreamUpdate)
 
 	return d, nil
