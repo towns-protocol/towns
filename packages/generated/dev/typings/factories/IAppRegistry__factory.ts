@@ -79,6 +79,16 @@ const _abi = [
             type: "address[]",
             internalType: "address[]",
           },
+          {
+            name: "installPrice",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "accessDuration",
+            type: "uint64",
+            internalType: "uint64",
+          },
         ],
       },
     ],
@@ -425,6 +435,16 @@ const _abi = [
   {
     type: "error",
     name: "InvalidArrayInput",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvalidDuration",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvalidPrice",
     inputs: [],
   },
   {
