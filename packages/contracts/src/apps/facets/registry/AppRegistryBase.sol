@@ -9,6 +9,7 @@ import {ITownsApp} from "../../ITownsApp.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
@@ -97,6 +98,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (params.permissions.length == 0) revert InvalidArrayInput();
         if (params.clients.length == 0) revert InvalidArrayInput();
 
+        _validatePricing(params.installPrice);
+
         app = LibClone.deployERC1967BeaconProxy(address(this));
         ISimpleApp(app).initialize(
             msg.sender,
@@ -126,8 +129,13 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
-        bytes32[] memory permissions = ITownsApp(app).requiredPermissions();
-        ExecutionManifest memory manifest = ITownsApp(app).executionManifest();
+        ITownsApp appContract = ITownsApp(app);
+
+        uint256 installPrice = appContract.installPrice();
+        _validatePricing(installPrice);
+
+        bytes32[] memory permissions = appContract.requiredPermissions();
+        ExecutionManifest memory manifest = appContract.executionManifest();
 
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
@@ -211,6 +219,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return appInfo.latestVersion;
     }
 
+    function _validatePricing(uint256 price) internal view {
+        IPlatformRequirements reqs = _getPlatformRequirements();
+        uint256 minPlatformFee = reqs.getMembershipFee();
+        if (price > 0 && price < minPlatformFee) revert InvalidPrice();
+    }
+
     /// @notice Verifies inputs for adding a new app
     /// @param app The app address to verify
     /// @param clients Array of client addresses to verify
@@ -230,5 +244,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         ) {
             AppDoesNotImplementInterface.selector.revertWith();
         }
+    }
+
+    function _getPlatformRequirements() internal view returns (IPlatformRequirements) {
+        return IPlatformRequirements(AppRegistryStorage.getLayout().spaceFactory);
     }
 }

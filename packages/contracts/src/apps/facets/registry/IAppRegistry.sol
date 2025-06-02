@@ -29,6 +29,8 @@ interface IAppRegistryBase {
     error InvalidArrayInput();
     error BannedApp();
     error InvalidAppId();
+    error InvalidPrice();
+    error InvalidDuration();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */

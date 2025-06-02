@@ -47,7 +47,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         address app,
         bytes calldata data,
         AppParams calldata params
-    ) external nonReentrant onlyOwner {
+    ) external payable nonReentrant onlyOwner {
         _installApp(app, params.delays, data);
     }
 
@@ -74,6 +74,11 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /// @inheritdoc IAppAccount
     function getClients(address app) external view returns (address[] memory) {
         return _getClients(app);
+    }
+
+    /// @inheritdoc IAppAccount
+    function getAppPrice(address app) external view returns (uint256) {
+        return _getInstallPrice(app);
     }
 
     /// @inheritdoc IAppAccount
