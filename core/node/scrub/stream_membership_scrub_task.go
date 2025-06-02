@@ -116,6 +116,21 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	log := logging.FromCtx(ctx)
 	tp.membershipChecks.Inc()
 
+	stream, err := tp.cache.GetStreamWaitForLocal(ctx, channelId)
+	if err != nil {
+		return AsRiverError(err).Message("Error during stream scrub").LogError(logging.FromCtx(ctx))
+	}
+
+	view, err := stream.GetView(ctx)
+	if err != nil {
+		return AsRiverError(err).Message("Error during stream scrub").LogError(logging.FromCtx(ctx))
+	}
+
+	appAddress, err := view.GetMemberAppAddress(member)
+	if err != nil {
+		return AsRiverError(err).Message("Error during stream scrub").LogError(logging.FromCtx(ctx))
+	}
+
 	spaceId := channelId.SpaceID()
 	isEntitledResult, err := tp.chainAuth.IsEntitled(
 		ctx,
@@ -125,6 +140,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			channelId,
 			member,
 			auth.PermissionRead,
+			appAddress,
 		),
 	)
 	if err != nil {

@@ -79,7 +79,7 @@ type csUserInboxRules struct {
 
 /*
 *
-* CanCreateStreamEvent
+* CanCreateStream
 * a pure function with no side effects that returns a boolean value and prerequesits
 * for creating a stream.
 *
@@ -249,6 +249,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkDMInceptionPayload,
 			).
 			requireUserAddr(ru.inception.SecondPartyAddress).
+			requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
 			requireDerivedEvents(ru.derivedDMMembershipEvents)
 
 	case *GdmChannelPayload_Inception:
@@ -263,6 +264,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkGDMPayloads,
 			).
 			requireUserAddr(ru.getGDMUserIds()[1:]...).
+			requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
 			requireDerivedEvents(ru.derivedGDMMembershipEvents)
 
 	case *UserPayload_Inception:
@@ -270,53 +272,79 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
-			check(
-				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
-				ru.params.eventCountMatches(1),
-				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		builder = builder.check(
+			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
+			ru.params.eventCountMatches(1),
+			ru.params.isUserStreamId,
+		)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 
 	case *UserMetadataPayload_Inception:
 		ru := &csUserMetadataRules{
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
+		builder = builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_METADATA_KEY_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
+			)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 
 	case *UserSettingsPayload_Inception:
 		ru := &csUserSettingsRules{
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
+		builder = builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_SETTINGS_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
+			)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 
 	case *UserInboxPayload_Inception:
 		ru := &csUserInboxRules{
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
+		builder = builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_INBOX_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
-
+			)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 	default:
 		return builder.fail(unknownPayloadType(inception))
 	}
@@ -329,6 +357,24 @@ func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 		} else {
 			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id type", "streamId", ru.streamId, "expectedType", expectedType)
 		}
+	}
+}
+
+func (ru *csParams) isEthereumAddress(address []byte) func() error {
+	return func() error {
+		if len(address) != 20 {
+			return RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"invalid ethereum address length",
+				"address",
+				address,
+				"length",
+				len(address),
+				"expectedLength",
+				20,
+			)
+		}
+		return nil
 	}
 }
 
@@ -403,6 +449,10 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 	}
 }
 
+func (ru *csParams) getCreatorIsNotRegisteredApp() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForIsNotBot(ru.creatorAddress), nil
+}
+
 func (ru *csChannelRules) validateChannelJoinEvent() error {
 	const joinEventIndex = 1
 	event := ru.params.parsedEvents[joinEventIndex]
@@ -449,11 +499,28 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 	return nil
 }
 
+func (ru *csUserRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
+}
+
+func (ru *csUserMetadataRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
+}
+
+func (ru *csUserSettingsRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
+}
+
+func (ru *csUserInboxRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
+}
+
 func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 	return auth.NewChainAuthArgsForSpace(
 		ru.params.streamId,
 		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels, // todo should be isOwner...
+		common.Address{},
 	), nil
 }
 
@@ -466,6 +533,7 @@ func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, erro
 		spaceId, // check parent space id
 		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels,
+		common.Address{},
 	), nil
 }
 
@@ -587,6 +655,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 		return auth.NewChainAuthArgsForIsSpaceMember(
 			spaceId,
 			userAddress,
+			common.Address{},
 		), nil
 	} else {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true must be provided in metadata for user stream")
@@ -612,6 +681,7 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 			channelId,
 			ru.params.creatorAddress,
 			auth.PermissionWrite,
+			common.Address{},
 		), nil
 	} else if shared.ValidSpaceStreamIdBytes(ru.inception.SpaceId) {
 		spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
@@ -622,7 +692,8 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 		return auth.NewChainAuthArgsForSpace(
 			spaceId,
 			ru.params.creatorAddress,
-			auth.PermissionModifySpaceSettings, // todo should it be isOwner?
+			auth.PermissionModifySpaceSettings, // TODO: should it be Owner?
+			common.Address{},
 		), nil
 	} else {
 		return nil, nil
@@ -688,7 +759,10 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	}, nil
 }
 
-func (ru *csGdmChannelRules) checkGDMMemberPayload(event *events.ParsedEvent, expectedUserAddress *common.Address) error {
+func (ru *csGdmChannelRules) checkGDMMemberPayload(
+	event *events.ParsedEvent,
+	expectedUserAddress *common.Address,
+) error {
 	payload := event.Event.GetMemberPayload()
 	if payload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel payload")

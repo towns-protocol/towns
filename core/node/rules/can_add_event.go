@@ -323,10 +323,17 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 			params:         params,
 			userMembership: content.UserMembership,
 		}
-		return aeBuilder().
+		builder := aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsValidNode).
 			check(ru.validUserMembershipTransition).
+			check(ru.validUserMembershipStreamForBot).
 			requireParentEvent(ru.parentEventForUserMembership)
+
+		isBot, _ := params.streamView.IsBotUser()
+		if isBot {
+			builder = builder.requireChainAuth(ru.ownerChainAuthForInviter)
+		}
+		return builder
 	case *UserPayload_UserMembershipAction_:
 		ru := &aeUserMembershipActionRules{
 			params: params,
@@ -1481,6 +1488,63 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	}, nil
 }
 
+// ownerChainAuthForInviter validates that the inviter on the UserMembership event has space ownership.
+// For bots, we expect the user membership event to be derived from a user membership action posted
+// by the space owner; this authorization is required to ensure that bots are added to spaces or channels
+// directly by space owners. In the future we may add a specific permission type for this.
+func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs, error) {
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	if streamId.Type() == shared.STREAM_SPACE_BIN {
+		return auth.NewChainAuthArgsForSpace(
+			streamId,
+			common.Address(ru.userMembership.Inviter),
+			auth.PermissionOwnership,
+			common.Address{},
+		), nil
+	}
+
+	if streamId.Type() == shared.STREAM_CHANNEL_BIN {
+		return auth.NewChainAuthArgsForChannel(
+			streamId.SpaceID(),
+			streamId,
+			common.Address(ru.userMembership.Inviter),
+			auth.PermissionOwnership,
+			common.Address{},
+		), nil
+	}
+
+	return nil, RiverError(
+		Err_BAD_STREAM_ID,
+		"Invalid stream type for determining ownership",
+	).Tag("streamId", streamId).
+		Tag("inviter", ru.userMembership.Inviter)
+}
+
+// validUserMembershipStreamForBot confirms that, if the user stream belongs to a bot, the bot is
+// being added to acceptible stream types. At this time the protocol does not support bot membership
+// in DM and GDM channels.
+func (ru *aeUserMembershipRules) validUserMembershipStreamForBot() (bool, error) {
+	isBotUser, err := ru.params.streamView.IsBotUser()
+	if err != nil {
+		return false, err
+	}
+
+	if !isBotUser {
+		return true, nil
+	}
+
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
+	if err != nil {
+		return false, err
+	}
+
+	return streamId.Type() != shared.STREAM_DM_CHANNEL_BIN && streamId.Type() != shared.STREAM_GDM_CHANNEL_BIN, nil
+}
+
 func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 	if ru.userMembership == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
@@ -1571,6 +1635,27 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 		initiatorAddress = creatorAddress
 	}
 
+	// Pass along the app address to the stream where the user's membership is changing.
+	lastSnap, err := ru.params.streamView.GetUserSnapshotContent()
+	if err != nil {
+		return nil, err
+	}
+	appAddress := common.BytesToAddress(lastSnap.Inception.AppAddress)
+	logging.FromCtx(ru.params.ctx).
+		Infow(
+			"Constructing derived membership event",
+			"Op",
+			userMembership.Op,
+			"toStream",
+			toStreamId,
+			"userId",
+			userAddress,
+			"streamParent",
+			userMembership.StreamParentId,
+			"appAddress",
+			appAddress,
+		)
+
 	return &DerivedEvent{
 		Payload: events.Make_MemberPayload_Membership(
 			userMembership.Op,
@@ -1578,6 +1663,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 			initiatorAddress,
 			userMembership.StreamParentId,
 			userMembership.Reason,
+			appAddress,
 		),
 		StreamId: toStreamId,
 	}, nil
@@ -1626,12 +1712,17 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 	// Space joins are a special case as they do not require an entitlement check. We simply
 	// verify that the user is a space member.
 	if ru.membership.Op == MembershipOp_SO_JOIN {
-		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(*streamId, permissionUser)
+		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(
+			*streamId,
+			permissionUser,
+			common.BytesToAddress(ru.membership.AppAddress),
+		)
 	} else {
 		chainAuthArgs = auth.NewChainAuthArgsForSpace(
 			*streamId,
 			permissionUser,
 			permission,
+			common.BytesToAddress(ru.membership.AppAddress),
 		)
 	}
 	return chainAuthArgs, nil
@@ -1657,6 +1748,11 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, err
 	}
 
+	var appAddress common.Address
+	if permissionUser == common.Address(ru.membership.UserAddress) {
+		appAddress = common.BytesToAddress(ru.membership.AppAddress)
+	}
+
 	// ModifyBanning is a space level permission
 	// but users with this entitlement should also be entitled to kick users from the channel
 	if permission == auth.PermissionModifyBanning {
@@ -1664,6 +1760,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 			spaceId,
 			permissionUser,
 			permission,
+			appAddress,
 		), nil
 	}
 
@@ -1672,6 +1769,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		*ru.params.streamView.StreamId(),
 		permissionUser,
 		permission,
+		appAddress,
 	)
 
 	return chainAuthArgs, nil
@@ -1687,16 +1785,22 @@ func (params *aeParams) spaceEntitlements(permission auth.Permission) func() (*a
 		}
 		permissionUser := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 
+		appAddress, err := params.streamView.GetMemberAppAddress(permissionUser)
+		if err != nil {
+			return nil, err
+		}
+
 		chainAuthArgs := auth.NewChainAuthArgsForSpace(
 			*spaceId,
 			permissionUser,
 			permission,
+			appAddress,
 		)
 		return chainAuthArgs, nil
 	}
 }
 
-// retrun a function that can be used to check if a user has a permission for a channel
+// return a function that can be used to check if a user has a permission for a channel
 func (params *aeParams) channelEntitlements(permission auth.Permission) func() (*auth.ChainAuthArgs, error) {
 	return func() (*auth.ChainAuthArgs, error) {
 		userId := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
@@ -1712,11 +1816,17 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 			return nil, err
 		}
 
+		appAddress, err := params.streamView.GetMemberAppAddress(userId)
+		if err != nil {
+			return nil, err
+		}
+
 		chainAuthArgs := auth.NewChainAuthArgsForChannel(
 			spaceId,
 			channelId,
 			userId,
 			permission,
+			appAddress,
 		)
 
 		return chainAuthArgs, nil

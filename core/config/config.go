@@ -108,6 +108,8 @@ type Config struct {
 	// Base chain contract configuration
 	ArchitectContract ContractConfig
 
+	AppRegistryContract ContractConfig
+
 	// Contract configuration
 	RegistryContract ContractConfig
 
