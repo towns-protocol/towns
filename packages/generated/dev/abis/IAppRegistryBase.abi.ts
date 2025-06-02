@@ -154,6 +154,16 @@ export default [
   },
   {
     "type": "error",
+    "name": "InvalidDuration",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPrice",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NotAppOwner",
     "inputs": []
   }
