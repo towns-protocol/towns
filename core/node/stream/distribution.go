@@ -393,7 +393,7 @@ func newImpl(
 	// add all operational nodes to the distributor and map to streamNode records
 	nodes, err := riverRegistry.GetAllNodes(ctx, atBlockNumber)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Message("Failed to get all nodes")
 	}
 
 	// sort them by node address to ensure consistent ordering in case of virtual node position clashes
@@ -415,7 +415,7 @@ func newImpl(
 
 	totalStreamCount, err := riverRegistry.GetStreamCount(ctx, atBlockNumber)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Message("Failed to get stream count")
 	}
 	impl.totalStreams.Store(uint64(totalStreamCount))
 
@@ -423,7 +423,7 @@ func newImpl(
 		if node.Status == river.NodeStatus_Operational {
 			streamCount, err := riverRegistry.GetStreamCountOnNode(ctx, atBlockNumber, node.NodeAddress)
 			if err != nil {
-				return nil, err
+				return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Message("Failed to get node stream count")
 			}
 			impl = impl.addStreamNode(node, streamCount, int(vnodeCount))
 		}
