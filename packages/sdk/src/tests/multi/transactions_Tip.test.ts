@@ -8,7 +8,7 @@ import { ETH_ADDRESS, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
-import { waitFor } from '../testUtils'
+import { waitFor, waitForValue } from '../testUtils'
 import { StreamTimelineEvent } from '../../types'
 import { userIdFromAddress, makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from 'crypto'
@@ -162,7 +162,7 @@ describe('transactions_Tip', () => {
         // get the user "stream" that is being synced by bob
         const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const isUserBlockchainTransaction = (e: StreamTimelineEvent) =>
                 e.remoteEvent?.event.payload.case === 'userPayload' &&
                 e.remoteEvent.event.payload.value.content.case === 'blockchainTransaction'
@@ -190,7 +190,7 @@ describe('transactions_Tip', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const isUserReceivedBlockchainTransaction = (e: StreamTimelineEvent) =>
                 e.remoteEvent?.event.payload.case === 'userPayload' &&
                 e.remoteEvent.event.payload.value.content.case === 'receivedBlockchainTransaction'
@@ -218,7 +218,7 @@ describe('transactions_Tip', () => {
         // get the channel "stream" that is being synced by bob
         const stream = bob.riverConnection.client!.stream(defaultChannelId)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const isMemberBlockchainTransaction = (e: StreamTimelineEvent) =>
                 e.remoteEvent?.event.payload.case === 'memberPayload' &&
                 e.remoteEvent.event.payload.value.content.case === 'memberBlockchainTransaction'
@@ -427,7 +427,7 @@ describe('transactions_Tip', () => {
         const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
         if (!stream) throw new Error('no stream found')
         // the view should have been updated with the tip
-        await waitFor(() => {
+        await waitForValue(() => {
             expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(2000n)
             expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(2n)
             expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
