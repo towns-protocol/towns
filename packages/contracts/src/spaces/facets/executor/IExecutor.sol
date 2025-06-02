@@ -35,8 +35,6 @@ struct Group {
     bytes32 guardian;
     // Delay in which the group takes effect after being granted.
     Time.Delay grantDelay;
-    // Allowed value of ETH that can be spent by the group.
-    uint256 allowance;
     // Whether the group is active.
     bool active;
 }
@@ -88,7 +86,6 @@ interface IExecutorBase {
     event GroupAccessRevoked(bytes32 indexed groupId, address indexed account, bool revoked);
     event GroupGuardianSet(bytes32 indexed groupId, bytes32 guardian);
     event GroupGrantDelaySet(bytes32 indexed groupId, uint32 delay);
-    event GroupMaxEthValueSet(bytes32 indexed groupId, uint256 allowance);
     event TargetFunctionGroupSet(
         address indexed target,
         bytes4 indexed selector,
@@ -100,6 +97,7 @@ interface IExecutorBase {
     event OperationScheduled(bytes32 indexed operationId, uint48 timepoint, uint32 nonce);
     event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
     event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
+    event GroupStatusSet(bytes32 indexed groupId, bool active);
 }
 
 interface IExecutor is IExecutorBase {
@@ -145,13 +143,6 @@ interface IExecutor is IExecutorBase {
     function setGroupDelay(bytes32 groupId, uint32 delay) external;
 
     /**
-     * @notice Sets the allowance for a group
-     * @param groupId The group ID
-     * @param allowance The allowance amount
-     */
-    function setAllowance(bytes32 groupId, uint256 allowance) external;
-
-    /**
      * @notice Sets the group ID for a target function
      * @param target The target contract address
      * @param selector The function selector
@@ -169,7 +160,6 @@ interface IExecutor is IExecutorBase {
     /**
      * @notice Schedules an operation for future execution
      * @param target The target contract address
-     * @param value The value for the operation
      * @param data The calldata for the operation
      * @param when The timestamp when the operation can be executed
      * @return operationId The unique identifier for the operation
@@ -177,7 +167,6 @@ interface IExecutor is IExecutorBase {
      */
     function scheduleOperation(
         address target,
-        uint256 value,
         bytes calldata data,
         uint48 when
     ) external payable returns (bytes32 operationId, uint32 nonce);
@@ -214,16 +203,12 @@ interface IExecutor is IExecutorBase {
      * @param account The account to check access for
      * @return isMember Whether the account is a member of the group
      * @return executionDelay The delay for the access to be effective
-     * @return maxEthValue The max eth value that can be used by the group
      * @return active Whether the group is active
      */
     function hasAccess(
         bytes32 groupId,
         address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active);
+    ) external view returns (bool isMember, uint32 executionDelay, bool active);
 
     /**
      * @notice Gets the access information for an account in a group
@@ -245,13 +230,6 @@ interface IExecutor is IExecutorBase {
      * @return The grant delay
      */
     function getGroupDelay(bytes32 groupId) external view returns (uint32);
-
-    /**
-     * @notice Gets the allowance for a group
-     * @param groupId The group ID
-     * @return The allowance amount
-     */
-    function getAllowance(bytes32 groupId) external view returns (uint256);
 
     /**
      * @notice Gets the scheduled timepoint for an operation

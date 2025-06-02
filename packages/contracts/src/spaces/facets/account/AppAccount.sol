@@ -18,11 +18,9 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @dev This account is used to execute transactions on behalf of a Space
  */
 contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
-    /**
-     * @notice Validates if the target address is allowed for delegate calls
-     * @dev Prevents delegate calls to critical system contracts
-     * @param target The contract address to check
-     */
+    /// @notice Validates if the target address is allowed for calls
+    /// @dev Prevents calls to critical system contracts
+    /// @param target The contract address to check
     modifier onlyAuthorized(address target) {
         _checkAuthorized(target);
         _;
@@ -43,40 +41,42 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       App Management                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IAppAccount
     function installApp(
-        bytes32 appId,
+        address app,
         bytes calldata data,
         AppParams calldata params
-    ) external onlyOwner {
-        _installApp(appId, params.grantDelay, params.executionDelay, params.allowance, data);
+    ) external nonReentrant onlyOwner {
+        _installApp(app, params.delays, data);
     }
 
-    function uninstallApp(bytes32 appId, bytes calldata data) external onlyOwner {
-        _uninstallApp(appId, data);
+    /// @inheritdoc IAppAccount
+    function disableApp(address app) external onlyOwner {
+        _disableApp(app);
     }
 
-    /// @notice Checks if a client is entitled to a permission for a module
-    /// @param appId The module ID to check
-    /// @param publicKey The public key to check
-    /// @param permission The permission to check
-    /// @return True if the client is entitled to the permission, false otherwise
+    /// @inheritdoc IAppAccount
+    function uninstallApp(address app, bytes calldata data) external onlyOwner {
+        _uninstallApp(app, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function getInstalledApps() external view returns (address[] memory) {
+        return _getApps();
+    }
+
+    /// @inheritdoc IAppAccount
+    function getAppId(address app) external view returns (bytes32) {
+        return _getAppId(app);
+    }
+
+    /// @inheritdoc IAppAccount
     function isAppEntitled(
-        bytes32 appId,
+        address app,
         address publicKey,
         bytes32 permission
     ) external view returns (bool) {
-        return _isEntitled(appId, publicKey, permission);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Allowance                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function setAppAllowance(bytes32 appId, uint256 allowance) external onlyOwner {
-        _setAppAllowance(appId, allowance);
-    }
-
-    function getAppAllowance(bytes32 appId) external view returns (uint256) {
-        return _getAppAllowance(appId);
+        return _isEntitled(app, publicKey, permission);
     }
 }
