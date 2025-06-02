@@ -198,6 +198,7 @@ message MemberPayload {
         bytes initiator_address = 3;
         optional bytes stream_parent_id = 4;
         MembershipReason reason = 5;
+        bool is_app = 6;
     }
     
     message KeySolicitation {
@@ -416,6 +417,7 @@ message UserPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        bool is_app = 3;
     }
     
     // update own membership
@@ -476,6 +478,7 @@ message UserInboxPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        bool is_app = 3;
     }
 
     message GroupEncryptionSessions {
@@ -524,6 +527,7 @@ message UserSettingsPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        bool is_app = 3;
     }
 
     message MarkerContent {
@@ -566,6 +570,7 @@ message UserMetadataPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        bool is_app = 3;
     }
 
     message EncryptionDevice {

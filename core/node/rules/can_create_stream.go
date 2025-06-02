@@ -279,53 +279,71 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
-			check(
-				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
-				ru.params.eventCountMatches(1),
-				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		builder = builder.check(
+			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
+			ru.params.eventCountMatches(1),
+			ru.params.isUserStreamId,
+		)
+		if ru.inception.IsApp {
+			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 
 	case *UserMetadataPayload_Inception:
 		ru := &csUserMetadataRules{
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
+		builder = builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_METADATA_KEY_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
+			)
+		if ru.inception.IsApp {
+			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 
 	case *UserSettingsPayload_Inception:
 		ru := &csUserSettingsRules{
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
+		builder = builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_SETTINGS_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
+			)
+		if ru.inception.IsApp {
+			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 
 	case *UserInboxPayload_Inception:
 		ru := &csUserInboxRules{
 			params:    ru,
 			inception: inception,
 		}
-		return builder.
+		builder = builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_INBOX_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
-			).
-			requireChainAuth(ru.params.getNewUserStreamChainAuth)
-
+			)
+		if ru.inception.IsApp {
+			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		} else {
+			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		}
+		return builder
 	default:
 		return builder.fail(unknownPayloadType(inception))
 	}
@@ -456,6 +474,10 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 		)
 	}
 	return nil
+}
+
+func (ru *csParams) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.creatorUserId), nil
 }
 
 func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
