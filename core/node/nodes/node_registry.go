@@ -35,7 +35,16 @@ type NodeRegistry interface {
 	// TODO: refactor to provide IsValidNodeAddress(address common.Address) bool functions instead of copying the whole list
 	GetValidNodeAddresses() []common.Address
 
-	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
+	// ChooseStreamNodes returns replFactor nodes that the given streamId can be assigned to.
+	ChooseStreamNodes(streamId StreamId, replFactor int) ([]common.Address, error)
+
+	// ChooseStreamNodes returns replFactor nodes that the given streamId can be assigned to.
+	// For all returned nodes the given filter returned true for the node address and operator.
+	ChooseStreamNodesWithCriteria(
+		streamId StreamId,
+		replFactor int,
+		match func(node common.Address, operator common.Address) bool,
+	) ([]common.Address, error)
 }
 
 type nodeRegistryImpl struct {
@@ -365,9 +374,16 @@ func (n *nodeRegistryImpl) GetValidNodeAddresses() []common.Address {
 }
 
 func (n *nodeRegistryImpl) ChooseStreamNodes(
-	ctx context.Context,
 	streamId StreamId,
 	replFactor int,
 ) ([]common.Address, error) {
 	return n.streamPicker.ChooseStreamNodes(streamId, replFactor)
+}
+
+func (n *nodeRegistryImpl) ChooseStreamNodesWithCriteria(
+	streamId StreamId,
+	replFactor int,
+	match func(node common.Address, operator common.Address) bool,
+) ([]common.Address, error) {
+	return n.streamPicker.ChooseStreamNodesWithCriteria(streamId, replFactor, match)
 }

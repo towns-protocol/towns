@@ -7,18 +7,29 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
+	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/gammazero/workerpool"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -724,6 +735,420 @@ func runStreamUserCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func loadWallet(walletFile string) (*crypto.Wallet, error) {
+	walletFileContents, err := os.ReadFile(walletFile)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := keystore.DecryptKey(walletFileContents, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return &crypto.Wallet{
+		PrivateKeyStruct: key.PrivateKey,
+		PrivateKey:       eth_crypto.FromECDSA(key.PrivateKey),
+		Address:          eth_crypto.PubkeyToAddress(key.PrivateKey.PublicKey),
+	}, nil
+}
+
+func initRiverBlockchain(ctx context.Context, wallet *crypto.Wallet) (
+	*crypto.Blockchain,
+	*registries.RiverRegistryContract,
+	error,
+) {
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		wallet,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return blockchain, registryContract, nil
+}
+
+const targetReplicationFactor = 3
+
+func runStreamMigrationStatusCmd(*config.Config, []string) error {
+	ctx, cancel := context.WithCancel(context.Background()) // lint:ignore context.Background() is fine here
+	defer cancel()
+
+	riverChain, riverRegistry, err := initRiverBlockchain(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer riverChain.Close()
+
+	nonReplicatedStreams := 0
+	nonReplicatedStreamsWithSyncNodes := 0
+	todoStreams := 0
+	replicatedStreams := 0
+
+	if err = riverRegistry.ForAllStreams(ctx, riverChain.InitialBlockNum, func(stream *river.StreamWithId) bool {
+		if stream.ReplicationFactor() == targetReplicationFactor && len(stream.Nodes()) == targetReplicationFactor {
+			replicatedStreams++
+		} else if stream.ReplicationFactor() <= 1 && len(stream.Nodes()) == 1 {
+			nonReplicatedStreams++
+		} else if stream.ReplicationFactor() == 1 && len(stream.Nodes()) == targetReplicationFactor {
+			nonReplicatedStreamsWithSyncNodes++
+		} else {
+			todoStreams++
+		}
+		return true
+	}); err != nil {
+		return err
+	}
+
+	fmt.Printf("    Replicated streams: %d\n", replicatedStreams)
+	fmt.Printf("Non-replicated streams: %d\n", nonReplicatedStreams)
+	fmt.Printf(" Migration in progress: %d\n", nonReplicatedStreamsWithSyncNodes)
+	fmt.Printf("          Todo streams: %d\n", todoStreams)
+
+	return nil
+}
+
+// runStreamMigrationToReplicatedStreamsCmd queries the streams registry and matches streams
+// that aren't replicated or in the process of being migrated to replicated streams and either
+// initiates the migration or advances the migration process to the next step/completed it.
+// It can be killed at any time and resumed later.
+func runStreamMigrationToReplicatedStreamsCmd(cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithCancel(context.Background()) // lint:ignore context.Background() is fine here
+	defer cancel()
+
+	wallet, err := loadWallet(args[0])
+	if err != nil {
+		return err
+	}
+
+	riverChain, riverRegistry, err := initRiverBlockchain(ctx, wallet)
+	if err != nil {
+		return err
+	}
+	defer riverChain.Close()
+
+	onChainConfig, err := crypto.NewOnChainConfig(
+		ctx,
+		riverChain.Client,
+		riverRegistry.Address,
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+	)
+	if err != nil {
+		return err
+	}
+
+	decoder, err := crypto.NewEVMErrorDecoder(
+		river.StreamRegistryV1MetaData,
+		river.RiverConfigV1MetaData,
+		river.NodeRegistryV1MetaData,
+		river.StreamRegistryV1MetaData)
+	if err != nil {
+		return err
+	}
+
+	httpClient, err := http_client.GetHttpClient(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	nodeRegistry, err := nodes.LoadNodeRegistry(
+		ctx,
+		riverRegistry,
+		common.Address{},
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+		onChainConfig,
+		httpClient,
+		nil)
+	if err != nil {
+		return err
+	}
+
+	mustProcessStream := func(stream *river.StreamWithId) bool {
+		isReplicatedStream := stream.ReplicationFactor() == targetReplicationFactor &&
+			len(stream.Nodes()) == targetReplicationFactor
+
+		if isReplicatedStream {
+			return false // already fully replicated
+		}
+
+		// migration in progress, try to complete it
+		if stream.ReplicationFactor() == 1 && len(stream.Nodes()) == targetReplicationFactor {
+			return true
+		}
+
+		return stream.LastMbNum() <= 150 // only migrate small streams for now
+	}
+
+	setStreamReplicationFactorRequestsChan := make(chan river.SetStreamReplicationFactor, 250)
+
+	initTotal := 0
+	enterQuorumTotal := 0
+
+	submitSetStreamReplicationFactorTx := func(requests []river.SetStreamReplicationFactor) error {
+		pendingTx, err := riverChain.TxPool.Submit(
+			context.Background(), // lint:ignore context.Background() is fine here
+			"StreamRegistry::SetStreamReplicationFactor",
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				return riverRegistry.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+			},
+		)
+		if err != nil {
+			cs, st, err := decoder.DecodeEVMError(err)
+			if cs != nil {
+				return cs
+			}
+			if st != nil {
+				return st
+			}
+			return err
+		}
+
+		receipt, err := pendingTx.Wait(context.Background()) // lint:ignore context.Background() is fine here
+		if err != nil {
+			return err
+		}
+
+		if receipt.Status != types.ReceiptStatusSuccessful {
+			return fmt.Errorf("set stream replication factor tx failed")
+		}
+
+		for _, r := range requests {
+			if r.ReplicationFactor == 1 {
+				initTotal++
+			} else {
+				enterQuorumTotal++
+			}
+
+			fmt.Printf(
+				"Set stream replication factor for stream %x to %d nodes: %v (tx=%s)\n",
+				r.StreamId,
+				r.ReplicationFactor,
+				r.Nodes,
+				receipt.TxHash,
+			)
+		}
+
+		fmt.Printf("Total set stream replication factor requests initiated: %d / enterQuorum: %d\n",
+			initTotal, enterQuorumTotal)
+
+		return nil
+	}
+
+	var backgroundJobs sync.WaitGroup
+	backgroundJobs.Add(1)
+
+	go func() {
+		defer backgroundJobs.Done()
+
+		var setStreamReplicationFactorRequests []river.SetStreamReplicationFactor
+
+		for {
+			select {
+			case request := <-setStreamReplicationFactorRequestsChan:
+				setStreamReplicationFactorRequests = append(setStreamReplicationFactorRequests, request)
+
+				if len(setStreamReplicationFactorRequests) >= 75 {
+					if err := submitSetStreamReplicationFactorTx(setStreamReplicationFactorRequests); err != nil {
+						panic(fmt.Sprintf("Error submitting set stream replication factor tx: %v\n", err))
+					}
+					setStreamReplicationFactorRequests = nil
+				}
+
+			case <-ctx.Done():
+				if len(setStreamReplicationFactorRequests) > 0 {
+					if err := submitSetStreamReplicationFactorTx(setStreamReplicationFactorRequests); err != nil {
+						panic(fmt.Sprintf("Error submitting set stream replication factor tx: %v\n", err))
+					}
+					setStreamReplicationFactorRequests = nil
+				}
+				return
+			}
+		}
+	}()
+
+	inProgressWorkerPool := workerpool.New(40)
+
+	type nodeStatus struct {
+		NodeAddress   common.Address
+		MiniblockNum  int64
+		MiniblockHash common.Hash
+	}
+
+	// readyToEnterQuorum returns an indication if the nodes are in sync and can all participate in stream quorum
+	readyToEnterQuorum := func(nodeStatuses []*nodeStatus) bool {
+		if len(nodeStatuses) != targetReplicationFactor {
+			return false
+		}
+
+		var miniblockNums []int64
+		for _, nodeStatus := range nodeStatuses {
+			miniblockNums = append(miniblockNums, nodeStatus.MiniblockNum)
+		}
+
+		// order by last miniblock number and reverse order so the highest miniblock number is first
+		slices.Sort(miniblockNums)
+		slices.Reverse(miniblockNums)
+
+		// ensure that the required number of nodes to reach quorum is at, or almost at the latest miniblock number.
+		minBlock := int64(math.MaxInt64)
+		maxBlock := int64(math.MinInt64)
+		quorumCount := events.TotalQuorumNum(len(miniblockNums))
+
+		for _, qn := range miniblockNums[:quorumCount] {
+			minBlock = min(minBlock, qn)
+			maxBlock = max(maxBlock, qn)
+		}
+
+		return maxBlock >= 0 && maxBlock-minBlock <= 1
+	}
+
+	// loop over registered streams and check if they are replicated or in the process of being migrated
+	riverRegistry.ForAllStreams(ctx, riverChain.InitialBlockNum, func(stream *river.StreamWithId) bool {
+		if !mustProcessStream(stream) {
+			return true
+		}
+
+		if stream.ReplicationFactor() <= 1 &&
+			len(stream.Nodes()) < targetReplicationFactor { // initiate stream migration to replicated stream
+
+			newNodes, err := nodeRegistry.ChooseStreamNodesWithCriteria(
+				stream.StreamId(),
+				targetReplicationFactor-len(stream.Nodes()),
+				func(node common.Address, operator common.Address) bool {
+					return !slices.Contains(stream.Nodes(), node)
+				},
+			)
+			if err != nil {
+				fmt.Printf("Error choosing stream nodes for stream %s: %v\n", stream.StreamId(), err)
+				return true
+			}
+
+			newNodeList := append(stream.Nodes(), newNodes...)
+			if len(newNodeList) != targetReplicationFactor {
+				panic(
+					fmt.Sprintf(
+						"Unexpected new node list length for stream %s new nodes: %v\n",
+						stream.StreamId(),
+						newNodeList,
+					),
+				)
+			}
+
+			setStreamReplicationFactorRequestsChan <- river.SetStreamReplicationFactor{
+				StreamId: stream.StreamId(),
+				Nodes:    newNodeList,
+				ReplicationFactor: uint8(
+					len(stream.Nodes()),
+				), // add new nodes as sync nodes and keep existing nodes as quorum nodes
+			}
+
+			return true
+		} else if stream.ReplicationFactor() == 1 && len(stream.Nodes()) == targetReplicationFactor { // stream migration is in progress
+			inProgressWorkerPool.Submit(func() {
+				// ask all quorum and sync nodes and determine if they are in sync,
+				// if in sync let the sync nodes enter quorum to finish the migration to replicated stream
+				var nodeStatuses []*nodeStatus
+			nodeStatusLoop:
+				for _, nodeAddress := range stream.Nodes() {
+					streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+					if err != nil {
+						panic(fmt.Sprintf("Error getting stream service client for node %s: %v\n", nodeAddress, err))
+					}
+
+					resp, err := streamServiceClient.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+						StreamId: stream.Id[:],
+					}))
+					if err != nil {
+						fmt.Printf("Error getting last miniblock hash for stream %s on node %s: %v\n", stream.StreamId(), nodeAddress, err)
+						break nodeStatusLoop
+					}
+
+					nodeStatuses = append(nodeStatuses, &nodeStatus{
+						NodeAddress:   nodeAddress,
+						MiniblockNum:  resp.Msg.GetMiniblockNum(),
+						MiniblockHash: common.BytesToHash(resp.Msg.GetHash()),
+					})
+				}
+
+				if readyToEnterQuorum(nodeStatuses) {
+					setStreamReplicationFactorRequestsChan <- river.SetStreamReplicationFactor{
+						StreamId:          stream.StreamId(),
+						Nodes:             stream.Nodes(),
+						ReplicationFactor: uint8(len(stream.Nodes())),
+					}
+					return
+				}
+			})
+		} else if stream.ReplicationFactor() == 1 && targetReplicationFactor == 3 && len(stream.Nodes()) == 4 &&
+			stream.Nodes()[0] == common.HexToAddress("0x14D237838A619784c831E3A690AbceB2df953F26") {
+			// migration of streams from bravo-2 that seemed overcommited at the time but is now fine
+			// and not overcommited anymore
+
+			inProgressWorkerPool.Submit(func() {
+				// ask all quorum and sync nodes and determine if they are in sync,
+				// if in sync let the sync nodes enter quorum to finish the migration to replicated stream
+				var nodeStatuses []*nodeStatus
+			nodeStatusLoop:
+				for _, nodeAddress := range stream.Nodes() {
+					streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+					if err != nil {
+						panic(fmt.Sprintf("Error getting stream service client for node %s: %v\n", nodeAddress, err))
+					}
+
+					resp, err := streamServiceClient.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+						StreamId: stream.Id[:],
+					}))
+					if err != nil {
+						fmt.Printf("Error getting last miniblock hash for stream %s on node %s: %v\n", stream.StreamId(), nodeAddress, err)
+						break nodeStatusLoop
+					}
+
+					nodeStatuses = append(nodeStatuses, &nodeStatus{
+						NodeAddress:   nodeAddress,
+						MiniblockNum:  resp.Msg.GetMiniblockNum(),
+						MiniblockHash: common.BytesToHash(resp.Msg.GetHash()),
+					})
+				}
+
+				if readyToEnterQuorum(nodeStatuses) {
+					setStreamReplicationFactorRequestsChan <- river.SetStreamReplicationFactor{
+						StreamId:          stream.StreamId(),
+						Nodes:             stream.Nodes()[:3],
+						ReplicationFactor: uint8(targetReplicationFactor),
+					}
+					return
+				}
+			})
+		} else if len(stream.Nodes()) != targetReplicationFactor {
+			fmt.Printf("Stream: %s replFactor: %d has unexpected number of nodes: %d\n", stream.StreamId(), stream.ReplicationFactor(), len(stream.Nodes()))
+		}
+
+		return true
+	})
+
+	backgroundJobs.Done()
+	inProgressWorkerPool.StopWait()
+
+	return nil
+}
+
 func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 	cc, ctxCancel, err := newCmdContext(cmd, cmdConfig)
 	if err != nil {
@@ -892,6 +1317,26 @@ max-block-range is optional and limits the number of blocks to consider (default
 		RunE:  runStreamValidateCmd,
 	}
 
+	cmdStreamMigrationToReplicatedStreams := &cobra.Command{
+		Use:   "migration-to-replicated-streams <wallet>",
+		Short: "Migrate stream to replicated streams",
+		Long:  `Migrate stream to replicated streams.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamMigrationToReplicatedStreamsCmd(cmdConfig, args)
+		},
+	}
+
+	cmdStreamMigrationStatus := &cobra.Command{
+		Use:   "repl-migration-status",
+		Short: "Replication migration status",
+		Long:  `Dump how manys streams need to be migrated to replicated streams or are in the process of being migrated.`,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamMigrationStatusCmd(cmdConfig, args)
+		},
+	}
+
 	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
 	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
 	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
@@ -906,5 +1351,8 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamGetPartition)
 	cmdStream.AddCommand(cmdStreamUser)
 	cmdStream.AddCommand(cmdStreamValidate)
+	cmdStream.AddCommand(cmdStreamMigrationToReplicatedStreams)
+	cmdStream.AddCommand(cmdStreamMigrationStatus)
+
 	rootCmd.AddCommand(cmdStream)
 }

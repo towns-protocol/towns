@@ -39,6 +39,15 @@ type (
 	Distributor interface {
 		// ChooseStreamNodes returns a set of `count` nodes for the given streamID.
 		ChooseStreamNodes(streamID StreamId, count int) ([]common.Address, error)
+
+		// ChooseStreamNodesWithCriteria returns replFactor nodes that the given streamId can be assigned to.
+		// For all returned nodes the given filter returned true for the node record.
+		ChooseStreamNodesWithCriteria(
+			streamID StreamId,
+			count int,
+			accept func(node common.Address, operator common.Address) bool,
+		) ([]common.Address, error)
+
 		// Reload the distributor state from the node registry.
 		// It must be called when a node is added or removed from the system,
 		// or its status changed from/to operational.
@@ -170,6 +179,16 @@ func (d *streamsDistributor) ChooseStreamNodes(
 	streamID StreamId,
 	count int,
 ) ([]common.Address, error) {
+	return d.ChooseStreamNodesWithCriteria(streamID, count, func(node common.Address, operator common.Address) bool {
+		return true
+	})
+}
+
+func (d *streamsDistributor) ChooseStreamNodesWithCriteria(
+	streamID StreamId,
+	count int,
+	accept func(node common.Address, operator common.Address) bool,
+) ([]common.Address, error) {
 	impl := d.impl.Load()
 	if len(impl.nodes) < count {
 		return nil, ErrInsufficientNodesAvailable
@@ -208,6 +227,11 @@ func (d *streamsDistributor) ChooseStreamNodes(
 	for range 1000 { // put a hard coded upper bound on the loop to avoid infinite loops
 		i = i % len(impl.sortedKeys)
 		node := impl.ring[impl.sortedKeys[i]]
+		i++
+
+		if !accept(node.NodeAddress, node.Operator) {
+			continue
+		}
 
 		candidates[node.NodeAddress] = node
 		candidateOperators[node.Operator] = struct{}{}
@@ -215,8 +239,6 @@ func (d *streamsDistributor) ChooseStreamNodes(
 		if enough(candidates, candidateOperators) {
 			break
 		}
-
-		i++
 	}
 
 	if !enough(candidates, candidateOperators) {
