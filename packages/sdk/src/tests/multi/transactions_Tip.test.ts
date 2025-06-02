@@ -91,25 +91,31 @@ describe('transactions_Tip', () => {
         expect(aliceTokenId_).toBeDefined()
         aliceTokenId = aliceTokenId_!
 
-        // dummy tip, to be used to test error cases
-        const tx = await bob.riverConnection.spaceDapp.tip(
-            {
+        try {
+            // dummy tip, to be used to test error cases
+            const tx = await bob.riverConnection.spaceDapp.tip(
+                {
+                    spaceId,
+                    tokenId: aliceTokenId,
+                    currency: ETH_ADDRESS,
+                    amount: 1000n,
+                    messageId: messageId,
+                    channelId: defaultChannelId,
+                    receiver: aliceIdentity.rootWallet.address,
+                },
+                bobIdentity.signer,
+            )
+            dummyReceipt = await tx.wait(2)
+            dummyTipEvent = bob.riverConnection.spaceDapp.getTipEvent(
                 spaceId,
-                tokenId: aliceTokenId,
-                currency: ETH_ADDRESS,
-                amount: 1000n,
-                messageId: messageId,
-                channelId: defaultChannelId,
-                receiver: aliceIdentity.rootWallet.address,
-            },
-            bobIdentity.signer,
-        )
-        dummyReceipt = await tx.wait(2)
-        dummyTipEvent = bob.riverConnection.spaceDapp.getTipEvent(
-            spaceId,
-            dummyReceipt,
-            bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
-        )!
+                dummyReceipt,
+                bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
+            )!
+        } catch (err) {
+            const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(spaceId, err)
+            console.error('parsedError', parsedError)
+            throw err
+        }
         expect(dummyTipEvent).toBeDefined()
         dummyTipEventCopy = deepCopy(dummyTipEvent)
         expect(dummyTipEventCopy).toEqual(dummyTipEvent)
@@ -427,7 +433,7 @@ describe('transactions_Tip', () => {
         const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
         if (!stream) throw new Error('no stream found')
         // the view should have been updated with the tip
-        await waitForValue(() => {
+        await waitFor(() => {
             expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(2000n)
             expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(2n)
             expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
