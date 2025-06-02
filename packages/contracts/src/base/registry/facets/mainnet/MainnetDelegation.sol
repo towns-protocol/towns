@@ -86,6 +86,11 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     }
 
     /// @inheritdoc IMainnetDelegation
+    function getMainnetDelegators() external view returns (address[] memory) {
+        return _getMainnetDelegators();
+    }
+
+    /// @inheritdoc IMainnetDelegation
     function getDepositIdByDelegator(address delegator) external view returns (uint256) {
         return _getDepositIdByDelegator(delegator);
     }
