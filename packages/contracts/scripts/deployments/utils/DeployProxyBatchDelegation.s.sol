@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {console} from "forge-std/console.sol";
 
 // contracts
 import {Deployer} from "../../common/Deployer.s.sol";
@@ -15,6 +14,12 @@ import {MockMessenger} from "test/mocks/MockMessenger.sol";
 import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
 
 contract DeployProxyBatchDelegation is Deployer {
+    address internal constant CLAIMERS = 0x0bEe55b52d01C4D5d4D0cfcE1d6e0baE6722db05;
+    address internal constant BASE_REGISTRY = 0x7c0422b31401C936172C897802CF0373B35B7698;
+    address internal constant BASE_REGISTRY_SEPOLIA = 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
+    address internal constant MESSENGER = 0x866E82a600A1414e583f7F13623F1aC5d58b0Afa;
+    address internal constant MESSENGER_SEPOLIA = 0xC34855F4De64F1840e5686e64278da901e261f20;
+
     // Mainnet
     DeployTownsMainnet internal townsHelper = new DeployTownsMainnet();
 
@@ -35,12 +40,12 @@ contract DeployProxyBatchDelegation is Deployer {
 
     function __deploy(address deployer) internal override returns (address) {
         townsToken = townsHelper.deploy(deployer);
-        console.log("DeployProxyBatchDelegation: townsToken: %s", townsToken);
+        debug("DeployProxyBatchDelegation: townsToken: %s", townsToken);
 
         vault = townsHelper.vault();
 
         claimers = _getClaimers(deployer);
-        console.log("DeployProxyBatchDelegation: claimers: %s", claimers);
+        debug("DeployProxyBatchDelegation: claimers: %s", claimers);
 
         if (messenger == address(0)) {
             if (isAnvil() || isTesting()) {
@@ -50,7 +55,7 @@ contract DeployProxyBatchDelegation is Deployer {
                 messenger = getMessenger();
             }
         }
-        console.log("DeployProxyBatchDelegation: messenger: %s", messenger);
+        debug("DeployProxyBatchDelegation: messenger: %s", messenger);
 
         if (mainnetDelegation == address(0)) {
             mainnetDelegation = _getMainnetDelegation();
@@ -71,7 +76,7 @@ contract DeployProxyBatchDelegation is Deployer {
 
     function _getClaimers(address deployer) internal returns (address) {
         if (block.chainid == 1) {
-            return 0x0bEe55b52d01C4D5d4D0cfcE1d6e0baE6722db05;
+            return CLAIMERS;
         }
 
         vm.broadcast(deployer);
@@ -81,12 +86,12 @@ contract DeployProxyBatchDelegation is Deployer {
     function _getMainnetDelegation() internal returns (address) {
         if (block.chainid == 84_532 || block.chainid == 11_155_111) {
             // base registry on base sepolia
-            return 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
+            return BASE_REGISTRY_SEPOLIA;
         }
 
         if (block.chainid == 1) {
             // Base Registry contract on Base
-            return 0x7c0422b31401C936172C897802CF0373B35B7698;
+            return BASE_REGISTRY;
         }
 
         return getDeployment("baseRegistry");
@@ -97,11 +102,9 @@ contract DeployProxyBatchDelegation is Deployer {
         if (block.chainid == 8453 || block.chainid == 84_532) {
             return 0x4200000000000000000000000000000000000007;
         } else if (block.chainid == 1) {
-            // Mainnet
-            return 0x866E82a600A1414e583f7F13623F1aC5d58b0Afa;
+            return MESSENGER;
         } else if (block.chainid == 11_155_111) {
-            // Sepolia
-            return 0xC34855F4De64F1840e5686e64278da901e261f20;
+            return MESSENGER_SEPOLIA;
         } else {
             revert("DeployProxyDelegation: Invalid network");
         }

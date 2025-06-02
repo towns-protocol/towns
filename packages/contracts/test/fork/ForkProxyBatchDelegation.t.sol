@@ -33,6 +33,10 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
     address internal constant MESSENGER = 0x866E82a600A1414e583f7F13623F1aC5d58b0Afa;
     address internal constant BASE_REGISTRY = 0x7c0422b31401C936172C897802CF0373B35B7698;
     IMainnetDelegation internal constant MAINNET_DELEGATION = IMainnetDelegation(BASE_REGISTRY);
+    string internal constant outDir = "resources/";
+
+    uint256 internal constant MAINNET_BLOCK_NUMBER = 22591100;
+    uint256 internal constant BASE_BLOCK_NUMBER = 30882700;
 
     ProxyBatchDelegation internal proxyBatchDelegation;
 
@@ -52,7 +56,7 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
     }
 
     function setUp() external onlyForked {
-        vm.createSelectFork("mainnet", 22591100);
+        vm.createSelectFork("mainnet", MAINNET_BLOCK_NUMBER);
 
         proxyBatchDelegation = new ProxyBatchDelegation(TOWNS, CLAIMERS, MESSENGER, BASE_REGISTRY);
 
@@ -79,7 +83,7 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
         assertGt(message.length, 0, "message not found");
 
         // Switch to base fork
-        vm.createSelectFork("base", 30882700);
+        vm.createSelectFork("base", BASE_BLOCK_NUMBER);
 
         MainnetDelegation mockMainnetDelegation = new MainnetDelegation();
 
@@ -88,6 +92,9 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
             address(mockMainnetDelegation),
             abi.encodeCall(IMainnetDelegation.getMainnetDelegators, ())
         );
+
+        // Ensure output directory exists before writing files
+        _ensureOutputDirExists();
 
         // Step 2: Capture delegations BEFORE cross-chain relaying
         DelegationAnalytics[] memory delegationsBefore = _captureDelegationAnalytics("BEFORE");
@@ -113,6 +120,16 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
 
         // Export comparison data
         _exportComparisonAnalytics(delegationsBefore, delegationsAfter);
+    }
+
+    function _ensureOutputDirExists() internal {
+        if (!vm.exists(outDir)) {
+            vm.createDir(outDir, true);
+            console.log("Created output directory:", outDir);
+        } else if (!vm.isDir(outDir)) {
+            // If path exists but is not a directory, this is an error
+            revert(string.concat("Output path exists but is not a directory: ", outDir));
+        }
     }
 
     function _captureDelegationAnalytics(
@@ -167,7 +184,7 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
             csv = string.concat(csv, row);
         }
 
-        string memory filepath = string.concat("analytics/", filename);
+        string memory filepath = string.concat(outDir, filename);
         vm.writeFile(filepath, csv);
         console.log("Exported", delegations.length, "delegations to", filepath);
     }
@@ -226,8 +243,9 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
             )
         );
 
-        vm.writeFile("analytics/delegation_comparison_summary.csv", summary);
-        console.log("Exported comparison summary to analytics/delegation_comparison_summary.csv");
+        string memory filepath = string.concat(outDir, "delegation_comparison_summary.csv");
+        vm.writeFile(filepath, summary);
+        console.log("Exported comparison summary to", filepath);
 
         // Export detailed changes
         _exportDetailedChanges(before, after_);
@@ -342,8 +360,9 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
             }
         }
 
-        vm.writeFile("analytics/delegation_detailed_changes.csv", changes);
-        console.log("Exported detailed changes to analytics/delegation_detailed_changes.csv");
+        string memory filepath = string.concat(outDir, "delegation_detailed_changes.csv");
+        vm.writeFile(filepath, changes);
+        console.log("Exported detailed changes to", filepath);
     }
 
     function _populateDelegatorSets(
