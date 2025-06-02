@@ -94,6 +94,10 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     /// @return The proxy delegation address
     function getProxyDelegation() external view returns (address);
 
+    /// @notice Get all mainnet delegators
+    /// @return Array of all mainnet delegator addresses
+    function getMainnetDelegators() external view returns (address[] memory);
+
     /// @notice Get the deposit ID by delegator
     /// @param delegator The mainnet delegator address
     /// @return The deposit ID

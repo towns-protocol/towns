@@ -187,6 +187,10 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    function _getMainnetDelegators() internal view returns (address[] memory) {
+        return MainnetDelegationStorage.layout().delegators.values();
+    }
+
     function _getDepositIdByDelegator(address delegator) internal view returns (uint256) {
         return MainnetDelegationStorage.layout().depositIdByDelegator[delegator];
     }
