@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -37,6 +36,8 @@ struct Group {
     Time.Delay grantDelay;
     // Whether the group is active.
     bool active;
+    // Timepoint at which the group becomes inactive.
+    uint48 expiration;
 }
 
 // Structure that stores the details for a scheduled operation. This structure fits into a
@@ -71,6 +72,7 @@ interface IExecutorBase {
     error ExecutionHookAlreadySet();
     error ModuleInstallCallbackFailed();
     error InvalidDataLength();
+    error InvalidExpiration();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                            */
@@ -98,6 +100,7 @@ interface IExecutorBase {
     event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
     event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
     event GroupStatusSet(bytes32 indexed groupId, bool active);
+    event GroupExpirationSet(bytes32 indexed groupId, uint48 expiration);
 }
 
 interface IExecutor is IExecutorBase {
@@ -112,6 +115,21 @@ interface IExecutor is IExecutorBase {
         bytes32 groupId,
         address account,
         uint32 delay
+    ) external returns (bool newMember);
+
+    /**
+     * @notice Grants access to a group for an account with a delay and expiration
+     * @param groupId The group ID
+     * @param account The account to grant access to
+     * @param delay The delay for the access to be effective
+     * @param expiration The expiration timepoint for the access
+     * @return newMember Whether the account is a new member of the group
+     */
+    function grantAccessWithExpiration(
+        bytes32 groupId,
+        address account,
+        uint32 delay,
+        uint48 expiration
     ) external returns (bool newMember);
 
     /**
@@ -141,6 +159,13 @@ interface IExecutor is IExecutorBase {
      * @param delay The delay for granting access
      */
     function setGroupDelay(bytes32 groupId, uint32 delay) external;
+
+    /**
+     * @notice Sets the expiration for a group
+     * @param groupId The group ID
+     * @param expiration The expiration timestamp
+     */
+    function setGroupExpiration(bytes32 groupId, uint48 expiration) external;
 
     /**
      * @notice Sets the group ID for a target function
