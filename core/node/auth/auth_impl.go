@@ -5,10 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -78,6 +79,13 @@ func (r *isEntitledResult) Reason() EntitlementResultReason {
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
 
+func NewChainAuthArgsForBot(userId string) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:      chainAuthKindIsBot,
+		principal: common.HexToAddress(userId),
+	}
+}
+
 func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId string, permission Permission) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindSpace,
@@ -130,14 +138,22 @@ const (
 	chainAuthKindChannelEnabled
 	chainAuthKindIsSpaceMember
 	chainAuthKindIsWalletLinked
+	chainAuthKindIsBot
 )
 
 type ChainAuthArgs struct {
-	kind          chainAuthKind
-	spaceId       shared.StreamId
-	channelId     shared.StreamId
-	principal     common.Address
-	permission    Permission
+	kind       chainAuthKind
+	spaceId    shared.StreamId
+	channelId  shared.StreamId
+	principal  common.Address
+	permission Permission
+
+	// isApp determines what logic is used to evaluate a user's entitlement to perform
+	// actions on the network. Specifically, app permissions checks are evaluated by checking
+	// the app's space-wide entitlements. Membership checks happen via an identical path for
+	// all types of users.
+	isApp bool
+
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
 }
@@ -203,6 +219,7 @@ type chainAuth struct {
 	blockchain              *crypto.Blockchain
 	evaluator               *entitlement.Evaluator
 	spaceContract           SpaceContract
+	appRegistryContract     *AppRegistryContract
 	walletLinkContract      *base.WalletLink
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
@@ -235,6 +252,7 @@ func NewChainAuth(
 	blockchain *crypto.Blockchain,
 	evaluator *entitlement.Evaluator,
 	architectCfg *config.ContractConfig,
+	appRegistryConfig *config.ContractConfig,
 	linkedWalletsLimit int,
 	contractCallsTimeoutMs int,
 	metrics infra.MetricsFactory,
@@ -246,6 +264,11 @@ func NewChainAuth(
 	}
 
 	walletLinkContract, err := base.NewWalletLink(architectCfg.Address, blockchain.Client)
+	if err != nil {
+		return nil, err
+	}
+
+	appRegistryContract, err := NewAppRegistryContract(ctx, appRegistryConfig, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -286,6 +309,7 @@ func NewChainAuth(
 		evaluator:               evaluator,
 		spaceContract:           spaceContract,
 		walletLinkContract:      walletLinkContract,
+		appRegistryContract:     appRegistryContract,
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
@@ -1039,6 +1063,15 @@ func (ca *chainAuth) checkEntitlement(
 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
+
+	if args.kind == chainAuthKindIsBot {
+		isBot, err := ca.appRegistryContract.IsRegisteredApp(ctx, args.principal)
+		if err != nil {
+			return nil, err
+		} else {
+			return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
+		}
+	}
 
 	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
 	if err != nil {

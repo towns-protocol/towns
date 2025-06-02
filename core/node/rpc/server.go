@@ -305,6 +305,7 @@ func (s *Service) initBaseChain() error {
 			s.baseChain,
 			s.entitlementEvaluator,
 			&cfg.ArchitectContract,
+			&cfg.AppRegistryContract,
 			cfg.BaseChain.LinkedWalletsLimit,
 			cfg.BaseChain.ContractCallsTimeoutMs,
 			s.metrics,
