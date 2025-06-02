@@ -61,9 +61,6 @@ exports.randomFillSync = randomFillSync`,
         },
         build: {
             target: 'esnext',
-            rollupOptions: {
-                external: ['@towns-protocol/olm'],
-            },
         },
         optimizeDeps: {
             exclude: ['@towns-protocol/olm'],
