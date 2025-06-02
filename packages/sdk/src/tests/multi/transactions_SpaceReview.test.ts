@@ -11,7 +11,7 @@ import {
     SpaceReviewEventObject,
 } from '@towns-protocol/web3'
 import { StreamTimelineEvent } from '../../types'
-import { waitFor, waitForValue } from '../testUtils'
+import { waitForValue } from '../testUtils'
 import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
 

@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog, dlogError } from '@towns-protocol/dlog'
 import { BigNumber, ethers } from 'ethers'
 import { ETH_ADDRESS, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'
@@ -17,6 +17,7 @@ import { deepCopy } from 'ethers/lib/utils'
 import { cloneDeep } from 'lodash'
 
 const base_log = dlog('csb:test:transactions_Tip')
+const logError = dlogError('csb:test:transactions_Tip_error')
 
 describe('transactions_Tip', () => {
     const riverConfig = makeRiverConfig()
@@ -113,7 +114,7 @@ describe('transactions_Tip', () => {
             )!
         } catch (err) {
             const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(spaceId, err)
-            console.error('parsedError', parsedError)
+            logError('parsedError', parsedError)
             throw err
         }
         expect(dummyTipEvent).toBeDefined()
