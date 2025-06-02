@@ -63,6 +63,10 @@ interface IAppAccount is IAppAccountBase {
         AppParams calldata params
     ) external payable;
 
+    /// @notice Enables an app
+    /// @param app The address of the app to enable
+    function enableApp(address app) external;
+
     /// @notice Disables an app
     /// @param app The address of the app to disable
     function disableApp(address app) external;
@@ -84,7 +88,7 @@ interface IAppAccount is IAppAccountBase {
     /// @notice Gets the clients of an app
     /// @param app The address of the app to get the clients of
     /// @return The clients of the app
-    function getClients(address app) external view returns (address[] memory);
+    function getAppClients(address app) external view returns (address[] memory);
 
     /// @notice Gets the price of an app
     /// @param app The address of the app to get the price of
