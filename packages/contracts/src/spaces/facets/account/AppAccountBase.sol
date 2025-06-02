@@ -140,12 +140,6 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         emit IERC6900Account.ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
-    function _disableApp(address app) internal {
-        bytes32 appId = _getAppId(app);
-        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
-        _setGroupStatus(appId, false);
-    }
-
     // Internal Functions
     function _addApp(address module, bytes32 appId) internal {
         AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
@@ -197,6 +191,18 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
                 excess
             );
         }
+    }
+
+    function _enableApp(address app) internal {
+        bytes32 appId = _getAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        _setGroupStatus(appId, true);
+    }
+
+    function _disableApp(address app) internal {
+        bytes32 appId = _getAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        _setGroupStatus(appId, false);
     }
 
     // Internal View Functions
