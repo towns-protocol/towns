@@ -112,7 +112,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Create")), false);
 
-        address[] memory clients = appAccount.getClients(address(mockModule));
+        address[] memory clients = appAccount.getAppClients(address(mockModule));
         assertEq(clients.length, 1);
         assertEq(clients[0], client);
     }
@@ -424,13 +424,8 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         });
 
         // Re-enable by installing again
-        uint256 price = appAccount.getAppPrice(address(mockModule));
-        _dealAndPay(founder, price);
-        appAccount.installApp{value: price}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
+        vm.prank(founder);
+        appAccount.enableApp(address(mockModule));
 
         // Should be able to execute now
         vm.prank(client);
