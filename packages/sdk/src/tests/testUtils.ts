@@ -518,7 +518,9 @@ export async function createSpaceAndDefaultChannel(
         channelId,
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
-    expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+    await waitFor(() =>
+        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true),
+    )
 
     return {
         spaceId,
