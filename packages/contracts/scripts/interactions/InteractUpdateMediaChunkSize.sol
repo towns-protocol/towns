@@ -18,10 +18,10 @@ contract InteractUpdateMediaChunkSize is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-          RiverConfigValues.MEDIA_CHUNK_SIZE,
-          0,
-          abi.encode(value)
+            RiverConfigValues.MEDIA_CHUNK_SIZE,
+            0,
+            abi.encode(value)
         );
         vm.stopBroadcast();
-  }
+    }
 }
