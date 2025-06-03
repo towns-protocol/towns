@@ -5,6 +5,13 @@
     "publishConfig": {
         "access": "public"
     },
+    "type": "module",
+    "imports": {
+        "#/dev/*": "./dev/*",
+        "#/v3/*": "./v3/*",
+        "#/deployments/*": "./deployments/*",
+        "#/config/*": "./config/*"
+    },
     "scripts": {
         "build": "yarn make-config",
         "make-config": "node ./scripts/make-config.js",
