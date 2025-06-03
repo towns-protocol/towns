@@ -159,6 +159,8 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     }
 
     function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
+        if (recipient == address(0)) InvalidRecipient.selector.revertWith();
+
         // Get the protocol fee - will be at least the membership fee
         uint256 protocolFee = _getProtocolFee(installPrice);
 

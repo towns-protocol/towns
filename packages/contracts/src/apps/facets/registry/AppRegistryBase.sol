@@ -43,6 +43,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _setSpaceFactory(address spaceFactory) internal {
+        if (spaceFactory == address(0)) InvalidAddressInput.selector.revertWith();
         AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
         $.spaceFactory = spaceFactory;
     }
