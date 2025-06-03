@@ -10,7 +10,7 @@ import {RiverConfigValues} from "scripts/interactions/helpers/RiverConfigValues.
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
 
-contract InteractEnableNewSnapshotFormat is Interaction {
+contract InteractUpdateMediaChunkSize is Interaction {
     function __interact(address deployer) internal override {
         address riverRegistry = getDeployment("riverRegistry");
 
