@@ -79,6 +79,8 @@ type localStreamState struct {
 	// If SaveMiniblockCandidate is called and it matched first element of pendingCandidates,
 	// it is removed from pendingCandidates and is applied immediately instead of being stored.
 	pendingCandidates []*MiniblockRef
+
+	eventInclusionSubs *inclusionMonitor
 }
 
 // IsLocal is thread-safe.
