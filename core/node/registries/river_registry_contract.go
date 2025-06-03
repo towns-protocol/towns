@@ -138,6 +138,8 @@ func NewRiverRegistryContract(
 		return nil, err
 	}
 
+	blockchain.ChainMonitor.EnableRiverRegistryCallbacks(cfg.Address)
+
 	c.NodeRegistry, c.NodeRegistryAbi, c.NodeEventTopics, c.NodeEventInfo, err = initContract(
 		ctx,
 		river.NewNodeRegistryV1,
@@ -146,12 +148,18 @@ func NewRiverRegistryContract(
 		river.NodeRegistryV1MetaData,
 		[]*EventInfo{
 			{Name: "NodeAdded", Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeAdded{Raw: *log} }},
-			{Name: "NodeRemoved", Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeRemoved{Raw: *log} }},
+			{
+				Name:  "NodeRemoved",
+				Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeRemoved{Raw: *log} },
+			},
 			{
 				Name:  "NodeStatusUpdated",
 				Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeStatusUpdated{Raw: *log} },
 			},
-			{Name: "NodeUrlUpdated", Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeUrlUpdated{Raw: *log} }},
+			{
+				Name:  "NodeUrlUpdated",
+				Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeUrlUpdated{Raw: *log} },
+			},
 		},
 	)
 	if err != nil {

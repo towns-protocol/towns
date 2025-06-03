@@ -4,12 +4,17 @@ import (
 	"context"
 	"math/big"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap/zapcore"
+
+	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 )
@@ -25,6 +30,9 @@ type (
 			blockPeriod time.Duration,
 			metrics infra.MetricsFactory,
 		)
+
+		// EnableRiverRegistryCallbacks enables the River Registry callbacks such as OnNodeAdded or OnStreamAllocated.
+		EnableRiverRegistryCallbacks(riverRegistry common.Address)
 		// OnHeader adds a callback that is when a new header is received.
 		// Note: it is not guaranteed to be called for every new header!
 		OnHeader(cb OnChainNewHeader)
@@ -45,7 +53,35 @@ type (
 		)
 		// OnStopped calls cb after the chain monitor stopped monitoring the chain
 		OnStopped(cb OnChainMonitorStoppedCallback)
+
+		// OnNodeStatusUpdated registers a callback that is called each time a node is added to the
+		// River Registry contract.
+		OnNodeAdded(from BlockNumber, cb OnNodeAddedCallback)
+
+		// OnNodeStatusUpdated registers a callback that is called each time a node status is updated
+		// in the River Registry contract.
+		OnNodeStatusUpdated(from BlockNumber, cb OnNodeStatusUpdatedCallback)
+
+		// OnNodeStatusUpdated registers a callback that is called each time a node url is updated
+		// in the River Registry contract.
+		OnNodeUrlUpdated(from BlockNumber, cb OnNodeUrlUpdatedCallback)
+
+		// OnNodeStatusUpdated registers a callback that is called each time a node is removed from the
+		// River Registry contract.
+		OnNodeRemoved(from BlockNumber, cb OnNodeRemovedCallback)
 	}
+
+	// OnNodeRemovedCallback calles each time a node url is removed.
+	OnNodeAddedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeAdded)
+
+	// OnNodeStatusUpdatedCallback calles each time a node status is updated.
+	OnNodeStatusUpdatedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeStatusUpdated)
+
+	// OnNodeUrlUpdatedCallback calles each time a node url is updated.
+	OnNodeUrlUpdatedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeUrlUpdated)
+
+	// OnNodeRemovedCallback calles each time a node is removed.
+	OnNodeRemovedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeRemoved)
 
 	// OnChainEventCallback is called for each event that matches the filter.
 	// Note that the monitor doesn't care about errors in the callback and doesn't
@@ -75,6 +111,10 @@ type (
 		builder   chainMonitorBuilder
 		fromBlock *big.Int
 		started   bool
+		// riverRegistry holds optionally the river registry contract address.
+		// if set the client can use the RiverRegistry specific callbacks.
+		riverRegistry atomic.Pointer[common.Address]
+		nodeABI       *abi.ABI
 	}
 
 	// ChainMonitorPollInterval determines the next poll interval for the chain monitor
@@ -164,6 +204,10 @@ func (cm *chainMonitor) setFromBlock(fromBlock *big.Int, onSubscribe bool) {
 	}
 }
 
+func (cm *chainMonitor) EnableRiverRegistryCallbacks(riverRegistry common.Address) {
+	cm.riverRegistry.Store(&riverRegistry)
+}
+
 func (cm *chainMonitor) OnHeader(cb OnChainNewHeader) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -195,6 +239,115 @@ func (cm *chainMonitor) OnContractEvent(from BlockNumber, addr common.Address, c
 	defer cm.mu.Unlock()
 	cm.builder.OnContractEvent(from, addr, cb)
 	cm.setFromBlock(from.AsBigInt(), true)
+}
+
+func (cm *chainMonitor) OnNodeAdded(from BlockNumber, cb OnNodeAddedCallback) {
+	riverRegistry := cm.riverRegistry.Load()
+	if riverRegistry == nil {
+		logging.DefaultLogger(zapcore.InfoLevel).
+			Panicw("ChainMonitor OnNodeAdded callback not enabled")
+	}
+
+	nodeAddedEventTopic := cm.nodeABI.Events["NodeAdded"].ID
+	cm.OnContractWithTopicsEvent(
+		from,
+		*riverRegistry,
+		[][]common.Hash{{nodeAddedEventTopic}},
+		func(ctx context.Context, log types.Log) {
+			e := river.NodeRegistryV1NodeAdded{
+				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
+				Operator:    common.BytesToAddress(log.Topics[2].Bytes()),
+				Raw:         log,
+			}
+
+			if err := cm.nodeABI.UnpackIntoInterface(&e, "NodeAdded", log.Data); err == nil {
+				cb(ctx, &e)
+			} else {
+				logging.FromCtx(ctx).Errorw("unable to unpack NodeAdded event",
+					"error", err, "tx", log.TxHash, "index", log.Index, "log", log)
+			}
+		},
+	)
+}
+
+func (cm *chainMonitor) OnNodeRemoved(from BlockNumber, cb OnNodeRemovedCallback) {
+	nodeRemovedEventTopic := cm.nodeABI.Events["NodeRemoved"].ID
+
+	riverRegistry := cm.riverRegistry.Load()
+	if riverRegistry == nil {
+		logging.DefaultLogger(zapcore.InfoLevel).
+			Panicw("ChainMonitor OnNodeRemoved callback not enabled")
+	}
+
+	cm.OnContractWithTopicsEvent(
+		from,
+		*riverRegistry,
+		[][]common.Hash{{nodeRemovedEventTopic}},
+		func(ctx context.Context, log types.Log) {
+			e := river.NodeRegistryV1NodeRemoved{
+				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
+				Raw:         log,
+			}
+
+			cb(ctx, &e)
+		},
+	)
+}
+
+func (cm *chainMonitor) OnNodeUrlUpdated(from BlockNumber, cb OnNodeUrlUpdatedCallback) {
+	riverRegistry := cm.riverRegistry.Load()
+	if riverRegistry == nil {
+		logging.DefaultLogger(zapcore.InfoLevel).
+			Panicw("ChainMonitor OnNodeUrlUpdated callback not enabled")
+	}
+
+	nodeUrlUpdatedEventTopic := cm.nodeABI.Events["NodeUrlUpdated"].ID
+	cm.OnContractWithTopicsEvent(
+		from,
+		*riverRegistry,
+		[][]common.Hash{{nodeUrlUpdatedEventTopic}},
+		func(ctx context.Context, log types.Log) {
+			e := river.NodeRegistryV1NodeUrlUpdated{
+				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
+				Raw:         log,
+			}
+
+			if err := cm.nodeABI.UnpackIntoInterface(&e, "NodeUrlUpdated", log.Data); err == nil {
+				cb(ctx, &e)
+			} else {
+				logging.FromCtx(ctx).Errorw("unable to unpack NodeUrlUpdated event",
+					"error", err, "tx", log.TxHash, "index", log.Index, "log", log)
+			}
+		},
+	)
+}
+
+func (cm *chainMonitor) OnNodeStatusUpdated(from BlockNumber, cb OnNodeStatusUpdatedCallback) {
+	nodeStatusUpdatedEventTopic := cm.nodeABI.Events["NodeStatusUpdated"].ID
+	riverRegistry := cm.riverRegistry.Load()
+	if riverRegistry == nil {
+		logging.DefaultLogger(zapcore.InfoLevel).
+			Panicw("ChainMonitor OnNodeStatusUpdated callback not enabled")
+	}
+
+	cm.OnContractWithTopicsEvent(
+		from,
+		*riverRegistry,
+		[][]common.Hash{{nodeStatusUpdatedEventTopic}},
+		func(ctx context.Context, log types.Log) {
+			e := river.NodeRegistryV1NodeStatusUpdated{
+				NodeAddress: common.BytesToAddress(log.Topics[1].Bytes()),
+				Raw:         log,
+			}
+
+			if err := cm.nodeABI.UnpackIntoInterface(&e, "NodeStatusUpdated", log.Data); err == nil {
+				cb(ctx, &e)
+			} else {
+				logging.FromCtx(ctx).Errorw("unable to unpack NodeStatusUpdated event",
+					"error", err, "tx", log.TxHash, "index", log.Index, "log", log)
+			}
+		},
+	)
 }
 
 func (cm *chainMonitor) OnContractWithTopicsEvent(
@@ -229,6 +382,13 @@ func (cm *chainMonitor) Start(
 		return
 	}
 	cm.started = true
+
+	nodeABI, err := river.NodeRegistryV1MetaData.GetAbi()
+	if err != nil {
+		logging.FromCtx(ctx).Panicw("NodeRegistry ABI invalid", "error", err)
+	}
+	cm.nodeABI = nodeABI
+
 	go cm.runWithBlockPeriod(ctx, client, initialBlock, blockPeriod, metrics)
 }
 
@@ -363,7 +523,8 @@ func (cm *chainMonitor) runWithBlockPeriod(
 			// log when the chain monitor is fetching more than several blocks it indicates that either the chain
 			// monitor isn't able to keep up or the rpc node is having issues and importing chain segments instead
 			// of single blocks.
-			if (fromBlock < toBlock.Uint64() && toBlock.Uint64()-fromBlock >= 3) && blockPeriod >= 750*time.Millisecond {
+			if (fromBlock < toBlock.Uint64() && toBlock.Uint64()-fromBlock >= 3) &&
+				blockPeriod >= 750*time.Millisecond {
 				log.Infow("process chain segment", "from", fromBlock, "to", toBlock.Uint64())
 			}
 
