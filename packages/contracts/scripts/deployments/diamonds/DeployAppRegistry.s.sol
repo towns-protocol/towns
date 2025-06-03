@@ -42,8 +42,12 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         SPACE_FACTORY = factory;
     }
 
-    function getSpaceFactory() public view returns (address) {
-        return SPACE_FACTORY;
+    function getSpaceFactory() public returns (address) {
+        if (SPACE_FACTORY != address(0)) {
+            return SPACE_FACTORY;
+        }
+
+        return getDeployment("spaceFactory");
     }
 
     function addImmutableCuts(address deployer) internal {
