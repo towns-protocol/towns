@@ -1,0 +1,31 @@
+# Function: checkDelegateSig()
+
+```ts
+function checkDelegateSig(params): void;
+```
+
+Defined in: [packages/sdk/src/signerContext.ts:34](https://github.com/towns-protocol/towns/blob/0db1fd0ac7258e8db8cedfb6183e8eade8284fa1/packages/sdk/src/signerContext.ts#L34)
+
+## Parameters
+
+### params
+
+#### creatorAddress
+
+`string` \| `Uint8Array`\<`ArrayBufferLike`\>
+
+#### delegatePubKey
+
+`string` \| `Uint8Array`\<`ArrayBufferLike`\>
+
+#### delegateSig
+
+`Uint8Array`
+
+#### expiryEpochMs
+
+`bigint`
+
+## Returns
+
+`void`
