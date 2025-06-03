@@ -761,7 +761,7 @@ export class SyncedStreamsLoop {
     private syncClosed() {
         this.stopPing()
         if (this.syncState === SyncState.Canceling) {
-            this.log('server acknowledged our close atttempt', this.syncId)
+            this.log('server acknowledged our close attempt', this.syncId)
         } else {
             this.log('server cancelled unepexectedly, go through the retry loop', this.syncId)
             this.setSyncState(SyncState.Retrying)
