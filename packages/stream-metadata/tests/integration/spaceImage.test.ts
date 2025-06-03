@@ -7,7 +7,7 @@ import {
 	makeUniqueSpaceStreamId,
 } from '@towns-protocol/sdk'
 
-import { encryptAndSendMediaPayload, getTestServerUrl, makeJpegBlob } from '../testUtils'
+import { encryptAndSendMediaPayload, getTestServerUrl, makeJpegBlob } from '../testUtils.js'
 
 const log = dlog('test:stream-metadata:test:spaceImage', {
 	allowJest: true,

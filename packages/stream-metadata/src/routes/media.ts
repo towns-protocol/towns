@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { isValidStreamId } from '@towns-protocol/sdk'
 import { bin_fromHexString } from '@towns-protocol/dlog'
 
-import { getMediaStreamContent } from '../riverStreamRpcClient'
+import { getMediaStreamContent } from '../riverStreamRpcClient.js'
 
 const paramsSchema = z.object({
 	mediaStreamId: z

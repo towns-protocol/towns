@@ -1,15 +1,10 @@
 {
+	"extends": "../tsconfig.app.json",
 	"compilerOptions": {
-		"module": "ESNext",
-		"target": "ES2022",
-		"moduleResolution": "node",
-		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"skipLibCheck": true,
 		"strict": true,
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"sourceMap": true,
 		"types": ["vitest/globals"]
 	},
 	"include": ["src/**/*.ts"],

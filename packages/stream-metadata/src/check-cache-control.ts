@@ -1,4 +1,4 @@
-import type { Server } from './node'
+import type { Server } from './node.js'
 
 const isEmptyHeader = (header: string | number | string[] | undefined) => {
 	if (!header) return true

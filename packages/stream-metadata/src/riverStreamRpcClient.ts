@@ -14,8 +14,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
 import { errors } from 'ethers'
 
-import { MediaContent } from './types'
-import { getNodeForStream } from './streamRegistry'
+import { MediaContent } from './types.js'
+import { getNodeForStream } from './streamRegistry.js'
 
 const STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS: UnpackEnvelopeOpts = {
 	disableHashValidation: true,
@@ -38,7 +38,7 @@ async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let client = clients.get(url)
 	if (!client) {
 		logger.info({ url }, 'Connecting')
-		client = makeStreamRpcClient(url)
+		client = await makeStreamRpcClient(url)
 		clients.set(url, client)
 	}
 	return client
@@ -242,6 +242,7 @@ export async function getStream(
 		) {
 			return undefined
 		}
+		throw e
 	} finally {
 		streamRequests.delete(streamId)
 	}

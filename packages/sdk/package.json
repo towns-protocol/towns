@@ -3,16 +3,23 @@
     "version": "0.0.236",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/browser/index.d.ts",
+            "import": "./dist/browser/index.js",
+            "node": "./dist/node/index.js",
+            "default": "./dist/browser/index.js"
+        },
+        "./package.json": "./package.json"
+    },
     "publishConfig": {
         "access": "public"
     },
+    "sideEffects": false,
     "scripts": {
-        "build": "tsc",
+        "build": "tsdown",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
-        "dev": "my-node src/index.ts",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "test:unit": "vitest run --config vitest.config.unit.ts",
@@ -22,7 +29,7 @@
         "test:ci:multi:ne": "vitest run --config vitest.config.multi_ne.ts",
         "test:ci:with-entitlements": "yarn test:ci:multi:ent",
         "test:watch": "vitest --watch",
-        "watch": "tsc --watch"
+        "watch": "tsdown --watch"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
@@ -63,9 +70,10 @@
         "ioredis": "^5.3.2",
         "msgpackr": "^1.10.1",
         "seedrandom": "^3.0.5",
+        "tsdown": "^0.12.3",
+        "tsx": "^4.19.4",
         "typed-emitter": "^2.1.0",
         "typescript": "^5.8.2",
-        "vite-plugin-wasm": "^3.4.1",
         "vitest-fetch-mock": "^0.4.3"
     },
     "files": [

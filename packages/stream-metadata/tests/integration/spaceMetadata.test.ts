@@ -10,7 +10,7 @@ import {
 	makeEthersProvider,
 	makeJpegBlob,
 	SpaceMetadataParams,
-} from '../testUtils'
+} from '../testUtils.js'
 import { spaceMetadataBaseUrl, SpaceMetadataResponse } from '../../src/routes/spaceMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 

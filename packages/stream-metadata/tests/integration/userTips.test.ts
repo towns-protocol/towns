@@ -4,7 +4,7 @@ import { ethers } from 'ethers'
 import { Bot, makeRiverConfig, SyncAgent } from '@towns-protocol/sdk'
 import { ETH_ADDRESS } from '@towns-protocol/web3'
 
-import { getTestServerUrl } from '../testUtils'
+import { getTestServerUrl } from '../testUtils.js'
 import { UserTipsResponsePayload } from '../../src/routes/userTips'
 
 const log = dlog('test:stream-metadata:test:userTips', {
