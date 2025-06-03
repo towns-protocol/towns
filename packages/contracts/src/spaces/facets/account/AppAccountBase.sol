@@ -66,7 +66,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
 
         // set the group status to active
         _chargeForInstall(msg.sender, app.owner, app.installPrice);
-        _setGroupStatus(app.appId, true);
+        _setGroupStatusWithExpiration(app.appId, true, app.accessDuration);
         _addApp(module, app.appId);
 
         uint256 clientsLength = app.clients.length;
