@@ -43,6 +43,6 @@
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.3",
     "solhint": "^5.1.0",
-    "turbo": "^2.5.3"
+    "turbo": "^2.5.4"
   }
 }

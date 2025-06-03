@@ -21,7 +21,7 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.5.0",
+    "@bufbuild/protobuf": "^2.5.1",
     "@ethereumjs/util": "^8.1.0",
     "@towns-protocol/dlog": "workspace:^",
     "@towns-protocol/olm": "3.2.28",
@@ -36,12 +36,12 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.17",
-    "@types/node": "^20.17.51",
-    "@typescript-eslint/eslint-plugin": "^8.33.0",
-    "@typescript-eslint/parser": "^8.33.0",
+    "@types/node": "^20.17.57",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
     "eslint": "^8.57.1",
-    "eslint-import-resolver-typescript": "^4.4.1",
-    "eslint-plugin-import-x": "^4.13.3",
+    "eslint-import-resolver-typescript": "^4.4.2",
+    "eslint-plugin-import-x": "^4.15.0",
     "fake-indexeddb": "^4.0.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",

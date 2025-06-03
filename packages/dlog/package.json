@@ -21,18 +21,18 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.5.0",
+        "@bufbuild/protobuf": "^2.5.1",
         "@towns-protocol/proto": "workspace:^",
         "debug": "^4.4.1",
         "ethereum-cryptography": "^3.2.0"
     },
     "devDependencies": {
         "@types/debug": "^4.1.12",
-        "@typescript-eslint/eslint-plugin": "^8.33.0",
-        "@typescript-eslint/parser": "^8.33.0",
+        "@typescript-eslint/eslint-plugin": "^8.33.1",
+        "@typescript-eslint/parser": "^8.33.1",
         "eslint": "^8.57.1",
-        "eslint-import-resolver-typescript": "^4.4.1",
-        "eslint-plugin-import-x": "^4.13.3",
+        "eslint-import-resolver-typescript": "^4.4.2",
+        "eslint-plugin-import-x": "^4.15.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.8.3",
         "vitest": "3.0.5"
