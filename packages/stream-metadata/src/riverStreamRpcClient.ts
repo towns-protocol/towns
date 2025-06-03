@@ -14,8 +14,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
 import { errors } from 'ethers'
 
-import { MediaContent } from './types'
-import { getNodeForStream } from './streamRegistry'
+import { MediaContent } from './types.js'
+import { getNodeForStream } from './streamRegistry.js'
 
 const STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS: UnpackEnvelopeOpts = {
 	disableHashValidation: true,
@@ -242,6 +242,7 @@ export async function getStream(
 		) {
 			return undefined
 		}
+		throw e
 	} finally {
 		streamRequests.delete(streamId)
 	}

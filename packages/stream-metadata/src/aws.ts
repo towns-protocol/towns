@@ -1,7 +1,7 @@
 import { CloudFront, GetInvalidationCommandOutput } from '@aws-sdk/client-cloudfront'
 import { FastifyBaseLogger } from 'fastify'
 
-import { config as envConfig } from './environment'
+import { config as envConfig } from './environment.js'
 
 export class CloudfrontManager {
 	private readonly cloudFront: CloudFront

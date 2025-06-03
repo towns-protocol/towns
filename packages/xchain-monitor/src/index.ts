@@ -1,8 +1,8 @@
-import { createCustomPublicClient } from './client'
-import { config } from './environment'
-import { getLogger } from './logger'
-import { scanBlockchainForXchainEvents } from './xchain'
-import { saveLastScannedBlock, getFirstUnscannedBlock } from './currentBlock'
+import { createCustomPublicClient } from './client.js'
+import { config } from './environment.js'
+import { getLogger } from './logger.js'
+import { scanBlockchainForXchainEvents } from './xchain.js'
+import { saveLastScannedBlock, getFirstUnscannedBlock } from './currentBlock.js'
 
 const logger = getLogger('main')
 

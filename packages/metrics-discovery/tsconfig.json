@@ -1,4 +1,6 @@
 {
+    // TODO: move this to app tsconfig once we figure out the proper way to handle the generated package
+    "extends": "../tsconfig.base.json",
     "compilerOptions": {
         "target": "es2020",
         "noImplicitAny": true,
@@ -6,8 +8,6 @@
         "preserveConstEnums": true,
         "noEmit": true,
         "sourceMap": false,
-        "module": "commonjs",
-        "moduleResolution": "node",
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
@@ -15,10 +15,7 @@
         "outDir": "dist",
         "inlineSourceMap": true,
         "resolveJsonModule": true,
-        "baseUrl": ".",
-        "paths": {
-            "@generated/*": ["./generated/*"]
-        }
+        "baseUrl": "."
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules", "**/*.test.ts"]
