@@ -40,5 +40,5 @@ if [ "$NODE_ENV" = "development" ]; then
   yarn ponder dev --config "${PONDER_CONFIG}"
 else
   echo "Starting Ponder in production mode"
-  yarn ponder start --config "${PONDER_CONFIG}"
+  yarn ponder start --config "${PONDER_CONFIG}" --log-format json
 fi
