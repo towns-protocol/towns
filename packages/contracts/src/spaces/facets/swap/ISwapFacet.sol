@@ -78,11 +78,11 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     function getSwapRouter() external view returns (address);
 
     /// @notice Get the swap fees for this space
-    /// @return treasuryBps Treasury fee in basis points (from protocol config)
+    /// @return protocolBps Treasury fee in basis points (from protocol config)
     /// @return posterBps Poster fee in basis points (space specific)
     /// @return collectPosterFeeToSpace Whether the poster fee is collected to the space
     function getSwapFees()
         external
         view
-        returns (uint16 treasuryBps, uint16 posterBps, bool collectPosterFeeToSpace);
+        returns (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace);
 }

@@ -12,7 +12,7 @@ import {
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
 } from '../../types'
-import { makeRandomUserContext, makeTestRpcClient } from '../testUtils'
+import { makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
 
 describe('streamRpcClientGetSince', () => {
     let bobsContext: SignerContext
@@ -128,13 +128,17 @@ describe('streamRpcClientGetSince', () => {
             })
         }
 
-        const streamSince = await client.getStream({
-            streamId: bobsSettingsStreamId,
-            syncCookie: cookie,
-        })
+        // eventually the stream will have a snapshot and the blocks will fall out of the stream view in the node
+        // so we will have an old sync cookie and get a sync reset
+        await waitFor(async () => {
+            const streamSince = await client.getStream({
+                streamId: bobsSettingsStreamId,
+                syncCookie: cookie,
+            })
 
-        expect(streamSince.stream?.events.length).toBe(0)
-        expect(streamSince.stream?.miniblocks.length).toBeGreaterThan(0)
-        expect(streamSince.stream?.syncReset).toBe(true)
+            expect(streamSince.stream?.events.length).toBe(0)
+            expect(streamSince.stream?.miniblocks.length).toBeGreaterThan(0)
+            expect(streamSince.stream?.syncReset).toBe(true)
+        })
     })
 })

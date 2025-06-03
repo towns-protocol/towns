@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
-
 	ttlcache "github.com/patrickmn/go-cache"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"

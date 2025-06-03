@@ -74,10 +74,15 @@ func TestStreamTrimmer(t *testing.T) {
 	// Check if the streams are trimmed correctly
 	require.Eventually(func() bool {
 		mbsLeft := make([]int64, 0, 10)
-		err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-			mbsLeft = append(mbsLeft, seqNum)
-			return nil
-		})
+		err = pgStreamStore.ReadMiniblocksByStream(
+			ctx,
+			streamId,
+			true,
+			func(blockdata []byte, seqNum int64, snapshot []byte) error {
+				mbsLeft = append(mbsLeft, seqNum)
+				return nil
+			},
+		)
 		require.NoError(err)
 		return slices.Equal([]int64{45, 46, 47, 48, 49, 50, 51, 52, 53, 54}, mbsLeft)
 	}, time.Second*5, 100*time.Millisecond)
@@ -85,10 +90,15 @@ func TestStreamTrimmer(t *testing.T) {
 	// Make sure the non-trimmable stream is not trimmed
 	require.Eventually(func() bool {
 		mbsLeft := make([]int64, 0, 55)
-		err = pgStreamStore.ReadMiniblocksByStream(ctx, nonTrimmableStreamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-			mbsLeft = append(mbsLeft, seqNum)
-			return nil
-		})
+		err = pgStreamStore.ReadMiniblocksByStream(
+			ctx,
+			nonTrimmableStreamId,
+			true,
+			func(blockdata []byte, seqNum int64, snapshot []byte) error {
+				mbsLeft = append(mbsLeft, seqNum)
+				return nil
+			},
+		)
 		require.NoError(err)
 		return len(mbsLeft) == 55
 	}, time.Second*5, 100*time.Millisecond)
@@ -113,10 +123,15 @@ func TestStreamTrimmer(t *testing.T) {
 	// Check if the streams are trimmed correctly
 	require.Eventually(func() bool {
 		mbsLeft := make([]int64, 0, 3)
-		err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-			mbsLeft = append(mbsLeft, seqNum)
-			return nil
-		})
+		err = pgStreamStore.ReadMiniblocksByStream(
+			ctx,
+			streamId,
+			true,
+			func(blockdata []byte, seqNum int64, snapshot []byte) error {
+				mbsLeft = append(mbsLeft, seqNum)
+				return nil
+			},
+		)
 		require.NoError(err)
 		return slices.Equal([]int64{50, 51, 52, 53, 54, 55}, mbsLeft)
 	}, time.Second*5, 100*time.Millisecond)

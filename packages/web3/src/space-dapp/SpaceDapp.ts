@@ -54,7 +54,7 @@ import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
-import { UNKNOWN_ERROR } from '../BaseContractShim'
+import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'
 import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 
@@ -70,7 +70,9 @@ import {
     IsTokenBanned,
 } from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
+import { TownsToken } from '../towns-token/TownsToken'
 import { wrapTransaction } from '../space-dapp/wrapTransaction'
+import { BaseRegistry } from '../base-registry/BaseRegistry'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -156,6 +158,7 @@ type EntitledWallet = string | undefined
 export class SpaceDapp {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
+    public readonly baseRegistry: BaseRegistry
     public readonly provider: ethers.providers.Provider
     public readonly spaceRegistrar: SpaceRegistrar
     public readonly pricingModules: PricingModules
@@ -163,6 +166,7 @@ export class SpaceDapp {
     public readonly platformRequirements: PlatformRequirements
     public readonly airdrop: RiverAirdropDapp
     public readonly spaceOwner: SpaceOwner
+    public readonly townsToken?: TownsToken
 
     public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
     public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
@@ -175,6 +179,7 @@ export class SpaceDapp {
         this.isLegacySpaceCache = new Map()
         this.config = config
         this.provider = provider
+        this.baseRegistry = new BaseRegistry(config, provider)
         this.spaceRegistrar = new SpaceRegistrar(config, provider)
         this.walletLink = new WalletLink(config, provider)
         this.pricingModules = new PricingModules(config, provider)
@@ -183,6 +188,9 @@ export class SpaceDapp {
             provider,
         )
         this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
+        if (config.addresses.towns) {
+            this.townsToken = new TownsToken(config.addresses.towns, provider)
+        }
         this.airdrop = new RiverAirdropDapp(config, provider)
 
         // For RPC providers that pool for events, we need to set the polling interval to a lower value
@@ -200,7 +208,12 @@ export class SpaceDapp {
         const bannedCacheOpts = {
             ttlSeconds: isLocalDev ? 5 : 15 * 60,
         }
-        this.entitlementCache = new EntitlementCache(entitlementCacheOpts)
+
+        // The caching of positive entitlements is shorter on both the node and client.
+        this.entitlementCache = new EntitlementCache({
+            positiveCacheTTLSeconds: isLocalDev ? 5 : 15,
+            negativeCacheTTLSeconds: 2,
+        })
         this.entitledWalletCache = new EntitlementCache(entitlementCacheOpts)
         this.entitlementEvaluationCache = new EntitlementCache(entitlementCacheOpts)
         this.bannedTokenIdsCache = new SimpleCache(bannedCacheOpts)
@@ -930,18 +943,20 @@ export class SpaceDapp {
         spaceId: string,
         rootKey: string,
         xchainConfig: XchainConfig,
+        invalidateCache: boolean = false,
     ): Promise<EntitledWallet> {
-        const { value } = await this.entitledWalletCache.executeUsingCache(
-            newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace),
-            async (request) => {
-                const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
-                    request.spaceId,
-                    request.userId,
-                    xchainConfig,
-                )
-                return new EntitledWalletCacheResult(entitledWallet)
-            },
-        )
+        const key = newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace)
+        if (invalidateCache) {
+            this.entitlementEvaluationCache.invalidate(key)
+        }
+        const { value } = await this.entitledWalletCache.executeUsingCache(key, async (request) => {
+            const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
+                request.spaceId,
+                request.userId,
+                xchainConfig,
+            )
+            return new EntitledWalletCacheResult(entitledWallet)
+        })
         return value
     }
 
@@ -992,9 +1007,14 @@ export class SpaceDapp {
         spaceId: string,
         user: string,
         permission: Permission,
+        invalidateCache: boolean = false,
     ): Promise<boolean> {
+        const key = newSpaceEntitlementEvaluationRequest(spaceId, user, permission)
+        if (invalidateCache) {
+            this.entitlementEvaluationCache.invalidate(key)
+        }
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            newSpaceEntitlementEvaluationRequest(spaceId, user, permission),
+            key,
             async (request) => {
                 const isEntitled = await this.isEntitledToSpaceUncached(
                     request.spaceId,
@@ -1029,9 +1049,19 @@ export class SpaceDapp {
         user: string,
         permission: Permission,
         xchainConfig: XchainConfig = EmptyXchainConfig,
+        invalidateCache: boolean = false,
     ): Promise<boolean> {
+        const key = newChannelEntitlementEvaluationRequest(
+            spaceId,
+            channelNetworkId,
+            user,
+            permission,
+        )
+        if (invalidateCache) {
+            this.entitlementEvaluationCache.invalidate(key)
+        }
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            newChannelEntitlementEvaluationRequest(spaceId, channelNetworkId, user, permission),
+            key,
             async (request) => {
                 const isEntitled = await this.isEntitledToChannelUncached(
                     request.spaceId,
@@ -1924,5 +1954,35 @@ export class SpaceDapp {
                 ),
             txnOpts,
         )
+    }
+
+    /**
+     * Delegate staking within a space to an operator
+     * @param args
+     * @param args.spaceId - The space id
+     * @param args.operatorAddress - The operator address
+     * @returns The transaction
+     */
+    public async addSpaceDelegation<T = ContractTransaction>(args: {
+        spaceId: string
+        operatorAddress: string
+        signer: ethers.Signer
+        transactionOpts?: TransactionOpts
+        overrideExecution?: OverrideExecution<T>
+    }) {
+        const { spaceId, operatorAddress, signer, transactionOpts, overrideExecution } = args
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const spaceAddress = space.Address
+
+        return this.baseRegistry.spaceDelegation.executeCall({
+            signer,
+            functionName: 'addSpaceDelegation',
+            args: [spaceAddress, operatorAddress],
+            overrideExecution,
+            transactionOpts,
+        })
     }
 }

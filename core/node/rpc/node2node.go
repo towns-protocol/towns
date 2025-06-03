@@ -259,6 +259,7 @@ func (s *Service) streamMiniblocksByIds(
 		ctx,
 		streamId,
 		req.GetMiniblockIds(),
+		req.GetOmitSnapshots(),
 		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
 			var mb Miniblock
 			if err = proto.Unmarshal(mbBytes, &mb); err != nil {

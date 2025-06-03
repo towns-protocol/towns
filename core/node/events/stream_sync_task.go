@@ -142,6 +142,7 @@ func (s *StreamCache) reconciliationTask(
 			return v, xsync.CancelOp
 		},
 	)
+
 	if corrupt {
 		logging.FromCtx(s.params.ServerCtx).Errorw("reconciliationTask: Corrupt task (double submission?)",
 			"stream", streamId,
@@ -159,11 +160,13 @@ func (s *StreamCache) reconciliationTask(
 				"error", err,
 				"streamRecord", streamRecord)
 
-		if IsRiverErrorCode(err, Err_DOWNSTREAM_NETWORK_ERROR) {
+		if IsRiverErrorCode(err, Err_DOWNSTREAM_NETWORK_ERROR) ||
+			IsRiverErrorCode(err, Err_UNAVAILABLE) {
 			s.scheduledReconciliationTasks.Compute(
 				streamId,
 				func(existingValue *reconcileTask, loaded bool) (newValue *reconcileTask, op xsync.ComputeOp) {
-					if loaded && existingValue.next != nil && existingValue.next.LastMbNum() > streamRecord.LastMbNum() {
+					if loaded && existingValue.next != nil &&
+						existingValue.next.LastMbNum() > streamRecord.LastMbNum() {
 						streamRecord = existingValue.next
 					} else if loaded && existingValue.inProgress != nil && existingValue.inProgress.LastMbNum() > streamRecord.LastMbNum() {
 						streamRecord = existingValue.inProgress
@@ -195,6 +198,7 @@ func (s *StreamCache) reconciliationTask(
 			}
 		},
 	)
+
 	if corrupt {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
@@ -274,12 +278,21 @@ func (s *StreamCache) syncStreamFromPeers(
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
 		}
+
 		remote = stream.AdvanceStickyPeer(remote)
 	}
 
-	return AsRiverError(err, Err_UNAVAILABLE).
-		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
-		Message("No peer could provide miniblocks for stream reconciliation")
+	if err != nil {
+		return AsRiverError(err, Err_UNAVAILABLE).
+			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
+			Message("No peer could provide miniblocks for stream reconciliation")
+	}
+
+	return RiverError(
+		Err_UNAVAILABLE,
+		"No peer could provide miniblocks for stream reconciliation",
+	).
+		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 }
 
 // syncStreamFromSinglePeer syncs the database for the given streamResult by fetching missing blocks from a single peer.
@@ -374,9 +387,12 @@ func (r *retryableReconciliationTasks) Add(streamId StreamId, stream *Stream, st
 	defer r.mu.Unlock()
 
 	if elem, ok := r.pendingTasks[streamId]; ok {
-		existing := elem.Value.(*river.StreamWithId)
-		if existing.LastMbNum() < streamRecord.LastMbNum() {
-			elem.Value = streamRecord
+		existing := elem.Value.(*retryableReconciliationTaskItem)
+		if existing.item.LastMbNum() < streamRecord.LastMbNum() {
+			elem.Value = &retryableReconciliationTaskItem{
+				retryAfter: time.Now().Add(r.nextRetryDuration),
+				item:       streamRecord,
+			}
 		}
 		return
 	}
