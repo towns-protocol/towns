@@ -78,7 +78,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
 
     /// @inheritdoc IAppAccount
     function getAppPrice(address app) external view returns (uint256) {
-        return _getInstallPrice(app);
+        return _getTotalRequiredPayment(app);
     }
 
     /// @inheritdoc IAppAccount
