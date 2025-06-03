@@ -49,6 +49,7 @@ interface IAppAccountBase {
     error AppRevoked();
     error InsufficientPayment();
     error InvalidOwner();
+    error InvalidRecipient();
 }
 
 interface IAppAccount is IAppAccountBase {
