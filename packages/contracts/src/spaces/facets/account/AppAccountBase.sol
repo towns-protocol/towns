@@ -21,6 +21,7 @@ import {AppAccountStorage} from "./AppAccountStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
@@ -41,6 +42,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
     bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
 
+    // External Functions
     function _installApp(
         address module,
         Delays calldata delays,
@@ -138,6 +140,13 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         emit IERC6900Account.ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
+    function _disableApp(address app) internal {
+        bytes32 appId = _getAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        _setGroupStatus(appId, false);
+    }
+
+    // Internal Functions
     function _addApp(address module, bytes32 appId) internal {
         AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
         $.installedApps.add(module);
@@ -149,19 +158,68 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         delete AppAccountStorage.getLayout().appIdByApp[module];
     }
 
-    function _disableApp(address app) internal {
-        bytes32 appId = _getAppId(app);
-        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
-        _setGroupStatus(appId, false);
+    function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
+        // Get the protocol fee - will be at least the membership fee
+        uint256 protocolFee = _getProtocolFee(installPrice);
+
+        // For free apps, we only need to cover protocol fee
+        uint256 totalRequired = _getTotalPrice(protocolFee, installPrice);
+        if (msg.value < totalRequired) revert InsufficientPayment();
+
+        // Handle protocol fee first - this is always charged
+        CurrencyTransfer.transferCurrency(
+            CurrencyTransfer.NATIVE_TOKEN,
+            payer,
+            _getPlatformRequirements().getFeeRecipient(),
+            protocolFee
+        );
+
+        // Handle recipient payment
+        uint256 ownerProceeds = installPrice == 0 ? 0 : totalRequired - protocolFee;
+        if (ownerProceeds > 0) {
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                payer,
+                recipient,
+                ownerProceeds
+            );
+        }
+
+        // Refund excess
+        uint256 excess = msg.value - totalRequired;
+        if (excess > 0) {
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                address(this),
+                payer,
+                excess
+            );
+        }
     }
 
-    function _getClients(address app) internal view returns (address[] memory) {
-        bytes32 appId = _getAppId(app);
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        return _getAppFromAttestation(app, _getAttestation(appId)).clients;
+    // Internal View Functions
+    function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
+        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 baseFee = platform.getMembershipFee();
+        if (installPrice == 0) return baseFee;
+        uint256 bpsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
+        return FixedPointMathLib.max(bpsFee, baseFee);
     }
 
-    // Getters
+    function _getTotalPrice(
+        uint256 protocolFee,
+        uint256 installPrice
+    ) internal pure returns (uint256) {
+        if (installPrice == 0) return protocolFee;
+        return installPrice + protocolFee;
+    }
+
+    function _getTotalRequiredPayment(address app) internal view returns (uint256 totalRequired) {
+        uint256 installPrice = ITownsApp(app).installPrice();
+        uint256 protocolFee = _getProtocolFee(installPrice);
+        return _getTotalPrice(protocolFee, installPrice);
+    }
+
     function _isEntitled(
         address module,
         address client,
@@ -265,7 +323,12 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         return AppAccountStorage.getLayout().appIdByApp[module];
     }
 
-    // Checks
+    function _getClients(address app) internal view returns (address[] memory) {
+        bytes32 appId = _getAppId(app);
+        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
+        return _getAppFromAttestation(app, _getAttestation(appId)).clients;
+    }
+
     function _checkAuthorized(address module) internal view {
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
@@ -288,59 +351,6 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         if (_isUnauthorizedTarget(module, factory, deps)) {
             UnauthorizedApp.selector.revertWith(module);
         }
-    }
-
-    function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
-        IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 minPrice = platform.getMembershipFee();
-        if (installPrice == 0) return minPrice;
-        uint256 basisPointsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
-        return basisPointsFee > minPrice ? basisPointsFee : minPrice;
-    }
-
-    function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
-        // Get the protocol fee - will be at least the membership fee
-        uint256 protocolFee = _getProtocolFee(installPrice);
-
-        // For free apps, we only need to cover protocol fee
-        uint256 totalRequired = installPrice == 0 ? protocolFee : installPrice;
-        if (msg.value < totalRequired) revert InsufficientPayment();
-
-        // Handle protocol fee first - this is always charged
-        CurrencyTransfer.transferCurrency(
-            CurrencyTransfer.NATIVE_TOKEN,
-            payer,
-            _getPlatformRequirements().getFeeRecipient(),
-            protocolFee
-        );
-
-        // Handle recipient payment
-        uint256 ownerProceeds = installPrice == 0 ? 0 : installPrice - protocolFee;
-        if (ownerProceeds > 0) {
-            CurrencyTransfer.transferCurrency(
-                CurrencyTransfer.NATIVE_TOKEN,
-                payer,
-                recipient,
-                ownerProceeds
-            );
-        }
-
-        // Refund excess
-        uint256 excess = msg.value - totalRequired;
-        if (excess > 0) {
-            CurrencyTransfer.transferCurrency(
-                CurrencyTransfer.NATIVE_TOKEN,
-                address(this),
-                payer,
-                excess
-            );
-        }
-    }
-
-    function _getInstallPrice(address app) internal view returns (uint256) {
-        uint256 installPrice = ITownsApp(app).installPrice();
-        if (installPrice == 0) return _getProtocolFee(installPrice);
-        return installPrice;
     }
 
     function _isUnauthorizedTarget(
@@ -390,10 +400,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             selector == ITownsApp.requiredPermissions.selector;
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Hooks                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
+    // Override Functions
     function _getOwner() internal view virtual override returns (address) {
         return _owner();
     }

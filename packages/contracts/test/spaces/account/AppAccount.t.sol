@@ -16,6 +16,7 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
@@ -243,13 +244,15 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         uint256 protocolFee = _getProtocolFee(price);
         uint256 devInitialBalance = address(dev).balance;
 
+        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
+
         vm.expectEmit(address(appAccount));
         emit IERC6900Account.ExecutionInstalled(
             address(mockModule),
             mockModule.executionManifest()
         );
-        _dealAndPay(founder, price);
-        appAccount.installApp{value: price}(
+        _dealAndPay(founder, totalPrice);
+        appAccount.installApp{value: totalPrice}(
             address(mockModule),
             "",
             AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
@@ -257,7 +260,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         // Verify fee distribution
         assertEq(address(deployer).balance, protocolFee);
-        assertEq(address(dev).balance - devInitialBalance, price - protocolFee);
+        assertEq(address(dev).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -271,8 +274,11 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
             address(mockModule),
             mockModule.executionManifest()
         );
-        _dealAndPay(founder, minFee);
-        appAccount.installApp{value: minFee}(
+
+        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
+
+        _dealAndPay(founder, totalPrice);
+        appAccount.installApp{value: totalPrice}(
             address(mockModule),
             "",
             AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
@@ -280,7 +286,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         // Verify all payment went to protocol fee recipient
         assertEq(address(deployer).balance, minFee);
-        assertEq(address(dev).balance, 0);
+        assertEq(address(dev).balance, totalPrice - minFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -293,8 +299,10 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         uint256 minFee = IPlatformRequirements(spaceFactory).getMembershipFee();
         uint256 devInitialBalance = address(dev).balance;
 
-        _dealAndPay(founder, price);
-        appAccount.installApp{value: price}(
+        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
+
+        _dealAndPay(founder, totalPrice);
+        appAccount.installApp{value: totalPrice}(
             address(mockModule),
             "",
             AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
@@ -303,7 +311,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         // Verify BPS fee was used instead of min fee
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(protocolFee > minFee);
-        assertEq(address(dev).balance - devInitialBalance, price - protocolFee);
+        assertEq(address(dev).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -320,8 +328,10 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         );
         uint256 devInitialBalance = address(dev).balance;
 
-        _dealAndPay(founder, price);
-        appAccount.installApp{value: price}(
+        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
+
+        _dealAndPay(founder, totalPrice);
+        appAccount.installApp{value: totalPrice}(
             address(mockModule),
             "",
             AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
@@ -331,7 +341,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(bpsFee < minFee);
         assertEq(protocolFee, minFee);
-        assertEq(address(dev).balance - devInitialBalance, price - protocolFee);
+        assertEq(address(dev).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -339,8 +349,11 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         uint256 price = 1 ether;
         _setupAppWithPrice(price);
 
+        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
+        uint256 protocolFee = _getProtocolFee(price);
+
         uint256 excess = 0.5 ether;
-        uint256 payment = price + excess;
+        uint256 payment = totalPrice + excess;
         uint256 founderInitialBalance = address(founder).balance;
 
         _dealAndPay(founder, payment);
@@ -352,6 +365,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         // Verify excess was refunded
         assertEq(address(founder).balance - founderInitialBalance, excess);
+        assertEq(address(dev).balance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -521,7 +535,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         uint256 minPrice = platform.getMembershipFee();
         if (installPrice == 0) return minPrice;
         uint256 basisPointsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
-        return basisPointsFee > minPrice ? basisPointsFee : minPrice;
+        return FixedPointMathLib.max(basisPointsFee, minPrice);
     }
 
     function _getTotalRequired(uint256 installPrice) internal view returns (uint256) {
