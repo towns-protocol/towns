@@ -58,7 +58,7 @@ func (sr *streamRegistryImpl) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) ([]common.Address, error) {
-	addrs, err := sr.nodeRegistry.ChooseStreamNodes(streamId, int(sr.onChainConfig.Get().ReplicationFactor))
+	addrs, err := sr.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(sr.onChainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}

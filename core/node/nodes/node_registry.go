@@ -36,11 +36,12 @@ type NodeRegistry interface {
 	GetValidNodeAddresses() []common.Address
 
 	// ChooseStreamNodes returns replFactor nodes that the given streamId can be assigned to.
-	ChooseStreamNodes(streamId StreamId, replFactor int) ([]common.Address, error)
+	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
 
 	// ChooseStreamNodes returns replFactor nodes that the given streamId can be assigned to.
 	// For all returned nodes the given filter returned true for the node address and operator.
 	ChooseStreamNodesWithCriteria(
+		ctx context.Context,
 		streamId StreamId,
 		replFactor int,
 		match func(node common.Address, operator common.Address) bool,
@@ -374,6 +375,7 @@ func (n *nodeRegistryImpl) GetValidNodeAddresses() []common.Address {
 }
 
 func (n *nodeRegistryImpl) ChooseStreamNodes(
+	ctx context.Context,
 	streamId StreamId,
 	replFactor int,
 ) ([]common.Address, error) {
@@ -381,6 +383,7 @@ func (n *nodeRegistryImpl) ChooseStreamNodes(
 }
 
 func (n *nodeRegistryImpl) ChooseStreamNodesWithCriteria(
+	ctx context.Context,
 	streamId StreamId,
 	replFactor int,
 	match func(node common.Address, operator common.Address) bool,

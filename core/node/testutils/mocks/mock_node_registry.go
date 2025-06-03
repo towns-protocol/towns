@@ -21,8 +21,12 @@ type MockNodeRegistry struct {
 	mock.Mock
 }
 
-// ChooseStreamNodes provides a mock function with given fields: ctx, streamId, replFactor
-func (_m *MockNodeRegistry) ChooseStreamNodes(ctx context.Context, streamId shared.StreamId, replFactor int) ([]common.Address, error) {
+func (_m *MockNodeRegistry) ChooseStreamNodesWithCriteria(
+	ctx context.Context,
+	streamId shared.StreamId,
+	replFactor int,
+	match func(node common.Address, operator common.Address) bool,
+) ([]common.Address, error) {
 	ret := _m.Called(ctx, streamId, replFactor)
 
 	if len(ret) == 0 {
@@ -49,6 +53,12 @@ func (_m *MockNodeRegistry) ChooseStreamNodes(ctx context.Context, streamId shar
 	}
 
 	return r0, r1
+}
+
+func (_m *MockNodeRegistry) ChooseStreamNodes(ctx context.Context, streamId shared.StreamId, replFactor int) ([]common.Address, error) {
+	return _m.ChooseStreamNodesWithCriteria(ctx, streamId, replFactor, func(node common.Address, operator common.Address) bool {
+		return true
+	})
 }
 
 // GetAllNodes provides a mock function with no fields

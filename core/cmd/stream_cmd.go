@@ -1029,6 +1029,7 @@ func runStreamMigrationToReplicatedStreamsCmd(cfg *config.Config, args []string)
 			len(stream.Nodes()) < targetReplicationFactor { // initiate stream migration to replicated stream
 
 			newNodes, err := nodeRegistry.ChooseStreamNodesWithCriteria(
+				ctx,
 				stream.StreamId(),
 				targetReplicationFactor-len(stream.Nodes()),
 				func(node common.Address, operator common.Address) bool {
