@@ -11,7 +11,7 @@ describe('memberMetadata_UsernamesTests', () => {
     const streamId = 'streamid1'
     let usernames: MemberMetadata_Usernames
     beforeEach(() => {
-        usernames = new MemberMetadata_Usernames(streamId)
+        usernames = new MemberMetadata_Usernames(streamId, 'userid-1')
     })
 
     test('clientCanSetUsername', async () => {
@@ -212,5 +212,29 @@ describe('memberMetadata_UsernamesTests', () => {
         usernames.onDecryptedContent('eventid-1', username)
         const infoAfterDecrypt = usernames.info('userid-1')
         expect(infoAfterDecrypt.usernameEncrypted).toEqual(false)
+    })
+
+    // in order to re-encrypt Olm-encrypted usernames using the new hybrid encryption,
+    // we need to keep track of the existing user's username payload
+    test('the current user`s username is accessible', async () => {
+        const username = 'bob-username1'
+        const checksum = usernameChecksum(username, streamId)
+        const encryptedData = create(EncryptedDataSchema, {
+            ciphertext: username,
+            checksum: checksum,
+        })
+
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
+
+        const current = usernames.currentUsernameEncryptedData
+        expect(current).toEqual(encryptedData)
     })
 })
