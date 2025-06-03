@@ -311,7 +311,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 				syncCookie := view.SyncCookie(tc.getBC().Wallet.Address)
 				require.NotNil(syncCookie, "sync cookie")
 
-				miniblocks, _, err := stream.GetMiniblocks(ctx, 0, syncCookie.MinipoolGen)
+				miniblocks, _, err := stream.GetMiniblocks(ctx, 0, syncCookie.MinipoolGen, true)
 				require.NoError(err, "get miniblocks")
 
 				for _, mb := range miniblocks {
