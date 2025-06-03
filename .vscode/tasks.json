@@ -14,6 +14,7 @@
         "CheckVersions",
         "FoundryUp",
         "YarnInstall",
+        "YarnBuild",
         "BuildProtobufs",
       ],
       "group": {
@@ -21,6 +22,18 @@
         "isDefault": true
       },
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "YarnBuild",
+      "type": "shell",
+      "command": "yarn build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
     },
     {
       // start local dev:
