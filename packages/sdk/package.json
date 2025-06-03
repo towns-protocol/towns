@@ -43,6 +43,7 @@
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/rpc-connector": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "browser-or-node": "^3.0.0",
         "debug": "^4.3.4",

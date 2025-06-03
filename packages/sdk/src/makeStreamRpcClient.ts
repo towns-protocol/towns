@@ -1,5 +1,5 @@
-import { Client, createClient } from '@connectrpc/connect'
-import { type ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
+import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
+import { createHttp2ConnectTransport } from '../../rpc-connector/dist/web'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
@@ -11,7 +11,7 @@ import {
     type RetryParams,
 } from './rpcInterceptors'
 import { UnpackEnvelopeOpts, unpackMiniblock, unpackSnapshot } from './sign'
-import { RpcOptions, createHttp2ConnectTransport } from './rpcCommon'
+import { RpcOptions } from './rpcCommon'
 import { streamIdAsBytes } from './id'
 import { ParsedMiniblock } from './types'
 
@@ -27,17 +27,17 @@ export type StreamRpcClient = Client<typeof StreamService> & {
     opts: StreamRpcClientOptions
 }
 
-export async function makeStreamRpcClient(
+export function makeStreamRpcClient(
     dest: string,
     refreshNodeUrl?: () => Promise<string>,
     opts?: RpcOptions,
-): Promise<StreamRpcClient> {
+): StreamRpcClient {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     logInfo('makeStreamRpcClient, transportId =', transportId)
     const url = randomUrlSelector(dest)
     logInfo('makeStreamRpcClient: Connecting to url=', url, ' allUrls=', dest)
-    const options: ConnectTransportOptionsWeb = {
+    const options: ConnectTransportOptions = {
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
@@ -56,7 +56,7 @@ export async function makeStreamRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = await createHttp2ConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
 
     const client: StreamRpcClient = createClient(StreamService, transport) as StreamRpcClient
     client.url = url

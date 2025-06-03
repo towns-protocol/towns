@@ -9072,6 +9072,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@towns-protocol/rpc-connector@workspace:^, @towns-protocol/rpc-connector@workspace:packages/rpc-connector":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/rpc-connector@workspace:packages/rpc-connector"
+  dependencies:
+    "@connectrpc/connect": ^2.0.0
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    eslint-plugin-tsdoc: ^0.3.0
+    tsdown: ^0.12.3
+    typescript: ^5.8.2
+    vitest: 3.0.5
+  peerDependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
+  peerDependenciesMeta:
+    "@connectrpc/connect-node":
+      optional: true
+    "@connectrpc/connect-web":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/sdk@workspace:^, @towns-protocol/sdk@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/sdk@workspace:packages/sdk"
@@ -9087,6 +9113,7 @@ __metadata:
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/debug": ^4.1.8
     "@types/lodash": ^4.14.186
