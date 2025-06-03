@@ -82,7 +82,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			continue
 		}
 
-		err = stream.Backfill(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
+		err = stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
 			s.sendResponse(&SyncStreamsResponse{
 				SyncOp:        SyncOp_SYNC_UPDATE,
 				Stream:        streamAndCookie,

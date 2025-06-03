@@ -1000,6 +1000,9 @@ message RemoveStreamFromSyncResponse {}
 
 // ModifySyncRequest adds or removes streams from an existing sync session.
 message ModifySyncRequest {
+  // Backfill is a message that contains the details of a backfill request.
+  // This message is used to request a backfill of streams that are already in the shared sync session
+  // before sending latest updates: backfill by cookie -> send latest updates.
   message Backfill {
     // backfill_streams is the list of sync cookies to backfill
     repeated SyncCookie streams = 1;

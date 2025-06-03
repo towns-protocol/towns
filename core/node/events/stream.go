@@ -776,8 +776,11 @@ func (s *Stream) addEventLocked(
 	return newSV, nil
 }
 
-// Backfill retrieves the stream content since the given cookie and sends it to the callback.
-func (s *Stream) Backfill(
+// UpdatesSinceCookie retrieves the stream content since the given cookie and sends it to the callback.
+// This function locks the stream until the callback is executed.
+// One of the use cases is to properly handle race condition when sending stream delta to the sync client
+// (avoid updating the stream until the delta is sent to the client).
+func (s *Stream) UpdatesSinceCookie(
 	ctx context.Context,
 	cookie *SyncCookie,
 	cb func(*StreamAndCookie),
@@ -785,7 +788,7 @@ func (s *Stream) Backfill(
 	if !s.IsLocal() {
 		return RiverError(
 			Err_NOT_FOUND,
-			"stream not found",
+			"stream not local",
 			"cookie.StreamId",
 			cookie.StreamId,
 			"s.streamId",
