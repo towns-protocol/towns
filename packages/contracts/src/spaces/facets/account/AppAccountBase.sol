@@ -202,7 +202,7 @@ abstract contract AppAccountBase is
 
     function _getApp(address module) internal view returns (App memory app) {
         bytes32 appId = _getInstalledAppId(module);
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
+        if (appId == EMPTY_UID) return app;
         return _getAppRegistry().getAppById(appId);
     }
 
@@ -229,8 +229,6 @@ abstract contract AppAccountBase is
     }
 
     function _getClients(address app) internal view returns (address[] memory) {
-        bytes32 appId = _getInstalledAppId(app);
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
         return _getApp(app).clients;
     }
 

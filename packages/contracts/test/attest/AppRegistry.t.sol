@@ -472,6 +472,17 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.installApp{value: price}(address(mockModule), address(appAccount), "");
     }
 
+    function test_revertWhen_installApp_bannedApp() external givenAppIsRegistered {
+        vm.prank(deployer);
+        registry.adminBanApp(address(mockModule));
+
+        uint256 price = registry.getAppPrice(address(mockModule));
+
+        hoax(founder, price);
+        vm.expectRevert(BannedApp.selector);
+        registry.installApp{value: price}(address(mockModule), address(appAccount), "");
+    }
+
     function test_revertWhen_uninstallApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
@@ -526,7 +537,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32 bannedUid = registry.adminBanApp(app);
 
         assertEq(bannedUid, appId);
-        assertEq(registry.getLatestAppId(app), bytes32(0));
+        assertTrue(registry.isAppBanned(app));
     }
 
     function test_adminBanApp_onlyOwner() external {
