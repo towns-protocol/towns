@@ -16,14 +16,17 @@ library DeployAppRegistryFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(13);
         arr.p(AppRegistryFacet.getAppSchema.selector);
         arr.p(AppRegistryFacet.getAppSchemaId.selector);
-        arr.p(AppRegistryFacet.getAttestation.selector);
+        arr.p(AppRegistryFacet.getAppById.selector);
         arr.p(AppRegistryFacet.getLatestAppId.selector);
         arr.p(AppRegistryFacet.registerApp.selector);
         arr.p(AppRegistryFacet.removeApp.selector);
         arr.p(AppRegistryFacet.createApp.selector);
+        arr.p(AppRegistryFacet.installApp.selector);
+        arr.p(AppRegistryFacet.uninstallApp.selector);
+        arr.p(AppRegistryFacet.getAppPrice.selector);
         arr.p(AppRegistryFacet.adminRegisterAppSchema.selector);
         arr.p(AppRegistryFacet.adminBanApp.selector);
         arr.p(AppRegistryFacet.isAppBanned.selector);

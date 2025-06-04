@@ -6,6 +6,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 
 // libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 interface IAppRegistryBase {
     struct AppParams {
@@ -16,12 +17,22 @@ interface IAppRegistryBase {
         uint64 accessDuration;
     }
 
+    struct App {
+        bytes32 appId;
+        address module;
+        address owner;
+        address[] clients;
+        bytes32[] permissions;
+        ExecutionManifest manifest;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     error AppAlreadyRegistered();
     error AppNotRegistered();
     error AppRevoked();
+    error AppNotInstalled();
     error NotAppOwner();
     error AppDoesNotImplementInterface();
     error InvalidAppName();
@@ -31,6 +42,8 @@ interface IAppRegistryBase {
     error InvalidAppId();
     error InvalidPrice();
     error InvalidDuration();
+    error InsufficientPayment();
+    error NotAllowed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -41,6 +54,8 @@ interface IAppRegistryBase {
     event AppBanned(address indexed app, bytes32 uid);
     event AppSchemaSet(bytes32 uid);
     event AppCreated(address indexed app, bytes32 uid);
+    event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
 }
 
 /// @title IAppRegistry Interface
@@ -57,7 +72,7 @@ interface IAppRegistry is IAppRegistryBase {
     /// @notice Get the attestation for a app
     /// @param appId The app ID
     /// @return The attestation
-    function getAttestation(bytes32 appId) external view returns (Attestation memory);
+    function getAppById(bytes32 appId) external view returns (App memory);
 
     /// @notice Get the current version (attestation UID) for a app
     /// @param app The app address
@@ -90,6 +105,12 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param appId The app ID to remove
     /// @return The attestation UID that was removed
     function removeApp(bytes32 appId) external returns (bytes32);
+
+    /// @notice Install an app
+    /// @param app The app address to install
+    /// @param account The account to install the app to
+    /// @param data The data to pass to the app's onInstall function
+    function installApp(address app, address account, bytes calldata data) external payable;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Admin                            */
