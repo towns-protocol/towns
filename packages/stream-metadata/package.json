@@ -33,6 +33,7 @@
 		"@towns-protocol/generated": "workspace:^",
 		"@towns-protocol/proto": "workspace:^",
 		"@towns-protocol/sdk": "workspace:^",
+		"@towns-protocol/sdk-crypto": "workspace:^",
 		"@towns-protocol/web3": "workspace:^",
 		"dd-trace": "^5.19.0",
 		"dotenv": "^16.4.5",

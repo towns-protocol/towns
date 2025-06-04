@@ -4,7 +4,6 @@
 export * from './check'
 export * from './client'
 export * from './clientDecryptionExtensions'
-export * from './crypto_utils'
 export * from './encryptedContentTypes'
 export * from './id'
 export * from './makeAuthenticationRpcClient'
