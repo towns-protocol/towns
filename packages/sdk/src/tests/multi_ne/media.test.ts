@@ -116,9 +116,7 @@ describe('mediaTests', () => {
     test('clientCanSendSpaceMediaPayload', async () => {
         const spaceId = makeUniqueSpaceStreamId()
         const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 5, new Uint8Array(100))
-        await expect(
-            bobSendMediaPayloads(mediaStreamInfo.creationCookie, 5),
-        ).resolves.not.toThrow()
+        await expect(bobSendMediaPayloads(mediaStreamInfo.creationCookie, 5)).resolves.not.toThrow()
     })
 
     test('clientCanSendEncryptedDerivedAesGmPayload', async () => {
