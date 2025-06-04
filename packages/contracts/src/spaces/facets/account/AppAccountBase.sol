@@ -63,10 +63,8 @@ abstract contract AppAccountBase is
 
         _verifyManifests(app.module, app.manifest);
 
-        uint64 accessDuration = ITownsApp(app.module).accessDuration();
-
         // set the group status to active
-        _setGroupStatusWithExpiration(app.appId, true, accessDuration);
+        _setGroupStatus(app.appId, true);
         _addApp(app.module, app.appId);
 
         uint256 clientsLength = app.clients.length;
