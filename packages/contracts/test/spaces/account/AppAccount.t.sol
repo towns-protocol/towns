@@ -14,7 +14,7 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
@@ -27,19 +27,15 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
 
-contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
+contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistryBase {
     AppRegistryFacet internal registry;
     AppAccount internal appAccount;
     MockModule internal mockModule;
 
-    bytes32 internal activeSchemaId;
     bytes32 internal appId;
 
     address internal dev;
     address internal client;
-
-    string internal MODULE_REGISTRY_SCHEMA =
-        "address module, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
 
     function setUp() public override {
         super.setUp();
@@ -80,17 +76,13 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         appId = registry.registerApp(address(mockModule), clients);
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
+        uint256 totalRequired = registry.getAppPrice(address(mockModule));
 
-        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
+        uint256 protocolFee = _getProtocolFee(totalRequired);
 
-        uint256 price = appAccount.getAppPrice(address(mockModule));
-        uint256 protocolFee = _getProtocolFee(price);
-
-        vm.deal(founder, price);
-
-        vm.prank(founder);
+        hoax(founder, totalRequired);
         emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
-        appAccount.installApp{value: price}(address(mockModule), "", AppParams({delays: delays}));
+        registry.installApp{value: totalRequired}(address(mockModule), address(appAccount), "");
 
         // assert that the founder has paid the price
         assertEq(address(deployer).balance, protocolFee);
@@ -117,64 +109,33 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         assertEq(clients[0], client);
     }
 
-    function test_revertWhen_installApp_notOwner() external givenAppIsRegistered {
-        address notOwner = _randomAddress();
-
-        vm.prank(notOwner);
-        vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
-        appAccount.installApp(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
+    function test_revertWhen_installApp_notRegistry() external {
+        vm.prank(client);
+        vm.expectRevert(InvalidCaller.selector);
+        appAccount.installApp(appId, "");
     }
 
-    function test_revertWhen_installApp_emptyModuleId() external {
-        vm.prank(founder);
-        vm.expectRevert(IAppRegistryBase.AppNotRegistered.selector);
-        appAccount.installApp(
-            _randomAddress(),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
+    function test_revertWhen_installApp_appNotRegistered() external {
+        vm.prank(appRegistry);
+        vm.expectRevert(AppNotRegistered.selector);
+        appAccount.installApp(_randomBytes32(), "");
+    }
+
+    function test_revertWhen_installApp_emptyAppId() external {
+        vm.prank(appRegistry);
+        vm.expectRevert(InvalidAppId.selector);
+        appAccount.installApp(EMPTY_UID, "");
     }
 
     function test_revertWhen_installApp_invalidManifest() external givenAppIsRegistered {
         MockModuleV2 mockModuleV2 = new MockModuleV2();
         mockModule.upgradeToAndCall(address(mockModuleV2), "");
 
-        vm.prank(founder);
+        vm.prank(appRegistry);
         vm.expectRevert(
             abi.encodeWithSelector(IAppAccountBase.InvalidManifest.selector, address(mockModule))
         );
-        appAccount.installApp(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-    }
-
-    function test_revertWhen_installApp_moduleNotRegistered() external {
-        vm.prank(founder);
-        vm.expectRevert(IAppRegistryBase.AppNotRegistered.selector);
-        appAccount.installApp(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-    }
-
-    function test_revertWhen_installApp_moduleRevoked() external givenAppIsRegistered {
-        vm.prank(dev);
-        registry.removeApp(appId);
-
-        vm.prank(founder);
-        vm.expectRevert(IAppRegistryBase.AppRevoked.selector);
-        appAccount.installApp(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
+        appAccount.installApp(appId, "");
     }
 
     function test_revertWhen_installApp_invalidSelector() external {
@@ -187,196 +148,21 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(dev);
         appId = registry.registerApp(address(invalidModule), clients);
 
-        uint256 price = appAccount.getAppPrice(address(invalidModule));
-        vm.deal(founder, price);
+        uint256 price = registry.getAppPrice(address(invalidModule));
 
-        vm.prank(founder);
+        hoax(founder, price);
         vm.expectRevert(IAppAccountBase.UnauthorizedSelector.selector);
-        appAccount.installApp{value: price}(
-            address(invalidModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-    }
-
-    function test_revertWhen_installApp_insufficientPayment() external givenAppIsRegistered {
-        uint256 price = 1 ether;
-        _setupAppWithPrice(price);
-
-        uint256 requiredAmount = _getTotalRequired(price);
-        uint256 insufficientAmount = requiredAmount - 1;
-
-        _dealAndPay(founder, insufficientAmount);
-
-        vm.expectRevert(IAppAccountBase.InsufficientPayment.selector);
-        appAccount.installApp{value: insufficientAmount}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-    }
-
-    function test_installApp_withFreeApp() external givenAppIsRegistered {
-        _setupAppWithPrice(0);
-
-        uint256 protocolFee = _getProtocolFee(0);
-
-        vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
-        _dealAndPay(founder, protocolFee);
-        appAccount.installApp{value: protocolFee}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-
-        // Verify protocol fee was paid
-        assertEq(address(deployer).balance, protocolFee);
-    }
-
-    function test_installApp_withPaidApp() external givenAppIsRegistered {
-        uint256 price = 1 ether;
-        _setupAppWithPrice(price);
-
-        uint256 protocolFee = _getProtocolFee(price);
-        uint256 devInitialBalance = address(dev).balance;
-
-        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
-
-        vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
-        _dealAndPay(founder, totalPrice);
-        appAccount.installApp{value: totalPrice}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-
-        // Verify fee distribution
-        assertEq(address(deployer).balance, protocolFee);
-        assertEq(address(dev).balance - devInitialBalance, totalPrice - protocolFee);
-        assertEq(address(appAccount).balance, 0);
-    }
-
-    function test_installApp_whenProtocolFeeEqualsPrice() external givenAppIsRegistered {
-        // Get minimum protocol fee
-        uint256 minFee = IPlatformRequirements(spaceFactory).getMembershipFee();
-        _setupAppWithPrice(minFee);
-
-        vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
-
-        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
-
-        _dealAndPay(founder, totalPrice);
-        appAccount.installApp{value: totalPrice}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-
-        // Verify all payment went to protocol fee recipient
-        assertEq(address(deployer).balance, minFee);
-        assertEq(address(dev).balance, totalPrice - minFee);
-        assertEq(address(appAccount).balance, 0);
-    }
-
-    function test_installApp_whenBpsHigherThanMinFee() external givenAppIsRegistered {
-        // Set price high enough that BPS fee > min fee
-        uint256 price = 100 ether;
-        _setupAppWithPrice(price);
-
-        uint256 protocolFee = _getProtocolFee(price);
-        uint256 minFee = IPlatformRequirements(spaceFactory).getMembershipFee();
-        uint256 devInitialBalance = address(dev).balance;
-
-        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
-
-        _dealAndPay(founder, totalPrice);
-        appAccount.installApp{value: totalPrice}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-
-        // Verify BPS fee was used instead of min fee
-        assertEq(address(deployer).balance, protocolFee);
-        assertTrue(protocolFee > minFee);
-        assertEq(address(dev).balance - devInitialBalance, totalPrice - protocolFee);
-        assertEq(address(appAccount).balance, 0);
-    }
-
-    function test_installApp_whenBpsLowerThanMinFee() external givenAppIsRegistered {
-        // Set price low enough that BPS fee < min fee
-        uint256 price = 0.01 ether;
-        _setupAppWithPrice(price);
-
-        uint256 protocolFee = _getProtocolFee(price);
-        uint256 minFee = IPlatformRequirements(spaceFactory).getMembershipFee();
-        uint256 bpsFee = BasisPoints.calculate(
-            price,
-            IPlatformRequirements(spaceFactory).getMembershipBps()
-        );
-        uint256 devInitialBalance = address(dev).balance;
-
-        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
-
-        _dealAndPay(founder, totalPrice);
-        appAccount.installApp{value: totalPrice}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-
-        // Verify min fee was used instead of BPS fee
-        assertEq(address(deployer).balance, protocolFee);
-        assertTrue(bpsFee < minFee);
-        assertEq(protocolFee, minFee);
-        assertEq(address(dev).balance - devInitialBalance, totalPrice - protocolFee);
-        assertEq(address(appAccount).balance, 0);
-    }
-
-    function test_installApp_withExcessPayment() external givenAppIsRegistered {
-        uint256 price = 1 ether;
-        _setupAppWithPrice(price);
-
-        uint256 totalPrice = appAccount.getAppPrice(address(mockModule));
-        uint256 protocolFee = _getProtocolFee(price);
-
-        uint256 excess = 0.5 ether;
-        uint256 payment = totalPrice + excess;
-        uint256 founderInitialBalance = address(founder).balance;
-
-        _dealAndPay(founder, payment);
-        appAccount.installApp{value: payment}(
-            address(mockModule),
-            "",
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-
-        // Verify excess was refunded
-        assertEq(address(founder).balance - founderInitialBalance, excess);
-        assertEq(address(dev).balance, totalPrice - protocolFee);
-        assertEq(address(appAccount).balance, 0);
+        registry.installApp{value: price}(address(invalidModule), address(appAccount), "");
     }
 
     // uninstallApp
     function test_uninstallApp() external givenAppIsInstalled {
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
-        vm.prank(founder);
+        vm.prank(appRegistry);
         vm.expectEmit(address(appAccount));
         emit IERC6900Account.ExecutionUninstalled(address(mockModule), true, manifest);
-        appAccount.uninstallApp(address(mockModule), "");
+        appAccount.uninstallApp(appId, "");
 
         vm.prank(client);
         vm.expectRevert(IExecutorBase.UnauthorizedCall.selector);
@@ -387,10 +173,53 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         });
     }
 
-    function test_revertWhen_uninstallApp_notOwner() external givenAppIsInstalled {
+    function test_revertWhen_uninstallApp_invalidAppId() external {
+        vm.prank(appRegistry);
+        vm.expectRevert(InvalidAppId.selector);
+        appAccount.uninstallApp(EMPTY_UID, "");
+    }
+
+    function test_revertWhen_uninstallApp_notRegistry() external givenAppIsInstalled {
         vm.prank(client);
-        vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        appAccount.uninstallApp(address(mockModule), "");
+        vm.expectRevert(InvalidCaller.selector);
+        appAccount.uninstallApp(appId, "");
+    }
+
+    function test_revertWhen_uninstallApp_notInstalled() external givenAppIsRegistered {
+        vm.prank(appRegistry);
+        vm.expectRevert(AppNotInstalled.selector);
+        appAccount.uninstallApp(appId, "");
+    }
+
+    function test_revertWhen_uninstallApp_appNotRegistered() external givenAppIsInstalled {
+        vm.prank(appRegistry);
+        vm.expectRevert(AppNotRegistered.selector);
+        appAccount.uninstallApp(_randomBytes32(), "");
+    }
+
+    function test_uninstallApp_withUninstallData() external givenAppIsInstalled {
+        bytes memory uninstallData = abi.encode("test data");
+
+        vm.expectEmit(address(mockModule));
+        emit MockModule.OnUninstallCalled(address(appAccount), uninstallData);
+
+        vm.prank(founder);
+        registry.uninstallApp(address(mockModule), address(appAccount), uninstallData);
+    }
+
+    function test_revertWhen_uninstallApp_whenHookFails() external givenAppIsInstalled {
+        vm.prank(dev);
+        mockModule.setShouldFailUninstall(true);
+
+        bytes memory uninstallData = abi.encode("test data");
+        ExecutionManifest memory manifest = mockModule.executionManifest();
+
+        vm.prank(founder);
+        vm.expectEmit(address(appAccount));
+        emit IERC6900Account.ExecutionUninstalled(address(mockModule), false, manifest);
+        registry.uninstallApp(address(mockModule), address(appAccount), uninstallData);
+
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), false);
     }
 
     // execute
@@ -452,73 +281,26 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
     }
 
     function test_installApp_withInstallData() external givenAppIsRegistered {
-        uint256 price = appAccount.getAppPrice(address(mockModule));
+        uint256 price = registry.getAppPrice(address(mockModule));
 
         bytes memory installData = abi.encode("test data");
         vm.expectEmit(address(mockModule));
         emit MockModule.OnInstallCalled(address(appAccount), installData);
 
-        _dealAndPay(founder, price);
-        appAccount.installApp{value: price}(
-            address(mockModule),
-            installData,
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
+        hoax(founder, price);
+        registry.installApp{value: price}(address(mockModule), address(appAccount), installData);
     }
 
     function test_revertWhen_installApp_hookFails() external givenAppIsRegistered {
-        uint256 price = appAccount.getAppPrice(address(mockModule));
+        uint256 price = registry.getAppPrice(address(mockModule));
 
         vm.prank(dev);
         mockModule.setShouldFailInstall(true);
 
         bytes memory installData = abi.encode("test data");
-        _dealAndPay(founder, price);
+        hoax(founder, price);
         vm.expectRevert("Installation failed");
-        appAccount.installApp{value: price}(
-            address(mockModule),
-            installData,
-            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
-        );
-    }
-
-    function test_uninstallApp_withUninstallData() external givenAppIsInstalled {
-        bytes memory uninstallData = abi.encode("test data");
-
-        vm.expectEmit(address(mockModule));
-        emit MockModule.OnUninstallCalled(address(appAccount), uninstallData);
-
-        vm.prank(founder);
-        appAccount.uninstallApp(address(mockModule), uninstallData);
-    }
-
-    function test_uninstallApp_whenHookFails() external givenAppIsInstalled {
-        vm.prank(dev);
-        mockModule.setShouldFailUninstall(true);
-
-        bytes memory uninstallData = abi.encode("test data");
-        ExecutionManifest memory manifest = mockModule.executionManifest();
-
-        vm.prank(founder);
-        vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionUninstalled(address(mockModule), false, manifest);
-        appAccount.uninstallApp(address(mockModule), uninstallData);
-
-        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), false);
-    }
-
-    function test_revertWhen_getApp_revokedAttestation() external givenAppIsRegistered {
-        vm.prank(dev);
-        registry.removeApp(appId);
-
-        bytes32 _appId = appAccount.getAppId(address(mockModule));
-        assertEq(_appId, bytes32(0));
-    }
-
-    function test_revertWhen_getApp_emptyAttestation() external {
-        vm.prank(founder);
-        bytes32 _appId = appAccount.getAppId(address(mockModule));
-        assertEq(_appId, bytes32(0));
+        registry.installApp{value: price}(address(mockModule), address(appAccount), installData);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -535,15 +317,5 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
     function _getTotalRequired(uint256 installPrice) internal view returns (uint256) {
         return installPrice == 0 ? _getProtocolFee(installPrice) : installPrice;
-    }
-
-    function _setupAppWithPrice(uint256 price) internal {
-        vm.prank(dev);
-        mockModule.setPrice(price);
-    }
-
-    function _dealAndPay(address payer, uint256 amount) internal {
-        vm.deal(payer, amount);
-        vm.prank(payer);
     }
 }

@@ -28,41 +28,55 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export type AttestationStruct = {
-  uid: PromiseOrValue<BytesLike>;
-  schema: PromiseOrValue<BytesLike>;
-  time: PromiseOrValue<BigNumberish>;
-  expirationTime: PromiseOrValue<BigNumberish>;
-  revocationTime: PromiseOrValue<BigNumberish>;
-  refUID: PromiseOrValue<BytesLike>;
-  recipient: PromiseOrValue<string>;
-  attester: PromiseOrValue<string>;
-  revocable: PromiseOrValue<boolean>;
-  data: PromiseOrValue<BytesLike>;
+export type ManifestExecutionFunctionStruct = {
+  executionSelector: PromiseOrValue<BytesLike>;
+  skipRuntimeValidation: PromiseOrValue<boolean>;
+  allowGlobalValidation: PromiseOrValue<boolean>;
 };
 
-export type AttestationStructOutput = [
-  string,
-  string,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  string,
-  string,
+export type ManifestExecutionFunctionStructOutput = [
   string,
   boolean,
-  string
+  boolean
 ] & {
-  uid: string;
-  schema: string;
-  time: BigNumber;
-  expirationTime: BigNumber;
-  revocationTime: BigNumber;
-  refUID: string;
-  recipient: string;
-  attester: string;
-  revocable: boolean;
-  data: string;
+  executionSelector: string;
+  skipRuntimeValidation: boolean;
+  allowGlobalValidation: boolean;
+};
+
+export type ManifestExecutionHookStruct = {
+  executionSelector: PromiseOrValue<BytesLike>;
+  entityId: PromiseOrValue<BigNumberish>;
+  isPreHook: PromiseOrValue<boolean>;
+  isPostHook: PromiseOrValue<boolean>;
+};
+
+export type ManifestExecutionHookStructOutput = [
+  string,
+  number,
+  boolean,
+  boolean
+] & {
+  executionSelector: string;
+  entityId: number;
+  isPreHook: boolean;
+  isPostHook: boolean;
+};
+
+export type ExecutionManifestStruct = {
+  executionFunctions: ManifestExecutionFunctionStruct[];
+  executionHooks: ManifestExecutionHookStruct[];
+  interfaceIds: PromiseOrValue<BytesLike>[];
+};
+
+export type ExecutionManifestStructOutput = [
+  ManifestExecutionFunctionStructOutput[],
+  ManifestExecutionHookStructOutput[],
+  string[]
+] & {
+  executionFunctions: ManifestExecutionFunctionStructOutput[];
+  executionHooks: ManifestExecutionHookStructOutput[];
+  interfaceIds: string[];
 };
 
 export declare namespace IAppRegistryBase {
@@ -87,6 +101,31 @@ export declare namespace IAppRegistryBase {
     installPrice: BigNumber;
     accessDuration: BigNumber;
   };
+
+  export type AppStruct = {
+    appId: PromiseOrValue<BytesLike>;
+    module: PromiseOrValue<string>;
+    owner: PromiseOrValue<string>;
+    clients: PromiseOrValue<string>[];
+    permissions: PromiseOrValue<BytesLike>[];
+    manifest: ExecutionManifestStruct;
+  };
+
+  export type AppStructOutput = [
+    string,
+    string,
+    string,
+    string[],
+    string[],
+    ExecutionManifestStructOutput
+  ] & {
+    appId: string;
+    module: string;
+    owner: string;
+    clients: string[];
+    permissions: string[];
+    manifest: ExecutionManifestStructOutput;
+  };
 }
 
 export interface IAppRegistryInterface extends utils.Interface {
@@ -94,10 +133,11 @@ export interface IAppRegistryInterface extends utils.Interface {
     "adminBanApp(address)": FunctionFragment;
     "adminRegisterAppSchema(string,address,bool)": FunctionFragment;
     "createApp((string,bytes32[],address[],uint256,uint64))": FunctionFragment;
+    "getAppById(bytes32)": FunctionFragment;
     "getAppSchema()": FunctionFragment;
     "getAppSchemaId()": FunctionFragment;
-    "getAttestation(bytes32)": FunctionFragment;
     "getLatestAppId(address)": FunctionFragment;
+    "installApp(address,address,bytes)": FunctionFragment;
     "isAppBanned(address)": FunctionFragment;
     "registerApp(address,address[])": FunctionFragment;
     "removeApp(bytes32)": FunctionFragment;
@@ -108,10 +148,11 @@ export interface IAppRegistryInterface extends utils.Interface {
       | "adminBanApp"
       | "adminRegisterAppSchema"
       | "createApp"
+      | "getAppById"
       | "getAppSchema"
       | "getAppSchemaId"
-      | "getAttestation"
       | "getLatestAppId"
+      | "installApp"
       | "isAppBanned"
       | "registerApp"
       | "removeApp"
@@ -134,6 +175,10 @@ export interface IAppRegistryInterface extends utils.Interface {
     values: [IAppRegistryBase.AppParamsStruct]
   ): string;
   encodeFunctionData(
+    functionFragment: "getAppById",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getAppSchema",
     values?: undefined
   ): string;
@@ -142,12 +187,16 @@ export interface IAppRegistryInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getAttestation",
-    values: [PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getLatestAppId",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "installApp",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "isAppBanned",
@@ -171,6 +220,7 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createApp", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getAppById", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getAppSchema",
     data: BytesLike
@@ -180,13 +230,10 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getAttestation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getLatestAppId",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "installApp", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isAppBanned",
     data: BytesLike
@@ -200,16 +247,20 @@ export interface IAppRegistryInterface extends utils.Interface {
   events: {
     "AppBanned(address,bytes32)": EventFragment;
     "AppCreated(address,bytes32)": EventFragment;
+    "AppInstalled(address,address,bytes32)": EventFragment;
     "AppRegistered(address,bytes32)": EventFragment;
     "AppSchemaSet(bytes32)": EventFragment;
+    "AppUninstalled(address,address,bytes32)": EventFragment;
     "AppUnregistered(address,bytes32)": EventFragment;
     "AppUpdated(address,bytes32)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "AppBanned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AppInstalled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppSchemaSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AppUninstalled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppUnregistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppUpdated"): EventFragment;
 }
@@ -233,6 +284,18 @@ export type AppCreatedEvent = TypedEvent<
 
 export type AppCreatedEventFilter = TypedEventFilter<AppCreatedEvent>;
 
+export interface AppInstalledEventObject {
+  app: string;
+  account: string;
+  appId: string;
+}
+export type AppInstalledEvent = TypedEvent<
+  [string, string, string],
+  AppInstalledEventObject
+>;
+
+export type AppInstalledEventFilter = TypedEventFilter<AppInstalledEvent>;
+
 export interface AppRegisteredEventObject {
   app: string;
   uid: string;
@@ -250,6 +313,18 @@ export interface AppSchemaSetEventObject {
 export type AppSchemaSetEvent = TypedEvent<[string], AppSchemaSetEventObject>;
 
 export type AppSchemaSetEventFilter = TypedEventFilter<AppSchemaSetEvent>;
+
+export interface AppUninstalledEventObject {
+  app: string;
+  account: string;
+  appId: string;
+}
+export type AppUninstalledEvent = TypedEvent<
+  [string, string, string],
+  AppUninstalledEventObject
+>;
+
+export type AppUninstalledEventFilter = TypedEventFilter<AppUninstalledEvent>;
 
 export interface AppUnregisteredEventObject {
   app: string;
@@ -317,19 +392,26 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getAppById(
+      appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[IAppRegistryBase.AppStructOutput]>;
+
     getAppSchema(overrides?: CallOverrides): Promise<[string]>;
 
     getAppSchemaId(overrides?: CallOverrides): Promise<[string]>;
-
-    getAttestation(
-      appId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[AttestationStructOutput]>;
 
     getLatestAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[string]>;
+
+    installApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     isAppBanned(
       app: PromiseOrValue<string>,
@@ -365,19 +447,26 @@ export interface IAppRegistry extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getAppById(
+    appId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<IAppRegistryBase.AppStructOutput>;
+
   getAppSchema(overrides?: CallOverrides): Promise<string>;
 
   getAppSchemaId(overrides?: CallOverrides): Promise<string>;
-
-  getAttestation(
-    appId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<AttestationStructOutput>;
 
   getLatestAppId(
     app: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  installApp(
+    app: PromiseOrValue<string>,
+    account: PromiseOrValue<string>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   isAppBanned(
     app: PromiseOrValue<string>,
@@ -413,19 +502,26 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string, string] & { app: string; appId: string }>;
 
+    getAppById(
+      appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<IAppRegistryBase.AppStructOutput>;
+
     getAppSchema(overrides?: CallOverrides): Promise<string>;
 
     getAppSchemaId(overrides?: CallOverrides): Promise<string>;
-
-    getAttestation(
-      appId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<AttestationStructOutput>;
 
     getLatestAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    installApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     isAppBanned(
       app: PromiseOrValue<string>,
@@ -463,6 +559,17 @@ export interface IAppRegistry extends BaseContract {
       uid?: null
     ): AppCreatedEventFilter;
 
+    "AppInstalled(address,address,bytes32)"(
+      app?: PromiseOrValue<string> | null,
+      account?: PromiseOrValue<string> | null,
+      appId?: PromiseOrValue<BytesLike> | null
+    ): AppInstalledEventFilter;
+    AppInstalled(
+      app?: PromiseOrValue<string> | null,
+      account?: PromiseOrValue<string> | null,
+      appId?: PromiseOrValue<BytesLike> | null
+    ): AppInstalledEventFilter;
+
     "AppRegistered(address,bytes32)"(
       app?: PromiseOrValue<string> | null,
       uid?: null
@@ -474,6 +581,17 @@ export interface IAppRegistry extends BaseContract {
 
     "AppSchemaSet(bytes32)"(uid?: null): AppSchemaSetEventFilter;
     AppSchemaSet(uid?: null): AppSchemaSetEventFilter;
+
+    "AppUninstalled(address,address,bytes32)"(
+      app?: PromiseOrValue<string> | null,
+      account?: PromiseOrValue<string> | null,
+      appId?: PromiseOrValue<BytesLike> | null
+    ): AppUninstalledEventFilter;
+    AppUninstalled(
+      app?: PromiseOrValue<string> | null,
+      account?: PromiseOrValue<string> | null,
+      appId?: PromiseOrValue<BytesLike> | null
+    ): AppUninstalledEventFilter;
 
     "AppUnregistered(address,bytes32)"(
       app?: PromiseOrValue<string> | null,
@@ -512,18 +630,25 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    getAppSchema(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getAppSchemaId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getAttestation(
+    getAppById(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getAppSchema(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getAppSchemaId(overrides?: CallOverrides): Promise<BigNumber>;
+
     getLatestAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    installApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     isAppBanned(
@@ -561,18 +686,25 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    getAppSchema(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getAppSchemaId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getAttestation(
+    getAppById(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getAppSchema(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getAppSchemaId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getLatestAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    installApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     isAppBanned(
