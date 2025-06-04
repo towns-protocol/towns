@@ -77,6 +77,28 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _createApp(params);
     }
 
+    /// @notice Install an app
+    /// @param app The app address to install
+    /// @param account The account to install the app to
+    /// @param data The data to pass to the app's onInstall function
+    function installApp(
+        address app,
+        address account,
+        bytes calldata data
+    ) external payable nonReentrant {
+        _onlyAllowed(account);
+        return _installApp(app, account, data);
+    }
+
+    /// @notice Uninstall an app
+    /// @param app The app address to uninstall
+    /// @param account The account to uninstall the app from
+    /// @param data The data to pass to the app's onUninstall function
+    function uninstallApp(address app, address account, bytes calldata data) external nonReentrant {
+        _onlyAllowed(account);
+        return _uninstallApp(app, account, data);
+    }
+
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getAppSchema() external view returns (string memory) {
@@ -91,9 +113,16 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
 
     /// @notice Get the attestation for a app
     /// @param appId The app ID
-    /// @return attestation The attestation
-    function getAttestation(bytes32 appId) external view returns (Attestation memory attestation) {
-        return _getApp(appId);
+    /// @return app The app
+    function getAppById(bytes32 appId) external view returns (App memory app) {
+        return _getAppById(appId);
+    }
+
+    /// @notice Get the total price of an app
+    /// @param app The app address
+    /// @return price The price of the app with protocol fee
+    function getAppPrice(address app) external view returns (uint256 price) {
+        return _getAppPrice(app);
     }
 
     /// @notice Get the latest version ID for a app

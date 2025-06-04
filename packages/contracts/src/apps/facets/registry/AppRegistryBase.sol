@@ -10,11 +10,16 @@ import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {AppRegistryStorage} from "./AppRegistryStorage.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -71,20 +76,31 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return appInfo.latestVersion;
     }
 
-    /// @notice Retrieves app attestation data by version ID
-    /// @param appId The version ID of the app
-    /// @return attestation The attestation data for the app
-    /// @dev Reverts if app is not registered, revoked, or banned
-    function _getApp(bytes32 appId) internal view returns (Attestation memory attestation) {
+    function _getAppPrice(address app) internal view returns (uint256 price) {
+        uint256 installPrice = ITownsApp(app).installPrice();
+        (price, ) = _getTotalRequiredPayment(installPrice);
+    }
+
+    function _getAppById(bytes32 appId) internal view returns (App memory app) {
         Attestation memory att = _getAttestation(appId);
-        if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
-        if (att.revocationTime > 0) AppRevoked.selector.revertWith();
-        (address app, , , , ) = abi.decode(
-            att.data,
-            (address, address, address[], bytes32[], ExecutionManifest)
-        );
-        if (_isBanned(app)) BannedApp.selector.revertWith();
-        return att;
+        if (att.uid == EMPTY_UID) return app;
+
+        (
+            address module,
+            address owner,
+            address[] memory clients,
+            bytes32[] memory permissions,
+            ExecutionManifest memory manifest
+        ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
+
+        app = App({
+            appId: att.uid,
+            module: module,
+            owner: owner,
+            clients: clients,
+            permissions: permissions,
+            manifest: manifest
+        });
     }
 
     /// @notice Checks if a app is banned
@@ -191,6 +207,95 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         version = appInfo.latestVersion;
 
         emit AppUnregistered(app, appId);
+    }
+
+    /// @notice Installs an app
+    /// @param app The address of the app to install
+    /// @param account The address of the account to install the app to
+    /// @param data The data to pass to the app's onInstall function
+    /// @dev Reverts if app is not registered or if the account is not a valid account
+    function _installApp(address app, address account, bytes calldata data) internal {
+        bytes32 appId = _getLatestAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+
+        Attestation memory att = _getAttestation(appId);
+        if (att.revocationTime > 0) AppRevoked.selector.revertWith();
+
+        // Pricing logic
+        uint256 installPrice = ITownsApp(app).installPrice();
+        address recipient = ITownsApp(app).moduleOwner();
+
+        _chargeForInstall(msg.sender, recipient, installPrice);
+
+        IAppAccount(account).installApp(appId, data);
+
+        emit AppInstalled(app, account, appId);
+    }
+
+    function _uninstallApp(address app, address account, bytes calldata data) internal {
+        bytes32 appId = IAppAccount(account).getAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+
+        IAppAccount(account).uninstallApp(appId, data);
+        emit AppUninstalled(app, account, appId);
+    }
+
+    function _onlyAllowed(address account) internal view {
+        if (IERC173(account).owner() != msg.sender) NotAllowed.selector.revertWith();
+    }
+
+    function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
+        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 baseFee = platform.getMembershipFee();
+        if (installPrice == 0) return baseFee;
+        uint256 bpsFee = BasisPoints.calculate(installPrice, platform.getMembershipBps());
+        return FixedPointMathLib.max(bpsFee, baseFee);
+    }
+
+    function _getTotalRequiredPayment(
+        uint256 installPrice
+    ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
+        protocolFee = _getProtocolFee(installPrice);
+        if (installPrice == 0) return (protocolFee, protocolFee);
+        return (installPrice + protocolFee, protocolFee);
+    }
+
+    function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
+        (uint256 totalRequired, uint256 protocolFee) = _getTotalRequiredPayment(installPrice);
+
+        if (msg.value < totalRequired) InsufficientPayment.selector.revertWith();
+
+        address feeRecipient = _getPlatformRequirements().getFeeRecipient();
+
+        // Handle protocol fee first - this is always charged
+        CurrencyTransfer.transferCurrency(
+            CurrencyTransfer.NATIVE_TOKEN,
+            msg.sender,
+            feeRecipient,
+            protocolFee
+        );
+
+        // Handle developer payment
+        uint256 ownerProceeds = installPrice == 0 ? 0 : totalRequired - protocolFee;
+        if (ownerProceeds > 0) {
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                payer,
+                recipient,
+                ownerProceeds
+            );
+        }
+
+        // Refund excess
+        uint256 excess = msg.value - totalRequired;
+        if (excess > 0) {
+            CurrencyTransfer.transferCurrency(
+                CurrencyTransfer.NATIVE_TOKEN,
+                address(this),
+                payer,
+                excess
+            );
+        }
     }
 
     /// @notice Bans a app from the registry

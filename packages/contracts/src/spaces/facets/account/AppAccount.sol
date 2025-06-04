@@ -36,12 +36,15 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IAppAccount
-    function installApp(
-        address app,
-        bytes calldata data,
-        AppParams calldata params
-    ) external payable nonReentrant onlyOwner {
-        _installApp(app, params.delays, data);
+    function installApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry(msg.sender);
+        _installApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function uninstallApp(bytes32 appId, bytes calldata data) external {
+        _onlyRegistry(msg.sender);
+        _uninstallApp(appId, data);
     }
 
     /// @inheritdoc IAppAccount
@@ -55,28 +58,18 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
-    function uninstallApp(address app, bytes calldata data) external onlyOwner {
-        _uninstallApp(app, data);
-    }
-
-    /// @inheritdoc IAppAccount
     function getInstalledApps() external view returns (address[] memory) {
         return _getApps();
     }
 
     /// @inheritdoc IAppAccount
     function getAppId(address app) external view returns (bytes32) {
-        return _getAppId(app);
+        return _getInstalledAppId(app);
     }
 
     /// @inheritdoc IAppAccount
     function getAppClients(address app) external view returns (address[] memory) {
         return _getClients(app);
-    }
-
-    /// @inheritdoc IAppAccount
-    function getAppPrice(address app) external view returns (uint256) {
-        return _getTotalRequiredPayment(app);
     }
 
     /// @inheritdoc IAppAccount
