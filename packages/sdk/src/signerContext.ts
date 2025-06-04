@@ -1,4 +1,4 @@
-import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
+import { ecrecover, fromRPCSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
 import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
@@ -60,8 +60,8 @@ export const recoverPublicKeyFromDelegateSig = (params: {
             ? publicKeyToUint8Array(params.delegatePubKey)
             : params.delegatePubKey
     const hashSource = riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
-    const hash = hashPersonalMessage(Buffer.from(hashSource))
-    const { v, r, s } = fromRpcSig('0x' + bin_toHexString(delegateSig))
+    const hash = hashPersonalMessage(hashSource)
+    const { v, r, s } = fromRPCSig(('0x' + bin_toHexString(delegateSig)) as `0x${string}`)
     const recoveredCreatorPubKey = ecrecover(hash, v, r, s)
     const recoveredCreatorAddress = Uint8Array.from(publicKeyToAddress(recoveredCreatorPubKey))
     return recoveredCreatorAddress

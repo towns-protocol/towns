@@ -21,7 +21,7 @@ import { check, throwWithCode } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
 import { fromBinary } from '@bufbuild/protobuf'
-import { decryptDerivedAESGCM } from './crypto_utils'
+import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { bytesToHex } from 'ethereum-cryptography/utils'
 
 export type ParsedChannelProperties = {

@@ -3,12 +3,12 @@ import {
 	StreamRpcClient,
 	StreamStateView,
 	UnpackEnvelopeOpts,
-	decryptAESGCM,
 	makeStreamRpcClient,
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
 } from '@towns-protocol/sdk'
+import { decryptAESGCM } from '@towns-protocol/sdk-crypto'
 import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
@@ -38,7 +38,7 @@ async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let client = clients.get(url)
 	if (!client) {
 		logger.info({ url }, 'Connecting')
-		client = await makeStreamRpcClient(url)
+		client = makeStreamRpcClient(url)
 		clients.set(url, client)
 	}
 	return client

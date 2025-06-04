@@ -3,7 +3,7 @@
  */
 
 import crypto from 'crypto'
-import { deriveKeyAndIV, encryptAESGCM } from '../../crypto_utils'
+import { deriveKeyAndIV, encryptAESGCM } from '@towns-protocol/sdk-crypto'
 
 describe('crypto_utils', () => {
     test('derivedKeyAndIV', async () => {

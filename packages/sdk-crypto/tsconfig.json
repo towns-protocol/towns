@@ -1,0 +1,14 @@
+{
+    "extends": "../tsconfig.base.json",
+    "compilerOptions": {
+        // Why??
+        "incremental": false,
+        "composite": false,
+        "moduleResolution": "bundler",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "experimentalDecorators": true,
+        "types": ["vitest/globals"]
+    },
+    "include": ["./src/**/*"]
+}

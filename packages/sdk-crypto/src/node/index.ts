@@ -1,11 +1,7 @@
-// This function is a helper for encrypting and decrypting public content.
-// The same IV and key are generated from the key phrase each time.
-// Not intended for protecting sensitive data, but rather for obfuscating content.
-
 import { throwWithCode } from '@towns-protocol/dlog'
 import { EncryptedData, Err } from '@towns-protocol/proto'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 export function uint8ArrayToBase64(uint8Array: Uint8Array): string {
     return Buffer.from(uint8Array).toString('base64')
