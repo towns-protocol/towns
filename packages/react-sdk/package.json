@@ -74,6 +74,5 @@
         "url": "https://github.com/towns-protocol/towns.git",
         "directory": "packages/react"
     },
-    "sideEffects": false,
-    "typings": "./dist/types/index.d.ts"
+    "sideEffects": false
 }
