@@ -1,3 +1,4 @@
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import type { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 
@@ -89,22 +90,16 @@ export const countReactions = (
     if (!channel) {
         return 0
     }
-    const message = channel.view.events.get(rootMessageId)
+    const message = channel.view.timeline.find((event) => event.eventId === rootMessageId)
     if (!message) {
         return 0
     }
 
     const reactions = channel.view.timeline.filter((event) => {
-        if (event.localEvent?.channelMessage.payload.case === 'reaction') {
-            return event.localEvent?.channelMessage.payload.value.refEventId === rootMessageId
+        if (event.content?.kind === RiverTimelineEvent.Reaction) {
+            return event.content.targetEventId === rootMessageId
         }
-        if (
-            event.decryptedContent?.kind === 'channelMessage' &&
-            event.decryptedContent?.content.payload.case === 'reaction'
-        ) {
-            return event.decryptedContent?.content.payload.value.refEventId === rootMessageId
-        }
-        return
+        return false
     })
 
     return reactions.length

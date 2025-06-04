@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Space, type Threads, assert } from '@towns-protocol/sdk'
+import { Space, TimelinesMap, assert } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { getRoom } from './utils'
@@ -11,7 +11,10 @@ import { getRoom } from './utils'
  * @param config - Configuration options for the observable.
  * @returns The threads of the stream as a map from the message eventId to a thread.
  */
-export const useThreads = (streamId: string, config?: ObservableConfig.FromObservable<Threads>) => {
+export const useThreads = (
+    streamId: string,
+    config?: ObservableConfig.FromObservable<TimelinesMap>,
+) => {
     const sync = useSyncAgent()
     const room = useMemo(() => getRoom(sync, streamId), [streamId, sync])
     assert(!(room instanceof Space), 'room cant be a space')

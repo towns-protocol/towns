@@ -3,6 +3,9 @@ import { findMessageByText, waitFor } from '../../testUtils'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { makeDefaultMembershipInfo } from '../../../sync-agent/utils/spaceUtils'
 import { RiverTimelineEvent } from '../../../sync-agent/timeline/models/timeline-types'
+import { dlog } from '@towns-protocol/dlog'
+
+const log = dlog('test:timeline.test.ts')
 
 const setupTest = async () => {
     const bobUser = new Bot()
@@ -122,11 +125,12 @@ describe('timeline.test.ts', () => {
 
         // everyone should receive the message
         await Promise.all([
-            waitFor(() =>
+            waitFor(() => {
+                log('aliceChannel.timeline.events.value', aliceChannel.timeline.events.value)
                 expect(
                     findMessageByText(aliceChannel.timeline.events.value, 'hey everyone!'),
-                ).toBeTruthy(),
-            ),
+                ).toBeTruthy()
+            }),
             waitFor(() =>
                 expect(
                     findMessageByText(charlieChannel.timeline.events.value, 'hey everyone!'),
@@ -196,7 +200,7 @@ describe('timeline.test.ts', () => {
         )
         // wait for bob to receive the reaction
         await waitFor(async () => {
-            const reaction = bobChannel.timeline.reactions.get(messageEvent!.eventId)
+            const reaction = bobChannel.timeline.reactions.value[messageEvent!.eventId]
             expect(reaction).toBeTruthy()
             expect(reaction?.['👍']).toBeTruthy()
             expect(reaction?.['👍'][alice.userId].eventId).toEqual(reactionEventId)
@@ -205,8 +209,8 @@ describe('timeline.test.ts', () => {
         await aliceChannel.redact(reactionEventId)
         // wait for bob to no longer see the reaction
         await waitFor(() => {
-            const reaction = bobChannel.timeline.reactions.get(messageEvent!.eventId)
-            expect(reaction).toBeUndefined()
+            const reaction = bobChannel.timeline.reactions.value[messageEvent!.eventId]
+            expect(reaction).toStrictEqual({})
         })
     })
 
@@ -250,8 +254,8 @@ describe('timeline.test.ts', () => {
                         event?.content?.body === 'hey alice, ready to sew?',
                 ).toEqual(true)
             })
-            const event = aliceChannel.timeline.events.getLatestEvent(
-                RiverTimelineEvent.ChannelMessage,
+            const event = aliceChannel.timeline.events.value.find(
+                (event) => event.content?.kind === RiverTimelineEvent.ChannelMessage,
             )!
             // a non threaded message should not have a thread parent id
             expect(event?.threadParentId).toBeUndefined()
@@ -264,7 +268,7 @@ describe('timeline.test.ts', () => {
             })
             // bob should receive the message in the thread and the thread id should be set to parent event id
             await waitFor(() => {
-                const thread = bobChannel.timeline.threads.get(event.eventId)
+                const thread = bobChannel.timeline.threads.value[event.eventId]
                 expect(thread).toBeTruthy()
                 expect(
                     thread?.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
@@ -279,7 +283,7 @@ describe('timeline.test.ts', () => {
             await aliceChannel.redact(firstReply.eventId)
             // bob should no longer see the first reply
             await waitFor(() => {
-                const thread = bobChannel.timeline.threads.get(event.eventId)!
+                const thread = bobChannel.timeline.threads.value[event.eventId]
                 expect(
                     thread.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
                         RiverTimelineEvent.RedactedEvent,

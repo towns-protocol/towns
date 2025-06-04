@@ -1,9 +1,10 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import {
-    isDecryptedEvent,
     makeRiverConfig,
     makeStreamRpcClient,
     randomUrlSelector,
+    RiverTimelineEvent,
+    TimelineEvent,
 } from '@towns-protocol/sdk'
 import { check } from '@towns-protocol/dlog'
 import { InfoRequestSchema } from '@towns-protocol/proto'
@@ -48,6 +49,9 @@ async function spamInfo(count: number) {
 }
 
 async function sendAMessage() {
+    const isChannelMessage = (event: TimelineEvent) => {
+        return event.content?.kind === RiverTimelineEvent.ChannelMessage
+    }
     logger.debug('=======================send a message - start =======================')
     const bob = await makeStressClient(config, 0, getRootWallet(), undefined)
     const { spaceId, defaultChannelId } = await bob.createSpace("bob's space")
@@ -64,15 +68,15 @@ async function sendAMessage() {
     logger.debug('=======================send a message - alice join space =======================')
     const channel = await alice.streamsClient.waitForStream(defaultChannelId)
     logger.debug('=======================send a message - alice wait =======================')
-    await waitFor(() => channel.view.timeline.filter(isDecryptedEvent).length > 0)
-    logger.debug('alices sees: ', channel.view.timeline.filter(isDecryptedEvent))
+    await waitFor(() => channel.view.timeline.filter(isChannelMessage).length > 0)
+    logger.debug('alices sees: ', channel.view.timeline.filter(isChannelMessage))
     logger.debug('=======================send a message - alice sends =======================')
     await alice.sendMessage(defaultChannelId, 'hi bob')
     logger.debug('=======================send a message - alice sent =======================')
     const bobChannel = await bob.streamsClient.waitForStream(defaultChannelId)
     logger.debug('=======================send a message - bob wait =======================')
-    await waitFor(() => bobChannel.view.timeline.filter(isDecryptedEvent).length > 0) // bob doesn't decrypt his own messages
-    logger.debug(bobChannel.view.timeline.filter(isDecryptedEvent), 'bob sees')
+    await waitFor(() => bobChannel.view.timeline.filter(isChannelMessage).length > 0) // bob doesn't decrypt his own messages
+    logger.debug(bobChannel.view.timeline.filter(isChannelMessage), 'bob sees')
 
     await bob.stop()
     await alice.stop()
