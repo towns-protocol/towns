@@ -6041,16 +6041,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ponder/utils@npm:0.2.3":
-  version: 0.2.3
-  resolution: "@ponder/utils@npm:0.2.3"
+"@ponder/utils@npm:0.2.6":
+  version: 0.2.6
+  resolution: "@ponder/utils@npm:0.2.6"
   peerDependencies:
     typescript: ">=5.0.4"
     viem: ">=2"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 39469b86946fe8d3eabeb5e65a9b4e44396946af13df28ef2a68b335c165bbee7f987ce08e8ad376e7dd535242006753a0546286ffe443e6e97725fc5da8b120
+  checksum: 9747b625e8c92daf931711642d3ab7f8e6b6a6463fb83f31fed81c4a5ddbcf8d373b36243b7d77cb1bd23feb34aa94ca8a17580fc9050757ac669cca2c5b1a0a
   languageName: node
   linkType: hard
 
@@ -8826,7 +8826,7 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-prettier: ^5.2.6
     hono: ^4.5.0
-    ponder: ^0.9.27
+    ponder: ^0.10.29
     prettier: ^3.5.3
     tsx: ^4.7.1
     typescript: ^5.8.2
@@ -14202,9 +14202,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-orm@npm:0.39.3":
-  version: 0.39.3
-  resolution: "drizzle-orm@npm:0.39.3"
+"drizzle-orm@npm:0.41.0":
+  version: 0.41.0
+  resolution: "drizzle-orm@npm:0.41.0"
   peerDependencies:
     "@aws-sdk/client-rds-data": ">=3"
     "@cloudflare/workers-types": ">=4"
@@ -14225,6 +14225,7 @@ __metadata:
     better-sqlite3: ">=7"
     bun-types: "*"
     expo-sqlite: ">=14.0.0"
+    gel: ">=2"
     knex: "*"
     kysely: "*"
     mysql2: ">=2"
@@ -14271,6 +14272,8 @@ __metadata:
       optional: true
     expo-sqlite:
       optional: true
+    gel:
+      optional: true
     knex:
       optional: true
     kysely:
@@ -14287,7 +14290,7 @@ __metadata:
       optional: true
     sqlite3:
       optional: true
-  checksum: 6509fb5c14aeecdeefff51a865f71214a910b8b15d3dca9d2766d070eb3854cd7ba8e93791e48c8b08a1185425107b20ddc2ea0623e59035bc8c3c71488a6bd7
+  checksum: 64f45f8e4c9cf29ed79db33b5c28eb7fdb7f9f1bb9c006a1fffafc75f3acdaa61c7d3ba7bdb442a256ff21c63715d840eccf420153df1ae6d90472a51281f418
   languageName: node
   linkType: hard
 
@@ -24743,9 +24746,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ponder@npm:^0.9.27":
-  version: 0.9.27
-  resolution: "ponder@npm:0.9.27"
+"ponder@npm:^0.10.29":
+  version: 0.10.29
+  resolution: "ponder@npm:0.10.29"
   dependencies:
     "@babel/code-frame": ^7.23.4
     "@commander-js/extra-typings": ^12.0.1
@@ -24754,7 +24757,7 @@ __metadata:
     "@escape.tech/graphql-armor-max-depth": ^2.2.0
     "@escape.tech/graphql-armor-max-tokens": ^2.3.0
     "@hono/node-server": 1.13.3
-    "@ponder/utils": 0.2.3
+    "@ponder/utils": 0.2.6
     abitype: ^0.10.2
     ansi-escapes: ^7.0.0
     commander: ^12.0.0
@@ -24762,7 +24765,7 @@ __metadata:
     dataloader: ^2.2.2
     detect-package-manager: ^3.0.2
     dotenv: ^16.3.1
-    drizzle-orm: 0.39.3
+    drizzle-orm: 0.41.0
     glob: ^10.3.10
     graphql: ^16.8.1
     graphql-yoga: ^5.3.0
@@ -24791,7 +24794,7 @@ __metadata:
       optional: true
   bin:
     ponder: dist/esm/bin/ponder.js
-  checksum: 6a5d3c637d0fefec546b0e3ecd9996063006fb819b84b98baddaac6b1aee2943e73af538841fb6beb06c72aace88dbfacfcb4872193ae49e0ec0189c737c1734
+  checksum: 8372d88534f6db11ade83c9a27156ed018b4b6342be3b7228d401c73acf3f343d737c8d34ccff6f6253ee043e1caf43152be3a66a699a8d8d14b019d246d242a
   languageName: node
   linkType: hard
 
