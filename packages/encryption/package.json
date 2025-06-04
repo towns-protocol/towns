@@ -3,11 +3,13 @@
     "version": "0.0.236",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "publishConfig": {
         "access": "public"
     },
+    "sideEffects": false,
     "exports": {
         ".": {
             "import": "./dist/index.js",
