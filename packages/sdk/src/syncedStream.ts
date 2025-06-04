@@ -7,7 +7,7 @@ import {
 } from '@towns-protocol/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse, ParsedSnapshot } from './types'
-import { DLogger, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import { DLogger, bin_equal, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
@@ -153,7 +153,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             header: miniblockHeader,
             events: [...events, miniblockEvent],
         }
-        if (snapshot && snapshot.hash === miniblockHeader.snapshotHash) {
+        if (snapshot && bin_equal(snapshot.hash, miniblockHeader.snapshotHash)) {
             await this.persistenceStore.saveSnapshot(
                 this.streamId,
                 miniblock.header.miniblockNum,
