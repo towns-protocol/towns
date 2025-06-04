@@ -1,5 +1,5 @@
 import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
-import { createHttp2ConnectTransport } from '../../rpc-connector/dist/web'
+import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
@@ -58,7 +58,7 @@ export function makeStreamRpcClient(
     }
     const transport = createHttp2ConnectTransport(options)
 
-    const client: StreamRpcClient = createClient(StreamService, transport) as StreamRpcClient
+    const client: StreamRpcClient = createClient(StreamService, transport)
     client.url = url
     client.opts = { retryParams }
     return client

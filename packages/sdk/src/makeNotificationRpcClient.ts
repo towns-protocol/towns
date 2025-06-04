@@ -3,7 +3,7 @@ import { NotificationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { RpcOptions } from './rpcCommon'
-import { createHttp2ConnectTransport } from '../../rpc-connector/dist/web'
+import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import {
     DEFAULT_RETRY_PARAMS,
     loggingInterceptor,
@@ -54,10 +54,7 @@ export function makeNotificationRpcClient(
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client: NotificationRpcClient = createClient(
-        NotificationService,
-        transport,
-    ) as NotificationRpcClient
+    const client: NotificationRpcClient = createClient(NotificationService, transport)
     client.url = url
     return client
 }
