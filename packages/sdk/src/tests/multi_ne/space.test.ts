@@ -115,7 +115,10 @@ describe('spaceTests', () => {
             if (snapshot?.content.case !== 'spaceContent') {
                 throw new Error('snapshot is not a space content')
             }
-            expect(snapshot.content.value.channels.length).toBe(1)
+            expect(
+                snapshot.content.value.channels.length,
+                'channelMetadata: pre-update bobsClient snapshot.channels.length',
+            ).toBe(1)
             expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
         })
 
@@ -148,7 +151,10 @@ describe('spaceTests', () => {
             if (snapshot?.content.case !== 'spaceContent') {
                 throw new Error('snapshot is not a space content')
             }
-            expect(snapshot.content.value.channels.length).toBe(1)
+            expect(
+                snapshot.content.value.channels.length,
+                'channelMetadata: post-update bobsClient snapshot.channels.length',
+            ).toBe(1)
             expect(snapshot.content.value.channels[0].updatedAtEventNum).toBeGreaterThan(
                 prevUpdatedAt,
             )
@@ -210,7 +216,10 @@ describe('spaceTests', () => {
         })
 
         await waitFor(() => {
-            expect(spaceImageUpdatedCounter.count).toBe(1)
+            expect(
+                spaceImageUpdatedCounter.count,
+                'spaceImage: spaceImageUpdatedCounter.count',
+            ).toBe(1)
         })
 
         // decrypt the snapshot and assert the image values
