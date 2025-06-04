@@ -69,11 +69,17 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     /// @notice Gets the latest version ID for a app
     /// @param app The address of the app
-    /// @return The latest version ID, or EMPTY_UID if the app is banned
+    /// @return The latest version ID
     function _getLatestAppId(address app) internal view returns (bytes32) {
         AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
-        if (appInfo.isBanned) return EMPTY_UID;
         return appInfo.latestVersion;
+    }
+
+    /// @notice Checks if an app is banned
+    /// @param app The address of the app to check
+    /// @return True if the app is banned, false otherwise
+    function _isBanned(address app) internal view returns (bool) {
+        return AppRegistryStorage.getLayout().apps[app].isBanned;
     }
 
     function _getAppPrice(address app) internal view returns (uint256 price) {
@@ -81,39 +87,28 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         (price, ) = _getTotalRequiredPayment(installPrice);
     }
 
-    function _getAppById(bytes32 appId) internal view returns (App memory app) {
+    /// @notice Retrieves detailed information about an app by its ID
+    /// @param appId The unique identifier of the app
+    /// @return appData A struct containing all app information including module, owner, clients, permissions, and manifest
+    /// @dev Returns an empty app struct if the appId is not found
+    function _getAppById(bytes32 appId) internal view returns (App memory appData) {
         Attestation memory att = _getAttestation(appId);
-        if (att.uid == EMPTY_UID) return app;
-
-        (
-            address module,
-            address owner,
-            address[] memory clients,
-            bytes32[] memory permissions,
-            ExecutionManifest memory manifest
-        ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
-
-        app = App({
-            appId: att.uid,
-            module: module,
-            owner: owner,
-            clients: clients,
-            permissions: permissions,
-            manifest: manifest
-        });
+        if (att.uid == EMPTY_UID) return appData;
+        appData = abi.decode(att.data, (App));
+        appData.appId = att.uid;
     }
 
-    /// @notice Checks if a app is banned
-    /// @param app The address of the app to check
-    /// @return True if the app is banned, false otherwise
-    function _isBanned(address app) internal view returns (bool) {
-        return AppRegistryStorage.getLayout().apps[app].isBanned;
-    }
-
+    /// @notice Creates a new app with the specified parameters
+    /// @param params The parameters for creating the app
+    /// @return app The address of the created app
+    /// @return version The version ID of the registered app
+    /// @dev Validates inputs, deploys app contract, and registers it
     function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
+        // Validate basic parameters
         if (bytes(params.name).length == 0) revert InvalidAppName();
-        if (params.permissions.length == 0) revert InvalidArrayInput();
-        if (params.clients.length == 0) revert InvalidArrayInput();
+        if (params.permissions.length == 0 || params.clients.length == 0) {
+            revert InvalidArrayInput();
+        }
 
         _validatePricing(params.installPrice);
 
@@ -127,7 +122,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         );
 
         version = _registerApp(app, params.clients);
-
         emit AppCreated(app, version);
     }
 
@@ -143,7 +137,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         _verifyAddAppInputs(app, clients);
 
         AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
-
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
         ITownsApp appContract = ITownsApp(app);
@@ -152,26 +145,32 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         _validatePricing(installPrice);
 
         bytes32[] memory permissions = appContract.requiredPermissions();
-        ExecutionManifest memory manifest = appContract.executionManifest();
-
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
-        address owner = ITownsApp(app).moduleOwner();
+        ExecutionManifest memory manifest = appContract.executionManifest();
+        address owner = appContract.moduleOwner();
+
+        App memory appData = App({
+            appId: EMPTY_UID,
+            module: app,
+            owner: owner,
+            clients: clients,
+            permissions: permissions,
+            manifest: manifest
+        });
 
         AttestationRequest memory request;
         request.schema = _getSchemaId();
         request.data.recipient = app;
         request.data.revocable = true;
         request.data.refUID = appInfo.latestVersion;
-        request.data.data = abi.encode(app, owner, clients, permissions, manifest);
+        request.data.data = abi.encode(appData);
         version = _attest(msg.sender, msg.value, request).uid;
 
         appInfo.latestVersion = version;
         appInfo.app = app;
 
         emit AppRegistered(app, version);
-
-        return version;
     }
 
     /// @notice Removes a app from the registry
@@ -191,12 +190,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
-        (app, , , , ) = abi.decode(
-            att.data,
-            (address, address, address[], bytes32[], ExecutionManifest)
-        );
 
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        App memory appData = abi.decode(att.data, (App));
+
+        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[
+            appData.module
+        ];
 
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
@@ -209,23 +208,26 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppUnregistered(app, appId);
     }
 
-    /// @notice Installs an app
+    /// @notice Installs an app to a specified account
     /// @param app The address of the app to install
     /// @param account The address of the account to install the app to
     /// @param data The data to pass to the app's onInstall function
-    /// @dev Reverts if app is not registered or if the account is not a valid account
+    /// @dev Handles validation, payment, and installation process
     function _installApp(address app, address account, bytes calldata data) internal {
         bytes32 appId = _getLatestAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        if (_isBanned(app)) BannedApp.selector.revertWith();
 
         Attestation memory att = _getAttestation(appId);
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
-        // Pricing logic
-        uint256 installPrice = ITownsApp(app).installPrice();
-        address recipient = ITownsApp(app).moduleOwner();
+        ITownsApp appContract = ITownsApp(app);
+        (address owner, uint256 installPrice) = (
+            appContract.moduleOwner(),
+            appContract.installPrice()
+        );
 
-        _chargeForInstall(msg.sender, recipient, installPrice);
+        _chargeForInstall(msg.sender, owner, installPrice);
 
         IAppAccount(account).installApp(appId, data);
 
@@ -260,12 +262,19 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return (installPrice + protocolFee, protocolFee);
     }
 
+    /// @notice Charges for app installation including protocol fees and developer payment
+    /// @param payer The address paying for the installation
+    /// @param recipient The address receiving the developer payment
+    /// @param installPrice The base price of the app
+    /// @dev Handles protocol fee, developer payment, and excess refund
     function _chargeForInstall(address payer, address recipient, uint256 installPrice) internal {
         (uint256 totalRequired, uint256 protocolFee) = _getTotalRequiredPayment(installPrice);
 
         if (msg.value < totalRequired) InsufficientPayment.selector.revertWith();
 
-        address feeRecipient = _getPlatformRequirements().getFeeRecipient();
+        // Cache platform requirements to avoid multiple storage reads
+        IPlatformRequirements platform = _getPlatformRequirements();
+        address feeRecipient = platform.getFeeRecipient();
 
         // Handle protocol fee first - this is always charged
         CurrencyTransfer.transferCurrency(
@@ -275,7 +284,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             protocolFee
         );
 
-        // Handle developer payment
+        // Transfer developer payment if applicable
         uint256 ownerProceeds = installPrice == 0 ? 0 : totalRequired - protocolFee;
         if (ownerProceeds > 0) {
             CurrencyTransfer.transferCurrency(
@@ -286,7 +295,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             );
         }
 
-        // Refund excess
+        // Refund excess payment if any
         uint256 excess = msg.value - totalRequired;
         if (excess > 0) {
             CurrencyTransfer.transferCurrency(
@@ -310,14 +319,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (appInfo.app == address(0)) AppNotRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
-        Attestation memory att = _getAttestation(appInfo.latestVersion);
-
-        if (att.revocationTime > 0) AppRevoked.selector.revertWith();
-
-        RevocationRequestData memory request;
-        request.uid = appInfo.latestVersion;
-
-        _revoke(att.schema, request, att.attester, 0, true);
         appInfo.isBanned = true;
 
         emit AppBanned(app, appInfo.latestVersion);
