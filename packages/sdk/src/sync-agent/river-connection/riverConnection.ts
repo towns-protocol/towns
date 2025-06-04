@@ -152,7 +152,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             return
         }
         this.logger.info(`setting rpcClient with urls: "${urls}"`)
-        const rpcClient = makeStreamRpcClient(
+        const rpcClient = await makeStreamRpcClient(
             urls,
             () => this.riverRegistryDapp.getOperationalNodeUrls(),
             {
