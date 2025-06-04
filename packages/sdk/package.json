@@ -3,6 +3,10 @@
     "version": "0.0.236",
     "packageManager": "yarn@3.8.0",
     "type": "module",
+    "main": "./dist/node/index.cjs",
+    "module": "./dist/node/index.js",
+    "types": "./dist/node/index.d.ts",
+    "sideEffects": false,
     "exports": {
         ".": {
             "types": "./dist/browser/index.d.ts",
@@ -15,7 +19,6 @@
     "publishConfig": {
         "access": "public"
     },
-    "sideEffects": false,
     "scripts": {
         "build": "tsdown",
         "cb": "yarn clean && yarn build",
