@@ -1,4 +1,5 @@
 import {
+    MiniblockHeader,
     PersistedEvent,
     PersistedEventSchema,
     PersistedMiniblock,
@@ -105,7 +106,11 @@ export function parsedMiniblockToPersistedMiniblock(
     direction: 'forward' | 'backward',
 ) {
     // always zero out the snapshot since we save it separately
-    const header = { ...miniblock.header, snapshot: undefined }
+    const header = {
+        ...miniblock.header,
+        snapshot: undefined,
+        snapshotHash: computeBackwardsCompatibleSnapshotHash(miniblock.header),
+    }
 
     return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
@@ -122,6 +127,7 @@ function parsedEventToPersistedEvent(event: ParsedEvent) {
         event.event.payload.value = {
             ...event.event.payload.value,
             snapshot: undefined,
+            snapshotHash: computeBackwardsCompatibleSnapshotHash(event.event.payload.value),
         }
     }
 
@@ -147,4 +153,19 @@ export function persistedSyncedStreamToParsedSyncedStream(
         minipoolEvents: stream.minipoolEvents.map(persistedEventToParsedEvent).filter(isDefined),
         lastMiniblockNum: stream.lastMiniblockNum,
     }
+}
+
+/// deprecated backfill
+/// if we have a snapshot, we don't want to save it here, but we do want to indicate that we have a snapshot
+/// if we don't have a snapshot hash but we do have an old snapshot (which is the deprecated case)
+/// we make up a fake string in place of the hash
+/// const snapshotHash =
+function computeBackwardsCompatibleSnapshotHash(header: MiniblockHeader) {
+    if (header.snapshotHash) {
+        return header.snapshotHash
+    }
+    if (header.snapshot) {
+        return new Uint8Array(16).fill(1)
+    }
+    return undefined
 }
