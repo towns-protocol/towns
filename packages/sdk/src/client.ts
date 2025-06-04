@@ -206,6 +206,7 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
+    readonly logId: string
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -234,7 +235,6 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
-    private logId: string
 
     constructor(
         signerContext: SignerContext,
