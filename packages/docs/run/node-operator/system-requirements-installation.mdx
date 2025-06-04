@@ -28,6 +28,11 @@ Please read the below requirements carefully prior to proceeding with node setup
 
   <Note>It is highly recommended to run a distinct Postgres instance for each Node FE to ensure resource isolation during upgrades.</Note>
 </Accordion>
+<Accordion title="Node Eth Balance Requirements">
+  - **Towns Chain Eth Balance**: Minimum 1 ETH on all stream node wallets in Towns Chain to support gas needed for miniblock validation.
+  - **Base Chain Eth Balance**: Minimum 0.5 ETH on all stream node wallets in Base Chain to support gas needed for cross-chain entitlement checks.
+<Note>Set up alerts to monitor the balance of the node's Eth balance on Towns Chain and Base Chain at a minimum alert threshold of 0.25 ETH and 0.1 ETH respectively.</Note>
+</Accordion>
 <br />
 ### Installation
 

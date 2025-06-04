@@ -250,4 +250,23 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         // Verify the gap: new expiration should be much later than original + duration
         assertGt(membership.expiresAt(tokenId), originalExpiration + duration);
     }
+
+    function test_renewMembershipNewTown() external {
+        vm.startPrank(founder);
+        membership.setMembershipFreeAllocation(2);
+        membership.setMembershipPrice(0.01 ether);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        membership.joinSpace(alice);
+        vm.stopPrank();
+
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+
+        vm.deal(alice, renewalPrice);
+
+        vm.prank(alice);
+        membership.renewMembership{value: renewalPrice}(tokenId);
+    }
 }

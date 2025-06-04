@@ -108,7 +108,7 @@ import {
 } from './id'
 import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
-import { IStreamStateView, StreamStateView } from './streamStateView'
+import { StreamStateView } from './streamStateView'
 import {
     make_UserMetadataPayload_Inception,
     make_ChannelPayload_Inception,
@@ -206,6 +206,7 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
+    readonly logId: string
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -234,7 +235,6 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
-    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -2274,7 +2274,7 @@ export class Client
      *     that are in the room but that have been blocked.
      */
     async getDevicesInStream(stream_id: string): Promise<UserDeviceCollection> {
-        let stream: IStreamStateView | undefined
+        let stream: StreamStateView | undefined
         stream = this.stream(stream_id)?.view
         if (!stream || !stream.isInitialized) {
             stream = await this.getStream(stream_id)

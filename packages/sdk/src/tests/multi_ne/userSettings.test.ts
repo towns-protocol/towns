@@ -31,7 +31,7 @@ describe('userSettingsTests', () => {
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+        expect(stream.view.getMembers().joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
         )
 
@@ -87,7 +87,7 @@ describe('userSettingsTests', () => {
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+        expect(stream.view.getMembers().joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
         )
 

@@ -58,37 +58,7 @@ const logError = dlogError('csb:streams:error')
 
 // it's very important that the Stream is the emitter for all events
 // for any mutations, go through the stream
-export interface IStreamStateView {
-    readonly streamId: string
-    readonly userId: string
-    readonly contentKind: SnapshotCaseType
-    readonly timeline: StreamTimelineEvent[]
-    readonly events: Map<string, StreamTimelineEvent>
-    isInitialized: boolean
-    prevMiniblockHash?: Uint8Array
-    prevMiniblockNum?: bigint
-    lastEventNum: bigint
-    prevSnapshotMiniblockNum: bigint
-    miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
-    syncCookie?: SyncCookie
-    membershipContent: StreamStateView_Members
-    get spaceContent(): StreamStateView_Space
-    get channelContent(): StreamStateView_Channel
-    get dmChannelContent(): StreamStateView_DMChannel
-    get gdmChannelContent(): StreamStateView_GDMChannel
-    get userContent(): StreamStateView_User
-    get userSettingsContent(): StreamStateView_UserSettings
-    get userMetadataContent(): StreamStateView_UserMetadata
-    get userInboxContent(): StreamStateView_UserInbox
-    get mediaContent(): StreamStateView_Media
-    getMembers(): StreamStateView_Members
-    getMemberMetadata(): StreamStateView_MemberMetadata
-    getContent(): StreamStateView_AbstractContent
-    userIsEntitledToKeyExchange(userId: string): boolean
-    getUsersEntitledToKeyExchange(): Set<string>
-}
-
-export class StreamStateView implements IStreamStateView {
+export class StreamStateView {
     readonly streamId: string
     readonly userId: string
     readonly contentKind: SnapshotCaseType
