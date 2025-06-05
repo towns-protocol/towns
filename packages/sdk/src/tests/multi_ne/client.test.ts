@@ -988,18 +988,14 @@ describe('clientTest', () => {
         const channelStream = bobsClient.stream(bobsChannelId)
         expect(channelStream).toBeDefined()
         await waitFor(() => {
-            expect(channelStream?.view.getMembers().membership.joinedUsers).toContain(
-                alicesClient.userId,
-            )
+            expect(channelStream?.view.getMembers().joinedUsers).toContain(alicesClient.userId)
         })
         // leave the space
         await expect(alicesClient.leaveStream(bobsSpaceId)).resolves.not.toThrow()
 
         // the channel should be left as well
         await waitFor(() => {
-            expect(channelStream?.view.getMembers().membership.joinedUsers).not.toContain(
-                alicesClient.userId,
-            )
+            expect(channelStream?.view.getMembers().joinedUsers).not.toContain(alicesClient.userId)
         })
         await alicesClient.stopSync()
     })

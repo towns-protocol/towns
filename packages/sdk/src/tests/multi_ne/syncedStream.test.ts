@@ -67,7 +67,7 @@ describe('syncedStream', () => {
         // check that the events are the same
         const aliceEvents = aliceStream.view.timeline.map((e) => e.hashStr)
         const bobEvents = bobStreamFresh.view.timeline.map((e) => e.hashStr)
-        await waitFor(() => aliceEvents.sort() === bobEvents.sort())
+        await waitFor(() => expect(aliceEvents.sort()).toStrictEqual(bobEvents.sort()))
 
         const bobEventCount = bobEvents.length
         // Alice sends another 5 messages

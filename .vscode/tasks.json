@@ -9,6 +9,20 @@
   },
   "tasks": [
     {
+      "label": "Dependencies",
+      "dependsOn": [
+        "CheckVersions",
+        "FoundryUp",
+        "YarnInstall",
+        "BuildProtobufs",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+    {
       // start local dev:
       //
       // 1. yarn install
@@ -20,10 +34,7 @@
       // and use the artifacts of the contracts in their builds
       "label": "~Start Local Dev~",
       "dependsOn": [
-        "CheckVersions",
-        "FoundryUp",
-        "YarnInstall",
-        "BuildProtobufs",
+        "Dependencies",
         "Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -119,7 +130,7 @@
     {
       "label": "CheckVersions",
       "type": "shell",
-      "command": "./scripts/check-node-version.sh && ./scripts/check-go-version.sh",
+      "command": "./scripts/check-node-version.sh && ./scripts/check-go-version.sh && ./scripts/install-protobuf-deps.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

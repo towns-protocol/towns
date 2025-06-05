@@ -2,8 +2,14 @@ import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@towns-proto
 import { DLogger } from '@towns-protocol/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { IStreamStateView, StreamStateView } from './streamStateView'
-import { LocalEventStatus, ParsedEvent, ParsedMiniblock, isLocalEvent } from './types'
+import { StreamStateView } from './streamStateView'
+import {
+    LocalEventStatus,
+    ParsedEvent,
+    ParsedMiniblock,
+    ParsedSnapshot,
+    isLocalEvent,
+} from './types'
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
@@ -12,8 +18,9 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly userId: string
+    readonly streamId: string
     _view: StreamStateView
-    get view(): IStreamStateView {
+    get view(): StreamStateView {
         return this._view
     }
     private stopped = false
@@ -29,10 +36,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logEmitFromStream = logEmitFromStream
         this.userId = userId
         this._view = new StreamStateView(userId, streamId)
-    }
-
-    get streamId(): string {
-        return this._view.streamId
+        this.streamId = streamId
     }
 
     get syncCookie(): SyncCookie | undefined {
@@ -78,6 +82,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
+        snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         this._view.appendEvents(events, nextSyncCookie, cleartexts, this)

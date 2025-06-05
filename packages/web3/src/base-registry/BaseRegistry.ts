@@ -4,6 +4,7 @@ import { INodeOperatorShim } from './INodeOperatorShim'
 import { IEntitlementCheckerShim } from './IEntitlementCheckerShim'
 import { ISpaceDelegationShim } from './ISpaceDelegationShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
+import { RewardsDistributionV2Shim } from './RewardsDistributionShim'
 
 export type BaseOperator = {
     operatorAddress: string
@@ -18,6 +19,8 @@ export class BaseRegistry {
     public readonly nodeOperator: INodeOperatorShim
     public readonly entitlementChecker: IEntitlementCheckerShim
     public readonly spaceDelegation: ISpaceDelegationShim
+    public readonly rewardsDistributionV2: RewardsDistributionV2Shim
+
     public readonly erc721A: IERC721AShim
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
@@ -29,6 +32,11 @@ export class BaseRegistry {
             provider,
         )
         this.spaceDelegation = new ISpaceDelegationShim(config.addresses.baseRegistry, provider)
+        this.rewardsDistributionV2 = new RewardsDistributionV2Shim(
+            config.addresses.baseRegistry,
+            provider,
+        )
+
         this.erc721A = new IERC721AShim(config.addresses.baseRegistry, provider)
     }
 

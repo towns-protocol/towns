@@ -996,14 +996,11 @@ export function getFallbackContent(
         case RiverTimelineEvent.SpaceImage:
             return `SpaceImage`
         case RiverTimelineEvent.Fulfillment:
-            return `Fulfillment sessionIds: ${
+            return `Fulfillment from: ${content.from} to: ${content.deviceKey} count: ${content.sessionIds.length} sessionIds: ${
                 content.sessionIds.length ? content.sessionIds.join(',') : 'forNewDevice: true'
-            }, from: ${content.from} to: ${content.deviceKey}`
+            }`
         case RiverTimelineEvent.KeySolicitation:
-            if (content.isNewDevice) {
-                return `KeySolicitation deviceKey: ${content.deviceKey}, newDevice: true`
-            }
-            return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
+            return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length} isNewDevice: ${content.isNewDevice}`
         case RiverTimelineEvent.ChannelMessageMissing:
             return `eventId: ${content.eventId}`
         case RiverTimelineEvent.ChannelMessageEncryptedWithRef:

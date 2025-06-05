@@ -109,7 +109,7 @@ describe('Trading', () => {
             logs: buyTransactionReceipt.logs,
         }
 
-        bobClient.on('streamTokenTransfer', (streamId, data) => {
+        bobClient.once('streamTokenTransfer', (streamId, data) => {
             expect(streamId).toBe(channelId)
             expect(data.userId).toBe(bobClient.userId)
             expect(data.createdAtEpochMs > 0n).toBe(true)

@@ -215,4 +215,58 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
             }
         }
     }
+
+    function test_renewExpiredMembershipStartsFromCurrentTime()
+        external
+        givenAliceHasMintedMembership
+    {
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 originalExpiration = membership.expiresAt(tokenId);
+        uint256 duration = membership.getMembershipDuration();
+
+        // Warp to well past the expiration time (1 day after expiration)
+        vm.warp(originalExpiration + 1 days);
+
+        // Verify membership has expired
+        assertTrue(
+            membership.expiresAt(tokenId) <= block.timestamp,
+            "Membership should be expired"
+        );
+
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+        vm.deal(alice, renewalPrice);
+
+        // Expected new expiration should be current time + duration, not original expiration + duration
+        uint256 expectedNewExpiration = block.timestamp + duration;
+
+        vm.prank(alice);
+        vm.expectEmit(address(membership));
+        emit SubscriptionUpdate(tokenId, uint64(expectedNewExpiration));
+        membership.renewMembership{value: renewalPrice}(tokenId);
+
+        // Verify the new expiration is based on current time, not the expired time
+        assertEq(membership.expiresAt(tokenId), expectedNewExpiration);
+
+        // Verify the gap: new expiration should be much later than original + duration
+        assertGt(membership.expiresAt(tokenId), originalExpiration + duration);
+    }
+
+    function test_renewMembershipNewTown() external {
+        vm.startPrank(founder);
+        membership.setMembershipFreeAllocation(2);
+        membership.setMembershipPrice(0.01 ether);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        membership.joinSpace(alice);
+        vm.stopPrank();
+
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+
+        vm.deal(alice, renewalPrice);
+
+        vm.prank(alice);
+        membership.renewMembership{value: renewalPrice}(tokenId);
+    }
 }

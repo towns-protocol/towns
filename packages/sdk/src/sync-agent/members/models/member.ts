@@ -89,7 +89,7 @@ export class Member extends PersistedObservable<MemberModel> {
             const displayNameInfo = metadata?.displayNames.info(this.userId)
             const ensAddress = metadata?.ensAddresses.info(this.userId)
             const nft = metadata?.nfts.info(this.userId)
-            const membership = streamView.getMembers().membership.info(this.userId)
+            const membership = streamView.getMembers().info(this.userId)
 
             this.setData({
                 initialized: true,
