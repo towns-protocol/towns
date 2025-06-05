@@ -2,7 +2,7 @@ import { makeSignerContext } from '../../signerContext'
 import { AppRegistryService } from '../../appRegistryService'
 import { ethers } from 'ethers'
 
-const appRegistryUrl = 'https://localhost:5180'
+const appRegistryUrl = 'https://localhost:6170'
 
 describe('appRegistryService test', { skip: true }, () => {
     test('authenticate with primary key', async () => {
