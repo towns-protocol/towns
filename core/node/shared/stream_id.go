@@ -21,6 +21,8 @@ const (
 	STREAM_GDM_CHANNEL_PREFIX            = "77"
 	STREAM_MEDIA_BIN                byte = 0xff
 	STREAM_MEDIA_PREFIX                  = "ff"
+	STREAM_METADATA_BIN             byte = 0xdd
+	STREAM_METADATA_PREFIX               = "dd"
 	STREAM_SPACE_BIN                byte = 0x10
 	STREAM_SPACE_PREFIX                  = "10"
 	STREAM_USER_METADATA_KEY_BIN    byte = 0xad
@@ -31,8 +33,6 @@ const (
 	STREAM_USER_PREFIX                   = "a8"
 	STREAM_USER_SETTINGS_BIN        byte = 0xa5
 	STREAM_USER_SETTINGS_PREFIX          = "a5"
-	STREAM_METADATA_BIN             byte = 0xdd
-	STREAM_METADATA_PREFIX               = "dd"
 
 	STREAM_ID_BYTES_LENGTH  = 32
 	STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
@@ -50,6 +50,8 @@ func StreamTypeToString(streamType byte) string {
 		return "gdm_channel"
 	case STREAM_MEDIA_BIN:
 		return "media"
+	case STREAM_METADATA_BIN:
+		return "metadata"
 	case STREAM_SPACE_BIN:
 		return "space"
 	case STREAM_USER_METADATA_KEY_BIN:
@@ -60,8 +62,6 @@ func StreamTypeToString(streamType byte) string {
 		return "user"
 	case STREAM_USER_SETTINGS_BIN:
 		return "user_settings"
-	case STREAM_METADATA_BIN:
-		return "metadata"
 	}
 	return fmt.Sprintf("%02x", streamType)
 }
@@ -169,7 +169,7 @@ func StreamIdContentLengthForType(t byte) (int, error) {
 	case STREAM_SPACE_BIN:
 		return 21, nil
 	case STREAM_METADATA_BIN:
-		return 5, nil // 1 byte prefix, 3 byte big endian shard number
+		return 9, nil // 1 byte prefix, 8 byte big endian shard number
 	default:
 		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream prefix", "prefix", t)
 	}

@@ -275,28 +275,30 @@ func ValidUserIdBytes(userId []byte) bool {
 	return len(userId) == 20
 }
 
-type StreamShard uint16
-
-func ShardFromMetadataStreamId(streamId StreamId) (StreamShard, error) {
+func ShardFromMetadataStreamId(streamId StreamId) (uint64, error) {
 	if streamId.Type() != STREAM_METADATA_BIN {
 		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream type for metadata", "streamId", streamId)
 	}
-	// 1 byte prefix, 2 byte big endian shard number
-	return StreamShard(binary.BigEndian.Uint16(streamId[1:3])), nil
+	// 1 byte prefix, 8 byte big endian shard number
+	return binary.BigEndian.Uint64(streamId[1:9]), nil
 }
 
-func MetadataStreamIdFromShard(shard StreamShard) StreamId {
+func MetadataStreamIdFromShard(shard uint64) StreamId {
 	var b StreamId
 	b[0] = STREAM_METADATA_BIN
-	binary.BigEndian.PutUint16(b[1:3], uint16(shard))
+	binary.BigEndian.PutUint64(b[1:9], shard)
 	return b
 }
 
-func ShardForStreamId(streamId StreamId, shardMask uint16) (StreamShard, error) {
+func ShardForStreamId(streamId StreamId, shardMask uint64) uint64 {
 	if shardMask == 0 {
 		shardMask = 0x3ff // 1023
 	}
 	hash := xxhash.Sum64(streamId[:])
-	shard := StreamShard(hash) & StreamShard(shardMask)
-	return shard, nil
+	shard := hash & shardMask
+	return shard
+}
+
+func MetadataStreamIdForStreamId(streamId StreamId, shard uint64) StreamId {
+	return MetadataStreamIdFromShard(ShardForStreamId(streamId, shard))
 }
