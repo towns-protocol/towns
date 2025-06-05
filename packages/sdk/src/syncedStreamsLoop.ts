@@ -825,7 +825,13 @@ export class SyncedStreamsLoop {
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,
-                            this.unpackEnvelopeOpts,
+                            // Miniblocks are not provided in the sync updates so skipping validation
+                            // where we check the miniblock snapshot hash against an actual snapshot hash.
+                            {
+                                disableHashValidation: false,
+                                disableMiniblockSnapshotHashValidation: true,
+                                disableSignatureValidation: true,
+                            },
                         )
                         streamRecord.syncCookie = streamAndCookie.nextSyncCookie
                         await streamRecord.stream.appendEvents(
