@@ -63,7 +63,6 @@ describe('streamRpcClient using v2 sync', () => {
                     alicesContext,
                     make_UserPayload_Inception({
                         streamId: alicesUserStreamId,
-                        isApp: false,
                     }),
                 ),
             ],
@@ -154,7 +153,6 @@ describe('streamRpcClient using v2 sync', () => {
                     alicesContext,
                     make_UserPayload_Inception({
                         streamId: alicesUserStreamId,
-                        isApp: false,
                     }),
                 ),
             ],
@@ -166,7 +164,6 @@ describe('streamRpcClient using v2 sync', () => {
                     bobsContext,
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
-                        isApp: false,
                     }),
                 ),
             ],

@@ -34,7 +34,6 @@ describe('streamRpcClientGetSince', () => {
                     bobsContext,
                     make_UserSettingsPayload_Inception({
                         streamId: bobsSettingsStreamId,
-                        isApp: false,
                     }),
                 ),
             ],

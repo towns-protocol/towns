@@ -541,7 +541,6 @@ export const make_MemberPayload_Membership2 = (
         initiatorAddress: addressFromUserId(value.initiatorId),
         streamParentId: value.streamParentId ? streamIdAsBytes(value.streamParentId) : undefined,
         reason: MembershipReason.MR_NONE,
-        isApp: false,
     })
 }
 
