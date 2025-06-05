@@ -14,8 +14,7 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         address appRegistry = getDeployment("appRegistry");
 
         // update with the bot public keys you want to register
-        address[] memory bots = new address[](1);
-        bots[0] = deployer; // update this with you public key bot address
+        address client = deployer; // update this with you public key bot address
 
         // update with the permissions you want to set for the app
         bytes32[] memory permissions = new bytes32[](1);
@@ -27,7 +26,7 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: bots,
+            client: client,
             installPrice: installPrice,
             accessDuration: accessDuration
         });
