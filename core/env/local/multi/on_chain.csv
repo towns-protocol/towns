@@ -1,5 +1,5 @@
 "stream.media.maxChunkCount",0,10
-"stream.media.maxChunkSize",0,500000
+"stream.media.maxChunkSize",0,1200000
 "media.streamMembershipLimits.77",0,6
 "media.streamMembershipLimits.88",0,2
 "stream.recencyConstraints.ageSeconds",0,11

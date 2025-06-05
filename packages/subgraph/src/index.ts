@@ -1,7 +1,7 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { getLatestBlockNumber, getCreatedDate } from './utils'
+import { getLatestBlockNumber } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -147,32 +147,12 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const transactionHash = event.transaction.hash
-    const createdDate = blockTimestamp ? new Date(Number(blockTimestamp) * 1000) : null
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(
-            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
-            transactionHash,
-            blockTimestamp,
-        )
-        return
-    }
 
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, spaceId),
     })
     if (!space) {
         console.warn(`Space not found for Space:Swap`, spaceId)
-        return
-    }
-
-    const createdDate = getCreatedDate(blockTimestamp)
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(
-            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
-            transactionHash,
-            blockTimestamp,
-        )
         return
     }
 
@@ -190,7 +170,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 poster: event.args.poster,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
@@ -203,19 +183,6 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     const blockNumber = event.block.number
     const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
-    const createdDate = blockTimestamp ? new Date(Number(blockTimestamp) * 1000) : null
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
-        return
-    }
-
-    const createdDate = getCreatedDate(blockTimestamp)
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
-        return
-    }
 
     try {
         // update swap router swap table
@@ -232,7 +199,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 recipient: event.args.recipient,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
