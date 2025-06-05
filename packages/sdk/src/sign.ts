@@ -186,21 +186,28 @@ export const unpackStreamAndCookie = async (
         streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
     )
     const events = await unpackEnvelopes(streamAndCookie.events, opts)
-    const miniblockHeaderEvent = events.find((event) => {
-        return event.event.payload.case === 'miniblockHeader'
-    })
+
+    let miniblockHeader: StreamEvent | undefined
+    let miniblockHeaderHash: Uint8Array | undefined
+    if (miniblocks.length > 0 && miniblocks[0].header.snapshotHash) {
+        miniblockHeader = miniblocks[0].events.at(-1)?.event
+        miniblockHeaderHash = miniblocks[0].header.snapshotHash
+    } else {
+        miniblockHeaderHash = (
+            events.find((event) => {
+                return event.event.payload.case === 'miniblockHeader'
+            })?.event.payload.value as MiniblockHeader
+        ).snapshotHash
+    }
+
     return {
         events: events,
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
         snapshot: streamAndCookie.snapshot
             ? await unpackSnapshot(
-                  miniblocks.length > 0 && miniblocks[0].header.snapshotHash
-                      ? miniblocks[0].events.at(-1)?.event
-                      : undefined,
-                  miniblockHeaderEvent
-                      ? (miniblockHeaderEvent?.event.payload.value as MiniblockHeader).snapshotHash
-                      : undefined,
+                  miniblockHeader,
+                  miniblockHeaderHash,
                   streamAndCookie.snapshot,
                   opts,
               )
@@ -263,6 +270,11 @@ export const unpackSnapshot = async (
     check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
 
     // make sure the given snapshot corresponds to the miniblock
+    check(
+        isDefined(miniblockHeaderSnapshotHash),
+        'Miniblock header snapshot hash is not set',
+        Err.BAD_EVENT,
+    )
     check(
         bin_equal(miniblockHeaderSnapshotHash, snapshot.hash),
         'Snapshot hash does not match miniblock snapshot hash',
