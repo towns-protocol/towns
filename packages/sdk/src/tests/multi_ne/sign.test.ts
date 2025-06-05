@@ -273,7 +273,6 @@ describe('sign', () => {
                     context,
                     make_UserPayload_Inception({
                         streamId: streamIdToBytes(userStreamId),
-                        isApp: false,
                     }),
                 ),
             ).toBeDefined()

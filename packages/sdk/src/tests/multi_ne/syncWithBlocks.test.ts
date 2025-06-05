@@ -51,7 +51,6 @@ describe('syncWithBlocks', () => {
                     bobsContext,
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
-                        isApp: false,
                     }),
                 ),
             ],

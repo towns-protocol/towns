@@ -45,7 +45,9 @@ describe('bot tests', () => {
         //     appOwnerId: bin_fromHexString(ownerWallet.address),
         // })
 
-        expect(await bot.initializeUser({ isApp: true })).not.toThrow()
+        expect(
+            await bot.initializeUser({ appAddress: bin_fromHexString(botWallet.address) }),
+        ).not.toThrow()
     })
 
     test('unregistered bots cannot create app user streams', async () => {})

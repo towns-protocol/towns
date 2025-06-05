@@ -53,7 +53,6 @@ export const bobTalksToHimself = async (
                 bobsContext,
                 make_UserPayload_Inception({
                     streamId: bobsUserStreamId,
-                    isApp: false,
                 }),
             ),
         ],

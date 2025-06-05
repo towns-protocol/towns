@@ -88,7 +88,6 @@ describe('syncStreams', () => {
                 alicesContext,
                 make_UserInboxPayload_Inception({
                     streamId: alicesUserInboxStreamId,
-                    isApp: false,
                 }),
             ),
         ])
