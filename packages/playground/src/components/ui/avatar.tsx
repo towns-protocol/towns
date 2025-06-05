@@ -7,14 +7,14 @@ const getAvatarUrl = (environmentId: string, userId: string, size: string = 'thu
     return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image?size=${size}`
 }
 
-export const Avatar = ({ 
-    userId, 
-    className, 
-    size = 'thumbnail' 
-}: { 
-    userId: string; 
-    className?: string; 
-    size?: 'thumbnail' | 'small' | 'medium' | 'original' 
+export const Avatar = ({
+    userId,
+    className,
+    size = 'thumbnail',
+}: {
+    userId: string
+    className?: string
+    size?: 'thumbnail' | 'small' | 'medium' | 'original'
 }) => {
     const { env: currentEnv } = useAgentConnection()
     const [avatar, setAvatar] = useState(getAvatarUrl(currentEnv ?? '', userId, size))
