@@ -195,7 +195,7 @@ type Config struct {
 
 	// TestOnlyMetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
-	TestOnlyMetadataShardMask uint16
+	TestOnlyMetadataShardMask uint64
 }
 
 type TLSConfig struct {
