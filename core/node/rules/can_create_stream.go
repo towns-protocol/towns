@@ -284,8 +284,10 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			ru.params.eventCountMatches(1),
 			ru.params.isUserStreamId,
 		)
-		if ru.inception.IsApp {
-			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
 		} else {
 			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
 		}
@@ -302,8 +304,10 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
-		if ru.inception.IsApp {
-			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
 		} else {
 			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
 		}
@@ -320,8 +324,10 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
-		if ru.inception.IsApp {
-			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
 		} else {
 			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
 		}
@@ -338,8 +344,10 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
-		if ru.inception.IsApp {
-			builder = builder.requireChainAuth(ru.params.getIsRegisteredAppChainAuth)
+		if len(ru.inception.AppAddress) > 0 {
+			builder = builder.check(
+				ru.params.isEthereumAddress(ru.inception.AppAddress),
+			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
 		} else {
 			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
 		}
@@ -356,6 +364,24 @@ func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 		} else {
 			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id type", "streamId", ru.streamId, "expectedType", expectedType)
 		}
+	}
+}
+
+func (ru *csParams) isEthereumAddress(address []byte) func() error {
+	return func() error {
+		if len(address) != 20 {
+			return RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"invalid ethereum address length",
+				"address",
+				address,
+				"length",
+				len(address),
+				"expectedLength",
+				20,
+			)
+		}
+		return nil
 	}
 }
 
@@ -476,8 +502,20 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 	return nil
 }
 
-func (ru *csParams) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.creatorUserId), nil
+func (ru *csUserRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+}
+
+func (ru *csUserMetadataRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+}
+
+func (ru *csUserSettingsRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+}
+
+func (ru *csUserInboxRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
 }
 
 func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {

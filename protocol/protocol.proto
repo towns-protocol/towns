@@ -198,7 +198,9 @@ message MemberPayload {
         bytes initiator_address = 3;
         optional bytes stream_parent_id = 4;
         MembershipReason reason = 5;
-        bool is_app = 6;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 6;
     }
     
     message KeySolicitation {
@@ -417,7 +419,9 @@ message UserPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
-        bool is_app = 3;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
     
     // update own membership
@@ -478,7 +482,9 @@ message UserInboxPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
-        bool is_app = 3;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
 
     message GroupEncryptionSessions {
@@ -527,7 +533,9 @@ message UserSettingsPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
-        bool is_app = 3;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
 
     message MarkerContent {
@@ -570,7 +578,9 @@ message UserMetadataPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
-        bool is_app = 3;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
 
     message EncryptionDevice {

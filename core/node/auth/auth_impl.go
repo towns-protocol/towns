@@ -79,7 +79,7 @@ func (r *isEntitledResult) Reason() EntitlementResultReason {
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
 
-func NewChainAuthArgsForBot(userId string) *ChainAuthArgs {
+func NewChainAuthArgsForBot(userId string, appContractAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:      chainAuthKindIsBot,
 		principal: common.HexToAddress(userId),
@@ -148,11 +148,13 @@ type ChainAuthArgs struct {
 	principal  common.Address
 	permission Permission
 
-	// isApp determines what logic is used to evaluate a user's entitlement to perform
-	// actions on the network. Specifically, app permissions checks are evaluated by checking
+	// appAddress determines what logic is used to evaluate a user's entitlement to perform
+	// actions on the network. If appAddress is not the zero address, then the check is for
+	// an app user.
+	// Specifically, app permissions checks are evaluated by checking
 	// the app's space-wide entitlements. Membership checks happen via an identical path for
 	// all types of users.
-	isApp bool
+	appAddress common.Address
 
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
