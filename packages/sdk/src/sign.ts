@@ -192,14 +192,15 @@ export const unpackStreamAndCookie = async (
         events: await unpackEnvelopes(streamAndCookie.events, opts),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot:
-            streamAndCookie.snapshot
-                ? await unpackSnapshot(
-                    miniblocks.length > 0 && miniblocks[0].header.snapshotHash ? miniblocks[0] : undefined,
-                    streamAndCookie.snapshot,
-                    opts,
-                )
-                : undefined,
+        snapshot: streamAndCookie.snapshot
+            ? await unpackSnapshot(
+                  miniblocks.length > 0 && miniblocks[0].header.snapshotHash
+                      ? miniblocks[0]
+                      : undefined,
+                  streamAndCookie.snapshot,
+                  opts,
+              )
+            : undefined,
     }
 }
 
