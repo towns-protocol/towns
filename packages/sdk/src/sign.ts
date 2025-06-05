@@ -186,32 +186,35 @@ export const unpackStreamAndCookie = async (
         streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
     )
     const events = await unpackEnvelopes(streamAndCookie.events, opts)
+    let snapshot: ParsedSnapshot | undefined
+    if (streamAndCookie.snapshot) {
+        let miniblockHeader: StreamEvent | undefined
+        let miniblockHeaderHash: Uint8Array | undefined
 
-    let miniblockHeader: StreamEvent | undefined
-    let miniblockHeaderHash: Uint8Array | undefined
-    if (miniblocks.length > 0 && miniblocks[0].header.snapshotHash) {
-        miniblockHeader = miniblocks[0].events.at(-1)?.event
-        miniblockHeaderHash = miniblocks[0].header.snapshotHash
-    } else {
-        miniblockHeaderHash = (
-            events.find((event) => {
-                return event.event.payload.case === 'miniblockHeader'
-            })?.event.payload.value as MiniblockHeader
-        ).snapshotHash
+        if (miniblocks.length > 0 && miniblocks[0].header.snapshotHash) {
+            miniblockHeader = miniblocks[0].events.at(-1)?.event
+            miniblockHeaderHash = miniblocks[0].header.snapshotHash
+        } else if (events.length > 0) {
+            miniblockHeaderHash = (
+                events.find((event) => {
+                    return event.event.payload.case === 'miniblockHeader'
+                })?.event.payload.value as MiniblockHeader
+            ).snapshotHash
+        }
+
+        snapshot = await unpackSnapshot(
+            miniblockHeader,
+            miniblockHeaderHash,
+            streamAndCookie.snapshot,
+            opts,
+        )
     }
 
     return {
         events: events,
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(
-                  miniblockHeader,
-                  miniblockHeaderHash,
-                  streamAndCookie.snapshot,
-                  opts,
-              )
-            : undefined,
+        snapshot: snapshot,
     }
 }
 
