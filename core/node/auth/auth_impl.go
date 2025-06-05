@@ -81,8 +81,9 @@ var everyone = common.HexToAddress("0x1") // This represents an Ethereum address
 
 func NewChainAuthArgsForBot(userId string, appContractAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:      chainAuthKindIsBot,
-		principal: common.HexToAddress(userId),
+		kind:       chainAuthKindIsBot,
+		principal:  common.HexToAddress(userId),
+		appAddress: appContractAddress,
 	}
 }
 
@@ -1050,6 +1051,23 @@ func (ca *chainAuth) checkStreamIsEnabled(
 	}
 }
 
+func (ca *chainAuth) checkIsBot(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	isBot, err := ca.appRegistryContract.IsRegisteredApp(ctx, args.appAddress)
+	if err != nil {
+		return nil, err
+	} else {
+
+
+		
+		return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
+	}
+
+}
+
 /** checkEntitlement checks if the user is entitled to the space / channel.
  * It checks the entitlments for the root key and all the wallets linked to it in parallel.
  * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
@@ -1067,12 +1085,7 @@ func (ca *chainAuth) checkEntitlement(
 	defer cancel()
 
 	if args.kind == chainAuthKindIsBot {
-		isBot, err := ca.appRegistryContract.IsRegisteredApp(ctx, args.principal)
-		if err != nil {
-			return nil, err
-		} else {
-			return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
-		}
+		return ca.checkIsBot(ctx, cfg, args)
 	}
 
 	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
