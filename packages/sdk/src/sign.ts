@@ -22,6 +22,7 @@ import {
     SyncCookieSchema,
     EventRefSchema,
     SnapshotSchema,
+    MiniblockHeader,
 } from '@towns-protocol/proto'
 import { abytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
@@ -50,10 +51,6 @@ export interface UnpackEnvelopeOpts {
     // if this is true, we skip the signature check
     // this operation is relatively expensive, and can be evaluated later
     disableSignatureValidation?: boolean
-    // disableMiniblockSnapshotHashValidation is used to disable the check that
-    // the snapshot hash in the miniblock header matches the hash of the snapshot event.
-    // This is used in the sync process, where miniblock header is not available, only miniblock header event.
-    disableMiniblockSnapshotHashValidation?: boolean
 }
 
 export const _impl_makeEvent_impl_ = async (
@@ -188,14 +185,21 @@ export const unpackStreamAndCookie = async (
     const miniblocks = await Promise.all(
         streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
     )
+    const events = await unpackEnvelopes(streamAndCookie.events, opts)
+    const miniblockHeaderEvent = events.find((event) => {
+        return event.event.payload.case === 'miniblockHeader'
+    })
     return {
-        events: await unpackEnvelopes(streamAndCookie.events, opts),
+        events: events,
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
         snapshot: streamAndCookie.snapshot
             ? await unpackSnapshot(
                   miniblocks.length > 0 && miniblocks[0].header.snapshotHash
-                      ? miniblocks[0]
+                      ? miniblocks[0].events.at(-1)?.event
+                      : undefined,
+                  miniblockHeaderEvent
+                      ? (miniblockHeaderEvent?.event.payload.value as MiniblockHeader).snapshotHash
                       : undefined,
                   streamAndCookie.snapshot,
                   opts,
@@ -249,7 +253,8 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
-    miniblock: ParsedMiniblock | undefined,
+    miniblockHeader: StreamEvent | undefined,
+    miniblockHeaderSnapshotHash: Uint8Array | undefined,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -258,13 +263,11 @@ export const unpackSnapshot = async (
     check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
 
     // make sure the given snapshot corresponds to the miniblock
-    if (opts?.disableMiniblockSnapshotHashValidation !== true) {
-        check(
-            bin_equal(miniblock?.header.snapshotHash, snapshot.hash),
-            'Snapshot hash does not match miniblock snapshot hash',
-            Err.BAD_EVENT_ID,
-        )
-    }
+    check(
+        bin_equal(miniblockHeaderSnapshotHash, snapshot.hash),
+        'Snapshot hash does not match miniblock snapshot hash',
+        Err.BAD_EVENT_ID,
+    )
 
     // check snapshot hash
     if (opts?.disableHashValidation !== true) {
@@ -274,9 +277,8 @@ export const unpackSnapshot = async (
 
     if (opts?.disableSignatureValidation !== true) {
         // header event contains the creatorAddress of the snapshot.
-        const headerEvent = miniblock?.events.at(-1)
-        check(headerEvent !== undefined, 'Miniblock header event not found', Err.BAD_EVENT)
-        checkEventSignature(headerEvent.event, snapshot.hash, snapshot.signature)
+        check(isDefined(miniblockHeader), 'Miniblock header is not set', Err.BAD_EVENT)
+        checkEventSignature(miniblockHeader, snapshot.hash, snapshot.signature)
     }
 
     return makeParsedSnapshot(
