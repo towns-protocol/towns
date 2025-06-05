@@ -39,7 +39,7 @@ set +a
 : ${RIVER_ANVIL_RPC_URL:?}
 
 if [ "${1-}" != "nobuild" ]; then
-    yarn turbo build --filter=@towns-protocol/contracts
+    cd "$PROJECT_ROOT" && yarn turbo build --filter=@towns-protocol/contracts && cd "$PROJECT_ROOT/packages/contracts"
 fi
 
 # Account Abstraction is not supported on anvil
