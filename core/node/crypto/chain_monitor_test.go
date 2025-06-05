@@ -693,8 +693,8 @@ func registerNodes(
 	return nodeAddresses
 }
 
-// TestChainMonitorNodeCallbacks tests the chain monitor Node Registry callbacks.
-func TestChainMonitorNodeCallbacks(t *testing.T) {
+// TestNodeRegistryChainMonitorNodeCallbacks tests the Node Registry chain monitor.
+func TestNodeRegistryChainMonitorNodeCallbacks(t *testing.T) {
 	t.Run("NodeAdded", testNodeAddedEvent)
 	t.Run("NodeStatusUpdated", testNodeStatusUpdatedEvent)
 	t.Run("NodeUrlUpdated", testNodeUrlUpdatedEvent)
@@ -714,11 +714,11 @@ func testNodeStatusUpdatedEvent(t *testing.T) {
 
 	owner := tc.DeployerBlockchain
 	chainMonitor := tc.DeployerBlockchain.ChainMonitor
-	chainMonitor.EnableRiverRegistryCallbacks(tc.RiverRegistryAddress)
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
 	capturedEvents := make(chan *river.NodeRegistryV1NodeStatusUpdated, 25)
 	nodes := registerNodes(t, ctx, tc, owner, 1)
 
-	chainMonitor.OnNodeStatusUpdated(
+	nodeRegistryMonitor.OnNodeStatusUpdated(
 		tc.BlockNum(ctx),
 		func(ctx context.Context, event *river.NodeRegistryV1NodeStatusUpdated) {
 			capturedEvents <- event
@@ -804,10 +804,10 @@ func testNodeAddedEvent(t *testing.T) {
 
 	owner := tc.DeployerBlockchain
 	chainMonitor := tc.DeployerBlockchain.ChainMonitor
-	chainMonitor.EnableRiverRegistryCallbacks(tc.RiverRegistryAddress)
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
 	capturedEvents := make(chan *river.NodeRegistryV1NodeAdded, 25)
 
-	chainMonitor.OnNodeAdded(
+	nodeRegistryMonitor.OnNodeAdded(
 		tc.BlockNum(ctx),
 		func(ctx context.Context, event *river.NodeRegistryV1NodeAdded) {
 			capturedEvents <- event
@@ -842,11 +842,11 @@ func testNodeUrlUpdatedEvent(t *testing.T) {
 
 	owner := tc.DeployerBlockchain
 	chainMonitor := tc.DeployerBlockchain.ChainMonitor
-	chainMonitor.EnableRiverRegistryCallbacks(tc.RiverRegistryAddress)
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
 	capturedEvents := make(chan *river.NodeRegistryV1NodeUrlUpdated, 25)
 	nodes := registerNodes(t, ctx, tc, owner, 3)
 
-	chainMonitor.OnNodeUrlUpdated(
+	nodeRegistryMonitor.OnNodeUrlUpdated(
 		tc.BlockNum(ctx),
 		func(ctx context.Context, event *river.NodeRegistryV1NodeUrlUpdated) {
 			capturedEvents <- event
@@ -932,11 +932,11 @@ func testNodeRemovedEvent(t *testing.T) {
 
 	owner := tc.DeployerBlockchain
 	chainMonitor := tc.DeployerBlockchain.ChainMonitor
-	chainMonitor.EnableRiverRegistryCallbacks(tc.RiverRegistryAddress)
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
 	capturedEvents := make(chan *river.NodeRegistryV1NodeRemoved, 25)
 	nodes := registerNodes(t, ctx, tc, owner, 3)
 
-	chainMonitor.OnNodeRemoved(
+	nodeRegistryMonitor.OnNodeRemoved(
 		tc.BlockNum(ctx),
 		func(ctx context.Context, event *river.NodeRegistryV1NodeRemoved) {
 			capturedEvents <- event

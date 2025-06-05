@@ -138,8 +138,6 @@ func NewRiverRegistryContract(
 		return nil, err
 	}
 
-	blockchain.ChainMonitor.EnableRiverRegistryCallbacks(cfg.Address)
-
 	c.NodeRegistry, c.NodeRegistryAbi, c.NodeEventTopics, c.NodeEventInfo, err = initContract(
 		ctx,
 		river.NewNodeRegistryV1,

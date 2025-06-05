@@ -119,11 +119,12 @@ func LoadNodeRegistry(
 		)
 	}
 
-	chainMonitor.EnableRiverRegistryCallbacks(contract.Address)
-	chainMonitor.OnNodeAdded(appliedBlockNum+1, ret.OnNodeAdded)
-	chainMonitor.OnNodeRemoved(appliedBlockNum+1, ret.OnNodeRemoved)
-	chainMonitor.OnNodeStatusUpdated(appliedBlockNum+1, ret.OnNodeStatusUpdated)
-	chainMonitor.OnNodeUrlUpdated(appliedBlockNum+1, ret.OnNodeUrlUpdated)
+	// register node registry callbacks
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, contract.Address)
+	nodeRegistryMonitor.OnNodeAdded(appliedBlockNum+1, ret.OnNodeAdded)
+	nodeRegistryMonitor.OnNodeRemoved(appliedBlockNum+1, ret.OnNodeRemoved)
+	nodeRegistryMonitor.OnNodeStatusUpdated(appliedBlockNum+1, ret.OnNodeStatusUpdated)
+	nodeRegistryMonitor.OnNodeUrlUpdated(appliedBlockNum+1, ret.OnNodeUrlUpdated)
 
 	return ret, nil
 }
