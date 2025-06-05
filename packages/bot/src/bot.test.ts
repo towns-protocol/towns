@@ -5,9 +5,9 @@ import {
     makeRiverConfig,
     makeRiverProvider,
     makeRiverRpcClient,
+    makeSignerContext,
     MockEntitlementsDelegate,
     RiverDbManager,
-    userIdFromAddress,
     waitFor,
     type AppRegistryRpcClient,
     type Channel,
@@ -15,8 +15,8 @@ import {
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload, UserData } from './bot'
-import { Bot as SyncAgentTest, AppRegistryService, makeSignerContext } from '@towns-protocol/sdk'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
+import { Bot as SyncAgentTest, AppRegistryService } from '@towns-protocol/sdk'
+import { bin_fromHexString, bin_fromString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
@@ -58,6 +58,7 @@ describe('Bot', { sequential: true }, () => {
         riverConfig.base.chainConfig,
         makeBaseProvider(riverConfig),
     )
+    const spaceDapp = new SpaceDapp(riverConfig.base.chainConfig, makeBaseProvider(riverConfig))
     let bobClient: SyncAgent
 
     const alice = new SyncAgentTest(undefined, riverConfig)
@@ -72,21 +73,20 @@ describe('Bot', { sequential: true }, () => {
     let appPrivateDataBase64: string
     let jwtSecretBase64: string
     let appRegistryRpcClient: AppRegistryRpcClient
-    let appId: Uint8Array
+    let appId: Address
     let bobDefaultChannel: Channel
-    let botAppAddress: Address
 
     beforeAll(async () => {
         await shouldInitializeBotOwner()
-        await shouldCreateBotClient()
         await shouldMintBot()
+        await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
         await appRegistryRpcClient.setAppSettings({
-            appId,
+            appId: bin_fromHexString(appId),
             settings: { forwardSetting },
         })
     }
@@ -109,38 +109,64 @@ describe('Bot', { sequential: true }, () => {
         expect(channelId).toBeDefined()
     }
 
-    const shouldCreateBotClient = async () => {
+    const shouldMintBot = async () => {
         botWallet = ethers.Wallet.createRandom()
+        const botClientAddress = botWallet.address as Address
+
+        const tx = await appRegistryDapp.createApp(
+            bob.signer,
+            'bot-witness-of-infinity',
+            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
+            [botClientAddress],
+        )
+        const receipt = await tx.wait()
+        const { app: appAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(appAddress).toBeDefined()
+
+        await appRegistryDapp.registerApp(bob.signer, appAddress as Address, [botClientAddress])
+        appId = appAddress as Address
+    }
+
+    const shouldInstallBotInSpace = async () => {
+        const space = spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error('Space not found')
+        }
+        // TODO: abstract this in web3 package
+        // this adds the bot to the space (onchain)
+        const tx = await space.AppAccount.write(bob.signer).installApp(
+            appId,
+            bin_fromString(spaceId),
+            {
+                delays: { executionDelay: 0, grantDelay: 0 },
+            },
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status).toBe(1)
+        const installedApps = await space.AppAccount.read.getInstalledApps()
+        expect(installedApps).toContain(appId)
+
         const delegateWallet = ethers.Wallet.createRandom()
         const signerContext = await makeSignerContext(botWallet, delegateWallet)
-
-        const spaceDapp = new SpaceDapp(riverConfig.base.chainConfig, makeBaseProvider(riverConfig))
-        const riverProvider = makeRiverProvider(riverConfig)
-        const rpcClient = await makeRiverRpcClient(riverProvider, riverConfig.river.chainConfig)
-        const botUserId = userIdFromAddress(signerContext.creatorAddress)
-        const cryptoStore = RiverDbManager.getCryptoDb(botUserId)
-
-        // we're not going to have the bot join the space here, because we're going to mint the bot in the app registry
-        // we want to mint the bot fist and join the space as a bot...
-        const { issued } = await spaceDapp.joinSpace(spaceId, botWallet.address, bob.signer)
-        expect(issued).toBe(true)
-
+        const rpcClient = await makeRiverRpcClient(
+            makeRiverProvider(riverConfig),
+            riverConfig.river.chainConfig,
+        )
+        const cryptoStore = RiverDbManager.getCryptoDb(appId)
         const botClient = new Client(
             signerContext,
             rpcClient,
             cryptoStore,
             new MockEntitlementsDelegate(),
         )
-        await botClient.initializeUser({ spaceId })
-        await botClient.joinStream(spaceId, {
-            skipWaitForUserStreamUpdate: true,
-            skipWaitForMiniblockConfirmation: true,
-        })
-        await botClient.joinStream(channelId, {
-            skipWaitForUserStreamUpdate: true,
-            skipWaitForMiniblockConfirmation: true,
-        })
-        await botClient.uploadDeviceKeys()
+
+        // the bot owner adds the bot to the space stream
+        await expect(
+            bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId)),
+        ).resolves.toBeDefined()
+        // the bot initializes itself and uploads its device keys
+        await expect(botClient.initializeUser({ spaceId })).resolves.toBeDefined()
+        await expect(botClient.uploadDeviceKeys()).resolves.toBeDefined()
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
         expect(exportedDevice).toBeDefined()
@@ -154,26 +180,6 @@ describe('Bot', { sequential: true }, () => {
             ),
         )
         expect(appPrivateDataBase64).toBeDefined()
-        appId = bin_fromHexString(botWallet.address)
-    }
-
-    const shouldMintBot = async () => {
-        const botClientAddress = botWallet.address as Address
-
-        const tx = await appRegistryDapp.createApp(
-            bob.signer,
-            'bot-witness-of-infinity',
-            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
-            [botClientAddress],
-        )
-        const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
-        expect(foundAppAddress).toBeDefined()
-
-        await appRegistryDapp.registerApp(bob.signer, foundAppAddress as Address, [
-            botClientAddress,
-        ])
-        botAppAddress = foundAppAddress as Address
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
@@ -184,7 +190,7 @@ describe('Bot', { sequential: true }, () => {
         )
         appRegistryRpcClient = rpcClient
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
-            appId,
+            appId: bin_fromHexString(appId),
             appOwnerId: bin_fromHexString(bob.userId),
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -202,13 +208,13 @@ describe('Bot', { sequential: true }, () => {
             createServer,
         })
         await appRegistryRpcClient.registerWebhook({
-            appId,
+            appId: bin_fromHexString(appId),
             webhookUrl: WEBHOOK_URL,
         })
 
         // Verify webhook registration
         const { isRegistered, validResponse } = await appRegistryRpcClient.getStatus({
-            appId,
+            appId: bin_fromHexString(appId),
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
