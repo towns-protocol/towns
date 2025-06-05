@@ -54,7 +54,7 @@ const appSettingsFormSchema = z.object({
     forwardSetting: z.nativeEnum(ForwardSettingValue),
 })
 
-const APP_REGISTRY_URL = 'https://localhost:5180'
+const APP_REGISTRY_URL = 'https://localhost:6170'
 
 type BotFormSchema = z.infer<typeof botFormSchema>
 type WebhookFormSchema = z.infer<typeof webhookFormSchema>
