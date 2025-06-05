@@ -282,7 +282,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         // Handle protocol fee first - this is always charged
         CurrencyTransfer.transferCurrency(
             CurrencyTransfer.NATIVE_TOKEN,
-            msg.sender,
+            payer,
             feeRecipient,
             protocolFee
         );
