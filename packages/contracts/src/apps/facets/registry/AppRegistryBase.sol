@@ -20,6 +20,7 @@ import {AppRegistryStorage} from "./AppRegistryStorage.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -83,7 +84,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     }
 
     function _getAppPrice(address app) internal view returns (uint256 price) {
-        uint256 installPrice = ITownsApp(app).installPrice();
+        bytes memory data = abi.encodeWithSelector(ITownsApp.installPrice.selector);
+        (bool success, , bytes memory result) = LibCall.tryStaticCall(app, 5000, 32, data);
+        uint256 installPrice = success ? abi.decode(result, (uint256)) : 0;
         (price, ) = _getTotalRequiredPayment(installPrice);
     }
 
