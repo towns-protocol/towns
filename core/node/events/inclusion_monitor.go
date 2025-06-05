@@ -42,6 +42,7 @@ func (m *inclusionMonitor) unsubscribe(e common.Hash, ch inclusionMonitorChan) {
 }
 
 func (m *inclusionMonitor) processMiniblock(mb *MiniblockInfo) {
+	// Process included events
 	for _, event := range mb.Events() {
 		chans, ok := m.subs[event.Hash]
 		if !ok {
@@ -51,5 +52,22 @@ func (m *inclusionMonitor) processMiniblock(mb *MiniblockInfo) {
 			ch <- EventInclusionIncluded
 			close(ch)
 		}
+		delete(m.subs, event.Hash)
+		return
+	}
+
+	// Process rejected events
+	for _, hashBytes := range mb.Header().GetRejectedEventHashes() {
+		eventHash := common.Hash(hashBytes)
+		chans, ok := m.subs[eventHash]
+		if !ok {
+			continue
+		}
+		for _, ch := range chans {
+			ch <- EventInclusionRejected
+			close(ch)
+		}
+		delete(m.subs, eventHash)
+		return
 	}
 }
