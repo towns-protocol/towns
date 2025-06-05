@@ -170,7 +170,7 @@ const Message = ({
 
     return (
         <div className="flex w-full gap-3.5">
-            <Avatar className="size-9 shadow" userId={event.sender.id} />
+            <Avatar className="size-9 shadow" userId={event.sender.id} size="thumbnail" />
             <div className="flex flex-col gap-2">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1">

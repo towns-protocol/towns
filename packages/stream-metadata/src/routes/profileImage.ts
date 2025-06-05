@@ -15,17 +15,34 @@ const paramsSchema = z.object({
 	}),
 })
 
+const querySchema = z.object({
+	size: z.enum(['thumbnail', 'small', 'medium', 'original']).optional().default('original'),
+})
+
 const CACHE_CONTROL = {
 	// Client caches for 30s, uses cached version for up to 7 days while revalidating in background
 	307: 'public, max-age=30, s-maxage=3600, stale-while-revalidate=604800',
 	400: 'public, max-age=30, s-maxage=3600',
 	404: 'public, max-age=5, s-maxage=3600', // 5s max-age to avoid user showing themselves a broken image during client cration flow
 	422: 'public, max-age=30, s-maxage=3600',
+	200: 'public, max-age=31536000, immutable',
+}
+
+const SIZE_DIMENSIONS = {
+	thumbnail: { width: 32, height: 32 },
+	small: { width: 64, height: 64 },
+	medium: { width: 128, height: 128 },
+	original: null,
+} as const
+
+function shouldServeThumbnail(size: string): boolean {
+	return size === 'thumbnail' || size === 'small'
 }
 
 export async function fetchUserProfileImage(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchUserProfileImage.name })
 	const parseResult = paramsSchema.safeParse(request.params)
+	const queryResult = querySchema.safeParse(request.query)
 
 	if (!parseResult.success) {
 		const errorMessage = parseResult.error.errors[0]?.message || 'Invalid parameters'
@@ -36,9 +53,19 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			.send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	const { userId } = parseResult.data
+	if (!queryResult.success) {
+		const errorMessage = queryResult.error.errors[0]?.message || 'Invalid query parameters'
+		logger.info(errorMessage)
+		return reply
+			.code(400)
+			.header('Cache-Control', CACHE_CONTROL[400])
+			.send({ error: 'Bad Request', message: errorMessage })
+	}
 
-	logger.info({ userId }, 'Fetching user image')
+	const { userId } = parseResult.data
+	const { size } = queryResult.data
+
+	logger.info({ userId, size }, 'Fetching user image')
 	let stream: StreamStateView | undefined
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
@@ -69,6 +96,17 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			.send('profileImage not found')
 	}
 
+	if (shouldServeThumbnail(size) && profileImage.thumbnail?.content) {
+		const thumbnailInfo = profileImage.thumbnail.info
+		if (thumbnailInfo?.mimetype) {
+			logger.info({ userId, size, thumbnailSize: profileImage.thumbnail.content.length }, 'Serving thumbnail directly')
+			return reply
+				.header('Content-Type', thumbnailInfo.mimetype)
+				.header('Cache-Control', CACHE_CONTROL[200])
+				.send(Buffer.from(profileImage.thumbnail.content))
+		}
+	}
+
 	try {
 		const { key, iv } = getMediaEncryption(logger, profileImage)
 		if (key?.length === 0 || iv?.length === 0) {
@@ -88,7 +126,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 		}
 		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
 			profileImage.streamId
-		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}`
+		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}&size=${size}`
 
 		return (
 			reply

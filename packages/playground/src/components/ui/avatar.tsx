@@ -3,13 +3,21 @@ import { useState } from 'react'
 import { cn } from '@/utils'
 import { getStreamMetadataUrl } from '@/utils/stream-metadata'
 
-const getAvatarUrl = (environmentId: string, userId: string) => {
-    return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image`
+const getAvatarUrl = (environmentId: string, userId: string, size: string = 'thumbnail') => {
+    return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image?size=${size}`
 }
 
-export const Avatar = ({ userId, className }: { userId: string; className?: string }) => {
+export const Avatar = ({ 
+    userId, 
+    className, 
+    size = 'thumbnail' 
+}: { 
+    userId: string; 
+    className?: string; 
+    size?: 'thumbnail' | 'small' | 'medium' | 'original' 
+}) => {
     const { env: currentEnv } = useAgentConnection()
-    const [avatar, setAvatar] = useState(getAvatarUrl(currentEnv ?? '', userId))
+    const [avatar, setAvatar] = useState(getAvatarUrl(currentEnv ?? '', userId, size))
 
     return (
         <img
