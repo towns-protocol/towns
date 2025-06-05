@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 // libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -12,7 +13,7 @@ interface IAppRegistryBase {
     struct AppParams {
         string name;
         bytes32[] permissions;
-        address[] clients;
+        address client;
         uint256 installPrice;
         uint64 accessDuration;
     }
@@ -21,7 +22,7 @@ interface IAppRegistryBase {
         bytes32 appId;
         address module;
         address owner;
-        address[] clients;
+        address client;
         bytes32[] permissions;
         ExecutionManifest manifest;
     }
@@ -44,6 +45,7 @@ interface IAppRegistryBase {
     error InvalidDuration();
     error InsufficientPayment();
     error NotAllowed();
+    error ClientAlreadyRegistered();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -79,6 +81,11 @@ interface IAppRegistry is IAppRegistryBase {
     /// @return The attestation UID representing the current version
     function getLatestAppId(address app) external view returns (bytes32);
 
+    /// @notice Get the app address associated with a client
+    /// @param client The client address
+    /// @return The app address
+    function getAppByClient(address client) external view returns (address);
+
     /// @notice Check if a app is banned
     /// @param app The app address
     /// @return isBanned True if the app is banned, false otherwise
@@ -94,12 +101,9 @@ interface IAppRegistry is IAppRegistryBase {
 
     /// @notice Register a new app with permissions
     /// @param app The app address to register
-    /// @param clients The list of client contract addresses that will use this app
+    /// @param client The client contract address that will use this app
     /// @return appId The attestation UID of the registered app
-    function registerApp(
-        address app,
-        address[] calldata clients
-    ) external payable returns (bytes32 appId);
+    function registerApp(address app, address client) external payable returns (bytes32 appId);
 
     /// @notice Remove a app from the registry
     /// @param appId The app ID to remove
