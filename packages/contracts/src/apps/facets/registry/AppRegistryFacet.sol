@@ -44,8 +44,8 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @param app The app address to ban
     /// @dev Only the owner can ban a app
     /// @return The attestation UID that was banned
-    function adminBanApp(ITownsApp app) external onlyOwner returns (bytes32) {
-        return _banApp(address(app));
+    function adminBanApp(address app) external onlyOwner returns (bytes32) {
+        return _banApp(app);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -54,13 +54,13 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
 
     /// @notice Register a new app with permissions
     /// @param app The app address to register
-    /// @param clients The list of client addresses that will make calls from this app
+    /// @param client The client address that will make calls from this app
     /// @return versionId The version ID of the registered app
     function registerApp(
         ITownsApp app,
-        address[] calldata clients
+        address client
     ) external payable nonReentrant returns (bytes32 versionId) {
-        return _registerApp(address(app), clients);
+        return _registerApp(address(app), client);
     }
 
     /// @notice Remove a app from the registry
@@ -81,15 +81,15 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
 
     /// @notice Install an app
     /// @param app The app address to install
-    /// @param account The account to install the app to
+    /// @param space The space to install the app to
     /// @param data The data to pass to the app's onInstall function
     function installApp(
         ITownsApp app,
-        IAppAccount account,
+        IAppAccount space,
         bytes calldata data
     ) external payable nonReentrant {
-        _onlyAllowed(address(account));
-        return _installApp(address(app), address(account), data);
+        _onlyAllowed(address(space));
+        return _installApp(address(app), address(space), data);
     }
 
     /// @notice Uninstall an app
@@ -136,6 +136,13 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @return appId The version ID of the registered app
     function getLatestAppId(address app) external view returns (bytes32) {
         return _getLatestAppId(app);
+    }
+
+    /// @notice Get the app address associated with a client
+    /// @param client The client address
+    /// @return app The app address
+    function getAppByClient(address client) external view returns (address app) {
+        return _getAppByClient(client);
     }
 
     /// @notice Check if a app is banned
