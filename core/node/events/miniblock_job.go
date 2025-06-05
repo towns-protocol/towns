@@ -73,14 +73,28 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum crypto.BlockNumber)
 		return err
 	}
 
-	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(ctx, j.stream.StreamId(), view.minipool.generation)
+	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(
+		ctx,
+		j.stream.StreamId(),
+		view.minipool.generation,
+	)
 	if err != nil {
 		return err
 	}
 
 	if skipCandidate(candidateCount, blockNum) {
-		return RiverError(Err_RESOURCE_EXHAUSTED, "mbJob.shouldContinue: candidate production is slowed down",
-			"candidateCount", candidateCount, "blockNum", blockNum, "streamId", j.stream.streamId, "miniblockGeneration", view.minipool.generation)
+		return RiverError(
+			Err_RESOURCE_EXHAUSTED,
+			"mbJob.shouldContinue: candidate production is slowed down",
+			"candidateCount",
+			candidateCount,
+			"blockNum",
+			blockNum,
+			"streamId",
+			j.stream.streamId,
+			"miniblockGeneration",
+			view.minipool.generation,
+		)
 	}
 
 	return nil
@@ -299,9 +313,18 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 	}
 
 	events := make([]common.Hash, 0, len(eventCounts))
-	for h, c := range eventCounts {
-		if c >= quorumNum {
-			events = append(events, h)
+
+	// walk over all event hashes again, adding them to the events list if they have quorum.
+	// do it this way to preserve order of events as they were received in a single proposal.
+	// we do not attempt to order events across proposals.
+	for _, p := range proposals {
+		for _, h := range p.eventHashes {
+			if c, ok := eventCounts[h]; ok {
+				if c >= quorumNum {
+					events = append(events, h)
+				}
+				delete(eventCounts, h)
+			}
 		}
 	}
 
@@ -433,7 +456,8 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 
 	err := qp.Wait()
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
+		logging.FromCtx(ctx).
+			Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
 		return err
 	}
 

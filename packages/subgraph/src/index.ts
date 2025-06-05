@@ -1,20 +1,21 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { createPublicClient, http } from 'viem'
-
-const publicClient = createPublicClient({
-    transport: http(process.env.PONDER_RPC_URL_1),
-})
-
-async function getLatestBlockNumber() {
-    return await publicClient.getBlockNumber()
-}
+import { getLatestBlockNumber } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
     const { SpaceFactory, SpaceOwner } = context.contracts
+
+    // Check if the space already exists
+    const existingSpace = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, event.args.space),
+    })
+    if (existingSpace) {
+        console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
+        return
+    }
 
     try {
         const paused = await context.client.readContract({
@@ -143,6 +144,7 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
 ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const transactionHash = event.transaction.hash
 
@@ -155,41 +157,52 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     }
 
     try {
-        // update swap table
-        await context.db.insert(schema.swap).values({
-            txHash: transactionHash,
-            spaceId: spaceId,
-            recipient: event.args.recipient,
-            tokenIn: event.args.tokenIn,
-            tokenOut: event.args.tokenOut,
-            amountIn: event.args.amountIn,
-            amountOut: event.args.amountOut,
-            poster: event.args.poster,
-            createdAt: blockNumber,
+        const existing = await context.db.sql.query.swap.findFirst({
+            where: eq(schema.swap.txHash, transactionHash),
         })
+        if (!existing) {
+            await context.db.insert(schema.swap).values({
+                txHash: transactionHash,
+                spaceId: spaceId,
+                recipient: event.args.recipient,
+                tokenIn: event.args.tokenIn,
+                tokenOut: event.args.tokenOut,
+                amountIn: event.args.amountIn,
+                amountOut: event.args.amountOut,
+                poster: event.args.poster,
+                blockTimestamp: blockTimestamp,
+                createdAt: blockNumber,
+            })
+        }
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
 })
-
 ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
 
     try {
         // update swap router swap table
-        await context.db.insert(schema.swapRouterSwap).values({
-            txHash: transactionHash,
-            router: event.args.router,
-            caller: event.args.caller,
-            tokenIn: event.args.tokenIn,
-            tokenOut: event.args.tokenOut,
-            amountIn: event.args.amountIn,
-            amountOut: event.args.amountOut,
-            recipient: event.args.recipient,
-            createdAt: blockNumber,
+        const existing = await context.db.sql.query.swapRouterSwap.findFirst({
+            where: eq(schema.swapRouterSwap.txHash, transactionHash),
         })
+        if (!existing) {
+            await context.db.insert(schema.swapRouterSwap).values({
+                txHash: transactionHash,
+                router: event.args.router,
+                caller: event.args.caller,
+                tokenIn: event.args.tokenIn,
+                tokenOut: event.args.tokenOut,
+                amountIn: event.args.amountIn,
+                amountOut: event.args.amountOut,
+                recipient: event.args.recipient,
+                blockTimestamp: blockTimestamp,
+                createdAt: blockNumber,
+            })
+        }
     } catch (error) {
         console.error(`Error processing SwapRouter:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -202,15 +215,20 @@ ponder.on('SwapRouter:FeeDistribution', async ({ event, context }) => {
 
     try {
         // update fee distribution table
-        await context.db.insert(schema.feeDistribution).values({
-            txHash: transactionHash,
-            token: event.args.token,
-            treasury: event.args.treasury,
-            poster: event.args.poster,
-            treasuryAmount: event.args.treasuryAmount,
-            posterAmount: event.args.posterAmount,
-            createdAt: blockNumber,
+        const existing = await context.db.sql.query.feeDistribution.findFirst({
+            where: eq(schema.feeDistribution.txHash, transactionHash),
         })
+        if (!existing) {
+            await context.db.insert(schema.feeDistribution).values({
+                txHash: transactionHash,
+                token: event.args.token,
+                treasury: event.args.treasury,
+                poster: event.args.poster,
+                treasuryAmount: event.args.treasuryAmount,
+                posterAmount: event.args.posterAmount,
+                createdAt: blockNumber,
+            })
+        }
     } catch (error) {
         console.error(
             `Error processing SwapRouter:FeeDistribution at blockNumber ${blockNumber}:`,
@@ -226,11 +244,16 @@ ponder.on('SwapRouter:SwapRouterInitialized', async ({ event, context }) => {
 
     try {
         // update swap router onchainTable
-        await context.db.insert(schema.swapRouter).values({
-            txHash: transactionHash,
-            spaceFactory: event.args.spaceFactory,
-            createdAt: blockNumber,
+        const existing = await context.db.sql.query.swapRouter.findFirst({
+            where: eq(schema.swapRouter.txHash, transactionHash),
         })
+        if (!existing) {
+            await context.db.insert(schema.swapRouter).values({
+                txHash: transactionHash,
+                spaceFactory: event.args.spaceFactory,
+                createdAt: blockNumber,
+            })
+        }
     } catch (error) {
         console.error(
             `Error processing SwapRouter:SwapRouterInitialized at blockNumber ${blockNumber}:`,

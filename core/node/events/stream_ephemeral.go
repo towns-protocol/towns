@@ -93,7 +93,8 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	}
 
 	// Check if this is the start of replication process for previously unreplicated stream.
-	if event.Stream.Stream.ReplicationFactor() == 1 && len(event.Stream.Stream.Nodes) > 1 && event.Stream.Stream.Nodes[0] == s.params.Wallet.Address {
+	if event.Stream.Stream.ReplicationFactor() == 1 && len(event.Stream.Stream.Nodes) > 1 &&
+		event.Stream.Stream.Nodes[0] == s.params.Wallet.Address {
 		go s.writeLatestMbToBlockchain(ctx, stream)
 	} else {
 		// Always submit a sync task, since this only happens on stream placement updates it happens

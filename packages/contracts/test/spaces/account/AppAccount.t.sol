@@ -79,13 +79,11 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
+        Delays memory delays = Delays({grantDelay: 0, executionDelay: 0});
+
         vm.prank(founder);
         emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
-        );
+        appAccount.installApp(address(mockModule), "", AppParams({delays: delays}));
         _;
     }
 
@@ -101,8 +99,12 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
             data: abi.encodeWithSelector(mockModule.mockFunction.selector)
         });
 
-        assertEq(appAccount.isAppEntitled(appId, client, keccak256("Read")), true);
-        assertEq(appAccount.isAppEntitled(appId, client, keccak256("Create")), false);
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Create")), false);
+
+        address[] memory clients = appAccount.getClients(address(mockModule));
+        assertEq(clients.length, 1);
+        assertEq(clients[0], client);
     }
 
     function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {
@@ -126,19 +128,19 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
         appAccount.installApp(
-            appId,
+            address(mockModule),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
         );
     }
 
     function test_revertWhen_installApp_emptyModuleId() external {
         vm.prank(founder);
-        vm.expectRevert(IAppAccountBase.InvalidAppId.selector);
+        vm.expectRevert(IAppRegistryBase.AppNotRegistered.selector);
         appAccount.installApp(
-            appId,
+            _randomAddress(),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
         );
     }
 
@@ -151,9 +153,9 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
             abi.encodeWithSelector(IAppAccountBase.InvalidManifest.selector, address(mockModule))
         );
         appAccount.installApp(
-            appId,
+            address(mockModule),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
         );
     }
 
@@ -161,22 +163,22 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(founder);
         vm.expectRevert(IAppRegistryBase.AppNotRegistered.selector);
         appAccount.installApp(
-            _randomBytes32(),
+            address(mockModule),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
         );
     }
 
-    function test_revertWhen_installApp_moduleRevoked() external givenAppIsInstalled {
+    function test_revertWhen_installApp_moduleRevoked() external givenAppIsRegistered {
         vm.prank(dev);
         registry.removeApp(appId);
 
         vm.prank(founder);
         vm.expectRevert(IAppRegistryBase.AppRevoked.selector);
         appAccount.installApp(
-            appId,
+            address(mockModule),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
         );
     }
 
@@ -193,9 +195,9 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(founder);
         vm.expectRevert(IAppAccountBase.UnauthorizedSelector.selector);
         appAccount.installApp(
-            appId,
+            address(invalidModule),
             "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: 0})
+            AppParams({delays: Delays({grantDelay: 0, executionDelay: 0})})
         );
     }
 
@@ -206,7 +208,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         vm.prank(founder);
         vm.expectEmit(address(appAccount));
         emit IERC6900Account.ExecutionUninstalled(address(mockModule), true, manifest);
-        appAccount.uninstallApp(appId, "");
+        appAccount.uninstallApp(address(mockModule), "");
 
         vm.prank(client);
         vm.expectRevert(IExecutorBase.UnauthorizedCall.selector);
@@ -220,85 +222,6 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
     function test_revertWhen_uninstallApp_notOwner() external givenAppIsInstalled {
         vm.prank(client);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        appAccount.uninstallApp(appId, "");
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        Allowance                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function test_allowance() external givenAppIsInstalled {
-        uint256 allowance = 1 ether;
-        vm.prank(founder);
-        appAccount.setAppAllowance(appId, allowance);
-
-        assertEq(appAccount.getAppAllowance(appId), allowance);
-    }
-
-    function test_revertWhen_setAllowance_notOwner() external givenAppIsInstalled {
-        uint256 allowance = 1 ether;
-        vm.prank(client);
-        vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        appAccount.setAppAllowance(appId, allowance);
-    }
-
-    function test_revertWhen_setAllowance_invalidModule() external givenAppIsInstalled {
-        bytes32 invalidModule = _randomBytes32();
-        uint256 allowance = 1 ether;
-        vm.prank(founder);
-        vm.expectRevert(IAppAccountBase.AppNotInstalled.selector);
-        appAccount.setAppAllowance(invalidModule, allowance);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       Savings Module                       */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function test_savingsModule() external givenAppIsInstalled {
-        vm.prank(dev);
-        MockSavingsModule savingsModule = new MockSavingsModule();
-
-        address[] memory clients = new address[](1);
-        clients[0] = client;
-
-        vm.prank(dev);
-        appId = registry.registerApp(address(savingsModule), clients);
-
-        uint256 maxEtherValue = 1 ether;
-        address savingsModuleAddress = address(savingsModule);
-
-        vm.deal(address(savingsModule), 5 ether);
-        vm.deal(address(appAccount), 1 ether);
-
-        vm.startPrank(founder);
-        appAccount.installApp(
-            appId,
-            "",
-            AppParams({grantDelay: 0, executionDelay: 0, allowance: maxEtherValue})
-        );
-        vm.stopPrank();
-
-        vm.prank(client);
-        appAccount.execute({
-            target: savingsModuleAddress,
-            value: maxEtherValue,
-            data: abi.encodeWithSelector(savingsModule.deposit.selector, 1 ether)
-        });
-
-        assertEq(address(savingsModule).balance, 6 ether);
-        assertEq(savingsModule.balances(address(appAccount)), 1 ether);
-
-        vm.warp(block.timestamp + 100 days);
-
-        uint256 accruedInterest = savingsModule.getCurrentBalance(address(appAccount));
-
-        vm.prank(client);
-        appAccount.execute({
-            target: savingsModuleAddress,
-            value: 0,
-            data: abi.encodeWithSelector(savingsModule.withdraw.selector, accruedInterest)
-        });
-
-        assertEq(address(appAccount).balance, accruedInterest);
-        assertEq(address(savingsModule).balance, 6 ether - accruedInterest);
+        appAccount.uninstallApp(address(mockModule), "");
     }
 }

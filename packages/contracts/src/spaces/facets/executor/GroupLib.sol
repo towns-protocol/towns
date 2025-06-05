@@ -13,26 +13,16 @@ library GroupLib {
     using Time for Time.Delay;
     using Time for uint32;
 
-    /// @notice Creates a new group and marks it as active.
-    function createGroup(Group storage self) internal {
-        self.active = true;
-    }
-
-    /// @notice Removes (deactivates) a group.
-    function removeGroup(Group storage self) internal {
-        self.active = false;
+    /// @notice Sets the status of a group.
+    /// @param status The status of the group.
+    function setStatus(Group storage self, bool status) internal {
+        self.active = status;
     }
 
     /// @notice Sets the guardian for a group.
     /// @param guardian The guardian role ID.
     function setGuardian(Group storage self, bytes32 guardian) internal {
         self.guardian = guardian;
-    }
-
-    /// @notice Sets the ETH allowance for a group.
-    /// @param allowance The new ETH allowance.
-    function setAllowance(Group storage self, uint256 allowance) internal {
-        self.allowance = allowance;
     }
 
     /// @notice Sets the grant delay for a group.
@@ -104,19 +94,13 @@ library GroupLib {
     /// @param module The module to check access for.
     /// @return isMember True if the account is a member, false otherwise.
     /// @return executionDelay The execution delay for the account.
-    /// @return allowance The allowance for the account.
     /// @return active True if the group is active, false otherwise.
     function hasAccess(
         Group storage self,
         address module
-    ) internal view returns (bool isMember, uint32 executionDelay, uint256 allowance, bool active) {
+    ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
         (uint48 hasRoleSince, uint32 currentDelay, , ) = getAccess(self, module);
-        return (
-            hasRoleSince != 0 && hasRoleSince <= Time.timestamp(),
-            currentDelay,
-            self.allowance,
-            self.active
-        );
+        return (hasRoleSince != 0 && hasRoleSince <= Time.timestamp(), currentDelay, self.active);
     }
 
     /// @notice Gets the guardian for a group.
@@ -129,11 +113,5 @@ library GroupLib {
     /// @return The grant delay in seconds.
     function getGrantDelay(Group storage self) internal view returns (uint32) {
         return self.grantDelay.get();
-    }
-
-    /// @notice Gets the ETH allowance for a group.
-    /// @return The ETH allowance.
-    function getAllowance(Group storage self) internal view returns (uint256) {
-        return self.allowance;
     }
 }

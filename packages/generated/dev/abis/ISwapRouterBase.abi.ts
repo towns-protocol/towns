@@ -10,7 +10,7 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "treasury",
+        "name": "protocol",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -22,7 +22,7 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "treasuryAmount",
+        "name": "protocolAmount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -106,6 +106,11 @@ export default [
   {
     "type": "error",
     "name": "SwapRouter__InvalidAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__InvalidBps",
     "inputs": []
   },
   {

@@ -158,6 +158,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 					ctx,
 					streamId,
 					req.Msg.GetMiniblockIds(),
+					req.Msg.GetOmitSnapshots(),
 					func(mbBytes []byte, seqNum int64, snBytes []byte) error {
 						var mb Miniblock
 						if err = proto.Unmarshal(mbBytes, &mb); err != nil {

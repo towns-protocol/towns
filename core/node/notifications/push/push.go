@@ -15,15 +15,15 @@ import (
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sideshow/apns2"
+	payload2 "github.com/sideshow/apns2/payload"
+	"github.com/sideshow/apns2/token"
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	"github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/sideshow/apns2"
-	payload2 "github.com/sideshow/apns2/payload"
-	"github.com/sideshow/apns2/token"
 )
 
 type (
@@ -226,7 +226,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 		riverErr = riverErr.Tag("msg", string(resBody))
 	}
 
-	subExpired := res.StatusCode == http.StatusGone
+	subExpired := res.StatusCode == http.StatusGone || res.StatusCode == http.StatusNotFound
 	return subExpired, riverErr
 }
 
