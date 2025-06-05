@@ -28,13 +28,6 @@ const CACHE_CONTROL = {
 	200: 'public, max-age=31536000, immutable',
 }
 
-const SIZE_DIMENSIONS = {
-	thumbnail: { width: 32, height: 32 },
-	small: { width: 64, height: 64 },
-	medium: { width: 128, height: 128 },
-	original: null,
-} as const
-
 function shouldServeThumbnail(size: string): boolean {
 	return size === 'thumbnail' || size === 'small'
 }
@@ -99,7 +92,10 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	if (shouldServeThumbnail(size) && profileImage.thumbnail?.content) {
 		const thumbnailInfo = profileImage.thumbnail.info
 		if (thumbnailInfo?.mimetype) {
-			logger.info({ userId, size, thumbnailSize: profileImage.thumbnail.content.length }, 'Serving thumbnail directly')
+			logger.info(
+				{ userId, size, thumbnailSize: profileImage.thumbnail.content.length },
+				'Serving thumbnail directly',
+			)
 			return reply
 				.header('Content-Type', thumbnailInfo.mimetype)
 				.header('Cache-Control', CACHE_CONTROL[200])
