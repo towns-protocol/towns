@@ -290,11 +290,15 @@ func MetadataStreamIdFromShard(shard uint64) StreamId {
 	return b
 }
 
-func ShardForStreamId(streamId StreamId, shardMask uint64) (uint64, error) {
+func ShardForStreamId(streamId StreamId, shardMask uint64) uint64 {
 	if shardMask == 0 {
 		shardMask = 0x3ff // 1023
 	}
 	hash := xxhash.Sum64(streamId[:])
 	shard := hash & shardMask
-	return shard, nil
+	return shard
+}
+
+func MetadataStreamIdForStreamId(streamId StreamId, shard uint64) StreamId {
+	return MetadataStreamIdFromShard(ShardForStreamId(streamId, shard))
 }
