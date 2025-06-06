@@ -75,9 +75,9 @@ const _abi = [
             internalType: "bytes32[]",
           },
           {
-            name: "clients",
-            type: "address[]",
-            internalType: "address[]",
+            name: "client",
+            type: "address",
+            internalType: "address",
           },
           {
             name: "installPrice",
@@ -105,6 +105,25 @@ const _abi = [
       },
     ],
     stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "getAppByClient",
+    inputs: [
+      {
+        name: "client",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -138,9 +157,9 @@ const _abi = [
             internalType: "address",
           },
           {
-            name: "clients",
-            type: "address[]",
-            internalType: "address[]",
+            name: "client",
+            type: "address",
+            internalType: "address",
           },
           {
             name: "permissions",
@@ -310,9 +329,9 @@ const _abi = [
         internalType: "contract ITownsApp",
       },
       {
-        name: "clients",
-        type: "address[]",
-        internalType: "address[]",
+        name: "client",
+        type: "address",
+        internalType: "address",
       },
     ],
     outputs: [
@@ -552,6 +571,11 @@ const _abi = [
   {
     type: "error",
     name: "BannedApp",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ClientAlreadyRegistered",
     inputs: [],
   },
   {

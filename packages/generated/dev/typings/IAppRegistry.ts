@@ -83,7 +83,7 @@ export declare namespace IAppRegistryBase {
   export type AppParamsStruct = {
     name: PromiseOrValue<string>;
     permissions: PromiseOrValue<BytesLike>[];
-    clients: PromiseOrValue<string>[];
+    client: PromiseOrValue<string>;
     installPrice: PromiseOrValue<BigNumberish>;
     accessDuration: PromiseOrValue<BigNumberish>;
   };
@@ -91,13 +91,13 @@ export declare namespace IAppRegistryBase {
   export type AppParamsStructOutput = [
     string,
     string[],
-    string[],
+    string,
     BigNumber,
     BigNumber
   ] & {
     name: string;
     permissions: string[];
-    clients: string[];
+    client: string;
     installPrice: BigNumber;
     accessDuration: BigNumber;
   };
@@ -106,7 +106,7 @@ export declare namespace IAppRegistryBase {
     appId: PromiseOrValue<BytesLike>;
     module: PromiseOrValue<string>;
     owner: PromiseOrValue<string>;
-    clients: PromiseOrValue<string>[];
+    client: PromiseOrValue<string>;
     permissions: PromiseOrValue<BytesLike>[];
     manifest: ExecutionManifestStruct;
   };
@@ -115,14 +115,14 @@ export declare namespace IAppRegistryBase {
     string,
     string,
     string,
-    string[],
+    string,
     string[],
     ExecutionManifestStructOutput
   ] & {
     appId: string;
     module: string;
     owner: string;
-    clients: string[];
+    client: string;
     permissions: string[];
     manifest: ExecutionManifestStructOutput;
   };
@@ -132,14 +132,15 @@ export interface IAppRegistryInterface extends utils.Interface {
   functions: {
     "adminBanApp(address)": FunctionFragment;
     "adminRegisterAppSchema(string,address,bool)": FunctionFragment;
-    "createApp((string,bytes32[],address[],uint256,uint64))": FunctionFragment;
+    "createApp((string,bytes32[],address,uint256,uint64))": FunctionFragment;
+    "getAppByClient(address)": FunctionFragment;
     "getAppById(bytes32)": FunctionFragment;
     "getAppSchema()": FunctionFragment;
     "getAppSchemaId()": FunctionFragment;
     "getLatestAppId(address)": FunctionFragment;
     "installApp(address,address,bytes)": FunctionFragment;
     "isAppBanned(address)": FunctionFragment;
-    "registerApp(address,address[])": FunctionFragment;
+    "registerApp(address,address)": FunctionFragment;
     "removeApp(bytes32)": FunctionFragment;
     "uninstallApp(address,address,bytes)": FunctionFragment;
   };
@@ -149,6 +150,7 @@ export interface IAppRegistryInterface extends utils.Interface {
       | "adminBanApp"
       | "adminRegisterAppSchema"
       | "createApp"
+      | "getAppByClient"
       | "getAppById"
       | "getAppSchema"
       | "getAppSchemaId"
@@ -175,6 +177,10 @@ export interface IAppRegistryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "createApp",
     values: [IAppRegistryBase.AppParamsStruct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAppByClient",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getAppById",
@@ -206,7 +212,7 @@ export interface IAppRegistryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "registerApp",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>[]]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "removeApp",
@@ -230,6 +236,10 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createApp", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getAppByClient",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getAppById", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getAppSchema",
@@ -406,6 +416,11 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getAppByClient(
+      client: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     getAppById(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -434,7 +449,7 @@ export interface IAppRegistry extends BaseContract {
 
     registerApp(
       app: PromiseOrValue<string>,
-      clients: PromiseOrValue<string>[],
+      client: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -468,6 +483,11 @@ export interface IAppRegistry extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getAppByClient(
+    client: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   getAppById(
     appId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -496,7 +516,7 @@ export interface IAppRegistry extends BaseContract {
 
   registerApp(
     app: PromiseOrValue<string>,
-    clients: PromiseOrValue<string>[],
+    client: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -530,6 +550,11 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string, string] & { app: string; appId: string }>;
 
+    getAppByClient(
+      client: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
     getAppById(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -558,7 +583,7 @@ export interface IAppRegistry extends BaseContract {
 
     registerApp(
       app: PromiseOrValue<string>,
-      clients: PromiseOrValue<string>[],
+      client: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -665,6 +690,11 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    getAppByClient(
+      client: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getAppById(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -693,7 +723,7 @@ export interface IAppRegistry extends BaseContract {
 
     registerApp(
       app: PromiseOrValue<string>,
-      clients: PromiseOrValue<string>[],
+      client: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -728,6 +758,11 @@ export interface IAppRegistry extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    getAppByClient(
+      client: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getAppById(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -756,7 +791,7 @@ export interface IAppRegistry extends BaseContract {
 
     registerApp(
       app: PromiseOrValue<string>,
-      clients: PromiseOrValue<string>[],
+      client: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
