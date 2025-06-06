@@ -36,14 +36,14 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IAppAccount
-    function installApp(bytes32 appId, bytes calldata data) external nonReentrant {
-        _onlyRegistry(msg.sender);
+    function onInstallApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry();
         _installApp(appId, data);
     }
 
     /// @inheritdoc IAppAccount
-    function uninstallApp(bytes32 appId, bytes calldata data) external {
-        _onlyRegistry(msg.sender);
+    function onUninstallApp(bytes32 appId, bytes calldata data) external {
+        _onlyRegistry();
         _uninstallApp(appId, data);
     }
 

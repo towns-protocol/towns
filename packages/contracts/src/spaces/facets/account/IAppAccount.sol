@@ -20,7 +20,12 @@ interface IAppAccount is IAppAccountBase {
     /// @notice Installs an app
     /// @param appId The ID of the app to install
     /// @param data The initialization data for the app
-    function installApp(bytes32 appId, bytes calldata data) external;
+    function onInstallApp(bytes32 appId, bytes calldata data) external;
+
+    /// @notice Uninstalls an app
+    /// @param appId The ID of the app to uninstall
+    /// @param data The data required for app uninstallation
+    function onUninstallApp(bytes32 appId, bytes calldata data) external;
 
     /// @notice Enables an app
     /// @param app The address of the app to enable
@@ -29,11 +34,6 @@ interface IAppAccount is IAppAccountBase {
     /// @notice Disables an app
     /// @param app The address of the app to disable
     function disableApp(address app) external;
-
-    /// @notice Uninstalls an app
-    /// @param appId The ID of the app to uninstall
-    /// @param data The data required for app uninstallation
-    function uninstallApp(bytes32 appId, bytes calldata data) external;
 
     /// @notice Gets the ID of an app
     /// @param app The address of the app to get the ID of

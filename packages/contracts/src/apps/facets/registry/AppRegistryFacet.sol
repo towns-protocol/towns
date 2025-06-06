@@ -4,6 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IAppRegistry} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
+import {ITownsApp} from "../../ITownsApp.sol";
 
 // types
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -42,8 +44,8 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @param app The app address to ban
     /// @dev Only the owner can ban a app
     /// @return The attestation UID that was banned
-    function adminBanApp(address app) external onlyOwner returns (bytes32) {
-        return _banApp(app);
+    function adminBanApp(ITownsApp app) external onlyOwner returns (bytes32) {
+        return _banApp(address(app));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -55,10 +57,10 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @param clients The list of client addresses that will make calls from this app
     /// @return versionId The version ID of the registered app
     function registerApp(
-        address app,
+        ITownsApp app,
         address[] calldata clients
     ) external payable nonReentrant returns (bytes32 versionId) {
-        return _registerApp(app, clients);
+        return _registerApp(address(app), clients);
     }
 
     /// @notice Remove a app from the registry
@@ -82,21 +84,25 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @param account The account to install the app to
     /// @param data The data to pass to the app's onInstall function
     function installApp(
-        address app,
-        address account,
+        ITownsApp app,
+        IAppAccount account,
         bytes calldata data
     ) external payable nonReentrant {
-        _onlyAllowed(account);
-        return _installApp(app, account, data);
+        _onlyAllowed(address(account));
+        return _installApp(address(app), address(account), data);
     }
 
     /// @notice Uninstall an app
     /// @param app The app address to uninstall
     /// @param account The account to uninstall the app from
     /// @param data The data to pass to the app's onUninstall function
-    function uninstallApp(address app, address account, bytes calldata data) external nonReentrant {
-        _onlyAllowed(account);
-        return _uninstallApp(app, account, data);
+    function uninstallApp(
+        ITownsApp app,
+        IAppAccount account,
+        bytes calldata data
+    ) external nonReentrant {
+        _onlyAllowed(address(account));
+        return _uninstallApp(address(app), address(account), data);
     }
 
     /// @notice Get the schema structure used for registering modules
@@ -111,7 +117,7 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _getSchemaId();
     }
 
-    /// @notice Get the attestation for a app
+    /// @notice Get the app by ID
     /// @param appId The app ID
     /// @return app The app
     function getAppById(bytes32 appId) external view returns (App memory app) {
