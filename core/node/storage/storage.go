@@ -101,12 +101,14 @@ type (
 			streamId StreamId,
 			fromInclusive int64,
 			toExclusive int64,
+			omitSnapshot bool,
 		) ([]*MiniblockDescriptor, error)
 
 		// ReadMiniblocksByStream calls onEachMb for each selected miniblock
 		ReadMiniblocksByStream(
 			ctx context.Context,
 			streamId StreamId,
+			omitSnapshot bool,
 			onEachMb MiniblockHandlerFunc,
 		) error
 
@@ -115,6 +117,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			mbs []int64,
+			omitSnapshot bool,
 			onEachMb MiniblockHandlerFunc,
 		) error
 
@@ -134,6 +137,12 @@ type (
 			blockHash common.Hash,
 			blockNumber int64,
 		) (*MiniblockDescriptor, error)
+
+		GetMiniblockCandidateCount(
+			ctx context.Context,
+			streamId StreamId,
+			miniblockNumber int64,
+		) (int, error)
 
 		// WriteMiniblocks writes miniblocks to the stream storage and creates new minipool.
 		//

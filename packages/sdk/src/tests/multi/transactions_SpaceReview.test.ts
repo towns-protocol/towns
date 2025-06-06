@@ -11,7 +11,7 @@ import {
     SpaceReviewEventObject,
 } from '@towns-protocol/web3'
 import { StreamTimelineEvent } from '../../types'
-import { waitFor } from '../testUtils'
+import { waitForValue } from '../testUtils'
 import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
 
@@ -107,7 +107,7 @@ describe('transaction_SpaceReview', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const reviewEvent = await waitFor(() => {
+        const reviewEvent = await waitForValue(() => {
             const reviewEvents = stream.view.timeline.filter(isUserBlockchainTransaction)
             expect(reviewEvents.length).toBeGreaterThan(0)
             const reviewEvent = reviewEvents[0]
@@ -139,7 +139,7 @@ describe('transaction_SpaceReview', () => {
     test('alice sees review in space stream', async () => {
         const stream = alice.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const reviewEvent = await waitFor(() => {
+        const reviewEvent = await waitForValue(() => {
             const reviewEvents = stream.view.membershipContent.spaceReviews
             expect(reviewEvents.length).toBe(1)
             const reviewEvent = reviewEvents[0]
@@ -153,7 +153,7 @@ describe('transaction_SpaceReview', () => {
     test('bob sees review in space stream', async () => {
         const stream = bob.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const reviewEvent = await waitFor(() => {
+        const reviewEvent = await waitForValue(() => {
             const reviewEvents = stream.view.membershipContent.spaceReviews
             expect(reviewEvents.length).toBe(1)
             return reviewEvents[0]
@@ -195,7 +195,7 @@ describe('transaction_SpaceReview', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const tipEvents = stream.view.timeline.filter(isUserReceivedBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
@@ -213,7 +213,7 @@ describe('transaction_SpaceReview', () => {
     test('alice can see tip in space stream', async () => {
         const stream = alice.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const tipEvents = stream.view.timeline.filter(isMemberBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
@@ -376,7 +376,7 @@ describe('transaction_SpaceReview', () => {
         const unauthenticatedClient = new UnauthenticatedClient(
             alice.riverConnection.client!.rpcClient,
         )
-        await unauthenticatedClient.scrollbackByMs(streamView, 5000)
+        await unauthenticatedClient.scrollback(streamView)
         expect(streamView.membershipContent.spaceReviews.length).toBe(1)
     })
 })

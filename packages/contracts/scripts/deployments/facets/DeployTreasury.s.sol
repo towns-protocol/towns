@@ -1,33 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {Treasury} from "src/spaces/facets/treasury/Treasury.sol";
-
-contract DeployTreasury is Deployer, FacetHelper {
-    constructor() {
-        // Funds
-        addSelector(Treasury.withdraw.selector);
-        addSelector(Treasury.onERC721Received.selector);
-        addSelector(Treasury.onERC1155Received.selector);
-        addSelector(Treasury.onERC1155BatchReceived.selector);
+library DeployTreasury {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](4);
+        res[0] = ITreasury.withdraw.selector;
+        res[1] = ITreasury.onERC721Received.selector;
+        res[2] = ITreasury.onERC1155Received.selector;
+        res[3] = ITreasury.onERC1155BatchReceived.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/treasuryFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        address treasury = address(new Treasury());
-        vm.stopBroadcast();
-
-        return treasury;
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("Treasury.sol", "");
     }
 }

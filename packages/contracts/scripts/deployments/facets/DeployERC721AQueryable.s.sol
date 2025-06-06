@@ -1,31 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {ERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/ERC721AQueryable.sol";
-
-contract DeployERC721AQueryable is FacetHelper, Deployer {
-    constructor() {
-        addSelector(ERC721AQueryable.explicitOwnershipOf.selector);
-        addSelector(ERC721AQueryable.explicitOwnershipsOf.selector);
-        addSelector(ERC721AQueryable.tokensOfOwnerIn.selector);
-        addSelector(ERC721AQueryable.tokensOfOwner.selector);
+library DeployERC721AQueryable {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](4);
+        res[0] = IERC721AQueryable.explicitOwnershipOf.selector;
+        res[1] = IERC721AQueryable.explicitOwnershipsOf.selector;
+        res[2] = IERC721AQueryable.tokensOfOwnerIn.selector;
+        res[3] = IERC721AQueryable.tokensOfOwner.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/erc721AQueryableFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        ERC721AQueryable facet = new ERC721AQueryable();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("ERC721AQueryable.sol", "");
     }
 }

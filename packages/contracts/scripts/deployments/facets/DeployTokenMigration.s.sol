@@ -2,38 +2,39 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {TokenMigrationFacet} from "src/tokens/migration/TokenMigration.sol";
+import {TokenMigrationFacet} from "src/tokens/migration/TokenMigrationFacet.sol";
 
-contract DeployTokenMigration is FacetHelper, Deployer {
-    constructor() {
-        addSelector(TokenMigrationFacet.migrate.selector);
-        addSelector(TokenMigrationFacet.emergencyWithdraw.selector);
-        addSelector(TokenMigrationFacet.tokens.selector);
+library DeployTokenMigration {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](3);
+        res[0] = TokenMigrationFacet.migrate.selector;
+        res[1] = TokenMigrationFacet.emergencyWithdraw.selector;
+        res[2] = TokenMigrationFacet.tokens.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return TokenMigrationFacet.__TokenMigrationFacet_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/tokenMigrationFacet";
+    function makeInitData(address oldToken, address newToken) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(
+                TokenMigrationFacet.__TokenMigrationFacet_init,
+                (IERC20(oldToken), IERC20(newToken))
+            );
     }
 
-    function makeInitData(address oldToken, address newToken) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), IERC20(oldToken), IERC20(newToken));
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        TokenMigrationFacet tokenMigration = new TokenMigrationFacet();
-        vm.stopBroadcast();
-        return address(tokenMigration);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("TokenMigrationFacet.sol", "");
     }
 }

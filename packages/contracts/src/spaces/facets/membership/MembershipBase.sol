@@ -15,6 +15,7 @@ import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 
@@ -39,6 +40,11 @@ abstract contract MembershipBase is IMembershipBase {
         if (info.price > 0) {
             _verifyPrice(info.price);
             IMembershipPricing(info.pricingModule).setPrice(info.price);
+        }
+
+        if (info.duration > 0) {
+            _verifyDuration(info.duration);
+            ds.membershipDuration = info.duration;
         }
     }
 
@@ -109,8 +115,29 @@ abstract contract MembershipBase is IMembershipBase {
     /*                          DURATION                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getMembershipDuration() internal view returns (uint64) {
-        return _getPlatformRequirements().getMembershipDuration();
+    function _verifyDuration(uint64 duration) internal view {
+        uint256 maxDuration = _getPlatformRequirements().getMembershipDuration();
+
+        if (duration == 0) {
+            CustomRevert.revertWith(Membership__InvalidDuration.selector);
+        }
+
+        if (duration > maxDuration) {
+            CustomRevert.revertWith(Membership__InvalidDuration.selector);
+        }
+    }
+
+    function _getMembershipDuration() internal view returns (uint64 duration) {
+        duration = MembershipStorage.layout().membershipDuration;
+
+        if (duration == 0) {
+            duration = _getPlatformRequirements().getMembershipDuration();
+        }
+    }
+
+    function _setMembershipDuration(uint64 duration) internal {
+        _verifyDuration(duration);
+        MembershipStorage.layout().membershipDuration = duration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -174,11 +201,16 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 totalSupply
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 minPrice = platform.getMembershipMinPrice();
 
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
-        if (renewalPrice != 0) return renewalPrice;
+        if (renewalPrice != 0) {
+            return FixedPointMathLib.max(renewalPrice, minPrice);
+        }
 
-        return _getMembershipPrice(totalSupply);
+        uint256 price = _getMembershipPrice(totalSupply);
+        return FixedPointMathLib.max(price, minPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

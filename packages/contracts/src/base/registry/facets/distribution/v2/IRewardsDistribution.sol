@@ -115,8 +115,8 @@ interface IRewardsDistributionBase {
     event Withdraw(uint256 indexed depositId, uint96 amount);
 
     /// @notice Emitted when a reward is claimed
-    /// @param beneficiary The address of the beneficiary
-    /// @param recipient The address of the recipient
+    /// @param beneficiary The address of the beneficiary whose reward is claimed
+    /// @param recipient The address of the recipient where the reward is sent
     /// @param reward The amount of rewardToken that is claimed
     event ClaimReward(address indexed beneficiary, address indexed recipient, uint256 reward);
 
@@ -163,7 +163,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @dev The caller must approve the contract to spend the stakeToken
     /// @param amount The amount of stakeToken to stake
     /// @param delegatee The address of the delegatee
-    /// @param beneficiary The address of the beneficiary
+    /// @param beneficiary The address of the beneficiary who is receiving the rewards
     /// @return depositId The ID of the deposit
     function stake(
         uint96 amount,
@@ -175,7 +175,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// stakeToken for rewards
     /// @param amount The amount of stakeToken to stake
     /// @param delegatee The address of the delegatee
-    /// @param beneficiary The address of the beneficiary
+    /// @param beneficiary The address of the beneficiary who is receiving the rewards
     /// @param deadline The deadline for the permit
     /// @param v The recovery byte of the permit
     /// @param r The R signature of the permit
@@ -195,7 +195,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @dev The caller must approve the contract to spend the stakeToken
     /// @param amount The amount of stakeToken to stake
     /// @param delegatee The address of the delegatee
-    /// @param beneficiary The address of the beneficiary
+    /// @param beneficiary The address of the beneficiary who is receiving the rewards
     /// @param owner The address of the deposit owner
     /// @return depositId The ID of the deposit
     function stakeOnBehalf(
@@ -215,8 +215,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     function increaseStake(uint256 depositId, uint96 amount) external;
 
     /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and increases
-    /// the
-    /// stake of an existing deposit
+    /// the stake of an existing deposit
     /// @dev The caller must be the owner of the deposit
     /// @param depositId The ID of the deposit
     /// @param amount The amount of stakeToken to stake
@@ -263,8 +262,8 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @dev If not, the caller may be the authorized claimer of the beneficiary.
     /// @dev If not, the beneficiary must be a space or operator while the caller must be the
     /// authorized claimer.
-    /// @param beneficiary The address of the beneficiary
-    /// @param recipient The address of the recipient
+    /// @param beneficiary The address of the beneficiary whose reward is claimed
+    /// @param recipient The address of the recipient where the reward is sent
     /// @return reward The amount of rewardToken that is claimed
     function claimReward(address beneficiary, address recipient) external returns (uint256 reward);
 
@@ -337,13 +336,12 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     function lastTimeRewardDistributed() external view returns (uint256);
 
     /// @notice Returns the current scaled amount of rewardToken that has been accumulated per
-    /// staked
-    /// token
+    /// staked token
     /// @return The current scaled amount of rewardToken that has been accumulated per staked token
     function currentRewardPerTokenAccumulated() external view returns (uint256);
 
     /// @notice Returns the current unclaimed reward for a beneficiary
-    /// @param beneficiary The address of the beneficiary
+    /// @param beneficiary The address of the beneficiary who is receiving the rewards
     /// @return The current unclaimed reward for the beneficiary
     function currentReward(address beneficiary) external view returns (uint256);
 

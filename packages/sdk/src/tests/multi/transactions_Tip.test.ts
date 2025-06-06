@@ -2,13 +2,13 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog, dlogError } from '@towns-protocol/dlog'
 import { BigNumber, ethers } from 'ethers'
 import { ETH_ADDRESS, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
-import { waitFor } from '../testUtils'
+import { waitFor, waitForValue } from '../testUtils'
 import { StreamTimelineEvent } from '../../types'
 import { userIdFromAddress, makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from 'crypto'
@@ -17,6 +17,7 @@ import { deepCopy } from 'ethers/lib/utils'
 import { cloneDeep } from 'lodash'
 
 const base_log = dlog('csb:test:transactions_Tip')
+const logError = dlogError('csb:test:transactions_Tip_error')
 
 describe('transactions_Tip', () => {
     const riverConfig = makeRiverConfig()
@@ -91,25 +92,31 @@ describe('transactions_Tip', () => {
         expect(aliceTokenId_).toBeDefined()
         aliceTokenId = aliceTokenId_!
 
-        // dummy tip, to be used to test error cases
-        const tx = await bob.riverConnection.spaceDapp.tip(
-            {
+        try {
+            // dummy tip, to be used to test error cases
+            const tx = await bob.riverConnection.spaceDapp.tip(
+                {
+                    spaceId,
+                    tokenId: aliceTokenId,
+                    currency: ETH_ADDRESS,
+                    amount: 1000n,
+                    messageId: messageId,
+                    channelId: defaultChannelId,
+                    receiver: aliceIdentity.rootWallet.address,
+                },
+                bobIdentity.signer,
+            )
+            dummyReceipt = await tx.wait(2)
+            dummyTipEvent = bob.riverConnection.spaceDapp.getTipEvent(
                 spaceId,
-                tokenId: aliceTokenId,
-                currency: ETH_ADDRESS,
-                amount: 1000n,
-                messageId: messageId,
-                channelId: defaultChannelId,
-                receiver: aliceIdentity.rootWallet.address,
-            },
-            bobIdentity.signer,
-        )
-        dummyReceipt = await tx.wait(2)
-        dummyTipEvent = bob.riverConnection.spaceDapp.getTipEvent(
-            spaceId,
-            dummyReceipt,
-            bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
-        )!
+                dummyReceipt,
+                bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
+            )!
+        } catch (err) {
+            const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(spaceId, err)
+            logError('parsedError', parsedError)
+            throw err
+        }
         expect(dummyTipEvent).toBeDefined()
         dummyTipEventCopy = deepCopy(dummyTipEvent)
         expect(dummyTipEventCopy).toEqual(dummyTipEvent)
@@ -162,7 +169,7 @@ describe('transactions_Tip', () => {
         // get the user "stream" that is being synced by bob
         const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const isUserBlockchainTransaction = (e: StreamTimelineEvent) =>
                 e.remoteEvent?.event.payload.case === 'userPayload' &&
                 e.remoteEvent.event.payload.value.content.case === 'blockchainTransaction'
@@ -190,7 +197,7 @@ describe('transactions_Tip', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const isUserReceivedBlockchainTransaction = (e: StreamTimelineEvent) =>
                 e.remoteEvent?.event.payload.case === 'userPayload' &&
                 e.remoteEvent.event.payload.value.content.case === 'receivedBlockchainTransaction'
@@ -218,7 +225,7 @@ describe('transactions_Tip', () => {
         // get the channel "stream" that is being synced by bob
         const stream = bob.riverConnection.client!.stream(defaultChannelId)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const isMemberBlockchainTransaction = (e: StreamTimelineEvent) =>
                 e.remoteEvent?.event.payload.case === 'memberPayload' &&
                 e.remoteEvent.event.payload.value.content.case === 'memberBlockchainTransaction'
@@ -386,5 +393,64 @@ describe('transactions_Tip', () => {
         expect(bobMember?.tipsSentCount?.[ETH_ADDRESS]).toEqual(1n)
         expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(1000n)
         expect(aliceMember?.tipsReceivedCount?.[ETH_ADDRESS]).toEqual(1n)
+    })
+
+    test('addSecondTip', async () => {
+        // a user should be able to upload a transaction that
+        // is a tip and is valid on chain
+        const tx = await bob.riverConnection.spaceDapp.tip(
+            {
+                spaceId,
+                tokenId: aliceTokenId,
+                currency: ETH_ADDRESS,
+                amount: 1000n,
+                messageId: messageId,
+                channelId: defaultChannelId,
+                receiver: aliceIdentity.rootWallet.address,
+            },
+            bobIdentity.signer,
+        )
+        const receipt = await tx.wait(2)
+        expect(receipt.from).toEqual(bobIdentity.rootWallet.address)
+        const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(
+            spaceId,
+            receipt,
+            bobIdentity.rootWallet.address,
+        )
+        expect(tipEvent).toBeDefined()
+        if (!tipEvent) throw new Error('no tip event found')
+        await expect(
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                receipt,
+                tipEvent,
+                aliceIdentity.rootWallet.address,
+            ),
+        ).resolves.not.toThrow()
+    })
+
+    test('bobSeesSecondTipInUserStream', async () => {
+        // get the user "stream" that is being synced by bob
+        const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
+        if (!stream) throw new Error('no stream found')
+        // the view should have been updated with the tip
+        await waitFor(() => {
+            expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(2000n)
+            expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(2n)
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
+        })
+    })
+
+    test('aliceSeesSecondTipReceivedInUserStream', async () => {
+        // get the user "stream" that is being synced by alice
+        const stream = alice.riverConnection.client!.stream(
+            alice.riverConnection.client!.userStreamId!,
+        )
+        if (!stream) throw new Error('no stream found')
+        // the view should have been updated with the tip
+        await waitFor(() => {
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(2000n)
+            expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(2n)
+        })
     })
 })

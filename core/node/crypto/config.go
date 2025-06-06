@@ -50,6 +50,13 @@ const (
 	StreamMiniblockRegistrationFrequencyKey         = "stream.miniblockRegistrationFrequency"
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
+	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
+	// StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey is the key for how many miniblocks to keep before the last
+	// snapshot for streams.
+	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
+	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
+	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
+	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
 )
 
 var (
@@ -103,6 +110,9 @@ type OnChainSettings struct {
 	ReplicationFactor uint64 `mapstructure:"stream.replicationFactor"`
 
 	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
+	// StreamEnableNewSnapshotFormat indicates whether the new snapshot format is enabled.
+	// 0 means the old snapshot format is used, 1 means the new snapshot format is used.
+	StreamEnableNewSnapshotFormat uint64 `mapstructure:"stream.enableNewSnapshotFormat"`
 
 	// StreamMiniblockRegistrationFrequency indicates how often miniblocks are registered.
 	// E.g. StreamMiniblockRegistrationFrequency=5 means that only 1 out of 5 miniblocks for a stream are registered.
@@ -120,6 +130,12 @@ type OnChainSettings struct {
 	XChain XChainSettings `mapstructure:",squash"`
 
 	NodeBlocklist []common.Address `mapstructure:"node.blocklist"`
+
+	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
+	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
+	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
+	// Defined with the default value and per stream type.
+	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
 }
 
 type XChainSettings struct {
@@ -165,10 +181,27 @@ func (m MembershipLimitsSettings) ForType(streamType byte) uint64 {
 	}
 }
 
+type StreamTrimmingMiniblocksToKeepSettings struct {
+	Default     uint64 `mapstructure:"stream.defaultStreamTrimmingMiniblocksToKeep"`
+	Space       uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.10"`
+	UserSetting uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.a5"`
+}
+
+func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 {
+	switch streamType {
+	case shared.STREAM_SPACE_BIN:
+		return m.Space
+	case shared.STREAM_USER_SETTINGS_BIN:
+		return m.UserSetting
+	default:
+		return m.Default
+	}
+}
+
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 50,
-		MediaMaxChunkSize:  500000,
+		MediaMaxChunkSize:  1200000,
 
 		RecencyConstraintsAge: 11 * time.Second,
 		RecencyConstraintsGen: 5,
@@ -182,11 +215,20 @@ func DefaultOnChainSettings() *OnChainSettings {
 			User:         10,
 			UserDevice:   10,
 		},
+		StreamEnableNewSnapshotFormat: 0,
+
+		// 0 means space stream trimming is disabled
+		StreamTrimmingMiniblocksToKeep: StreamTrimmingMiniblocksToKeepSettings{
+			Default:     0,
+			Space:       0,
+			UserSetting: 0,
+		},
 
 		StreamCacheExpiration:    5 * time.Minute,
 		StreamCachePollIntterval: 30 * time.Second,
 
-		StreamEphemeralStreamTTL: time.Minute * 10,
+		StreamEphemeralStreamTTL:           time.Minute * 10,
+		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
@@ -395,12 +437,12 @@ func (occ *onChainConfiguration) processRawSettings(
 			DecodeHook: decodeHook,
 		})
 		if err != nil {
-			log.Errorw("SHOULD NOT HAPPEN: failed to create decoder", "err", err)
+			log.Errorw("SHOULD NOT HAPPEN: failed to create decoder", "error", err)
 			continue
 		}
 		err = decoder.Decode(input)
 		if err != nil {
-			log.Errorw("SHOULD NOT HAPPEN: failed to decode settings", "err", err)
+			log.Errorw("SHOULD NOT HAPPEN: failed to decode settings", "error", err)
 			continue
 		}
 
@@ -643,8 +685,10 @@ func ABIDecodeAddressArray(data []byte) ([]common.Address, error) {
 	return args[0].([]common.Address), nil
 }
 
-var commonAddressType = reflect.TypeOf(common.Address{})
-var commonAddressArrayType = reflect.TypeOf([]common.Address{})
+var (
+	commonAddressType      = reflect.TypeOf(common.Address{})
+	commonAddressArrayType = reflect.TypeOf([]common.Address{})
+)
 
 func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
 	log := logging.FromCtx(ctx)
@@ -663,7 +707,7 @@ func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue
 					if (ms || sec) && ok {
 						vv, err := ABIDecodeInt64(bb)
 						if err != nil {
-							log.Errorw("failed to decode int64", "key", key, "err", err, "bytes", bb)
+							log.Errorw("failed to decode int64", "key", key, "error", err, "bytes", bb)
 							badKeys = append(badKeys, key)
 							continue
 						}
@@ -686,37 +730,37 @@ func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue
 				if err == nil {
 					return v, nil
 				}
-				log.Errorw("failed to decode int64", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode int64", "error", err, "bytes", from.Bytes())
 			} else if to.Kind() == reflect.Uint64 || to.Kind() == reflect.Uint {
 				v, err := ABIDecodeUint64(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Errorw("failed to decode uint64", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode uint64", "error", err, "bytes", from.Bytes())
 			} else if to.Kind() == reflect.String {
 				v, err := ABIDecodeString(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Errorw("failed to decode string", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode string", "error", err, "bytes", from.Bytes())
 			} else if to.Kind() == reflect.Slice && to.Type().Elem().Kind() == reflect.Uint64 {
 				v, err := ABIDecodeUint64Array(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Errorw("failed to decode []uint64", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode []uint64", "error", err, "bytes", from.Bytes())
 			} else if to.Type() == commonAddressType {
 				v, err := ABIDecodeAddress(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Errorw("failed to decode []address", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode []address", "error", err, "bytes", from.Bytes())
 			} else if to.Type() == commonAddressArrayType {
 				v, err := ABIDecodeAddressArray(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Errorw("failed to decode []address", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode []address", "error", err, "bytes", from.Bytes())
 			} else {
 				log.Errorw("unsupported type for setting decoding", "type", to.Kind(), "bytes", from.Bytes())
 			}

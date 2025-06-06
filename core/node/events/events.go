@@ -189,6 +189,26 @@ func Make_MemberPayload_Membership(
 	}
 }
 
+func Make_MemberPayload_KeySolicitation(
+	deviceKey string,
+	fallbackKey string,
+	isNewDevice bool,
+	sessionIds []string,
+) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_KeySolicitation_{
+				KeySolicitation: &MemberPayload_KeySolicitation{
+					DeviceKey:   deviceKey,
+					FallbackKey: fallbackKey,
+					IsNewDevice: isNewDevice,
+					SessionIds:  sessionIds,
+				},
+			},
+		},
+	}
+}
+
 func Make_MemberPayload_Username(username *EncryptedData) *StreamEvent_MemberPayload {
 	return &StreamEvent_MemberPayload{
 		MemberPayload: &MemberPayload{
@@ -342,13 +362,18 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	}
 }
 
-func Make_ChannelPayload_Message_WithSessionBytes(content string, sessionIdBytes []byte) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Message_WithSessionBytes(
+	content string,
+	sessionIdBytes []byte,
+	deviceKey string,
+) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Message{
 				Message: &EncryptedData{
 					Ciphertext:     content,
 					SessionIdBytes: sessionIdBytes,
+					SenderKey:      deviceKey,
 				},
 			},
 		},
@@ -534,6 +559,7 @@ func Make_UserPayload_Membership(
 	streamId StreamId,
 	inInviter *string,
 	streamParentId []byte,
+	reason *MembershipReason,
 ) *StreamEvent_UserPayload {
 	var inviter []byte
 	if inInviter != nil {
@@ -552,6 +578,7 @@ func Make_UserPayload_Membership(
 					Op:             op,
 					Inviter:        inviter,
 					StreamParentId: streamParentId,
+					Reason:         reason,
 				},
 			},
 		},

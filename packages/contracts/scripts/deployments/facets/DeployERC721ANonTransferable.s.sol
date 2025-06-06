@@ -2,48 +2,48 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {ERC721A} from "src/diamond/facets/token/ERC721A/ERC721A.sol";
-import {ERC721ANonTransferable} from "src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
 
-contract DeployERC721ANonTransferable is FacetHelper, Deployer {
-    constructor() {
-        addSelector(IERC721A.totalSupply.selector);
-        addSelector(IERC721A.balanceOf.selector);
-        addSelector(IERC721A.ownerOf.selector);
-        addSelector(IERC721A.transferFrom.selector);
-        addSelector(IERC721A.approve.selector);
-        addSelector(IERC721A.getApproved.selector);
-        addSelector(IERC721A.setApprovalForAll.selector);
-        addSelector(IERC721A.isApprovedForAll.selector);
-        addSelector(IERC721A.name.selector);
-        addSelector(IERC721A.symbol.selector);
-        addSelector(IERC721A.tokenURI.selector);
-        addSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)")));
-        addSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256,bytes)")));
+library DeployERC721ANonTransferable {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](13);
+        res[0] = IERC721A.totalSupply.selector;
+        res[1] = IERC721A.balanceOf.selector;
+        res[2] = IERC721A.ownerOf.selector;
+        res[3] = IERC721A.transferFrom.selector;
+        res[4] = IERC721A.approve.selector;
+        res[5] = IERC721A.getApproved.selector;
+        res[6] = IERC721A.setApprovalForAll.selector;
+        res[7] = IERC721A.isApprovedForAll.selector;
+        res[8] = IERC721A.name.selector;
+        res[9] = IERC721A.symbol.selector;
+        res[10] = IERC721A.tokenURI.selector;
+        res[11] = bytes4(keccak256("safeTransferFrom(address,address,uint256)"));
+        res[12] = bytes4(keccak256("safeTransferFrom(address,address,uint256,bytes)"));
+    }
+
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData(
         string memory name,
         string memory symbol
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(ERC721A.__ERC721A_init.selector, name, symbol);
+    ) internal pure returns (bytes memory) {
+        return abi.encodeCall(ERC721A.__ERC721A_init, (name, symbol));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/erc721ANonTransferableFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        ERC721ANonTransferable facet = new ERC721ANonTransferable();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("ERC721ANonTransferable.sol", "");
     }
 }

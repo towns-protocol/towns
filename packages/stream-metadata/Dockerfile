@@ -40,10 +40,13 @@ RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 FROM node:lts-alpine3.20 as runner
 COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-metadata/dist
 
-# install dd-trace again (because the bundler excludes some of the sub-dependencies)
+# install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
 RUN yarn init --yes
-RUN yarn add dd-trace@^5.19.0
+# We need to install @towns-protocol/olm here because esbuild
+# isnt smart enough to read the export field in package json
+# and get the node specific import in the bundle step
+RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28
 
 # run the service
 ARG GIT_SHA

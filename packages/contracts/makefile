@@ -49,10 +49,18 @@ help:
 # ================================== GENERIC TARGETS ==================================
 
 # === Local network targets ===
+# The `--slow` flag solves race conditions caused by fluctuations in the local fee market.
 deploy-any-local :;
 	@echo "Running $(contract) on local chain"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
+
+deploy-facet-local :;
+	@echo "Deploying $(contract) on local chain"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	CONTRACT_NAME=$(contract) \
+	forge script scripts/common/DeployFacet.s.sol \
 	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 interact-any-local :;
@@ -72,27 +80,61 @@ deploy-any :;
 	@echo "Running $(contract) on remote network"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
-	--ffi --rpc-url ${rpc} $(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
-	--broadcast --verify $(if $(verifier),--verifier $(verifier),) $(if $(verifier-url),--verifier-url $(verifier-url),) \
+	--ffi --rpc-url ${rpc} --broadcast --verify \
+	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),)
+
+deploy-facet :;
+	@echo "Deploying $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	CONTRACT_NAME=$(contract) \
+	forge script scripts/common/DeployFacet.s.sol \
+	--ffi --rpc-url ${rpc} --broadcast --verify \
+	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
 	$(if $(etherscan),--etherscan-api-key $(etherscan),)
 
 resume-any :;
 	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
-	--ffi --rpc-url ${rpc} --private-key ${private_key} $(if $(verifier),--verifier $(verifier),) \
-	--verifier-url ${verifier-url} $(if $(etherscan),--etherscan-api-key $(etherscan),) --verify --resume $(if $(args),${args},)
+	--ffi --rpc-url ${rpc} --resume --verify \
+	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),) \
+	$(if $(args),${args},)
+
+resume-facet :;
+	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	CONTRACT_NAME=$(contract) \
+	forge script scripts/common/DeployFacet.s.sol \
+	--ffi --rpc-url ${rpc} --resume --verify \
+	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),) \
+	$(if $(args),${args},)
 
 interact-any :;
 	@echo "Running $(contract) on remote network"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/interactions/${contract}.s.sol:${contract} \
-	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast --verify \
-	$(if $(verifier),--verifier $(verifier),) $(if $(verifier-url),--verifier-url $(verifier-url),) \
+	--ffi --rpc-url ${rpc} --broadcast --verify \
+	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
 	$(if $(etherscan),--etherscan-api-key $(etherscan),) \
-	$(if $(gas_limit),--gas-limit ${gas_limit},) $(if $(args),${args},)
-
-interact-any-explicit :;
-	@$(MAKE) interact-any
+	$(if $(gas_limit),--gas-limit ${gas_limit},) \
+	$(if $(args),${args},)
 
 interact-any-explicit-blockscout :;
 	@$(MAKE) interact-any verifier=blockscout
@@ -141,22 +183,56 @@ deploy-any-ledger :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify $(if $(verifier),--verifier $(verifier),) \
-	$(if $(verifier-url),--verifier-url $(verifier-url),) $(if $(etherscan),--etherscan-api-key $(etherscan),)
+	--ffi --rpc-url ${rpc} --broadcast --verify \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),)
+
+deploy-facet-ledger :;
+	@echo "Deploying $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	CONTRACT_NAME=$(contract) \
+	forge script scripts/common/DeployFacet.s.sol \
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--ffi --rpc-url ${rpc} --broadcast --verify \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),)
 
 deploy-verify-both :;
-	@$(MAKE) deploy-any rpc=$(rpc) private_key=$(private_key) verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
-	@$(MAKE) resume-any rpc=$(rpc) private_key=$(private_key) verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
+	@$(MAKE) deploy-any rpc=$(rpc) private_key=$(private_key) \
+	verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
+	@$(MAKE) resume-any rpc=$(rpc) private_key=$(private_key) \
+	verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 deploy-ledger-verify-both :;
-	@$(MAKE) deploy-any-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
-	@$(MAKE) resume-any-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
+	@$(MAKE) deploy-any-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) \
+	verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
+	@$(MAKE) resume-any-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) \
+	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
+
+deploy-facet-ledger-verify-both :;
+	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
+	verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
+	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
+	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
-	--ledger --hd-paths ${hd_path} \
-	--ffi --rpc-url ${rpc} --broadcast --verify $(if $(verifier),--verifier $(verifier),) \
-	--verifier-url ${verifier-url} $(if $(etherscan),--etherscan-api-key $(etherscan),) --resume
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--ffi --rpc-url ${rpc} --broadcast --verify --resume \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),)
+
+resume-facet-ledger :;
+	@CONTRACT_NAME=$(contract) \
+	forge script scripts/common/DeployFacet.s.sol \
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--ffi --rpc-url ${rpc} --broadcast --verify --resume \
+	$(if $(verifier),--verifier $(verifier),) \
+	$(if $(verifier-url),--verifier-url $(verifier-url),) \
+	$(if $(etherscan),--etherscan-api-key $(etherscan),)
 
 interact-any-ledger :;
 	@echo "Running $(contract) on remote network"

@@ -1,52 +1,56 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
+
+// contracts
 import {WalletLink} from "src/factory/facets/wallet-link/WalletLink.sol";
 
-contract DeployWalletLink is FacetHelper, Deployer {
-    constructor() {
-        addSelector(WalletLink.linkCallerToRootKey.selector);
-        addSelector(WalletLink.linkWalletToRootKey.selector);
-        addSelector(WalletLink.removeLink.selector);
-        addSelector(WalletLink.getWalletsByRootKey.selector);
-        addSelector(WalletLink.getRootKeyForWallet.selector);
-        addSelector(WalletLink.checkIfLinked.selector);
-        addSelector(WalletLink.getLatestNonceForRootKey.selector);
-        addSelector(WalletLink.removeCallerLink.selector);
-        addSelector(WalletLink.setDefaultWallet.selector);
-        addSelector(WalletLink.getDefaultWallet.selector);
-        addSelector(WalletLink.getWalletsByRootKeyWithDelegations.selector);
-        addSelector(WalletLink.getDependency.selector);
-        addSelector(WalletLink.setDependency.selector);
-        addSelector(WalletLink.explicitWalletsByRootKey.selector);
-        addSelector(WalletLink.linkNonEVMWalletToRootKey.selector);
-        addSelector(WalletLink.removeNonEVMWalletLink.selector);
-        addSelector(WalletLink.checkIfNonEVMWalletLinked.selector);
+library DeployWalletLink {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(16);
+        arr.p(WalletLink.linkCallerToRootKey.selector);
+        arr.p(WalletLink.linkWalletToRootKey.selector);
+        arr.p(WalletLink.removeLink.selector);
+        arr.p(WalletLink.getWalletsByRootKey.selector);
+        arr.p(WalletLink.getRootKeyForWallet.selector);
+        arr.p(WalletLink.checkIfLinked.selector);
+        arr.p(WalletLink.getLatestNonceForRootKey.selector);
+        arr.p(WalletLink.removeCallerLink.selector);
+        arr.p(WalletLink.setDefaultWallet.selector);
+        arr.p(WalletLink.getDefaultWallet.selector);
+        arr.p(WalletLink.getDependency.selector);
+        arr.p(WalletLink.setDependency.selector);
+        arr.p(WalletLink.getAllWalletsByRootKey.selector);
+        arr.p(WalletLink.linkNonEVMWalletToRootKey.selector);
+        arr.p(WalletLink.removeNonEVMWalletLink.selector);
+        arr.p(WalletLink.checkIfNonEVMWalletLinked.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return WalletLink.__WalletLink_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    // 0x6aa4029900000000000000000000000000000000000000447e69651d841bd8d104bed4930000000000000000000000001d19402769366dc08d3256a0ac148f227df105ce00000000000000000000000000000000000000000000000000000000
-    function makeInitData(
-        address delegateRegistry,
-        address sclEip6565
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), delegateRegistry, sclEip6565);
+    function makeInitData(address sclEip6565) internal pure returns (bytes memory) {
+        return abi.encodeCall(WalletLink.__WalletLink_init, (sclEip6565));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/walletLinkFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        WalletLink walletLink = new WalletLink();
-        vm.stopBroadcast();
-        return address(walletLink);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("WalletLink.sol", "");
     }
 }

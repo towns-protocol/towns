@@ -1,34 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {EntitlementsManager} from "src/spaces/facets/entitlements/EntitlementsManager.sol";
-
-contract DeployEntitlementsManager is FacetHelper, Deployer {
-    constructor() {
-        addSelector(EntitlementsManager.addImmutableEntitlements.selector);
-        addSelector(EntitlementsManager.addEntitlementModule.selector);
-        addSelector(EntitlementsManager.removeEntitlementModule.selector);
-        addSelector(EntitlementsManager.getEntitlements.selector);
-        addSelector(EntitlementsManager.getEntitlement.selector);
-        addSelector(EntitlementsManager.isEntitledToSpace.selector);
-        addSelector(EntitlementsManager.isEntitledToChannel.selector);
+library DeployEntitlementsManager {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](7);
+        res[0] = IEntitlementsManager.addImmutableEntitlements.selector;
+        res[1] = IEntitlementsManager.addEntitlementModule.selector;
+        res[2] = IEntitlementsManager.removeEntitlementModule.selector;
+        res[3] = IEntitlementsManager.getEntitlements.selector;
+        res[4] = IEntitlementsManager.getEntitlement.selector;
+        res[5] = IEntitlementsManager.isEntitledToSpace.selector;
+        res[6] = IEntitlementsManager.isEntitledToChannel.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/entitlementsManagerFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        EntitlementsManager facet = new EntitlementsManager();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("EntitlementsManager.sol", "");
     }
 }

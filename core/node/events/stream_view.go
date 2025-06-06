@@ -116,7 +116,6 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 
 	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
 	lastMiniblockNumber := int64(-1)
-	snapshotIndex := 0
 	for i, binMiniblock := range stream.Miniblocks {
 		opts := NewParsedMiniblockInfoOpts()
 		// Ignore block number of first block, but enforce afterward
@@ -129,12 +128,9 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.Header().IsSnapshot() {
-			snapshotIndex = i
-		}
 	}
 
-	snapshot := miniblocks[snapshotIndex].GetSnapshot()
+	snapshot := miniblocks[0].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -170,7 +166,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
-		snapshotIndex: snapshotIndex,
+		snapshotIndex: 0,
 	}, nil
 }
 
@@ -417,11 +413,14 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		header.Snapshot = parsedSnapshot.Snapshot
-		// header.SnapshotHash = parsedSnapshot.Envelope.Hash
-		// TODO: Remove the following line.
-		// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
-		parsedSnapshot = nil
+		if params.ChainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
+			// Snapshot is outside the miniblock header, new format
+			header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		} else {
+			// Snapshot is inside miniblock header, legacy format
+			header.Snapshot = parsedSnapshot.Snapshot
+			parsedSnapshot = nil
+		}
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
@@ -703,7 +702,8 @@ func (r *StreamView) ValidateNextEvent(
 				"prevMiniblockNum is greater than the last miniblock number in the stream",
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -714,7 +714,9 @@ func (r *StreamView) ValidateNextEvent(
 				"prevMiniblockHash references block that is too old to be loaded",
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
+				"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -725,7 +727,8 @@ func (r *StreamView) ValidateNextEvent(
 			return RiverError(
 				Err_DATA_LOSS,
 				"prevMiniblockHash does not match the block number",
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"actualBlock", foundBlock.Ref,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
@@ -747,9 +750,11 @@ func (r *StreamView) ValidateNextEvent(
 			return RiverError(
 				Err_BAD_PREV_MINIBLOCK_HASH,
 				"prevMiniblockHash not found in recent blocks",
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", -1,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
+				"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -768,9 +773,11 @@ func (r *StreamView) ValidateNextEvent(
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"referenced block is not recent",
-			"requestedBlock", parsedEvent.MiniblockRef,
+			"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+			"requestedBlock", parsedEvent.MiniblockRef.Hash,
 			"expected", lastBlock.Ref.Hash,
 			"expNum", lastBlock.Ref.Num,
+			"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 			"streamId", r.streamId,
 			"event", parsedEvent.Hash,
 		).Func("ValidateNextEvent")
@@ -939,7 +946,6 @@ func (r *StreamView) GetStreamSince(
 			"stream", r.streamId, "error", err.Error())
 
 		return r.GetResetStreamAndCookie(wallet), nil
-
 	}
 
 	// append events from blocks

@@ -38,6 +38,7 @@ import {
     MemberPayload_Nft,
     BlockchainTransaction,
     ChannelMessageSchema,
+    MembershipReason,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/dlog'
@@ -59,6 +60,13 @@ export interface ParsedEvent {
     hashStr: string
     signature: Uint8Array | undefined
     creatorUserId: string
+}
+
+export interface ParsedSnapshot {
+    snapshot: Snapshot
+    hash: Uint8Array
+    hashStr: string
+    signature: Uint8Array | undefined
 }
 
 export interface StreamTimelineEvent {
@@ -204,6 +212,7 @@ export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
     miniblocks: ParsedMiniblock[]
     events: ParsedEvent[]
+    snapshot?: ParsedSnapshot
 }
 
 export interface ParsedStreamResponse {
@@ -531,6 +540,7 @@ export const make_MemberPayload_Membership2 = (
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
         streamParentId: value.streamParentId ? streamIdAsBytes(value.streamParentId) : undefined,
+        reason: MembershipReason.MR_NONE,
     })
 }
 

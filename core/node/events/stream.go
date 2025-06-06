@@ -284,6 +284,7 @@ func (s *Stream) importMiniblocksLocked(
 	var err error
 	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
+	var snapshot *Envelope
 	for _, miniblock := range miniblocks {
 		currentView, newEvents, err = currentView.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 		if err != nil {
@@ -291,6 +292,9 @@ func (s *Stream) importMiniblocksLocked(
 		}
 		allNewEvents = append(allNewEvents, newEvents...)
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
+		if len(miniblock.Header().GetSnapshotHash()) > 0 {
+			snapshot = miniblock.Snapshot
+		}
 	}
 
 	newMinipoolBytes, err := currentView.minipool.getEnvelopeBytes()
@@ -314,7 +318,7 @@ func (s *Stream) importMiniblocksLocked(
 	s.setViewLocked(currentView)
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 	// TODO: should we notify with entire miniblocks for efficiency?
-	s.notifySubscribersLocked(allNewEvents, newSyncCookie)
+	s.notifySubscribersLocked(allNewEvents, newSyncCookie, snapshot)
 	return nil
 }
 
@@ -375,7 +379,11 @@ func (s *Stream) applyMiniblockImplLocked(
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 
 	newEvents = append(newEvents, info.headerEvent.Envelope)
-	s.notifySubscribersLocked(newEvents, newSyncCookie)
+	var snapshot *Envelope
+	if len(info.Header().GetSnapshotHash()) > 0 {
+		snapshot = info.Snapshot
+	}
+	s.notifySubscribersLocked(newEvents, newSyncCookie, snapshot)
 	return nil
 }
 
@@ -389,7 +397,7 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	return s.promoteCandidateLocked(ctx, mb)
 }
 
-// promoteCandidateLocked shouldbe called with a lock held.
+// promoteCandidateLocked should be called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
@@ -441,7 +449,7 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 			return RiverError(
 				Err_STREAM_RECONCILIATION_REQUIRED,
 				"schedulePromotionNoLock: next promotion is not for the next block",
-			)
+			).Tags("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	} else if len(s.local.pendingCandidates) > 3 {
@@ -449,7 +457,8 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
-			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
+			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive").
+				Tag("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
@@ -463,6 +472,10 @@ func (s *Stream) initFromGenesisLocked(
 ) error {
 	if genesisInfo.Header().MiniblockNum != 0 {
 		return RiverError(Err_INTERNAL, "init from genesis must be from block with num 0")
+	}
+
+	if len(genesisBytes) == 0 {
+		return RiverError(Err_INTERNAL, "init from genesis: empty genesis bytes", "streamId", s.streamId)
 	}
 
 	err := s.params.Storage.CreateStreamStorage(
@@ -638,15 +651,23 @@ func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockInfo, bool, error) {
-	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
+	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
 	if err != nil {
 		return nil, false, err
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
-		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
+		opts := NewParsedMiniblockInfoOpts()
+		if block.Number > -1 {
+			opts = opts.WithExpectedBlockNumber(block.Number)
+		}
+		if omitSnapshot {
+			opts = opts.WithSkipSnapshotValidation()
+		}
+		miniblocks[i], err = NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 		if err != nil {
 			return nil, false, err
 		}
@@ -666,13 +687,7 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) error {
 // AddEvent2 adds an event to the stream and returns the new stream view.
 // AddEvent2 is thread-safe.
 func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
-	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-
-	return s.addEventLocked(ctx, event)
+	return s.addEvent(ctx, event, false)
 }
 
 // notifySubscribersLocked updates all callers with unseen events and the new sync cookie.
@@ -680,6 +695,7 @@ func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView
 func (s *Stream) notifySubscribersLocked(
 	envelopes []*Envelope,
 	newSyncCookie *SyncCookie,
+	snapshot *Envelope,
 ) {
 	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
 		s.lastAccessedTime = time.Now()
@@ -687,6 +703,7 @@ func (s *Stream) notifySubscribersLocked(
 		resp := &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: newSyncCookie,
+			Snapshot:       snapshot,
 		}
 		for receiver := range s.local.receivers.Iter() {
 			receiver.OnUpdate(resp)
@@ -694,9 +711,29 @@ func (s *Stream) notifySubscribersLocked(
 	}
 }
 
+func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+	_, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.addEventLocked(ctx, event, relaxDuplicateCheck)
+}
+
+// addEventLocked adds an event to the stream.
+// If relaxDuplicateCheck is true, it will not return an error if referenced miniblock can't be found in the cache.
+// In this case duplicate check can't be completed.
+// This options is used to add events that are reported by other nodes.
+// Without this option there are rare situations when events stay in minipools forever since they have mbs that too
+// old to be in the cache and thus can't complete the duplicate check.
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
+func (s *Stream) addEventLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	relaxDuplicateCheck bool,
+) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
 		return nil, err
@@ -708,7 +745,11 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
 			return oldSV, nil
 		}
-		return nil, AsRiverError(err).Func("copyAndAddEvent")
+		skipError := relaxDuplicateCheck && IsRiverErrorCode(err, Err_BAD_PREV_MINIBLOCK_HASH)
+		if !skipError {
+			return nil, AsRiverError(err).Func("copyAndAddEvent")
+		}
+		logging.FromCtx(ctx).Warnw("Stream.addEventLocked: adding event with relaxed duplicate check", "error", err)
 	}
 
 	// Check if event can be added before writing to storage.
@@ -748,7 +789,7 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 	s.setViewLocked(newSV)
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 
-	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie)
+	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
 
 	return newSV, nil
 }
@@ -991,9 +1032,9 @@ func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error)
 	return s.params.Storage.GetLastMiniblockNumber(ctx, s.streamId)
 }
 
-// applyStreamEvents applies the list of stream events to the stream.
-// applyStreamEvents is thread-safe.
-func (s *Stream) applyStreamEvents(
+// applyStreamMiniblockUpdates applies the list miniblock updates to the stream.
+// applyStreamMiniblockUpdates is thread-safe.
+func (s *Stream) applyStreamMiniblockUpdates(
 	ctx context.Context,
 	events []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
@@ -1002,11 +1043,15 @@ func (s *Stream) applyStreamEvents(
 		return
 	}
 
-	_, err := s.lockMuAndLoadView(ctx)
+	view, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "err", err)
+		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
+	}
+
+	if view == nil {
+		return // stream is not local, no need to apply miniblock updates
 	}
 
 	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
@@ -1030,7 +1075,7 @@ func (s *Stream) applyStreamEvents(
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
 					s.params.streamCache.SubmitSyncStreamTask(s, nil)
 				} else {
-					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
 			}
 		} else {

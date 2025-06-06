@@ -139,13 +139,10 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 
 	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 	// Applied for the new snapshot format only.
-	if !opts.SkipSnapshotValidation() && blockHeader.GetSnapshot() == nil && len(blockHeader.GetSnapshotHash()) > 0 {
-		if snapshot == nil {
-			return nil, RiverError(Err_BAD_BLOCK, "Snapshot envelope must be set").
-				Func("NewMiniblockInfoFromProto")
-		}
-
-		// Validate snapshot in a new style
+	if !opts.SkipSnapshotValidation() &&
+		blockHeader.GetSnapshot() == nil &&
+		len(blockHeader.GetSnapshotHash()) > 0 &&
+		snapshot != nil {
 		if common.BytesToHash(sn.Hash).Cmp(common.BytesToHash(blockHeader.GetSnapshotHash())) != 0 {
 			return nil, RiverError(Err_BAD_BLOCK, "Snapshot hash does not match snapshot envelope hash").
 				Func("NewMiniblockInfoFromProto")
@@ -314,6 +311,9 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 				Message("Failed to serialize snapshot to bytes").
 				Func("AsStorageMb")
 		}
+	} else if b.Header().GetSnapshot() != nil {
+		// TODO: Remove it after enabling new snapshot format
+		serializedSn = make([]byte, 0)
 	}
 
 	return &storage.WriteMiniblockData{

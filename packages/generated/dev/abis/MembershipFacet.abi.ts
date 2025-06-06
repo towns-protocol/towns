@@ -230,6 +230,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "setMembershipDuration",
+    "inputs": [
+      {
+        "name": "duration",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setMembershipFreeAllocation",
     "inputs": [
       {
@@ -1449,6 +1462,11 @@ export default [
   {
     "type": "error",
     "name": "Roles__RoleDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__RoleIsImmutable",
     "inputs": []
   },
   {

@@ -5,7 +5,7 @@ import { PersistedObservable, persistedObservable } from '../../../observable/pe
 import { makeUserInboxStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Client } from '../../../client'
-import { IStreamStateView } from '../../../streamStateView'
+import { StreamStateView } from '../../../streamStateView'
 import { isDefined } from '../../../check'
 
 const logger = dlogger('csb:userInbox')
@@ -20,7 +20,11 @@ export interface UserInboxModel extends Identifiable {
 
 @persistedObservable({ tableName: 'userInbox' })
 export class UserInbox extends PersistedObservable<UserInboxModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserInboxStreamId(id), initialized: false },
             store,
@@ -72,7 +76,7 @@ export class UserInbox extends PersistedObservable<UserInboxModel> {
         }
     }
 
-    private initialize(deviceId: string, streamView: IStreamStateView) {
+    private initialize(deviceId: string, streamView: StreamStateView) {
         this.setData({
             initialized: true,
             deviceId,

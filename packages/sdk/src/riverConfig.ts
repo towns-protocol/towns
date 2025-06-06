@@ -86,6 +86,7 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                 baseRegistry: process.env.BASE_REGISTRY_ADDRESS as Address,
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
                 spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
+                towns: process.env.TOWNS_ADDRESS as Address,
                 utils: {
                     mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
                     member: process.env.MEMBER_ADDRESS as Address | undefined,
@@ -127,4 +128,23 @@ export function makeRiverConfig(inEnvironmentId?: string) {
         river: makeRiverChainConfig(environmentId),
     }
     return config
+}
+
+export const getStreamMetadataUrl = (environmentId: string) => {
+    switch (environmentId) {
+        case 'alpha':
+            return 'https://alpha.river.delivery'
+        case 'gamma':
+            return 'https://gamma.river.delivery'
+        case 'omega':
+            return 'https://river.delivery'
+        case 'delta':
+            return 'https://delta.river.delivery'
+        case 'local_multi':
+            return 'http://localhost:3002'
+        case 'local_multi_ne':
+            return 'http://localhost:3003'
+        default:
+            throw new Error(`No stream metadata url for environmentId ${environmentId}`)
+    }
 }

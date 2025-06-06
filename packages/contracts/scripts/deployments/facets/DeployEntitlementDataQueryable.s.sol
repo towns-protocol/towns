@@ -1,32 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IEntitlementDataQueryable} from "src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {EntitlementDataQueryable} from "src/spaces/facets/entitlements/extensions/EntitlementDataQueryable.sol";
-
-contract DeployEntitlementDataQueryable is Deployer, FacetHelper {
-    // FacetHelper
-    constructor() {
-        addSelector(EntitlementDataQueryable.getEntitlementDataByPermission.selector);
-        addSelector(EntitlementDataQueryable.getChannelEntitlementDataByPermission.selector);
-        addSelector(EntitlementDataQueryable.getCrossChainEntitlementData.selector);
+library DeployEntitlementDataQueryable {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](3);
+        res[0] = IEntitlementDataQueryable.getEntitlementDataByPermission.selector;
+        res[1] = IEntitlementDataQueryable.getChannelEntitlementDataByPermission.selector;
+        res[2] = IEntitlementDataQueryable.getCrossChainEntitlementData.selector;
     }
 
-    // Deploying
-    function versionName() public pure override returns (string memory) {
-        return "facets/entitlementDataQueryableFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        EntitlementDataQueryable facet = new EntitlementDataQueryable();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("EntitlementDataQueryable.sol", "");
     }
 }

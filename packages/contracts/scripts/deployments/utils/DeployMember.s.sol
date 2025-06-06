@@ -47,8 +47,19 @@ contract DeployMember is Deployer {
         allowances[3] = 1;
         allowances[4] = 1;
 
+        uint256[] memory points = new uint256[](5);
+        points[0] = 1;
+        points[1] = 1;
+        points[2] = 1;
+        points[3] = 1;
+        points[4] = 1;
+
         merkle = new MerkleTree();
-        (bytes32 root, bytes32[][] memory tree) = merkle.constructTree(accounts, allowances);
+        (bytes32 root, bytes32[][] memory tree) = merkle.constructTree(
+            accounts,
+            allowances,
+            points
+        );
 
         vm.startBroadcast(deployer);
         member = new Member(

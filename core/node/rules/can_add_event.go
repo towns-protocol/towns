@@ -10,6 +10,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/towns-protocol/towns/core/config"
 	baseContracts "github.com/towns-protocol/towns/core/contracts/base"
 	"github.com/towns-protocol/towns/core/node/auth"
@@ -20,7 +22,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/xchain/bindings/erc20"
-	"google.golang.org/protobuf/proto"
 )
 
 type aeParams struct {
@@ -162,15 +163,15 @@ func CanAddEvent(
 	if parsedEvent.Event.PrevMiniblockHash == nil {
 		return false, nil, nil, RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
 	}
+
 	// check preceding miniblock hash
-	err := streamView.ValidateNextEvent(ctx, chainConfig.Get(), parsedEvent, currentTime)
-	if err != nil {
+	if err := streamView.ValidateNextEvent(ctx, chainConfig.Get(), parsedEvent, currentTime); err != nil {
 		return false, nil, nil, err
 	}
+
 	// make sure the stream event is of the same type as the inception event
-	err = parsedEvent.Event.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload())
-	if err != nil {
-		return false, nil, nil, err
+	if err := parsedEvent.Event.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload()); err != nil {
+		return false, nil, nil, AsRiverError(err, Err_INVALID_ARGUMENT)
 	}
 
 	settings := chainConfig.Get()
@@ -658,7 +659,10 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_I
 	// loop over all events in the view, check if the transaction is already in the view
 	streamView := ru.params.streamView
 
-	hasTransaction, err := streamView.HasTransaction(ru.memberTransaction.Transaction.GetReceipt(), ru.memberTransaction.Transaction.GetSolanaReceipt())
+	hasTransaction, err := streamView.HasTransaction(
+		ru.memberTransaction.Transaction.GetReceipt(),
+		ru.memberTransaction.Transaction.GetSolanaReceipt(),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -674,7 +678,10 @@ func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransacti
 	// loop over all events in the view, check if the transaction is already in the view
 	userStreamView := ru.params.streamView
 
-	hasTransaction, err := userStreamView.HasTransaction(ru.receivedTransaction.Transaction.GetReceipt(), ru.receivedTransaction.Transaction.GetSolanaReceipt())
+	hasTransaction, err := userStreamView.HasTransaction(
+		ru.receivedTransaction.Transaction.GetReceipt(),
+		ru.receivedTransaction.Transaction.GetSolanaReceipt(),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -695,14 +702,28 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 		return false, err
 	}
 	if hasTransaction {
-		return false, RiverError(
-			Err_INVALID_ARGUMENT,
-			"duplicate transaction",
-			"streamId",
-			ru.params.streamView.StreamId(),
-			"transactionHash",
-			ru.transaction.GetReceipt().TransactionHash,
-		)
+		if ru.transaction.GetReceipt() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetReceipt().TransactionHash,
+			)
+		} else if ru.transaction.GetSolanaReceipt().GetTransaction() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetSolanaReceipt().GetTransaction().Signatures,
+			)
+		} else {
+			// should never happen
+			return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
+		}
 	}
 	return true, nil
 }
@@ -923,7 +944,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 
 		// preTokenBalances isn't set when a user opens a token account (buys a token for the 1st time),
 		// so we need to check if it's not empty otherwise, we use 0 as the amount before
-		var amountBefore = big.NewInt(0)
+		amountBefore := big.NewInt(0)
 		if idx != len(meta.GetPreTokenBalances()) {
 			var ok bool
 			amountString := meta.GetPreTokenBalances()[idx].Amount.Amount
@@ -1453,7 +1474,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	}
 	// for joins and invites, require space membership
 	return &DerivedEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil),
+		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil, nil),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -1476,6 +1497,23 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 
 	if currentMembershipOp == ru.userMembership.Op {
 		return false, nil
+	}
+
+	if ru.userMembership.Reason != nil && *ru.userMembership.Reason != MembershipReason_MR_NONE {
+		// at this time, the only reasons are for the scrubber so we need to make sure the membership op is leave
+		if ru.userMembership.Op != MembershipOp_SO_LEAVE {
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"reasons should be undefined for non-leave events",
+				"op",
+				ru.userMembership.Op,
+			)
+		}
+		// reasons should only be set by the scrubber at this time
+		canAdd, err := ru.params.creatorIsValidNode()
+		if !canAdd || err != nil {
+			return false, err
+		}
 	}
 
 	switch currentMembershipOp {
@@ -1556,7 +1594,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId)
+	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId, nil)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
 	if err != nil {
 		return nil, err
@@ -1712,6 +1750,7 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 			*channelId,
 			&userId,
 			spaceId[:],
+			nil,
 		),
 	}, nil
 }

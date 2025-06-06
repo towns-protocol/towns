@@ -41,7 +41,7 @@ var DefaultDbTxDurationBucketsSeconds = []float64{
 }
 
 // MetricsPublisher both provides handler to publish metrics from the given registry
-// and optionally published metric on give adddress:port.
+// and optionally published metric on give address:port.
 type MetricsPublisher struct {
 	registry   *prometheus.Registry
 	httpServer *http.Server
@@ -93,7 +93,7 @@ func (m *MetricsPublisher) serveHttp(ctx context.Context) {
 		if err == http.ErrServerClosed {
 			log.Infow("Metrics HTTP server closed")
 		} else {
-			log.Errorw("Metrics HTTP server error", "err", err)
+			log.Errorw("Metrics HTTP server error", "error", err)
 		}
 	}
 }
@@ -104,7 +104,7 @@ func (m *MetricsPublisher) waitForClose(ctx context.Context) {
 
 	err := m.httpServer.Close()
 	if err != nil {
-		log.Errorw("Error closing metrics HTTP server", "err", err)
+		log.Errorw("Error closing metrics HTTP server", "error", err)
 	} else {
 		log.Infow("Closing metrics HTTP server")
 	}

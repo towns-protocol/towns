@@ -1,70 +1,76 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
+library DeployMembership {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
-contract DeployMembership is Deployer, FacetHelper {
-    constructor() {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(22);
+
         // Funds
-
-        addSelector(IMembership.revenue.selector);
+        arr.p(IMembership.revenue.selector);
 
         // Minting
-        addSelector(IMembership.joinSpace.selector);
-        addSelector(IMembership.joinSpaceWithReferral.selector);
-        addSelector(IMembership.renewMembership.selector);
+        arr.p(IMembership.joinSpace.selector);
+        arr.p(IMembership.joinSpaceWithReferral.selector);
+        arr.p(IMembership.renewMembership.selector);
 
-        addSelector(IMembership.expiresAt.selector);
+        arr.p(IMembership.expiresAt.selector);
 
         // Duration
-        addSelector(IMembership.getMembershipDuration.selector);
+        arr.p(IMembership.getMembershipDuration.selector);
+        arr.p(IMembership.setMembershipDuration.selector);
 
         // Pricing Module
-        addSelector(IMembership.setMembershipPricingModule.selector);
-        addSelector(IMembership.getMembershipPricingModule.selector);
+        arr.p(IMembership.setMembershipPricingModule.selector);
+        arr.p(IMembership.getMembershipPricingModule.selector);
 
         // Pricing
-        addSelector(IMembership.setMembershipPrice.selector);
-        addSelector(IMembership.getMembershipPrice.selector);
-        addSelector(IMembership.getMembershipRenewalPrice.selector);
-        addSelector(IMembership.getProtocolFee.selector);
+        arr.p(IMembership.setMembershipPrice.selector);
+        arr.p(IMembership.getMembershipPrice.selector);
+        arr.p(IMembership.getMembershipRenewalPrice.selector);
+        arr.p(IMembership.getProtocolFee.selector);
 
         // Allocation
-        addSelector(IMembership.setMembershipFreeAllocation.selector);
-        addSelector(IMembership.getMembershipFreeAllocation.selector);
+        arr.p(IMembership.setMembershipFreeAllocation.selector);
+        arr.p(IMembership.getMembershipFreeAllocation.selector);
 
         // Limits
-        addSelector(IMembership.setMembershipLimit.selector);
-        addSelector(IMembership.getMembershipLimit.selector);
+        arr.p(IMembership.setMembershipLimit.selector);
+        arr.p(IMembership.getMembershipLimit.selector);
 
         // Currency
-        addSelector(IMembership.getMembershipCurrency.selector);
+        arr.p(IMembership.getMembershipCurrency.selector);
 
         // Image
-        addSelector(IMembership.setMembershipImage.selector);
-        addSelector(IMembership.getMembershipImage.selector);
+        arr.p(IMembership.setMembershipImage.selector);
+        arr.p(IMembership.getMembershipImage.selector);
 
         // Factory
-        addSelector(IMembership.getSpaceFactory.selector);
+        arr.p(IMembership.getSpaceFactory.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/membershipFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        address membership = address(new MembershipFacet());
-        vm.stopBroadcast();
-
-        return membership;
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("MembershipFacet.sol", "");
     }
 }

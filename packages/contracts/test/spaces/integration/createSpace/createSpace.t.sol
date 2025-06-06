@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IArchitect} from "src/factory/facets/architect/IArchitect.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
@@ -13,22 +12,19 @@ import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
-
 import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
-import {Validator__InvalidAddress} from "src/utils/Validator.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 
 // contracts
-
 import {Architect} from "src/factory/facets/architect/Architect.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // mocks
-
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
@@ -277,7 +273,7 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function test_createSpaceV2_with_invalid_pricing_module() public {
         vm.prank(founder);
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         createSpaceFacet.createSpaceV2(
             _createSpaceWithPrepayInfo("test"),
             SpaceOptions({to: founder})
@@ -290,7 +286,7 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         spaceInfo.membership.requirements.everyone = true;
 
         vm.prank(founder);
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         createSpaceFacet.createSpaceV2(spaceInfo, SpaceOptions({to: address(0)}));
     }
 

@@ -2,28 +2,29 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IMembershipMetadata} from "src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 //libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {MembershipMetadata} from "src/spaces/facets/membership/metadata/MembershipMetadata.sol";
 
-contract DeployMembershipMetadata is Deployer, FacetHelper {
-    constructor() {
-        addSelector(MembershipMetadata.refreshMetadata.selector);
-        addSelector(MembershipMetadata.tokenURI.selector);
+library DeployMembershipMetadata {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](2);
+        res[0] = IMembershipMetadata.refreshMetadata.selector;
+        res[1] = IMembershipMetadata.tokenURI.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/membershipMetadataFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        MembershipMetadata membershipMetadata = new MembershipMetadata();
-        vm.stopBroadcast();
-        return address(membershipMetadata);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("MembershipMetadata.sol", "");
     }
 }

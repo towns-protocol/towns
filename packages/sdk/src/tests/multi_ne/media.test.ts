@@ -173,7 +173,7 @@ describe('mediaTests', () => {
 
     test('chunkSizeCanBeAtLimit', async () => {
         const result = await bobCreateMediaStream(10)
-        const chunk = new Uint8Array(500000)
+        const chunk = new Uint8Array(1200000)
         await expect(
             bobsClient.sendMediaPayload(result.creationCookie, false, chunk, 0),
         ).resolves.not.toThrow()
@@ -181,7 +181,7 @@ describe('mediaTests', () => {
 
     test('chunkSizeNeedsToBeWithinLimit', async () => {
         const result = await bobCreateMediaStream(10)
-        const chunk = new Uint8Array(500001)
+        const chunk = new Uint8Array(1200001)
         await expect(
             bobsClient.sendMediaPayload(result.creationCookie, false, chunk, 0),
         ).rejects.toThrow()

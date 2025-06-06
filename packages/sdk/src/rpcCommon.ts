@@ -12,11 +12,11 @@ export interface RpcOptions {
 }
 
 export function createHttp2ConnectTransport(options: ConnectTransportOptionsWeb): Transport {
-    if (isNodeEnv() && !isTestEnv()) {
+    if (isNodeEnv && !isTestEnv()) {
         // use node version of connect to force httpVersion: '2'
         const {
             createConnectTransport: createConnectTransportNode,
-            // eslint-disable-next-line import/no-extraneous-dependencies, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+            // eslint-disable-next-line import-x/no-extraneous-dependencies, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
         } = require('@connectrpc/connect-node')
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         return createConnectTransportNode({ ...options, httpVersion: '2' }) as Transport

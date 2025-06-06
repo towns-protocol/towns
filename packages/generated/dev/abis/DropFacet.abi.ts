@@ -19,7 +19,7 @@ export default [
       {
         "name": "condition",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.ClaimCondition",
+        "internalType": "struct DropGroup.ClaimCondition",
         "components": [
           {
             "name": "currency",
@@ -67,9 +67,9 @@ export default [
     "name": "claimAndStake",
     "inputs": [
       {
-        "name": "claim",
+        "name": "req",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.Claim",
+        "internalType": "struct DropClaim.Claim",
         "components": [
           {
             "name": "conditionId",
@@ -83,6 +83,11 @@ export default [
           },
           {
             "name": "quantity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "points",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -111,7 +116,7 @@ export default [
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -123,9 +128,9 @@ export default [
     "name": "claimWithPenalty",
     "inputs": [
       {
-        "name": "claim",
+        "name": "req",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.Claim",
+        "internalType": "struct DropClaim.Claim",
         "components": [
           {
             "name": "conditionId",
@@ -139,6 +144,11 @@ export default [
           },
           {
             "name": "quantity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "points",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -191,7 +201,7 @@ export default [
       {
         "name": "condition",
         "type": "tuple",
-        "internalType": "struct DropClaimLib.ClaimCondition",
+        "internalType": "struct DropGroup.ClaimCondition",
         "components": [
           {
             "name": "currency",
@@ -241,7 +251,7 @@ export default [
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct DropClaimLib.ClaimCondition[]",
+        "internalType": "struct DropGroup.ClaimCondition[]",
         "components": [
           {
             "name": "currency",
@@ -338,7 +348,7 @@ export default [
       {
         "name": "conditions",
         "type": "tuple[]",
-        "internalType": "struct DropClaimLib.ClaimCondition[]",
+        "internalType": "struct DropGroup.ClaimCondition[]",
         "components": [
           {
             "name": "currency",
@@ -395,7 +405,7 @@ export default [
         "name": "condition",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct DropClaimLib.ClaimCondition",
+        "internalType": "struct DropGroup.ClaimCondition",
         "components": [
           {
             "name": "currency",
@@ -451,7 +461,7 @@ export default [
         "name": "conditions",
         "type": "tuple[]",
         "indexed": false,
-        "internalType": "struct DropClaimLib.ClaimCondition[]",
+        "internalType": "struct DropGroup.ClaimCondition[]",
         "components": [
           {
             "name": "currency",
@@ -682,6 +692,27 @@ export default [
     "type": "error",
     "name": "DropFacet__UnexpectedPenaltyBps",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ERC20InsufficientBalance",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",

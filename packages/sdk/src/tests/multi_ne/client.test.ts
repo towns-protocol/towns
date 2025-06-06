@@ -180,6 +180,12 @@ describe('clientTest', () => {
 
         await bobsClient.waitForStream(channelId)
 
+        // send a bunch of messages and force some snapshots to push the events out of the view
+        for (let i = 0; i < 10; i++) {
+            await bobsClient.sendMessage(channelId, `Hello ${i}`)
+            await bobsClient.debugForceMakeMiniblock(channelId, { forceSnapshot: true })
+        }
+
         // hand construct a message, (don't do this normally! just use sendMessage(..))
         const algorithm = GroupEncryptionAlgorithmId.GroupEncryption // algorithm doesn't matter here, don't copy paste
         const channelMessage = create(ChannelMessageSchema, {
@@ -205,6 +211,7 @@ describe('clientTest', () => {
                 channelId,
                 message,
                 Uint8Array.from(Array(32).fill(0)), // just going to throw any old thing in there... the retry should pick it up
+                BigInt(0),
             ),
         ).resolves.not.toThrow()
     })
@@ -372,6 +379,16 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // see solicitation in view
+        await waitFor(() => {
+            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const solicitation = stream?.view.membershipContent.joined
+                .get(bobsClient.userId)
+                ?.solicitations.find((x) => x.deviceKey === 'foo')
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(true)
+        })
+
         // fulfillment should resolve
         payload = make_MemberPayload_KeyFulfillment({
             deviceKey: 'foo',
@@ -382,18 +399,14 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // fullfillment should remove solicitation from view
         await waitFor(() => {
-            const lastEvent = bobsClient.streams
-                .get(bobsClient.userSettingsStreamId!)
-                ?.view.timeline.filter((x) => x.remoteEvent?.event.payload.case === 'memberPayload')
-                .at(-1)
-            expect(lastEvent).toBeDefined()
-            check(lastEvent?.remoteEvent?.event.payload.case === 'memberPayload', '??')
-            check(
-                lastEvent?.remoteEvent?.event.payload.value.content.case === 'keyFulfillment',
-                '??',
-            )
-            expect(lastEvent?.remoteEvent?.event.payload.value.content.value.deviceKey).toBe('foo')
+            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const solicitation = stream?.view.membershipContent.joined
+                .get(bobsClient.userId)
+                ?.solicitations.find((x) => x.deviceKey === 'foo')
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(false)
         })
 
         // fulfillment with empty session ids should now fail
@@ -975,18 +988,14 @@ describe('clientTest', () => {
         const channelStream = bobsClient.stream(bobsChannelId)
         expect(channelStream).toBeDefined()
         await waitFor(() => {
-            expect(channelStream?.view.getMembers().membership.joinedUsers).toContain(
-                alicesClient.userId,
-            )
+            expect(channelStream?.view.getMembers().joinedUsers).toContain(alicesClient.userId)
         })
         // leave the space
         await expect(alicesClient.leaveStream(bobsSpaceId)).resolves.not.toThrow()
 
         // the channel should be left as well
         await waitFor(() => {
-            expect(channelStream?.view.getMembers().membership.joinedUsers).not.toContain(
-                alicesClient.userId,
-            )
+            expect(channelStream?.view.getMembers().joinedUsers).not.toContain(alicesClient.userId)
         })
         await alicesClient.stopSync()
     })
@@ -1058,8 +1067,10 @@ describe('clientTest', () => {
             thumbnail: undefined,
         } satisfies PlainMessage<ChunkedMedia>
 
-        const { eventId } = await bobsClient.setUserProfileImage(chunkedMediaInfo)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserProfileImage(chunkedMediaInfo)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedProfileImage).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
         expect(decrypted).toBeDefined()
@@ -1078,8 +1089,10 @@ describe('clientTest', () => {
         expect(userMetadataStream).toBeDefined()
 
         const bio = { bio: 'Hello, world!' }
-        const { eventId } = await bobsClient.setUserBio(bio)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserBio(bio)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)
@@ -1094,8 +1107,10 @@ describe('clientTest', () => {
         expect(userMetadataStream).toBeDefined()
 
         const bio = { bio: '' }
-        const { eventId } = await bobsClient.setUserBio(bio)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserBio(bio)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)

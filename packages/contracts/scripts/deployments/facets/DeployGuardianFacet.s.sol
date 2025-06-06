@@ -1,42 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {GuardianFacet} from "src/spaces/facets/guardian/GuardianFacet.sol";
 
-contract DeployGuardianFacet is FacetHelper, Deployer {
-    constructor() {
-        addSelector(IGuardian.enableGuardian.selector);
-        addSelector(IGuardian.guardianCooldown.selector);
-        addSelector(IGuardian.disableGuardian.selector);
-        addSelector(IGuardian.isGuardianEnabled.selector);
-        addSelector(IGuardian.getDefaultCooldown.selector);
-        addSelector(IGuardian.setDefaultCooldown.selector);
+library DeployGuardianFacet {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](6);
+        res[0] = IGuardian.enableGuardian.selector;
+        res[1] = IGuardian.guardianCooldown.selector;
+        res[2] = IGuardian.disableGuardian.selector;
+        res[3] = IGuardian.isGuardianEnabled.selector;
+        res[4] = IGuardian.getDefaultCooldown.selector;
+        res[5] = IGuardian.setDefaultCooldown.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/guardianFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return GuardianFacet.__GuardianFacet_init.selector;
+    function makeInitData(uint256 cooldown) internal pure returns (bytes memory) {
+        return abi.encodeCall(GuardianFacet.__GuardianFacet_init, cooldown);
     }
 
-    function makeInitData(uint256 cooldown) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), cooldown);
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        GuardianFacet facet = new GuardianFacet();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("GuardianFacet.sol", "");
     }
 }

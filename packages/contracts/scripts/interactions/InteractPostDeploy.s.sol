@@ -2,59 +2,55 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-import {IImplementationRegistry} from "./../../src/factory/facets/registry/IImplementationRegistry.sol";
-
+import {IImplementationRegistry} from "../../src/factory/facets/registry/IImplementationRegistry.sol";
 import {SpaceDelegationFacet} from "src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
+import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
 
 // libraries
+import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
-
 import {MAX_CLAIMABLE_SUPPLY} from "./InteractClaimCondition.s.sol";
 import {Interaction} from "scripts/common/Interaction.s.sol";
 import {MockTowns} from "test/mocks/MockTowns.sol";
 
 // deployments
-
-import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
-
-import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
-import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeploySpaceOwner} from "scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-
 import {DeployProxyBatchDelegation} from "scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 import {DeployTownsBase} from "scripts/deployments/utils/DeployTownsBase.s.sol";
 
 contract InteractPostDeploy is Interaction {
+    DeployProxyBatchDelegation deployProxyDelegation = new DeployProxyBatchDelegation();
+    DeployTownsBase deployTownsBase = new DeployTownsBase();
+
+    address internal constant OPERATOR = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    address internal constant STAKER = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
+
     function __interact(address deployer) internal override {
         vm.pauseGasMetering();
-
-        DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
-        DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
-        DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
-        DeployTownsBase deployTownsBase = new DeployTownsBase();
-        DeployProxyBatchDelegation deployProxyDelegation = new DeployProxyBatchDelegation();
-        DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
-
-        address spaceOwner = deploySpaceOwner.deploy(deployer);
-        address spaceFactory = deploySpaceFactory.deploy(deployer);
-        address baseRegistry = deployBaseRegistry.deploy(deployer);
+        address spaceOwner = getDeployment("spaceOwner");
+        address spaceFactory = getDeployment("spaceFactory");
+        address baseRegistry = getDeployment("baseRegistry");
+        address riverAirdrop = getDeployment("riverAirdrop");
+        address appRegistry = getDeployment("appRegistry");
         address townsBase = deployTownsBase.deploy(deployer);
-        address mainnetProxyDelegation = deployProxyDelegation.deploy(deployer);
-        address riverAirdrop = deployRiverAirdrop.deploy(deployer);
+        address proxyDelegation = deployProxyDelegation.deploy(deployer);
 
         // this is for anvil deployment only
         vm.startBroadcast(deployer);
-        // this is for anvil deployment only
         MockTowns(townsBase).localMint(riverAirdrop, MAX_CLAIMABLE_SUPPLY);
+        MockTowns(townsBase).localMint(STAKER, MAX_CLAIMABLE_SUPPLY);
         ISpaceOwner(spaceOwner).setFactory(spaceFactory);
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
+        IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
         SpaceDelegationFacet(baseRegistry).setRiverToken(townsBase);
-        IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
+        IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
+
+        INodeOperator operatorFacet = INodeOperator(baseRegistry);
+        operatorFacet.registerOperator(OPERATOR);
+        operatorFacet.setOperatorStatus(OPERATOR, NodeOperatorStatus.Approved);
         vm.stopBroadcast();
     }
 }

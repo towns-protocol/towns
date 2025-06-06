@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
 import {IRiverConfig} from "src/river/registry/facets/config/IRiverConfig.sol";
 
 // libraries
+import {RiverConfigValues} from "scripts/interactions/helpers/RiverConfigValues.sol";
 
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
@@ -26,7 +27,7 @@ contract InteractRiverRegistry is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("xchain.blockchains"),
+            RiverConfigValues.XCHAIN_BLOCKCHAINS,
             0,
             abi.encode(chains)
         );

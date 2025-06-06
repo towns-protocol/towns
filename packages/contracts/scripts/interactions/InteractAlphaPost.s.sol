@@ -8,21 +8,20 @@ import {IPricingModules} from "src/factory/facets/architect/pricing/IPricingModu
 import {ISpaceProxyInitializer} from "src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // deployment
-import {DeploySpaceProxyInitializer} from "scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeployTieredLogPricingV3} from "scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
 
 contract InteractAlphaPost is Interaction {
-    DeploySpaceProxyInitializer deploySpaceProxyInitializer = new DeploySpaceProxyInitializer();
     DeployTieredLogPricingV3 deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
 
     function __interact(address deployer) internal override {
         address spaceFactory = getDeployment("spaceFactory");
 
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
-        address spaceProxyInitializer = deploySpaceProxyInitializer.deploy(deployer);
+        vm.broadcast(deployer);
+        address spaceProxyInitializer = deployCode("SpaceProxyInitializer.sol", "");
         address tieredLogPricing = deployTieredLogPricingV3.deploy(deployer);
 
         vm.startBroadcast(deployer);

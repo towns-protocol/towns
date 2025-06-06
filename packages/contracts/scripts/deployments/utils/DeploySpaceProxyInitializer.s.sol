@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
+//interfaces
 
-// contracts
-import {Deployer} from "scripts/common/Deployer.s.sol";
+//libraries
+
+//contracts
 import {SpaceProxyInitializer} from "src/spaces/facets/proxy/SpaceProxyInitializer.sol";
+import {Deployer} from "scripts/common/Deployer.s.sol";
 
 contract DeploySpaceProxyInitializer is Deployer {
     function versionName() public pure override returns (string memory) {
@@ -13,10 +15,14 @@ contract DeploySpaceProxyInitializer is Deployer {
     }
 
     function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        SpaceProxyInitializer proxyInitializer = new SpaceProxyInitializer();
-        vm.stopBroadcast();
+        bytes32 salt = bytes32(uint256(1));
+        bytes32 initCodeHash = hashInitCode(type(SpaceProxyInitializer).creationCode);
+        address soonToBe = vm.computeCreate2Address(salt, initCodeHash);
 
-        return address(proxyInitializer);
+        vm.broadcast(deployer);
+        SpaceProxyInitializer initializer = new SpaceProxyInitializer{salt: salt}();
+
+        require(address(initializer) == soonToBe, "address mismatch");
+        return address(initializer);
     }
 }

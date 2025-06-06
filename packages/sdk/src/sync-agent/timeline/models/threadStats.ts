@@ -3,7 +3,7 @@ import { RiverTimelineEvent, TimelineEvent, ThreadStatsData } from './timeline-t
 import { getMessageSenderId, getChannelMessageContent } from './timelineEvent'
 
 // eventId -> threadStats
-export type ThreadStatsMap = Record<string, ThreadStatsData>
+type ThreadStatsMap = Record<string, ThreadStatsData>
 
 // TODO: better name
 export class ThreadStats extends Observable<ThreadStatsMap> {

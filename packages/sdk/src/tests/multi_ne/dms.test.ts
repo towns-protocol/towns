@@ -33,7 +33,7 @@ describe('dmsTests', () => {
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+        expect(stream.view.getMembers().joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
         )
     })
@@ -44,7 +44,7 @@ describe('dmsTests', () => {
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
             )
         })
@@ -52,9 +52,7 @@ describe('dmsTests', () => {
         await expect(alicesClient.leaveStream(streamId)).resolves.not.toThrow()
         await waitFor(
             () => {
-                expect(stream.view.getMembers().membership.joinedUsers).toEqual(
-                    new Set([bobsClient.userId]),
-                )
+                expect(stream.view.getMembers().joinedUsers).toEqual(new Set([bobsClient.userId]))
             },
             { timeoutMS: 15000 },
         )
@@ -141,9 +139,7 @@ describe('dmsTests', () => {
         const bobsClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(bobsClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMembers().membership.joinedUsers).toEqual(
-            new Set([bobsClient.userId]),
-        )
+        expect(stream.view.getMembers().joinedUsers).toEqual(new Set([bobsClient.userId]))
     })
 
     // Alice should not be allowed to create a 1:1 DM between Bob and himself.

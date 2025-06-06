@@ -20,6 +20,7 @@ import { userRefresh } from './routes/userRefresh'
 import { addCacheControlCheck } from './check-cache-control'
 import { fetchSpaceMemberMetadata } from './routes/spaceMemberMetadata'
 import { fetchRefreshStatus } from './routes/refreshStatus'
+import { fetchUserTips } from './routes/userTips'
 
 // Set the process title to 'stream-metadata' so it can be easily identified
 // or killed with `pkill stream-metadata`
@@ -62,7 +63,7 @@ server.addHook('onRequest', (request, reply, done) => {
 			url: request.url,
 			query: request.query,
 			params: request.params,
-			routerPath: request.routerPath,
+			routerPath: request.routeOptions.url,
 			method: request.method,
 			ip: request.ip,
 			ips: request.ips,
@@ -114,6 +115,7 @@ export function setupRoutes(srv: Server) {
 	srv.get('/space/:spaceAddress', fetchSpaceMetadata)
 	srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata) // for fetching token info (i.e. openSea metadata)
 	srv.get('/user/:userId/bio', fetchUserBio)
+	srv.get('/user/:userId/tips', fetchUserTips)
 
 	// not cached
 	srv.get('/health', checkHealth)

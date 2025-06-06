@@ -3,20 +3,17 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
-
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
-import {Validator__InvalidAddress, Validator__InvalidStringLength} from "src/utils/Validator.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 
 // libraries
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
-
 import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
@@ -66,12 +63,12 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
         address spaceAddress = _randomAddress();
 
         vm.prank(spaceFactory);
-        vm.expectRevert(Validator__InvalidStringLength.selector);
+        vm.expectRevert(Validator.InvalidLength.selector);
         spaceOwnerToken.mintSpace("", uri, spaceAddress, shortDescription, longDescription);
     }
 
     function test_mintSpace_revert_invalidAddress() external {
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         mintSpace(uri, address(0));
     }
 
@@ -132,7 +129,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
         mintSpace(uri, spaceAddress);
 
         vm.prank(spaceFactory);
-        vm.expectRevert(Validator__InvalidStringLength.selector);
+        vm.expectRevert(Validator.InvalidLength.selector);
         spaceOwnerToken.updateSpaceInfo(
             spaceAddress,
             "",
@@ -194,7 +191,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
 
     function test_setFactory_revert_invalidAddress() external {
         vm.prank(deployer);
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         spaceOwnerToken.setFactory(address(0));
     }
 
@@ -219,7 +216,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
 
     function test_setDefaultUri_revert_invalidUri() external {
         vm.prank(deployer);
-        vm.expectRevert(Validator__InvalidStringLength.selector);
+        vm.expectRevert(Validator.InvalidLength.selector);
         spaceOwnerToken.setDefaultUri("");
     }
 

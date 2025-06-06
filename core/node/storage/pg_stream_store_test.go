@@ -15,11 +15,13 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 type testStreamStoreParams struct {
@@ -62,7 +64,14 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		instanceId,
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:           time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep:     crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5, UserSetting: 5},
+				StreamSnapshotIntervalInMiniblocks: 110,
+			},
+		},
+		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
 
@@ -661,7 +670,13 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			instanceId2,
 			exitSignal2,
 			infra.NewMetricsFactory(nil, "", ""),
-			time.Minute*10,
+			&mocks.MockOnChainCfg{
+				Settings: &crypto.OnChainSettings{
+					StreamEphemeralStreamTTL:       time.Minute * 10,
+					StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
+				},
+			},
+			5,
 		)
 		require.NoError(err)
 		secondStoreInitialized.Done()
@@ -1057,7 +1072,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		),
 	)
 
-	_, err := pgStreamStore.ReadMiniblocks(ctx, streamId, 1, 4)
+	_, err := pgStreamStore.ReadMiniblocks(ctx, streamId, 1, 4, true)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Miniblocks consistency violation")
@@ -1196,6 +1211,13 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 		Snapshot: genMB.Snapshot,
 	}))
 
+	count, err := store.GetMiniblockCandidateCount(ctx, streamId, 0)
+	require.NoError(err)
+	require.EqualValues(0, count)
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, 1)
+	require.NoError(err)
+	require.EqualValues(0, count)
+
 	mb1 := dataMaker.mb(1, false)
 	mbs = append(mbs, mb1)
 	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
@@ -1203,6 +1225,19 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 		Hash:   mb1.Hash,
 		Data:   mb1.Data,
 	}))
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, mb1.Number)
+	require.NoError(err)
+	require.EqualValues(1, count)
+
+	mb1_1 := dataMaker.mb(1, false)
+	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
+		Number: mb1_1.Number,
+		Hash:   mb1_1.Hash,
+		Data:   mb1_1.Data,
+	}))
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, mb1.Number)
+	require.NoError(err)
+	require.EqualValues(2, count)
 
 	mb1read, err := store.ReadMiniblockCandidate(ctx, streamId, mb1.Hash, mb1.Number)
 	require.NoError(err)
@@ -1376,4 +1411,99 @@ func TestQueryPlan(t *testing.T) {
 	).Scan(&plan))
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
 	require.Contains(plan, `"Actual Rows": 11,`, "PLAN: %s", plan)
+}
+
+// TestEmptyMiniblockRecordCorruptionFix checks that code recovers from the corruption that occured
+// when empty genesis miniblocks occasionally were inserted into production database.
+// Such records were not parsible on load leading to errors.
+// Code is modified to return Err_NOT_FOUND in case of such records in GetStreamFromLastSnapshot.
+// And to allow overwriting of such record in CreateStreamStorage.
+func TestEmptyMiniblockRecordCorruptionFix(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	require.Error(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{
+		Data:     []byte{},
+		Snapshot: []byte{},
+	}))
+
+	dataMaker := newDataMaker()
+
+	genMB := dataMaker.mb(0, true)
+	err := store.CreateStreamStorage(
+		ctx,
+		streamId,
+		&WriteMiniblockData{
+			Data:     []byte{},
+			Snapshot: genMB.Snapshot,
+		},
+	)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_INVALID_ARGUMENT))
+	require.NoError(
+		store.CreateStreamStorage(
+			ctx,
+			streamId,
+			&WriteMiniblockData{
+				Data:     genMB.Data,
+				Snapshot: genMB.Snapshot,
+			},
+		),
+	)
+	err = store.CreateStreamStorage(
+		ctx,
+		streamId,
+		&WriteMiniblockData{
+			Data:     genMB.Data,
+			Snapshot: genMB.Snapshot,
+		},
+	)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_ALREADY_EXISTS))
+
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.NoError(err)
+	_, err = store.GetLastMiniblockNumber(ctx, streamId)
+	require.NoError(err)
+
+	// Check empty value returns Err_NOT_FOUND
+	_, err = params.pgStreamStore.pool.Exec(
+		ctx,
+		params.pgStreamStore.sqlForStream(
+			"UPDATE {{miniblocks}} SET blockdata = ''::BYTEA WHERE stream_id = $1 AND seq_num = 0",
+			streamId,
+		),
+		streamId,
+	)
+	require.NoError(err)
+
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
+
+	_, err = store.GetLastMiniblockNumber(ctx, streamId)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
+
+	// Check it's possible to overwrite corrupt record
+	require.NoError(
+		store.CreateStreamStorage(
+			ctx,
+			streamId,
+			&WriteMiniblockData{
+				Data:     genMB.Data,
+				Snapshot: genMB.Snapshot,
+			},
+		),
+	)
+
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.NoError(err)
+	_, err = store.GetLastMiniblockNumber(ctx, streamId)
+	require.NoError(err)
 }

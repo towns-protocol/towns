@@ -3,7 +3,7 @@ import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { makeUserSettingsStreamId } from '../../../id'
-import { IStreamStateView } from '../../../streamStateView'
+import { StreamStateView } from '../../../streamStateView'
 import { Client } from '../../../client'
 import { isDefined } from '../../../check'
 
@@ -17,7 +17,11 @@ export interface UserSettingsModel extends Identifiable {
 
 @persistedObservable({ tableName: 'userSettings' })
 export class UserSettings extends PersistedObservable<UserSettingsModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserSettingsStreamId(id), initialized: false },
             store,
@@ -49,7 +53,7 @@ export class UserSettings extends PersistedObservable<UserSettingsModel> {
         }
     }
 
-    private initialize = (_streamView: IStreamStateView) => {
+    private initialize = (_streamView: StreamStateView) => {
         this.setData({ initialized: true })
     }
 }

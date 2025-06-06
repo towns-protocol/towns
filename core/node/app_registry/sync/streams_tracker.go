@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -24,10 +26,10 @@ type EncryptedMessageQueue interface {
 		encryptionEnvelope []byte,
 	) (err error)
 
-	HasRegisteredWebhook(
+	IsForwardableApp(
 		ctx context.Context,
 		appId common.Address,
-	) bool
+	) (isForwardable bool, settings types.AppSettings, err error)
 
 	DispatchOrEnqueueMessages(
 		ctx context.Context,
@@ -66,6 +68,7 @@ func NewAppRegistryStreamsTracker(
 		listener,
 		tracker,
 		metricsFactory,
+		config.StreamTracking,
 	); err != nil {
 		return nil, err
 	}
@@ -76,9 +79,7 @@ func NewAppRegistryStreamsTracker(
 func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId) bool {
 	streamType := streamId.Type()
 
-	return streamType == shared.STREAM_DM_CHANNEL_BIN ||
-		streamType == shared.STREAM_GDM_CHANNEL_BIN ||
-		streamType == shared.STREAM_CHANNEL_BIN
+	return streamType == shared.STREAM_CHANNEL_BIN
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(

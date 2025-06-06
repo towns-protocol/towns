@@ -19,7 +19,7 @@ import {
     streamIdAsString,
     isChannelStreamId,
 } from './id'
-import { ParsedEvent, ParsedStreamResponse } from './types'
+import { ParsedEvent, ParsedSnapshot, ParsedStreamResponse } from './types'
 import { isDefined, logNever } from './check'
 
 export enum SyncState {
@@ -66,6 +66,7 @@ export interface ISyncedStream {
     appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
+        snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void>
     resetUpToDate(): void
@@ -796,7 +797,7 @@ export class SyncedStreamsLoop {
                         this.inFlightSyncCookies.delete(streamId)
                         if (
                             this.inFlightSyncCookies.size === 0 ||
-                            Date.now() - this.lastLogInflightAt > 3000
+                            Date.now() - this.lastLogInflightAt > 5000
                         ) {
                             if (
                                 this.inFlightSyncCookies.size === 0 &&
@@ -807,8 +808,7 @@ export class SyncedStreamsLoop {
                                 this.syncStartedAt = undefined
                             } else {
                                 this.log(
-                                    'onUpdate: remaining streams in flight',
-                                    this.inFlightSyncCookies.size,
+                                    `sync status inflight:${this.inFlightSyncCookies.size} enqueued:${this.pendingSyncCookies.length}`,
                                 )
                             }
                             this.lastLogInflightAt = Date.now()
@@ -825,12 +825,18 @@ export class SyncedStreamsLoop {
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,
-                            this.unpackEnvelopeOpts,
+                            // Miniblocks are not provided in the sync updates so skipping signature validation
+                            // that ensures that the snapshot creator is the same address as its miniblock creator.
+                            {
+                                disableHashValidation: false,
+                                disableSignatureValidation: true,
+                            },
                         )
                         streamRecord.syncCookie = streamAndCookie.nextSyncCookie
                         await streamRecord.stream.appendEvents(
                             streamAndCookie.events,
                             streamAndCookie.nextSyncCookie,
+                            streamAndCookie.snapshot,
                             undefined,
                         )
                     }
@@ -872,29 +878,32 @@ export class SyncedStreamsLoop {
 
     private sendKeepAlivePings() {
         // periodically ping the server to keep the connection alive
-        this.pingInfo.pingTimeout = setTimeout(() => {
-            const ping = async () => {
-                if (this.syncState === SyncState.Syncing && this.syncId) {
-                    const n = nanoid()
-                    this.pingInfo.nonces[n] = {
-                        sequence: this.pingInfo.currentSequence++,
-                        nonce: n,
-                        pingAt: performance.now(),
+        this.pingInfo.pingTimeout = setTimeout(
+            () => {
+                const ping = async () => {
+                    if (this.syncState === SyncState.Syncing && this.syncId) {
+                        const n = nanoid()
+                        this.pingInfo.nonces[n] = {
+                            sequence: this.pingInfo.currentSequence++,
+                            nonce: n,
+                            pingAt: performance.now(),
+                        }
+                        await this.rpcClient.pingSync({
+                            syncId: this.syncId,
+                            nonce: n,
+                        })
                     }
-                    await this.rpcClient.pingSync({
-                        syncId: this.syncId,
-                        nonce: n,
-                    })
+                    if (this.syncState === SyncState.Syncing) {
+                        // schedule the next ping
+                        this.sendKeepAlivePings()
+                    }
                 }
-                if (this.syncState === SyncState.Syncing) {
-                    // schedule the next ping
-                    this.sendKeepAlivePings()
-                }
-            }
-            ping().catch((err) => {
-                this.interruptSync?.(err)
-            })
-        }, 5 * 1000 * 60) // every 5 minutes
+                ping().catch((err) => {
+                    this.interruptSync?.(err)
+                })
+            },
+            5 * 1000 * 60,
+        ) // every 5 minutes
     }
 
     private stopPing() {

@@ -8,15 +8,15 @@ import {IChannelBase} from "./IChannel.sol";
 
 // services
 import {ChannelService} from "./ChannelService.sol";
-import {Validator} from "src/utils/Validator.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 abstract contract ChannelBase is IChannelBase {
     function _createChannel(
         bytes32 channelId,
-        string memory metadata,
+        string calldata metadata,
         uint256[] memory roleIds
     ) internal {
-        Validator.checkLength(metadata, 0);
+        Validator.checkLengthCalldata(metadata, 0);
         ChannelService.createChannel(channelId, metadata, roleIds);
         emit ChannelCreated(msg.sender, channelId);
     }
@@ -26,39 +26,42 @@ abstract contract ChannelBase is IChannelBase {
 
         uint256[] memory roleIds = ChannelService.getRolesByChannel(channelId);
 
-        return Channel({id: channelId, disabled: disabled, metadata: metadata, roleIds: roleIds});
+        (channel.id, channel.disabled, channel.metadata, channel.roleIds) = (
+            channelId,
+            disabled,
+            metadata,
+            roleIds
+        );
     }
 
-    function _getChannels() internal view returns (Channel[] memory) {
+    function _getChannels() internal view returns (Channel[] memory channels) {
         bytes32[] memory channelIds = ChannelService.getChannelIds();
 
-        Channel[] memory channels = new Channel[](channelIds.length);
+        channels = new Channel[](channelIds.length);
 
-        for (uint256 i = 0; i < channelIds.length; i++) {
+        for (uint256 i; i < channelIds.length; ++i) {
             (bytes32 id, string memory metadata, bool disabled) = ChannelService.getChannel(
                 channelIds[i]
             );
-
             uint256[] memory roleIds = ChannelService.getRolesByChannel(channelIds[i]);
 
-            channels[i] = Channel({
-                id: id,
-                disabled: disabled,
-                metadata: metadata,
-                roleIds: roleIds
-            });
+            Channel memory channel = channels[i];
+            (channel.id, channel.disabled, channel.metadata, channel.roleIds) = (
+                id,
+                disabled,
+                metadata,
+                roleIds
+            );
         }
-
-        return channels;
     }
 
     function _setChannelRoleOverrides(bytes32 channelId, uint256[] memory roleIds) internal {
-        for (uint256 i = 0; i < roleIds.length; i++) {
+        for (uint256 i; i < roleIds.length; ++i) {
             _addRoleToChannel(channelId, roleIds[i]);
         }
     }
 
-    function _updateChannel(bytes32 channelId, string memory metadata, bool disabled) internal {
+    function _updateChannel(bytes32 channelId, string calldata metadata, bool disabled) internal {
         ChannelService.updateChannel(channelId, metadata, disabled);
         emit ChannelUpdated(msg.sender, channelId);
     }

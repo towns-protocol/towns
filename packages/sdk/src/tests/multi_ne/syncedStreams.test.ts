@@ -35,7 +35,7 @@ describe('syncStreams', () => {
         expect(stateConstraints[SyncState.Canceling].has(SyncState.Syncing)).toBe(false)
         expect(stateConstraints[SyncState.NotSyncing].has(SyncState.Syncing)).toBe(false)
 
-        // the starting, and retrying state should both be able to transition to syncing, othwerwise waitForSyncingState will break
+        // the starting, and retrying state should both be able to transition to syncing, otherwise waitForSyncingState will break
         expect(stateConstraints[SyncState.Starting].has(SyncState.Syncing)).toBe(true)
         expect(stateConstraints[SyncState.Retrying].has(SyncState.Syncing)).toBe(true) // if this breaks, we just need to change the two conditions in waitForSyncingState
     })
@@ -46,11 +46,15 @@ describe('syncStreams', () => {
         // globals setup
         const stubPersistenceStore = new StubPersistenceStore()
         const done1 = makeDonePromise()
+        let userInboxDeviceSummaryUpdatedCount = 0
         const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
         mockClientEmitter.on('streamSyncActive', (isActive: boolean) => {
             if (isActive) {
                 done1.done()
             }
+        })
+        mockClientEmitter.on('userInboxDeviceSummaryUpdated', () => {
+            userInboxDeviceSummaryUpdatedCount++
         })
         // alice setup
         const rpcClient = await makeTestRpcClient()
@@ -114,6 +118,8 @@ describe('syncStreams', () => {
                 ),
             })
         }
+        // assert assumptions
+        expect(userInboxDeviceSummaryUpdatedCount).toBe(0)
 
         // post an ack (easiest way to put a string in a stream)
         await addEvent(
@@ -124,16 +130,9 @@ describe('syncStreams', () => {
         )
 
         // make sure it shows up
-        await waitFor(() =>
-            expect(
-                userInboxStream.view.timeline.find(
-                    (e) =>
-                        e.remoteEvent?.event.payload.case === 'userInboxPayload' &&
-                        e.remoteEvent?.event.payload.value.content.case === 'ack' &&
-                        e.remoteEvent?.event.payload.value.content.value.deviceKey === 'numero uno',
-                ),
-            ).toBeDefined(),
-        )
+        await waitFor(() => {
+            expect(userInboxDeviceSummaryUpdatedCount).toBe(1)
+        })
         const sendPing = async () => {
             if (!alicesSyncedStreams.pingInfo) {
                 throw new Error('syncId not set')
@@ -183,6 +182,9 @@ describe('syncStreams', () => {
             debug: ['drop_stream', alicesSyncedStreams.getSyncId()!, alicesUserInboxStreamIdStr],
         })
 
+        // assert assumptions
+        expect(userInboxDeviceSummaryUpdatedCount).toBe(1)
+
         // add second event
         await addEvent(
             make_UserInboxPayload_Ack({
@@ -192,16 +194,7 @@ describe('syncStreams', () => {
         )
 
         // make sure it shows up
-        await waitFor(() =>
-            expect(
-                userInboxStream.view.timeline.find(
-                    (e) =>
-                        e.remoteEvent?.event.payload.case === 'userInboxPayload' &&
-                        e.remoteEvent?.event.payload.value.content.case === 'ack' &&
-                        e.remoteEvent?.event.payload.value.content.value.deviceKey === 'numero dos',
-                ),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(userInboxDeviceSummaryUpdatedCount).toBe(2))
 
         await alicesSyncedStreams.stopSync()
     })

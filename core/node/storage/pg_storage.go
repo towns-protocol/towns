@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
-	"time"
 
 	"github.com/exaring/otelpgx"
 	"github.com/golang-migrate/migrate/v4"
@@ -48,12 +47,6 @@ type PostgresEventStore struct {
 
 	txTracker pgTxTracker
 }
-
-// var _ StreamStorage = (*PostgresEventStore)(nil)
-
-const (
-	PG_REPORT_INTERVAL = 3 * time.Minute
-)
 
 type txRunnerOpts struct {
 	skipLoggingNotFound bool
@@ -143,7 +136,7 @@ func (s *PostgresEventStore) txRunner(
 					pass = true
 					level = zapcore.DebugLevel
 				}
-				log.Logw(level, "pg.txRunner: transaction failed", "err", err)
+				log.Logw(level, "pg.txRunner: transaction failed", "error", err)
 			}
 
 			if pass {
@@ -159,6 +152,7 @@ func (s *PostgresEventStore) txRunner(
 			).Func("pg.txRunner").
 				Message("transaction failed").
 				Tag("name", name).
+				Tag("numAttempts", backoff.NumAttempts).
 				Tags(tags...)
 		}
 

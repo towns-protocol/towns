@@ -42,7 +42,6 @@ type cacheTestInstance struct {
 	params         *StreamCacheParams
 	streamRegistry StreamRegistry
 	cache          *StreamCache
-	mbProducer     *miniblockProducer
 }
 
 type testParams struct {
@@ -52,6 +51,7 @@ type testParams struct {
 	recencyConstraintsGenerations int
 	recencyConstraintsAgeSec      int
 	defaultMinEventsPerSnapshot   int
+	enableNewSnapshotFormat       int
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -164,10 +164,9 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *StreamCache {
 	streamCache := NewStreamCache(ctc.instances[n].params)
-	err := streamCache.Start(ctc.ctx)
+	err := streamCache.Start(ctc.ctx, opts)
 	ctc.require.NoError(err)
 	ctc.instances[n].cache = streamCache
-	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, opts)
 	return streamCache
 }
 
@@ -283,7 +282,7 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 			defer wg.Done()
 
 			streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID)
+			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID, nil)
 			ctc.createStreamNoCache(streamID, mb.Proto)
 
 			mu.Lock()
@@ -296,7 +295,7 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 }
 
 func (ctc *cacheTestContext) makeMiniblock(inst int, streamId StreamId, forceSnapshot bool) *MiniblockRef {
-	ref, err := ctc.instances[inst].mbProducer.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
+	ref, err := ctc.instances[inst].cache.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
 	ctc.require.NoError(err)
 	return ref
 }
@@ -355,7 +354,7 @@ func (ctc *cacheTestContext) GetMbs(
 				return nil, err
 			}
 
-			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive)
+			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
 			if err != nil {
 				return nil, err
 			}
@@ -409,17 +408,24 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
 		)
 	}
+	if p.enableNewSnapshotFormat != 0 {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamEnableNewSnapshotFormatConfigKey,
+			crypto.ABIEncodeUint64(uint64(p.enableNewSnapshotFormat)),
+		)
+	}
 }
 
 func (i *cacheTestInstance) makeAndSaveMbCandidate(
 	ctx context.Context,
 	stream *Stream,
+	blockNum crypto.BlockNumber,
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
 		stream: stream,
 		cache:  i.cache,
 	}
-	err := j.produceCandidate(ctx)
+	err := j.produceCandidate(ctx, blockNum)
 	if err != nil {
 		return nil, err
 	}

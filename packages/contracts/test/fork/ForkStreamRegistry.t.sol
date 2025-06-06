@@ -18,7 +18,7 @@ import {SetMiniblock, Stream, StreamWithId} from "src/river/registry/libraries/R
 
 //contracts
 
-import {TestUtils} from "../utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {StreamRegistry} from "src/river/registry/facets/stream/StreamRegistry.sol";
 
 contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
@@ -27,7 +27,6 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
 
     address internal riverRegistry;
     IStreamRegistry internal streamRegistry;
-    DeployStreamRegistry internal streamRegistryDeployer;
 
     EnumerableSet.AddressSet internal ghostNodes;
     mapping(address => EnumerableSet.Bytes32Set) internal streamIdsByNode;
@@ -39,7 +38,6 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
 
         riverRegistry = getDeployment("riverRegistry");
         streamRegistry = IStreamRegistry(riverRegistry);
-        streamRegistryDeployer = new DeployStreamRegistry();
 
         governanceActions();
     }
@@ -103,7 +101,7 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
         IDiamondCut(riverRegistry).diamondCut(facetCuts, address(0), "");
 
         impl = address(new StreamRegistry());
-        facetCuts[0] = streamRegistryDeployer.makeCut(impl, FacetCutAction.Replace);
+        facetCuts[0] = DeployStreamRegistry.makeCut(impl, FacetCutAction.Replace);
         vm.prank(owner);
         IDiamondCut(riverRegistry).diamondCut(facetCuts, address(0), "");
     }
