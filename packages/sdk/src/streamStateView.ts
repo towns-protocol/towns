@@ -493,15 +493,6 @@ export class StreamStateView {
             logInfo(
                 `StreamStateView::eventDecrypted: timelineEvent is undefined ${this.streamId} ${eventId}`,
             )
-            const timelineEvent = this.streamsView?.streamEventDecrypted(
-                this.streamId,
-                this.contentKind,
-                eventId,
-                content,
-            )
-            if (timelineEvent) {
-                emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent) // todo change this to dispatch content
-            }
         }
     }
 
