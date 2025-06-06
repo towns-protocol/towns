@@ -515,6 +515,7 @@ func (s *Service) runHttpServer() error {
 			"Connect-Timeout-Ms",
 			"x-river-request-id",
 			"Authorization",
+			"X-Use-Shared-Sync", // TODO: remove after the legacy syncer is removed
 		},
 	})
 
