@@ -1053,19 +1053,14 @@ func (ca *chainAuth) checkStreamIsEnabled(
 
 func (ca *chainAuth) checkIsBot(
 	ctx context.Context,
-	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
-	isBot, err := ca.appRegistryContract.IsRegisteredApp(ctx, args.appAddress)
+	isBot, err := ca.appRegistryContract.IsRegisteredAppWithClient(ctx, args.appAddress, args.principal)
 	if err != nil {
 		return nil, err
-	} else {
-
-
-		
-		return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
 	}
 
+	return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
 }
 
 /** checkEntitlement checks if the user is entitled to the space / channel.
@@ -1085,7 +1080,7 @@ func (ca *chainAuth) checkEntitlement(
 	defer cancel()
 
 	if args.kind == chainAuthKindIsBot {
-		return ca.checkIsBot(ctx, cfg, args)
+		return ca.checkIsBot(ctx, args)
 	}
 
 	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)

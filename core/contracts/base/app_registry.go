@@ -29,30 +29,50 @@ var (
 	_ = abi.ConvertType
 )
 
-// Attestation is an auto generated low-level Go binding around an user-defined struct.
-type Attestation struct {
-	Uid            [32]byte
-	Schema         [32]byte
-	Time           uint64
-	ExpirationTime uint64
-	RevocationTime uint64
-	RefUID         [32]byte
-	Recipient      common.Address
-	Attester       common.Address
-	Revocable      bool
-	Data           []byte
+// ExecutionManifest is an auto generated low-level Go binding around an user-defined struct.
+type ExecutionManifest struct {
+	ExecutionFunctions []ManifestExecutionFunction
+	ExecutionHooks     []ManifestExecutionHook
+	InterfaceIds       [][4]byte
+}
+
+// IAppRegistryBaseApp is an auto generated low-level Go binding around an user-defined struct.
+type IAppRegistryBaseApp struct {
+	AppId       [32]byte
+	Module      common.Address
+	Owner       common.Address
+	Client      common.Address
+	Permissions [][32]byte
+	Manifest    ExecutionManifest
 }
 
 // IAppRegistryBaseAppParams is an auto generated low-level Go binding around an user-defined struct.
 type IAppRegistryBaseAppParams struct {
-	Name        string
-	Permissions [][32]byte
-	Clients     []common.Address
+	Name           string
+	Permissions    [][32]byte
+	Client         common.Address
+	InstallPrice   *big.Int
+	AccessDuration uint64
+}
+
+// ManifestExecutionFunction is an auto generated low-level Go binding around an user-defined struct.
+type ManifestExecutionFunction struct {
+	ExecutionSelector     [4]byte
+	SkipRuntimeValidation bool
+	AllowGlobalValidation bool
+}
+
+// ManifestExecutionHook is an auto generated low-level Go binding around an user-defined struct.
+type ManifestExecutionHook struct {
+	ExecutionSelector [4]byte
+	EntityId          uint32
+	IsPreHook         bool
+	IsPostHook        bool
 }
 
 // AppRegistryMetaData contains all meta data concerning the AppRegistry contract.
 var AppRegistryMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"adminBanApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"adminRegisterAppSchema\",\"inputs\":[{\"name\":\"schema\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"resolver\",\"type\":\"address\",\"internalType\":\"contractISchemaResolver\"},{\"name\":\"revocable\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createApp\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.AppParams\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"clients\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"outputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getAppSchema\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchemaId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAttestation\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structAttestation\",\"components\":[{\"name\":\"uid\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"schema\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"time\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"expirationTime\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revocationTime\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"refUID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"attester\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"revocable\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"clients\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"removeApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppCreated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppRegistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppSchemaSet\",\"inputs\":[{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUnregistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUpdated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AppAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppDoesNotImplementInterface\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppRevoked\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BannedApp\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAddressInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppName\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidArrayInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAppOwner\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"adminBanApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"adminRegisterAppSchema\",\"inputs\":[{\"name\":\"schema\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"resolver\",\"type\":\"address\",\"internalType\":\"contractISchemaResolver\"},{\"name\":\"revocable\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createApp\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.AppParams\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"installPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"accessDuration\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getAppByClient\",\"inputs\":[{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppById\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.App\",\"components\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"manifest\",\"type\":\"tuple\",\"internalType\":\"structExecutionManifest\",\"components\":[{\"name\":\"executionFunctions\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionFunction[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"skipRuntimeValidation\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowGlobalValidation\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"executionHooks\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionHook[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"entityId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"isPreHook\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"isPostHook\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"interfaceIds\",\"type\":\"bytes4[]\",\"internalType\":\"bytes4[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchema\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchemaId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"installApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"isAppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"removeApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppCreated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppRegistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppSchemaSet\",\"inputs\":[{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUninstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUnregistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUpdated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AppAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppDoesNotImplementInterface\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppRevoked\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BannedApp\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ClientAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InsufficientPayment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAddressInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppName\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidArrayInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDuration\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrice\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAppOwner\",\"inputs\":[]}]",
 }
 
 // AppRegistryABI is the input ABI used to generate the binding from.
@@ -201,6 +221,68 @@ func (_AppRegistry *AppRegistryTransactorRaw) Transact(opts *bind.TransactOpts, 
 	return _AppRegistry.Contract.contract.Transact(opts, method, params...)
 }
 
+// GetAppByClient is a free data retrieval call binding the contract method 0x75dfa342.
+//
+// Solidity: function getAppByClient(address client) view returns(address)
+func (_AppRegistry *AppRegistryCaller) GetAppByClient(opts *bind.CallOpts, client common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _AppRegistry.contract.Call(opts, &out, "getAppByClient", client)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetAppByClient is a free data retrieval call binding the contract method 0x75dfa342.
+//
+// Solidity: function getAppByClient(address client) view returns(address)
+func (_AppRegistry *AppRegistrySession) GetAppByClient(client common.Address) (common.Address, error) {
+	return _AppRegistry.Contract.GetAppByClient(&_AppRegistry.CallOpts, client)
+}
+
+// GetAppByClient is a free data retrieval call binding the contract method 0x75dfa342.
+//
+// Solidity: function getAppByClient(address client) view returns(address)
+func (_AppRegistry *AppRegistryCallerSession) GetAppByClient(client common.Address) (common.Address, error) {
+	return _AppRegistry.Contract.GetAppByClient(&_AppRegistry.CallOpts, client)
+}
+
+// GetAppById is a free data retrieval call binding the contract method 0xfb609045.
+//
+// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[])))
+func (_AppRegistry *AppRegistryCaller) GetAppById(opts *bind.CallOpts, appId [32]byte) (IAppRegistryBaseApp, error) {
+	var out []interface{}
+	err := _AppRegistry.contract.Call(opts, &out, "getAppById", appId)
+
+	if err != nil {
+		return *new(IAppRegistryBaseApp), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(IAppRegistryBaseApp)).(*IAppRegistryBaseApp)
+
+	return out0, err
+
+}
+
+// GetAppById is a free data retrieval call binding the contract method 0xfb609045.
+//
+// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[])))
+func (_AppRegistry *AppRegistrySession) GetAppById(appId [32]byte) (IAppRegistryBaseApp, error) {
+	return _AppRegistry.Contract.GetAppById(&_AppRegistry.CallOpts, appId)
+}
+
+// GetAppById is a free data retrieval call binding the contract method 0xfb609045.
+//
+// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[])))
+func (_AppRegistry *AppRegistryCallerSession) GetAppById(appId [32]byte) (IAppRegistryBaseApp, error) {
+	return _AppRegistry.Contract.GetAppById(&_AppRegistry.CallOpts, appId)
+}
+
 // GetAppSchema is a free data retrieval call binding the contract method 0x5db78f1f.
 //
 // Solidity: function getAppSchema() view returns(string)
@@ -261,37 +343,6 @@ func (_AppRegistry *AppRegistrySession) GetAppSchemaId() ([32]byte, error) {
 // Solidity: function getAppSchemaId() view returns(bytes32)
 func (_AppRegistry *AppRegistryCallerSession) GetAppSchemaId() ([32]byte, error) {
 	return _AppRegistry.Contract.GetAppSchemaId(&_AppRegistry.CallOpts)
-}
-
-// GetAttestation is a free data retrieval call binding the contract method 0xa3112a64.
-//
-// Solidity: function getAttestation(bytes32 appId) view returns((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))
-func (_AppRegistry *AppRegistryCaller) GetAttestation(opts *bind.CallOpts, appId [32]byte) (Attestation, error) {
-	var out []interface{}
-	err := _AppRegistry.contract.Call(opts, &out, "getAttestation", appId)
-
-	if err != nil {
-		return *new(Attestation), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(Attestation)).(*Attestation)
-
-	return out0, err
-
-}
-
-// GetAttestation is a free data retrieval call binding the contract method 0xa3112a64.
-//
-// Solidity: function getAttestation(bytes32 appId) view returns((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))
-func (_AppRegistry *AppRegistrySession) GetAttestation(appId [32]byte) (Attestation, error) {
-	return _AppRegistry.Contract.GetAttestation(&_AppRegistry.CallOpts, appId)
-}
-
-// GetAttestation is a free data retrieval call binding the contract method 0xa3112a64.
-//
-// Solidity: function getAttestation(bytes32 appId) view returns((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))
-func (_AppRegistry *AppRegistryCallerSession) GetAttestation(appId [32]byte) (Attestation, error) {
-	return _AppRegistry.Contract.GetAttestation(&_AppRegistry.CallOpts, appId)
 }
 
 // GetLatestAppId is a free data retrieval call binding the contract method 0x712e46df.
@@ -398,46 +449,67 @@ func (_AppRegistry *AppRegistryTransactorSession) AdminRegisterAppSchema(schema 
 	return _AppRegistry.Contract.AdminRegisterAppSchema(&_AppRegistry.TransactOpts, schema, resolver, revocable)
 }
 
-// CreateApp is a paid mutator transaction binding the contract method 0x6ac34c7c.
+// CreateApp is a paid mutator transaction binding the contract method 0x2c4b902c.
 //
-// Solidity: function createApp((string,bytes32[],address[]) params) payable returns(address app, bytes32 appId)
+// Solidity: function createApp((string,bytes32[],address,uint256,uint64) params) payable returns(address app, bytes32 appId)
 func (_AppRegistry *AppRegistryTransactor) CreateApp(opts *bind.TransactOpts, params IAppRegistryBaseAppParams) (*types.Transaction, error) {
 	return _AppRegistry.contract.Transact(opts, "createApp", params)
 }
 
-// CreateApp is a paid mutator transaction binding the contract method 0x6ac34c7c.
+// CreateApp is a paid mutator transaction binding the contract method 0x2c4b902c.
 //
-// Solidity: function createApp((string,bytes32[],address[]) params) payable returns(address app, bytes32 appId)
+// Solidity: function createApp((string,bytes32[],address,uint256,uint64) params) payable returns(address app, bytes32 appId)
 func (_AppRegistry *AppRegistrySession) CreateApp(params IAppRegistryBaseAppParams) (*types.Transaction, error) {
 	return _AppRegistry.Contract.CreateApp(&_AppRegistry.TransactOpts, params)
 }
 
-// CreateApp is a paid mutator transaction binding the contract method 0x6ac34c7c.
+// CreateApp is a paid mutator transaction binding the contract method 0x2c4b902c.
 //
-// Solidity: function createApp((string,bytes32[],address[]) params) payable returns(address app, bytes32 appId)
+// Solidity: function createApp((string,bytes32[],address,uint256,uint64) params) payable returns(address app, bytes32 appId)
 func (_AppRegistry *AppRegistryTransactorSession) CreateApp(params IAppRegistryBaseAppParams) (*types.Transaction, error) {
 	return _AppRegistry.Contract.CreateApp(&_AppRegistry.TransactOpts, params)
 }
 
-// RegisterApp is a paid mutator transaction binding the contract method 0x991fc73a.
+// InstallApp is a paid mutator transaction binding the contract method 0x66f4bd18.
 //
-// Solidity: function registerApp(address app, address[] clients) payable returns(bytes32 appId)
-func (_AppRegistry *AppRegistryTransactor) RegisterApp(opts *bind.TransactOpts, app common.Address, clients []common.Address) (*types.Transaction, error) {
-	return _AppRegistry.contract.Transact(opts, "registerApp", app, clients)
+// Solidity: function installApp(address app, address account, bytes data) payable returns()
+func (_AppRegistry *AppRegistryTransactor) InstallApp(opts *bind.TransactOpts, app common.Address, account common.Address, data []byte) (*types.Transaction, error) {
+	return _AppRegistry.contract.Transact(opts, "installApp", app, account, data)
 }
 
-// RegisterApp is a paid mutator transaction binding the contract method 0x991fc73a.
+// InstallApp is a paid mutator transaction binding the contract method 0x66f4bd18.
 //
-// Solidity: function registerApp(address app, address[] clients) payable returns(bytes32 appId)
-func (_AppRegistry *AppRegistrySession) RegisterApp(app common.Address, clients []common.Address) (*types.Transaction, error) {
-	return _AppRegistry.Contract.RegisterApp(&_AppRegistry.TransactOpts, app, clients)
+// Solidity: function installApp(address app, address account, bytes data) payable returns()
+func (_AppRegistry *AppRegistrySession) InstallApp(app common.Address, account common.Address, data []byte) (*types.Transaction, error) {
+	return _AppRegistry.Contract.InstallApp(&_AppRegistry.TransactOpts, app, account, data)
 }
 
-// RegisterApp is a paid mutator transaction binding the contract method 0x991fc73a.
+// InstallApp is a paid mutator transaction binding the contract method 0x66f4bd18.
 //
-// Solidity: function registerApp(address app, address[] clients) payable returns(bytes32 appId)
-func (_AppRegistry *AppRegistryTransactorSession) RegisterApp(app common.Address, clients []common.Address) (*types.Transaction, error) {
-	return _AppRegistry.Contract.RegisterApp(&_AppRegistry.TransactOpts, app, clients)
+// Solidity: function installApp(address app, address account, bytes data) payable returns()
+func (_AppRegistry *AppRegistryTransactorSession) InstallApp(app common.Address, account common.Address, data []byte) (*types.Transaction, error) {
+	return _AppRegistry.Contract.InstallApp(&_AppRegistry.TransactOpts, app, account, data)
+}
+
+// RegisterApp is a paid mutator transaction binding the contract method 0x357b8c27.
+//
+// Solidity: function registerApp(address app, address client) payable returns(bytes32 appId)
+func (_AppRegistry *AppRegistryTransactor) RegisterApp(opts *bind.TransactOpts, app common.Address, client common.Address) (*types.Transaction, error) {
+	return _AppRegistry.contract.Transact(opts, "registerApp", app, client)
+}
+
+// RegisterApp is a paid mutator transaction binding the contract method 0x357b8c27.
+//
+// Solidity: function registerApp(address app, address client) payable returns(bytes32 appId)
+func (_AppRegistry *AppRegistrySession) RegisterApp(app common.Address, client common.Address) (*types.Transaction, error) {
+	return _AppRegistry.Contract.RegisterApp(&_AppRegistry.TransactOpts, app, client)
+}
+
+// RegisterApp is a paid mutator transaction binding the contract method 0x357b8c27.
+//
+// Solidity: function registerApp(address app, address client) payable returns(bytes32 appId)
+func (_AppRegistry *AppRegistryTransactorSession) RegisterApp(app common.Address, client common.Address) (*types.Transaction, error) {
+	return _AppRegistry.Contract.RegisterApp(&_AppRegistry.TransactOpts, app, client)
 }
 
 // RemoveApp is a paid mutator transaction binding the contract method 0x1f1bf78b.
@@ -751,6 +823,168 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppCreated(log types.Log) (*AppReg
 	return event, nil
 }
 
+// AppRegistryAppInstalledIterator is returned from FilterAppInstalled and is used to iterate over the raw logs and unpacked data for AppInstalled events raised by the AppRegistry contract.
+type AppRegistryAppInstalledIterator struct {
+	Event *AppRegistryAppInstalled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AppRegistryAppInstalledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AppRegistryAppInstalled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AppRegistryAppInstalled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AppRegistryAppInstalledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AppRegistryAppInstalledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AppRegistryAppInstalled represents a AppInstalled event raised by the AppRegistry contract.
+type AppRegistryAppInstalled struct {
+	App     common.Address
+	Account common.Address
+	AppId   [32]byte
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterAppInstalled is a free log retrieval operation binding the contract event 0x964f2b980b9892debcc394f32662d711d5b6417bf23117f145240a8a0ba4b8c3.
+//
+// Solidity: event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) FilterAppInstalled(opts *bind.FilterOpts, app []common.Address, account []common.Address, appId [][32]byte) (*AppRegistryAppInstalledIterator, error) {
+
+	var appRule []interface{}
+	for _, appItem := range app {
+		appRule = append(appRule, appItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var appIdRule []interface{}
+	for _, appIdItem := range appId {
+		appIdRule = append(appIdRule, appIdItem)
+	}
+
+	logs, sub, err := _AppRegistry.contract.FilterLogs(opts, "AppInstalled", appRule, accountRule, appIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AppRegistryAppInstalledIterator{contract: _AppRegistry.contract, event: "AppInstalled", logs: logs, sub: sub}, nil
+}
+
+// WatchAppInstalled is a free log subscription operation binding the contract event 0x964f2b980b9892debcc394f32662d711d5b6417bf23117f145240a8a0ba4b8c3.
+//
+// Solidity: event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) WatchAppInstalled(opts *bind.WatchOpts, sink chan<- *AppRegistryAppInstalled, app []common.Address, account []common.Address, appId [][32]byte) (event.Subscription, error) {
+
+	var appRule []interface{}
+	for _, appItem := range app {
+		appRule = append(appRule, appItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var appIdRule []interface{}
+	for _, appIdItem := range appId {
+		appIdRule = append(appIdRule, appIdItem)
+	}
+
+	logs, sub, err := _AppRegistry.contract.WatchLogs(opts, "AppInstalled", appRule, accountRule, appIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AppRegistryAppInstalled)
+				if err := _AppRegistry.contract.UnpackLog(event, "AppInstalled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseAppInstalled is a log parse operation binding the contract event 0x964f2b980b9892debcc394f32662d711d5b6417bf23117f145240a8a0ba4b8c3.
+//
+// Solidity: event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) ParseAppInstalled(log types.Log) (*AppRegistryAppInstalled, error) {
+	event := new(AppRegistryAppInstalled)
+	if err := _AppRegistry.contract.UnpackLog(event, "AppInstalled", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // AppRegistryAppRegisteredIterator is returned from FilterAppRegistered and is used to iterate over the raw logs and unpacked data for AppRegistered events raised by the AppRegistry contract.
 type AppRegistryAppRegisteredIterator struct {
 	Event *AppRegistryAppRegistered // Event containing the contract specifics and raw log
@@ -1024,6 +1258,168 @@ func (_AppRegistry *AppRegistryFilterer) WatchAppSchemaSet(opts *bind.WatchOpts,
 func (_AppRegistry *AppRegistryFilterer) ParseAppSchemaSet(log types.Log) (*AppRegistryAppSchemaSet, error) {
 	event := new(AppRegistryAppSchemaSet)
 	if err := _AppRegistry.contract.UnpackLog(event, "AppSchemaSet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AppRegistryAppUninstalledIterator is returned from FilterAppUninstalled and is used to iterate over the raw logs and unpacked data for AppUninstalled events raised by the AppRegistry contract.
+type AppRegistryAppUninstalledIterator struct {
+	Event *AppRegistryAppUninstalled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AppRegistryAppUninstalledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AppRegistryAppUninstalled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AppRegistryAppUninstalled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AppRegistryAppUninstalledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AppRegistryAppUninstalledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AppRegistryAppUninstalled represents a AppUninstalled event raised by the AppRegistry contract.
+type AppRegistryAppUninstalled struct {
+	App     common.Address
+	Account common.Address
+	AppId   [32]byte
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterAppUninstalled is a free log retrieval operation binding the contract event 0xe0b9e78734e068100cc19d3fdf3d1cb8adbe68b9321eb3e1490a6e5a1ab628f4.
+//
+// Solidity: event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) FilterAppUninstalled(opts *bind.FilterOpts, app []common.Address, account []common.Address, appId [][32]byte) (*AppRegistryAppUninstalledIterator, error) {
+
+	var appRule []interface{}
+	for _, appItem := range app {
+		appRule = append(appRule, appItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var appIdRule []interface{}
+	for _, appIdItem := range appId {
+		appIdRule = append(appIdRule, appIdItem)
+	}
+
+	logs, sub, err := _AppRegistry.contract.FilterLogs(opts, "AppUninstalled", appRule, accountRule, appIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AppRegistryAppUninstalledIterator{contract: _AppRegistry.contract, event: "AppUninstalled", logs: logs, sub: sub}, nil
+}
+
+// WatchAppUninstalled is a free log subscription operation binding the contract event 0xe0b9e78734e068100cc19d3fdf3d1cb8adbe68b9321eb3e1490a6e5a1ab628f4.
+//
+// Solidity: event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) WatchAppUninstalled(opts *bind.WatchOpts, sink chan<- *AppRegistryAppUninstalled, app []common.Address, account []common.Address, appId [][32]byte) (event.Subscription, error) {
+
+	var appRule []interface{}
+	for _, appItem := range app {
+		appRule = append(appRule, appItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var appIdRule []interface{}
+	for _, appIdItem := range appId {
+		appIdRule = append(appIdRule, appIdItem)
+	}
+
+	logs, sub, err := _AppRegistry.contract.WatchLogs(opts, "AppUninstalled", appRule, accountRule, appIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AppRegistryAppUninstalled)
+				if err := _AppRegistry.contract.UnpackLog(event, "AppUninstalled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseAppUninstalled is a log parse operation binding the contract event 0xe0b9e78734e068100cc19d3fdf3d1cb8adbe68b9321eb3e1490a6e5a1ab628f4.
+//
+// Solidity: event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) ParseAppUninstalled(log types.Log) (*AppRegistryAppUninstalled, error) {
+	event := new(AppRegistryAppUninstalled)
+	if err := _AppRegistry.contract.UnpackLog(event, "AppUninstalled", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
