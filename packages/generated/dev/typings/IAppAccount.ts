@@ -4,7 +4,6 @@
 import type {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -23,44 +22,26 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IAppAccountBase {
-  export type DelaysStruct = {
-    grantDelay: PromiseOrValue<BigNumberish>;
-    executionDelay: PromiseOrValue<BigNumberish>;
-  };
-
-  export type DelaysStructOutput = [number, number] & {
-    grantDelay: number;
-    executionDelay: number;
-  };
-
-  export type AppParamsStruct = { delays: IAppAccountBase.DelaysStruct };
-
-  export type AppParamsStructOutput = [IAppAccountBase.DelaysStructOutput] & {
-    delays: IAppAccountBase.DelaysStructOutput;
-  };
-}
-
 export interface IAppAccountInterface extends utils.Interface {
   functions: {
     "disableApp(address)": FunctionFragment;
+    "enableApp(address)": FunctionFragment;
     "getAppId(address)": FunctionFragment;
-    "getClients(address)": FunctionFragment;
     "getInstalledApps()": FunctionFragment;
-    "installApp(address,bytes,((uint32,uint32)))": FunctionFragment;
     "isAppEntitled(address,address,bytes32)": FunctionFragment;
-    "uninstallApp(address,bytes)": FunctionFragment;
+    "onInstallApp(bytes32,bytes)": FunctionFragment;
+    "onUninstallApp(bytes32,bytes)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "disableApp"
+      | "enableApp"
       | "getAppId"
-      | "getClients"
       | "getInstalledApps"
-      | "installApp"
       | "isAppEntitled"
-      | "uninstallApp"
+      | "onInstallApp"
+      | "onUninstallApp"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -68,24 +49,16 @@ export interface IAppAccountInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getAppId",
+    functionFragment: "enableApp",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getClients",
+    functionFragment: "getAppId",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getInstalledApps",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "installApp",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      IAppAccountBase.AppParamsStruct
-    ]
   ): string;
   encodeFunctionData(
     functionFragment: "isAppEntitled",
@@ -96,24 +69,31 @@ export interface IAppAccountInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "uninstallApp",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    functionFragment: "onInstallApp",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "onUninstallApp",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
 
   decodeFunctionResult(functionFragment: "disableApp", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "enableApp", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getAppId", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getClients", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getInstalledApps",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "installApp", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isAppEntitled",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "uninstallApp",
+    functionFragment: "onInstallApp",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "onUninstallApp",
     data: BytesLike
   ): Result;
 
@@ -152,24 +132,17 @@ export interface IAppAccount extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    enableApp(
+      app: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    getClients(
-      app: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string[]]>;
-
     getInstalledApps(overrides?: CallOverrides): Promise<[string[]]>;
-
-    installApp(
-      app: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      params: IAppAccountBase.AppParamsStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
 
     isAppEntitled(
       app: PromiseOrValue<string>,
@@ -178,8 +151,14 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    uninstallApp(
-      app: PromiseOrValue<string>,
+    onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    onUninstallApp(
+      appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -190,24 +169,17 @@ export interface IAppAccount extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  enableApp(
+    app: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   getAppId(
     app: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<string>;
 
-  getClients(
-    app: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string[]>;
-
   getInstalledApps(overrides?: CallOverrides): Promise<string[]>;
-
-  installApp(
-    app: PromiseOrValue<string>,
-    data: PromiseOrValue<BytesLike>,
-    params: IAppAccountBase.AppParamsStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   isAppEntitled(
     app: PromiseOrValue<string>,
@@ -216,8 +188,14 @@ export interface IAppAccount extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  uninstallApp(
-    app: PromiseOrValue<string>,
+  onInstallApp(
+    appId: PromiseOrValue<BytesLike>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  onUninstallApp(
+    appId: PromiseOrValue<BytesLike>,
     data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -228,24 +206,17 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    enableApp(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string>;
 
-    getClients(
-      app: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string[]>;
-
     getInstalledApps(overrides?: CallOverrides): Promise<string[]>;
-
-    installApp(
-      app: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      params: IAppAccountBase.AppParamsStruct,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     isAppEntitled(
       app: PromiseOrValue<string>,
@@ -254,8 +225,14 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    uninstallApp(
-      app: PromiseOrValue<string>,
+    onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    onUninstallApp(
+      appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -269,24 +246,17 @@ export interface IAppAccount extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    enableApp(
+      app: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getClients(
-      app: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getInstalledApps(overrides?: CallOverrides): Promise<BigNumber>;
-
-    installApp(
-      app: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      params: IAppAccountBase.AppParamsStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
 
     isAppEntitled(
       app: PromiseOrValue<string>,
@@ -295,8 +265,14 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    uninstallApp(
-      app: PromiseOrValue<string>,
+    onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    onUninstallApp(
+      appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -308,24 +284,17 @@ export interface IAppAccount extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    enableApp(
+      app: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getClients(
-      app: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getInstalledApps(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    installApp(
-      app: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      params: IAppAccountBase.AppParamsStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
 
     isAppEntitled(
       app: PromiseOrValue<string>,
@@ -334,8 +303,14 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    uninstallApp(
-      app: PromiseOrValue<string>,
+    onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    onUninstallApp(
+      appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

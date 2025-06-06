@@ -284,12 +284,12 @@ const _abi = [
       {
         name: "app",
         type: "address",
-        internalType: "address",
+        internalType: "contract ITownsApp",
       },
       {
         name: "account",
         type: "address",
-        internalType: "address",
+        internalType: "contract IAppAccount",
       },
       {
         name: "data",
@@ -326,7 +326,7 @@ const _abi = [
       {
         name: "app",
         type: "address",
-        internalType: "address",
+        internalType: "contract ITownsApp",
       },
       {
         name: "client",
@@ -360,6 +360,29 @@ const _abi = [
         internalType: "bytes32",
       },
     ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "uninstallApp",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "contract ITownsApp",
+      },
+      {
+        name: "account",
+        type: "address",
+        internalType: "contract IAppAccount",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [],
     stateMutability: "nonpayable",
   },
   {

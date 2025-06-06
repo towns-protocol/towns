@@ -2,10 +2,7 @@ import { ethers, type ContractReceipt, type ContractTransaction } from 'ethers'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
-import type {
-    AppCreatedEventObject,
-    AttestationStructOutput,
-} from '@towns-protocol/generated/dev/typings/IAppRegistry'
+import type { AppCreatedEventObject } from '@towns-protocol/generated/dev/typings/IAppRegistry'
 import { Permission } from '../types/ContractTypes'
 
 type NonEmptyArray<T> = [T, ...T[]]
@@ -20,16 +17,22 @@ export class AppRegistryDapp {
         this.appRegistry = new IAppRegistryShim(config.addresses.appRegistry, provider)
     }
 
+    // TODO: better api for passing access duration
+    // TODO: remove override of gas limit, max fee, and max priority fee
     public async createApp(
         signer: ethers.Signer,
         name: string,
         permissions: NonEmptyArray<Permission>,
-        clients: NonEmptyArray<Address>,
+        client: Address,
+        installPrice: bigint,
+        accessDuration: bigint, // in seconds
     ): Promise<ContractTransaction> {
         return this.appRegistry.write(signer).createApp({
             name,
             permissions: permissions.map((p) => ethers.utils.formatBytes32String(Permission[p])),
-            clients,
+            client,
+            installPrice,
+            accessDuration,
         })
     }
 
@@ -50,15 +53,31 @@ export class AppRegistryDapp {
         return { app: '', uid: '' }
     }
 
+    /** To register a smart contract app with a App Client */
     public async registerApp(
         signer: ethers.Signer,
         app: Address,
-        clients: Address[],
+        client: Address,
     ): Promise<ContractTransaction> {
-        return this.appRegistry.write(signer).registerApp(app, clients, {
-            gasLimit: 100_000,
-            maxFeePerGas: 100_000,
-            maxPriorityFeePerGas: 100_000,
+        return this.appRegistry.write(signer).registerApp(app, client)
+    }
+
+    /** To install a smart contract app in a space */
+    public async installApp(
+        /** The signer of the app owner */
+        signer: ethers.Signer,
+        /** The address of the app to install */
+        app: Address,
+        /** The address of the space to install the app in */
+        spaceAddress: Address,
+        /** The price of the app in wei */
+        price: bigint,
+    ): Promise<ContractTransaction> {
+        return this.appRegistry.write(signer).installApp(app, spaceAddress, new Uint8Array(0), {
+            gasLimit: 1_000_000,
+            maxFeePerGas: 20_000_000_000,
+            maxPriorityFeePerGas: 1_000_000_000,
+            value: price,
         })
     }
 
@@ -76,9 +95,6 @@ export class AppRegistryDapp {
 
     public async isAppBanned(app: Address): Promise<boolean> {
         return this.appRegistry.read.isAppBanned(app)
-    }
-    public async getAttestation(appId: string): Promise<AttestationStructOutput> {
-        return this.appRegistry.read.getAttestation(appId)
     }
 
     public async getLatestAppId(app: Address): Promise<string> {

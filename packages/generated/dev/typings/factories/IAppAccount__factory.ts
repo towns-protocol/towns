@@ -22,6 +22,19 @@ const _abi = [
   },
   {
     type: "function",
+    name: "enableApp",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "getAppId",
     inputs: [
       {
@@ -41,25 +54,6 @@ const _abi = [
   },
   {
     type: "function",
-    name: "getClients",
-    inputs: [
-      {
-        name: "app",
-        type: "address",
-        internalType: "address",
-      },
-    ],
-    outputs: [
-      {
-        name: "",
-        type: "address[]",
-        internalType: "address[]",
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
     name: "getInstalledApps",
     inputs: [],
     outputs: [
@@ -70,48 +64,6 @@ const _abi = [
       },
     ],
     stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "installApp",
-    inputs: [
-      {
-        name: "app",
-        type: "address",
-        internalType: "address",
-      },
-      {
-        name: "data",
-        type: "bytes",
-        internalType: "bytes",
-      },
-      {
-        name: "params",
-        type: "tuple",
-        internalType: "struct IAppAccountBase.AppParams",
-        components: [
-          {
-            name: "delays",
-            type: "tuple",
-            internalType: "struct IAppAccountBase.Delays",
-            components: [
-              {
-                name: "grantDelay",
-                type: "uint32",
-                internalType: "uint32",
-              },
-              {
-                name: "executionDelay",
-                type: "uint32",
-                internalType: "uint32",
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    outputs: [],
-    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -144,12 +96,30 @@ const _abi = [
   },
   {
     type: "function",
-    name: "uninstallApp",
+    name: "onInstallApp",
     inputs: [
       {
-        name: "app",
-        type: "address",
-        internalType: "address",
+        name: "appId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "onUninstallApp",
+    inputs: [
+      {
+        name: "appId",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "data",
@@ -167,21 +137,6 @@ const _abi = [
   },
   {
     type: "error",
-    name: "AppNotInstalled",
-    inputs: [],
-  },
-  {
-    type: "error",
-    name: "AppNotRegistered",
-    inputs: [],
-  },
-  {
-    type: "error",
-    name: "AppRevoked",
-    inputs: [],
-  },
-  {
-    type: "error",
     name: "InvalidAppAddress",
     inputs: [
       {
@@ -193,7 +148,7 @@ const _abi = [
   },
   {
     type: "error",
-    name: "InvalidAppId",
+    name: "InvalidCaller",
     inputs: [],
   },
   {

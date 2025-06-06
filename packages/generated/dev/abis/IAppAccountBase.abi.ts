@@ -6,21 +6,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "AppNotInstalled",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "AppNotRegistered",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "AppRevoked",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "InvalidAppAddress",
     "inputs": [
       {
@@ -32,7 +17,7 @@ export default [
   },
   {
     "type": "error",
-    "name": "InvalidAppId",
+    "name": "InvalidCaller",
     "inputs": []
   },
   {
