@@ -43,9 +43,14 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
     }
 
     /// @inheritdoc ISpaceDelegation
-    function addSpaceDelegation(address space, address operator) external onlySpaceOwner(space) {
+    function addSpaceDelegation(address space, address operator) external {
         if (operator == address(0)) {
             CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+        }
+
+        // Validate that the space exists
+        if (!_isValidSpace(space)) {
+            CustomRevert.revertWith(SpaceDelegation__InvalidSpace.selector);
         }
 
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
@@ -54,6 +59,15 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
 
         if (currentOperator == operator) {
             CustomRevert.revertWith(SpaceDelegation__AlreadyDelegated.selector);
+        }
+
+        // Authorization logic: anyone can delegate if space is not delegated yet,
+        // only owner can change delegation if already delegated
+        if (currentOperator != address(0)) {
+            // Space is already delegated, only owner can change delegation
+            if (!_isValidSpaceOwner(space)) {
+                CustomRevert.revertWith(SpaceDelegation__InvalidSpace.selector);
+            }
         }
 
         NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();
@@ -267,5 +281,9 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
         return
             IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0 &&
             IERC173(space).owner() == msg.sender;
+    }
+
+    function _isValidSpace(address space) internal view returns (bool) {
+        return IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0;
     }
 }
