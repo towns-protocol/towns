@@ -211,7 +211,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -361,7 +361,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -507,7 +507,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -662,7 +662,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat libsecp256k1-dev
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd libsecp256k1-dev
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -731,7 +731,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y zstd make netcat libsecp256k1-dev gcc
+              run: sudo apt update && sudo apt-get install -y zstd make netcat libsecp256k1-dev gcc netcat-openbsd
 
             - name: Setup Go
               uses: actions/setup-go@v5
