@@ -105,7 +105,11 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	sub := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
+	sub, err := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
+	if err != nil {
+		syncOp.log.Errorw("Failed to subscribe to stream sync operation", "err", err)
+		return err
+	}
 	defer sub.Close()
 
 	// Adding the initial sync position to the syncer
@@ -327,9 +331,14 @@ func (syncOp *StreamSyncOperation) ModifySync(
 
 	if syncOp.otelTracer != nil {
 		var span trace.Span
-		ctx, span = syncOp.otelTracer.Start(ctx, "modifySync",
+		ctx, span = syncOp.otelTracer.Start(ctx, "streamsyncoperation::modifySync",
 			trace.WithAttributes(attribute.String("syncId", req.Msg.GetSyncId())))
 		defer span.End()
+	}
+
+	var toBackfill []*ModifySyncRequest_Backfill
+	if req.Msg.GetBackfillStreams() != nil {
+		toBackfill = []*ModifySyncRequest_Backfill{req.Msg.GetBackfillStreams()}
 	}
 
 	resp := connect.NewResponse(&ModifySyncResponse{})
@@ -337,8 +346,14 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	cmd := &subCommand{
 		Ctx: ctx,
 		ModifySyncReq: &client.ModifyRequest{
-			ToAdd:    req.Msg.GetAddStreams(),
-			ToRemove: req.Msg.GetRemoveStreams(),
+			ToAdd:      req.Msg.GetAddStreams(),
+			ToRemove:   req.Msg.GetRemoveStreams(),
+			ToBackfill: toBackfill,
+			BackfillingFailureHandler: func(status *SyncStreamOpStatus) {
+				respLock.Lock()
+				resp.Msg.Backfills = append(resp.Msg.Backfills, status)
+				respLock.Unlock()
+			},
 			AddingFailureHandler: func(status *SyncStreamOpStatus) {
 				respLock.Lock()
 				resp.Msg.Adds = append(resp.Msg.Adds, status)
@@ -370,30 +385,24 @@ func (syncOp *StreamSyncOperation) CancelSync(
 			Func("CancelSync")
 	}
 
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		ctx, span = syncOp.otelTracer.Start(ctx, "cancelSync",
+			trace.WithAttributes(attribute.String("syncId", req.Msg.GetSyncId())))
+		defer span.End()
+	}
+
 	cmd := &subCommand{
 		Ctx:       ctx,
 		CancelReq: req.Msg.GetSyncId(),
 		reply:     make(chan error, 1),
 	}
 
-	timeout := time.After(15 * time.Second)
-
-	select {
-	case syncOp.commands <- cmd:
-		select {
-		case err := <-cmd.reply:
-			if err == nil {
-				return connect.NewResponse(&CancelSyncResponse{}), nil
-			}
-			return nil, err
-		case <-timeout:
-			return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full").
-				Func("CancelSync")
-		}
-	case <-timeout:
-		return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full").
-			Func("CancelSync")
+	if err := syncOp.process(cmd); err != nil {
+		return nil, err
 	}
+
+	return connect.NewResponse(&CancelSyncResponse{}), nil
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
@@ -437,7 +446,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 			return RiverError(Err_CANCELED, "sync operation cancelled").
 				Tags("syncId", syncOp.SyncID)
 		}
-	case <-time.After(10 * time.Second):
+	case <-time.After(30 * time.Second): // TODO: make this configurable
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
 			Tags("syncId", syncOp.SyncID)
 		syncOp.log.Errorw("Sync operation command queue full", "error", err)

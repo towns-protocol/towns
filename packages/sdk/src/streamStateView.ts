@@ -355,7 +355,11 @@ export class StreamStateView implements IStreamStateView {
         try {
             switch (payload.case) {
                 case 'miniblockHeader':
-                    // TODO: Remove
+                    if (this.miniblockInfo?.max == payload.value.miniblockNum) {
+                        // This is a duplicate miniblock header, ignore it.
+                        // It can happen right after receiving a stream backfill message during sync initialization.
+                        break
+                    }
                     check(
                         (this.miniblockInfo?.max ?? -1n) < payload.value.miniblockNum,
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,

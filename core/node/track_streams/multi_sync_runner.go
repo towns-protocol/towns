@@ -124,7 +124,7 @@ func (ssr *syncSessionRunner) AddStream(
 			"syncId", ssr.GetSyncId(),
 			"targetNode", ssr.node,
 		)
-	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
+	if resp, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
 			MinipoolGen:       record.minipoolGen,

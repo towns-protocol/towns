@@ -3,10 +3,13 @@ package subscription
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -16,24 +19,33 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+// Manager is the subscription manager that manages all subscriptions for stream sync operations.
 type Manager struct {
 	// log is the logger for this stream sync operation
-	log           *logging.Log
+	log *logging.Log
+	// localNodeAddr is the address of the local node
 	localNodeAddr common.Address
-	globalCtx     context.Context
-
-	streamCache  *StreamCache
+	// globalCtx is the global context of the node
+	globalCtx context.Context
+	// streamCache is the global stream cache
+	streamCache *StreamCache
+	// nodeRegistry is the node registry that provides information about other nodes in the network
 	nodeRegistry nodes.NodeRegistry
-
-	syncers  *client.SyncerSet
+	// syncers is the set of syncers that handle stream synchronization
+	syncers *client.SyncerSet
+	// messages is the global channel for messages of all syncing streams
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-
-	sLock         sync.Mutex
+	// sLock is the mutex that protects the subscriptions map
+	sLock sync.Mutex
+	// subscriptions is a map of stream IDs to subscriptions.
 	subscriptions map[StreamId][]*Subscription
-
+	// stopped is a flag that indicates whether the manager is stopped (1) or not (0).
+	stopped atomic.Bool
+	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
 	otelTracer trace.Tracer
 }
 
+// NewManager creates a new subscription manager for stream sync operations.
 func NewManager(
 	ctx context.Context,
 	localNodeAddr common.Address,
@@ -64,32 +76,40 @@ func NewManager(
 	return manager
 }
 
-func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) *Subscription {
-	return &Subscription{
-		log:      m.log.With("syncId", syncID),
-		ctx:      ctx,
-		cancel:   cancel,
-		syncID:   syncID,
-		Messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		manager:  m,
+// Subscribe creates a new subscription with the given sync ID.
+func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) (*Subscription, error) {
+	if m.stopped.Load() {
+		return nil, RiverError(Err_UNAVAILABLE, "subscription manager is stopped").Tag("syncId", syncID)
 	}
+
+	return &Subscription{
+		log:                 m.log.With("syncId", syncID),
+		ctx:                 ctx,
+		cancel:              cancel,
+		syncID:              syncID,
+		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		manager:             m,
+		initializingStreams: xsync.NewMap[StreamId, bool](),
+	}, nil
 }
 
+// start starts the subscription manager and listens for messages from the syncer set.
 func (m *Manager) start() {
-	defer m.cancelAllSubscriptions(m.globalCtx.Err())
+	defer func() {
+		m.stopped.Store(true)
+		m.cancelAllSubscriptions(m.globalCtx.Err())
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-m.globalCtx.Done():
-			// TODO: Handle, cancel all subscriptions
 			return
 		case _, open := <-m.messages.Wait():
 			msgs = m.messages.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed
 			if msgs == nil {
-				// TODO: Handle, should not happen
 				return
 			}
 
@@ -101,7 +121,6 @@ func (m *Manager) start() {
 				// from the current batch, just interrupt the sending process and close.
 				select {
 				case <-m.globalCtx.Done():
-					// TODO: Handle, cancel all subscriptions
 					return
 				default:
 				}
@@ -110,7 +129,6 @@ func (m *Manager) start() {
 			// If the client sent a close message, stop sending messages to client from the buffer.
 			// In theory should not happen, but just in case.
 			if !open {
-				// TODO: Handle, cancel all subscriptions
 				return
 			}
 		}
@@ -125,6 +143,8 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 		return
 	}
 
+	// Get the stream ID from the message. Depending on the operation type, it can be either from the message itself
+	// or from the next sync cookie of the stream.
 	var streamIDRaw []byte
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		streamIDRaw = msg.GetStreamId()
@@ -141,39 +161,90 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	// Send the message to all subscriptions for this stream.
 	m.sLock.Lock()
 	subscriptions, ok := m.subscriptions[streamID]
-	if !ok {
+	if !ok || len(subscriptions) == 0 {
 		// No subscriptions for this stream, nothing to do.
-		// TODO: When this case might happen?
-		// TODO: Remove the given stream from the syncer set to no longer receive updates for the given stream.
+		go m.dropStream(streamID)
 		m.sLock.Unlock()
 		return
 	}
-
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		// The given stream is no longer needed, remove it from the subscriptions.
+		// The given stream is no longer syncing, remove it from the subscriptions.
 		delete(m.subscriptions, streamID)
 	}
 	m.sLock.Unlock()
 
-	// FIXME: Potentially, a single subscription might block the entire sending process.
+	// If the given message has a specific target subscription, just fetch the subscription by the sync ID
+	if len(msg.GetTargetSyncIds()) > 0 {
+		// Applicable only for backfill operation
+		var sub *Subscription
+		for _, subscription := range subscriptions {
+			if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
+				sub = subscription
+				break
+			}
+		}
+
+		// If the subscription is closed, just skip sending the message.
+		// This can happen if a client immediately closes the subscription before receiving the backfill message.
+		if sub != nil {
+			msg.TargetSyncIds = msg.TargetSyncIds[1:]
+			sub.Send(msg)
+
+			if initializing, _ := sub.initializingStreams.Load(streamID); initializing {
+				// The given stream is in initialization state for the given subscription.
+				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+					// Backfill of the stream targeted specifically to the given subscription
+					sub.initializingStreams.Delete(streamID)
+				}
+			}
+		}
+		return
+	}
+
+	// Sending the message to all subscriptions for the given stream.
+	// It is safe to use waitgroup here becasue subscribers use dynamic buffer channel and can just throw the
+	// error if the buffer is full. Meaning, this is not a blocking by client operation.
 	var wg sync.WaitGroup
-	wg.Add(len(subscriptions))
 	for i, subscription := range subscriptions {
-		go func(i int, subscription *Subscription) {
-			if subscription.isClosed() && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-				// Remove the given subscriptions from the list of subscriptions of the given stream
+		if subscription.isClosed() {
+			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+				// Remove the given subscriptions from the list of subscriptions of the given stream.
+				// If the operation is SYNC_DOWN, all subscriptions were removed above already.
 				m.sLock.Lock()
 				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
 				m.sLock.Unlock()
-			} else {
-				subscription.Send(msg)
 			}
+			continue
+		}
+
+		if initializing, _ := subscription.initializingStreams.Load(streamID); initializing {
+			// If the subscription is still initializing, skip sending the message.
+			// It will be sent later when the subscription is ready.
+			continue
+		}
+
+		wg.Add(1)
+		go func(i int, subscription *Subscription) {
+			subscription.Send(msg)
 			wg.Done()
 		}(i, subscription)
 	}
 	wg.Wait()
 }
 
+// dropStream removes the given stream from the syncers set and all subscriptions.
+func (m *Manager) dropStream(streamID StreamId) {
+	if err := m.syncers.Modify(m.globalCtx, client.ModifyRequest{
+		ToRemove: [][]byte{streamID[:]},
+		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+			m.log.Errorw("Failed to remove stream from syncer set", "streamId", streamID, "status", status)
+		},
+	}); err != nil {
+		m.log.Errorw("Failed to drop stream from syncer set", "streamId", streamID, "err", err)
+	}
+}
+
+// cancelAllSubscriptions cancels all subscriptions with the given error.
 func (m *Manager) cancelAllSubscriptions(err error) {
 	m.sLock.Lock()
 	for _, subscriptions := range m.subscriptions {

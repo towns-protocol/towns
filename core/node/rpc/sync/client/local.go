@@ -61,8 +61,44 @@ func (s *localSyncer) Address() common.Address {
 	return s.localAddr
 }
 
-func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::modify")
+		defer span.End()
+	}
+
 	var resp ModifySyncResponse
+
+	for _, cookie := range request.GetBackfillStreams().GetStreams() {
+		stream, err := s.streamCache.GetStreamNoWait(ctx, StreamId(cookie.GetStreamId()))
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
+		err = stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
+			s.sendResponse(&SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				Stream:        streamAndCookie,
+				TargetSyncIds: request.TargetSyncIDs(),
+			})
+		})
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+	}
 
 	for _, cookie := range request.GetAddStreams() {
 		if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
@@ -76,8 +112,6 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	for _, streamID := range request.GetRemoveStreams() {
 		syncStream, found := s.activeStreams[StreamId(streamID)]
 		if found {
@@ -85,8 +119,9 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
+	s.activeStreamsMu.Unlock()
 
-	return &resp, len(s.activeStreams) == 0, nil
+	return &resp, nil
 }
 
 // OnUpdate is called each time a new cookie is available for a stream

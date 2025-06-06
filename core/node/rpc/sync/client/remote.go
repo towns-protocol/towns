@@ -234,7 +234,7 @@ func (s *remoteSyncer) Address() common.Address {
 	return s.remoteAddr
 }
 
-func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
 	if s.otelTracer != nil {
 		var span trace.Span
 		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::modify")
@@ -246,7 +246,7 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	for _, cookie := range request.GetAddStreams() {
@@ -265,17 +265,7 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 		}
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
-
-	return resp.Msg, noMoreStreams, nil
+	return resp.Msg, nil
 }
 
 func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {

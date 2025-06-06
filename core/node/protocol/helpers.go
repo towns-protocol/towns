@@ -80,3 +80,18 @@ func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
 func (x *MiniblockHeader) IsSnapshot() bool {
 	return x.GetSnapshot() != nil || len(x.GetSnapshotHash()) > 0
 }
+
+// TargetSyncIDs returns the list of target sync IDs from the ModifySyncRequest.
+func (r *ModifySyncRequest) TargetSyncIDs() []string {
+	var targetSyncIds []string
+
+	if r.SyncId != "" {
+		targetSyncIds = append(targetSyncIds, r.SyncId)
+	}
+
+	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.SyncId {
+		targetSyncIds = append(targetSyncIds, r.GetBackfillStreams().GetSyncId())
+	}
+
+	return targetSyncIds
+}
