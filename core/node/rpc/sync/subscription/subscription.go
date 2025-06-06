@@ -5,10 +5,10 @@ import (
 	"slices"
 	"sync/atomic"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -36,6 +36,8 @@ type Subscription struct {
 	manager *Manager
 	// initializingStreams is a map of streams that are currently being initialized for this subscription.
 	initializingStreams *xsync.Map[StreamId, bool]
+	// backfillEvents is the map of stream and backfill events that were sent to the client..
+	backfillEvents *xsync.Map[StreamId, []common.Hash]
 }
 
 // Close closes the subscription.
@@ -57,7 +59,6 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 		return
 	}
 
-	msg = proto.Clone(msg).(*SyncStreamsResponse)
 	err := s.Messages.AddMessage(msg)
 	if err != nil {
 		rvrErr := AsRiverError(err).

@@ -2,12 +2,14 @@ package subscription
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -90,6 +92,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:             m,
 		initializingStreams: xsync.NewMap[StreamId, bool](),
+		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
 	}, nil
 }
 
@@ -195,6 +198,18 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 					// Backfill of the stream targeted specifically to the given subscription
 					sub.initializingStreams.Delete(streamID)
+
+					// Add the given events to the backfill events of the subscription.
+					for _, event := range msg.GetStream().GetEvents() {
+						sub.backfillEvents.Compute(streamID, func(oldValue []common.Hash, _ bool) ([]common.Hash, xsync.ComputeOp) {
+							return append(oldValue, common.BytesToHash(event.Hash)), xsync.UpdateOp
+						})
+					}
+					for _, miniblock := range msg.GetStream().GetMiniblocks() {
+						sub.backfillEvents.Compute(streamID, func(oldValue []common.Hash, _ bool) ([]common.Hash, xsync.ComputeOp) {
+							return append(oldValue, common.BytesToHash(miniblock.Header.Hash)), xsync.UpdateOp
+						})
+					}
 				}
 			}
 		}
@@ -225,6 +240,20 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 
 		wg.Add(1)
 		go func(i int, subscription *Subscription) {
+			msg := proto.Clone(msg).(*SyncStreamsResponse)
+
+			// Prevent sending duplicates that have already been sent to the client in the backfill message.
+			// TODO: Remove the backfill events for the given stream after receiving N messages after the backfill.
+			backfillEvents, loaded := subscription.backfillEvents.Load(streamID)
+			if loaded && len(backfillEvents) > 0 {
+				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
+					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
+				})
+				msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
+					return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
+				})
+			}
+
 			subscription.Send(msg)
 			wg.Done()
 		}(i, subscription)
