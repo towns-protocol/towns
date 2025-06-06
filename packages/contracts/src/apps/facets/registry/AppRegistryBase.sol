@@ -10,17 +10,16 @@ import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {AppRegistryStorage} from "./AppRegistryStorage.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {LibCall} from "solady/utils/LibCall.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -84,10 +83,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     }
 
     function _getAppPrice(address app) internal view returns (uint256 price) {
-        bytes memory data = abi.encodeWithSelector(ITownsApp.installPrice.selector);
-        (bool success, , bytes memory result) = LibCall.tryStaticCall(app, 5000, 32, data);
-        uint256 installPrice = success ? abi.decode(result, (uint256)) : 0;
-        (price, ) = _getTotalRequiredPayment(installPrice);
+        try ITownsApp(app).installPrice() returns (uint256 installPrice) {
+            (price, ) = _getTotalRequiredPayment(installPrice);
+        } catch {
+            (price, ) = _getTotalRequiredPayment(0);
+        }
     }
 
     /// @notice Retrieves detailed information about an app by its ID
@@ -108,10 +108,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @dev Validates inputs, deploys app contract, and registers it
     function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
         // Validate basic parameters
-        if (bytes(params.name).length == 0) revert InvalidAppName();
-        if (params.permissions.length == 0 || params.clients.length == 0) {
-            revert InvalidArrayInput();
-        }
+        if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
+        if (params.permissions.length == 0 || params.clients.length == 0)
+            InvalidArrayInput.selector.revertWith();
 
         _validatePricing(params.installPrice);
 
@@ -232,17 +231,16 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         _chargeForInstall(msg.sender, owner, installPrice);
 
-        IAppAccount(account).installApp(appId, data);
+        IAppAccount(account).onInstallApp(appId, data);
 
-        emit AppInstalled(app, account, appId);
+        emit AppInstalled(app, address(account), appId);
     }
 
     function _uninstallApp(address app, address account, bytes calldata data) internal {
         bytes32 appId = IAppAccount(account).getAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
-
-        IAppAccount(account).uninstallApp(appId, data);
-        emit AppUninstalled(app, account, appId);
+        IAppAccount(account).onUninstallApp(appId, data);
+        emit AppUninstalled(app, address(account), appId);
     }
 
     function _onlyAllowed(address account) internal view {
@@ -288,8 +286,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         );
 
         // Transfer developer payment if applicable
-        uint256 ownerProceeds = installPrice == 0 ? 0 : totalRequired - protocolFee;
-        if (ownerProceeds > 0) {
+        if (totalRequired > protocolFee) {
+            uint256 ownerProceeds = totalRequired - protocolFee;
             CurrencyTransfer.transferCurrency(
                 CurrencyTransfer.NATIVE_TOKEN,
                 payer,
@@ -332,7 +330,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     function _validatePricing(uint256 price) internal view {
         IPlatformRequirements reqs = _getPlatformRequirements();
         uint256 minPlatformFee = reqs.getMembershipFee();
-        if (price > 0 && price < minPlatformFee) revert InvalidPrice();
+        if (price > 0 && price < minPlatformFee) InvalidPrice.selector.revertWith();
     }
 
     /// @notice Verifies inputs for adding a new app
