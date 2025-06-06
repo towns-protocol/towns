@@ -19,6 +19,9 @@ export class Observable<T> {
     }
 
     setValue(newValue: T) {
+        if (this._value === newValue) {
+            return
+        }
         const prevValue = this._value
         this._value = newValue
         this.notify(prevValue)

@@ -168,16 +168,20 @@ describe('gdmsTests', () => {
         )
 
         await bobsClient.sendMessage(streamId, 'hello')
-        log('waiting for recipients to receive message')
+        log(`urkaiaj 1 waiting for recipients to receive message chuck: ${chucksClient.logId}`)
         await Promise.all(aliceCharliePromises)
-
+        log('urkaiaj 2')
         // In this test, Bob invites Chuck _after_ sending the message
         const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
         await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).resolves.not.toThrow()
+        log('urkaiaj 3')
         const stream = await chucksClient.waitForStream(streamId)
         await stream.waitForMembership(MembershipOp.SO_INVITE)
+        log('urkaiaj 4')
         await expect(chucksClient.joinStream(streamId)).resolves.not.toThrow()
+        log('urkaiaj 5')
         await expect(chuckPromise).resolves.not.toThrow()
+        log('urkaiaj 6')
     })
 
     // In this test, Bob goes offline after sending the message,
