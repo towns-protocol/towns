@@ -24,22 +24,15 @@ Build-time setup script that:
 
 ### `run.sh`
 
-Runtime script for container execution with multiple modes:
+Runtime script that starts both blockchain networks and keeps them running for development.
 
-**Usage:**
+### `test.sh`
 
-```bash
-./run.sh [OPTIONS]
+Test runner script that:
 
-Options:
-  --test    Run in test mode (kills anvil processes after running tests)
-  --help    Show this help message
-```
-
-**Modes:**
-
-- **Normal Mode**: Starts both blockchain networks and keeps them running
-- **Test Mode**: Starts networks, runs node registry tests, then exits
+- Starts both blockchain networks
+- Runs node registry tests
+- Kills anvil processes and exits after tests complete
 
 ## Usage
 
@@ -56,13 +49,8 @@ docker build -t towns-anvil -f ./contracts/docker/Dockerfile .
 **Start blockchain networks:**
 
 ```bash
-docker run -it --rm -p 8545:8545 -p 8546:8546 towns-anvil ./contracts/docker/run.sh
-```
-
-**Run tests only:**
-
-```bash
-docker run -it --rm towns-anvil ./contracts/docker/run.sh --test
+docker run -it --rm -p 8545:8545 -e CHAIN=base towns-anvil:latest
+docker run -it --rm -p 8546:8546 -e CHAIN=river towns-anvil:latest
 ```
 
 **Interactive shell:**

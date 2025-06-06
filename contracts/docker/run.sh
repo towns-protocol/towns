@@ -74,7 +74,7 @@ setup_trap() {
 
 start_base_chain() {
   echo "Starting base chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--load-state base-anvil-state.json" bash ./scripts/start-local-basechain.sh 
+  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--load-state base-anvil-state.json --host 0.0.0.0" bash ./scripts/start-local-basechain.sh 
   sleep 1  # Give it a moment to start
   BASE_PID=$(pgrep -f "anvil.*base-anvil-state.json" | head -n 1)
   echo "Base chain started with PID: $BASE_PID"
@@ -82,7 +82,7 @@ start_base_chain() {
 
 start_river_chain() {
   echo "Starting river chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--load-state river-anvil-state.json" bash ./scripts/start-local-riverchain.sh 
+  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--load-state river-anvil-state.json --host 0.0.0.0" bash ./scripts/start-local-riverchain.sh 
   sleep 1  # Give it a moment to start
   RIVER_PID=$(pgrep -f "anvil.*river-anvil-state.json" | head -n 1)
   echo "River chain started with PID: $RIVER_PID"
