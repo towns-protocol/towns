@@ -345,6 +345,8 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0
 
+	cfg.TestOnlyMetadataShardMask = 0b11
+
 	if options.configUpdater != nil {
 		options.configUpdater(cfg)
 	}
@@ -683,6 +685,42 @@ func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) tes
 	})
 
 	return clients
+}
+
+// newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
+func (st *serviceTester) createMetadataStreams() {
+	operatorClient := st.newTestClientWithWallet(0, testClientOpts{}, st.btc.GetDeployerWallet())
+
+	numStreams := st.nodes[0].service.config.TestOnlyMetadataShardMask + 1
+
+	var wg sync.WaitGroup
+	for i := uint64(0); i < numStreams; i++ {
+		wg.Add(1)
+		go func(i uint64) {
+			defer wg.Done()
+
+			streamId := MetadataStreamIdFromShard(i)
+
+			inception, err := MakeEnvelopeWithPayload(
+				operatorClient.wallet,
+				Make_MetadataPayload_Inception(streamId, nil),
+				nil,
+			)
+			st.require.NoError(err)
+
+			res, err := operatorClient.client.CreateStream(
+				operatorClient.ctx,
+				connect.NewRequest(&CreateStreamRequest{
+					Events:   []*Envelope{inception},
+					StreamId: streamId[:],
+				}),
+			)
+			st.require.NoError(err)
+
+			operatorClient.require.Equal(streamId, StreamId(res.Msg.Stream.NextSyncCookie.StreamId))
+		}(i)
+	}
+	wg.Wait()
 }
 
 func (tc *testClient) DefaultEncryptionDevice() app_client.EncryptionDevice {

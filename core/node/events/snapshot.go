@@ -261,7 +261,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_MediaPayload:
 		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown payload type %T", event.Event.Payload))
+		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type", "payloadType", fmt.Sprintf("%T", event.Event.Payload))
 	}
 }
 

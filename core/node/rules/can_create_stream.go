@@ -78,6 +78,11 @@ type csUserInboxRules struct {
 	inception *UserInboxPayload_Inception
 }
 
+type csMetadataRules struct {
+	params    *csParams
+	inception *MetadataPayload_Inception
+}
+
 /*
 *
 * CanCreateStreamEvent
@@ -326,6 +331,18 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			).
 			requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
+	case *MetadataPayload_Inception:
+		ru := &csMetadataRules{
+			params:    ru,
+			inception: inception,
+		}
+		return builder.
+			check(
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_METADATA_BIN),
+				ru.params.eventCountMatches(1),
+				ru.params.creatorIsOperator,
+			)
+
 	default:
 		return builder.fail(unknownPayloadType(inception))
 	}
@@ -410,6 +427,19 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 		}
 		return nil
 	}
+}
+
+func (ru *csParams) creatorIsOperator() error {
+	if len(ru.parsedEvents) < min || len(ru.parsedEvents) > max {
+		return RiverError(
+			Err_BAD_STREAM_CREATION_PARAMS,
+			"bad event count",
+			"count",
+			len(ru.parsedEvents),
+			"minExpectedCount", min, "maxExpectedCount", max,
+		)
+	}
+	return nil
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
