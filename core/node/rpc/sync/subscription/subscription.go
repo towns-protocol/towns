@@ -32,7 +32,7 @@ type Subscription struct {
 	// syncID is the subscription/sync ID
 	syncID string
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.
-	closed uint32
+	closed atomic.Bool
 	// manager is the subscription manager that manages this subscription
 	manager *Manager
 	// initializingStreams is a map of streams that are currently being initialized for this subscription.
@@ -41,7 +41,7 @@ type Subscription struct {
 
 // Close closes the subscription.
 func (s *Subscription) Close() {
-	atomic.StoreUint32(&s.closed, 1)
+	s.closed.Store(true)
 	s.Messages.Close()
 	// The given subscription is going to be removed from the list (s.subscriptions) automatically during the next stream update.
 	// This way we can avoid iterating over all streams to remove the current subscription.
@@ -49,7 +49,7 @@ func (s *Subscription) Close() {
 
 // isClosed returns true if the subscription is closed, false otherwise.
 func (s *Subscription) isClosed() bool {
-	return atomic.LoadUint32(&s.closed) == 1
+	return s.closed.Load()
 }
 
 // Send sends the given message to the subscription messages channel.

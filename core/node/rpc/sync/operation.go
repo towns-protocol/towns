@@ -446,7 +446,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 			return RiverError(Err_CANCELED, "sync operation cancelled").
 				Tags("syncId", syncOp.SyncID)
 		}
-	case <-time.After(30 * time.Second):
+	case <-time.After(30 * time.Second): // TODO: make this configurable
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
 			Tags("syncId", syncOp.SyncID)
 		syncOp.log.Errorw("Sync operation command queue full", "error", err)

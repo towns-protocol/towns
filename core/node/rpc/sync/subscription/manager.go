@@ -40,7 +40,7 @@ type Manager struct {
 	// subscriptions is a map of stream IDs to subscriptions.
 	subscriptions map[StreamId][]*Subscription
 	// stopped is a flag that indicates whether the manager is stopped (1) or not (0).
-	stopped uint32
+	stopped atomic.Bool
 	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
 	otelTracer trace.Tracer
 }
@@ -78,7 +78,7 @@ func NewManager(
 
 // Subscribe creates a new subscription with the given sync ID.
 func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) (*Subscription, error) {
-	if atomic.LoadUint32(&m.stopped) == 1 {
+	if m.stopped.Load() {
 		return nil, RiverError(Err_UNAVAILABLE, "subscription manager is stopped").Tag("syncId", syncID)
 	}
 
@@ -96,7 +96,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 // start starts the subscription manager and listens for messages from the syncer set.
 func (m *Manager) start() {
 	defer func() {
-		atomic.StoreUint32(&m.stopped, 1)
+		m.stopped.Store(true)
 		m.cancelAllSubscriptions(m.globalCtx.Err())
 	}()
 
