@@ -3,6 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
+import {ITownsApp} from "../../ITownsApp.sol";
 
 // libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -97,7 +99,7 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param clients The list of client contract addresses that will use this app
     /// @return appId The attestation UID of the registered app
     function registerApp(
-        address app,
+        ITownsApp app,
         address[] calldata clients
     ) external payable returns (bytes32 appId);
 
@@ -110,7 +112,13 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address to install
     /// @param account The account to install the app to
     /// @param data The data to pass to the app's onInstall function
-    function installApp(address app, address account, bytes calldata data) external payable;
+    function installApp(ITownsApp app, IAppAccount account, bytes calldata data) external payable;
+
+    /// @notice Uninstall an app
+    /// @param app The app address to uninstall
+    /// @param account The account to uninstall the app from
+    /// @param data The data to pass to the app's onUninstall function
+    function uninstallApp(ITownsApp app, IAppAccount account, bytes calldata data) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Admin                            */
@@ -127,5 +135,5 @@ interface IAppRegistry is IAppRegistryBase {
     /// @notice Ban a app from the registry
     /// @param app The app address to ban
     /// @return The attestation UID that was banned
-    function adminBanApp(address app) external returns (bytes32);
+    function adminBanApp(ITownsApp app) external returns (bytes32);
 }

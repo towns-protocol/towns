@@ -46,8 +46,8 @@ abstract contract AppAccountBase is
     bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
 
     // External Functions
-    function _onlyRegistry(address sender) internal view {
-        if (sender != address(_getAppRegistry())) InvalidCaller.selector.revertWith();
+    function _onlyRegistry() internal view {
+        if (msg.sender != address(_getAppRegistry())) InvalidCaller.selector.revertWith();
     }
 
     function _installApp(bytes32 appId, bytes calldata postInstallData) internal {

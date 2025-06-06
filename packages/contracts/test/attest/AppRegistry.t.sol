@@ -11,6 +11,7 @@ import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {ITownsApp} from "../../src/apps/ITownsApp.sol";
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -64,7 +65,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         clients[0] = DEFAULT_CLIENT;
 
         vm.prank(DEFAULT_DEV);
-        DEFAULT_APP_ID = registry.registerApp(address(mockModule), clients);
+        DEFAULT_APP_ID = registry.registerApp(mockModule, clients);
         _;
     }
 
@@ -97,12 +98,12 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         // App address cannot be zero
         vm.prank(owner);
         vm.expectRevert(InvalidAddressInput.selector);
-        registry.registerApp(address(0), clients);
+        registry.registerApp(ITownsApp(address(0)), clients);
     }
 
     function test_revertWhen_registerApp_EmptyClients() external {
         address owner = _randomAddress();
-        address app = address(new MockPlugin(owner));
+        MockPlugin app = new MockPlugin(owner);
 
         address[] memory clients = new address[](0);
 
@@ -120,7 +121,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         address owner = _randomAddress();
 
         vm.prank(owner);
-        address app = address(new MockPlugin(owner));
+        MockPlugin app = new MockPlugin(owner);
 
         address[] memory clients = new address[](2);
         clients[0] = _randomAddress();
@@ -144,7 +145,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         address owner = _randomAddress();
 
         vm.prank(owner);
-        address app = address(new MockPlugin(owner));
+        MockPlugin app = new MockPlugin(owner);
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
@@ -162,7 +163,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         address owner = _randomAddress();
 
         vm.prank(owner);
-        address app = address(new MockPlugin(owner));
+        MockPlugin app = new MockPlugin(owner);
         address notOwner = _randomAddress();
 
         address[] memory clients = new address[](1);
@@ -301,19 +302,19 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.prank(founder);
         vm.expectEmit(address(appAccount));
         emit IERC6900Account.ExecutionInstalled(address(mockModule), appInfo.manifest);
-        registry.installApp{value: totalRequired}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: totalRequired}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.installApp(address(mockModule), address(appAccount), "");
+        registry.installApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_appNotRegistered() external {
         vm.expectRevert(AppNotRegistered.selector);
         vm.prank(founder);
-        registry.installApp(address(mockModule), address(appAccount), "");
+        registry.installApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_insufficientPayment() external givenAppIsRegistered {
@@ -325,11 +326,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, insufficientAmount);
         vm.expectRevert(InsufficientPayment.selector);
-        registry.installApp{value: insufficientAmount}(
-            address(mockModule),
-            address(appAccount),
-            ""
-        );
+        registry.installApp{value: insufficientAmount}(mockModule, appAccount, "");
     }
 
     function test_installApp_withFreeApp() external givenAppIsRegistered {
@@ -343,7 +340,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             mockModule.executionManifest()
         );
         hoax(founder, requiredAmount);
-        registry.installApp{value: requiredAmount}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: requiredAmount}(mockModule, appAccount, "");
 
         uint256 protocolFee = _getProtocolFee(0);
 
@@ -366,7 +363,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             mockModule.executionManifest()
         );
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify fee distribution
         assertEq(address(deployer).balance, protocolFee);
@@ -390,7 +387,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         );
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, minFee);
         assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - minFee);
@@ -408,7 +405,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(protocolFee > minFee);
@@ -431,7 +428,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(bpsFee < minFee);
@@ -453,7 +450,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 founderInitialBalance = address(founder).balance;
 
         hoax(founder, payment);
-        registry.installApp{value: payment}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: payment}(mockModule, appAccount, "");
 
         // Verify excess was refunded
         assertEq(address(founder).balance - founderInitialBalance, excess);
@@ -469,30 +466,30 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, price);
         vm.expectRevert(AppRevoked.selector);
-        registry.installApp{value: price}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: price}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_bannedApp() external givenAppIsRegistered {
         vm.prank(deployer);
-        registry.adminBanApp(address(mockModule));
+        registry.adminBanApp(mockModule);
 
         uint256 price = registry.getAppPrice(address(mockModule));
 
         hoax(founder, price);
         vm.expectRevert(BannedApp.selector);
-        registry.installApp{value: price}(address(mockModule), address(appAccount), "");
+        registry.installApp{value: price}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_uninstallApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.uninstallApp(address(mockModule), address(appAccount), "");
+        registry.uninstallApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_uninstallApp_appNotRegistered() external {
         vm.prank(founder);
         vm.expectRevert(AppNotRegistered.selector);
-        registry.uninstallApp(address(mockModule), address(appAccount), "");
+        registry.uninstallApp(mockModule, appAccount, "");
     }
 
     function test_getAppById_getRevokedApp() external givenAppIsRegistered {
@@ -525,7 +522,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         address owner = _randomAddress();
 
         vm.prank(owner);
-        address app = address(new MockPlugin(owner));
+        MockPlugin app = new MockPlugin(owner);
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
@@ -537,12 +534,12 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         bytes32 bannedUid = registry.adminBanApp(app);
 
         assertEq(bannedUid, appId);
-        assertTrue(registry.isAppBanned(app));
+        assertTrue(registry.isAppBanned(address(app)));
     }
 
     function test_adminBanApp_onlyOwner() external {
         address notOwner = _randomAddress();
-        address app = address(new MockPlugin(_randomAddress()));
+        MockPlugin app = new MockPlugin(_randomAddress());
 
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
@@ -550,7 +547,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     }
 
     function test_revertWhen_adminBanApp_AppNotRegistered() external {
-        address app = address(new MockPlugin(_randomAddress()));
+        MockPlugin app = new MockPlugin(_randomAddress());
 
         // Even the admin cannot ban a app that doesn't exist
         vm.prank(deployer);
