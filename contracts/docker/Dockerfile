@@ -75,4 +75,4 @@ COPY ./contracts/docker/setup.sh /app/contracts/docker/setup.sh
 RUN bash ./contracts/docker/setup.sh && sleep 5
 
 # Default command
-CMD ["/bin/bash"]
+ENTRYPOINT ["/bin/bash", "./contracts/docker/run.sh"]
