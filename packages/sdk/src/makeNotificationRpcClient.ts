@@ -54,7 +54,7 @@ export function makeNotificationRpcClient(
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client: NotificationRpcClient = createClient(NotificationService, transport)
+    const client = createClient(NotificationService, transport) as NotificationRpcClient
     client.url = url
     return client
 }

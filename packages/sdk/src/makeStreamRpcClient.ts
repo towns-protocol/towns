@@ -58,7 +58,7 @@ export function makeStreamRpcClient(
     }
     const transport = createHttp2ConnectTransport(options)
 
-    const client: StreamRpcClient = createClient(StreamService, transport)
+    const client = createClient(StreamService, transport) as StreamRpcClient
     client.url = url
     client.opts = { retryParams }
     return client

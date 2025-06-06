@@ -47,10 +47,7 @@ export function makeAuthenticationRpcClient(
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client: AuthenticationRpcClient = createClient(
-        AuthenticationService,
-        transport,
-    ) as AuthenticationRpcClient
+    const client = createClient(AuthenticationService, transport) as AuthenticationRpcClient
     client.url = url
     return client
 }
