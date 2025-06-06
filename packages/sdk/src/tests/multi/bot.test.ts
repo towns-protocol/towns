@@ -26,7 +26,7 @@ describe('bot tests', () => {
             botProvider.signer,
             'bob-bot',
             [Permission.Read, Permission.Write],
-            [botWallet.address as Address],
+            botWallet.address as Address,
         )
         const receipt = await tx.wait()
         const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)

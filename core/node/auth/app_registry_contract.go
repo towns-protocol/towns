@@ -34,11 +34,27 @@ var EMPTY_UID = [32]byte{}
 
 func (arc *AppRegistryContract) IsRegisteredApp(
 	ctx context.Context,
-	address common.Address,
+	appAddress common.Address,
 ) (bool, error) {
-	uid, err := arc.appRegistry.GetLatestAppId(&bind.CallOpts{}, address)
+	uid, err := arc.appRegistry.GetLatestAppId(&bind.CallOpts{Context: ctx}, appAddress)
 	if err != nil {
-		return false, AsRiverError(err).Message("Unable to check if app is registered").Tag("address", address)
+		return false, AsRiverError(err).Message("Unable to check if app is registered").Tag("address", appAddress)
 	}
 	return uid != EMPTY_UID, nil
+}
+
+func (arc *AppRegistryContract) IsRegisteredAppWithClient(
+	ctx context.Context,
+	appAddress common.Address,
+	clientAddress common.Address,
+) (bool, error) {
+	appAddress, err := arc.appRegistry.GetAppByClient(&bind.CallOpts{Context: ctx}, clientAddress)
+	if err != nil {
+		return false, AsRiverError(
+			err,
+		).Message("Unable to check if app exists with client address").
+			Tag("appAddress", appAddress).
+			Tag("clientAddress", clientAddress)
+	}
+	return false, nil
 }
