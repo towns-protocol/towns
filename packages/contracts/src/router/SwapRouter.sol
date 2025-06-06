@@ -245,23 +245,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         );
     }
 
-    //    /// @dev Calls the `permit` function of the ERC20 token
-    //    /// @param token The address of the ERC20 token
-    //    /// @param permit The permit parameters
-    //    function _permit(address token, PermitParams calldata permit) internal {
-    //        bytes4 selector = IERC20Permit.permit.selector;
-    //        assembly ("memory-safe") {
-    //            let fmp := mload(0x40)
-    //            mstore(fmp, selector)
-    //            // copy permit params to memory
-    //            calldatacopy(add(fmp, 0x04), permit, 0xe0)
-    //            if iszero(call(gas(), token, 0, fmp, 0xe4, 0, 0)) {
-    //                returndatacopy(0, 0, returndatasize())
-    //                revert(0, returndatasize())
-    //            }
-    //        }
-    //    }
-
     /// @notice Collects and distributes both protocol and poster fees
     /// @param token The token to collect fees in
     /// @param amount The amount to calculate fees from
