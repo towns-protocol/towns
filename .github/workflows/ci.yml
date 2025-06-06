@@ -80,7 +80,7 @@ jobs:
                   version: ${{ env.FOUNDRY_VERSION }}
 
             - name: Install Binaries
-              run: sudo apt-get update && sudo apt-get -y install make zstd libsecp256k1-dev gcc
+              run: sudo apt-get update && sudo apt-get -y install make zstd libsecp256k1-dev gcc netcat-openbsd
 
             - uses: actions/setup-node@v4
               with:
