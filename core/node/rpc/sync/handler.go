@@ -189,6 +189,8 @@ func (h *handlerImpl) runSyncStreams(
 	op *StreamSyncOperation,
 	doneChan chan error,
 ) {
+	const useSharedSyncHeaderName = "X-Use-Shared-Sync"
+
 	// send SyncID to client
 	if err := res.Send(&SyncStreamsResponse{
 		SyncId: op.SyncID,
@@ -199,8 +201,13 @@ func (h *handlerImpl) runSyncStreams(
 	}
 
 	// run until sub.ctx expires or until the client calls CancelSync
-	// TODO: Run legacy upon request
-	doneChan <- op.Run(req, res)
+	if req.Header().Get(useSharedSyncHeaderName) == "true" {
+		// Run sync operation using shared syncer.
+		doneChan <- op.Run(req, res)
+	} else {
+		// Run sync operation using legacy syncer.
+		doneChan <- op.RunLegacy(req, res)
+	}
 }
 
 func (h *handlerImpl) AddStreamToSync(

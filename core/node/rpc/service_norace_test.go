@@ -15,19 +15,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
-
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
@@ -181,7 +179,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
 			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:],nil),
+				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:], nil),
 				MiniblockRefFromLastHash(miniBlockHashResp.Msg),
 			)
 			req.NoError(err)
