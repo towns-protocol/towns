@@ -44,7 +44,12 @@ func NewRemoteSyncer(
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
-	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
+
+	// TODO: Remove after removing the legacy syncer
+	req := connect.NewRequest(&SyncStreamsRequest{})
+	req.Header().Set(UseSharedSyncHeaderName, "true")
+
+	responseStream, err := client.SyncStreams(syncStreamCtx, req)
 	if err != nil {
 		syncStreamCancel()
 		return nil, err

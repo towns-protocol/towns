@@ -810,7 +810,11 @@ func (tc *testClient) startSync() {
 		return
 	}
 
-	updates, err := tc.client.SyncStreams(tc.ctx, connect.NewRequest(&SyncStreamsRequest{}))
+	// TODO: Remove after removing the legacy syncer
+	req := connect.NewRequest(&SyncStreamsRequest{})
+	req.Header().Set(UseSharedSyncHeaderName, "true")
+
+	updates, err := tc.client.SyncStreams(tc.ctx, req)
 	tc.require.NoError(err)
 
 	if updates.Receive() {

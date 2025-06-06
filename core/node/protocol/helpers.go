@@ -4,6 +4,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	// UseSharedSyncHeaderName is the header name that indicates whether to use the shared syncer or not.
+	UseSharedSyncHeaderName = "X-Use-Shared-Sync"
+)
+
 func (e *StreamEvent) GetStreamSettings() *StreamSettings {
 	if e == nil {
 		return nil

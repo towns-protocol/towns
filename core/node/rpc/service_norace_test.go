@@ -302,7 +302,12 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 
 	// subscribe to channel updates
 	syncPos := append(users, channels...)
-	syncRes, err := client1.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}))
+
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+	syncRes, err := client1.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
 
 	syncRes.Receive()

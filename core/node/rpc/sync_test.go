@@ -40,7 +40,12 @@ func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCooki
 	if len(cookies) > 0 {
 		req.SyncPos = cookies
 	}
-	resp, err := c.client.SyncStreams(ctx, connect.NewRequest(req))
+
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(req)
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+	resp, err := c.client.SyncStreams(ctx, connReq)
 	if err == nil {
 	syncLoop:
 		for {

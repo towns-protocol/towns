@@ -25,7 +25,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -337,10 +336,8 @@ func (ssr *syncSessionRunner) Run() {
 		ssr.syncStarted.Done()
 		return
 	}
-	syncer, err := legacyclient.NewRemoteSyncer(
+	syncer, err := client.NewRemoteSyncer(
 		ssr.syncCtx,
-		ssr.cancelSync,
-		"SyncSessionRunner",
 		ssr.node,
 		streamClient,
 		ssr.relocateStream,
