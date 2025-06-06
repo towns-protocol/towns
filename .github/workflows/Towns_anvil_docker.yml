@@ -67,12 +67,9 @@ jobs:
                   echo "Release version: $RELEASE_VERSION"
 
                   docker build \
-                    --build-arg GIT_SHA=${{ github.sha }} \
-                    --build-arg VER_VERSION=$RELEASE_VERSION \
-                    --build-arg VER_BRANCH=$BRANCH \
-                    --build-arg VER_COMMIT=$COMMIT_HASH \
                     -t towns-anvil:local-latest \
-                    . 
+                    -f ./packages/contracts/docker/Dockerfile \
+                    .
 
                   for tag in "${TAGS[@]}"; do
                     echo "Pushing image to $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag"
