@@ -32,7 +32,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
 
     string internal constant APP_REGISTRY_SCHEMA =
-        "address app, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
+        "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest";
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";

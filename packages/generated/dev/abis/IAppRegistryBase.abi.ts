@@ -189,6 +189,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "ClientAlreadyRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InsufficientPayment",
     "inputs": []
   },

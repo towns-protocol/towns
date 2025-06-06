@@ -44,11 +44,6 @@ interface IAppAccount is IAppAccountBase {
     /// @return The apps installed on the account
     function getInstalledApps() external view returns (address[] memory);
 
-    /// @notice Gets the clients of an app
-    /// @param app The address of the app to get the clients of
-    /// @return The clients of the app
-    function getAppClients(address app) external view returns (address[] memory);
-
     /// @notice Checks if a client is entitled to a permission for an app
     /// @param app The address of the app to check
     /// @param publicKey The public key to check
