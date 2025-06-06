@@ -12,6 +12,9 @@ export default mergeConfig(
             include: ['./src/tests/multi/**/*.test.ts', './src/tests/multi_v2/**/*.test.ts'],
             hookTimeout: 120_000,
             testTimeout: 120_000,
+            alias: {
+                '@connectrpc/connect-node': '@connectrpc/connect-web',
+            },
             setupFiles: './vitest.setup.ts',
         },
     }),
