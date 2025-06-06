@@ -27,8 +27,6 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
         "@connectrpc/connect": "^2.0.0",
-        "@connectrpc/connect-node": "^2.0.0",
-        "@connectrpc/connect-web": "^2.0.0",
         "@ethereumjs/util": "^8.0.1",
         "@noble/curves": "^1.9.1",
         "@noble/hashes": "^1.8.0",
@@ -49,6 +47,8 @@
         "vitest": "3.0.5"
     },
     "devDependencies": {
+        "@connectrpc/connect-node": "^2.0.0",
+        "@connectrpc/connect-web": "^2.0.0",
         "@types/debug": "^4.1.8",
         "@types/lodash": "^4.14.186",
         "@types/node": "^20.14.8",
