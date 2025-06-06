@@ -380,6 +380,12 @@ func newRetryableReconciliationTasks(nextRetry time.Duration) *retryableReconcil
 	}
 }
 
+func (r *retryableReconciliationTasks) Len() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.pendingTasksFifo.Len()
+}
+
 // Add adds or updates a retryable reconciliation task for the given streamId.
 // If a task already exists for the given stream  and the given streamRecord is newer the existing task is updated.
 func (r *retryableReconciliationTasks) Add(streamId StreamId, stream *Stream, streamRecord *river.StreamWithId) {
