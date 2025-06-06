@@ -946,7 +946,6 @@ func (r *StreamView) GetStreamSince(
 			"stream", r.streamId, "error", err.Error())
 
 		return r.GetResetStreamAndCookie(addr), nil
-
 	}
 
 	// append events from blocks

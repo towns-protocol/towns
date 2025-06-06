@@ -82,7 +82,7 @@ describe('gdmsTests', () => {
 
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, charliesClient.userId]),
             )
         })
@@ -133,9 +133,7 @@ describe('gdmsTests', () => {
         await expect(alicesClient.joinUser(streamId, chucksClient.userId)).resolves.not.toThrow()
         const stream = await chucksClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(
-                stream.view.getMembers().membership.joinedUsers.has(charliesClient.userId),
-            ).toEqual(true)
+            expect(stream.view.getMembers().joinedUsers.has(charliesClient.userId)).toEqual(true)
         })
     })
 

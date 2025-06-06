@@ -143,6 +143,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @return app The address of the removed app
     /// @return version The version ID that was removed
     /// @dev Reverts if app is not registered, revoked, or banned
+    /// @dev Spaces that install this app will need to uninstall it
     function _removeApp(
         address revoker,
         bytes32 appId
@@ -167,13 +168,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         _revoke(att.schema, request, revoker, 0, true);
 
         version = appInfo.latestVersion;
-        if (version == appId) {
-            appInfo.latestVersion = EMPTY_UID;
-        }
 
         emit AppUnregistered(app, appId);
-
-        return (app, version);
     }
 
     /// @notice Bans a app from the registry

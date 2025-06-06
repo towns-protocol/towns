@@ -201,18 +201,16 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 totalSupply
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 minPrice = platform.getMembershipMinPrice();
 
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
-
-        // If a specific renewal price is set for this token
         if (renewalPrice != 0) {
-            // Ensure it's at least the protocol fee that would be calculated for this price
-            uint256 protocolFee = _getProtocolFee(renewalPrice);
-            return FixedPointMathLib.min(renewalPrice, protocolFee);
+            return FixedPointMathLib.max(renewalPrice, minPrice);
         }
 
-        // Otherwise use the regular membership price
-        return _getMembershipPrice(totalSupply);
+        uint256 price = _getMembershipPrice(totalSupply);
+        return FixedPointMathLib.max(price, minPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -2,7 +2,7 @@ import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@towns-proto
 import { DLogger } from '@towns-protocol/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { IStreamStateView, StreamStateView } from './streamStateView'
+import { StreamStateView } from './streamStateView'
 import {
     LocalEventStatus,
     ParsedEvent,
@@ -18,8 +18,9 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly userId: string
+    readonly streamId: string
     _view: StreamStateView
-    get view(): IStreamStateView {
+    get view(): StreamStateView {
         return this._view
     }
     private stopped = false
@@ -35,10 +36,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logEmitFromStream = logEmitFromStream
         this.userId = userId
         this._view = new StreamStateView(userId, streamId)
-    }
-
-    get streamId(): string {
-        return this._view.streamId
+        this.streamId = streamId
     }
 
     get syncCookie(): SyncCookie | undefined {

@@ -284,6 +284,7 @@ func (s *Stream) importMiniblocksLocked(
 	var err error
 	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
+	var snapshot *Envelope
 	for _, miniblock := range miniblocks {
 		currentView, newEvents, err = currentView.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 		if err != nil {
@@ -291,6 +292,9 @@ func (s *Stream) importMiniblocksLocked(
 		}
 		allNewEvents = append(allNewEvents, newEvents...)
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
+		if len(miniblock.Header().GetSnapshotHash()) > 0 {
+			snapshot = miniblock.Snapshot
+		}
 	}
 
 	newMinipoolBytes, err := currentView.minipool.getEnvelopeBytes()
@@ -314,7 +318,7 @@ func (s *Stream) importMiniblocksLocked(
 	s.setViewLocked(currentView)
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 	// TODO: should we notify with entire miniblocks for efficiency?
-	s.notifySubscribersLocked(allNewEvents, newSyncCookie)
+	s.notifySubscribersLocked(allNewEvents, newSyncCookie, snapshot)
 	return nil
 }
 
@@ -375,7 +379,11 @@ func (s *Stream) applyMiniblockImplLocked(
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 
 	newEvents = append(newEvents, info.headerEvent.Envelope)
-	s.notifySubscribersLocked(newEvents, newSyncCookie)
+	var snapshot *Envelope
+	if len(info.Header().GetSnapshotHash()) > 0 {
+		snapshot = info.Snapshot
+	}
+	s.notifySubscribersLocked(newEvents, newSyncCookie, snapshot)
 	return nil
 }
 
@@ -643,15 +651,23 @@ func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockInfo, bool, error) {
-	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
+	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
 	if err != nil {
 		return nil, false, err
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
-		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
+		opts := NewParsedMiniblockInfoOpts()
+		if block.Number > -1 {
+			opts = opts.WithExpectedBlockNumber(block.Number)
+		}
+		if omitSnapshot {
+			opts = opts.WithSkipSnapshotValidation()
+		}
+		miniblocks[i], err = NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 		if err != nil {
 			return nil, false, err
 		}
@@ -679,6 +695,7 @@ func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView
 func (s *Stream) notifySubscribersLocked(
 	envelopes []*Envelope,
 	newSyncCookie *SyncCookie,
+	snapshot *Envelope,
 ) {
 	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
 		s.lastAccessedTime = time.Now()
@@ -686,6 +703,7 @@ func (s *Stream) notifySubscribersLocked(
 		resp := &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: newSyncCookie,
+			Snapshot:       snapshot,
 		}
 		for receiver := range s.local.receivers.Iter() {
 			receiver.OnUpdate(resp)
@@ -771,7 +789,7 @@ func (s *Stream) addEventLocked(
 	s.setViewLocked(newSV)
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 
-	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie)
+	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
 
 	return newSV, nil
 }

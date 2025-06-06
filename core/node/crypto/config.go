@@ -201,7 +201,7 @@ func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 50,
-		MediaMaxChunkSize:  500000,
+		MediaMaxChunkSize:  1200000,
 
 		RecencyConstraintsAge: 11 * time.Second,
 		RecencyConstraintsGen: 5,
@@ -685,8 +685,10 @@ func ABIDecodeAddressArray(data []byte) ([]common.Address, error) {
 	return args[0].([]common.Address), nil
 }
 
-var commonAddressType = reflect.TypeOf(common.Address{})
-var commonAddressArrayType = reflect.TypeOf([]common.Address{})
+var (
+	commonAddressType      = reflect.TypeOf(common.Address{})
+	commonAddressArrayType = reflect.TypeOf([]common.Address{})
+)
 
 func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
 	log := logging.FromCtx(ctx)

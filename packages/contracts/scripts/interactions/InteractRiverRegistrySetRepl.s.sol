@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
 import {IRiverConfig} from "src/river/registry/facets/config/IRiverConfig.sol";
 
 // libraries
+import {RiverConfigValues} from "scripts/interactions/helpers/RiverConfigValues.sol";
 
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
@@ -20,7 +21,7 @@ contract InteractRiverRegistrySetFreq is Interaction {
         //     ./core/env/<ENV_NAME>/run.sh registry blocknumber
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("stream.replicationfactor"),
+            RiverConfigValues.STREAM_REPLICATION_FACTOR,
             13824246, // Block number
             abi.encode(value)
         );

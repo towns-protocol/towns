@@ -337,6 +337,10 @@ func checkUpdate(t *testing.T, update *protocol.StreamAndCookie, opts *updateOpt
 			t.Errorf("Failed to parse event: %v", err)
 			return
 		}
+		if len(parsedEvent.Event.GetMiniblockHeader().GetSnapshotHash()) > 0 {
+			require.NotNil(t, update.GetSnapshot)
+			require.Equal(t, parsedEvent.Event.GetMiniblockHeader().GetSnapshotHash(), update.GetSnapshot().GetHash())
+		}
 		eventType := getPayloadType(parsedEvent.Event)
 		updateStr += fmt.Sprintf("\n    %s", eventType)
 		if opts.eventType != "" && eventType != opts.eventType {
@@ -398,7 +402,7 @@ func TestSyncWithFlush(t *testing.T) {
 	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client0, streamId, mbRef))
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "UserSettingsPayload"})
 
-	mbRef, err = makeMiniblock(ctx, client0, streamId, false, mbRef.Num)
+	mbRef, err = makeMiniblock(ctx, client0, streamId, true, mbRef.Num)
 	require.NoError(err)
 	require.NotEmpty(mbRef.Hash)
 	require.Equal(int64(2), mbRef.Num)

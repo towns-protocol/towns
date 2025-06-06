@@ -1,20 +1,21 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { createPublicClient, http } from 'viem'
-
-const publicClient = createPublicClient({
-    transport: http(process.env.PONDER_RPC_URL_1),
-})
-
-async function getLatestBlockNumber() {
-    return await publicClient.getBlockNumber()
-}
+import { getLatestBlockNumber } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
     const { SpaceFactory, SpaceOwner } = context.contracts
+
+    // Check if the space already exists
+    const existingSpace = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, event.args.space),
+    })
+    if (existingSpace) {
+        console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
+        return
+    }
 
     try {
         const paused = await context.client.readContract({
@@ -146,16 +147,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const transactionHash = event.transaction.hash
-    const createdDate = blockTimestamp ? new Date(Number(blockTimestamp) * 1000) : null
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(
-            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
-            transactionHash,
-            blockTimestamp,
-        )
-        return
-    }
 
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, spaceId),
@@ -179,7 +170,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 poster: event.args.poster,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
@@ -187,18 +178,11 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
 })
-
 ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
     const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
-    const createdDate = blockTimestamp ? new Date(Number(blockTimestamp) * 1000) : null
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
-        return
-    }
 
     try {
         // update swap router swap table
@@ -215,7 +199,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 recipient: event.args.recipient,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
