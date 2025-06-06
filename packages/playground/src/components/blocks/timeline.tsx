@@ -20,6 +20,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { cn } from '@/utils'
 import { getNativeEmojiFromName } from '@/utils/emojis'
+import { formatTimestamp } from '@/utils/formatTimestamp'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -86,6 +87,7 @@ export const Timeline = ({ streamId, showThreadMessages, threads, events }: Time
                                         key={event.eventId}
                                         event={event}
                                         thread={threads?.[event.eventId]}
+                                        showThreadMessages={showThreadMessages}
                                     />
                                 )
                             }
@@ -149,10 +151,12 @@ const Message = ({
     event,
     streamId,
     thread,
+    showThreadMessages,
 }: {
     event: TimelineEvent
     thread: TimelineEvent[] | undefined
     streamId: string
+    showThreadMessages?: boolean
 }) => {
     const sync = useSyncAgent()
     const preferSpaceMember = isChannelStreamId(streamId)
@@ -181,6 +185,12 @@ const Message = ({
                             )}
                         >
                             {prettyDisplayName || event.sender.id}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            {formatTimestamp(
+                                event.createdAtEpochMs,
+                                showThreadMessages ? 'relative' : 'absolute'
+                            )}
                         </span>
                     </div>
                     <span>
