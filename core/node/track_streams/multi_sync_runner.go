@@ -23,8 +23,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+	client "github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -124,7 +124,7 @@ func (ssr *syncSessionRunner) AddStream(
 			"syncId", ssr.GetSyncId(),
 			"targetNode", ssr.node,
 		)
-	if resp, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
+	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
 			MinipoolGen:       record.minipoolGen,
@@ -338,6 +338,8 @@ func (ssr *syncSessionRunner) Run() {
 	}
 	syncer, err := client.NewRemoteSyncer(
 		ssr.syncCtx,
+		ssr.cancelSync,
+		"SyncSessionRunner",
 		ssr.node,
 		streamClient,
 		ssr.relocateStream,

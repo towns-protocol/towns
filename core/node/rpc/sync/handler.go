@@ -199,6 +199,7 @@ func (h *handlerImpl) runSyncStreams(
 	}
 
 	// run until sub.ctx expires or until the client calls CancelSync
+	// TODO: Run legacy upon request
 	doneChan <- op.Run(req, res)
 }
 

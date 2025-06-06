@@ -25,7 +25,7 @@ type (
 	StreamsSyncer interface {
 		Run()
 		Address() common.Address
-		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error)
+		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
 	}
 
@@ -479,7 +479,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
 
-			resp, err := syncer.Modify(ctx, modifySync)
+			resp, _, err := syncer.Modify(ctx, modifySync)
 			if err != nil {
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
 				for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {

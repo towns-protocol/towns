@@ -1,4 +1,4 @@
-package client
+package legacyclient
 
 import (
 	"context"
@@ -16,7 +16,10 @@ import (
 )
 
 type localSyncer struct {
-	globalCtx context.Context
+	globalSyncOpID string
+
+	syncStreamCtx      context.Context
+	cancelGlobalSyncOp context.CancelCauseFunc
 
 	streamCache *StreamCache
 	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -30,31 +33,36 @@ type localSyncer struct {
 }
 
 func newLocalSyncer(
-	globalCtx context.Context,
+	ctx context.Context,
+	globalSyncOpID string,
+	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		globalCtx:     globalCtx,
-		streamCache:   streamCache,
-		localAddr:     localAddr,
-		messages:      messages,
-		activeStreams: make(map[StreamId]*Stream),
-		otelTracer:    otelTracer,
+		globalSyncOpID:     globalSyncOpID,
+		syncStreamCtx:      ctx,
+		cancelGlobalSyncOp: cancelGlobalSyncOp,
+		streamCache:        streamCache,
+		localAddr:          localAddr,
+		messages:           messages,
+		activeStreams:      make(map[StreamId]*Stream),
+		otelTracer:         otelTracer,
 	}
 }
 
 func (s *localSyncer) Run() {
-	<-s.globalCtx.Done()
+	<-s.syncStreamCtx.Done()
 
 	s.activeStreamsMu.Lock()
+	defer s.activeStreamsMu.Unlock()
+
 	for streamID, syncStream := range s.activeStreams {
 		syncStream.Unsub(s)
 		delete(s.activeStreams, streamID)
 	}
-	s.activeStreamsMu.Unlock()
 }
 
 func (s *localSyncer) Address() common.Address {
@@ -62,43 +70,7 @@ func (s *localSyncer) Address() common.Address {
 }
 
 func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
-	if s.otelTracer != nil {
-		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "localSyncer::modify")
-		defer span.End()
-	}
-
 	var resp ModifySyncResponse
-
-	for _, cookie := range request.GetBackfillStreams().GetStreams() {
-		stream, err := s.streamCache.GetStreamNoWait(ctx, StreamId(cookie.GetStreamId()))
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
-			})
-			continue
-		}
-
-		err = stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
-			s.sendResponse(&SyncStreamsResponse{
-				SyncOp:        SyncOp_SYNC_UPDATE,
-				Stream:        streamAndCookie,
-				TargetSyncIds: request.TargetSyncIDs(),
-			})
-		})
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
-			})
-			continue
-		}
-	}
 
 	for _, cookie := range request.GetAddStreams() {
 		if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
@@ -112,6 +84,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	s.activeStreamsMu.Lock()
+	defer s.activeStreamsMu.Unlock()
+
 	for _, streamID := range request.GetRemoveStreams() {
 		syncStream, found := s.activeStreams[StreamId(streamID)]
 		if found {
@@ -119,10 +93,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
-	s.activeStreamsMu.Unlock()
 
-	// TODO: Remove the second argument after the legacy client is removed
-	return &resp, false, nil
+	return &resp, len(s.activeStreams) == 0, nil
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
@@ -133,12 +105,13 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 // OnSyncError is called when a sync subscription failed unrecoverable
 func (s *localSyncer) OnSyncError(error) {
 	s.activeStreamsMu.Lock()
+	defer s.activeStreamsMu.Unlock()
+
 	for streamID, syncStream := range s.activeStreams {
 		syncStream.Unsub(s)
 		delete(s.activeStreams, streamID)
 		s.OnStreamSyncDown(streamID)
 	}
-	s.activeStreamsMu.Unlock()
 }
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
@@ -187,15 +160,18 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	select {
-	case <-s.globalCtx.Done():
+	case <-s.syncStreamCtx.Done():
 		return
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			rvrErr := AsRiverError(err).
+			err := AsRiverError(err).
+				Tag("syncId", s.globalSyncOpID).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
-			_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
-			s.OnSyncError(err)
+
+			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
+
+			s.cancelGlobalSyncOp(err)
 		}
 	}
 }
