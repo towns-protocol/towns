@@ -67,9 +67,9 @@ export default [
             "internalType": "bytes32[]"
           },
           {
-            "name": "clients",
-            "type": "address[]",
-            "internalType": "address[]"
+            "name": "client",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "installPrice",
@@ -97,6 +97,25 @@ export default [
       }
     ],
     "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "getAppByClient",
+    "inputs": [
+      {
+        "name": "client",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -130,9 +149,9 @@ export default [
             "internalType": "address"
           },
           {
-            "name": "clients",
-            "type": "address[]",
-            "internalType": "address[]"
+            "name": "client",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "permissions",
@@ -302,9 +321,9 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "clients",
-        "type": "address[]",
-        "internalType": "address[]"
+        "name": "client",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [
@@ -521,6 +540,11 @@ export default [
   {
     "type": "error",
     "name": "BannedApp",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ClientAlreadyRegistered",
     "inputs": []
   },
   {
