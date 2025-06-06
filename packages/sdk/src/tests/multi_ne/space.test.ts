@@ -7,7 +7,13 @@ import { Client } from '../../client'
 import { dlog } from '@towns-protocol/dlog'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId, streamIdToBytes } from '../../id'
-import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@towns-protocol/proto'
+import {
+    ChunkedMedia,
+    GetStreamResponse,
+    MediaInfoSchema,
+    MembershipOp,
+    PlainMessage,
+} from '@towns-protocol/proto'
 import { deriveKeyAndIV } from '../../crypto_utils'
 import { nanoid } from 'nanoid'
 import { create } from '@bufbuild/protobuf'
@@ -101,26 +107,31 @@ describe('spaceTests', () => {
         // make a snapshot
         await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
+        let response: GetStreamResponse | undefined
         // the new snapshot should have the new data
         await waitFor(async () => {
             // fetch the raw stream with new snapshot
-            const response = await bobsClient.rpcClient.getStream({
+            response = await bobsClient.rpcClient.getStream({
                 streamId: streamIdToBytes(spaceId),
             })
-            const stream = await unpackStream(response.stream, {
-                disableHashValidation: true,
-                disableSignatureValidation: true,
-            })
-            const snapshot = stream.snapshot
-            if (snapshot?.content.case !== 'spaceContent') {
-                throw new Error('snapshot is not a space content')
-            }
-            expect(
-                snapshot.content.value.channels.length,
-                'channelMetadata: pre-update bobsClient snapshot.channels.length',
-            ).toBe(1)
-            expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
+            expect(response).toBeDefined()
         })
+        if (response === undefined) {
+            throw new Error('response is undefined')
+        }
+        const stream = await unpackStream(response.stream, {
+            disableHashValidation: true,
+            disableSignatureValidation: true,
+        })
+        const snapshot = stream.snapshot
+        if (snapshot?.content.case !== 'spaceContent') {
+            throw new Error('snapshot is not a space content')
+        }
+        expect(
+            snapshot.content.value.channels.length,
+            'channelMetadata: pre-update bobsClient snapshot.channels.length',
+        ).toBe(1)
+        expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
 
         // update the channel metadata
         await bobsClient.updateChannel(spaceId, channelId, '', '')
