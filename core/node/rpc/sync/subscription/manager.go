@@ -14,8 +14,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/sharedclient"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -32,7 +32,7 @@ type Manager struct {
 	// nodeRegistry is the node registry that provides information about other nodes in the network
 	nodeRegistry nodes.NodeRegistry
 	// syncers is the set of syncers that handle stream synchronization
-	syncers *sharedclient.SyncerSet
+	syncers *client.SyncerSet
 	// messages is the global channel for messages of all syncing streams
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	// sLock is the mutex that protects the subscriptions map
@@ -55,7 +55,7 @@ func NewManager(
 ) *Manager {
 	log := logging.FromCtx(ctx).With("node", localNodeAddr)
 
-	syncers, messages := sharedclient.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, otelTracer)
+	syncers, messages := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, otelTracer)
 
 	go syncers.Run()
 
@@ -234,7 +234,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 
 // dropStream removes the given stream from the syncers set and all subscriptions.
 func (m *Manager) dropStream(streamID StreamId) {
-	if err := m.syncers.Modify(m.globalCtx, sharedclient.ModifyRequest{
+	if err := m.syncers.Modify(m.globalCtx, client.ModifyRequest{
 		ToRemove: [][]byte{streamID[:]},
 		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
 			m.log.Errorw("Failed to remove stream from syncer set", "streamId", streamID, "status", status)

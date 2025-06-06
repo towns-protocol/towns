@@ -1,4 +1,4 @@
-package sharedclient
+package client
 
 import (
 	"context"
