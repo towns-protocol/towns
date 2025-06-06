@@ -9,14 +9,6 @@ parse_args() {
   
   while [ $# -gt 0 ]; do
     case $1 in
-      --base-chain)
-        BASE_CHAIN=true
-        shift
-        ;;
-      --river-chain)
-        RIVER_CHAIN=true
-        shift
-        ;;
       --help)
         SHOW_HELP=true
         shift
