@@ -288,8 +288,6 @@ register-nodes-river: _require_run_env config-river-chain config-instances just-
 
 config: _require_run_env config-root config-app-registry register-nodes-base register-nodes-river storage-start
 
-config-nodes-only: _require_run_env config-root register-nodes-base register-nodes-river storage-start
-
 build: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
