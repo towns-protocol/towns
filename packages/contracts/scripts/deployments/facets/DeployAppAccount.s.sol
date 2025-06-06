@@ -14,13 +14,13 @@ library DeployAppAccount {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
         _selectors = new bytes4[](8);
         _selectors[0] = AppAccount.execute.selector;
-        _selectors[1] = AppAccount.installApp.selector;
-        _selectors[2] = AppAccount.uninstallApp.selector;
+        _selectors[1] = AppAccount.onInstallApp.selector;
+        _selectors[2] = AppAccount.onUninstallApp.selector;
         _selectors[3] = AppAccount.isAppEntitled.selector;
         _selectors[4] = AppAccount.disableApp.selector;
         _selectors[5] = AppAccount.getInstalledApps.selector;
         _selectors[6] = AppAccount.getAppId.selector;
-        _selectors[7] = AppAccount.getClients.selector;
+        _selectors[7] = AppAccount.enableApp.selector;
     }
 
     function makeCut(

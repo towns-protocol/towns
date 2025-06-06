@@ -27,13 +27,27 @@ import {Deployer} from "../../common/Deployer.s.sol";
 contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
+    address private SPACE_FACTORY;
+
     DeployFacet private facetHelper = new DeployFacet();
 
     string internal constant APP_REGISTRY_SCHEMA =
-        "address app, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
+        "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest";
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";
+    }
+
+    function setSpaceFactory(address factory) public {
+        SPACE_FACTORY = factory;
+    }
+
+    function getSpaceFactory() public returns (address) {
+        if (SPACE_FACTORY != address(0)) {
+            return SPACE_FACTORY;
+        }
+
+        return getDeployment("spaceFactory");
     }
 
     function addImmutableCuts(address deployer) internal {
@@ -105,7 +119,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
             facet,
-            DeployAppRegistryFacet.makeInitData(APP_REGISTRY_SCHEMA, address(0))
+            DeployAppRegistryFacet.makeInitData(getSpaceFactory(), APP_REGISTRY_SCHEMA, address(0))
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
