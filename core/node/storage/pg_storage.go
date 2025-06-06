@@ -152,6 +152,7 @@ func (s *PostgresEventStore) txRunner(
 			).Func("pg.txRunner").
 				Message("transaction failed").
 				Tag("name", name).
+				Tag("numAttempts", backoff.NumAttempts).
 				Tags(tags...)
 		}
 

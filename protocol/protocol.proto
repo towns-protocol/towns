@@ -148,6 +148,9 @@ message MiniblockHeader {
     // hash of the snapshot.
     optional bytes snapshot_hash = 8;
 
+    // hashes of events that were rejected from the block
+    repeated bytes rejected_event_hashes = 9;
+
     // stream payloads are required to have a content field
     oneof content {
         google.protobuf.Empty none = 100;
