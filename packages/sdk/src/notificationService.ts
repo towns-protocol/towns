@@ -17,7 +17,7 @@ export class NotificationService {
         getSignature: (hash: Uint8Array) => Promise<Uint8Array>,
         extraFinishAuthParams: Record<string, any>,
     ) {
-        const authenticationRpcClient = await makeAuthenticationRpcClient(serviceUrl, opts)
+        const authenticationRpcClient = makeAuthenticationRpcClient(serviceUrl, opts)
 
         const startResponse = await authenticationRpcClient.startAuthentication({ userId })
         check(startResponse.challenge.length >= 16, 'challenge must be 16 bytes')
@@ -36,7 +36,7 @@ export class NotificationService {
             signature,
             ...extraFinishAuthParams,
         })
-        const notificationRpcClient = await makeNotificationRpcClient(
+        const notificationRpcClient = makeNotificationRpcClient(
             serviceUrl,
             finishResponse.sessionToken,
             opts,
