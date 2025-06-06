@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/sharedclient"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,13 +25,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type RemoteStreamSyncer interface {
-	client.StreamsSyncer
+	sharedclient.StreamsSyncer
 	GetSyncId() string
 }
 
@@ -336,7 +337,7 @@ func (ssr *syncSessionRunner) Run() {
 		ssr.syncStarted.Done()
 		return
 	}
-	syncer, err := client.NewRemoteSyncer(
+	syncer, err := sharedclient.NewRemoteSyncer(
 		ssr.syncCtx,
 		ssr.node,
 		streamClient,

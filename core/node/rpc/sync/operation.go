@@ -15,7 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/sharedclient"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
@@ -51,7 +51,7 @@ type (
 	// subCommand represents a request to add or remove a stream and ping sync operation
 	subCommand struct {
 		Ctx             context.Context
-		ModifySyncReq   *client.ModifyRequest
+		ModifySyncReq   *sharedclient.ModifyRequest
 		PingReq         string
 		CancelReq       string
 		DebugDropStream shared.StreamId
@@ -117,7 +117,7 @@ func (syncOp *StreamSyncOperation) Run(
 		go func() {
 			cmd := &subCommand{
 				Ctx: syncOp.ctx,
-				ModifySyncReq: &client.ModifyRequest{
+				ModifySyncReq: &sharedclient.ModifyRequest{
 					ToAdd: req.Msg.GetSyncPos(),
 					AddingFailureHandler: func(status *SyncStreamOpStatus) {
 						select {
@@ -253,7 +253,7 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	var status *SyncStreamOpStatus
 	cmd := &subCommand{
 		Ctx: ctx,
-		ModifySyncReq: &client.ModifyRequest{
+		ModifySyncReq: &sharedclient.ModifyRequest{
 			ToAdd: []*SyncCookie{req.Msg.GetSyncPos()},
 			AddingFailureHandler: func(st *SyncStreamOpStatus) {
 				status = st
@@ -297,7 +297,7 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	var status *SyncStreamOpStatus
 	cmd := &subCommand{
 		Ctx: ctx,
-		ModifySyncReq: &client.ModifyRequest{
+		ModifySyncReq: &sharedclient.ModifyRequest{
 			ToRemove: [][]byte{req.Msg.GetStreamId()},
 			RemovingFailureHandler: func(st *SyncStreamOpStatus) {
 				status = st
@@ -345,7 +345,7 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	respLock := sync.Mutex{}
 	cmd := &subCommand{
 		Ctx: ctx,
-		ModifySyncReq: &client.ModifyRequest{
+		ModifySyncReq: &sharedclient.ModifyRequest{
 			ToAdd:      req.Msg.GetAddStreams(),
 			ToRemove:   req.Msg.GetRemoveStreams(),
 			ToBackfill: toBackfill,

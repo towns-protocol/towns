@@ -5,17 +5,16 @@ import (
 	"slices"
 	"sync/atomic"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/sharedclient"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -72,7 +71,7 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 
 // Modify modifies the current subscription by adding or removing streams.
 // It also handles implicit backfills for streams that are added or being added.
-func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) error {
+func (s *Subscription) Modify(ctx context.Context, req sharedclient.ModifyRequest) error {
 	if s.manager.otelTracer != nil {
 		var span trace.Span
 		ctx, span = s.manager.otelTracer.Start(ctx, "subscription::modify",
@@ -88,7 +87,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	// Prepare a request to be sent to the syncer set if needed
-	modifiedReq := client.ModifyRequest{
+	modifiedReq := sharedclient.ModifyRequest{
 		SyncID:                    s.syncID,
 		ToBackfill:                req.ToBackfill,
 		BackfillingFailureHandler: req.BackfillingFailureHandler,
@@ -197,7 +196,7 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 // DebugDropStream drops the given stream from the subscription.
 func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
 	if remove := s.removeStream(streamID[:]); remove {
-		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
+		if err := s.manager.syncers.Modify(ctx, sharedclient.ModifyRequest{
 			ToRemove:               [][]byte{streamID[:]},
 			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 		}); err != nil {
