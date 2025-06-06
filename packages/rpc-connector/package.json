@@ -12,13 +12,18 @@
     "sideEffects": false,
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "node": "./dist/node/index.js",
-            "default": "./dist/web/index.js"
+            "import": {
+                "node": "./dist/node/index.js",
+                "default": "./dist/web/index.js"
+            },
+            "require": {
+                "node": "./dist/node/index.cjs",
+                "default": "./dist/node/index.cjs"
+            }
         },
         "./common": {
-            "types": "./dist/common/index.d.ts",
-            "default": "./dist/common/index.js"
+            "import": "./dist/common/index.js",
+            "require": "./dist/common/index.cjs"
         },
         "./package.json": "./package.json"
     },
@@ -45,11 +50,11 @@
         "eslint-plugin-tsdoc": "^0.3.0",
         "tsdown": "^0.12.3",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5"
+        "vitest": "3.2.3"
     },
     "peerDependencies": {
-        "@connectrpc/connect-node": "^2.0.0",
-        "@connectrpc/connect-web": "^2.0.0"
+        "@connectrpc/connect-node": ">=2.0.0",
+        "@connectrpc/connect-web": ">=2.0.0"
     },
     "peerDependenciesMeta": {
         "@connectrpc/connect-node": {
