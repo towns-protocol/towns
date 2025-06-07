@@ -122,7 +122,7 @@ func (e *Evaluator) getMainnetDelegators(
 		}
 
 		for _, wallet := range wallets {
-			delegationInfos, err := registry.GetDelegationsByDelegate(nil, wallet)
+			delegationInfos, err := registry.GetDelegationsByDelegate(&bind.CallOpts{Context: ctx}, wallet)
 			if err != nil {
 				log.Errorw("Unable to retrieve delegations for wallet", "chainId", chainId, "error", err)
 				return nil, err

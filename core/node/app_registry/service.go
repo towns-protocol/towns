@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ttlcache "github.com/patrickmn/go-cache"
 	"google.golang.org/protobuf/proto"
@@ -409,7 +410,7 @@ waitLoop:
 			loopExitErr = base.AsRiverError(ctx.Err(), Err_NOT_FOUND).Message("Timed out while waiting for stream availability")
 			break waitLoop
 		case <-time.After(delay):
-			stream, err := s.riverRegistry.StreamRegistry.GetStream(nil, userMetadataStreamId)
+			stream, err := s.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: ctx}, userMetadataStreamId)
 			if err != nil {
 				continue
 			}

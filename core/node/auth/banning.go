@@ -69,7 +69,7 @@ type banning struct {
 
 func (b *banning) IsBanned(ctx context.Context, wallets []common.Address) (bool, error) {
 	return b.bannedAddressCache.IsBanned(wallets, func() (map[common.Address]struct{}, error) {
-		bannedTokens, err := b.contract.Banned(nil)
+		bannedTokens, err := b.contract.Banned(&bind.CallOpts{Context: ctx})
 		if err != nil {
 			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).
 				Func("IsBanned").
@@ -77,7 +77,7 @@ func (b *banning) IsBanned(ctx context.Context, wallets []common.Address) (bool,
 		}
 		bannedAddresses := map[common.Address]struct{}{}
 		for _, token := range bannedTokens {
-			tokenOwnership, err := b.tokenContract.ExplicitOwnershipOf(nil, token)
+			tokenOwnership, err := b.tokenContract.ExplicitOwnershipOf(&bind.CallOpts{Context: ctx}, token)
 			if err != nil {
 				return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).
 					Func("IsBanned").
