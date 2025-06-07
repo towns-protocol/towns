@@ -167,7 +167,7 @@ func (args *ChainAuthArgs) Principal() common.Address {
 
 func (args *ChainAuthArgs) String() string {
 	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s}",
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s}",
 		args.kind,
 		args.spaceId,
 		args.channelId,
@@ -175,6 +175,7 @@ func (args *ChainAuthArgs) String() string {
 		args.permission,
 		args.linkedWallets,
 		args.walletAddress.Hex(),
+		args.appAddress.Hex(),
 	)
 }
 
@@ -1059,6 +1060,9 @@ func (ca *chainAuth) checkIsBot(
 	if err != nil {
 		return nil, err
 	}
+
+	logging.FromCtx(ctx).
+		Infow("checkIsBot", "isBot", isBot, "err", err, "appAddress", args.appAddress, "principal", args.principal)
 
 	return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
 }

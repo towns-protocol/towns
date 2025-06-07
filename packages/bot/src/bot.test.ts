@@ -159,10 +159,8 @@ describe('Bot', { sequential: true }, () => {
             cryptoStore,
             new MockEntitlementsDelegate(),
         )
-        await botClient.initializeUser({
-            spaceId,
-            appAddress: bin_fromHexString(botWallet.address),
-        })
+        await botClient.initializeUser({ appAddress })
+
         await expect(
             bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId)),
         ).resolves.toBeDefined()

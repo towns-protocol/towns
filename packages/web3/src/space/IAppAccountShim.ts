@@ -4,8 +4,6 @@ import { IAppAccount__factory } from '@towns-protocol/generated/dev/typings/fact
 
 const { abi, connect } = IAppAccount__factory
 
-export type { IAppAccountBase } from '@towns-protocol/generated/dev/typings/IAppAccount'
-
 export class IAppAccountShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
