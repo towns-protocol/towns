@@ -29,7 +29,7 @@
         "@connectrpc/connect": "^2.0.0",
         "@connectrpc/connect-node": "^2.0.0",
         "@connectrpc/connect-web": "^2.0.0",
-        "@ethereumjs/util": "^8.0.1",
+        "@ethereumjs/util": "^10.0.0",
         "@noble/curves": "^1.9.1",
         "@noble/hashes": "^1.8.0",
         "@towns-protocol/dlog": "workspace:^",
