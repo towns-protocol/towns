@@ -253,6 +253,16 @@ _register-node-base $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
             $NODE_ADDRESS > /dev/null
     fi
 
+# get the contract addresses from the node registry contract deployed to river chain
+get_all_node_addresses: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    source ${RUN_BASE}/contracts.env
+    cast call \
+            --rpc-url ${RPC_RIVER} \
+            $RIVER_REGISTRYCONTRACT_ADDRESS \
+            "getAllNodeAddresses()"
+
 just-register-nodes-base: _require_run_env (_loop-instances-seq "_register-node-base")
 
 register-nodes-base: _require_run_env config-base-chain config-instances just-register-nodes-base

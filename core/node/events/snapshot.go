@@ -366,6 +366,8 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *ChannelPayload_Message:
 		return nil
+	case *ChannelPayload_Redaction_:
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown channel payload type %T", content))
 	}
