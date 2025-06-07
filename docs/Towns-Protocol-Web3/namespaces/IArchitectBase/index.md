@@ -1,0 +1,26 @@
+# IArchitectBase
+
+## Type Aliases
+
+- [ChannelInfoStruct](type-aliases/ChannelInfoStruct.md)
+- [ChannelInfoStructOutput](type-aliases/ChannelInfoStructOutput.md)
+- [CreateSpaceOldStruct](type-aliases/CreateSpaceOldStruct.md)
+- [CreateSpaceOldStructOutput](type-aliases/CreateSpaceOldStructOutput.md)
+- [CreateSpaceStruct](type-aliases/CreateSpaceStruct.md)
+- [CreateSpaceStructOutput](type-aliases/CreateSpaceStructOutput.md)
+- [MembershipOldStruct](type-aliases/MembershipOldStruct.md)
+- [MembershipOldStructOutput](type-aliases/MembershipOldStructOutput.md)
+- [MembershipRequirementsOldStruct](type-aliases/MembershipRequirementsOldStruct.md)
+- [MembershipRequirementsOldStructOutput](type-aliases/MembershipRequirementsOldStructOutput.md)
+- [MembershipRequirementsStruct](type-aliases/MembershipRequirementsStruct.md)
+- [MembershipRequirementsStructOutput](type-aliases/MembershipRequirementsStructOutput.md)
+- [MembershipStruct](type-aliases/MembershipStruct.md)
+- [MembershipStructOutput](type-aliases/MembershipStructOutput.md)
+- [MetadataStruct](type-aliases/MetadataStruct.md)
+- [MetadataStructOutput](type-aliases/MetadataStructOutput.md)
+- [PrepayStruct](type-aliases/PrepayStruct.md)
+- [PrepayStructOutput](type-aliases/PrepayStructOutput.md)
+- [SpaceInfoStruct](type-aliases/SpaceInfoStruct.md)
+- [SpaceInfoStructOutput](type-aliases/SpaceInfoStructOutput.md)
+- [SpaceOptionsStruct](type-aliases/SpaceOptionsStruct.md)
+- [SpaceOptionsStructOutput](type-aliases/SpaceOptionsStructOutput.md)

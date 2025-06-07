@@ -31,7 +31,7 @@ packages/contracts/in
 
 abi/
 
-/docs
+/docs-json
 
 clients/web/app/storybook-static
 

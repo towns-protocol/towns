@@ -1,0 +1,29 @@
+# Function: makeRiverChainConfig()
+
+```ts
+function makeRiverChainConfig(environmentId?): object;
+```
+
+Defined in: [packages/sdk/src/riverConfig.ts:105](https://github.com/towns-protocol/towns/blob/0db1fd0ac7258e8db8cedfb6183e8eade8284fa1/packages/sdk/src/riverConfig.ts#L105)
+
+## Parameters
+
+### environmentId?
+
+`string`
+
+## Returns
+
+`object`
+
+### chainConfig
+
+```ts
+chainConfig: RiverChainConfig = env.river;
+```
+
+### rpcUrl
+
+```ts
+rpcUrl: string;
+```

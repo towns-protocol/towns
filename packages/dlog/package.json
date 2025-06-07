@@ -13,6 +13,7 @@
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
+        "docs": "typedoc --json ../../docs-json/dlog.json",
         "lint:fix": "yarn lint --fix",
         "test": "vitest run",
         "test:watch": "vitest --watch",
@@ -34,6 +35,9 @@
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
         "ts-node": "^10.9.1",
+        "typedoc": "^0.28.5",
+        "typedoc-plugin-frontmatter": "^1.3.0",
+        "typedoc-plugin-markdown": "^4.6.4",
         "typescript": "^5.8.2",
         "vitest": "3.0.5"
     },
