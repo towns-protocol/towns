@@ -970,8 +970,8 @@ export function waitForValue<T>(
         const timeoutMS = options.timeoutMS
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
         let lastError: any = undefined
-        let intervalId: ReturnType<typeof setInterval>
-        let timeoutId: ReturnType<typeof setTimeout>
+        const intervalId: ReturnType<typeof setInterval>
+        const timeoutId: ReturnType<typeof setTimeout>
         function onDone(result: T | undefined) {
             clearInterval(intervalId)
             clearInterval(timeoutId)
@@ -1034,8 +1034,8 @@ export function waitFor<T extends void | boolean>(
         let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
 
-        let intervalId: ReturnType<typeof setInterval>
-        let timeoutId: ReturnType<typeof setTimeout>
+        const intervalId: ReturnType<typeof setInterval>
+        const timeoutId: ReturnType<typeof setTimeout>
         function onDone(result?: T) {
             clearInterval(intervalId)
             clearInterval(timeoutId)
