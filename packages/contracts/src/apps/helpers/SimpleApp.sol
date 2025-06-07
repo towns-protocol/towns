@@ -20,29 +20,62 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     function initialize(
         address owner,
         string calldata appId,
-        bytes32[] calldata permissions
+        bytes32[] calldata permissions,
+        uint256 installPrice,
+        uint64 accessDuration
     ) external initializer {
         _setOwner(owner);
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         $.name = appId;
         $.permissions = permissions;
+        $.installPrice = installPrice;
+        $.accessDuration = accessDuration;
     }
 
-    function moduleId() public view returns (string memory) {
+    /// @notice Updates the pricing of the app
+    /// @param installPrice The new install price
+    /// @param accessDuration The new access duration
+    function updatePricing(uint256 installPrice, uint64 accessDuration) external onlyOwner {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        return $.name;
+        $.installPrice = installPrice;
+        $.accessDuration = accessDuration;
     }
 
-    function _moduleOwner() internal view override returns (address) {
-        return owner();
-    }
-
+    /// @notice Returns the required permissions for the app
+    /// @return permissions The required permissions for the app
     function requiredPermissions() external view returns (bytes32[] memory) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         return $.permissions;
     }
 
+    /// @notice Returns the ID of the app
+    /// @return name The ID of the app
+    function moduleId() public view returns (string memory) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        return $.name;
+    }
+
+    /// @notice Returns the execution manifest for the app
+    /// @return manifest The execution manifest for the app
     function executionManifest() external pure returns (ExecutionManifest memory) {
         // solhint-disable no-empty-blocks
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           OVERRIDES                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _installPrice() internal view override returns (uint256) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        return $.installPrice;
+    }
+
+    function _accessDuration() internal view override returns (uint64) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        return $.accessDuration;
+    }
+
+    function _moduleOwner() internal view override returns (address) {
+        return owner();
     }
 }

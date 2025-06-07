@@ -25,6 +25,8 @@ library AppRegistryStorage {
         mapping(address => AppInfo) apps;
         // Simple app beacon
         address beacon;
+        // Space factory
+        address spaceFactory;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

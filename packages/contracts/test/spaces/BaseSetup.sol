@@ -166,6 +166,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         riverAirdrop = deployRiverAirdrop.deploy(deployer);
 
         // App Registry
+        deployAppRegistry.setSpaceFactory(spaceFactory);
         appRegistry = deployAppRegistry.deploy(deployer);
 
         // Base Registry Diamond

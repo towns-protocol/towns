@@ -26,11 +26,33 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
 
     bool public shouldFailInstall;
     bool public shouldFailManifest;
+    bool public shouldFailUninstall;
 
-    function initialize(bool _shouldFailInstall, bool _shouldFailManifest) external initializer {
+    uint256 internal price;
+
+    function initialize(
+        bool _shouldFailInstall,
+        bool _shouldFailManifest,
+        bool _shouldFailUninstall,
+        uint256 _price
+    ) external initializer {
         __Ownable_init_unchained(msg.sender);
         shouldFailInstall = _shouldFailInstall;
         shouldFailManifest = _shouldFailManifest;
+        shouldFailUninstall = _shouldFailUninstall;
+        price = _price;
+    }
+
+    function setShouldFailInstall(bool _shouldFail) external {
+        shouldFailInstall = _shouldFail;
+    }
+
+    function setShouldFailUninstall(bool _shouldFail) external {
+        shouldFailUninstall = _shouldFail;
+    }
+
+    function setPrice(uint256 _price) external {
+        price = _price;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -42,6 +64,14 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
 
     function moduleOwner() external view returns (address) {
         return _owner();
+    }
+
+    function installPrice() external view returns (uint256) {
+        return price;
+    }
+
+    function accessDuration() external pure returns (uint64) {
+        return 0;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -89,6 +119,9 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     }
 
     function onUninstall(bytes calldata data) external {
+        if (shouldFailUninstall) {
+            revert("Uninstallation failed");
+        }
         emit OnUninstallCalled(msg.sender, data);
     }
 

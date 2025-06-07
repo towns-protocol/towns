@@ -10,6 +10,8 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -27,7 +29,12 @@ import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token
 import {ExecutionManifest, ManifestExecutionFunction} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorBase {
+abstract contract AppAccountBase is
+    IAppAccountBase,
+    IAppRegistryBase,
+    TokenOwnableBase,
+    ExecutorBase
+{
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
@@ -38,38 +45,35 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
     bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
 
-    function _installApp(
-        address module,
-        Delays calldata delays,
-        bytes calldata postInstallData
-    ) internal {
-        if (module == address(0)) InvalidAppAddress.selector.revertWith();
+    // External Functions
+    function _onlyRegistry() internal view {
+        if (msg.sender != address(_getAppRegistry())) InvalidCaller.selector.revertWith();
+    }
 
-        // get the latest app
-        App memory app = _getLatestApp(module);
+    function _installApp(bytes32 appId, bytes calldata postInstallData) internal {
+        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
+
+        // get the app
+        App memory app = _getAppRegistry().getAppById(appId);
+
+        if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
 
         // verify if already installed
-        if (_isGroupActive(app.appId)) AppAlreadyInstalled.selector.revertWith();
+        if (_isAppInstalled(app.module)) AppAlreadyInstalled.selector.revertWith();
 
-        // check if a version of the app is already installed
-        bytes32 appId = _getAppId(module);
-        if (appId != EMPTY_UID && _isGroupActive(appId)) {
-            AppAlreadyInstalled.selector.revertWith();
-        }
+        _verifyManifests(app.module, app.manifest);
 
-        _verifyManifests(module, app.manifest);
+        // set the group status to active
         _setGroupStatus(app.appId, true);
-        _addApp(module, app.appId);
+        _addApp(app.module, app.appId);
 
         uint256 clientsLength = app.clients.length;
         for (uint256 i; i < clientsLength; ++i) {
             _grantGroupAccess({
                 groupId: app.appId,
                 account: app.clients[i],
-                grantDelay: delays.grantDelay > 0
-                    ? delays.grantDelay
-                    : _getGroupGrantDelay(app.appId),
-                executionDelay: delays.executionDelay > 0 ? delays.executionDelay : 0
+                grantDelay: _getGroupGrantDelay(app.appId),
+                executionDelay: 0
             });
         }
 
@@ -100,10 +104,15 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         emit IERC6900Account.ExecutionInstalled(app.module, app.manifest);
     }
 
-    function _uninstallApp(address module, bytes calldata uninstallData) internal {
-        App memory app = _getApp(module);
+    function _uninstallApp(bytes32 appId, bytes calldata uninstallData) internal {
+        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
-        _removeApp(module);
+        App memory app = _getAppRegistry().getAppById(appId);
+
+        if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        if (!_isAppInstalled(app.module)) AppNotInstalled.selector.revertWith();
+
+        _removeApp(app.module);
 
         // Remove function _group mappings
         uint256 executionFunctionsLength = app.manifest.executionFunctions.length;
@@ -132,6 +141,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         emit IERC6900Account.ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
+    // Internal Functions
     function _addApp(address module, bytes32 appId) internal {
         AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
         $.installedApps.add(module);
@@ -143,28 +153,27 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         delete AppAccountStorage.getLayout().appIdByApp[module];
     }
 
+    function _enableApp(address app) internal {
+        bytes32 appId = _getInstalledAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        _setGroupStatus(appId, true);
+    }
+
     function _disableApp(address app) internal {
-        bytes32 appId = _getAppId(app);
+        bytes32 appId = _getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, false);
     }
 
-    function _getClients(address app) internal view returns (address[] memory) {
-        bytes32 appId = _getAppId(app);
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        return _getAppFromAttestation(app, _getAttestation(appId)).clients;
-    }
-
-    // Getters
     function _isEntitled(
         address module,
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        bytes32 appId = _getAppId(module);
+        bytes32 appId = _getInstalledAppId(module);
         if (appId == EMPTY_UID) return false;
 
-        App memory app = _getAppFromAttestation(module, _getAttestation(appId));
+        App memory app = _getApp(module);
 
         address[] memory clients = app.clients;
         bytes32[] memory permissions = app.permissions;
@@ -192,64 +201,37 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
     }
 
     function _getApp(address module) internal view returns (App memory app) {
-        bytes32 appId = _getAppId(module);
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        return _getAppFromAttestation(module, _getAttestation(appId));
+        bytes32 appId = _getInstalledAppId(module);
+        if (appId == EMPTY_UID) return app;
+        return _getAppRegistry().getAppById(appId);
     }
 
-    function _getLatestApp(address module) internal view returns (App memory app) {
-        return _getAppFromAttestation(module, _getLatestAttestation(module));
-    }
-
-    function _getAppFromAttestation(
-        address module,
-        Attestation memory att
-    ) private pure returns (App memory app) {
-        if (att.uid == EMPTY_UID) InvalidAppId.selector.revertWith();
-        if (att.revocationTime != 0) AppRevoked.selector.revertWith();
-
-        (
-            ,
-            address owner,
-            address[] memory clients,
-            bytes32[] memory permissions,
-            ExecutionManifest memory manifest
-        ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
-
-        app = App({
-            appId: att.uid,
-            module: module,
-            owner: owner,
-            clients: clients,
-            permissions: permissions,
-            manifest: manifest
-        });
+    function _getPlatformRequirements() private view returns (IPlatformRequirements) {
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        return IPlatformRequirements(ms.spaceFactory);
     }
 
     function _getAppRegistry() private view returns (IAppRegistry) {
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        return IAppRegistry(ms.getDependency("AppRegistry"));
-    }
-
-    function _getAttestation(bytes32 appId) internal view returns (Attestation memory) {
-        return _getAppRegistry().getAttestation(appId);
-    }
-
-    function _getLatestAttestation(address module) internal view returns (Attestation memory) {
-        IAppRegistry registry = _getAppRegistry();
-        bytes32 appId = registry.getLatestAppId(module);
-        return registry.getAttestation(appId);
+        return IAppRegistry(ms.getDependency(APP_REGISTRY));
     }
 
     function _getApps() internal view returns (address[] memory) {
         return AppAccountStorage.getLayout().installedApps.values();
     }
 
-    function _getAppId(address module) internal view returns (bytes32) {
+    function _getInstalledAppId(address module) internal view returns (bytes32) {
         return AppAccountStorage.getLayout().appIdByApp[module];
     }
 
-    // Checks
+    function _isAppInstalled(address module) internal view returns (bool) {
+        return AppAccountStorage.getLayout().installedApps.contains(module);
+    }
+
+    function _getClients(address app) internal view returns (address[] memory) {
+        return _getApp(app).clients;
+    }
+
     function _checkAuthorized(address module) internal view {
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
@@ -321,10 +303,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             selector == ITownsApp.requiredPermissions.selector;
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Hooks                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
+    // Override Functions
     function _getOwner() internal view virtual override returns (address) {
         return _owner();
     }

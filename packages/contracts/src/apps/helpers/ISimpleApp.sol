@@ -11,6 +11,8 @@ interface ISimpleApp {
     function initialize(
         address owner,
         string calldata appId,
-        bytes32[] calldata permissions
+        bytes32[] calldata permissions,
+        uint256 installPrice,
+        uint64 accessDuration
     ) external;
 }
