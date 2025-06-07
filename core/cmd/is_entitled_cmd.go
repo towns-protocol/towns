@@ -72,6 +72,7 @@ func isEntitledForSpaceAndChannel(
 		baseChain,
 		evaluator,
 		&cfg.ArchitectContract,
+		&cfg.AppRegistryContract,
 		20,
 		30000,
 		metricsFactory,

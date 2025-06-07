@@ -159,13 +159,11 @@ describe('Bot', { sequential: true }, () => {
             cryptoStore,
             new MockEntitlementsDelegate(),
         )
+        await botClient.initializeUser({ appAddress })
 
-        // the bot owner adds the bot to the space stream
         await expect(
             bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId)),
         ).resolves.toBeDefined()
-        // the bot initializes itself and uploads its device keys
-        await expect(botClient.initializeUser({ spaceId })).resolves.toBeDefined()
         await expect(botClient.uploadDeviceKeys()).resolves.toBeDefined()
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
