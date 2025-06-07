@@ -91,6 +91,7 @@ import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'
 import { MemberTokenTransfer } from '../streamStateView_Members'
+import { setHeaderInterceptor } from '../rpcInterceptors'
 
 const log = dlog('csb:test:util')
 
@@ -142,7 +143,14 @@ const getNextTestUrl = async (): Promise<{
 
 export const makeTestRpcClient = async (opts?: RpcOptions) => {
     const { urls: url, refreshNodeUrl } = await getNextTestUrl()
-    return makeStreamRpcClient(url, refreshNodeUrl, opts)
+    const customOpts = {
+        ...opts,
+        interceptors: [
+            ...(opts?.interceptors ?? []),
+            setHeaderInterceptor({ 'X-Use-Shared-Sync': 'true' }), // TODO: remove this when shared sync is enabled by default
+        ],
+    }
+    return makeStreamRpcClient(url, refreshNodeUrl, customOpts)
 }
 
 export const makeEvent_test = async (

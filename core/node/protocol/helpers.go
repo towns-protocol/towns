@@ -4,6 +4,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	// UseSharedSyncHeaderName is the header name that indicates whether to use the shared syncer or not.
+	UseSharedSyncHeaderName = "X-Use-Shared-Sync"
+)
+
 func (e *StreamEvent) GetStreamSettings() *StreamSettings {
 	if e == nil {
 		return nil
@@ -82,4 +87,19 @@ func (x *MiniblockHeader) IsSnapshot() bool {
 		return false
 	}
 	return x.GetSnapshot() != nil || len(x.GetSnapshotHash()) > 0
+}
+
+// TargetSyncIDs returns the list of target sync IDs from the ModifySyncRequest.
+func (r *ModifySyncRequest) TargetSyncIDs() []string {
+	var targetSyncIds []string
+
+	if r.SyncId != "" {
+		targetSyncIds = append(targetSyncIds, r.SyncId)
+	}
+
+	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.SyncId {
+		targetSyncIds = append(targetSyncIds, r.GetBackfillStreams().GetSyncId())
+	}
+
+	return targetSyncIds
 }
