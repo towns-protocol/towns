@@ -200,7 +200,7 @@ func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 
 
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
-		MediaMaxChunkCount: 50,
+		MediaMaxChunkCount: 21,
 		MediaMaxChunkSize:  1200000,
 
 		RecencyConstraintsAge: 11 * time.Second,

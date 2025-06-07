@@ -126,7 +126,7 @@ describe('mediaWithEntitlements', () => {
          * Bob is a member of the channel and can therefore create a media stream
          */
         await expect(
-            bobClient.createMediaStream(channelId, spaceStreamId, undefined, 10),
+            bobClient.createMediaStream(channelId, spaceStreamId, undefined, 5),
         ).resolves.not.toThrow()
         await bobClient.stop()
 
@@ -135,7 +135,7 @@ describe('mediaWithEntitlements', () => {
 
         // Alice is NOT a member of the channel is prevented from creating a media stream
         await expect(
-            aliceClient.createMediaStream(channelId, spaceStreamId, undefined, 10),
+            aliceClient.createMediaStream(channelId, spaceStreamId, undefined, 5),
         ).rejects.toThrow()
         await aliceClient.stop()
     })
@@ -201,7 +201,7 @@ describe('mediaWithEntitlements', () => {
          * Bob creates a user media stream
          */
         await expect(
-            bobClient.createMediaStream(undefined, undefined, bobClient.userId, 10),
+            bobClient.createMediaStream(undefined, undefined, bobClient.userId, 5),
         ).resolves.not.toThrow()
         await bobClient.stop()
     })
