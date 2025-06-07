@@ -42,7 +42,7 @@ const Profile = () => {
     return (
         <Sheet>
             <SheetTrigger>
-                <Avatar userId={user.id} className="h-8 w-8" />
+                <Avatar userId={user.id} className="h-8 w-8" size="thumbnail" />
             </SheetTrigger>
             <SheetContent side="right" className="flex flex-col justify-between">
                 <div className="flex flex-col gap-2">
