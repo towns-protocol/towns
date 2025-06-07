@@ -1,9 +1,10 @@
 {
-    "extends": "./../tsconfig.base.json",
+    "extends": "../tsconfig.base.json",
     "compilerOptions": {
-        "rootDir": "./src" /* Specify the root folder within your source files. */,
+        "rootDir": "." /* Specify the root folder within your source files. */,
+        "sourceRoot": "./src",
         "outDir": "./dist" /* Specify an output folder for all emitted files. */,
         "types": ["vitest/globals"]
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "*.config.ts"]
 }

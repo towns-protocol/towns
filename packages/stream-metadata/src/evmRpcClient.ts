@@ -1,7 +1,7 @@
 import { RiverRegistry } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
-import { config } from './environment'
+import { config } from './environment.js'
 
 let riverRegistry: ReturnType<typeof createRiverRegistry> | undefined
 

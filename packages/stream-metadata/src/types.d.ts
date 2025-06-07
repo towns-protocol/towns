@@ -1,4 +1,4 @@
 export interface MediaContent {
-	data: ArrayBuffer
+	data: Uint8Array
 	mimeType: string
 }

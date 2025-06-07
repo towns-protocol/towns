@@ -7,7 +7,7 @@ import {
     http,
 } from 'viem'
 import { base } from 'viem/chains'
-import { config } from './environment'
+import { config } from './environment.js'
 
 export const baseChainWithCustomRpcUrl: Chain = {
     ...base,

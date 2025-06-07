@@ -1,6 +1,6 @@
 import { LoggerOptions, TransportSingleOptions, pino } from 'pino'
 
-import { config } from './environment'
+import { config } from './environment.js'
 
 const pretty: TransportSingleOptions = {
 	target: 'pino-pretty',

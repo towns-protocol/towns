@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
-import { CloudfrontManager } from '../aws'
+import { CloudfrontManager } from '../aws.js'
 
 const paramsSchema = z.object({
 	invalidationId: z.string().min(1, 'invalidationId parameter is required'),

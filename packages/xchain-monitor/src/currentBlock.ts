@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import { config } from './environment'
-import { getLogger } from './logger'
+import { config } from './environment.js'
+import { getLogger } from './logger.js'
 
 const logger = getLogger('currentBlock')
 

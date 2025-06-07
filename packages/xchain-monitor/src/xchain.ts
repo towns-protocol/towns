@@ -1,9 +1,9 @@
-import EntitlementCheckerAbi from '@towns-protocol/generated/dev/abis/IEntitlementChecker.abi'
-import EntitlementGatedAbi from '@towns-protocol/generated/dev/abis/IEntitlementGated.abi'
+import EntitlementCheckerAbi from '@towns-protocol/generated/dev/abis/IEntitlementChecker.abi.js'
+import EntitlementGatedAbi from '@towns-protocol/generated/dev/abis/IEntitlementGated.abi.js'
 import { Address, Hex, decodeFunctionData } from 'viem'
-import { config } from './environment'
-import { getLogger } from './logger'
-import { BlockType, createCustomPublicClient, PublicClientType } from './client'
+import { config } from './environment.js'
+import { getLogger } from './logger.js'
+import { BlockType, createCustomPublicClient, PublicClientType } from './client.js'
 
 const logger = getLogger('xchain')
 

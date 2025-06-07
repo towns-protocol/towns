@@ -4,10 +4,10 @@ import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk
 import { z } from 'zod'
 import { bin_toHexString } from '@towns-protocol/dlog'
 
-import { config } from '../environment'
-import { getStream } from '../riverStreamRpcClient'
-import { isValidEthereumAddress } from '../validators'
-import { getMediaEncryption } from '../media-encryption'
+import { config } from '../environment.js'
+import { getStream } from '../riverStreamRpcClient.js'
+import { isValidEthereumAddress } from '../validators.js'
+import { getMediaEncryption } from '../media-encryption.js'
 
 const paramsSchema = z.object({
 	spaceAddress: z

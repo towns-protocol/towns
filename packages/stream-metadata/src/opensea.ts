@@ -2,8 +2,8 @@ import { BASE_MAINNET, BASE_SEPOLIA, type SpaceInfo } from '@towns-protocol/web3
 import { BigNumber } from 'ethers'
 import { FastifyBaseLogger } from 'fastify'
 
-import { config } from './environment'
-import { spaceDapp } from './contract-utils'
+import { config } from './environment.js'
+import { spaceDapp } from './contract-utils.js'
 
 const getOpenSeaAPIUrl = (logger: FastifyBaseLogger, space: SpaceInfo) => {
 	const spaceOwnerAddress = config.web3Config.base.addresses.spaceOwner
