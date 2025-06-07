@@ -48,7 +48,7 @@ func (arc *AppRegistryContract) IsRegisteredAppWithClient(
 	appAddress common.Address,
 	clientAddress common.Address,
 ) (bool, error) {
-	appAddress, err := arc.appRegistry.GetAppByClient(&bind.CallOpts{Context: ctx}, clientAddress)
+	registeredAppAddress, err := arc.appRegistry.GetAppByClient(&bind.CallOpts{Context: ctx}, clientAddress)
 	if err != nil {
 		return false, AsRiverError(
 			err,
@@ -56,5 +56,5 @@ func (arc *AppRegistryContract) IsRegisteredAppWithClient(
 			Tag("appAddress", appAddress).
 			Tag("clientAddress", clientAddress)
 	}
-	return false, nil
+	return appAddress.Cmp(registeredAppAddress) == 0, nil
 }
