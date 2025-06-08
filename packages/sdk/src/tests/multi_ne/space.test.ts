@@ -129,7 +129,7 @@ describe('spaceTests', () => {
         }
         expect(
             snapshot.content.value.channels.length,
-            'channelMetadata: pre-update bobsClient snapshot.channels.length',
+            `channelMetadata: ${spaceId} pre-update bobsClient snapshot.channels.length`,
         ).toBe(1)
         expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
 
