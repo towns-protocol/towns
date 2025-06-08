@@ -1035,6 +1035,7 @@ export function waitFor<T extends void | boolean>(
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let timedOut = false
         let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
         const intervalId = setInterval(checkCallback, pollIntervalMS)
@@ -1053,6 +1054,7 @@ export function waitFor<T extends void | boolean>(
         }
         function onTimeout() {
             lastError = lastError ?? timeoutContext
+            timedOut = true
             onDone()
         }
         function checkCallback() {
@@ -1063,8 +1065,10 @@ export function waitFor<T extends void | boolean>(
                     promiseStatus = 'pending'
                     result.then(
                         (res) => {
-                            promiseStatus = 'resolved'
-                            onDone(res)
+                            if (!timedOut) {
+                                promiseStatus = 'resolved'
+                                onDone(res)
+                            }
                         },
                         (err) => {
                             promiseStatus = 'rejected'

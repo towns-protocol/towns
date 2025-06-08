@@ -433,6 +433,7 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 
 	newTarget := record.remotes.AdvanceStickyPeer(ssr.node)
 	log.Debugw("Relocating stream", "oldNode", ssr.node, "newTarget", newTarget)
+	ssr.relocateStreams <- record
 }
 
 func (ssr *syncSessionRunner) GetSyncId() string {
@@ -450,7 +451,7 @@ func (ssr *syncSessionRunner) Close(err error) {
 	ssr.mu.Lock()
 	if ssr.closeErr != nil {
 		defer ssr.mu.Unlock()
-		log.Warnw("syncSessionRunner.Close already called", "existingError", ssr.closeErr, "newError", err)
+		log.Debugw("syncSessionRunner.Close already called", "existingError", ssr.closeErr, "newError", err)
 		return
 	}
 	ssr.closeErr = err
@@ -477,12 +478,6 @@ func (ssr *syncSessionRunner) Close(err error) {
 	// Kill the sync session if it is still running
 	if ssr.syncCtx.Err() == nil {
 		ssr.cancelSync(err)
-	}
-
-	// 1 second delay before relocating streams so that non-replicated streams are not causing repeated
-	// attempted connections if a node is down.
-	if err := base.SleepWithContext(ssr.rootCtx, 1*time.Second); err != nil {
-		return
 	}
 
 	// Relocate all streams on this runner.
