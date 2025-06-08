@@ -327,6 +327,13 @@ describe('gdmsTests', () => {
 
         // total memberships are now 6, joining another user should fail
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
+        // wait for 6 confirmed memberships, should only equal 6 after miniblock confirmation
+        // miniblocks should be properly replicated to all nodes
+        await waitFor(() => {
+            const stream = bobsClient.streams.get(streamId)
+            expect(stream?.view.getMembers().joinedUsers.size).toEqual(6)
+        })
+        // try to join the 7th user
         await expect(bobsClient.joinUser(streamId, chucksClient.userId)).rejects.toThrow(
             /membership limit reached[\s]+membershipLimit = 6/,
         )

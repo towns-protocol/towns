@@ -47,6 +47,7 @@ describe('timeline.test.ts', () => {
                     e?.content?.mentions.length > 0 &&
                     e?.content?.mentions[0].userId === bob.userId &&
                     e?.content?.mentions[0].displayName === 'bob',
+                `mention: ${bobChannel.data.id}`,
             ).toEqual(true)
         })
     })
@@ -75,9 +76,7 @@ describe('timeline.test.ts', () => {
         await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
         const aliceChannel = alice.spaces.getSpace(spaceId).getDefaultChannel()
         // alice shouldnt receive all the messages, only a few
-        await waitFor(() =>
-            expect(aliceChannel.timeline.events.value.length).toBeLessThan(NUM_MESSAGES),
-        )
+        expect(aliceChannel.timeline.events.value.length).toBeLessThan(NUM_MESSAGES)
         const aliceChannelLength = aliceChannel.timeline.events.value.length
         // call scrollback
         await aliceChannel.timeline.scrollback()
@@ -249,7 +248,7 @@ describe('timeline.test.ts', () => {
                                 ? e.content?.body
                                 : undefined,
                     }))
-                    expect(events, 'find ready to sew').toContainEqual({
+                    expect(events, `find ready to sew: ${aliceChannel.data.id}`).toContainEqual({
                         kind: RiverTimelineEvent.ChannelMessage,
                         body: 'hey alice, ready to sew?',
                     })
