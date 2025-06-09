@@ -102,7 +102,7 @@ return WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).
     LogWarn(log)
 ```
 
-This can functionality can be used as necessary, but since all request errors are logged on RPC level, for requrest processing
+This can functionality can be used as necessary, but since all request errors are logged on RPC level, for request processing
 the default should be to augument passing error and let RPC layer do the logging once.
 
 ## . imports
