@@ -17,7 +17,7 @@ set +a
 
 # Build if not called with nobuild
 if [ "${1-}" != "nobuild" ]; then
-    yarn turbo build --filter=@towns-protocol/contracts
+    yarn run -T turbo build --filter=@towns-protocol/contracts
 fi
 
 # Deploy Multicall3
