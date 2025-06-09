@@ -4,7 +4,7 @@ import { getStreamMetadataUrl } from '@towns-protocol/sdk'
 import { cn } from '@/utils'
 
 const getAvatarUrl = (environmentId: string, userId: string, size: string = 'thumbnail') => {
-    return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image?size=${size}`
+    return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image/${size}`
 }
 
 export const Avatar = ({
