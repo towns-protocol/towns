@@ -1072,10 +1072,7 @@ export function waitFor<T extends void | boolean>(
                         },
                         (err) => {
                             promiseStatus = 'rejected'
-                            // splat the error to get a stack trace, i don't know why this works
-                            lastError = {
-                                ...err,
-                            }
+                            lastError = err
                         },
                     )
                 } else {

@@ -1,6 +1,6 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.240",
+  "version": "0.0.241",
   "packageManager": "yarn@3.8.0",
   "installConfig": {
     "hoistingLimits": "dependencies"
@@ -42,7 +42,6 @@
     "forge-std": "github:foundry-rs/forge-std#v1.9.7",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
-    "solhint": "^5.0.5",
-    "turbo": "^2.5.4"
+    "solhint": "^5.0.5"
   }
 }
