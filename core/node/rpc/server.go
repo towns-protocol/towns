@@ -738,6 +738,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		s.wallet.Address,
 		s.cache,
 		s.nodeRegistry,
+		s.metrics,
 		s.otelTracer,
 	)
 
