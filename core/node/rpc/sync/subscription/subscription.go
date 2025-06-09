@@ -30,14 +30,18 @@ type Subscription struct {
 	cancel context.CancelCauseFunc
 	// syncID is the subscription/sync ID
 	syncID string
+	// initializingStreams is a map of streams that are currently being initialized for this subscription.
+	// A placement of the stream in this map means that the stream is being initialized and
+	// the routing logic (in manager) should not send any messages for this stream until it is initialized.
+	initializingStreams *xsync.Map[StreamId, struct{}]
+	// backfillEvents is the map of stream and backfill events and miniblocks hashes that were sent to the client.
+	// This is used to avoid sending the same backfill events multiple times.
+	// The list of hashes is deleted after receiving the first message after the backfill.
+	backfillEvents *xsync.Map[StreamId, []common.Hash]
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.
 	closed atomic.Bool
 	// manager is the subscription manager that manages this subscription
 	manager *Manager
-	// initializingStreams is a map of streams that are currently being initialized for this subscription.
-	initializingStreams *xsync.Map[StreamId, bool]
-	// backfillEvents is the map of stream and backfill events that were sent to the client..
-	backfillEvents *xsync.Map[StreamId, []common.Hash]
 }
 
 // Close closes the subscription.
@@ -151,12 +155,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 // addStream adds the given stream to the current subscription.
 // Returns true if the given stream must be added to the main syncer set.
 func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBackfill bool) {
-	s.manager.sLock.Lock()
-	defer s.manager.sLock.Unlock()
-
 	streamID := StreamId(cookie.GetStreamId())
 
-	// Add the stream to the subscription if not added yet
+	s.manager.sLock.Lock()
 	subscriptions, ok := s.manager.subscriptions[streamID]
 	if !ok || len(subscriptions) == 0 {
 		shouldAdd = true
@@ -166,13 +167,14 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 			return sub.syncID == s.syncID
 		}) {
 			if cookie.GetMinipoolGen() > 0 || len(cookie.GetPrevMiniblockHash()) > 0 {
-				// The given stream should be backfilled and then start syncing
+				// The given stream should be backfilled and then start syncing.
 				shouldBackfill = true
-				s.initializingStreams.Store(streamID, true)
+				s.initializingStreams.Store(streamID, struct{}{})
 			}
 			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
 		}
 	}
+	s.manager.sLock.Unlock()
 	return
 }
 
@@ -180,8 +182,6 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 // Returns true if the given stream must be removed from the main syncer set.
 func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	s.manager.sLock.Lock()
-	defer s.manager.sLock.Unlock()
-
 	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
 		s.manager.subscriptions[StreamId(streamID)],
 		func(sub *Subscription) bool {
@@ -191,6 +191,7 @@ func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
 	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
 		delete(s.manager.subscriptions, StreamId(streamID))
 	}
+	s.manager.sLock.Unlock()
 	return
 }
 

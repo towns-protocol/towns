@@ -91,7 +91,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		manager:             m,
-		initializingStreams: xsync.NewMap[StreamId, bool](),
+		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
 	}, nil
 }
@@ -193,24 +193,22 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			msg.TargetSyncIds = msg.TargetSyncIds[1:]
 			sub.Send(msg)
 
-			if initializing, _ := sub.initializingStreams.Load(streamID); initializing {
+			if _, found := sub.initializingStreams.Load(streamID); found {
 				// The given stream is in initialization state for the given subscription.
-				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-					// Backfill of the stream targeted specifically to the given subscription
-					sub.initializingStreams.Delete(streamID)
+				// Backfill of the stream targeted specifically to the given subscription.
+				// Remove the stream from the initializing streams map for the given subscription
+				// to start sending updates.
+				sub.initializingStreams.Delete(streamID)
 
-					// Add the given events to the backfill events of the subscription.
-					for _, event := range msg.GetStream().GetEvents() {
-						sub.backfillEvents.Compute(streamID, func(oldValue []common.Hash, _ bool) ([]common.Hash, xsync.ComputeOp) {
-							return append(oldValue, common.BytesToHash(event.Hash)), xsync.UpdateOp
-						})
-					}
-					for _, miniblock := range msg.GetStream().GetMiniblocks() {
-						sub.backfillEvents.Compute(streamID, func(oldValue []common.Hash, _ bool) ([]common.Hash, xsync.ComputeOp) {
-							return append(oldValue, common.BytesToHash(miniblock.Header.Hash)), xsync.UpdateOp
-						})
-					}
+				// Store backfill events and miniblocks hashes for the given stream in the subscription.
+				hashes := make([]common.Hash, 0, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
+				for _, event := range msg.GetStream().GetEvents() {
+					hashes = append(hashes, common.BytesToHash(event.Hash))
 				}
+				for _, miniblock := range msg.GetStream().GetMiniblocks() {
+					hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
+				}
+				sub.backfillEvents.Store(streamID, hashes)
 			}
 		}
 		return
@@ -232,7 +230,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			continue
 		}
 
-		if initializing, _ := subscription.initializingStreams.Load(streamID); initializing {
+		if _, found := subscription.initializingStreams.Load(streamID); found {
 			// If the subscription is still initializing, skip sending the message.
 			// It will be sent later when the subscription is ready.
 			continue
@@ -243,8 +241,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			// TODO: Remove the backfill events for the given stream after receiving N messages after the backfill.
-			backfillEvents, loaded := subscription.backfillEvents.Load(streamID)
+			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
 			if loaded && len(backfillEvents) > 0 {
 				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
 					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
