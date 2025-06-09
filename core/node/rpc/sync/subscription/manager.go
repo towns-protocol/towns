@@ -171,10 +171,6 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 		return
 	}
 
-	// Make a copy of the subscriptions slice while holding the lock
-	subscriptionsCopy := make([]*Subscription, len(subscriptions))
-	copy(subscriptionsCopy, subscriptions)
-
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The given stream is no longer syncing, remove it from the subscriptions.
 		delete(m.subscriptions, streamID)
@@ -185,7 +181,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	if len(msg.GetTargetSyncIds()) > 0 {
 		// Applicable only for backfill operation
 		var sub *Subscription
-		for _, subscription := range subscriptionsCopy {
+		for _, subscription := range subscriptions {
 			if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
 				sub = subscription
 				break
@@ -223,16 +219,12 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	// It is safe to use waitgroup here becasue subscribers use dynamic buffer channel and can just throw the
 	// error if the buffer is full. Meaning, this is not a blocking by client operation.
 	var wg sync.WaitGroup
-	for i, subscription := range subscriptionsCopy {
+	var toRemove []string
+	for _, subscription := range subscriptions {
 		if subscription.isClosed() {
 			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-				// Remove the given subscriptions from the list of subscriptions of the given stream.
-				// If the operation is SYNC_DOWN, all subscriptions were removed above already.
-				m.sLock.Lock()
-				m.subscriptions[streamID] = slices.DeleteFunc(m.subscriptions[streamID], func(s *Subscription) bool {
-					return s.syncID == subscription.syncID
-				})
-				m.sLock.Unlock()
+				// Collect the subscription IDs to remove
+				toRemove = append(toRemove, subscription.syncID)
 			}
 			continue
 		}
@@ -244,7 +236,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 		}
 
 		wg.Add(1)
-		go func(i int, subscription *Subscription) {
+		go func(subscription *Subscription) {
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
@@ -260,9 +252,18 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 
 			subscription.Send(msg)
 			wg.Done()
-		}(i, subscription)
+		}(subscription)
 	}
 	wg.Wait()
+
+	// Remove collected subscriptions after iteration is complete
+	if len(toRemove) > 0 {
+		m.sLock.Lock()
+		m.subscriptions[streamID] = slices.DeleteFunc(m.subscriptions[streamID], func(s *Subscription) bool {
+			return slices.Contains(toRemove, s.syncID)
+		})
+		m.sLock.Unlock()
+	}
 }
 
 // dropStream removes the given stream from the syncers set and all subscriptions.
