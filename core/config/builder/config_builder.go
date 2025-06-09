@@ -46,7 +46,7 @@ func NewConfigBuilder[T any](defaults *T, envPrefix string) (*ConfigBuilder[T], 
 
 func (b *ConfigBuilder[T]) LoadConfig(path string) error {
 	// Viper doesn't support prefixes in env files, but does support them in env vars.
-	// To address this inconsistency, env file is pre-proccessed.
+	// To address this inconsistency, env file is pre-processed.
 	ext := filepath.Ext(path)
 	// TODO: add support for .env.local and so on.
 	if ext == ".env" || ext == ".dotenv" {
