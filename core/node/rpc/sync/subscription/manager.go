@@ -170,6 +170,11 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 		m.sLock.Unlock()
 		return
 	}
+
+	// Make a copy of the subscriptions slice while holding the lock
+	subscriptionsCopy := make([]*Subscription, len(subscriptions))
+	copy(subscriptionsCopy, subscriptions)
+
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The given stream is no longer syncing, remove it from the subscriptions.
 		delete(m.subscriptions, streamID)
@@ -180,7 +185,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	if len(msg.GetTargetSyncIds()) > 0 {
 		// Applicable only for backfill operation
 		var sub *Subscription
-		for _, subscription := range subscriptions {
+		for _, subscription := range subscriptionsCopy {
 			if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
 				sub = subscription
 				break
@@ -218,12 +223,12 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 	// It is safe to use waitgroup here becasue subscribers use dynamic buffer channel and can just throw the
 	// error if the buffer is full. Meaning, this is not a blocking by client operation.
 	var wg sync.WaitGroup
-	for i, subscription := range subscriptions {
+	for i, subscription := range subscriptionsCopy {
 		if subscription.isClosed() {
 			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
 				// Remove the given subscriptions from the list of subscriptions of the given stream.
 				// If the operation is SYNC_DOWN, all subscriptions were removed above already.
-				subscriptions = append(subscriptions[:i], subscriptions[i+1:]...)
+				subscriptionsCopy = append(subscriptionsCopy[:i], subscriptionsCopy[i+1:]...)
 				m.sLock.Lock()
 				m.subscriptions[streamID] = slices.DeleteFunc(m.subscriptions[streamID], func(s *Subscription) bool {
 					return s.syncID == subscription.syncID
