@@ -85,7 +85,7 @@ describe('spaceTests', () => {
         // assert assumptions
         expect(spaceStream).toBeDefined()
         expect(spaceStream.view.miniblockInfo).toBeDefined()
-        let spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
+        const spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
 
         // create a new channel
         const channelId = makeUniqueChannelStreamId(spaceId)
