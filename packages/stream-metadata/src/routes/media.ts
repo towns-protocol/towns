@@ -91,7 +91,10 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 					.resize(dimensions.width, dimensions.height, { fit: 'cover' })
 					.toBuffer()
 			} catch (error) {
-				logger.warn({ mediaStreamId, size, err: error }, 'Failed to resize image, serving original')
+				logger.warn(
+					{ mediaStreamId, size, err: error },
+					'Failed to resize image, serving original',
+				)
 			}
 		}
 
