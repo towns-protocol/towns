@@ -127,7 +127,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         townsToken = deployTokenBase.deploy(deployer);
 
         // Base Registry
-        deployBaseRegistry.setDependencies({riverToken_: townsToken});
         baseRegistry = deployBaseRegistry.deploy(deployer);
         entitlementChecker = IEntitlementChecker(baseRegistry);
         nodeOperator = INodeOperator(baseRegistry);

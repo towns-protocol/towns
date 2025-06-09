@@ -17,7 +17,7 @@ set +a
 
 # Build if not called with nobuild
 if [ "${1-}" != "nobuild" ]; then
-    yarn turbo build --filter=@towns-protocol/contracts
+    yarn run -T turbo build --filter=@towns-protocol/contracts
 fi
 
 # Deploy Multicall3
@@ -27,9 +27,9 @@ cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $BASE_
 
 # Space Architect
 make clear-anvil-deployments context=$RIVER_ENV
-make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployBaseRegistry
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployProxyBatchDelegation
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTownsBase
+make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployBaseRegistry
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpace
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceOwner
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceFactory

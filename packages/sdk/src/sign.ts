@@ -22,6 +22,7 @@ import {
     SyncCookieSchema,
     EventRefSchema,
     SnapshotSchema,
+    MiniblockHeader,
 } from '@towns-protocol/proto'
 import { abytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
@@ -184,14 +185,36 @@ export const unpackStreamAndCookie = async (
     const miniblocks = await Promise.all(
         streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
     )
+    const events = await unpackEnvelopes(streamAndCookie.events, opts)
+    let snapshot: ParsedSnapshot | undefined
+    if (streamAndCookie.snapshot) {
+        let miniblockHeader: StreamEvent | undefined
+        let miniblockHeaderHash: Uint8Array | undefined
+
+        if (miniblocks.length > 0 && miniblocks[0].header.snapshotHash) {
+            miniblockHeader = miniblocks[0].events.at(-1)?.event
+            miniblockHeaderHash = miniblocks[0].header.snapshotHash
+        } else if (events.length > 0) {
+            miniblockHeaderHash = (
+                events.find((event) => {
+                    return event.event.payload.case === 'miniblockHeader'
+                })?.event.payload.value as MiniblockHeader
+            ).snapshotHash
+        }
+
+        snapshot = await unpackSnapshot(
+            miniblockHeader,
+            miniblockHeaderHash,
+            streamAndCookie.snapshot,
+            opts,
+        )
+    }
+
     return {
-        events: await unpackEnvelopes(streamAndCookie.events, opts),
+        events: events,
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot:
-            streamAndCookie.snapshot && miniblocks.length > 0 && miniblocks[0].header.snapshotHash
-                ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
-                : undefined,
+        snapshot: snapshot,
     }
 }
 
@@ -240,7 +263,8 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
-    miniblock: ParsedMiniblock,
+    miniblockHeader: StreamEvent | undefined,
+    miniblockHeaderSnapshotHash: Uint8Array | undefined,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -250,7 +274,12 @@ export const unpackSnapshot = async (
 
     // make sure the given snapshot corresponds to the miniblock
     check(
-        bin_equal(miniblock.header.snapshotHash, snapshot.hash),
+        isDefined(miniblockHeaderSnapshotHash),
+        'Miniblock header snapshot hash is not set',
+        Err.BAD_EVENT,
+    )
+    check(
+        bin_equal(miniblockHeaderSnapshotHash, snapshot.hash),
         'Snapshot hash does not match miniblock snapshot hash',
         Err.BAD_EVENT_ID,
     )
@@ -263,9 +292,8 @@ export const unpackSnapshot = async (
 
     if (opts?.disableSignatureValidation !== true) {
         // header event contains the creatorAddress of the snapshot.
-        const headerEvent = miniblock.events.at(-1)
-        check(headerEvent !== undefined, 'Miniblock header event not found', Err.BAD_EVENT)
-        checkEventSignature(headerEvent.event, snapshot.hash, snapshot.signature)
+        check(isDefined(miniblockHeader), 'Miniblock header is not set', Err.BAD_EVENT)
+        checkEventSignature(miniblockHeader, snapshot.hash, snapshot.signature)
     }
 
     return makeParsedSnapshot(

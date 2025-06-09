@@ -2823,6 +2823,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ethereumjs/rlp@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@ethereumjs/rlp@npm:10.0.0"
+  bin:
+    rlp: bin/rlp.cjs
+  checksum: 18ef68b779cd7c721270e5479e0a4db073c92be5adcfad505a0edb06a580b96e7ec74c209c63652194150d57faeaac90190ebe311c3b8b852c34603b29d9c013
+  languageName: node
+  linkType: hard
+
 "@ethereumjs/rlp@npm:^4.0.1":
   version: 4.0.1
   resolution: "@ethereumjs/rlp@npm:4.0.1"
@@ -2844,7 +2853,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/util@npm:^8.0.1, @ethereumjs/util@npm:^8.1.0":
+"@ethereumjs/util@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@ethereumjs/util@npm:10.0.0"
+  dependencies:
+    "@ethereumjs/rlp": ^10.0.0
+    ethereum-cryptography: ^3.2.0
+  checksum: 9e23b0af5e87a0c923993534800f01e3df263111c6db3edfc5917796c1796c10b60586e4d90027a9a43d6664483a2d24e9e85fe8115efb99a1bea02bd5b95ce8
+  languageName: node
+  linkType: hard
+
+"@ethereumjs/util@npm:^8.1.0":
   version: 8.1.0
   resolution: "@ethereumjs/util@npm:8.1.0"
   dependencies:
@@ -8451,7 +8470,6 @@ __metadata:
     prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.14
     solhint: ^5.0.5
-    turbo: ^2.0.12
   languageName: unknown
   linkType: soft
 
@@ -8501,7 +8519,6 @@ __metadata:
   resolution: "@towns-protocol/encryption@workspace:packages/encryption"
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
-    "@ethereumjs/util": ^8.0.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/olm": 3.2.28
     "@towns-protocol/proto": "workspace:^"
@@ -8697,7 +8714,7 @@ __metadata:
     "@connectrpc/connect": ^2.0.0
     "@connectrpc/connect-node": ^2.0.0
     "@connectrpc/connect-web": ^2.0.0
-    "@ethereumjs/util": ^8.0.1
+    "@ethereumjs/util": ^10.0.0
     "@noble/curves": ^1.9.1
     "@noble/hashes": ^1.8.0
     "@towns-protocol/dlog": "workspace:^"
@@ -28716,7 +28733,7 @@ __metadata:
     publint: ^0.2.8
     syncpack: ^10.7.3
     ts-node: ^10.9.1
-    turbo: ^2.0.12
+    turbo: ^2.5.4
     typechain: ^8.1.1
     typescript: ^5.8.2
     vitest: 3.0.5
@@ -29077,58 +29094,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo-darwin-64@npm:2.0.12":
-  version: 2.0.12
-  resolution: "turbo-darwin-64@npm:2.0.12"
+"turbo-darwin-64@npm:2.5.4":
+  version: 2.5.4
+  resolution: "turbo-darwin-64@npm:2.5.4"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-darwin-arm64@npm:2.0.12":
-  version: 2.0.12
-  resolution: "turbo-darwin-arm64@npm:2.0.12"
+"turbo-darwin-arm64@npm:2.5.4":
+  version: 2.5.4
+  resolution: "turbo-darwin-arm64@npm:2.5.4"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-linux-64@npm:2.0.12":
-  version: 2.0.12
-  resolution: "turbo-linux-64@npm:2.0.12"
+"turbo-linux-64@npm:2.5.4":
+  version: 2.5.4
+  resolution: "turbo-linux-64@npm:2.5.4"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-linux-arm64@npm:2.0.12":
-  version: 2.0.12
-  resolution: "turbo-linux-arm64@npm:2.0.12"
+"turbo-linux-arm64@npm:2.5.4":
+  version: 2.5.4
+  resolution: "turbo-linux-arm64@npm:2.5.4"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-windows-64@npm:2.0.12":
-  version: 2.0.12
-  resolution: "turbo-windows-64@npm:2.0.12"
+"turbo-windows-64@npm:2.5.4":
+  version: 2.5.4
+  resolution: "turbo-windows-64@npm:2.5.4"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-windows-arm64@npm:2.0.12":
-  version: 2.0.12
-  resolution: "turbo-windows-arm64@npm:2.0.12"
+"turbo-windows-arm64@npm:2.5.4":
+  version: 2.5.4
+  resolution: "turbo-windows-arm64@npm:2.5.4"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo@npm:^2.0.12":
-  version: 2.0.12
-  resolution: "turbo@npm:2.0.12"
+"turbo@npm:^2.5.4":
+  version: 2.5.4
+  resolution: "turbo@npm:2.5.4"
   dependencies:
-    turbo-darwin-64: 2.0.12
-    turbo-darwin-arm64: 2.0.12
-    turbo-linux-64: 2.0.12
-    turbo-linux-arm64: 2.0.12
-    turbo-windows-64: 2.0.12
-    turbo-windows-arm64: 2.0.12
+    turbo-darwin-64: 2.5.4
+    turbo-darwin-arm64: 2.5.4
+    turbo-linux-64: 2.5.4
+    turbo-linux-arm64: 2.5.4
+    turbo-windows-64: 2.5.4
+    turbo-windows-arm64: 2.5.4
   dependenciesMeta:
     turbo-darwin-64:
       optional: true
@@ -29144,7 +29161,7 @@ __metadata:
       optional: true
   bin:
     turbo: bin/turbo
-  checksum: 14b83df73e5a88439fad99d260f2c35b3f69923658ce43bf65abeebd4fd89e1d8b392fae023417d18125cedb18055cb722ca23ffd02fe7279e9189a5712b05a9
+  checksum: b0b1b5a3ad8cece743c32dbbfaf48b3e16dad1ec238afbd2259447a1d2346955bc2d2da4b650b0114ee3c92b32179a56e47c640be027ddcf5a10e6724f0e8245
   languageName: node
   linkType: hard
 

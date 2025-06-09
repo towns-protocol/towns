@@ -5,3 +5,4 @@ packages/stream-metadata/Dockerfile
 packages/stream-metadata/docker-compose.yml
 packages/metrics-discovery/Dockerfile
 packages/metrics-discovery/docker-compose.yml
+packages/contracts/docker/Dockerfile
