@@ -56,7 +56,7 @@ var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // Prefix 'CS
 var TownsHashForSnapshots = TownsHash{83, 78, 65, 80, 83, 72, 79, 84} // Prefix 'SNAPSHOT' as bytes.
 
 // Hash computes the hash of the given buffer using the Towns hashing algorithm.
-// It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
+// It uses Keccak256 to ensure compatibility with the EVM and uses a header, separator,
 // and footer to ensure that the hash is unique to Towns.
 func (h TownsHash) Hash(buffer []byte) common.Hash {
 	hash := sha3.NewLegacyKeccak256()
