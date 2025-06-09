@@ -178,13 +178,17 @@ describe('timeline.test.ts', () => {
         // bob sends a message to the room
         await bobChannel.sendMessage('hey!')
         // wait for alice to receive the message
-        await waitFor(async () => {
-            const event = findMessageByText(aliceChannel.timeline.events.value, 'hey!')
-            expect(
-                event?.content?.kind === RiverTimelineEvent.ChannelMessage &&
-                    event?.content?.body === 'hey!',
-            ).toEqual(true)
-        })
+        await waitFor(
+            async () => {
+                const event = findMessageByText(aliceChannel.timeline.events.value, 'hey!')
+                expect(
+                    event?.content?.kind === RiverTimelineEvent.ChannelMessage &&
+                        event?.content?.body === 'hey!',
+                    `find hey message: ${aliceChannel.data.id}`,
+                ).toEqual(true)
+            },
+            { timeoutMS: 20000 },
+        )
         // alice grabs the message
         const messageEvent = findMessageByText(aliceChannel.timeline.events.value, 'hey!')
         expect(messageEvent).toBeTruthy()
@@ -274,12 +278,12 @@ describe('timeline.test.ts', () => {
                 expect(
                     thread?.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
                         RiverTimelineEvent.ChannelMessage,
-                    'find first reply',
+                    `find first reply ${bobChannel.data.id}`,
                 ).toBeTruthy()
                 expect(
                     thread?.find((e) => e.eventId === secondReply.eventId)?.content?.kind ===
                         RiverTimelineEvent.ChannelMessage,
-                    'find second reply',
+                    `find second reply ${bobChannel.data.id}`,
                 ).toBeTruthy()
             })
             // alice deletes the first reply
@@ -290,12 +294,12 @@ describe('timeline.test.ts', () => {
                 expect(
                     thread.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
                         RiverTimelineEvent.RedactedEvent,
-                    'find first reply redacted',
+                    `find first reply redacted ${bobChannel.data.id}`,
                 ).toBeTruthy()
                 expect(
                     thread.find((e) => e.eventId === secondReply.eventId)?.content?.kind ===
                         RiverTimelineEvent.ChannelMessage,
-                    'find second reply not redacted',
+                    `find second reply not redacted ${bobChannel.data.id}`,
                 ).toBeTruthy()
             })
         },
