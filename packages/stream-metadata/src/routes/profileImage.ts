@@ -25,12 +25,9 @@ const CACHE_CONTROL = {
 	400: 'public, max-age=30, s-maxage=3600',
 	404: 'public, max-age=5, s-maxage=3600', // 5s max-age to avoid user showing themselves a broken image during client cration flow
 	422: 'public, max-age=30, s-maxage=3600',
-	200: 'public, max-age=900, s-maxage=3600',
 }
 
-function shouldServeThumbnail(size: string): boolean {
-	return size === 'thumbnail' || size === 'small'
-}
+
 
 export async function fetchUserProfileImage(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchUserProfileImage.name })
@@ -89,19 +86,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			.send('profileImage not found')
 	}
 
-	if (shouldServeThumbnail(size) && profileImage.thumbnail?.content) {
-		const thumbnailInfo = profileImage.thumbnail.info
-		if (thumbnailInfo?.mimetype) {
-			logger.info(
-				{ userId, size, thumbnailSize: profileImage.thumbnail.content.length },
-				'Serving thumbnail directly',
-			)
-			return reply
-				.header('Content-Type', thumbnailInfo.mimetype)
-				.header('Cache-Control', CACHE_CONTROL[200])
-				.send(Buffer.from(profileImage.thumbnail.content))
-		}
-	}
+
 
 	try {
 		const { key, iv } = getMediaEncryption(logger, profileImage)
