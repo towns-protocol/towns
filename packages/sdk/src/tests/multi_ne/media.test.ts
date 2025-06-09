@@ -6,7 +6,7 @@ import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, makeDMStreamId, streamIdAsString } from '../../id'
 import { CreationCookie, CreationCookieSchema, InfoRequestSchema } from '@towns-protocol/proto'
-import { deriveKeyAndIV, encryptAESGCM } from '../../crypto_utils'
+import { deriveKeyAndIV, encryptAESGCM } from '@towns-protocol/sdk-crypto'
 import { create } from '@bufbuild/protobuf'
 
 describe('mediaTests', () => {

@@ -36,7 +36,7 @@ import {
 } from './types'
 import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { createHash } from 'crypto'
+import { sha256 } from '@noble/hashes/sha2'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 import { eventIdsFromSnapshot } from './persistenceStore'
 
@@ -490,12 +490,20 @@ export function notificationServiceHash(
     // aellis - i don't understand why we need to slice here, the go and ios code both truncate the leading 0's
     check(userId.length === 20, 'User ID should be 20 bytes')
     check(challenge.length === 16, 'Challenge should be 16 bytes')
-    return createHash('sha256')
-        .update(prefixBytes)
-        .update(userId)
-        .update(expirationBytes)
-        .update(challenge)
-        .digest()
+
+    // Concatenate all data and hash with web-compatible sha256
+    const totalLength =
+        prefixBytes.length + userId.length + expirationBytes.length + challenge.length
+    const data = new Uint8Array(totalLength)
+    let offset = 0
+    data.set(prefixBytes, offset)
+    offset += prefixBytes.length
+    data.set(userId, offset)
+    offset += userId.length
+    data.set(expirationBytes, offset)
+    offset += expirationBytes.length
+    data.set(challenge, offset)
+    return sha256(data)
 }
 
 export async function riverSign(
