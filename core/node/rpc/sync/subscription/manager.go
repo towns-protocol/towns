@@ -223,6 +223,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
 				// Remove the given subscriptions from the list of subscriptions of the given stream.
 				// If the operation is SYNC_DOWN, all subscriptions were removed above already.
+				subscriptions = append(subscriptions[:i], subscriptions[i+1:]...)
 				m.sLock.Lock()
 				m.subscriptions[streamID] = slices.DeleteFunc(m.subscriptions[streamID], func(s *Subscription) bool {
 					return s.syncID == subscription.syncID
