@@ -83,7 +83,7 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 		}
 
 		let processedData = Buffer.from(data)
-		
+
 		if (size !== 'original' && mimeType.startsWith('image/')) {
 			try {
 				const dimensions = getSizeDimensions(size)
