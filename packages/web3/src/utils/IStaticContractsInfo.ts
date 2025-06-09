@@ -13,7 +13,7 @@ export interface BaseChainConfig {
         towns?: Address
         utils: {
             mockNFT?: Address // mockErc721aAddress
-            member?: Address // testGatingTokenAddress - For tesing token gating scenarios
+            member?: Address // testGatingTokenAddress - For testing token gating scenarios
         }
     }
     executionClient?: 'geth_dev' | undefined
