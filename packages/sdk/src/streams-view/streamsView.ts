@@ -2,27 +2,27 @@ import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { DecryptedContent } from '../encryptedContentTypes'
 import { StreamChange } from '../streamEvents'
 import { LocalTimelineEvent, StreamTimelineEvent } from '../types'
-import { TimelineStore, TimelineStoreDelegate } from './timelineStore'
+import { TimelinesView, TimelinesViewDelegate } from './timelinesView'
 import { SnapshotCaseType } from '@towns-protocol/proto'
 import { TimelineEvent } from '../sync-agent/timeline/models/timeline-types'
 
-export type StreamsViewDelegate = TimelineStoreDelegate
+export type StreamsViewDelegate = TimelinesViewDelegate
 
 // a view of all the streams
 export class StreamsView {
-    readonly timelineStore: TimelineStore
+    readonly timelinesView: TimelinesView
 
     // todo invert this so we don't have to pass the whole client
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
-        this.timelineStore = new TimelineStore(userId, delegate)
+        this.timelinesView = new TimelinesView(userId, delegate)
     }
 
     streamInitialized(streamId: string, kind: SnapshotCaseType, events: StreamTimelineEvent[]) {
-        this.timelineStore.initializeStream(streamId, kind, events)
+        this.timelinesView.initializeStream(streamId, kind, events)
     }
 
     streamUpdated(streamId: string, kind: SnapshotCaseType, change: StreamChange) {
-        this.timelineStore.streamUpdated(streamId, kind, change)
+        this.timelinesView.streamUpdated(streamId, kind, change)
     }
 
     streamEventDecrypted(
@@ -31,7 +31,7 @@ export class StreamsView {
         eventId: string,
         decryptedContent: DecryptedContent,
     ): TimelineEvent | undefined {
-        return this.timelineStore.streamEventDecrypted(streamId, eventId, decryptedContent)
+        return this.timelinesView.streamEventDecrypted(streamId, eventId, decryptedContent)
     }
 
     streamEventDecryptedContentError(
@@ -40,7 +40,7 @@ export class StreamsView {
         eventId: string,
         error: DecryptionSessionError,
     ) {
-        this.timelineStore.streamEventDecryptedContentError(streamId, eventId, error)
+        this.timelinesView.streamEventDecryptedContentError(streamId, eventId, error)
     }
 
     streamLocalEventUpdated(
@@ -49,6 +49,6 @@ export class StreamsView {
         localEventId: string,
         localEvent: LocalTimelineEvent,
     ) {
-        this.timelineStore.streamLocalEventUpdated(streamId, kind, localEventId, localEvent)
+        this.timelinesView.streamLocalEventUpdated(streamId, kind, localEventId, localEvent)
     }
 }

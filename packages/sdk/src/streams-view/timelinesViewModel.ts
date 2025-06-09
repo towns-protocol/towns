@@ -13,7 +13,7 @@ import {
     TimelineEvent_OneOf,
 } from '../sync-agent/timeline/models/timeline-types'
 import { dlogger } from '@towns-protocol/dlog'
-import { getFallbackContent } from './timelineStoreEvents'
+import { getFallbackContent } from './timelineEvents'
 
 const logger = dlogger('csb:timelineInterface')
 
@@ -28,7 +28,7 @@ export type ReactionsMap = Record<string, Record<string, MessageReactions>>
 /// TipsMap: { streamId: { eventId: MessageTips } }
 export type TipsMap = Record<string, Record<string, MessageTips>>
 // store states
-export type TimelineStoreStates = {
+export type TimelinesViewModel = {
     timelines: TimelinesMap
     replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
     pendingReplacedEvents: Record<string, Record<string, TimelineEvent>>
@@ -39,7 +39,7 @@ export type TimelineStoreStates = {
     lastestEventByUser: { [userId: string]: TimelineEvent }
 }
 
-export interface TimelineStoreInterface {
+export interface TimelinesViewInterface {
     initializeStream: (userId: string, streamId: string) => void
     reset: (streamIds: string[]) => void
     appendEvents: (
@@ -59,14 +59,14 @@ export interface TimelineStoreInterface {
     confirmEvents: (confirmations: TimelineEventConfirmation[], streamId: string) => void
 }
 
-export function makeTimelineStoreInterface(
-    setState: (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => void,
-): TimelineStoreInterface {
+export function makeTimelinesViewInterface(
+    setState: (fn: (prevState: TimelinesViewModel) => TimelinesViewModel) => void,
+): TimelinesViewInterface {
     const initializeStream = (userId: string, streamId: string) => {
         setState((state) => _initializeStream(state, streamId))
     }
 
-    const _initializeStream = (state: TimelineStoreStates, streamId: string) => {
+    const _initializeStream = (state: TimelinesViewModel, streamId: string) => {
         const aggregated = {
             threadStats: {} as Record<string, ThreadStatsData>,
             threads: {} as Record<string, TimelineEvent[]>,
@@ -111,7 +111,7 @@ export function makeTimelineStoreInterface(
             return prev
         })
     }
-    const removeEvent = (state: TimelineStoreStates, streamId: string, eventId: string) => {
+    const removeEvent = (state: TimelinesViewModel, streamId: string, eventId: string) => {
         const eventIndex = state.timelines[streamId]?.findIndex((e) => e.eventId == eventId)
         if ((eventIndex ?? -1) < 0) {
             return state
@@ -129,7 +129,7 @@ export function makeTimelineStoreInterface(
         }
     }
     const appendEvent = (
-        state: TimelineStoreStates,
+        state: TimelinesViewModel,
         userId: string,
         streamId: string,
         timelineEvent: TimelineEvent,
@@ -152,7 +152,7 @@ export function makeTimelineStoreInterface(
         }
     }
     const prependEvent = (
-        state: TimelineStoreStates,
+        state: TimelinesViewModel,
         userId: string,
         streamId: string,
         inTimelineEvent: TimelineEvent,
@@ -182,7 +182,7 @@ export function makeTimelineStoreInterface(
     }
 
     const replaceEvent = (
-        state: TimelineStoreStates,
+        state: TimelinesViewModel,
         userId: string,
         streamId: string,
         replacedMsgId: string,
@@ -281,7 +281,7 @@ export function makeTimelineStoreInterface(
     }
 
     function confirmEvent(
-        state: TimelineStoreStates,
+        state: TimelinesViewModel,
         streamId: string,
         confirmation: TimelineEventConfirmation,
     ) {
@@ -341,7 +341,7 @@ export function makeTimelineStoreInterface(
     }
 
     function processEvent(
-        state: TimelineStoreStates,
+        state: TimelinesViewModel,
         event: TimelineEvent,
         userId: string,
         streamId: string,

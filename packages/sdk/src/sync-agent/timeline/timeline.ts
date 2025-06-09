@@ -9,7 +9,7 @@ import {
 } from './models/timeline-types'
 import type { RiverConnection } from '../river-connection/riverConnection'
 import { Observable } from '../../observable/observable'
-import { TimelinesMap, TimelineStoreStates } from '../../streams-view/timelineStoreInterface'
+import { TimelinesMap, TimelinesViewModel } from '../../streams-view/timelinesViewModel'
 
 export class MessageTimeline {
     events = new Observable<TimelineEvent[]>([])
@@ -36,8 +36,8 @@ export class MessageTimeline {
 
     initialize(stream: Stream) {
         this.reset()
-        this.unsubFn = stream.view.streamsView.timelineStore.subscribe(
-            (state: TimelineStoreStates) => {
+        this.unsubFn = stream.view.streamsView.timelinesView.subscribe(
+            (state: TimelinesViewModel) => {
                 this.events.setValue(state.timelines[this.streamId])
                 this.threads.setValue(state.threads[this.streamId])
                 this.threadsStats.setValue(state.threadsStats[this.streamId])

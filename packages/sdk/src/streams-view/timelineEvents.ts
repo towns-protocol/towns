@@ -69,7 +69,7 @@ import {
     getReactionParentId,
     getReplyParentId,
     getThreadParentId,
-} from './timelineStoreInterface'
+} from './timelinesViewModel'
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../encryptedContentTypes'

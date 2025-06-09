@@ -2,7 +2,7 @@
  * @group core
  */
 
-import { TimelineStore } from '../../streams-view/timelineStore'
+import { TimelinesView } from '../../streams-view/timelinesView'
 import {
     ChannelMessageEvent,
     MessageTips,
@@ -50,7 +50,7 @@ function describeTips(tipsMap?: Record<string, MessageTips>): Record<string, str
 }
 
 function execute(
-    timelineStore: TimelineStore,
+    timelinesView: TimelinesView,
     userId: string,
     events: TimelineEvent[],
     expected: {
@@ -60,7 +60,7 @@ function execute(
         tips?: Record<string, string[]>
     },
 ) {
-    const setState = timelineStore.setState
+    const setState = timelinesView.setState
     const channelId = 'channel1'
     //
     {
@@ -72,7 +72,7 @@ function execute(
             threads: threadsAppended,
             threadsStats: threadStatsAppended,
             tips: tipsAppended,
-        } = timelineStore.getState()
+        } = timelinesView.getState()
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesAppended[channelId])).toEqual(expected.timeline)
         // check threads
@@ -100,7 +100,7 @@ function execute(
             threads: threadsPrepended,
             threadsStats: threadStatsPrepended,
             tips: tipsPrepended,
-        } = timelineStore.getState()
+        } = timelinesView.getState()
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesPrepended[channelId])).toEqual(expected.timeline)
         // check threads
@@ -118,17 +118,17 @@ function execute(
     }
 }
 
-describe('UseTimelineStore', () => {
-    const timelineStore = new TimelineStore('', undefined)
+describe('UseTimelinesView', () => {
+    const timelinesView = new TimelinesView('', undefined)
     beforeAll(() => {
-        const { timelines } = timelineStore.getState()
-        const setState = timelineStore.setState
+        const { timelines } = timelinesView.getState()
+        const setState = timelinesView.setState
         const roomIds = Object.keys(timelines)
         setState.reset(roomIds)
     })
     afterEach(() => {
-        const { timelines } = timelineStore.getState()
-        const setState = timelineStore.setState
+        const { timelines } = timelinesView.getState()
+        const setState = timelinesView.setState
         const roomIds = Object.keys(timelines)
         setState.reset(roomIds)
     })
@@ -138,7 +138,7 @@ describe('UseTimelineStore', () => {
             .sendMessage({ from: 'alice', body: 'hi bob!' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, { timeline: ['event0 alice: hi bob!'] })
+        execute(timelinesView, 'alice', events, { timeline: ['event0 alice: hi bob!'] })
     })
     test('test send and edit', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -147,7 +147,7 @@ describe('UseTimelineStore', () => {
             .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited)'] })
+        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited)'] })
     })
     test('test send and edit with different sender', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -156,7 +156,7 @@ describe('UseTimelineStore', () => {
             .editMessage({ edits: 'MSG_0', newBody: 'alice sucks! (edited)', senderId: 'bob' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, { timeline: ['MSG_0 alice: hi bob!'] })
+        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob!'] })
     })
     test('test send and multiple edits', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -166,7 +166,7 @@ describe('UseTimelineStore', () => {
             .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
     })
     test('test send and multiple edits out of order', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -179,7 +179,7 @@ describe('UseTimelineStore', () => {
         const ex = events[events.length - 1]
         events[events.length - 1] = events[events.length - 2]
         events[events.length - 2] = ex
-        execute(timelineStore, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
     })
     test('test threads and thread stats', () => {
         // events
@@ -189,7 +189,7 @@ describe('UseTimelineStore', () => {
             .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'Hows it going?' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 'MSG_0 alice: hi bob!',
                 'event1 bob: hi alice!',
@@ -227,7 +227,7 @@ describe('UseTimelineStore', () => {
             .sendTip({ tip: 10, ref: msgId_0, id: tipId_c, from: 'alice', to: 'bob' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 `${msgId_0} alice: hi bob!`,
                 `${msgId_1} bob: hi alice!`,
@@ -252,7 +252,7 @@ describe('UseTimelineStore', () => {
             .editMessage({ edits: 'THREAD_0', newBody: 'hi alice! (edited)' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: ['MSG_0 alice: hi bob!', 'THREAD_0 bob: hi alice! (edited)'],
             threads: {
                 MSG_0: ['THREAD_0 bob: hi alice! (edited)'],
@@ -278,7 +278,7 @@ describe('UseTimelineStore', () => {
             .redactMessage({ redacts: 'THREAD_0' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 'MSG_0 alice: hi bob!',
                 'THREAD_0 ~Redacted~',
@@ -322,7 +322,7 @@ describe('UseTimelineStore', () => {
             .redactMessage({ redacts: 'MSG_2' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 'event0 alice: hi bob!',
                 'MSG_1 bob: hi alice! (edited)',
@@ -340,7 +340,7 @@ describe('UseTimelineStore', () => {
             .redactMessage({ redacts: 'MSG_0' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 'MSG_0 ~Redacted~',
                 'MSG_1 alice: hi bob!',
@@ -356,7 +356,7 @@ describe('UseTimelineStore', () => {
             .redactMessage({ redacts: 'MSG_0', senderId: 'bob' })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 'MSG_0 alice: hi bob',
                 'MSG_1 alice: hi bob!',
@@ -372,7 +372,7 @@ describe('UseTimelineStore', () => {
             .redactMessage({ redacts: 'MSG_0', senderId: 'bob', isAdmin: true })
             .getEvents()
         // results
-        execute(timelineStore, 'alice', events, {
+        execute(timelinesView, 'alice', events, {
             timeline: [
                 'MSG_0 ~Redacted~',
                 'MSG_1 alice: hi bob!',

@@ -74,7 +74,7 @@ export class StreamStateView {
     membershipContent: StreamStateView_Members
 
     get timeline(): TimelineEvent[] {
-        return this.streamsView?.timelineStore.getState().timelines[this.streamId] ?? []
+        return this.streamsView?.timelinesView.getState().timelines[this.streamId] ?? []
     }
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space

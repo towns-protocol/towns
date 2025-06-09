@@ -3,27 +3,27 @@ import { Observable } from '../observable/observable'
 import { TimelineEvent, RiverTimelineEvent } from '../sync-agent/timeline/models/timeline-types'
 import { LocalTimelineEvent, StreamTimelineEvent } from '../types'
 import {
-    makeTimelineStoreInterface,
-    TimelineStoreInterface,
-    TimelineStoreStates,
-} from './timelineStoreInterface'
+    makeTimelinesViewInterface,
+    TimelinesViewInterface,
+    TimelinesViewModel,
+} from './timelinesViewModel'
 import { StreamChange } from '../streamEvents'
-import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineStoreEvents'
+import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineEvents'
 import { DecryptedContent } from '../encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import isEqual from 'lodash/isEqual'
 
-export interface TimelineStoreDelegate {
+export interface TimelinesViewDelegate {
     isDMMessageEventBlocked(event: TimelineEvent, kind: SnapshotCaseType): boolean
 }
 
-export class TimelineStore extends Observable<TimelineStoreStates> {
+export class TimelinesView extends Observable<TimelinesViewModel> {
     readonly streamIds = new Set<string>()
-    readonly setState: TimelineStoreInterface
+    readonly setState: TimelinesViewInterface
     // todo invert this so we don't have to pass the whole client
     constructor(
         public readonly userId: string,
-        public readonly delegate: TimelineStoreDelegate | undefined,
+        public readonly delegate: TimelinesViewDelegate | undefined,
         public readonly eventFilter: Set<RiverTimelineEvent> = new Set([
             RiverTimelineEvent.Fulfillment,
             RiverTimelineEvent.KeySolicitation,
@@ -39,8 +39,8 @@ export class TimelineStore extends Observable<TimelineStoreStates> {
             tips: {},
             lastestEventByUser: {},
         })
-        this.setState = makeTimelineStoreInterface(
-            (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => {
+        this.setState = makeTimelinesViewInterface(
+            (fn: (prevState: TimelinesViewModel) => TimelinesViewModel) => {
                 this.setValue(fn(this.value)) // todo batching
             },
         )
