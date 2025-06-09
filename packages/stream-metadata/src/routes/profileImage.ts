@@ -25,7 +25,7 @@ const CACHE_CONTROL = {
 	400: 'public, max-age=30, s-maxage=3600',
 	404: 'public, max-age=5, s-maxage=3600', // 5s max-age to avoid user showing themselves a broken image during client cration flow
 	422: 'public, max-age=30, s-maxage=3600',
-	200: 'public, max-age=31536000, immutable',
+	200: 'public, max-age=900, s-maxage=3600',
 }
 
 function shouldServeThumbnail(size: string): boolean {
