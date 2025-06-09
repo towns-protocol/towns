@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { isValidStreamId } from '@towns-protocol/sdk'
 import { bin_fromHexString } from '@towns-protocol/dlog'
+import sharp from 'sharp'
 
 import { getMediaStreamContent } from '../riverStreamRpcClient'
 
@@ -23,6 +24,7 @@ const querySchema = z.object({
 		.string()
 		.transform((value) => bin_fromHexString(value))
 		.optional(),
+	size: z.enum(['thumbnail', 'small', 'medium', 'original']).optional().default('original'),
 })
 
 const CACHE_CONTROL = {
@@ -53,8 +55,8 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	}
 
 	const { mediaStreamId } = paramsResult.data
-	const { key, iv } = queryResult.data
-	logger.info({ mediaStreamId, key, iv }, 'Fetching media stream content')
+	const { key, iv, size } = queryResult.data
+	logger.info({ mediaStreamId, key, iv, size }, 'Fetching media stream content')
 
 	try {
 		const mediaContent = await getMediaStreamContent(logger, mediaStreamId, key, iv)
@@ -80,10 +82,23 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 				.send('Invalid data or mimeType')
 		}
 
+		let processedData = Buffer.from(data)
+		
+		if (size !== 'original' && mimeType.startsWith('image/')) {
+			try {
+				const dimensions = getSizeDimensions(size)
+				processedData = await sharp(processedData)
+					.resize(dimensions.width, dimensions.height, { fit: 'cover' })
+					.toBuffer()
+			} catch (error) {
+				logger.warn({ mediaStreamId, size, err: error }, 'Failed to resize image, serving original')
+			}
+		}
+
 		return reply
 			.header('Content-Type', mimeType)
 			.header('Cache-Control', CACHE_CONTROL[200])
-			.send(Buffer.from(data))
+			.send(processedData)
 	} catch (error) {
 		logger.error({ mediaStreamId, err: error }, 'Failed to fetch media stream content')
 
@@ -91,5 +106,18 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL['4xx'])
 			.send({ error: 'Not Found', message: 'Failed to fetch media stream content' })
+	}
+}
+
+function getSizeDimensions(size: string): { width: number; height: number } {
+	switch (size) {
+		case 'thumbnail':
+			return { width: 32, height: 32 }
+		case 'small':
+			return { width: 64, height: 64 }
+		case 'medium':
+			return { width: 128, height: 128 }
+		default:
+			return { width: 256, height: 256 }
 	}
 }
