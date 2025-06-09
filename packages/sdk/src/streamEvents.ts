@@ -121,7 +121,6 @@ export type StreamStateEvents = {
     eventDecrypted: (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpToDate: (streamId: string) => void
-    streamUpdated: (streamId: string, contentKind: SnapshotCaseType, change: StreamChange) => void
     streamLocalEventUpdated: (
         streamId: string,
         contentKind: SnapshotCaseType,

@@ -628,7 +628,6 @@ export class StreamStateView {
             confirmed: confirmed.length > 0 ? confirmed : undefined,
         }
         this.streamsView?.streamUpdated(this.streamId, this.contentKind, updatedData)
-        emitter?.emit('streamUpdated', this.streamId, this.contentKind, updatedData)
     }
 
     prependEvents(
@@ -668,7 +667,6 @@ export class StreamStateView {
         }
         if (this.isInitialized) {
             this.streamsView?.streamUpdated(this.streamId, this.contentKind, { prepended })
-            stateEmitter?.emit('streamUpdated', this.streamId, this.contentKind, { prepended })
         }
         return prepended
     }
@@ -691,9 +689,6 @@ export class StreamStateView {
         this.getContent().onAppendLocalEvent(timelineEvent, emitter)
 
         this.streamsView?.streamUpdated(this.streamId, this.contentKind, {
-            appended: [timelineEvent],
-        })
-        emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
             appended: [timelineEvent],
         })
         return localId
