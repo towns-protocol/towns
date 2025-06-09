@@ -162,7 +162,7 @@ contract RewardsDistribution is
         ds.distributionByOperator[operator] += operatorClaimAmount;
         emit RewardsDistributed(operator, operatorClaimAmount);
 
-        //distribute the remainder across the delgators to this operator
+        //distribute the remainder across the delegators to this operator
         uint256 delegatorClaimAmount = amountPerOperator - operatorClaimAmount;
         _distributeDelegatorsRewards(sd, operator, delegatorClaimAmount);
     }
