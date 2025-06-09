@@ -5,7 +5,6 @@ export default mergeConfig(
     rootConfig,
     defineConfig({
         test: {
-            pool: 'threads',
             environment: 'happy-dom',
             env: {
                 RIVER_ENV: 'local_multi',
