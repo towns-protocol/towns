@@ -36,7 +36,7 @@ type Subscription struct {
 	initializingStreams *xsync.Map[StreamId, struct{}]
 	// backfillEvents is the map of stream and backfill events and miniblocks hashes that were sent to the client.
 	// This is used to avoid sending the same backfill events multiple times.
-	// The list of hashes is deleted automatically after .
+	// The list of hashes is deleted after receiving the first message after the backfill.
 	backfillEvents *xsync.Map[StreamId, []common.Hash]
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.
 	closed atomic.Bool

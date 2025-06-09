@@ -216,12 +216,6 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 					hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
 				}
 				sub.backfillEvents.Store(streamID, hashes)
-				go func() {
-					// Cleanup backfill events and miniblocks hashes after a certain period.
-					// TODO: find a better way to maintain the given mechanism.
-					time.Sleep(backfillEventsCleanupPeriod)
-					sub.backfillEvents.Delete(streamID)
-				}()
 			}
 		}
 		return
@@ -254,7 +248,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			backfillEvents, loaded := subscription.backfillEvents.Load(streamID)
+			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
 			if loaded && len(backfillEvents) > 0 {
 				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
 					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
