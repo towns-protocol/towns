@@ -12,6 +12,7 @@ import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
+import { RiverTimelineEvent } from './sync-agent/timeline/models/timeline-types'
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
@@ -130,9 +131,10 @@ function getParticipatingUserAddresses(
 ): Uint8Array[] {
     switch (message.payload.case) {
         case 'reaction': {
-            const event = streamView.events.get(message.payload.value.refEventId)
-            if (event && event.remoteEvent?.event.creatorAddress) {
-                return [event.remoteEvent.event.creatorAddress]
+            const refEventId = message.payload.value.refEventId
+            const event = streamView.timeline.find((x) => x.eventId === refEventId)
+            if (event) {
+                return [addressFromUserId(event.sender.id)]
             }
             return []
         }
@@ -153,18 +155,16 @@ function participantsFromParentEventId(
     streamView: StreamStateView,
 ): Uint8Array[] {
     const participating = new Set<Uint8Array>()
-    const parentEvent = streamView.events.get(parentId)
-    if (parentEvent && parentEvent.remoteEvent?.event.creatorAddress) {
-        participating.add(parentEvent.remoteEvent.event.creatorAddress)
+    const parentEvent = streamView.timeline.find((x) => x.eventId === parentId)
+    if (parentEvent && parentEvent.sender.id) {
+        participating.add(addressFromUserId(parentEvent.sender.id))
     }
     streamView.timeline.forEach((event) => {
         if (
-            event.decryptedContent?.kind === 'channelMessage' &&
-            event.decryptedContent.content.payload.case === 'post' &&
-            event.decryptedContent.content.payload.value.threadId === parentId &&
-            event.remoteEvent?.event.creatorAddress
+            event.content?.kind === RiverTimelineEvent.ChannelMessage &&
+            event.content.threadId === parentId
         ) {
-            participating.add(event.remoteEvent.event.creatorAddress)
+            participating.add(addressFromUserId(event.sender.id))
         }
     })
     return Array.from(participating)
@@ -177,16 +177,13 @@ function getParentThreadId(
     if (!eventId) {
         return undefined
     }
-    const event = streamView.events.get(eventId)
+    const event = streamView.timeline.find((x) => x.eventId === eventId)
     if (!event) {
         return undefined
     }
-    if (
-        event.decryptedContent?.kind === 'channelMessage' &&
-        event.decryptedContent.content.payload.case === 'post'
-    ) {
-        if (event.decryptedContent.content.payload.value.threadId) {
-            return bin_fromHexString(event.decryptedContent.content.payload.value.threadId)
+    if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        if (event.content.threadId) {
+            return bin_fromHexString(event.content.threadId)
         }
     }
     return undefined
