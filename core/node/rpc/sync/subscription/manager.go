@@ -5,7 +5,6 @@ import (
 	"slices"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -20,12 +19,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
-)
-
-const (
-	// backfillEventsCleanupPeriod is the period after which the backfill events and miniblocks hashes
-	// are cleaned up from the subscription.
-	backfillEventsCleanupPeriod = 30 * time.Second
 )
 
 // Manager is the subscription manager that manages all subscriptions for stream sync operations.
