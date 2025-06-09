@@ -5,6 +5,7 @@ import (
 	"slices"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -19,6 +20,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+const (
+	// backfillEventsCleanupPeriod is the period after which the backfill events and miniblocks hashes
+	// are cleaned up from the subscription.
+	backfillEventsCleanupPeriod = 30 * time.Second
 )
 
 // Manager is the subscription manager that manages all subscriptions for stream sync operations.
@@ -209,6 +216,12 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 					hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
 				}
 				sub.backfillEvents.Store(streamID, hashes)
+				go func() {
+					// Cleanup backfill events and miniblocks hashes after a certain period.
+					// TODO: find a better way to maintain the given mechanism.
+					time.Sleep(backfillEventsCleanupPeriod)
+					sub.backfillEvents.Delete(streamID)
+				}()
 			}
 		}
 		return
@@ -241,7 +254,7 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
+			backfillEvents, loaded := subscription.backfillEvents.Load(streamID)
 			if loaded && len(backfillEvents) > 0 {
 				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
 					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
