@@ -5051,7 +5051,7 @@ type ModifySyncRequest struct {
 	AddStreams []*SyncCookie `protobuf:"bytes,2,rep,name=add_streams,json=addStreams,proto3" json:"add_streams,omitempty"`
 	// remove_streams contains the stream id's to remove from the sync session.
 	RemoveStreams [][]byte `protobuf:"bytes,3,rep,name=remove_streams,json=removeStreams,proto3" json:"remove_streams,omitempty"`
-	// backfill_streams ...
+	// backfill_streams contains the backfill requests to perform before sending the latest updates.
 	BackfillStreams *ModifySyncRequest_Backfill `protobuf:"bytes,4,opt,name=backfill_streams,json=backfillStreams,proto3" json:"backfill_streams,omitempty"`
 }
 

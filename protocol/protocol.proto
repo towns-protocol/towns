@@ -1022,7 +1022,7 @@ message ModifySyncRequest {
   repeated SyncCookie add_streams = 2;
   // remove_streams contains the stream id's to remove from the sync session.
   repeated bytes remove_streams = 3;
-  // backfill_streams ...
+  // backfill_streams contains the backfill requests to perform before sending the latest updates.
   Backfill backfill_streams = 4;
 }
 
