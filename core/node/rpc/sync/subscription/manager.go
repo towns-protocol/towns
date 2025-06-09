@@ -224,7 +224,9 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 				// Remove the given subscriptions from the list of subscriptions of the given stream.
 				// If the operation is SYNC_DOWN, all subscriptions were removed above already.
 				m.sLock.Lock()
-				m.subscriptions[streamID] = append(subscriptions[:i], subscriptions[i+1:]...)
+				m.subscriptions[streamID] = slices.DeleteFunc(m.subscriptions[streamID], func(s *Subscription) bool {
+					return s.syncID == subscription.syncID
+				})
 				m.sLock.Unlock()
 			}
 			continue
