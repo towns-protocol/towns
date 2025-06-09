@@ -110,6 +110,7 @@ export function setupRoutes(srv: Server) {
 	// cached
 	srv.get('/media/:mediaStreamId', fetchMedia)
 	srv.get('/user/:userId/image', fetchUserProfileImage)
+	srv.get('/user/:userId/image/:size', fetchUserProfileImage)
 	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
 	srv.get('/space/:spaceAddress/image/:eventId', fetchSpaceImage)
 	srv.get('/space/:spaceAddress', fetchSpaceMetadata)

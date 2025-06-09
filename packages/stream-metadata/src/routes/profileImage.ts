@@ -13,9 +13,6 @@ const paramsSchema = z.object({
 	userId: z.string().min(1, 'userId parameter is required').refine(isValidEthereumAddress, {
 		message: 'Invalid userId',
 	}),
-})
-
-const querySchema = z.object({
 	size: z.enum(['thumbnail', 'small', 'medium', 'original']).optional().default('original'),
 })
 
@@ -27,12 +24,9 @@ const CACHE_CONTROL = {
 	422: 'public, max-age=30, s-maxage=3600',
 }
 
-
-
 export async function fetchUserProfileImage(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchUserProfileImage.name })
 	const parseResult = paramsSchema.safeParse(request.params)
-	const queryResult = querySchema.safeParse(request.query)
 
 	if (!parseResult.success) {
 		const errorMessage = parseResult.error.errors[0]?.message || 'Invalid parameters'
@@ -43,17 +37,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			.send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	if (!queryResult.success) {
-		const errorMessage = queryResult.error.errors[0]?.message || 'Invalid query parameters'
-		logger.info(errorMessage)
-		return reply
-			.code(400)
-			.header('Cache-Control', CACHE_CONTROL[400])
-			.send({ error: 'Bad Request', message: errorMessage })
-	}
-
-	const { userId } = parseResult.data
-	const { size } = queryResult.data
+	const { userId, size } = parseResult.data
 
 	logger.info({ userId, size }, 'Fetching user image')
 	let stream: StreamStateView | undefined
@@ -85,8 +69,6 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			.header('Cache-Control', CACHE_CONTROL[404])
 			.send('profileImage not found')
 	}
-
-
 
 	try {
 		const { key, iv } = getMediaEncryption(logger, profileImage)
