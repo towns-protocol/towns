@@ -2,10 +2,10 @@ import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { StreamPrefix, makeStreamId } from '@towns-protocol/sdk'
 
-import { config } from '../environment'
-import { isValidEthereumAddress } from '../validators'
-import { spaceDapp } from '../contract-utils'
-import { getStream } from '../riverStreamRpcClient'
+import { config } from '../environment.js'
+import { isValidEthereumAddress } from '../validators.js'
+import { spaceDapp } from '../contract-utils.js'
+import { getStream } from '../riverStreamRpcClient.js'
 
 const paramsSchema = z.object({
 	spaceAddress: z

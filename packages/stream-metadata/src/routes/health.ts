@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 
-import { getRiverRegistry } from '../evmRpcClient'
-import { config } from '../environment'
+import { getRiverRegistry } from '../evmRpcClient.js'
+import { config } from '../environment.js'
 
 export async function checkHealth(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: checkHealth.name })

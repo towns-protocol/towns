@@ -1,6 +1,6 @@
 import tracer from 'dd-trace'
 
-import { config } from './environment'
+import { config } from './environment.js'
 
 // initialized in a different file to avoid hoisting and bundling issues.
 

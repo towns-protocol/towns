@@ -3,10 +3,10 @@ import { SpaceInfo } from '@towns-protocol/web3'
 import { z } from 'zod'
 import { makeStreamId, StreamPrefix } from '@towns-protocol/sdk'
 
-import { config } from '../environment'
-import { isValidEthereumAddress } from '../validators'
-import { spaceDapp } from '../contract-utils'
-import { getStream } from '../riverStreamRpcClient'
+import { config } from '../environment.js'
+import { isValidEthereumAddress } from '../validators.js'
+import { spaceDapp } from '../contract-utils.js'
+import { getStream } from '../riverStreamRpcClient.js'
 
 export const spaceMetadataBaseUrl = `${config.streamMetadataBaseUrl}/space`.toLowerCase()
 

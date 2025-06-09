@@ -1,10 +1,10 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
-import { isValidEthereumAddress } from '../validators'
-import { CloudfrontManager } from '../aws'
-import { refreshOpenSea } from '../opensea'
-import { HEADER_INVALIDATION_ID } from '../constants'
+import { isValidEthereumAddress } from '../validators.js'
+import { CloudfrontManager } from '../aws.js'
+import { refreshOpenSea } from '../opensea.js'
+import { HEADER_INVALIDATION_ID } from '../constants.js'
 
 const paramsSchema = z.object({
 	spaceAddress: z

@@ -3,13 +3,23 @@
     "version": "0.0.241",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./package.json": "./package.json"
+    },
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "tsdown",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
@@ -18,7 +28,7 @@
         "test:watch": "vitest --watch",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
-        "watch": "tsc --watch"
+        "watch": "tsdown --watch"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
@@ -34,6 +44,7 @@
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
         "ts-node": "^10.9.1",
+        "tsdown": "^0.12.3",
         "typescript": "^5.8.2",
         "vitest": "3.0.5"
     },
