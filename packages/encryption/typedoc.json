@@ -1,0 +1,5 @@
+{
+    "extends": "../../typedoc.base.mjs",
+    "entryPoints": ["src/index.ts"],
+    "name": "Towns Protocol Encryption"
+}

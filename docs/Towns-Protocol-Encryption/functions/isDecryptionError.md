@@ -1,0 +1,17 @@
+# Function: isDecryptionError()
+
+```ts
+function isDecryptionError(e): e is DecryptionError;
+```
+
+Defined in: [packages/encryption/src/base.ts:96](https://github.com/towns-protocol/towns/blob/0db1fd0ac7258e8db8cedfb6183e8eade8284fa1/packages/encryption/src/base.ts#L96)
+
+## Parameters
+
+### e
+
+`Error`
+
+## Returns
+
+`e is DecryptionError`
