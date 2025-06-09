@@ -88,7 +88,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 		}
 		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
 			profileImage.streamId
-		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}&size=${size}`
+		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}`
 
 		return (
 			reply
