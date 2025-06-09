@@ -42,7 +42,6 @@
     "forge-std": "github:foundry-rs/forge-std#v1.9.7",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
-    "solhint": "^5.0.5",
-    "turbo": "^2.5.4"
+    "solhint": "^5.0.5"
   }
 }
