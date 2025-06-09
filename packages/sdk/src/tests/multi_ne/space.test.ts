@@ -84,6 +84,8 @@ describe('spaceTests', () => {
 
         // assert assumptions
         expect(spaceStream).toBeDefined()
+        expect(spaceStream.view.miniblockInfo).toBeDefined()
+        const spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
 
         // create a new channel
         const channelId = makeUniqueChannelStreamId(spaceId)
@@ -98,6 +100,7 @@ describe('spaceTests', () => {
                 spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)
                     ?.updatedAtEventNum,
             ).toBeGreaterThan(0)
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
         })
 
         // save off existing updated at
@@ -105,7 +108,13 @@ describe('spaceTests', () => {
             spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)!.updatedAtEventNum
 
         // make a snapshot
-        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        await waitFor(async () => {
+            const response = await bobsClient.debugForceMakeMiniblock(spaceId, {
+                forceSnapshot: true,
+                lastKnownMiniblockNum: spaceStream.view.miniblockInfo!.max,
+            })
+            expect(response).toBeDefined()
+        })
 
         let response: GetStreamResponse | undefined
         // the new snapshot should have the new data
