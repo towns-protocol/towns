@@ -18,6 +18,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly userId: string
+    readonly streamId: string
     _view: StreamStateView
     get view(): StreamStateView {
         return this._view
@@ -35,10 +36,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logEmitFromStream = logEmitFromStream
         this.userId = userId
         this._view = new StreamStateView(userId, streamId)
-    }
-
-    get streamId(): string {
-        return this._view.streamId
+        this.streamId = streamId
     }
 
     get syncCookie(): SyncCookie | undefined {

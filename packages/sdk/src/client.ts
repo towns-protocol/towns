@@ -54,6 +54,7 @@ import {
     SessionKeysSchema,
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
+    InfoResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -206,6 +207,7 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
+    readonly logId: string
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -234,7 +236,6 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
-    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -2817,10 +2818,15 @@ export class Client
 
     public async debugForceMakeMiniblock(
         streamId: string,
-        opts: { forceSnapshot?: boolean } = {},
-    ): Promise<void> {
-        await this.rpcClient.info({
-            debug: ['make_miniblock', streamId, opts.forceSnapshot === true ? 'true' : 'false'],
+        opts: { forceSnapshot?: boolean; lastKnownMiniblockNum?: bigint }, // call will error if current miniblock is less than or equal to lastKnownMiniblockNum
+    ): Promise<InfoResponse> {
+        return this.rpcClient.info({
+            debug: [
+                'make_miniblock',
+                streamId,
+                opts.forceSnapshot === true ? 'true' : 'false',
+                `${opts.lastKnownMiniblockNum ?? -1n}`,
+            ],
         })
     }
 

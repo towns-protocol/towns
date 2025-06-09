@@ -1,7 +1,7 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { getLatestBlockNumber, getCreatedDate } from './utils'
+import { getLatestBlockNumber } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -156,16 +156,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         return
     }
 
-    const createdDate = getCreatedDate(blockTimestamp)
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(
-            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
-            transactionHash,
-            blockTimestamp,
-        )
-        return
-    }
-
     try {
         const existing = await context.db.sql.query.swap.findFirst({
             where: eq(schema.swap.txHash, transactionHash),
@@ -180,7 +170,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 poster: event.args.poster,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
@@ -193,13 +183,6 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     const blockNumber = event.block.number
     const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
-
-    const createdDate = getCreatedDate(blockTimestamp)
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
-        return
-    }
 
     try {
         // update swap router swap table
@@ -216,7 +199,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 recipient: event.args.recipient,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
