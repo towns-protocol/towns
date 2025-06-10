@@ -85,7 +85,7 @@ type (
 		// metrics is the metrics factory used to create Prometheus metrics.
 		metrics                         infra.MetricsFactory
 		failedSyncOpsCounter            *prometheus.CounterVec
-		syncingStreamsPerOpCounter      *prometheus.CounterVec
+		syncingStreamsPerOpCounter      *prometheus.GaugeVec
 		messageBufferSizePerOpHistogram *prometheus.HistogramVec
 		sentMessagesCounter             *prometheus.CounterVec
 	}

@@ -52,7 +52,7 @@ type (
 		// sentMessagesCounter is a Prometheus counter that tracks the number of messages sent to the client
 		sentMessagesCounter *prometheus.CounterVec
 		// syncingStreamsPerOpCounter is a Prometheus counter that tracks the number of streams being synced
-		syncingStreamsPerOpCounter *prometheus.CounterVec
+		syncingStreamsPerOpCounter *prometheus.GaugeVec
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -87,7 +87,7 @@ func NewStreamsSyncOperation(
 	otelTracer trace.Tracer,
 	messageBufferSizePerOpHistogram *prometheus.HistogramVec,
 	sentMessagesCounter *prometheus.CounterVec,
-	syncingStreamsPerOpCounter *prometheus.CounterVec,
+	syncingStreamsPerOpCounter *prometheus.GaugeVec,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
@@ -297,6 +297,10 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 			Func("AddStreamToSync")
 	}
 
+	if syncOp.syncingStreamsPerOpCounter != nil {
+		syncOp.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(1)
+	}
+
 	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
 }
 
@@ -339,6 +343,10 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 		return nil, RiverError(Err(status.GetCode()), status.GetMessage()).
 			Tag("streamId", shared.StreamId(status.GetStreamId())).
 			Func("RemoveStreamFromSync")
+	}
+
+	if syncOp.syncingStreamsPerOpCounter != nil {
+		syncOp.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Sub(1)
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
@@ -395,6 +403,11 @@ func (syncOp *StreamSyncOperation) ModifySync(
 
 	if err := syncOp.process(cmd); err != nil {
 		return nil, err
+	}
+
+	if syncOp.syncingStreamsPerOpCounter != nil {
+		diff := len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())
+		syncOp.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(float64(diff))
 	}
 
 	return resp, nil
