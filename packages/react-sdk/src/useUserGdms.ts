@@ -1,4 +1,4 @@
-import type { Gdms } from '@towns-protocol/sdk/dist/sync-agent/gdms/gdms'
+import type { Gdms } from '@towns-protocol/sdk'
 import type { ObservableConfig } from './useObservable'
 import { useTowns } from './useTowns'
 

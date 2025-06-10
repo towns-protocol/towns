@@ -78,6 +78,7 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
     check(isDefined(process.env.RIVER_CHAIN_ID), 'RIVER_CHAIN_ID is not defined')
     check(isDefined(process.env.RIVER_CHAIN_RPC_URL), 'RIVER_CHAIN_RPC_URL is not defined')
     check(isDefined(process.env.RIVER_REGISTRY_ADDRESS), 'RIVER_REGISTRY_ADDRESS is not defined')
+    check(isDefined(process.env.APP_REGISTRY_ADDRESS), 'APP_REGISTRY_ADDRESS is not defined')
 
     return {
         base: {
