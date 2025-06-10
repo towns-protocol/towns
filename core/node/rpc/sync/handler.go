@@ -159,7 +159,10 @@ func (h *handlerImpl) SyncStreams(
 
 	err = <-doneChan
 	if err != nil {
-		h.failedSyncOpsCounter.WithLabelValues(req.Header().Get(UseSharedSyncHeaderName)).Inc()
+		h.failedSyncOpsCounter.WithLabelValues(
+			req.Header().Get(UseSharedSyncHeaderName),
+			AsRiverError(err).Code.String(),
+		).Inc()
 	}
 	return err
 }

@@ -10,7 +10,7 @@ func (h *handlerImpl) setupSyncMetrics() {
 	h.failedSyncOpsCounter = h.metrics.NewCounterVecEx(
 		"stream_sync_failed_ops_counter",
 		"Total number of failed stream sync operations",
-		"use_shared_sync",
+		"use_shared_sync", "river_error",
 	)
 	h.messageBufferSizePerOpHistogram = h.metrics.NewHistogramVecEx(
 		"stream_sync_messages_buffer",
@@ -46,7 +46,6 @@ func (h *handlerImpl) setupSyncMetrics() {
 			func() float64 { return float64(h.subscriptionManager.GetStats().SyncingStreamsCount) },
 		},
 		// TODO: Total number of syncing streams of all active sync operations - legacy sync
-		// TODO: Number of dropped messages from the buffer?
 	}
 	for _, metric := range numericMetrics {
 		h.metrics.NewGaugeFunc(
