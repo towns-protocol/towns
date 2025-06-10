@@ -2,43 +2,32 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
-import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
+import {IWalletLink} from "../../factory/facets/wallet-link/IWalletLink.sol";
+import {IEntitlement} from "../entitlements/IEntitlement.sol";
+import {IEntitlementBase} from "../entitlements/IEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
-import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {WalletLinkProxyBase} from "src/spaces/facets/delegation/WalletLinkProxyBase.sol";
-import {EntitlementsManagerStorage} from "src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
-import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {ERC721ABase} from "../../diamond/facets/token/ERC721A/ERC721ABase.sol";
+import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
+import {EntitlementsManagerStorage} from "./entitlements/EntitlementsManagerStorage.sol";
+import {MembershipStorage} from "./membership/MembershipStorage.sol";
 
 // contracts
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
-
-import {ERC5643Base} from "src/diamond/facets/token/ERC5643/ERC5643Base.sol";
-import {BanningBase} from "src/spaces/facets/banning/BanningBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {BanningBase} from "./banning/BanningBase.sol";
 
 abstract contract Entitled is
     IEntitlementBase,
     TokenOwnableBase,
     PausableBase,
     BanningBase,
-    ERC721ABase,
-    WalletLinkProxyBase,
-    ERC5643Base
+    ERC721ABase
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes32 internal constant IN_TOWN = 0x0;
-
-    function _isMember(address user) internal view returns (bool member) {
-        member = _balanceOf(user) > 0;
-    }
 
     function _isEntitled(
         bytes32 channelId,
@@ -89,7 +78,7 @@ abstract contract Entitled is
         address user,
         string calldata permission
     ) internal view returns (bool) {
-        return _isEntitled(IN_TOWN, user, bytes32(bytes(permission)));
+        return _isEntitledToChannel(IN_TOWN, user, permission);
     }
 
     function _isEntitledToChannel(
@@ -100,22 +89,10 @@ abstract contract Entitled is
         return _isEntitled(channelId, user, bytes32(bytes(permission)));
     }
 
-    function _isAllowed(
-        bytes32 channelId,
-        string memory permission,
-        address caller
-    ) internal view returns (bool) {
-        return
-            _owner() == caller ||
-            (!_paused() && _isEntitled(channelId, caller, bytes32(bytes(permission))));
-    }
-
     function _isAllowed(bytes32 channelId, string memory permission) internal view returns (bool) {
-        address sender = msg.sender;
-
         return
-            _owner() == sender ||
-            (!_paused() && _isEntitled(channelId, sender, bytes32(bytes(permission))));
+            _owner() == msg.sender ||
+            (!_paused() && _isEntitled(channelId, msg.sender, bytes32(bytes(permission))));
     }
 
     function _validatePermission(string memory permission) internal view {
@@ -124,10 +101,8 @@ abstract contract Entitled is
         }
     }
 
-    function _validatePermission(string memory permission, address caller) internal view {
-        if (!_isAllowed(IN_TOWN, permission, caller)) {
-            CustomRevert.revertWith(Entitlement__NotAllowed.selector);
-        }
+    function _isMember(address user) internal view returns (bool member) {
+        member = _balanceOf(user) > 0;
     }
 
     function _validateMembership(address user) internal view {
@@ -145,12 +120,6 @@ abstract contract Entitled is
             }
         }
         CustomRevert.revertWith(Entitlement__NotMember.selector);
-    }
-
-    function _validateChannelPermission(bytes32 channelId, string memory permission) internal view {
-        if (!_isAllowed(channelId, permission)) {
-            CustomRevert.revertWith(Entitlement__NotAllowed.selector);
-        }
     }
 
     function _getLinkedWalletsWithUser(address rootKey) internal view returns (address[] memory) {
