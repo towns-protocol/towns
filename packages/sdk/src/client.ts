@@ -265,10 +265,7 @@ export class Client
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)
         this.streamsView = new StreamsView(this.userId, {
-            isDMMessageEventBlocked: (event, kind) => {
-                if (kind !== 'dmChannelContent') {
-                    return false
-                }
+            isDMMessageEventBlocked: (event) => {
                 if (!this?.userSettingsStreamId) {
                     return false
                 }
