@@ -17,6 +17,9 @@ export default mergeConfig(
         // This instructs Vitest to not use "node" field from package.json exports
         resolve: {
             conditions: ['browser'],
+            alias: {
+                '@connectrpc/connect-node': '@connectrpc/connect-web',
+            },
         },
     }),
 )
