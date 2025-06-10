@@ -14,7 +14,7 @@ import {
     MembershipOp,
     PlainMessage,
 } from '@towns-protocol/proto'
-import { deriveKeyAndIV } from '../../crypto_utils'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
 import { create } from '@bufbuild/protobuf'
 import { unpackStream } from '../../sign'
