@@ -10,6 +10,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@connectrpc/connect-web": "^2.0.0",
         "@emoji-mart/data": "^1.1.2",
         "@hookform/resolvers": "^3.6.0",
         "@radix-ui/react-dialog": "^1.1.1",
@@ -39,7 +40,6 @@
         "tailwindcss-animate": "^1.0.7",
         "use-stick-to-bottom": "^1.1.0",
         "viem": "^2.29.3",
-        "vite-plugin-node-polyfills": "^0.22.0",
         "wagmi": "^2.15.3",
         "zod": "^3.21.4"
     },
@@ -65,7 +65,6 @@
         "typescript": "^5.8.2",
         "vite": "^6.1.0",
         "vite-plugin-checker": "^0.8.0",
-        "vite-plugin-replace": "^0.1.1",
         "vite-plugin-wasm": "^3.4.1",
         "vite-tsconfig-paths": "^5.1.3"
     }

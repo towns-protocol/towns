@@ -148,7 +148,7 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { useModifySync?: boolean } | undefined,
+        private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -375,7 +375,12 @@ export class SyncedStreamsLoop {
                             {
                                 syncPos: syncCookies,
                             },
-                            { timeoutMs: -1 },
+                            {
+                                timeoutMs: -1,
+                                headers: this.streamOpts?.useSharedSyncer
+                                    ? { 'X-Use-Shared-Sync': 'true' }
+                                    : undefined,
+                            },
                         )
 
                         const iterator = streams[Symbol.asyncIterator]()
@@ -825,7 +830,12 @@ export class SyncedStreamsLoop {
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,
-                            this.unpackEnvelopeOpts,
+                            // Miniblocks are not provided in the sync updates so skipping signature validation
+                            // that ensures that the snapshot creator is the same address as its miniblock creator.
+                            {
+                                disableHashValidation: false,
+                                disableSignatureValidation: true,
+                            },
                         )
                         streamRecord.syncCookie = streamAndCookie.nextSyncCookie
                         await streamRecord.stream.appendEvents(

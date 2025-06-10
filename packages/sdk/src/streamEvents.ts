@@ -11,7 +11,6 @@ import {
 import {
     ClientInitStatus,
     ConfirmedTimelineEvent,
-    DecryptedTimelineEvent,
     LocalTimelineEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
@@ -25,6 +24,7 @@ import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
 import { SpaceReviewEventObject } from '@towns-protocol/web3'
+import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -118,14 +118,9 @@ export type StreamStateEvents = {
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
     userBlockUpdated: (userBlock: UserSettingsPayload_UserBlock) => void
-    eventDecrypted: (
-        streamId: string,
-        contentKind: SnapshotCaseType,
-        event: DecryptedTimelineEvent,
-    ) => void
+    eventDecrypted: (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpToDate: (streamId: string) => void
-    streamUpdated: (streamId: string, contentKind: SnapshotCaseType, change: StreamChange) => void
     streamLocalEventUpdated: (
         streamId: string,
         contentKind: SnapshotCaseType,

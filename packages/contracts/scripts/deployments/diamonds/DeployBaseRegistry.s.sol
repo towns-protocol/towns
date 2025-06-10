@@ -29,22 +29,19 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 import {DeployMockMessenger} from "../utils/DeployMockMessenger.s.sol";
+import {DeployTownsBase} from "../utils/DeployTownsBase.s.sol";
 
 contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
     DeployMockMessenger private messengerHelper = new DeployMockMessenger();
+    DeployTownsBase internal townsHelper = new DeployTownsBase();
 
     address public messenger;
-    address private riverToken = 0x9172852305F32819469bf38A3772f29361d7b768;
 
     function versionName() public pure override returns (string memory) {
         return "baseRegistry";
-    }
-
-    function setDependencies(address riverToken_) external {
-        riverToken = riverToken_;
     }
 
     function addImmutableCuts(address deployer) internal {
@@ -100,6 +97,9 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         // Deploy all facets in a single batch transaction
         facetHelper.deployBatch(deployer);
 
+        // Deploy or retrieve the towns token
+        address townsToken = townsHelper.deploy(deployer);
+
         // Add facets using the deployed addresses
         address facet = facetHelper.getDeployedAddress("ERC721ANonTransferable");
         addFacet(
@@ -133,15 +133,11 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployRewardsDistributionV2.selectors()),
             facet,
-            DeployRewardsDistributionV2.makeInitData(riverToken, riverToken, 14 days)
+            DeployRewardsDistributionV2.makeInitData(townsToken, townsToken, 14 days)
         );
 
         facet = facetHelper.getDeployedAddress("SpaceDelegationFacet");
-        addFacet(
-            makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()),
-            facet,
-            DeploySpaceDelegation.makeInitData(riverToken)
-        );
+        addCut(makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()));
 
         messenger = messengerHelper.deploy(deployer);
         facet = facetHelper.getDeployedAddress("MainnetDelegation");
@@ -184,6 +180,9 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         // Deploy all requested facets in a single batch transaction
         facetHelper.deployBatch(deployer);
 
+        // Deploy or retrieve the towns token
+        address townsToken = townsHelper.deploy(deployer);
+
         // Add the requested facets
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
@@ -211,7 +210,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
                 addFacet(
                     makeCut(facet, FacetCutAction.Add, DeployRewardsDistributionV2.selectors()),
                     facet,
-                    DeployRewardsDistributionV2.makeInitData(riverToken, riverToken, 14 days)
+                    DeployRewardsDistributionV2.makeInitData(townsToken, townsToken, 14 days)
                 );
             } else if (facetName.eq("MainnetDelegation")) {
                 messenger = messengerHelper.deploy(deployer);
@@ -221,11 +220,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
                     DeployMainnetDelegation.makeInitData(messenger)
                 );
             } else if (facetName.eq("SpaceDelegationFacet")) {
-                addFacet(
-                    makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()),
-                    facet,
-                    DeploySpaceDelegation.makeInitData(riverToken)
-                );
+                addCut(makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()));
             } else if (facetName.eq("ERC721ANonTransferable")) {
                 addFacet(
                     makeCut(facet, FacetCutAction.Add, DeployERC721ANonTransferable.selectors()),

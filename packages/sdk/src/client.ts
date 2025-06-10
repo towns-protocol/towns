@@ -54,6 +54,7 @@ import {
     SessionKeysSchema,
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
+    InfoResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -154,6 +155,7 @@ import {
     make_MemberPayload_EncryptionAlgorithm,
     SolanaTransactionReceipt,
     isSolanaTransactionReceipt,
+    ParsedEvent,
 } from './types'
 
 import debug from 'debug'
@@ -172,9 +174,15 @@ import { SyncState } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
-import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
+import {
+    decryptAESGCM,
+    deriveKeyAndIV,
+    encryptAESGCM,
+    uint8ArrayToBase64,
+} from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { StreamsView } from './streams-view/streamsView'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -185,7 +193,7 @@ export type ClientOptions = {
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
-    streamOpts?: { useModifySync?: boolean }
+    streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
 }
 
 type SendChannelMessageOptions = {
@@ -206,6 +214,8 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
+    readonly streamsView: StreamsView
+    readonly logId: string
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -234,7 +244,6 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
-    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -260,6 +269,22 @@ export class Client
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)
+        this.streamsView = new StreamsView(this.userId, {
+            isDMMessageEventBlocked: (event, kind) => {
+                if (kind !== 'dmChannelContent') {
+                    return false
+                }
+                if (!this?.userSettingsStreamId) {
+                    return false
+                }
+                const stream = this.stream(this.userSettingsStreamId)
+                check(isDefined(stream), 'stream must be defined')
+                return stream.view.userSettingsContent.isUserBlockedAt(
+                    event.sender.id,
+                    event.eventNum,
+                )
+            },
+        })
         this.defaultGroupEncryptionAlgorithm =
             opts?.defaultGroupEncryptionAlgorithm ??
             GroupEncryptionAlgorithmId.HybridGroupEncryption
@@ -339,6 +364,7 @@ export class Client
         const stream = new SyncedStream(
             this.userId,
             streamIdAsString(streamId),
+            this.streamsView,
             this,
             this.logEmitFromStream,
             this.persistenceStore,
@@ -1202,16 +1228,50 @@ export class Client
         })
     }
 
+    async getPersistedEvent(streamId: string, eventId: string): Promise<ParsedEvent | undefined> {
+        const timelineEvent = this.streamsView.timelinesView
+            .getState()
+            .timelines[streamId]?.find((e) => e.eventId === eventId)
+        if (!timelineEvent) {
+            return undefined
+        }
+        const blockNumber = timelineEvent.confirmedInBlockNum
+        if (!blockNumber) {
+            return undefined
+        }
+        const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
+        if (!miniblock) {
+            return undefined
+        }
+        const event = miniblock.events.find((e) => e.hashStr === eventId)
+        if (!event) {
+            return undefined
+        }
+        return event
+    }
+
     async pin(streamId: string, eventId: string) {
-        const stream = this.streams.get(streamId)
-        check(isDefined(stream), 'stream not found')
-        const event = stream.view.events.get(eventId)
+        const timelineEvent = this.streamsView.timelinesView
+            .getState()
+            .timelines[streamId]?.find((e) => e.eventId === eventId)
+        check(isDefined(timelineEvent), 'event not found')
+        const blockNumber = timelineEvent.confirmedInBlockNum
+        let event: ParsedEvent | undefined
+        if (blockNumber) {
+            const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
+            check(isDefined(miniblock), 'miniblock not found')
+            event = miniblock.events.find((e) => e.hashStr === eventId)
+        } else {
+            const stream = this.stream(streamId)
+            check(isDefined(stream), 'stream not found')
+            event = stream.view.minipoolEvents.get(eventId)?.remoteEvent
+        }
         check(isDefined(event), 'event not found')
-        const remoteEvent = event.remoteEvent
-        check(isDefined(remoteEvent), 'remoteEvent not found')
+        const streamEvent = event.event
+        check(isDefined(streamEvent), 'streamEvent not found')
         const result = await this.makeEventAndAddToStream(
             streamId,
-            make_MemberPayload_Pin(remoteEvent.hash, remoteEvent.event),
+            make_MemberPayload_Pin(event.hash, streamEvent),
             {
                 method: 'pin',
             },
@@ -1309,7 +1369,10 @@ export class Client
         return streamView
     }
 
-    private async _getStream(streamId: string | Uint8Array): Promise<StreamStateView> {
+    private async _getStream(
+        streamId: string | Uint8Array,
+        streamsView?: StreamsView,
+    ): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({
@@ -1319,7 +1382,7 @@ export class Client
                 response.stream,
                 this.opts?.unpackEnvelopeOpts,
             )
-            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
+            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
             throw err
@@ -1329,8 +1392,9 @@ export class Client
     private streamViewFromUnpackedResponse(
         streamId: string | Uint8Array,
         unpackedResponse: ParsedStreamResponse,
+        streamsView: StreamsView | undefined,
     ): StreamStateView {
-        const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
+        const streamView = new StreamStateView(this.userId, streamIdAsString(streamId), streamsView)
         streamView.initialize(
             unpackedResponse.streamAndCookie.nextSyncCookie,
             unpackedResponse.streamAndCookie.events,
@@ -1362,7 +1426,10 @@ export class Client
         return streamView
     }
 
-    private async _getStreamEx(streamId: string | Uint8Array): Promise<StreamStateView> {
+    private async _getStreamEx(
+        streamId: string | Uint8Array,
+        streamsView?: StreamsView,
+    ): Promise<StreamStateView> {
         try {
             this.logCall('getStreamEx', streamId)
             const response = this.rpcClient.getStreamEx({
@@ -1398,7 +1465,7 @@ export class Client
                 )
             }
             const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
-            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
+            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)
             throw err
@@ -1826,9 +1893,6 @@ export class Client
         if (!stream) {
             throw new Error(`stream not found: ${streamId}`)
         }
-        if (!stream.view.events.has(payload.refEventId)) {
-            throw new Error(`ref event not found: ${payload.refEventId}`)
-        }
         return this.sendChannelMessage(streamId, {
             payload: {
                 case: 'redaction',
@@ -1886,7 +1950,7 @@ export class Client
     async retrySendMessage(streamId: string, localId: string): Promise<void> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found' + streamId)
-        const event = stream.view.events.get(localId)
+        const event = stream.view.minipoolEvents.get(localId)
         check(isDefined(event), 'event not found')
         check(isDefined(event.localEvent), 'event not found')
         check(event.localEvent.status === 'failed', 'event not in failed state')
@@ -2817,10 +2881,15 @@ export class Client
 
     public async debugForceMakeMiniblock(
         streamId: string,
-        opts: { forceSnapshot?: boolean } = {},
-    ): Promise<void> {
-        await this.rpcClient.info({
-            debug: ['make_miniblock', streamId, opts.forceSnapshot === true ? 'true' : 'false'],
+        opts: { forceSnapshot?: boolean; lastKnownMiniblockNum?: bigint }, // call will error if current miniblock is less than or equal to lastKnownMiniblockNum
+    ): Promise<InfoResponse> {
+        return this.rpcClient.info({
+            debug: [
+                'make_miniblock',
+                streamId,
+                opts.forceSnapshot === true ? 'true' : 'false',
+                `${opts.lastKnownMiniblockNum ?? -1n}`,
+            ],
         })
     }
 

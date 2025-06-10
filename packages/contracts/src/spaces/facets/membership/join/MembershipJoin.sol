@@ -2,28 +2,29 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
-import {IPartnerRegistry, IPartnerRegistryBase} from "src/factory/facets/partner/IPartnerRegistry.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
-import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
-import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
+import {ITownsPointsBase} from "../../../../airdrop/points/ITownsPoints.sol";
+import {IPartnerRegistry, IPartnerRegistryBase} from "../../../../factory/facets/partner/IPartnerRegistry.sol";
+import {IEntitlement} from "../../../entitlements/IEntitlement.sol";
+import {IRuleEntitlement} from "../../../entitlements/rule/IRuleEntitlement.sol";
+import {IRolesBase} from "../../roles/IRoles.sol";
+import {IMembership} from "../IMembership.sol";
 
 // libraries
-import {Permissions} from "src/spaces/facets/Permissions.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {BasisPoints} from "../../../../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
+import {Permissions} from "../../Permissions.sol";
 
 // contracts
-import {Entitled} from "src/spaces/facets/Entitled.sol";
-import {DispatcherBase} from "src/spaces/facets/dispatcher/DispatcherBase.sol";
-import {EntitlementGatedBase} from "src/spaces/facets/gated/EntitlementGatedBase.sol";
-import {MembershipBase} from "src/spaces/facets/membership/MembershipBase.sol";
-import {PrepayBase} from "src/spaces/facets/prepay/PrepayBase.sol";
-import {ReferralsBase} from "src/spaces/facets/referrals/ReferralsBase.sol";
-import {RolesBase} from "src/spaces/facets/roles/RolesBase.sol";
+import {ERC5643Base} from "../../../../diamond/facets/token/ERC5643/ERC5643Base.sol";
+import {DispatcherBase} from "../../dispatcher/DispatcherBase.sol";
+import {Entitled} from "../../Entitled.sol";
+import {EntitlementGatedBase} from "../../gated/EntitlementGatedBase.sol";
 import {PointsBase} from "../../points/PointsBase.sol";
+import {PrepayBase} from "../../prepay/PrepayBase.sol";
+import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
+import {RolesBase} from "../../roles/RolesBase.sol";
+import {MembershipBase} from "../MembershipBase.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -32,6 +33,7 @@ import {PointsBase} from "../../points/PointsBase.sol";
 abstract contract MembershipJoin is
     IRolesBase,
     IPartnerRegistryBase,
+    ERC5643Base,
     MembershipBase,
     ReferralsBase,
     DispatcherBase,

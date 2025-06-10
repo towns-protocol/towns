@@ -127,7 +127,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         townsToken = deployTokenBase.deploy(deployer);
 
         // Base Registry
-        deployBaseRegistry.setDependencies({riverToken_: townsToken});
         baseRegistry = deployBaseRegistry.deploy(deployer);
         entitlementChecker = IEntitlementChecker(baseRegistry);
         nodeOperator = INodeOperator(baseRegistry);
@@ -178,8 +177,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
-        ISpaceDelegation(baseRegistry).setRiverToken(townsToken);
-        ISpaceDelegation(baseRegistry).setMainnetDelegation(baseRegistry);
         IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
         ISpaceDelegation(baseRegistry).setSpaceFactory(spaceFactory);
         MockMessenger(messenger).setXDomainMessageSender(mainnetProxyDelegation);

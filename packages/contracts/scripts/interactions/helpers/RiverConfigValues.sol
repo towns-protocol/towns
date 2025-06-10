@@ -15,4 +15,6 @@ library RiverConfigValues {
     bytes32 public constant STREAM_MINIBLOCK_REGISTRATION_FREQUENCY =
         keccak256("stream.miniblockregistrationfrequency");
     bytes32 public constant STREAM_REPLICATION_FACTOR = keccak256("stream.replicationfactor");
+    bytes32 public constant MEDIA_CHUNK_SIZE = keccak256("stream.media.maxchunksize");
+    bytes32 public constant MEDIA_CHUNK_COUNT = keccak256("stream.media.maxchunkcount");
 }

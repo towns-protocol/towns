@@ -18,7 +18,7 @@ library DropClaim {
     /// @param conditionId The ID of the claim condition
     /// @param account The address of the account that claimed
     /// @param quantity The quantity of tokens claimed
-    /// @param points The points you've earned
+    /// @param points The points to be burned
     /// @param proof The proof of the claim
     struct Claim {
         uint256 conditionId;

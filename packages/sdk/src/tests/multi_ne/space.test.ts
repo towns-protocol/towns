@@ -7,8 +7,14 @@ import { Client } from '../../client'
 import { dlog } from '@towns-protocol/dlog'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId, streamIdToBytes } from '../../id'
-import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@towns-protocol/proto'
-import { deriveKeyAndIV } from '../../crypto_utils'
+import {
+    ChunkedMedia,
+    GetStreamResponse,
+    MediaInfoSchema,
+    MembershipOp,
+    PlainMessage,
+} from '@towns-protocol/proto'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
 import { create } from '@bufbuild/protobuf'
 import { unpackStream } from '../../sign'
@@ -78,6 +84,8 @@ describe('spaceTests', () => {
 
         // assert assumptions
         expect(spaceStream).toBeDefined()
+        expect(spaceStream.view.miniblockInfo).toBeDefined()
+        const spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
 
         // create a new channel
         const channelId = makeUniqueChannelStreamId(spaceId)
@@ -92,6 +100,7 @@ describe('spaceTests', () => {
                 spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)
                     ?.updatedAtEventNum,
             ).toBeGreaterThan(0)
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
         })
 
         // save off existing updated at
@@ -99,25 +108,39 @@ describe('spaceTests', () => {
             spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)!.updatedAtEventNum
 
         // make a snapshot
-        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        await waitFor(async () => {
+            const response = await bobsClient.debugForceMakeMiniblock(spaceId, {
+                forceSnapshot: true,
+                lastKnownMiniblockNum: spaceStream.view.miniblockInfo!.max,
+            })
+            expect(response).toBeDefined()
+        })
 
+        let response: GetStreamResponse | undefined
         // the new snapshot should have the new data
         await waitFor(async () => {
             // fetch the raw stream with new snapshot
-            const response = await bobsClient.rpcClient.getStream({
+            response = await bobsClient.rpcClient.getStream({
                 streamId: streamIdToBytes(spaceId),
             })
-            const stream = await unpackStream(response.stream, {
-                disableHashValidation: true,
-                disableSignatureValidation: true,
-            })
-            const snapshot = stream.snapshot
-            if (snapshot?.content.case !== 'spaceContent') {
-                throw new Error('snapshot is not a space content')
-            }
-            expect(snapshot.content.value.channels.length).toBe(1)
-            expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
+            expect(response).toBeDefined()
         })
+        if (response === undefined) {
+            throw new Error('response is undefined')
+        }
+        const stream = await unpackStream(response.stream, {
+            disableHashValidation: true,
+            disableSignatureValidation: true,
+        })
+        const snapshot = stream.snapshot
+        if (snapshot?.content.case !== 'spaceContent') {
+            throw new Error('snapshot is not a space content')
+        }
+        expect(
+            snapshot.content.value.channels.length,
+            `channelMetadata: ${spaceId} pre-update bobsClient snapshot.channels.length`,
+        ).toBe(1)
+        expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
 
         // update the channel metadata
         await bobsClient.updateChannel(spaceId, channelId, '', '')
@@ -148,7 +171,10 @@ describe('spaceTests', () => {
             if (snapshot?.content.case !== 'spaceContent') {
                 throw new Error('snapshot is not a space content')
             }
-            expect(snapshot.content.value.channels.length).toBe(1)
+            expect(
+                snapshot.content.value.channels.length,
+                'channelMetadata: post-update bobsClient snapshot.channels.length',
+            ).toBe(1)
             expect(snapshot.content.value.channels[0].updatedAtEventNum).toBeGreaterThan(
                 prevUpdatedAt,
             )
@@ -210,7 +236,10 @@ describe('spaceTests', () => {
         })
 
         await waitFor(() => {
-            expect(spaceImageUpdatedCounter.count).toBe(1)
+            expect(
+                spaceImageUpdatedCounter.count,
+                'spaceImage: spaceImageUpdatedCounter.count',
+            ).toBe(1)
         })
 
         // decrypt the snapshot and assert the image values

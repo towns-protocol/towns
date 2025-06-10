@@ -69,7 +69,7 @@ func (sc *SpaceContractV3) GetChannels(
 	if err != nil {
 		return nil, err
 	}
-	contractChannels, err := space.channels.GetChannels(nil)
+	contractChannels, err := space.channels.GetChannels(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (sc *SpaceContractV3) GetRoles(
 		return nil, err
 	}
 
-	iRoleBaseRoles, err := space.rolesContract.GetRoles(nil)
+	iRoleBaseRoles, err := space.rolesContract.GetRoles(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (sc *SpaceContractV3) GetRoles(
 				iEntitlementCache[entitlement] = iEntitlement
 			}
 			iEntitlement := iEntitlementCache[entitlement]
-			entitlementType, err := iEntitlement.ModuleType(nil)
+			entitlementType, err := iEntitlement.ModuleType(&bind.CallOpts{Context: ctx})
 			if err != nil {
 				return nil, fmt.Errorf(
 					"error fetching entitlement type for IEntitlement @ address %v: %w",
@@ -125,7 +125,10 @@ func (sc *SpaceContractV3) GetRoles(
 					err,
 				)
 			}
-			entitlementData, err := iEntitlement.GetEntitlementDataByRoleId(nil, iRoleBaseRole.Id)
+			entitlementData, err := iEntitlement.GetEntitlementDataByRoleId(
+				&bind.CallOpts{Context: ctx},
+				iRoleBaseRole.Id,
+			)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"error fetching entitlement data for role %v from IEntitlement @ address %v: %w",
@@ -347,7 +350,7 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	owner, err := spaceAsIerc5313.Owner(nil)
+	owner, err := spaceAsIerc5313.Owner(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		log.Warnw("Failed to get owner", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
@@ -410,7 +413,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	owner, err := spaceAsIerc5313.Owner(nil)
+	owner, err := spaceAsIerc5313.Owner(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		log.Warnw("Failed to get owner", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
@@ -481,7 +484,7 @@ func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceId shared.S
 		return false, err
 	}
 
-	isDisabled, err := space.pausable.Paused(nil)
+	isDisabled, err := space.pausable.Paused(&bind.CallOpts{Context: ctx})
 	return isDisabled, err
 }
 

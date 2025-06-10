@@ -95,12 +95,12 @@ interface IArchitectBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Events                               */
+    /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Errors                               */
+    /*                           Errors                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error Architect__InvalidStringLength();
@@ -114,14 +114,14 @@ interface IArchitectBase {
 
 interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Registry                               */
+    /*                           Registry                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function getSpaceByTokenId(uint256 tokenId) external view returns (address space);
 
     function getTokenIdBySpace(address space) external view returns (uint256);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Implementations                               */
+    /*                           Implementations                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function setSpaceArchitectImplementations(
@@ -142,7 +142,7 @@ interface IArchitect is IArchitectBase {
         );
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Proxy Initializer                               */
+    /*                           Proxy Initializer                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     /// @notice Retrieves the current proxy initializer
     /// @return The address of the current ISpaceProxyInitializer contract

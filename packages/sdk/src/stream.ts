@@ -13,11 +13,14 @@ import {
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { StreamsView } from './streams-view/streamsView'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly userId: string
+    readonly streamId: string
+    readonly streamsView: StreamsView
     _view: StreamStateView
     get view(): StreamStateView {
         return this._view
@@ -27,6 +30,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     constructor(
         userId: string,
         streamId: string,
+        streamsView: StreamsView,
         clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: DLogger,
     ) {
@@ -34,11 +38,9 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
         this.userId = userId
-        this._view = new StreamStateView(userId, streamId)
-    }
-
-    get streamId(): string {
-        return this._view.streamId
+        this.streamId = streamId
+        this.streamsView = streamsView
+        this._view = new StreamStateView(userId, streamId, streamsView)
     }
 
     get syncCookie(): SyncCookie | undefined {
@@ -59,10 +61,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): void {
         // grab any local events from the previous view that haven't been processed
-        const localEvents = this._view.timeline
+        const localEvents = Array.from(this._view.minipoolEvents.values())
             .filter(isLocalEvent)
             .filter((e) => e.hashStr.startsWith('~'))
-        this._view = new StreamStateView(this.userId, this.streamId)
+            .sort((a, b) => Number(a.eventNum - b.eventNum))
+        this._view = new StreamStateView(this.userId, this.streamId, this.streamsView)
         this._view.initialize(
             nextSyncCookie,
             minipoolEvents,
@@ -84,7 +87,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
-        snapshot: ParsedSnapshot | undefined,
+        _snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         this._view.appendEvents(events, nextSyncCookie, cleartexts, this)

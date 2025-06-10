@@ -192,6 +192,10 @@ type Config struct {
 	EntitlementContract ContractConfig `mapstructure:"entitlement_contract"`
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
+
+	// TestOnlyMetadataShardMask is the mask used to determine the shard for metadata streams.
+	// It is used for testing only.
+	TestOnlyMetadataShardMask uint64
 }
 
 type TLSConfig struct {
