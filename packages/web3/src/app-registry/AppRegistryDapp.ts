@@ -55,11 +55,7 @@ export class AppRegistryDapp {
         app: Address,
         clients: Address[],
     ): Promise<ContractTransaction> {
-        return this.appRegistry.write(signer).registerApp(app, clients, {
-            gasLimit: 100_000,
-            maxFeePerGas: 100_000,
-            maxPriorityFeePerGas: 100_000,
-        })
+        return this.appRegistry.write(signer).registerApp(app, clients)
     }
 
     public async removeApp(signer: ethers.Signer, appId: string): Promise<ContractTransaction> {
