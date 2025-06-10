@@ -212,24 +212,6 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
     /*                           SETTERS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_setRiverToken_revertIf_notOwner() public {
-        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
-        spaceDelegationFacet.setRiverToken(address(0));
-    }
-
-    function test_fuzz_setRiverToken(address newToken) public {
-        vm.assume(newToken != address(0));
-
-        vm.expectEmit(address(spaceDelegationFacet));
-        emit RiverTokenChanged(newToken);
-
-        vm.prank(deployer);
-        spaceDelegationFacet.setRiverToken(newToken);
-
-        address retrievedToken = spaceDelegationFacet.riverToken();
-        assertEq(retrievedToken, newToken);
-    }
-
     function test_fuzz_setSpaceFactory_revertIf_notOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
         spaceDelegationFacet.setSpaceFactory(address(0));
