@@ -171,8 +171,7 @@ contract MembershipBaseSetup is
         IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
 
         // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule
-        // entitlements that need to
-        // be checked for the joinSpace permission.
+        // entitlements that need to be checked for the joinSpace permission.
         IRolesBase.CreateEntitlement[]
             memory createEntitlements1 = new IRolesBase.CreateEntitlement[](1);
         IRolesBase.CreateEntitlement[]

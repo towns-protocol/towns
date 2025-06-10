@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IArchitect} from "../../../../factory/facets/architect/IArchitect.sol";
 import {IVotesEnumerable} from "../../../../diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IMainnetDelegation} from "../mainnet/IMainnetDelegation.sol";
@@ -41,15 +42,16 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
      * @inheritdoc ISpaceDelegation
      * @dev Delegates a space to a node operator for reward distribution.
      * Authorization logic:
-     * - Anyone can delegate an undelegated space
+     * - Only space members can delegate an undelegated space
      * - Only the space owner can change delegation if already delegated
      *
      * Process:
      * 1. Validates operator address and space existence
      * 2. Checks operator is registered and not exiting
-     * 3. Sweeps any pending rewards from previous delegation
-     * 4. Updates storage mappings and delegation timestamp
-     * 5. Emits SpaceDelegatedToOperator event
+     * 3. Validates caller is member (for undelegated) or owner (for delegated)
+     * 4. Sweeps any pending rewards from previous delegation
+     * 5. Updates storage mappings and delegation timestamp
+     * 6. Emits SpaceDelegatedToOperator event
      */
     function addSpaceDelegation(address space, address operator) external {
         if (operator == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
@@ -63,11 +65,14 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
         if (currentOperator == operator) SpaceDelegation__AlreadyDelegated.selector.revertWith();
 
-        // Authorization logic: anyone can delegate if space is not delegated yet,
+        // Authorization logic: only members can delegate if space is not delegated yet,
         // only owner can change delegation if already delegated
         if (currentOperator != address(0)) {
             // Space is already delegated, only owner can change delegation
             if (!_isValidSpaceOwner(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
+        } else {
+            // Space is not delegated, only members can delegate
+            if (!_isValidSpaceMember(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
         }
 
         NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();
@@ -226,5 +231,16 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     /// @dev Assumes that the space is valid
     function _isValidSpaceOwner(address space) internal view returns (bool) {
         return IERC173(space).owner() == msg.sender;
+    }
+
+    /// @dev Checks if the caller is a member of the space (has at least one membership token)
+    /// @dev Also considers the space owner as a member
+    /// @dev Assumes that the space is valid
+    function _isValidSpaceMember(address space) internal view returns (bool) {
+        // Check if caller is the space owner
+        if (IERC173(space).owner() == msg.sender) return true;
+
+        // Check if caller has at least one membership token
+        return IERC721(space).balanceOf(msg.sender) != 0;
     }
 }

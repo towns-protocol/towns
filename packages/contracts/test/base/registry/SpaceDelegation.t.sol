@@ -4,9 +4,13 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ISpaceDelegationBase} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
+import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
+import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // libraries
-
+import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
@@ -27,8 +31,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.addSpaceDelegation(address(this), OPERATOR);
     }
 
-    function test_addSpaceDelegation_revertIf_alreadyDelegated() public {
-        space = deploySpace(deployer);
+    function test_addSpaceDelegation_revertIf_alreadyDelegated() public givenSpaceIsDeployed {
         vm.prank(deployer);
         spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
 
@@ -37,11 +40,101 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
     }
 
-    function test_addSpaceDelegation_revertIf_invalidOperator() public {
-        space = deploySpace(deployer);
+    function test_addSpaceDelegation_revertIf_invalidOperator() public givenSpaceIsDeployed {
         vm.expectRevert(SpaceDelegation__InvalidOperator.selector);
         vm.prank(deployer);
         spaceDelegationFacet.addSpaceDelegation(space, address(this));
+    }
+
+    function test_addSpaceDelegation_revertIf_operatorExiting() public givenSpaceIsDeployed {
+        // Set operator status to Exiting
+        vm.prank(deployer);
+        operatorFacet.setOperatorStatus(OPERATOR, NodeOperatorStatus.Exiting);
+
+        vm.expectRevert(SpaceDelegation__InvalidOperator.selector);
+        vm.prank(deployer);
+        spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
+    }
+
+    function test_addSpaceDelegation_ownerCanDelegateUndelegatedSpace()
+        public
+        givenSpaceIsDeployed
+    {
+        // Owner should be able to delegate undelegated space (owner is considered a member)
+        vm.prank(deployer);
+        spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
+
+        address assignedOperator = spaceDelegationFacet.getSpaceDelegation(space);
+        assertEq(assignedOperator, OPERATOR, "Owner delegation failed");
+    }
+
+    function test_addSpaceDelegation_memberCanDelegateUndelegatedSpace(
+        address member
+    ) public assumeEOA(member) {
+        // Member should not be the space owner
+        vm.assume(member != deployer);
+
+        // Deploy an "everyone" space that allows anyone to join
+        address everyoneSpace = deployEveryoneSpace(deployer);
+
+        // Make the fuzzed address a member by joining the space
+        vm.prank(member);
+        IMembership(everyoneSpace).joinSpace(member);
+
+        // Verify member has at least one token
+        assertGt(
+            IERC721(everyoneSpace).balanceOf(member),
+            0,
+            "Member should have membership token"
+        );
+
+        // Member should be able to delegate undelegated space
+        vm.prank(member);
+        spaceDelegationFacet.addSpaceDelegation(everyoneSpace, OPERATOR);
+
+        address assignedOperator = spaceDelegationFacet.getSpaceDelegation(everyoneSpace);
+        assertEq(assignedOperator, OPERATOR, "Member delegation failed");
+    }
+
+    function test_addSpaceDelegation_revertIf_nonMemberCannotDelegateUndelegatedSpace(
+        address nonMember
+    ) public assumeEOA(nonMember) {
+        // Non-member should not be the space owner
+        vm.assume(nonMember != deployer);
+
+        // Deploy an "everyone" space but don't make the non-member join
+        address everyoneSpace = deployEveryoneSpace(deployer);
+
+        // Verify non-member has no tokens (they haven't joined)
+        assertEq(
+            IERC721(everyoneSpace).balanceOf(nonMember),
+            0,
+            "Non-member should have no tokens"
+        );
+
+        vm.expectRevert(SpaceDelegation__InvalidSpace.selector);
+        vm.prank(nonMember);
+        spaceDelegationFacet.addSpaceDelegation(everyoneSpace, OPERATOR);
+    }
+
+    function test_addSpaceDelegation_revertIf_nonOwnerCannotChangeDelegation(
+        address nonOwner
+    ) public givenSpaceIsDeployed assumeEOA(nonOwner) {
+        // Non-owner should not be the space owner
+        vm.assume(nonOwner != deployer);
+
+        // Owner delegates first
+        vm.prank(deployer);
+        spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
+
+        // Create second operator
+        address operator2 = makeAddr("operator2");
+        setOperator(operator2, 5000);
+
+        // Non-owner should not be able to change delegation
+        vm.expectRevert(SpaceDelegation__InvalidSpace.selector);
+        vm.prank(nonOwner);
+        spaceDelegationFacet.addSpaceDelegation(space, operator2);
     }
 
     function test_fuzz_addSpaceDelegation(
@@ -157,6 +250,12 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.removeSpaceDelegation(address(0));
     }
 
+    function test_removeSpaceDelegation_revertIf_notDelegated() public givenSpaceIsDeployed {
+        vm.expectRevert(SpaceDelegation__NotDelegated.selector);
+        vm.prank(deployer);
+        spaceDelegationFacet.removeSpaceDelegation(space);
+    }
+
     function test_fuzz_removeSpaceDelegation(
         address operator,
         uint256 commissionRate,
@@ -217,6 +316,12 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.setSpaceFactory(address(0));
     }
 
+    function test_setSpaceFactory_revertIf_invalidAddress() public {
+        vm.expectRevert(SpaceDelegation__InvalidAddress.selector);
+        vm.prank(deployer);
+        spaceDelegationFacet.setSpaceFactory(address(0));
+    }
+
     function test_fuzz_setSpaceFactory(address newSpaceFactory) public {
         vm.assume(newSpaceFactory != address(0));
 
@@ -225,5 +330,20 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
 
         address retrievedFactory = spaceDelegationFacet.getSpaceFactory();
         assertEq(retrievedFactory, newSpaceFactory);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            UTILS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Deploys a space that allows everyone to join (for membership testing)
+    function deployEveryoneSpace(address _deployer) internal returns (address _space) {
+        IArchitectBase.SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(
+            string(abi.encode(_randomUint256()))
+        );
+        spaceInfo.membership.settings.pricingModule = pricingModule;
+        spaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
+        vm.prank(_deployer);
+        _space = ICreateSpace(spaceFactory).createSpace(spaceInfo);
     }
 }
