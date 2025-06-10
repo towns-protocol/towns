@@ -173,6 +173,12 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		crypto.StreamEnableNewSnapshotFormatConfigKey,
 		crypto.ABIEncodeUint64(1),
 	)
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.ServerEnableNode2NodeAuthConfigKey,
+		crypto.ABIEncodeUint64(1),
+	)
 
 	if opts.start {
 		st.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
@@ -402,19 +408,23 @@ func (st *serviceTester) testNode2NodeClient(i int) protocolconnect.NodeToNodeCl
 }
 
 func (st *serviceTester) testClientForUrl(url string) protocolconnect.StreamServiceClient {
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
-	return protocolconnect.NewStreamServiceClient(httpClient, url, connect.WithGRPCWeb())
+	return protocolconnect.NewStreamServiceClient(st.httpClient(), url, connect.WithGRPCWeb())
 }
 
 func (st *serviceTester) testNode2NodeClientForUrl(url string, i int) protocolconnect.NodeToNodeClient {
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClientWithCert(
-		st.ctx, st.getConfig(), node2nodeauth.CertGetter(nil, st.btc.NodeWallets[i], st.btc.ChainId),
-	)
-	return protocolconnect.NewNodeToNodeClient(httpClient, url, connect.WithGRPCWeb())
+	return protocolconnect.NewNodeToNodeClient(st.httpClientWithCert(i), url, connect.WithGRPCWeb())
 }
 
 func (st *serviceTester) httpClient() *http.Client {
 	c, err := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
+	st.require.NoError(err)
+	return c
+}
+
+func (st *serviceTester) httpClientWithCert(i int) *http.Client {
+	c, err := testcert.GetHttp2LocalhostTLSClientWithCert(
+		st.ctx, st.getConfig(), node2nodeauth.CertGetter(nil, st.btc.NodeWallets[i], st.btc.ChainId),
+	)
 	st.require.NoError(err)
 	return c
 }
