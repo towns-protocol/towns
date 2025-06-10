@@ -19,6 +19,13 @@ describe('crypto', () => {
     const KEYS_FILE = '../test/crypto/keys.csv'
     const DATA_FILE = '../test/crypto/test_data.csv'
 
+    // This is a hack to fix the issue with the test failing on CI.
+    // https://github.com/vitest-dev/vitest/discussions/6511#discussioncomment-13145786
+    // Moving to pool threads doesn't fix it.
+    afterEach(async () => {
+        await new Promise((res) => setImmediate(res))
+    })
+
     const generateData = async () => {
         const keys = Array.from({ length: 5 }, () => {
             const pr = secp256k1.utils.randomPrivateKey()

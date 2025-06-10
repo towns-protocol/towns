@@ -7,15 +7,17 @@ import { Client } from '../../client'
 import { makeDonePromise, makeTestClient } from '../testUtils'
 import { UserDevice } from '@towns-protocol/encryption'
 
-const log = debug('test')
+const log = debug('test:deviceKeyMessageTest')
 
 describe('deviceKeyMessageTest', () => {
     let bobsClient: Client
     let alicesClient: Client
 
     beforeEach(async () => {
+        log('beforeEach')
         bobsClient = await makeTestClient()
         alicesClient = await makeTestClient()
+        log('after beforeEach')
     })
 
     afterEach(async () => {
@@ -26,10 +28,11 @@ describe('deviceKeyMessageTest', () => {
     test('bobUploadsDeviceKeys', async () => {
         log('bobUploadsDeviceKeys')
         await bobsClient.initializeUser()
-        await alicesClient.initializeUser()
         // Bob gets created, starts syncing, and uploads his device keys.
         const bobsUserId = bobsClient.userId
+        const bobUserMetadataStreamId = bobsClient.userMetadataStreamId
         const bobSelfDeviceKeyDone = makeDonePromise()
+        log('listening for userDeviceKeyMessage')
         bobsClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
@@ -42,8 +45,7 @@ describe('deviceKeyMessageTest', () => {
             },
         )
         bobsClient.startSync()
-        alicesClient.startSync()
-        const bobUserMetadataStreamId = bobsClient.userMetadataStreamId
+        log('started sync')
         await bobSelfDeviceKeyDone.expectToSucceed()
     })
 

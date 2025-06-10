@@ -976,6 +976,9 @@ message SyncStreamsResponse {
     // stream_id is set when sync_op = SYNC_DOWN and indicates it will not receive updates anymore for this stream.
     // If the client is still is interested in updates for this stream it must re-add the stream to the sync session.
     bytes stream_id = 5;
+    // target_sync_ids is the chain of sync IDs that is used to deliver the backfill update to the right end client.
+    // For example: client->nodeA->nodeB->nodeA(target sync 1)->client(target sync 2)
+    repeated string target_sync_ids = 6;
 }
 
 // AddStreamToSyncRequest is a request to add a stream to an existing streams sync session.
@@ -1000,12 +1003,27 @@ message RemoveStreamFromSyncResponse {}
 
 // ModifySyncRequest adds or removes streams from an existing sync session.
 message ModifySyncRequest {
+  // Backfill is a message that contains the details of a backfill request.
+  // This message is used to request a backfill of streams that are already in the shared sync session
+  // before sending latest updates: backfill by cookie -> send latest updates.
+  // Important node to client: duplicated events might be sent once in the backfill and latest updates.
+  message Backfill {
+    // backfill_streams is the list of sync cookies to backfill
+    repeated SyncCookie streams = 1;
+    // sync_id is the id of the sync session to backfill.
+    // This is the sync ID between the end client and the node that initiated the sync session.
+    // The sync ID below is the sync ID between the node that initiated the sync session and the node that is backfilling.
+    string sync_id = 2;
+  }
+
   // sync_id is the id of the sync session.
   string sync_id = 1;
   // add_streams contains the stream cookies for streams to add to the stream sync session.
   repeated SyncCookie add_streams = 2;
   // remove_streams contains the stream id's to remove from the sync session.
   repeated bytes remove_streams = 3;
+  // backfill_streams contains the backfill requests to perform before sending the latest updates.
+  Backfill backfill_streams = 4;
 }
 
 // SyncStreamOpStatus contains details why adding or removing a stream to/from a sync session failed.
@@ -1024,6 +1042,8 @@ message ModifySyncResponse {
   repeated SyncStreamOpStatus adds = 1;
   // List with streams that failed to be removed from the sync operation.
   repeated SyncStreamOpStatus removals = 2;
+  // backfills is the list of backfills that were requested to be performed.
+  repeated SyncStreamOpStatus backfills = 3;
 }
 
 // CancelSyncRequest cancels the sync session.

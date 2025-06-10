@@ -40,7 +40,12 @@ func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCooki
 	if len(cookies) > 0 {
 		req.SyncPos = cookies
 	}
-	resp, err := c.client.SyncStreams(ctx, connect.NewRequest(req))
+
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(req)
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+	resp, err := c.client.SyncStreams(ctx, connReq)
 	if err == nil {
 	syncLoop:
 		for {
@@ -98,6 +103,7 @@ func (c *syncClient) modify(t *testing.T, ctx context.Context, add []*protocol.S
 		RemoveStreams: remove,
 	}))
 	require.NoError(t, err, "failed to modify sync")
+	require.Len(t, resp.Msg.GetBackfills(), 0)
 	require.Len(t, resp.Msg.GetAdds(), 0)
 	require.Len(t, resp.Msg.GetRemovals(), 0)
 }
@@ -628,7 +634,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
-		30*time.Second,
+		time.Second*10,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(
@@ -643,13 +649,13 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNStreamsDown(
 		t,
 		nodeToStreams[tt.nodes[1].address],
-		time.Minute,
+		time.Second*10,
 	)
 	tt.CloseNode(2)
 	syncClients.expectNStreamsDown(
 		t,
 		nodeToStreams[tt.nodes[2].address],
-		time.Minute,
+		time.Second*10,
 	)
 
 	// Add all cookies to the modify stream again and expect for updates
@@ -663,7 +669,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
-		30*time.Second,
+		time.Second*10,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(

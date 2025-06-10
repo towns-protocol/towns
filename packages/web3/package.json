@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.241",
+    "version": "0.0.242",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -44,7 +44,7 @@
         "eslint-plugin-import-x": "^4.10.2",
         "typed-emitter": "^2.1.0",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5"
+        "vitest": "3.2.3"
     },
     "files": [
         "/dist"

@@ -33,7 +33,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from '../id'
-import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
+import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '@towns-protocol/encryption'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
@@ -300,6 +300,10 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
         persistenceStoreName: persistenceDbName,
+        streamOpts: {
+            useModifySync: true,
+            useSharedSyncer: true,
+        },
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
@@ -1127,16 +1131,22 @@ export function getChannelMessagePayload(event?: ChannelMessage) {
     return undefined
 }
 
+export function getTimelineMessagePayload(event?: TimelineEvent) {
+    if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return event.content.body
+    }
+    return undefined
+}
+
 export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(
         'eventDecrypted',
-        (streamId: string, contentKind: SnapshotCaseType, event: DecryptedTimelineEvent): void => {
+        (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
             recipientReceivesMessageWithoutError.runAndDone(() => {
-                const content = event.decryptedContent
-                expect(content).toBeDefined()
-                check(content.kind === 'channelMessage')
-                expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
+                expect(event.content).toBeDefined()
+                check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                expect(event.content.body).toEqual(expectedMessageText)
             })
         },
     )
