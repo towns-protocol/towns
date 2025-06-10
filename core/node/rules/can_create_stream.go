@@ -28,8 +28,7 @@ type csParams struct {
 	parsedEvents          []*events.ParsedEvent
 	requestMetadata       map[string][]byte
 	inceptionPayload      IsInceptionPayload
-	creatorAddress        []byte
-	creatorUserId         string
+	creatorAddress        common.Address
 	creatorUserStreamId   shared.StreamId
 }
 
@@ -120,21 +119,14 @@ func CanCreateStream(
 		)
 	}
 
-	creatorAddress := parsedEvents[0].Event.GetCreatorAddress()
-	creatorUserId, err := shared.AddressHex(creatorAddress)
-	if err != nil {
-		return nil, err
-	}
-	creatorUserStreamId, err := shared.UserStreamIdFromBytes(creatorAddress)
-	if err != nil {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid creator user stream id", "error", err)
-	}
+	creatorAddress := common.BytesToAddress(parsedEvents[0].Event.GetCreatorAddress())
+	creatorUserStreamId := shared.UserStreamIdFromAddr(creatorAddress)
 
 	for _, event := range parsedEvents {
 		if event.Event.PrevMiniblockHash != nil {
 			return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "PrevMiniblockHash should be nil")
 		}
-		if !bytes.Equal(event.Event.CreatorAddress, creatorAddress) {
+		if !bytes.Equal(event.Event.CreatorAddress, creatorAddress.Bytes()) {
 			return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "all events should have the same creator address")
 		}
 	}
@@ -168,7 +160,6 @@ func CanCreateStream(
 		requestMetadata:       requestMetadata,
 		inceptionPayload:      inceptionPayload,
 		creatorAddress:        creatorAddress,
-		creatorUserId:         creatorUserId,
 		creatorUserStreamId:   creatorUserStreamId,
 	}
 
@@ -459,31 +450,21 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 }
 
 func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
-	creatorUserAddress := ru.params.parsedEvents[0].Event.GetCreatorAddress()
-	userId, err := shared.AddressHex(creatorUserAddress)
-	if err != nil {
-		return nil, err
-	}
 	return auth.NewChainAuthArgsForSpace(
 		ru.params.streamId,
-		userId,
+		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels, // todo should be isOwner...
 	), nil
 }
 
 func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, error) {
-	creatorUserAddress := ru.params.parsedEvents[0].Event.GetCreatorAddress()
-	userId, err := shared.AddressHex(creatorUserAddress)
-	if err != nil {
-		return nil, err
-	}
 	spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
 	if err != nil {
 		return nil, err
 	}
 	return auth.NewChainAuthArgsForSpace(
 		spaceId, // check parent space id
-		userId,
+		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels,
 	), nil
 }
@@ -524,17 +505,12 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 }
 
 func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
-	creatorAddress, err := BytesToAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
-	if err != nil {
-		return nil, err
-	}
-	creatorUserStreamId := shared.UserStreamIdFromAddr(creatorAddress)
-	inviterId := creatorAddress.Hex()
+	creatorUserStreamId := shared.UserStreamIdFromAddr(ru.creatorAddress)
 	streamParentId := events.GetStreamParentId(ru.inceptionPayload)
 	payload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.streamId,
-		&inviterId,
+		ru.creatorAddress,
 		streamParentId,
 		nil,
 	)
@@ -601,11 +577,6 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 	if err != nil {
 		return nil, err
 	}
-	// convert to user id
-	userId, err := shared.AddressHex(userAddress[:])
-	if err != nil {
-		return nil, err
-	}
 	// we don't have a good way to check to see if they have on chain assets yet,
 	// so require a space id to be passed in the metadata and check that the user has read permissions there
 	if spaceIdBytes, ok := ru.requestMetadata["spaceId"]; ok {
@@ -615,7 +586,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 		}
 		return auth.NewChainAuthArgsForIsSpaceMember(
 			spaceId,
-			userId,
+			userAddress,
 		), nil
 	} else {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true must be provided in metadata for user stream")
@@ -623,11 +594,6 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 }
 
 func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error) {
-	userId, err := shared.AddressHex(ru.params.creatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
 	if shared.ValidChannelStreamIdBytes(ru.inception.ChannelId) {
 		if len(ru.inception.SpaceId) == 0 {
 			return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space id must not be empty for media stream")
@@ -644,7 +610,7 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 		return auth.NewChainAuthArgsForChannel(
 			spaceId,
 			channelId,
-			userId,
+			ru.params.creatorAddress,
 			auth.PermissionWrite,
 		), nil
 	} else if shared.ValidSpaceStreamIdBytes(ru.inception.SpaceId) {
@@ -655,7 +621,7 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 
 		return auth.NewChainAuthArgsForSpace(
 			spaceId,
-			userId,
+			ru.params.creatorAddress,
 			auth.PermissionModifySpaceSettings, // todo should it be isOwner?
 		), nil
 	} else {
@@ -667,7 +633,7 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 	if len(ru.inception.FirstPartyAddress) != 20 || len(ru.inception.SecondPartyAddress) != 20 {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid party addresses for dm channel")
 	}
-	if !bytes.Equal(ru.params.creatorAddress, ru.inception.FirstPartyAddress) {
+	if !bytes.Equal(ru.params.creatorAddress.Bytes(), ru.inception.FirstPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator must be first party for dm channel")
 	}
 	if !shared.ValidDMChannelStreamIdBetween(
@@ -695,7 +661,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	firstPartyPayload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
-		&ru.params.creatorUserId,
+		ru.params.creatorAddress,
 		nil,
 		nil,
 	)
@@ -704,7 +670,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	secondPartyPayload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
-		&ru.params.creatorUserId,
+		ru.params.creatorAddress,
 		nil,
 		nil,
 	)
@@ -722,7 +688,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	}, nil
 }
 
-func (ru *csGdmChannelRules) checkGDMMemberPayload(event *events.ParsedEvent, expectedUserAddress *[]byte) error {
+func (ru *csGdmChannelRules) checkGDMMemberPayload(event *events.ParsedEvent, expectedUserAddress *common.Address) error {
 	payload := event.Event.GetMemberPayload()
 	if payload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel payload")
@@ -743,7 +709,7 @@ func (ru *csGdmChannelRules) checkGDMMemberPayload(event *events.ParsedEvent, ex
 		)
 	}
 
-	if expectedUserAddress != nil && !bytes.Equal(*expectedUserAddress, membershipPayload.UserAddress) {
+	if expectedUserAddress != nil && !bytes.Equal(expectedUserAddress.Bytes(), membershipPayload.UserAddress) {
 		return RiverError(
 			Err_BAD_STREAM_CREATION_PARAMS,
 			"membership user id does not match",
@@ -842,7 +808,7 @@ func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, erro
 		payload := events.Make_UserPayload_Membership(
 			MembershipOp_SO_JOIN,
 			ru.params.streamId,
-			&ru.params.creatorUserId,
+			ru.params.creatorAddress,
 			nil,
 			nil,
 		)
