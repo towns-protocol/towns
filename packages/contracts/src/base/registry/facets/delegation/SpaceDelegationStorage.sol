@@ -16,10 +16,10 @@ library SpaceDelegationStorage {
 
     struct Layout {
         // References
-        uint256 stakeRequirement;
-        address spaceOwnerRegistry;
-        address riverToken;
-        address mainnetDelegation;
+        uint256 stakeRequirement; // deprecated
+        address spaceOwnerRegistry; // deprecated
+        address riverToken; // deprecated
+        address mainnetDelegation; // deprecated
         // Delegation Mappings
         mapping(address operator => EnumerableSet.AddressSet) spacesByOperator;
         mapping(address space => address operator) operatorBySpace;

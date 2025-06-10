@@ -174,7 +174,12 @@ import { SyncState } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
-import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
+import {
+    decryptAESGCM,
+    deriveKeyAndIV,
+    encryptAESGCM,
+    uint8ArrayToBase64,
+} from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './streams-view/streamsView'

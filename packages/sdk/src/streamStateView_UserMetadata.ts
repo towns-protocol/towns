@@ -17,7 +17,7 @@ import { logNever } from './check'
 import { UserDevice } from '@towns-protocol/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { getUserIdFromStreamId } from './id'
-import { decryptDerivedAESGCM } from './crypto_utils'
+import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { fromBinary } from '@bufbuild/protobuf'
 
 export class StreamStateView_UserMetadata extends StreamStateView_AbstractContent {

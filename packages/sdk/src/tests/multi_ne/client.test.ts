@@ -53,7 +53,7 @@ import {
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
 } from '../../types'
-import { deriveKeyAndIV } from '../../crypto_utils'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
 import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
 

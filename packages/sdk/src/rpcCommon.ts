@@ -1,25 +1,7 @@
-import { Interceptor, Transport } from '@connectrpc/connect'
-import {
-    createConnectTransport as createConnectTransportWeb,
-    ConnectTransportOptions as ConnectTransportOptionsWeb,
-} from '@connectrpc/connect-web'
+import { type Interceptor } from '@towns-protocol/rpc-connector/common'
 import { type RetryParams } from './rpcInterceptors'
-import { isNodeEnv, isTestEnv } from '@towns-protocol/dlog'
 
 export interface RpcOptions {
     retryParams?: RetryParams
     interceptors?: Interceptor[]
-}
-
-export function createHttp2ConnectTransport(options: ConnectTransportOptionsWeb): Transport {
-    if (isNodeEnv && !isTestEnv()) {
-        // use node version of connect to force httpVersion: '2'
-        const {
-            createConnectTransport: createConnectTransportNode,
-            // eslint-disable-next-line import-x/no-extraneous-dependencies, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-        } = require('@connectrpc/connect-node')
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return createConnectTransportNode({ ...options, httpVersion: '2' }) as Transport
-    }
-    return createConnectTransportWeb(options)
 }
