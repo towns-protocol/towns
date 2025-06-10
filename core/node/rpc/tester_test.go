@@ -689,7 +689,7 @@ func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) tes
 
 // newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
 func (st *serviceTester) createMetadataStreams() {
-	operatorClient := st.newTestClientWithWallet(0, testClientOpts{}, st.btc.GetDeployerWallet())
+	operatorClient := st.newTestClientWithWallet(0, testClientOpts{}, st.btc.OperatorWallets[0])
 
 	numStreams := st.nodes[0].service.config.TestOnlyMetadataShardMask + 1
 

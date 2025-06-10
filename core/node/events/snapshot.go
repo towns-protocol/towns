@@ -192,6 +192,12 @@ func make_SnapshotContent(iInception IsInceptionPayload) (IsSnapshot_Content, er
 				Inception: inception,
 			},
 		}, nil
+	case *MetadataPayload_Inception:
+		return &Snapshot_MetadataContent{
+			MetadataContent: &MetadataPayload_Snapshot{
+				Inception: inception,
+			},
+		}, nil
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown inception type %T", iInception))
 	}
