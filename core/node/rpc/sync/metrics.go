@@ -12,6 +12,11 @@ func (h *handlerImpl) setupSyncMetrics() {
 		"Total number of failed stream sync operations",
 		"use_shared_sync", "river_error",
 	)
+	h.syncingStreamsPerOpCounter = h.metrics.NewCounterVecEx(
+		"stream_sync_syncing_streams_per_op_counter",
+		"Number of streams being synced per sync operation",
+		"use_shared_sync", "sync_id",
+	)
 	h.messageBufferSizePerOpHistogram = h.metrics.NewHistogramVecEx(
 		"stream_sync_messages_buffer",
 		"Size of the message buffer per sync operation",

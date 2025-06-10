@@ -85,6 +85,7 @@ type (
 		// metrics is the metrics factory used to create Prometheus metrics.
 		metrics                         infra.MetricsFactory
 		failedSyncOpsCounter            *prometheus.CounterVec
+		syncingStreamsPerOpCounter      *prometheus.CounterVec
 		messageBufferSizePerOpHistogram *prometheus.HistogramVec
 		sentMessagesCounter             *prometheus.CounterVec
 	}
@@ -135,6 +136,7 @@ func (h *handlerImpl) SyncStreams(
 		h.otelTracer,
 		h.messageBufferSizePerOpHistogram,
 		h.sentMessagesCounter,
+		h.syncingStreamsPerOpCounter,
 	)
 	if err != nil {
 		return err
