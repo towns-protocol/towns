@@ -37,15 +37,38 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     /*                         DELEGATION                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @inheritdoc ISpaceDelegation
-    function addSpaceDelegation(address space, address operator) external onlySpaceOwner(space) {
+    /**
+     * @inheritdoc ISpaceDelegation
+     * @dev Delegates a space to a node operator for reward distribution.
+     * Authorization logic:
+     * - Anyone can delegate an undelegated space
+     * - Only the space owner can change delegation if already delegated
+     *
+     * Process:
+     * 1. Validates operator address and space existence
+     * 2. Checks operator is registered and not exiting
+     * 3. Sweeps any pending rewards from previous delegation
+     * 4. Updates storage mappings and delegation timestamp
+     * 5. Emits SpaceDelegatedToOperator event
+     */
+    function addSpaceDelegation(address space, address operator) external {
         if (operator == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
+
+        // Validate that the space exists
+        if (!_isValidSpace(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
 
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
         address currentOperator = ds.operatorBySpace[space];
 
         if (currentOperator == operator) SpaceDelegation__AlreadyDelegated.selector.revertWith();
+
+        // Authorization logic: anyone can delegate if space is not delegated yet,
+        // only owner can change delegation if already delegated
+        if (currentOperator != address(0)) {
+            // Space is already delegated, only owner can change delegation
+            if (!_isValidSpaceOwner(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
+        }
 
         NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();
 
@@ -72,7 +95,17 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
         emit SpaceDelegatedToOperator(space, operator);
     }
 
-    /// @inheritdoc ISpaceDelegation
+    /**
+     * @inheritdoc ISpaceDelegation
+     * @dev Removes delegation from a space, returning it to an undelegated state.
+     * Only the space owner can call this function.
+     *
+     * Process:
+     * 1. Validates space address and delegation existence
+     * 2. Sweeps any pending rewards to the current operator
+     * 3. Clears storage mappings and resets delegation timestamp
+     * 4. Emits SpaceDelegatedToOperator event with address(0)
+     */
     function removeSpaceDelegation(address space) external onlySpaceOwner(space) {
         if (space == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
 
