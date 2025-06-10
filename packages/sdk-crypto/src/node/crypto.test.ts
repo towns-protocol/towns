@@ -17,6 +17,10 @@ const testBase64 = 'SGVsbG8sIFdvcmxkIQ=='
 const testKeyPhrase = 'test-passphrase-123'
 
 describe('Crypto Functions', () => {
+    test('should be running in a Node environment', () => {
+        expect(typeof window === 'undefined').toBe(true)
+    })
+
     describe('Base64 Conversion', () => {
         test('uint8ArrayToBase64 should convert Uint8Array to base64', () => {
             const uint8Array = new TextEncoder().encode(testString)
