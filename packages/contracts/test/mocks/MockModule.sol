@@ -40,6 +40,10 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         return "mock-module";
     }
 
+    function moduleOwner() external view returns (address) {
+        return _owner();
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PERMISSIONS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

@@ -10,7 +10,7 @@ import {
     ChannelMessageSchema,
 } from '@towns-protocol/proto'
 import { makeTags } from '../../tags'
-import { IStreamStateView, StreamStateView } from '../../streamStateView'
+import { StreamStateView } from '../../streamStateView'
 import {
     addressFromUserId,
     genIdBlob,
@@ -25,8 +25,6 @@ import { makeRemoteTimelineEvent } from '../../types'
 import { bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 
-// Mock the IStreamStateView interface
-
 interface TagsTestUser {
     userId: string
     address: Uint8Array
@@ -37,7 +35,7 @@ interface TagsTestUser {
 describe('makeTags', () => {
     const spaceId = makeUniqueSpaceStreamId()
     const streamId = makeUniqueChannelStreamId(spaceId)
-    let mockStreamView: IStreamStateView
+    let mockStreamView: StreamStateView
 
     let user1: TagsTestUser
     let user2: TagsTestUser

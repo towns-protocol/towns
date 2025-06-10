@@ -19,7 +19,7 @@ import {
     streamIdAsString,
     isChannelStreamId,
 } from './id'
-import { ParsedEvent, ParsedStreamResponse } from './types'
+import { ParsedEvent, ParsedSnapshot, ParsedStreamResponse } from './types'
 import { isDefined, logNever } from './check'
 
 export enum SyncState {
@@ -66,6 +66,7 @@ export interface ISyncedStream {
     appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
+        snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void>
     resetUpToDate(): void
@@ -824,12 +825,18 @@ export class SyncedStreamsLoop {
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,
-                            this.unpackEnvelopeOpts,
+                            // Miniblocks are not provided in the sync updates so skipping signature validation
+                            // that ensures that the snapshot creator is the same address as its miniblock creator.
+                            {
+                                disableHashValidation: false,
+                                disableSignatureValidation: true,
+                            },
                         )
                         streamRecord.syncCookie = streamAndCookie.nextSyncCookie
                         await streamRecord.stream.appendEvents(
                             streamAndCookie.events,
                             streamAndCookie.nextSyncCookie,
+                            streamAndCookie.snapshot,
                             undefined,
                         )
                     }

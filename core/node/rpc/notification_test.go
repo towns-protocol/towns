@@ -630,7 +630,7 @@ func testSpaceChannelPlainMessage(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID[:])
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -709,7 +709,7 @@ func testSpaceChannelAtChannelTag(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID[:])
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -819,6 +819,7 @@ func initNotificationService(
 	cfg := tester.getConfig()
 	cfg.Notifications.Authentication.SessionToken.Key.Algorithm = "HS256"
 	cfg.Notifications.Authentication.SessionToken.Key.Key = hex.EncodeToString(key[:])
+	cfg.Notifications.StreamTracking.StreamsPerSyncSession = 4
 
 	service, err := StartServerInNotificationMode(ctx, cfg, notifier, makeTestServerOpts(tester))
 	tester.require.NoError(err)
@@ -1085,7 +1086,7 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 		from,
 		events.Make_UserPayload_BlockchainTransaction(from.Address[:], &BlockchainTransaction{
 			// a very incomplete receipt
-			Receipt: makeTipReceipt(ctx, from, to, messageId, tc.gdmStreamID[:], amount, tokenId, currency),
+			Receipt: makeTipReceipt(from, to, messageId, tc.gdmStreamID[:], amount, tokenId, currency),
 			Content: &BlockchainTransaction_Tip_{
 				Tip: &BlockchainTransaction_Tip{
 					Event: &BlockchainTransaction_Tip_Event{
@@ -1131,7 +1132,6 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 }
 
 func makeTipReceipt(
-	ctx context.Context,
 	from *crypto.Wallet,
 	to *crypto.Wallet,
 	messageId []byte,

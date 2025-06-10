@@ -78,5 +78,8 @@ func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
 
 // IsSnapshot returns true if the miniblock header has a snapshot.
 func (x *MiniblockHeader) IsSnapshot() bool {
+	if x == nil {
+		return false
+	}
 	return x.GetSnapshot() != nil || len(x.GetSnapshotHash()) > 0
 }

@@ -272,9 +272,13 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 		}},
 	)
 
-	var allNodes []common.Address
+	var (
+		allNodes         []common.Address
+		nodeAddrToRecord = make(map[common.Address]*testNodeRecord)
+	)
 	for _, node := range tt.nodes {
 		allNodes = append(allNodes, node.address)
+		nodeAddrToRecord[node.address] = node
 	}
 	testfmt.Logf(t, "all nodes: %v", allNodes)
 
@@ -292,22 +296,27 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 	initialNodes := slices.Clone(stream.Nodes)
 	testfmt.Logf(t, "stream %s placed on nodes %v\n", channelId, initialNodes)
 
+	testClient := tt.testClientForUrl(nodeAddrToRecord[stream.Nodes[0]].url)
+
 	// keep adding events to the stream to ensure it is hot/active
 	atLeastMBNum := stream.LastMiniblockNum + 10
 	mbProdCtx, mbProdCancel := context.WithCancel(tt.ctx)
 	mbProdDone := make(chan struct{})
 	go func() {
+		defer close(mbProdDone)
 		for i := 1; true; i++ {
 			select {
-			case <-time.After(50 * time.Millisecond):
+			case <-time.After(10 * time.Millisecond):
 				stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
 				tt.require.NoError(err)
 				if stream.LastMiniblockNum >= atLeastMBNum+10 { // produced enough miniblocks
 					return
 				}
 				alice.say(channelId, fmt.Sprintf("hello from Alice %d times", i))
+				mbRef, err := makeMiniblock(tt.ctx, testClient, channelId, false, -1)
+				tt.require.NoError(err)
+				testfmt.Logf(t, "stream %s make miniblock %d\n", channelId, mbRef.Num)
 			case <-mbProdCtx.Done():
-				close(mbProdDone)
 				return
 			}
 		}
@@ -332,7 +341,8 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 		require.EqualValues(c, len(replicatedNodesAddrs), len(registryStream.Nodes))
 
 		// make sure that stream has progressed enough to be considered hot
-		require.GreaterOrEqual(c, registryStream.LastMiniblockNum, atLeastMBNum)
+		require.GreaterOrEqual(c, registryStream.LastMiniblockNum, atLeastMBNum,
+			"stream %s not enough miniblocks", channelId)
 
 		participatesInStream := slices.Contains(replicatedNodesAddrs, node.address)
 

@@ -25,6 +25,7 @@ ffi = true
 fs_permissions = [
   { access = "read-write", path = "./deployments" },
   { access = "read-write", path = "./in" },
+  { access = "read-write", path = "./resources" },
   { access = "read", path = "./out" },
   { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
 ] # Configures permissions for cheatcodes that touch the filesystem

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 // utils
 
 //interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
@@ -46,6 +47,10 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
 
     function test_fuzz_mint(address to, uint256 value) public {
         vm.assume(to != address(0));
+
+        vm.expectEmit(address(pointsFacet));
+        emit IERC20.Transfer(address(0), to, value);
+
         vm.prank(space);
         pointsFacet.mint(to, value);
     }
@@ -74,12 +79,22 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         sanitizeAmounts(values);
         address[] memory _accounts = toDyn(accounts);
         uint256[] memory _values = toDyn(values);
+
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            vm.expectEmit(address(pointsFacet));
+            emit IERC20.Transfer(address(0), _accounts[i], _values[i]);
+        }
+
         vm.prank(deployer);
         pointsFacet.batchMintPoints(abi.encode(_accounts, _values));
     }
 
     modifier givenCheckedIn(address user) {
         vm.assume(user != address(0));
+
+        vm.expectEmit(address(pointsFacet));
+        emit IERC20.Transfer(address(0), user, 1 ether);
+
         vm.prank(user);
         pointsFacet.checkIn();
         _;
@@ -122,6 +137,9 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
             block.timestamp
         );
 
+        vm.expectEmit(address(pointsFacet));
+        emit IERC20.Transfer(address(0), user, pointsToAward);
+
         vm.prank(user);
         pointsFacet.checkIn();
 
@@ -135,6 +153,9 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         uint256 currentPoints = pointsFacet.balanceOf(user);
 
         vm.warp(block.timestamp + CheckIn.CHECK_IN_WAIT_PERIOD + 1);
+
+        vm.expectEmit(address(pointsFacet));
+        emit IERC20.Transfer(address(0), user, CheckIn.MAX_POINTS_PER_CHECKIN);
 
         vm.prank(user);
         pointsFacet.checkIn();

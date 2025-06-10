@@ -13,6 +13,7 @@ import (
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,6 +26,12 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// maxWorkerPoolPendingTasks is the maximum number of pending tasks in the worker pool.
+	// Background workers must respect this limit to avoid overloading.
+	maxWorkerPoolPendingTasks = 10000
+)
+
 type PostgresStreamStore struct {
 	PostgresEventStore
 
@@ -35,8 +42,10 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	esm           *ephemeralStreamMonitor
-	streamTrimmer *streamTrimmer
+	// workers
+	esm             *ephemeralStreamMonitor
+	streamTrimmer   *streamTrimmer
+	snapshotTrimmer *snapshotTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -115,8 +124,7 @@ func NewPostgresStreamStore(
 	instanceId string,
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
-	ephemeralStreamTtl time.Duration,
-	streamMiniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
+	config crypto.OnChainConfiguration,
 	trimmingBatchSize int64,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
@@ -143,17 +151,39 @@ func NewPostgresStreamStore(
 	store.cleanupListenFunc = cancel
 	go store.listenForNewNodes(cancelCtx)
 
+	// Create shared worker pool for background workers
+	workerPool := workerpool.New(8)
+	go func() {
+		<-ctx.Done()
+		workerPool.Stop()
+	}()
+
 	// Start the ephemeral stream monitor.
-	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	store.esm, err = newEphemeralStreamMonitor(
+		ctx,
+		config.Get().StreamEphemeralStreamTTL,
+		store,
+	)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
 	// Start the stream trimmer
-	store.streamTrimmer, err = newStreamTrimmer(ctx, store, streamMiniblocksToKeep, trimmingBatchSize)
-	if err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
-	}
+	store.streamTrimmer = newStreamTrimmer(
+		ctx,
+		store,
+		workerPool,
+		config.Get().StreamTrimmingMiniblocksToKeep,
+		trimmingBatchSize,
+	)
+
+	// Start the snapshot trimmer
+	store.snapshotTrimmer = newSnapshotTrimmer(
+		ctx,
+		store,
+		workerPool,
+		config,
+	)
 
 	return store, nil
 }
@@ -1012,6 +1042,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
 	var miniblocks []*MiniblockDescriptor
 	if err := s.txRunner(
@@ -1020,7 +1051,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive)
+			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
 			return err
 		},
 		nil,
@@ -1040,15 +1071,23 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
+	var snapshotField string
+	if omitSnapshot {
+		snapshotField = "NULL as snapshot"
+	} else {
+		snapshotField = "snapshot"
+	}
+
 	miniblocksRow, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num",
+			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", snapshotField),
 			streamId,
 		),
 		fromInclusive,
@@ -1094,6 +1133,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 func (s *PostgresStreamStore) ReadMiniblocksByStream(
 	ctx context.Context,
 	streamId StreamId,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	return s.txRunner(
@@ -1101,7 +1141,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByStream(
 		"ReadMiniblocksByStream",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.readMiniblocksByStreamTx(ctx, tx, streamId, onEachMb)
+			return s.readMiniblocksByStreamTx(ctx, tx, streamId, omitSnapshot, onEachMb)
 		},
 		&txRunnerOpts{useStreamingPool: true},
 		"streamId", streamId,
@@ -1112,16 +1152,24 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
 	}
 
+	var snapshotField string
+	if omitSnapshot {
+		snapshotField = "NULL as snapshot"
+	} else {
+		snapshotField = "snapshot"
+	}
+
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num",
+			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num", snapshotField),
 			streamId,
 		),
 		streamId,
@@ -1152,6 +1200,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByIds(
 	ctx context.Context,
 	streamId StreamId,
 	mbs []int64,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	return s.txRunner(
@@ -1159,7 +1208,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByIds(
 		"ReadMiniblocksByIds",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.readMiniblocksByIdsTx(ctx, tx, streamId, mbs, onEachMb)
+			return s.readMiniblocksByIdsTx(ctx, tx, streamId, mbs, omitSnapshot, onEachMb)
 		},
 		&txRunnerOpts{useStreamingPool: true},
 		"streamId", streamId,
@@ -1172,6 +1221,7 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	mbs []int64,
+	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
 	_, err := s.lockStream(ctx, tx, streamId, false)
@@ -1179,10 +1229,17 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 		return err
 	}
 
+	var snapshotField string
+	if omitSnapshot {
+		snapshotField = "NULL as snapshot"
+	} else {
+		snapshotField = "snapshot"
+	}
+
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num",
+			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num", snapshotField),
 			streamId,
 		),
 		streamId,
@@ -1387,9 +1444,6 @@ func (s *PostgresStreamStore) getMiniblockCandidateCountTx(
 		streamId,
 		miniblockNumber,
 	).Scan(&count); err != nil {
-		// if errors.Is(err, pgx.ErrNoRows) {
-		// 	return 0, RiverError(Err_NOT_FOUND, "Miniblock candidate not found")
-		// }
 		return 0, err
 	}
 	return count, nil
@@ -1625,7 +1679,11 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 		// Let the stream trimmer know that a new snapshot miniblock was created.
 		if s.streamTrimmer != nil {
-			s.streamTrimmer.tryScheduleTrimming(ctx, tx, streamId)
+			s.streamTrimmer.tryScheduleTrimming(streamId)
+		}
+		// Let the snapshot trimmer know that a new snapshot miniblock was created.
+		if s.snapshotTrimmer != nil {
+			s.snapshotTrimmer.tryScheduleTrimming(streamId)
 		}
 	}
 
@@ -1689,6 +1747,9 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	}
 	if s.streamTrimmer != nil {
 		s.streamTrimmer.close()
+	}
+	if s.snapshotTrimmer != nil {
+		s.snapshotTrimmer.close()
 	}
 	s.PostgresEventStore.Close(ctx)
 }
@@ -2238,6 +2299,23 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	}
 
 	return maxSeqNum, nil
+}
+
+// getLowestStreamMiniblockTx retrieves the lowest miniblock number for a given stream
+func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (int64, error) {
+	var lowestMiniblock int64
+	err := tx.QueryRow(ctx,
+		s.sqlForStream(
+			`SELECT MIN(seq_num) FROM {{miniblocks}} WHERE stream_id = $1`,
+			streamId,
+		),
+		streamId,
+	).Scan(&lowestMiniblock)
+	return lowestMiniblock, err
 }
 
 func getCurrentNodeProcessInfo(currentSchemaName string) string {

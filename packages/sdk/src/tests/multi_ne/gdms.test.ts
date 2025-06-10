@@ -82,7 +82,7 @@ describe('gdmsTests', () => {
 
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, charliesClient.userId]),
             )
         })
@@ -133,9 +133,7 @@ describe('gdmsTests', () => {
         await expect(alicesClient.joinUser(streamId, chucksClient.userId)).resolves.not.toThrow()
         const stream = await chucksClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(
-                stream.view.getMembers().membership.joinedUsers.has(charliesClient.userId),
-            ).toEqual(true)
+            expect(stream.view.getMembers().joinedUsers.has(charliesClient.userId)).toEqual(true)
         })
     })
 
@@ -329,6 +327,13 @@ describe('gdmsTests', () => {
 
         // total memberships are now 6, joining another user should fail
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
+        // wait for 6 confirmed memberships, should only equal 6 after miniblock confirmation
+        // miniblocks should be properly replicated to all nodes
+        await waitFor(() => {
+            const stream = bobsClient.streams.get(streamId)
+            expect(stream?.view.getMembers().joinedUsers.size).toEqual(6)
+        })
+        // try to join the 7th user
         await expect(bobsClient.joinUser(streamId, chucksClient.userId)).rejects.toThrow(
             /membership limit reached[\s]+membershipLimit = 6/,
         )
@@ -344,7 +349,12 @@ describe('gdmsTests', () => {
             await client.initializeUser()
             await expect(bobsClient.joinUser(streamId, client.userId)).resolves.not.toThrow()
         }
-
+        // wait for 6 confirmed memberships, should only equal 6 after miniblock confirmation
+        // miniblocks should be properly replicated to all nodes
+        await waitFor(() => {
+            const stream = bobsClient.streams.get(streamId)
+            expect(stream?.view.getMembers().joinedUsers.size).toEqual(6)
+        })
         // total memberships are now 6, inviting another user should fail
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
         await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).rejects.toThrow(

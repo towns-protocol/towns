@@ -707,7 +707,12 @@ func (NoopChainMonitor) OnAllEvents(BlockNumber, OnChainEventCallback)          
 func (NoopChainMonitor) OnContractEvent(BlockNumber, common.Address, OnChainEventCallback) {}
 func (NoopChainMonitor) OnContractWithTopicsEvent(BlockNumber, common.Address, [][]common.Hash, OnChainEventCallback) {
 }
-func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback) {}
+func (NoopChainMonitor) OnNodeAdded(BlockNumber, OnNodeAddedCallback)                 {}
+func (NoopChainMonitor) OnNodeStatusUpdated(BlockNumber, OnNodeStatusUpdatedCallback) {}
+func (NoopChainMonitor) OnNodeUrlUpdated(BlockNumber, OnNodeUrlUpdatedCallback)       {}
+func (NoopChainMonitor) OnNodeRemoved(BlockNumber, OnNodeRemovedCallback)             {}
+func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback)                      {}
+func (NoopChainMonitor) EnableRiverRegistryCallbacks(common.Address)                  {}
 
 // TestMainForLeaksIgnoreGeth is a helper function to check if there are goroutine leaks.
 // It ignores goroutines created by Geth's simulated backend.

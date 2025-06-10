@@ -150,7 +150,7 @@ describe('ClientDecryptionExtensions', () => {
 
         await expect(alice2_restarted.waitForStream(streamId)).resolves.not.toThrow()
 
-        // she should have the keys because bob2 should share with existing memebers
+        // she should have the keys because bob2 should share with existing members
         await expect(
             waitForMessages(alice2_restarted, streamId, ['hello', 'whats up']),
         ).resolves.not.toThrow()
@@ -172,9 +172,9 @@ describe('ClientDecryptionExtensions', () => {
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
         await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
-        await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the messsage if bob isn't online to send keys
+        await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
-        await expect(waitForMessages(alice1, channelId, ['its alice'])).resolves.not.toThrow() // alice doesn't see the messsage if bob isn't online to send keys
+        await expect(waitForMessages(alice1, channelId, ['its alice'])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
 
         // bob comes back online, same device
         const bob1IsBack = await makeAndStartClient({

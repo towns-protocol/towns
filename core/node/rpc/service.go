@@ -55,7 +55,6 @@ type Service struct {
 
 	// Streams
 	cache       *StreamCache
-	mbProducer  TestMiniblockProducer
 	syncHandler river_sync.Handler
 
 	// Notifications

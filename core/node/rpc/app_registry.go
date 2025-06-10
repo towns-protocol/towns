@@ -14,6 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry"
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -79,6 +80,16 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		streamEventListener = opts.StreamEventListener
 	}
 
+	// If insecure webhook calls are desired, override the configured http client with an h2c client.
+	webhookHttpClient := httpClient
+	if s.config.AppRegistry.AllowInsecureWebhooks {
+		if webhookHttpClient, err = http_client.GetH2cHttpClient(s.serverCtx, s.config); err != nil {
+			return AsRiverError(err).Message("Failed to initialize webhook http client")
+		}
+		// Go routine clean-up of client connections on server shutdown.
+		s.onClose(webhookHttpClient.CloseIdleConnections)
+	}
+
 	if s.AppRegistryService, err = app_registry.NewService(
 		s.serverCtx,
 		s.config.AppRegistry,
@@ -88,7 +99,7 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		registries,
 		s.metrics,
 		streamEventListener,
-		httpClient,
+		webhookHttpClient,
 	); err != nil {
 		return AsRiverError(err).Message("Failed to instantiate app registry service").LogError(s.defaultLogger)
 	}

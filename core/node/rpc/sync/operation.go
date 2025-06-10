@@ -129,7 +129,7 @@ func (syncOp *StreamSyncOperation) Run(
 				reply: make(chan error, 1),
 			}
 			if err := syncOp.process(cmd); err != nil {
-				syncOp.log.Errorw("Unable to add initial sync position", "err", err)
+				syncOp.log.Errorw("Unable to add initial sync position", "error", err)
 			}
 		}()
 	}
@@ -165,7 +165,7 @@ func (syncOp *StreamSyncOperation) Run(
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
-					syncOp.log.Errorw("Unable to send sync stream update to client", "err", err)
+					syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
 					return err
 				}
 
@@ -443,7 +443,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 	case <-time.After(10 * time.Second):
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
 			Tags("syncId", syncOp.SyncID)
-		syncOp.log.Errorw("Sync operation command queue full", "err", err)
+		syncOp.log.Errorw("Sync operation command queue full", "error", err)
 		return err
 	case <-syncOp.ctx.Done():
 		return RiverError(Err_CANCELED, "sync operation cancelled").

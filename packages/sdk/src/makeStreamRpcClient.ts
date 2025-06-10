@@ -151,7 +151,8 @@ async function fetchMiniblocksFromRpc(
         if (!omitSnapshots && response.snapshots[unpackedMiniblockNum]) {
             parsedSnapshots[unpackedMiniblockNum] = (
                 await unpackSnapshot(
-                    unpackedMiniblock,
+                    unpackedMiniblock.events.at(-1)?.event,
+                    unpackedMiniblock.header.snapshotHash,
                     response.snapshots[unpackedMiniblockNum],
                     unpackEnvelopeOpts,
                 )

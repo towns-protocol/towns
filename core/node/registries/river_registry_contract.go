@@ -3,7 +3,6 @@ package registries
 import (
 	"context"
 	"math/big"
-	"slices"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -45,11 +44,15 @@ type RiverRegistryContract struct {
 	Settings *config.RiverRegistryConfig
 
 	errDecoder *crypto.EvmErrorDecoder
+
+	StreamUpdatedEventInfo                   *EventInfo
+	StreamLastMiniblockUpdateFailedEventInfo *EventInfo
 }
 
 type EventInfo struct {
 	Name  string
 	Maker func(*types.Log) any
+	Topic common.Hash
 }
 
 func initContract[T any](
@@ -103,6 +106,7 @@ func initContract[T any](
 				LogError(log)
 		}
 		eventSigs = append(eventSigs, ev.ID)
+		e.Topic = ev.ID
 		eventInfo[ev.ID] = e
 	}
 	return contract, abi, [][]common.Hash{eventSigs}, eventInfo, nil
@@ -141,35 +145,40 @@ func NewRiverRegistryContract(
 		blockchain.Client,
 		river.NodeRegistryV1MetaData,
 		[]*EventInfo{
-			{"NodeAdded", func(log *types.Log) any { return &river.NodeRegistryV1NodeAdded{Raw: *log} }},
-			{"NodeRemoved", func(log *types.Log) any { return &river.NodeRegistryV1NodeRemoved{Raw: *log} }},
+			{Name: "NodeAdded", Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeAdded{Raw: *log} }},
 			{
-				"NodeStatusUpdated",
-				func(log *types.Log) any { return &river.NodeRegistryV1NodeStatusUpdated{Raw: *log} },
+				Name:  "NodeRemoved",
+				Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeRemoved{Raw: *log} },
 			},
-			{"NodeUrlUpdated", func(log *types.Log) any { return &river.NodeRegistryV1NodeUrlUpdated{Raw: *log} }},
+			{
+				Name:  "NodeStatusUpdated",
+				Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeStatusUpdated{Raw: *log} },
+			},
+			{
+				Name:  "NodeUrlUpdated",
+				Maker: func(log *types.Log) any { return &river.NodeRegistryV1NodeUrlUpdated{Raw: *log} },
+			},
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	c.StreamUpdatedEventInfo = &EventInfo{
+		Name:  river.Event_StreamUpdated,
+		Maker: func(log *types.Log) any { return &river.StreamRegistryV1StreamUpdated{Raw: *log} },
+	}
+	c.StreamLastMiniblockUpdateFailedEventInfo = &EventInfo{
+		Name:  river.Event_StreamLastMiniblockUpdateFailed,
+		Maker: func(log *types.Log) any { return &river.StreamRegistryV1StreamLastMiniblockUpdateFailed{Raw: *log} },
+	}
 	c.StreamRegistry, c.StreamRegistryAbi, c.StreamEventTopics, c.StreamEventInfo, err = initContract(
 		ctx,
 		river.NewStreamRegistryV1,
 		cfg.Address,
 		blockchain.Client,
 		river.StreamRegistryV1MetaData,
-		[]*EventInfo{
-			{
-				river.Event_StreamUpdated,
-				func(log *types.Log) any { return &river.StreamRegistryV1StreamUpdated{Raw: *log} },
-			},
-			{
-				river.Event_StreamLastMiniblockUpdateFailed,
-				func(log *types.Log) any { return &river.StreamRegistryV1StreamLastMiniblockUpdateFailed{Raw: *log} },
-			},
-		},
+		[]*EventInfo{c.StreamUpdatedEventInfo, c.StreamLastMiniblockUpdateFailedEventInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -764,12 +773,8 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 		// only parse the new events (StreamUpdated + StreamLastMiniblockUpdateFailed) and ignore the old events.
 		// this allows the contract to be upgraded without breaking event parsing.
 		// TODO: remove wanted1/wanted2 check after smart contract has been upgraded and won't emit old event types.
-		wanted1 := common.HexToHash(
-			"0x378ece20ebca29c2f887798617154658265a73d80c84fad8c9c49639ffdb29bb",
-		) // StreamUpdated
-		wanted2 := common.HexToHash(
-			"0x75460fe319331413a18a82d99b07735cec53fa0c4061ada38c2141e331082afa",
-		) // StreamLastMiniblockUpdateFailed
+		wanted1 := c.StreamUpdatedEventInfo.Topic
+		wanted2 := c.StreamLastMiniblockUpdateFailedEventInfo.Topic
 
 		for _, l := range receipt.Logs {
 			if l.Topics[0] != wanted1 && l.Topics[0] != wanted2 {
@@ -869,9 +874,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-	river.NodeRegistryV1NodeRemoved |
-	river.NodeRegistryV1NodeStatusUpdated |
-	river.NodeRegistryV1NodeUrlUpdated
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -940,7 +945,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		func(ctx context.Context, log types.Log) {
 			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, &log)
 			if err != nil {
-				logging.FromCtx(ctx).Errorw("Failed to parse event", "err", err, "log", log)
+				logging.FromCtx(ctx).Errorw("Failed to parse event", "error", err, "log", log)
 				return
 			}
 			if event, ok := parsed.(*river.StreamRegistryV1StreamUpdated); ok {
@@ -964,6 +969,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 						logging.FromCtx(ctx).Errorw("Unknown stream updated reason type", "event", event)
 					}
 				}
+			} else if event, ok := parsed.(*river.StreamRegistryV1StreamLastMiniblockUpdateFailed); ok {
+				logging.FromCtx(ctx).Debugw("Stream last miniblock update failed", "event", event)
 			} else {
 				logging.FromCtx(ctx).Errorw("Unknown event type", "event", parsed)
 			}
@@ -971,14 +978,14 @@ func (c *RiverRegistryContract) OnStreamEvent(
 	return nil
 }
 
-func (c *RiverRegistryContract) FilterStreamEvents(
+func (c *RiverRegistryContract) FilterStreamUpdatedEvents(
 	ctx context.Context,
 	logs []*types.Log,
 ) (map[StreamId][]river.StreamUpdatedEvent, []error) {
 	ret := map[StreamId][]river.StreamUpdatedEvent{}
 	var finalErrs []error
 	for _, log := range logs {
-		if log.Address != c.Address || len(log.Topics) == 0 || !slices.Contains(c.StreamEventTopics[0], log.Topics[0]) {
+		if log.Address != c.Address || len(log.Topics) == 0 || log.Topics[0] != c.StreamUpdatedEventInfo.Topic {
 			continue
 		}
 

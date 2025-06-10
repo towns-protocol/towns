@@ -702,14 +702,28 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 		return false, err
 	}
 	if hasTransaction {
-		return false, RiverError(
-			Err_INVALID_ARGUMENT,
-			"duplicate transaction",
-			"streamId",
-			ru.params.streamView.StreamId(),
-			"transactionHash",
-			ru.transaction.GetReceipt().TransactionHash,
-		)
+		if ru.transaction.GetReceipt() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetReceipt().TransactionHash,
+			)
+		} else if ru.transaction.GetSolanaReceipt().GetTransaction() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetSolanaReceipt().GetTransaction().Signatures,
+			)
+		} else {
+			// should never happen
+			return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
+		}
 	}
 	return true, nil
 }
@@ -1460,7 +1474,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	}
 	// for joins and invites, require space membership
 	return &DerivedEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil),
+		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil, nil),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -1483,6 +1497,23 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 
 	if currentMembershipOp == ru.userMembership.Op {
 		return false, nil
+	}
+
+	if ru.userMembership.Reason != nil && *ru.userMembership.Reason != MembershipReason_MR_NONE {
+		// at this time, the only reasons are for the scrubber so we need to make sure the membership op is leave
+		if ru.userMembership.Op != MembershipOp_SO_LEAVE {
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"reasons should be undefined for non-leave events",
+				"op",
+				ru.userMembership.Op,
+			)
+		}
+		// reasons should only be set by the scrubber at this time
+		canAdd, err := ru.params.creatorIsValidNode()
+		if !canAdd || err != nil {
+			return false, err
+		}
 	}
 
 	switch currentMembershipOp {
@@ -1563,7 +1594,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId)
+	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId, nil)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
 	if err != nil {
 		return nil, err
@@ -1719,6 +1750,7 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 			*channelId,
 			&userId,
 			spaceId[:],
+			nil,
 		),
 	}, nil
 }

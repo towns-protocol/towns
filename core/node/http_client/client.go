@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,14 +26,14 @@ func getTLSConfig(ctx context.Context, getClientCert GetClientCertFunc) *tls.Con
 	// Load the system cert pool
 	sysCerts, err := x509.SystemCertPool()
 	if err != nil {
-		log.Warnw("getTLSConfig Error loading system certs", "err", err)
+		log.Warnw("getTLSConfig Error loading system certs", "error", err)
 		return nil
 	}
 
 	// Attempt to load ~/river-ca-cert.pem
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Warnw("getTLSConfig Failed to get user home directory:", "err", err)
+		log.Warnw("getTLSConfig Failed to get user home directory:", "error", err)
 		return nil
 	}
 	// TODO - hook this up to the config file
@@ -88,6 +89,19 @@ func GetHttp11Client(ctx context.Context) (*http.Client, error) {
 			TLSClientConfig:   getTLSConfig(ctx, nil),
 			ForceAttemptHTTP2: false,
 			TLSNextProto:      map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+		},
+	}, nil
+}
+
+func GetH2cHttpClient(ctx context.Context, cfg *config.Config) (*http.Client, error) {
+	// Define a custom HTTP/2 transport with h2c support
+	return &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// This bypasses TLS and just dials a plain TCP connection
+				return (&net.Dialer{}).DialContext(ctx, network, addr)
+			},
 		},
 	}, nil
 }

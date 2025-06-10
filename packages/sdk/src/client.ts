@@ -54,6 +54,7 @@ import {
     SessionKeysSchema,
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
+    InfoResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -81,7 +82,7 @@ import {
     type EncryptionDeviceInitOpts,
 } from '@towns-protocol/encryption'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
-import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
+import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -108,7 +109,7 @@ import {
 } from './id'
 import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
-import { IStreamStateView, StreamStateView } from './streamStateView'
+import { StreamStateView } from './streamStateView'
 import {
     make_UserMetadataPayload_Inception,
     make_ChannelPayload_Inception,
@@ -206,6 +207,7 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
+    readonly logId: string
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -234,7 +236,6 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
-    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -2153,6 +2154,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
         try {
@@ -2189,11 +2191,13 @@ export class Client
             this.opts?.unpackEnvelopeOpts,
         )
 
-        await this.persistenceStore.saveMiniblocks(
-            streamIdAsString(streamId),
-            miniblocks,
-            'backward',
-        )
+        if (opts?.skipPersistence !== true) {
+            await this.persistenceStore.saveMiniblocks(
+                streamIdAsString(streamId),
+                miniblocks,
+                'backward',
+            )
+        }
 
         return {
             terminus: terminus,
@@ -2271,7 +2275,7 @@ export class Client
      *     that are in the room but that have been blocked.
      */
     async getDevicesInStream(stream_id: string): Promise<UserDeviceCollection> {
-        let stream: IStreamStateView | undefined
+        let stream: StreamStateView | undefined
         stream = this.stream(stream_id)?.view
         if (!stream || !stream.isInitialized) {
             stream = await this.getStream(stream_id)
@@ -2281,15 +2285,9 @@ export class Client
             return {}
         }
         const members = Array.from(stream.getUsersEntitledToKeyExchange())
-        this.logCall(
-            `Encrypting for users (shouldEncryptForInvitedMembers:`,
-            members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
-        )
+        this.logInfo(`getDevicesInStream: downloading device info for: `, members.length)
         const info = await this.downloadUserDeviceInfo(members)
-        this.logCall(
-            'keys: ',
-            Object.keys(info).map((key) => `${key} (${info[key].length})`),
-        )
+        this.logCall('getDevicesInStream: done, keys.length ', Object.keys(info).length)
         return info
     }
 
@@ -2331,6 +2329,7 @@ export class Client
                 this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
+                { skipPersistence: true },
             )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
@@ -2475,15 +2474,8 @@ export class Client
             // if we had a localEventId, pass the last id so the ui can continue to update to the latest hash
             retryCount = retryCount ?? 0
 
-            if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
-                this.logInfo('RETRYING event after MINIBLOCK_TOO_NEW response', {
-                    syncStats: this.streams.stats(),
-                    retryCount,
-                    prevMiniblockHash,
-                    prevMiniblockNum,
-                })
-                await new Promise((resolve) => setTimeout(resolve, 1000))
-                return await this.makeEventWithHashAndAddToStream(
+            const makeRetry = async (prevMiniblockHash: Uint8Array, prevMiniblockNum: bigint) => {
+                return this.makeEventWithHashAndAddToStream(
                     streamId,
                     payload,
                     prevMiniblockHash,
@@ -2492,8 +2484,19 @@ export class Client
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
                     tags,
-                    retryCount + 1,
+                    (retryCount ?? 0) + 1,
                 )
+            }
+
+            if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
+                this.logInfo('RETRYING event after MINIBLOCK_TOO_NEW response', {
+                    syncStats: this.streams.stats(),
+                    retryCount,
+                    prevMiniblockHash,
+                    prevMiniblockNum,
+                })
+                await new Promise((resolve) => setTimeout(resolve, 1000))
+                return await makeRetry(prevMiniblockHash, prevMiniblockNum)
             } else if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH) && retryCount < 3) {
                 const expectedHash = getRpcErrorProperty(err, 'expected')
                 this.logInfo('RETRYING event after BAD_PREV_MINIBLOCK_HASH response', {
@@ -2505,17 +2508,29 @@ export class Client
                 check(isDefined(expectedHash), 'expected hash not found in error')
                 const expectedMiniblockNum = getRpcErrorProperty(err, 'expNum')
                 check(isDefined(expectedMiniblockNum), 'expected miniblock num not found in error')
-                return await this.makeEventWithHashAndAddToStream(
-                    streamId,
-                    payload,
+                return await makeRetry(
                     bin_fromHexString(expectedHash),
                     BigInt(expectedMiniblockNum),
-                    optional,
-                    isDefined(localId) ? eventId : undefined,
-                    cleartext,
-                    tags,
-                    retryCount + 1,
                 )
+            } else if (
+                // for blockchain transactions: if we get a permission denied error, and the error message contains 'Transaction has 0 confirmations',
+                // we need to retry the event, since the node is likely lagging behind, and waiting a few seconds will allow it to catch up
+                errorContains(err, Err.PERMISSION_DENIED) &&
+                (errorContainsMessage(err, 'Transaction has 0 confirmations.') ||
+                    errorContainsMessage(err, 'Transaction receipt not found')) &&
+                retryCount < 3
+            ) {
+                this.logInfo(
+                    'RETRYING event after PERMISSION_DENIED (transaction has 0 confirmations) response',
+                    {
+                        syncStats: this.streams.stats(),
+                        retryCount,
+                        prevMiniblockHash,
+                        prevMiniblockNum,
+                    },
+                )
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                return await makeRetry(prevMiniblockHash, prevMiniblockNum)
             } else {
                 if (localId) {
                     const stream = this.streams.get(streamId)
@@ -2727,20 +2742,23 @@ export class Client
         const sessionIds = sessions.map((session) => session.sessionId)
         const payload = makeSessionKeys(sessions)
         const payloadClearText = toJsonString(SessionKeysSchema, payload)
-        const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
+        const toDevicesEntries = Object.entries(toDevices)
+        const promises = toDevicesEntries.map(async ([userId, deviceKeys]) => {
             try {
                 const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logCall('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
-                this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
-                    toStreamId,
-                    deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
-                })
+                if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
+                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                        toStreamId,
+                        deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
+                    })
+                }
                 await this.makeEventWithHashAndAddToStream(
                     toStreamId,
                     make_UserInboxPayload_GroupEncryptionSessions({
@@ -2759,7 +2777,9 @@ export class Client
             }
         })
 
+        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
+        this.logInfo('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.
@@ -2798,10 +2818,15 @@ export class Client
 
     public async debugForceMakeMiniblock(
         streamId: string,
-        opts: { forceSnapshot?: boolean } = {},
-    ): Promise<void> {
-        await this.rpcClient.info({
-            debug: ['make_miniblock', streamId, opts.forceSnapshot === true ? 'true' : 'false'],
+        opts: { forceSnapshot?: boolean; lastKnownMiniblockNum?: bigint }, // call will error if current miniblock is less than or equal to lastKnownMiniblockNum
+    ): Promise<InfoResponse> {
+        return this.rpcClient.info({
+            debug: [
+                'make_miniblock',
+                streamId,
+                opts.forceSnapshot === true ? 'true' : 'false',
+                `${opts.lastKnownMiniblockNum ?? -1n}`,
+            ],
         })
     }
 
