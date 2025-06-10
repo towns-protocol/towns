@@ -516,12 +516,18 @@ export function appRegistryHash(
     const expirationBytes = bigIntToBytes(expiration)
     check(userId.length === 20, 'User ID should be 20 bytes')
     check(challenge.length === 16, 'Challenge should be 16 bytes')
-    return createHash('sha256')
-        .update(prefixBytes)
-        .update(userId)
-        .update(expirationBytes)
-        .update(challenge)
-        .digest()
+    const totalLength =
+        prefixBytes.length + userId.length + expirationBytes.length + challenge.length
+    const data = new Uint8Array(totalLength)
+    let offset = 0
+    data.set(prefixBytes, offset)
+    offset += prefixBytes.length
+    data.set(userId, offset)
+    offset += userId.length
+    data.set(expirationBytes, offset)
+    offset += expirationBytes.length
+    data.set(challenge, offset)
+    return sha256(data)
 }
 
 export async function riverSign(

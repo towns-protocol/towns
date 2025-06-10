@@ -3,13 +3,14 @@ import { type ConnectTransportOptions } from '@connectrpc/connect-web'
 import { AppRegistryService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
-import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
 import {
     DEFAULT_RETRY_PARAMS,
     loggingInterceptor,
     retryInterceptor,
     setHeaderInterceptor,
 } from './rpcInterceptors'
+import type { RpcOptions } from './rpcCommon'
+import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 
 const logInfo = dlog('csb:rpc:info')
 
