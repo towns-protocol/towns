@@ -148,7 +148,7 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { useModifySync?: boolean } | undefined,
+        private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -375,7 +375,12 @@ export class SyncedStreamsLoop {
                             {
                                 syncPos: syncCookies,
                             },
-                            { timeoutMs: -1 },
+                            {
+                                timeoutMs: -1,
+                                headers: this.streamOpts?.useSharedSyncer
+                                    ? { 'X-Use-Shared-Sync': 'true' }
+                                    : undefined,
+                            },
                         )
 
                         const iterator = streams[Symbol.asyncIterator]()

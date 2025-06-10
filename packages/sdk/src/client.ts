@@ -188,7 +188,7 @@ export type ClientOptions = {
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
-    streamOpts?: { useModifySync?: boolean }
+    streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
 }
 
 type SendChannelMessageOptions = {

@@ -515,6 +515,7 @@ func (s *Service) runHttpServer() error {
 			"Connect-Timeout-Ms",
 			"x-river-request-id",
 			"Authorization",
+			UseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
 		},
 	})
 
@@ -733,9 +734,11 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	}
 
 	s.syncHandler = sync.NewHandler(
+		s.serverCtx,
 		s.wallet.Address,
 		s.cache,
 		s.nodeRegistry,
+		s.metrics,
 		s.otelTracer,
 	)
 

@@ -300,6 +300,10 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
         persistenceStoreName: persistenceDbName,
+        streamOpts: {
+            useModifySync: true,
+            useSharedSyncer: true,
+        },
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
