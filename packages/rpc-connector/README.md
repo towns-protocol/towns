@@ -1,29 +1,7 @@
-# River-Build SDK
+# @towns-protocol/rpc-connector
 
-For more details, visit the following resources:
+This package is a wrapper around `@connectrpc/connect-node` and `@connectrpc/connect-web`.
+We need this wrapper so we can properly bundle SDK for the web and node, relying on `package.json` exports to solve the correct import path.
 
-River documentation: https://docs.towns.com/introduction
-River Messaging with encryption: https://docs.towns.com/concepts/encryption
-River Encryption protocol: https://docs.towns.com/build/towns-encryption
-GitHub repository: git+https://github.com/towns-protocol/towns.git
-bugs: https://github.com/towns-protocol/towns/issues
-
-# Debugging Tips
-
-## Logging
-
-Enabling logging for tests in the shell:
-
-    DEBUG=csb:* DEBUG_DEPTH=100 yarn test src/my.test.ts -t testCaseName
-
-To enabling debug logging in the browser, set var in console:
-
-    localStorage.debug = 'csb:*'
-
-## Inspecting Network Traffic
-
-Set this in console to switch encoding to JSON instead of binary:
-
-    localStorage.RIVER_DEBUG_TRANSPORT = 'true'
-
-Now in Network tab of the browser dev tool requests and responses are more readable.
+> [!IMPORTANT]  
+> This package require the caller to have `@connectrpc/connect-node` or `@connectrpc/connect-web` installed, depending on the environment.
