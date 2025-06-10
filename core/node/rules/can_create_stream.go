@@ -19,6 +19,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+type NodeRegistryChecks interface {
+	IsOperator(address common.Address) bool
+}
+
 type csParams struct {
 	ctx                   context.Context
 	cfg                   *config.Config
@@ -31,6 +35,7 @@ type csParams struct {
 	creatorAddress        []byte
 	creatorUserId         string
 	creatorUserStreamId   shared.StreamId
+	nodeRegistryChecks    NodeRegistryChecks
 }
 
 type csSpaceRules struct {
@@ -108,6 +113,7 @@ func CanCreateStream(
 	streamId shared.StreamId,
 	parsedEvents []*events.ParsedEvent,
 	requestMetadata map[string][]byte,
+	nodeRegistryChecks NodeRegistryChecks,
 ) (*CreateStreamRules, error) {
 	if len(parsedEvents) == 0 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
@@ -175,6 +181,7 @@ func CanCreateStream(
 		creatorAddress:        creatorAddress,
 		creatorUserId:         creatorUserId,
 		creatorUserStreamId:   creatorUserStreamId,
+		nodeRegistryChecks:    nodeRegistryChecks,
 	}
 
 	builder := r.canCreateStream()
@@ -430,16 +437,7 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 }
 
 func (ru *csParams) creatorIsOperator() error {
-	if len(ru.parsedEvents) < min || len(ru.parsedEvents) > max {
-		return RiverError(
-			Err_BAD_STREAM_CREATION_PARAMS,
-			"bad event count",
-			"count",
-			len(ru.parsedEvents),
-			"minExpectedCount", min, "maxExpectedCount", max,
-		)
-	}
-	return nil
+	
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {

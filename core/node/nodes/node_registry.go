@@ -34,6 +34,8 @@ type NodeRegistry interface {
 	GetValidNodeAddresses() []common.Address
 
 	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
+
+	IsOperator(address common.Address) bool
 }
 
 type nodeRegistryImpl struct {
@@ -360,4 +362,10 @@ func (n *nodeRegistryImpl) ChooseStreamNodes(
 	}
 
 	return nil, RiverError(Err_INTERNAL, "ChooseStreamNodes: should not happen")
+}
+
+func (n *nodeRegistryImpl) IsOperator(address common.Address) bool {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.operatorsLocked[address]
 }
