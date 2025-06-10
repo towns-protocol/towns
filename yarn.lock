@@ -964,7 +964,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/types@npm:^7.27.3, @babel/types@npm:^7.27.6":
+"@babel/types@npm:^7.27.3":
   version: 7.27.6
   resolution: "@babel/types@npm:7.27.6"
   dependencies:
@@ -5228,13 +5228,13 @@ __metadata:
   linkType: hard
 
 "@napi-rs/wasm-runtime@npm:^0.2.10":
-  version: 0.2.11
-  resolution: "@napi-rs/wasm-runtime@npm:0.2.11"
+  version: 0.2.10
+  resolution: "@napi-rs/wasm-runtime@npm:0.2.10"
   dependencies:
     "@emnapi/core": ^1.4.3
     "@emnapi/runtime": ^1.4.3
     "@tybys/wasm-util": ^0.9.0
-  checksum: 7c614625784ab467cc7b36b4d7384854891469d0ddce8ca831d28b2abdf8cb3f014d8e8a181c98000719effb46950ab9134b245ab9a8044ad7a7da725b40f858
+  checksum: e061701989eebecc004702a18a6913a574a7890899c0d2bc83162088e8cad48ecd596ed9106c7cc42f26fb80b403b7c4c418c8403c288de4c00460378d3963c2
   languageName: node
   linkType: hard
 
@@ -9102,6 +9102,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/playground@workspace:packages/playground"
   dependencies:
+    "@connectrpc/connect-web": ^2.0.0
     "@emoji-mart/data": ^1.1.2
     "@hookform/resolvers": ^3.6.0
     "@radix-ui/react-dialog": ^1.1.1
@@ -9224,6 +9225,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@towns-protocol/rpc-connector@workspace:^, @towns-protocol/rpc-connector@workspace:packages/rpc-connector":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/rpc-connector@workspace:packages/rpc-connector"
+  dependencies:
+    "@connectrpc/connect": ^2.0.0
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    eslint-plugin-tsdoc: ^0.3.0
+    tsdown: ^0.12.3
+    typescript: ^5.8.2
+    vitest: 3.2.3
+  peerDependencies:
+    "@connectrpc/connect-node": ">=2.0.0"
+    "@connectrpc/connect-web": ">=2.0.0"
+  peerDependenciesMeta:
+    "@connectrpc/connect-node":
+      optional: true
+    "@connectrpc/connect-web":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/sdk-crypto@workspace:^, @towns-protocol/sdk-crypto@workspace:packages/sdk-crypto":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/sdk-crypto@workspace:packages/sdk-crypto"
@@ -9252,7 +9279,6 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect": ^2.0.0
-    "@connectrpc/connect-node": ^2.0.0
     "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^10.0.0
     "@noble/curves": ^1.9.1
@@ -9261,6 +9287,7 @@ __metadata:
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/debug": ^4.1.8
@@ -9301,6 +9328,7 @@ __metadata:
     "@aws-sdk/client-cloudfront": ^3.645.0
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@fastify/cors": ^11.0.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
@@ -9345,6 +9373,7 @@ __metadata:
   dependencies:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
@@ -27470,12 +27499,12 @@ __metadata:
   linkType: hard
 
 "rolldown-plugin-dts@npm:^0.13.8":
-  version: 0.13.9
-  resolution: "rolldown-plugin-dts@npm:0.13.9"
+  version: 0.13.8
+  resolution: "rolldown-plugin-dts@npm:0.13.8"
   dependencies:
     "@babel/generator": ^7.27.5
     "@babel/parser": ^7.27.5
-    "@babel/types": ^7.27.6
+    "@babel/types": ^7.27.3
     ast-kit: ^2.1.0
     birpc: ^2.3.0
     debug: ^4.4.1
@@ -27493,7 +27522,7 @@ __metadata:
       optional: true
     vue-tsc:
       optional: true
-  checksum: a541b414db042dcbf45d4dc73172bacec469e68c90da44e168b4d0488da68add6317c8ce35ee55f47e8573ddefcc07caa858523c8b39e7a04c12dcb3c193a0e2
+  checksum: e13fe745947384e3488dca55ceba27bfaa38c72b3d8c3fae2c767836da53d2943e9947a0904968bd6460ec40c8fb9487aa548bbebdba34d8d2a76702fed536cf
   languageName: node
   linkType: hard
 
