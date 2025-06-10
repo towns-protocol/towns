@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk",
-    "version": "0.0.239",
+    "version": "0.0.242",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -29,7 +29,7 @@
         "@connectrpc/connect": "^2.0.0",
         "@connectrpc/connect-node": "^2.0.0",
         "@connectrpc/connect-web": "^2.0.0",
-        "@ethereumjs/util": "^8.0.1",
+        "@ethereumjs/util": "^10.0.0",
         "@noble/curves": "^1.9.1",
         "@noble/hashes": "^1.8.0",
         "@towns-protocol/dlog": "workspace:^",
@@ -45,7 +45,7 @@
         "lodash": "^4.17.21",
         "nanoid": "^4.0.0",
         "p-limit": "^6.1.0",
-        "vitest": "3.0.5"
+        "vitest": "3.2.3"
     },
     "devDependencies": {
         "@types/debug": "^4.1.8",
