@@ -80,8 +80,8 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 				return nil
 			}
 
-			if syncOp.messageBufferSizePerOpHistogram != nil {
-				syncOp.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(len(msgs)))
+			if syncOp.metrics != nil {
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(len(msgs)))
 			}
 
 			for i, msg := range msgs {

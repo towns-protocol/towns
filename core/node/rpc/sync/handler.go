@@ -6,7 +6,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -82,12 +81,8 @@ type (
 		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
-		// metrics is the metrics factory used to create Prometheus metrics.
-		metrics                         infra.MetricsFactory
-		failedSyncOpsCounter            *prometheus.CounterVec
-		syncingStreamsPerOpCounter      *prometheus.GaugeVec
-		messageBufferSizePerOpHistogram *prometheus.HistogramVec
-		sentMessagesCounter             *prometheus.CounterVec
+		// metrics is the set of metrics used to track sync operations
+		metrics *syncMetrics
 	}
 )
 
@@ -113,10 +108,9 @@ func NewHandler(
 		nodeRegistry:         nodeRegistry,
 		activeSyncOperations: xsync.NewMap[string, *StreamSyncOperation](),
 		subscriptionManager:  subscription.NewManager(ctx, nodeAddr, cache, nodeRegistry, otelTracer),
-		metrics:              metrics,
 		otelTracer:           otelTracer,
 	}
-	h.setupSyncMetrics()
+	h.setupSyncMetrics(metrics)
 	return h
 }
 
@@ -134,9 +128,7 @@ func (h *handlerImpl) SyncStreams(
 		h.nodeRegistry,
 		h.subscriptionManager,
 		h.otelTracer,
-		h.messageBufferSizePerOpHistogram,
-		h.sentMessagesCounter,
-		h.syncingStreamsPerOpCounter,
+		h.metrics,
 	)
 	if err != nil {
 		return err
@@ -161,7 +153,7 @@ func (h *handlerImpl) SyncStreams(
 
 	err = <-doneChan
 	if err != nil {
-		h.failedSyncOpsCounter.WithLabelValues(
+		h.metrics.failedSyncOpsCounter.WithLabelValues(
 			req.Header().Get(UseSharedSyncHeaderName),
 			AsRiverError(err).Code.String(),
 		).Inc()

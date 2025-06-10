@@ -2,32 +2,43 @@ package sync
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/towns-protocol/towns/core/node/infra"
 )
+
+// syncMetrics contains the Prometheus metrics for the sync handler.
+type syncMetrics struct {
+	failedSyncOpsCounter            *prometheus.CounterVec
+	syncingStreamsPerOpCounter      *prometheus.GaugeVec
+	messageBufferSizePerOpHistogram *prometheus.HistogramVec
+	sentMessagesCounter             *prometheus.CounterVec
+}
 
 // setupSyncMetrics initializes the Prometheus metrics for the sync handler.
 // TODO: Consider adding more metrics as needed for better observability.
-func (h *handlerImpl) setupSyncMetrics() {
-	h.failedSyncOpsCounter = h.metrics.NewCounterVecEx(
-		"stream_sync_failed_ops_counter",
-		"Total number of failed stream sync operations",
-		"use_shared_sync", "river_error",
-	)
-	h.syncingStreamsPerOpCounter = h.metrics.NewGaugeVecEx(
-		"stream_sync_syncing_streams_per_op_counter",
-		"Number of streams being synced per sync operation",
-		"sync_id",
-	)
-	h.messageBufferSizePerOpHistogram = h.metrics.NewHistogramVecEx(
-		"stream_sync_messages_buffer",
-		"Size of the message buffer per sync operation",
-		[]float64{250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2500},
-		"use_shared_sync",
-	)
-	h.sentMessagesCounter = h.metrics.NewCounterVecEx(
-		"stream_sync_sent_messages_counter",
-		"Total number of messages sent to the client per sync operation",
-		"use_shared_sync", "sync_id",
-	)
+func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
+	h.metrics = &syncMetrics{
+		failedSyncOpsCounter: metrics.NewCounterVecEx(
+			"stream_sync_failed_ops_counter",
+			"Total number of failed stream sync operations",
+			"use_shared_sync", "river_error",
+		),
+		syncingStreamsPerOpCounter: metrics.NewGaugeVecEx(
+			"stream_sync_syncing_streams_per_op_counter",
+			"Number of streams being synced per sync operation",
+			"sync_id",
+		),
+		messageBufferSizePerOpHistogram: metrics.NewHistogramVecEx(
+			"stream_sync_messages_buffer",
+			"Size of the message buffer per sync operation",
+			[]float64{250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2500},
+			"use_shared_sync",
+		),
+		sentMessagesCounter: metrics.NewCounterVecEx(
+			"stream_sync_sent_messages_counter",
+			"Total number of messages sent to the client per sync operation",
+			"use_shared_sync", "sync_id",
+		),
+	}
 
 	// Metrics for numeric values
 	numericMetrics := []struct {
@@ -53,7 +64,7 @@ func (h *handlerImpl) setupSyncMetrics() {
 		// TODO: Total number of syncing streams of all active sync operations - legacy sync
 	}
 	for _, metric := range numericMetrics {
-		h.metrics.NewGaugeFunc(
+		metrics.NewGaugeFunc(
 			prometheus.GaugeOpts{
 				Name: metric.name,
 				Help: metric.help,

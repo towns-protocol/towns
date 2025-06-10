@@ -150,7 +150,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		node1.service.cache,
 		node1.service.nodeRegistry,
 		subscription.NewManager(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil),
-		nil, nil, nil, nil,
+		nil, nil,
 	)
 	req.NoError(err, "NewStreamsSyncOperation")
 

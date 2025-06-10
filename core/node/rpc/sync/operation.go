@@ -7,7 +7,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -47,12 +46,8 @@ type (
 		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
-		// messageBufferSizePerOpHistogram is a Prometheus histogram that tracks the size of the message buffer
-		messageBufferSizePerOpHistogram *prometheus.HistogramVec
-		// sentMessagesCounter is a Prometheus counter that tracks the number of messages sent to the client
-		sentMessagesCounter *prometheus.CounterVec
-		// syncingStreamsPerOpCounter is a Prometheus counter that tracks the number of streams being synced
-		syncingStreamsPerOpCounter *prometheus.GaugeVec
+		// metrics is the set of metrics used to track sync operations
+		metrics *syncMetrics
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -85,29 +80,25 @@ func NewStreamsSyncOperation(
 	nodeRegistry nodes.NodeRegistry,
 	subscriptionManager *subscription.Manager,
 	otelTracer trace.Tracer,
-	messageBufferSizePerOpHistogram *prometheus.HistogramVec,
-	sentMessagesCounter *prometheus.CounterVec,
-	syncingStreamsPerOpCounter *prometheus.GaugeVec,
+	metrics *syncMetrics,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
 	log := logging.FromCtx(syncOpCtx).With("syncId", syncId, "node", node)
 
 	return &StreamSyncOperation{
-		log:                             log,
-		rootCtx:                         ctx,
-		ctx:                             syncOpCtx,
-		cancel:                          cancel,
-		SyncID:                          syncId,
-		thisNodeAddress:                 node,
-		commands:                        make(chan *subCommand, 64),
-		streamCache:                     streamCache,
-		nodeRegistry:                    nodeRegistry,
-		subscriptionManager:             subscriptionManager,
-		otelTracer:                      otelTracer,
-		messageBufferSizePerOpHistogram: messageBufferSizePerOpHistogram,
-		sentMessagesCounter:             sentMessagesCounter,
-		syncingStreamsPerOpCounter:      syncingStreamsPerOpCounter,
+		log:                 log,
+		rootCtx:             ctx,
+		ctx:                 syncOpCtx,
+		cancel:              cancel,
+		SyncID:              syncId,
+		thisNodeAddress:     node,
+		commands:            make(chan *subCommand, 64),
+		streamCache:         streamCache,
+		nodeRegistry:        nodeRegistry,
+		subscriptionManager: subscriptionManager,
+		otelTracer:          otelTracer,
+		metrics:             metrics,
 	}, nil
 }
 
@@ -157,8 +148,8 @@ func (syncOp *StreamSyncOperation) Run(
 
 	var messagesSendToClient int
 	defer func() {
-		if syncOp.sentMessagesCounter != nil {
-			syncOp.sentMessagesCounter.DeleteLabelValues("true", syncOp.SyncID)
+		if syncOp.metrics != nil {
+			syncOp.metrics.sentMessagesCounter.DeleteLabelValues("true", syncOp.SyncID)
 		}
 		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 	}()
@@ -185,8 +176,8 @@ func (syncOp *StreamSyncOperation) Run(
 				return nil
 			}
 
-			if syncOp.messageBufferSizePerOpHistogram != nil {
-				syncOp.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(len(msgs)))
+			if syncOp.metrics != nil {
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(len(msgs)))
 			}
 
 			for i, msg := range msgs {
@@ -197,8 +188,8 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 
 				messagesSendToClient++
-				if syncOp.sentMessagesCounter != nil {
-					syncOp.sentMessagesCounter.WithLabelValues("true", syncOp.SyncID).Inc()
+				if syncOp.metrics != nil {
+					syncOp.metrics.sentMessagesCounter.WithLabelValues("true", syncOp.SyncID).Inc()
 				}
 
 				syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
@@ -297,8 +288,8 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 			Func("AddStreamToSync")
 	}
 
-	if syncOp.syncingStreamsPerOpCounter != nil {
-		syncOp.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(1)
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(1)
 	}
 
 	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
@@ -345,8 +336,8 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 			Func("RemoveStreamFromSync")
 	}
 
-	if syncOp.syncingStreamsPerOpCounter != nil {
-		syncOp.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Sub(1)
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Sub(1)
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
@@ -405,9 +396,9 @@ func (syncOp *StreamSyncOperation) ModifySync(
 		return nil, err
 	}
 
-	if syncOp.syncingStreamsPerOpCounter != nil {
+	if syncOp.metrics != nil {
 		diff := len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())
-		syncOp.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(float64(diff))
+		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(float64(diff))
 	}
 
 	return resp, nil
