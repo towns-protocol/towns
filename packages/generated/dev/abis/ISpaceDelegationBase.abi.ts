@@ -82,6 +82,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "SpaceDelegation__NotSpaceMember",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SpaceDelegation__NotSpaceOwner",
     "inputs": []
   }

@@ -10,6 +10,7 @@ interface ISpaceDelegationBase {
     error SpaceDelegation__InvalidOperator();
     error SpaceDelegation__InvalidSpace();
     error SpaceDelegation__NotSpaceOwner();
+    error SpaceDelegation__NotSpaceMember();
     error SpaceDelegation__AlreadyDelegated(address operator);
     error SpaceDelegation__NotDelegated();
     error SpaceDelegation__InvalidStakeRequirement();
