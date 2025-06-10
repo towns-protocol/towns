@@ -24,28 +24,12 @@ export default ({ mode }: { mode: string }) => {
         plugins: [
             wasm(),
             tsconfigPaths(),
-            replaceCodePlugin({
-                replacements: [
-                    {
-                        from: `if ((crypto && crypto.getRandomValues) || !process.browser) {
-  exports.randomFill = randomFill
-  exports.randomFillSync = randomFillSync
-} else {
-  exports.randomFill = oldBrowser
-  exports.randomFillSync = oldBrowser
-}`,
-                        to: `exports.randomFill = randomFill
-exports.randomFillSync = randomFillSync`,
-                    },
-                ],
-            }),
             checker({
                 typescript: true,
                 eslint: {
                     lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
                 },
             }),
-            nodePolyfills(),
             react(),
         ],
         resolve: {
