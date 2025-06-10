@@ -137,6 +137,48 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.addSpaceDelegation(space, operator2);
     }
 
+    function test_addSpaceDelegation_revertIf_memberCannotRedelegateAfterOwnerRemoval(
+        address member
+    ) public assumeEOA(member) {
+        // Member should not be the space owner
+        vm.assume(member != deployer);
+
+        // Deploy an "everyone" space that allows anyone to join
+        address everyoneSpace = deployEveryoneSpace(deployer);
+
+        // Make the fuzzed address a member by joining the space
+        vm.prank(member);
+        IMembership(everyoneSpace).joinSpace(member);
+
+        // Owner delegates first
+        vm.prank(deployer);
+        spaceDelegationFacet.addSpaceDelegation(everyoneSpace, OPERATOR);
+
+        // Owner removes delegation
+        vm.prank(deployer);
+        spaceDelegationFacet.removeSpaceDelegation(everyoneSpace);
+
+        // Verify space is no longer delegated
+        address currentOperator = spaceDelegationFacet.getSpaceDelegation(everyoneSpace);
+        assertEq(currentOperator, address(0), "Space should not be delegated after removal");
+
+        // Create second operator
+        address operator2 = makeAddr("operator2");
+        setOperator(operator2, 5000);
+
+        // Member should NOT be able to redelegate after owner explicitly removed delegation
+        vm.expectRevert(SpaceDelegation__NotSpaceOwner.selector);
+        vm.prank(member);
+        spaceDelegationFacet.addSpaceDelegation(everyoneSpace, operator2);
+
+        // But owner should still be able to redelegate
+        vm.prank(deployer);
+        spaceDelegationFacet.addSpaceDelegation(everyoneSpace, operator2);
+
+        address finalOperator = spaceDelegationFacet.getSpaceDelegation(everyoneSpace);
+        assertEq(finalOperator, operator2, "Owner should be able to redelegate");
+    }
+
     function test_fuzz_addSpaceDelegation(
         address operator,
         uint256 commissionRate
