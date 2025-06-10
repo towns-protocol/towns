@@ -14,11 +14,13 @@
         ".": {
             "import": {
                 "node": "./dist/node/index.js",
+                "browser": "./dist/web/index.js",
                 "default": "./dist/web/index.js"
             },
             "require": {
                 "node": "./dist/node/index.cjs",
-                "default": "./dist/node/index.cjs"
+                "browser": "./dist/web/index.cjs",
+                "default": "./dist/web/index.cjs"
             }
         },
         "./common": {

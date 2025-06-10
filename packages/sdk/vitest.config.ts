@@ -16,7 +16,7 @@ export default mergeConfig(
         },
         // This instructs Vitest to not use "node" field from package.json exports
         resolve: {
-            conditions: ['browser', 'module', 'import', 'default'],
+            conditions: ['browser'],
         },
     }),
 )
