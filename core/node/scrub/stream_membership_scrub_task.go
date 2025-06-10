@@ -131,7 +131,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processSpaceMemberImpl(
 	}
 
 	// In the case that the user is not entitled, they must have lost their entitlement
-	// after joining the channel, so let's go ahead and boot them.
+	// after joining the space, so let's go ahead and boot them.
 	if !isEntitledResult.IsEntitled() {
 		tp.entitlementLosses.Inc()
 
