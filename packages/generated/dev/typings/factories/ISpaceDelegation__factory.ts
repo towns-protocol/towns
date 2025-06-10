@@ -205,6 +205,11 @@ const _abi = [
     name: "SpaceDelegation__NotDelegated",
     inputs: [],
   },
+  {
+    type: "error",
+    name: "SpaceDelegation__NotSpaceOwner",
+    inputs: [],
+  },
 ] as const;
 
 export class ISpaceDelegation__factory {

@@ -193,5 +193,10 @@ export default [
     "type": "error",
     "name": "SpaceDelegation__NotDelegated",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SpaceDelegation__NotSpaceOwner",
+    "inputs": []
   }
 ] as const

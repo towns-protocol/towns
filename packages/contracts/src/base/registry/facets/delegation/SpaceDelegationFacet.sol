@@ -29,7 +29,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
     modifier onlySpaceOwner(address space) {
         if (!_isValidSpace(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
-        if (!_isValidSpaceOwner(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
+        if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
         _;
     }
 
