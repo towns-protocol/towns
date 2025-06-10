@@ -6,6 +6,7 @@ export default mergeConfig(
     defineConfig({
         test: {
             environment: 'happy-dom',
+            name: 'multi_legacy',
             env: {
                 USE_LEGACY_SPACES: 'true',
                 RIVER_ENV: 'local_multi',
@@ -15,9 +16,11 @@ export default mergeConfig(
             testTimeout: 120_000,
             setupFiles: './vitest.setup.ts',
         },
-        // This instructs Vitest to not use "node" field from package.json exports
         resolve: {
             conditions: ['browser'],
+            alias: {
+                '@connectrpc/connect-node': '@connectrpc/connect-web',
+            },
         },
     }),
 )
