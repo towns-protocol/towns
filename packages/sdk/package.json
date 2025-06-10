@@ -48,7 +48,6 @@
         "vitest": "3.2.3"
     },
     "devDependencies": {
-        "@connectrpc/connect-node": "^2.0.0",
         "@connectrpc/connect-web": "^2.0.0",
         "@types/debug": "^4.1.8",
         "@types/lodash": "^4.14.186",
