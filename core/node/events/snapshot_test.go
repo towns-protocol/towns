@@ -3,6 +3,7 @@ package events
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -55,7 +56,7 @@ func make_User_Membership(
 		Make_UserPayload_Membership(
 			membershipOp,
 			streamId,
-			nil,
+			common.Address{},
 			nil,
 			nil,
 		),
