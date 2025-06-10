@@ -69,10 +69,10 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
         // only owner can change delegation if already delegated
         if (currentOperator != address(0)) {
             // Space is already delegated, only owner can change delegation
-            if (!_isValidSpaceOwner(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
+            if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
         } else {
             // Space is not delegated, only members can delegate
-            if (!_isValidSpaceMember(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
+            if (!_isValidSpaceMember(space)) SpaceDelegation__NotSpaceMember.selector.revertWith();
         }
 
         NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();

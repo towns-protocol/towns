@@ -112,7 +112,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
             "Non-member should have no tokens"
         );
 
-        vm.expectRevert(SpaceDelegation__InvalidSpace.selector);
+        vm.expectRevert(SpaceDelegation__NotSpaceMember.selector);
         vm.prank(nonMember);
         spaceDelegationFacet.addSpaceDelegation(everyoneSpace, OPERATOR);
     }
@@ -132,7 +132,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         setOperator(operator2, 5000);
 
         // Non-owner should not be able to change delegation
-        vm.expectRevert(SpaceDelegation__InvalidSpace.selector);
+        vm.expectRevert(SpaceDelegation__NotSpaceOwner.selector);
         vm.prank(nonOwner);
         spaceDelegationFacet.addSpaceDelegation(space, operator2);
     }
