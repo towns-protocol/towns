@@ -269,6 +269,10 @@ function toTownsContent_fromParsedEvent(
                 message.event.payload.value,
                 description,
             )
+        case 'metadataPayload':
+            return {
+                error: `${description} metadataPayload not supported for timeline events`,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
