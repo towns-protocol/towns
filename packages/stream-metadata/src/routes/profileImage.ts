@@ -13,6 +13,7 @@ const paramsSchema = z.object({
 	userId: z.string().min(1, 'userId parameter is required').refine(isValidEthereumAddress, {
 		message: 'Invalid userId',
 	}),
+	size: z.enum(['thumbnail', 'small', 'medium', 'original']).optional().default('original'),
 })
 
 const CACHE_CONTROL = {
@@ -36,9 +37,9 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			.send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	const { userId } = parseResult.data
+	const { userId, size } = parseResult.data
 
-	logger.info({ userId }, 'Fetching user image')
+	logger.info({ userId, size }, 'Fetching user image')
 	let stream: StreamStateView | undefined
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
