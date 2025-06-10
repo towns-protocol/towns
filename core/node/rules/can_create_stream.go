@@ -428,7 +428,10 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 }
 
 func (ru *csParams) creatorIsOperator() error {
-	
+	if ru.nodeRegistryChecks.IsOperator(ru.creatorAddress) {
+		return nil
+	}
+	return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator is not an operator", "creator", ru.creatorAddress)
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
