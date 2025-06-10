@@ -149,7 +149,10 @@ describe('syncWithBlocks', () => {
             {
                 syncPos: [channel.stream!.nextSyncCookie!],
             },
-            { timeoutMs: -1 },
+            {
+                timeoutMs: -1,
+                headers: { 'X-Use-Shared-Sync': 'true' },
+            },
         )
 
         // If there is a message, next expect a miniblock header, and vise versa.

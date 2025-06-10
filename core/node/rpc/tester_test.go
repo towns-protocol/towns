@@ -824,12 +824,14 @@ func (tc *testClient) syncChannel(cookie *SyncCookie) {
 		return
 	}
 
-	_, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
+	resp, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
 		SyncId:     tc.SyncID(),
 		AddStreams: []*SyncCookie{cookie},
 	}))
-
 	tc.require.NoError(err)
+	tc.require.Len(resp.Msg.GetBackfills(), 0)
+	tc.require.Len(resp.Msg.GetAdds(), 0)
+	tc.require.Len(resp.Msg.GetRemovals(), 0)
 }
 
 func (tc *testClient) syncChannelFromInit(streamId StreamId) {
@@ -846,7 +848,11 @@ func (tc *testClient) startSync() {
 		return
 	}
 
-	updates, err := tc.client.SyncStreams(tc.ctx, connect.NewRequest(&SyncStreamsRequest{}))
+	// TODO: Remove after removing the legacy syncer
+	req := connect.NewRequest(&SyncStreamsRequest{})
+	req.Header().Set(UseSharedSyncHeaderName, "true")
+
+	updates, err := tc.client.SyncStreams(tc.ctx, req)
 	tc.require.NoError(err)
 
 	if updates.Receive() {
@@ -1793,14 +1799,14 @@ func (tcs testClients) compareNowImpl(
 				clientUpdate := clientUpdates[j]
 
 				success = success && assert.Equal(
-					first.GetSyncOp(), clientUpdates[i].GetSyncOp(),
+					first.GetSyncOp(), clientUpdate.GetSyncOp(),
 					"sync op not matching [%d:%d]: %s / %s",
 					i+1, j,
 					first.GetSyncOp(),
 					clientUpdate.GetSyncOp())
 
 				success = success && assert.Equal(
-					first.GetStreamId(), clientUpdates[i].GetStreamId(),
+					first.GetStreamId(), clientUpdate.GetStreamId(),
 					"different stream id [%d:%d]: %x / %x",
 					i+1, j,
 					first.GetStreamId(),

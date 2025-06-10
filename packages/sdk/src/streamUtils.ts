@@ -67,6 +67,8 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
             return direction === 'forward' ? true : false
         case 'userInboxPayload':
             return direction === 'forward' ? true : false
+        case 'metadataPayload':
+            return false
         case undefined:
             return false
         default:
