@@ -15,5 +15,9 @@ export default mergeConfig(
             testTimeout: 120_000,
             setupFiles: './vitest.setup.ts',
         },
+        // This instructs Vitest to not use "node" field from package.json exports
+        resolve: {
+            conditions: ['browser'],
+        },
     }),
 )
