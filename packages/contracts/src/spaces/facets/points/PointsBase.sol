@@ -6,17 +6,19 @@ import {ITownsPoints} from "../../../airdrop/points/ITownsPoints.sol";
 import {IImplementationRegistry} from "../../../factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
+import {MembershipStorage} from "../membership/MembershipStorage.sol";
 
 // contracts
-import {MembershipBase} from "../membership/MembershipBase.sol";
 
 /// @notice Base contract for interacting with the TownsPoints contract
-abstract contract PointsBase is MembershipBase {
+abstract contract PointsBase {
     /// @dev The implementation ID for the TownsPoints contract
     bytes32 internal constant AIRDROP_DIAMOND = bytes32("RiverAirdrop");
 
     function _getAirdropDiamond() internal view returns (address) {
-        return IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(AIRDROP_DIAMOND);
+        return
+            IImplementationRegistry(MembershipStorage.layout().spaceFactory)
+                .getLatestImplementation(AIRDROP_DIAMOND);
     }
 
     function _getPoints(

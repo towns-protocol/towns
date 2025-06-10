@@ -11,8 +11,6 @@ import {ISwapFacet} from "./ISwapFacet.sol";
 // libraries
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
-import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
-import {MembershipBase} from "../membership/MembershipBase.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {SwapFacetStorage} from "./SwapFacetStorage.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -25,14 +23,7 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 
 /// @title SwapFacet
 /// @notice Facet for executing swaps within a space
-contract SwapFacet is
-    ISwapFacet,
-    ReentrancyGuardTransient,
-    Entitled,
-    MembershipBase,
-    PointsBase,
-    Facet
-{
+contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
@@ -220,6 +211,14 @@ contract SwapFacet is
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         INTERNAL                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _getSpaceFactory() internal view returns (address) {
+        return MembershipStorage.layout().spaceFactory;
+    }
+
+    function _getPlatformRequirements() internal view returns (IPlatformRequirements) {
+        return IPlatformRequirements(_getSpaceFactory());
+    }
 
     /// @notice Resolves the actual poster address based on the space's fee configuration
     /// @param poster The original poster address
