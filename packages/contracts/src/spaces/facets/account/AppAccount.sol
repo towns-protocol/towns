@@ -68,6 +68,11 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
+    function getAppExpiration(address app) external view returns (uint64) {
+        return _getGroupExpiration(_getInstalledAppId(app));
+    }
+
+    /// @inheritdoc IAppAccount
     function isAppEntitled(
         address app,
         address publicKey,

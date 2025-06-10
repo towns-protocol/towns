@@ -26,6 +26,7 @@ interface IAppRegistryBase {
         address client;
         bytes32[] permissions;
         ExecutionManifest manifest;
+        uint64 duration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

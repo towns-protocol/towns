@@ -42,7 +42,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param groupId The ID of the group to create.
     /// @param status The status to set (active/inactive).
     /// @param expiration Optional timestamp when the group should expire (0 for no expiration).
-    function _setGroupStatus(bytes32 groupId, bool status, uint48 expiration) internal {
+    function _setGroupStatus(bytes32 groupId, bool status, uint64 expiration) internal {
         Group storage group = _getGroup(groupId);
         group.setStatus(status);
         if (status && expiration > 0) {
@@ -50,6 +50,10 @@ abstract contract ExecutorBase is IExecutorBase {
             group.expiration = expiration;
         }
         emit GroupStatusSet(groupId, status);
+    }
+
+    function _getGroupExpiration(bytes32 groupId) internal view returns (uint64) {
+        return _getGroup(groupId).expiration;
     }
 
     /// @notice Creates a new group and marks it as active without expiration.
@@ -62,7 +66,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @notice Sets or extends the expiration for a group.
     /// @param groupId The ID of the group.
     /// @param expiration The new expiration timestamp.
-    function _setGroupExpiration(bytes32 groupId, uint48 expiration) internal {
+    function _setGroupExpiration(bytes32 groupId, uint64 expiration) internal {
         if (expiration <= block.timestamp) revert InvalidExpiration();
         Group storage group = _getGroup(groupId);
         group.expiration = expiration;

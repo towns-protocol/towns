@@ -37,7 +37,7 @@ struct Group {
     // Whether the group is active.
     bool active;
     // Timepoint at which the group becomes inactive.
-    uint48 expiration;
+    uint64 expiration;
 }
 
 // Structure that stores the details for a scheduled operation. This structure fits into a
@@ -100,7 +100,7 @@ interface IExecutorBase {
     event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
     event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
     event GroupStatusSet(bytes32 indexed groupId, bool active);
-    event GroupExpirationSet(bytes32 indexed groupId, uint48 expiration);
+    event GroupExpirationSet(bytes32 indexed groupId, uint64 expiration);
 }
 
 interface IExecutor is IExecutorBase {

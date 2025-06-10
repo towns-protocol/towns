@@ -33,6 +33,8 @@ import {AttestationBase} from "../attest/AttestationBase.sol";
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
 
+    uint64 private constant MAX_DURATION = 365 days;
+
     function __AppRegistry_init_unchained(
         address spaceFactory,
         string calldata schema,
@@ -115,11 +117,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @dev Validates inputs, deploys app contract, and registers it
     function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
         // Validate basic parameters
-        if (bytes(params.name).length == 0) revert InvalidAppName();
+        if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
         if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
         if (params.client == address(0)) InvalidAddressInput.selector.revertWith();
 
-        _validatePricing(params.installPrice);
+        uint64 duration = _validateDuration(params.accessDuration);
 
         app = LibClone.deployERC1967BeaconProxy(address(this));
         ISimpleApp(app).initialize(
@@ -127,7 +129,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             params.name,
             params.permissions,
             params.installPrice,
-            params.accessDuration
+            duration
         );
 
         version = _registerApp(app, params.client);
@@ -154,11 +156,16 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         uint256 installPrice = appContract.installPrice();
         _validatePricing(installPrice);
 
+        uint64 accessDuration = appContract.accessDuration();
+        uint64 duration = _validateDuration(accessDuration);
+
         bytes32[] memory permissions = appContract.requiredPermissions();
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
-        ExecutionManifest memory manifest = appContract.executionManifest();
         address owner = appContract.moduleOwner();
+        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
+
+        ExecutionManifest memory manifest = appContract.executionManifest();
 
         App memory appData = App({
             appId: EMPTY_UID,
@@ -166,7 +173,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             owner: owner,
             client: client,
             permissions: permissions,
-            manifest: manifest
+            manifest: manifest,
+            duration: duration
         });
 
         AttestationRequest memory request;
@@ -230,13 +238,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         Attestation memory att = _getAttestation(appId);
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
-        ITownsApp appContract = ITownsApp(app);
-        (address owner, uint256 installPrice) = (
-            appContract.moduleOwner(),
-            appContract.installPrice()
-        );
+        App memory appData = abi.decode(att.data, (App));
 
-        _chargeForInstall(msg.sender, owner, installPrice);
+        ITownsApp appContract = ITownsApp(app);
+        uint256 installPrice = appContract.installPrice();
+
+        _chargeForInstall(msg.sender, appData.owner, installPrice);
 
         IAppAccount(account).onInstallApp(appId, data);
 
@@ -338,6 +345,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         IPlatformRequirements reqs = _getPlatformRequirements();
         uint256 minPlatformFee = reqs.getMembershipFee();
         if (price > 0 && price < minPlatformFee) InvalidPrice.selector.revertWith();
+    }
+
+    function _validateDuration(uint64 duration) internal pure returns (uint64) {
+        if (duration > MAX_DURATION) InvalidDuration.selector.revertWith();
+        if (duration == 0) duration = MAX_DURATION;
+        return duration;
     }
 
     /// @notice Verifies inputs for adding a new app

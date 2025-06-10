@@ -74,7 +74,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         string memory schema = registry.getAppSchema();
         assertEq(
             schema,
-            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest"
+            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest, uint64 duration"
         );
     }
 
@@ -85,6 +85,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     function test_registerApp() external givenAppIsRegistered {
         assertEq(DEFAULT_APP_ID, registry.getLatestAppId(address(mockModule)));
         assertEq(address(mockModule), registry.getAppByClient(DEFAULT_CLIENT));
+        assertEq(registry.getAppById(DEFAULT_APP_ID).duration, DEFAULT_ACCESS_DURATION);
     }
 
     function test_revertWhen_registerApp_EmptyApp() external {
@@ -110,6 +111,15 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(ClientAlreadyRegistered.selector);
         registry.registerApp(newApp, DEFAULT_CLIENT);
+    }
+
+    function test_revertWhen_registerApp_InvalidDuration() external {
+        vm.prank(DEFAULT_DEV);
+        mockModule.setDuration(365 days + 1);
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(InvalidDuration.selector);
+        registry.registerApp(mockModule, DEFAULT_CLIENT);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -220,6 +230,19 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAddressInput.selector);
+        registry.createApp(appData);
+    }
+
+    function test_revertWhen_createApp_InvalidDuration() external {
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: new bytes32[](1),
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: 365 days + 1
+        });
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(InvalidDuration.selector);
         registry.createApp(appData);
     }
 
