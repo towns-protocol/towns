@@ -14,9 +14,14 @@ func (h *handlerImpl) setupSyncMetrics() {
 	)
 	h.messageBufferSizePerOpHistogram = h.metrics.NewHistogramVecEx(
 		"stream_sync_messages_buffer",
-		"Load stream record duration",
+		"Size of the message buffer per sync operation",
 		[]float64{250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2500},
 		"use_shared_sync",
+	)
+	h.sentMessagesCounter = h.metrics.NewCounterVecEx(
+		"stream_sync_sent_messages_counter",
+		"Total number of messages sent to the client per sync operation",
+		"use_shared_sync", "sync_id",
 	)
 
 	// Metrics for numeric values

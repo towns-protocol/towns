@@ -86,6 +86,7 @@ type (
 		metrics                         infra.MetricsFactory
 		failedSyncOpsCounter            *prometheus.CounterVec
 		messageBufferSizePerOpHistogram *prometheus.HistogramVec
+		sentMessagesCounter             *prometheus.CounterVec
 	}
 )
 
@@ -133,6 +134,7 @@ func (h *handlerImpl) SyncStreams(
 		h.subscriptionManager,
 		h.otelTracer,
 		h.messageBufferSizePerOpHistogram,
+		h.sentMessagesCounter,
 	)
 	if err != nil {
 		return err

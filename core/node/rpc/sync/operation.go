@@ -49,6 +49,8 @@ type (
 		otelTracer trace.Tracer
 		// messageBufferSizePerOpHistogram is a Prometheus histogram that tracks the size of the message buffer
 		messageBufferSizePerOpHistogram *prometheus.HistogramVec
+		// sentMessagesCounter is a Prometheus counter that tracks the number of messages sent to the client
+		sentMessagesCounter *prometheus.CounterVec
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -82,6 +84,7 @@ func NewStreamsSyncOperation(
 	subscriptionManager *subscription.Manager,
 	otelTracer trace.Tracer,
 	messageBufferSizePerOpHistogram *prometheus.HistogramVec,
+	sentMessagesCounter *prometheus.CounterVec,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
@@ -100,6 +103,7 @@ func NewStreamsSyncOperation(
 		subscriptionManager:             subscriptionManager,
 		otelTracer:                      otelTracer,
 		messageBufferSizePerOpHistogram: messageBufferSizePerOpHistogram,
+		sentMessagesCounter:             sentMessagesCounter,
 	}, nil
 }
 
@@ -148,7 +152,12 @@ func (syncOp *StreamSyncOperation) Run(
 	go syncOp.runCommandsProcessing(sub)
 
 	var messagesSendToClient int
-	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	defer func() {
+		if syncOp.sentMessagesCounter != nil {
+			syncOp.sentMessagesCounter.DeleteLabelValues("true", syncOp.SyncID)
+		}
+		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -184,6 +193,9 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 
 				messagesSendToClient++
+				if syncOp.sentMessagesCounter != nil {
+					syncOp.sentMessagesCounter.WithLabelValues("true", syncOp.SyncID).Inc()
+				}
 
 				syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
 
