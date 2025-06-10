@@ -33,8 +33,9 @@ interface IAppAccountBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    ////                           ERRORS
+    /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     error UnauthorizedApp(address app);
     error InvalidAppAddress(address app);
     error InvalidManifest(address app);
