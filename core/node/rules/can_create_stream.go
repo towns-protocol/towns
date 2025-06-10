@@ -338,6 +338,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_METADATA_BIN),
 				ru.params.eventCountMatches(1),
+				ru.params.metadataShardIsInRange,
 				ru.params.creatorIsOperator,
 			)
 
@@ -431,7 +432,18 @@ func (ru *csParams) creatorIsOperator() error {
 	if ru.nodeRegistryChecks.IsOperator(ru.creatorAddress) {
 		return nil
 	}
-	return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator is not an operator", "creator", ru.creatorAddress)
+	return RiverError(Err_PERMISSION_DENIED, "creator is not an operator", "creator", ru.creatorAddress)
+}
+
+func (ru *csParams) metadataShardIsInRange() error {
+	shard, err := shared.ShardFromMetadataStreamId(ru.streamId)
+	if err != nil {
+		return err
+	}
+	if shard <= ru.cfg.MetadataShardMask {
+		return nil
+	}
+	return RiverError(Err_BAD_STREAM_ID, "metadata shard is out of range", "shard", shard, "mask", ru.cfg.MetadataShardMask)
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
