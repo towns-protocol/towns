@@ -7,6 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -46,6 +47,8 @@ type (
 		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
+		// messageBufferSizePerOpHistogram is a Prometheus histogram that tracks the size of the message buffer
+		messageBufferSizePerOpHistogram *prometheus.HistogramVec
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -78,23 +81,25 @@ func NewStreamsSyncOperation(
 	nodeRegistry nodes.NodeRegistry,
 	subscriptionManager *subscription.Manager,
 	otelTracer trace.Tracer,
+	messageBufferSizePerOpHistogram *prometheus.HistogramVec,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
 	log := logging.FromCtx(syncOpCtx).With("syncId", syncId, "node", node)
 
 	return &StreamSyncOperation{
-		log:                 log,
-		rootCtx:             ctx,
-		ctx:                 syncOpCtx,
-		cancel:              cancel,
-		SyncID:              syncId,
-		thisNodeAddress:     node,
-		commands:            make(chan *subCommand, 64),
-		streamCache:         streamCache,
-		nodeRegistry:        nodeRegistry,
-		subscriptionManager: subscriptionManager,
-		otelTracer:          otelTracer,
+		log:                             log,
+		rootCtx:                         ctx,
+		ctx:                             syncOpCtx,
+		cancel:                          cancel,
+		SyncID:                          syncId,
+		thisNodeAddress:                 node,
+		commands:                        make(chan *subCommand, 64),
+		streamCache:                     streamCache,
+		nodeRegistry:                    nodeRegistry,
+		subscriptionManager:             subscriptionManager,
+		otelTracer:                      otelTracer,
+		messageBufferSizePerOpHistogram: messageBufferSizePerOpHistogram,
 	}, nil
 }
 
@@ -165,6 +170,10 @@ func (syncOp *StreamSyncOperation) Run(
 					SyncOp: SyncOp_SYNC_CLOSE,
 				})
 				return nil
+			}
+
+			if syncOp.messageBufferSizePerOpHistogram != nil {
+				syncOp.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(len(msgs)))
 			}
 
 			for i, msg := range msgs {

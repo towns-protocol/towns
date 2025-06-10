@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -81,6 +82,10 @@ type (
 		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
+		// metrics is the metrics factory used to create Prometheus metrics.
+		metrics                         infra.MetricsFactory
+		failedSyncOpsCounter            *prometheus.CounterVec
+		messageBufferSizePerOpHistogram *prometheus.HistogramVec
 	}
 )
 
@@ -106,9 +111,10 @@ func NewHandler(
 		nodeRegistry:         nodeRegistry,
 		activeSyncOperations: xsync.NewMap[string, *StreamSyncOperation](),
 		subscriptionManager:  subscription.NewManager(ctx, nodeAddr, cache, nodeRegistry, otelTracer),
+		metrics:              metrics,
 		otelTracer:           otelTracer,
 	}
-	h.setupSyncMetrics(metrics)
+	h.setupSyncMetrics()
 	return h
 }
 
@@ -126,6 +132,7 @@ func (h *handlerImpl) SyncStreams(
 		h.nodeRegistry,
 		h.subscriptionManager,
 		h.otelTracer,
+		h.messageBufferSizePerOpHistogram,
 	)
 	if err != nil {
 		return err
@@ -147,7 +154,12 @@ func (h *handlerImpl) SyncStreams(
 	}
 
 	go h.runSyncStreams(req, sender, op, doneChan)
-	return <-doneChan
+
+	err = <-doneChan
+	if err != nil {
+		h.failedSyncOpsCounter.WithLabelValues(req.Header().Get(UseSharedSyncHeaderName)).Inc()
+	}
+	return err
 }
 
 // StreamsResponseSubscriber is helper interface that allows a custom streams sync subscriber to be given in unit tests.
@@ -194,7 +206,7 @@ func (h *handlerImpl) runSyncStreams(
 	op *StreamSyncOperation,
 	doneChan chan error,
 ) {
-	// send SyncID to client
+	// Send SyncID to client
 	if err := res.Send(&SyncStreamsResponse{
 		SyncId: op.SyncID,
 		SyncOp: SyncOp_SYNC_NEW,
