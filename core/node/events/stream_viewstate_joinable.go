@@ -20,6 +20,7 @@ type JoinableStreamView interface {
 
 var _ JoinableStreamView = (*StreamView)(nil)
 
+// TODO: FIX: REFACTOR: make it to be GetChannelMembers() (map[common.Address]struct{}, error)
 func (r *StreamView) GetChannelMembers() (mapset.Set[string], error) {
 	members := mapset.NewSet[string]()
 

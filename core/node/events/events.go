@@ -557,17 +557,13 @@ func Make_UserMetadataPayload_EncryptionDevice(
 func Make_UserPayload_Membership(
 	op MembershipOp,
 	streamId StreamId,
-	inInviter *string,
+	inInviter common.Address,
 	streamParentId []byte,
 	reason *MembershipReason,
 ) *StreamEvent_UserPayload {
 	var inviter []byte
-	if inInviter != nil {
-		var err error
-		inviter, err = AddressFromUserId(*inInviter)
-		if err != nil {
-			panic(err) // todo convert everything to StreamId
-		}
+	if inInviter != (common.Address{}) {
+		inviter = inInviter.Bytes()
 	}
 
 	return &StreamEvent_UserPayload{

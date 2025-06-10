@@ -285,7 +285,7 @@ func joinChannel(
 		events.Make_UserPayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
 			channelId,
-			nil,
+			common.Address{},
 			spaceId[:],
 			nil,
 		),
