@@ -109,6 +109,7 @@ export declare namespace IAppRegistryBase {
     client: PromiseOrValue<string>;
     permissions: PromiseOrValue<BytesLike>[];
     manifest: ExecutionManifestStruct;
+    duration: PromiseOrValue<BigNumberish>;
   };
 
   export type AppStructOutput = [
@@ -117,7 +118,8 @@ export declare namespace IAppRegistryBase {
     string,
     string,
     string[],
-    ExecutionManifestStructOutput
+    ExecutionManifestStructOutput,
+    BigNumber
   ] & {
     appId: string;
     module: string;
@@ -125,6 +127,7 @@ export declare namespace IAppRegistryBase {
     client: string;
     permissions: string[];
     manifest: ExecutionManifestStructOutput;
+    duration: BigNumber;
   };
 }
 

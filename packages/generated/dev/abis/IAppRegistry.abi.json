@@ -218,6 +218,11 @@
                 "internalType": "bytes4[]"
               }
             ]
+          },
+          {
+            "name": "duration",
+            "type": "uint64",
+            "internalType": "uint64"
           }
         ]
       }

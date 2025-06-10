@@ -164,7 +164,7 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         bytes32 groupId = _randomBytes32();
         address account = _randomAddress();
         uint32 executionDelay = 100;
-        uint48 expiration = uint48(block.timestamp + 1 days);
+        uint64 expiration = uint64(block.timestamp + 1 days);
         uint48 lastAccess = Time.timestamp() + executor.getGroupDelay(groupId);
 
         vm.prank(founder);
@@ -198,7 +198,7 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         bytes32 groupId = _randomBytes32();
         address account = _randomAddress();
         uint32 executionDelay = 100;
-        uint48 expiration = uint48(block.timestamp - 1); // Past expiration
+        uint64 expiration = uint64(block.timestamp - 1); // Past expiration
 
         vm.prank(founder);
         vm.expectRevert(IExecutorBase.InvalidExpiration.selector);
@@ -209,8 +209,8 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         bytes32 groupId = _randomBytes32();
         address account = _randomAddress();
         uint32 executionDelay = 100;
-        uint48 initialExpiration = uint48(block.timestamp + 1 days);
-        uint48 newExpiration = uint48(block.timestamp + 2 days);
+        uint64 initialExpiration = uint64(block.timestamp + 1 days);
+        uint64 newExpiration = uint64(block.timestamp + 2 days);
 
         // Grant initial access with expiration
         vm.startPrank(founder);
@@ -234,8 +234,8 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         bytes32 groupId = _randomBytes32();
         address account = _randomAddress();
         uint32 executionDelay = 100;
-        uint48 initialExpiration = uint48(block.timestamp + 1 days);
-        uint48 newExpiration = uint48(block.timestamp + 3 days);
+        uint64 initialExpiration = uint64(block.timestamp + 1 days);
+        uint64 newExpiration = uint64(block.timestamp + 3 days);
 
         // Grant initial access with expiration
         vm.startPrank(founder);

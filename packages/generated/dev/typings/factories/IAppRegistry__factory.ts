@@ -227,6 +227,11 @@ const _abi = [
               },
             ],
           },
+          {
+            name: "duration",
+            type: "uint64",
+            internalType: "uint64",
+          },
         ],
       },
     ],

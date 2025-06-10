@@ -45,7 +45,7 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
         bytes32 groupId,
         address account,
         uint32 delay,
-        uint48 expiration
+        uint64 expiration
     ) external onlyOwner returns (bool newMember) {
         _setGroupStatus(groupId, true, expiration);
         return _grantGroupAccess(groupId, account, _getGroupGrantDelay(groupId), delay);
@@ -72,7 +72,7 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     }
 
     /// @inheritdoc IExecutor
-    function setGroupExpiration(bytes32 groupId, uint48 expiration) external onlyOwner {
+    function setGroupExpiration(bytes32 groupId, uint64 expiration) external onlyOwner {
         _setGroupExpiration(groupId, expiration);
     }
 

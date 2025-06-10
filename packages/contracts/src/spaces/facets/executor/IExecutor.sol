@@ -129,7 +129,7 @@ interface IExecutor is IExecutorBase {
         bytes32 groupId,
         address account,
         uint32 delay,
-        uint48 expiration
+        uint64 expiration
     ) external returns (bool newMember);
 
     /**
@@ -165,7 +165,7 @@ interface IExecutor is IExecutorBase {
      * @param groupId The group ID
      * @param expiration The expiration timestamp
      */
-    function setGroupExpiration(bytes32 groupId, uint48 expiration) external;
+    function setGroupExpiration(bytes32 groupId, uint64 expiration) external;
 
     /**
      * @notice Sets the group ID for a target function
