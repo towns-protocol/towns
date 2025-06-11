@@ -6,7 +6,7 @@ export default [
       {
         "name": "app",
         "type": "address",
-        "internalType": "contract ITownsApp"
+        "internalType": "address"
       }
     ],
     "outputs": [
