@@ -9025,7 +9025,7 @@ __metadata:
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   languageName: unknown
   linkType: soft
 
@@ -31446,7 +31446,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vitest@npm:3.2.3, vitest@npm:^3.2.3":
+"vitest@npm:^3.2.3":
   version: 3.2.3
   resolution: "vitest@npm:3.2.3"
   dependencies:
