@@ -55,7 +55,7 @@ func TestStreamsToNodeAssignment(t *testing.T) {
 			ctx, blockchain, &cfg.RegistryContract, &cfg.RiverRegistry)
 		require.NoError(t, err)
 
-		testDistributionWithStateFromEnv(t, blockchain, riverContract)
+		testDistributionWithStateFromEnv(t, blockchain, riverContract, 2, 0)
 	})
 
 	t.Run("Omega", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestStreamsToNodeAssignment(t *testing.T) {
 			ctx, blockchain, &cfg.RegistryContract, &cfg.RiverRegistry)
 		require.NoError(t, err)
 
-		testDistributionWithStateFromEnv(t, blockchain, riverContract)
+		testDistributionWithStateFromEnv(t, blockchain, riverContract, 2, 10)
 	})
 }
 
@@ -94,14 +94,15 @@ func testDistributionWithStateFromEnv(
 	t *testing.T,
 	blockchain *crypto.Blockchain,
 	riverRegistry *registries.RiverRegistryContract,
+	extraCandidatesCount uint64,
+	newNodesCount int,
 ) {
 	var (
-		ctx, cancel          = context.WithCancel(t.Context())
-		require              = require.New(t)
-		streamID             StreamId
-		replFactor           = 3
-		extraCandidatesCount = uint64(2)
-		streamsToAllocate    = 5_000_000
+		ctx, cancel       = context.WithCancel(t.Context())
+		require           = require.New(t)
+		streamID          StreamId
+		replFactor        = 3
+		streamsToAllocate = 5_000_000
 	)
 	defer cancel()
 
@@ -142,7 +143,7 @@ func testDistributionWithStateFromEnv(
 	})
 
 	var wallets []common.Address
-	for range 5 {
+	for range newNodesCount {
 		wallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 		wallets = append(wallets, wallet.Address)

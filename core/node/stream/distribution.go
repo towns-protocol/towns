@@ -1,11 +1,11 @@
 package stream
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"maps"
 	"slices"
-	"sort"
 	"sync/atomic"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -159,18 +159,18 @@ func (d *streamsDistributor) ChooseStreamNodes(
 		extraCandidatesCount = defaultExtraCandidatesCount
 	}
 
-	// pick candidateCount nodes and select the best replFactor nodes from them.
+	// pick candidatesWanted nodes and select the best replFactor nodes from them.
 	// With best being defined as least number of streams assigned.
-	candidateCount := replFactor + extraCandidatesCount
-	candidateCount = min(len(impl.nodes), candidateCount)
-	uniqueOperators := candidateCount <= len(impl.operators)
+	candidatesWanted := replFactor + extraCandidatesCount
+	candidatesWanted = min(len(impl.nodes), candidatesWanted)
+	uniqueOperators := candidatesWanted <= len(impl.operators)
 
 	if !uniqueOperators {
 		// if there are equal number of operators as replFactor but not enough to pick the
 		// desired candidates count ensure that the picked nodes are all from unique operators.
 		// This favors stream distribution over unique operators over balancing streams over nodes.
 		if replFactor <= len(impl.operators) {
-			candidateCount = replFactor
+			candidatesWanted = replFactor
 			uniqueOperators = true
 		} else {
 			logging.FromCtx(ctx).Warnw("ChooseStreamNodes: replication factor is greater than number of unique operators",
@@ -179,41 +179,46 @@ func (d *streamsDistributor) ChooseStreamNodes(
 		}
 	}
 
-	nodes := slices.Clone(impl.nodes)
-	selectedOperators := make([]common.Address, 0, replFactor)
-	candidatesFound := 0
+	var (
+		nodes             = slices.Clone(impl.nodes)
+		candidatesFound   = 0
+		selectedOperators = make([]common.Address, 0, replFactor)
+		h                 = xxhash.New()
+	)
 
-	h := xxhash.New()
-	for candidatesFound < candidateCount {
-		if _, err := h.Write(streamID[:]); err != nil {
-			return nil, AsRiverError(err, Err_INTERNAL).
-				Message("Unable to hash stream Id for node selection")
-		}
+	// pick pseudo-random a node from the node list. If it is a valid candidate swap it with the
+	// first node in the node list and slice the canidate from the node list. If its not a valid
+	// candidate swap it with the last node in the node list and truncate the node list by slicing
+	// the last node off so it won't be picked again as a candidate.
+	for candidatesFound < candidatesWanted {
+		_, _ = h.Write(streamID[:])
+
+		// pick a pseudo-random node from the remaining nodes that haven't been picked before
 		index := candidatesFound + int(h.Sum64()%uint64(len(nodes)-candidatesFound))
 		selectedNode := nodes[index]
 
 		if uniqueOperators {
 			if slices.Contains(selectedOperators, selectedNode.Operator) {
+				// overwrite invalid candidate with last node of the list and truncate node list by
+				// one so it has an even chance to be picked again.
+				nodes[index] = nodes[len(nodes)-1]
+				nodes = nodes[:len(nodes)-1]
 				continue
 			}
-			selectedOperators = append(selectedOperators, selectedNode.Operator)
 		}
 
-		nodes[index] = nodes[candidatesFound]
-		nodes[candidatesFound] = selectedNode
-
+		// selected node is a valid candidate, move it to the front of the node list
+		nodes[candidatesFound], nodes[index] = selectedNode, nodes[candidatesFound]
+		selectedOperators = append(selectedOperators, selectedNode.Operator)
 		candidatesFound++
 	}
 
-	if candidatesFound < candidateCount {
-		return nil, ErrInsufficientNodesAvailable
-	}
-
 	// select the candidates with the least number of streams assigned to them
-	sort.Slice(nodes[:candidateCount], func(i, j int) bool {
-		return nodes[i].streamCount.Load() < nodes[j].streamCount.Load()
+	slices.SortFunc(nodes[:candidatesFound], func(x, y *streamNode) int {
+		return cmp.Compare(x.streamCount.Load(), y.streamCount.Load())
 	})
 
+	// and pick replFactor nodes from the candidates
 	addrs := make([]common.Address, 0, replFactor)
 	for i := range replFactor {
 		addrs = append(addrs, nodes[i].NodeAddress)
