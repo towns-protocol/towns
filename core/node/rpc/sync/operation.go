@@ -177,7 +177,9 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(len(msgs)))
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues(
+					"true", syncOp.SyncID,
+				).Observe(float64(len(msgs)))
 			}
 
 			for i, msg := range msgs {

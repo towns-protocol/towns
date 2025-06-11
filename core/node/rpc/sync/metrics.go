@@ -31,8 +31,8 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 		messageBufferSizePerOpHistogram: metrics.NewHistogramVecEx(
 			"stream_sync_messages_buffer",
 			"Size of the message buffer per sync operation",
-			[]float64{250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2500},
-			"use_shared_sync",
+			prometheus.LinearBuckets(100, 5000, 30),
+			"use_shared_sync", "sync_id",
 		),
 		sentMessagesCounter: metrics.NewCounterVecEx(
 			"stream_sync_sent_messages_counter",
