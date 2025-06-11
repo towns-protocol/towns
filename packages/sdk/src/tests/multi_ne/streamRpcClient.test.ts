@@ -301,7 +301,10 @@ describe('streamRpcClient', () => {
             {
                 syncPos: aliceSyncCookie ? [aliceSyncCookie] : [],
             },
-            { timeoutMs: -1 },
+            {
+                timeoutMs: -1,
+                headers: { 'X-Use-Shared-Sync': 'true' },
+            },
         )
 
         let syncId
