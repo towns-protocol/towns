@@ -188,8 +188,8 @@ export class SpaceDapp {
             provider,
         )
         this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
-        if (config.addresses.towns) {
-            this.townsToken = new TownsToken(config.addresses.towns, provider)
+        if (config.addresses.utils.towns) {
+            this.townsToken = new TownsToken(config.addresses.utils.towns, provider)
         }
         this.airdrop = new RiverAirdropDapp(config, provider)
 
