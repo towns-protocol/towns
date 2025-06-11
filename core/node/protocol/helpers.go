@@ -103,3 +103,18 @@ func (r *ModifySyncRequest) TargetSyncIDs() []string {
 
 	return targetSyncIds
 }
+
+// StreamID returns the stream ID from the SyncStreamsResponse.
+// Depending on the operation type, it can be either from the message itself
+// or from the next sync cookie of the stream.
+func (r *SyncStreamsResponse) StreamID() []byte {
+	if r == nil {
+		return nil
+	}
+
+	if r.GetSyncOp() == SyncOp_SYNC_DOWN {
+		return r.GetStreamId()
+	}
+
+	return r.GetStream().GetNextSyncCookie().GetStreamId()
+}

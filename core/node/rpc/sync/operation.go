@@ -46,6 +46,8 @@ type (
 		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
+		// metrics is the set of metrics used to track sync operations
+		metrics *syncMetrics
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -78,6 +80,7 @@ func NewStreamsSyncOperation(
 	nodeRegistry nodes.NodeRegistry,
 	subscriptionManager *subscription.Manager,
 	otelTracer trace.Tracer,
+	metrics *syncMetrics,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
@@ -95,6 +98,7 @@ func NewStreamsSyncOperation(
 		nodeRegistry:        nodeRegistry,
 		subscriptionManager: subscriptionManager,
 		otelTracer:          otelTracer,
+		metrics:             metrics,
 	}, nil
 }
 
@@ -143,7 +147,12 @@ func (syncOp *StreamSyncOperation) Run(
 	go syncOp.runCommandsProcessing(sub)
 
 	var messagesSendToClient int
-	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	defer func() {
+		if syncOp.metrics != nil {
+			syncOp.metrics.sentMessagesCounter.DeleteLabelValues("true", syncOp.SyncID)
+		}
+		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -167,6 +176,10 @@ func (syncOp *StreamSyncOperation) Run(
 				return nil
 			}
 
+			if syncOp.metrics != nil {
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(len(msgs)))
+			}
+
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
@@ -175,6 +188,9 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 
 				messagesSendToClient++
+				if syncOp.metrics != nil {
+					syncOp.metrics.sentMessagesCounter.WithLabelValues("true", syncOp.SyncID).Inc()
+				}
 
 				syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
 
@@ -272,6 +288,10 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 			Func("AddStreamToSync")
 	}
 
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(1)
+	}
+
 	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
 }
 
@@ -314,6 +334,10 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 		return nil, RiverError(Err(status.GetCode()), status.GetMessage()).
 			Tag("streamId", shared.StreamId(status.GetStreamId())).
 			Func("RemoveStreamFromSync")
+	}
+
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Sub(1)
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
@@ -370,6 +394,11 @@ func (syncOp *StreamSyncOperation) ModifySync(
 
 	if err := syncOp.process(cmd); err != nil {
 		return nil, err
+	}
+
+	if syncOp.metrics != nil {
+		diff := len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())
+		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(float64(diff))
 	}
 
 	return resp, nil

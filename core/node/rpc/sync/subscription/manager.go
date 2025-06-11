@@ -55,7 +55,9 @@ func NewManager(
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) *Manager {
-	log := logging.FromCtx(ctx).With("node", localNodeAddr)
+	log := logging.FromCtx(ctx).
+		Named("shared-syncer").
+		With("node", localNodeAddr)
 
 	syncers, messages := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, otelTracer)
 
@@ -117,8 +119,21 @@ func (m *Manager) start() {
 			}
 
 			for _, msg := range msgs {
+				// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
+				if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+					m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
+					continue
+				}
+
+				// Get the stream ID from the message.
+				streamID, err := StreamIdFromBytes(msg.StreamID())
+				if err != nil {
+					m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
+					continue
+				}
+
 				// Distribute the messages to all relevant subscriptions.
-				m.distributeMessage(msg)
+				m.distributeMessage(streamID, msg)
 
 				// In case of the global context (the node itself) is done in the middle of the sending messages
 				// from the current batch, just interrupt the sending process and close.
@@ -139,33 +154,13 @@ func (m *Manager) start() {
 }
 
 // distributeMessage processes the given message and sends it to all relevant subscriptions.
-func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
-	// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
-	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-		m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
-		return
-	}
-
-	// Get the stream ID from the message. Depending on the operation type, it can be either from the message itself
-	// or from the next sync cookie of the stream.
-	var streamIDRaw []byte
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		streamIDRaw = msg.GetStreamId()
-	} else {
-		streamIDRaw = msg.GetStream().GetNextSyncCookie().GetStreamId()
-	}
-
-	streamID, err := StreamIdFromBytes(streamIDRaw)
-	if err != nil || streamID == (StreamId{}) {
-		m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
-		return
-	}
-
+func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	// Send the message to all subscriptions for this stream.
 	m.sLock.Lock()
 	subscriptions, ok := m.subscriptions[streamID]
 	if !ok || len(subscriptions) == 0 {
-		// No subscriptions for this stream, nothing to do.
+		// No subscriptions for this stream, nothing to do. This should not happen in theory.
+		m.log.Errorw("Received an update for the stream with no subscribers", "streamId", streamID)
 		go m.dropStream(streamID)
 		m.sLock.Unlock()
 		return

@@ -7,10 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/puzpuzpuz/xsync/v4"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"

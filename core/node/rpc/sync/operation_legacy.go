@@ -80,6 +80,10 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 				return nil
 			}
 
+			if syncOp.metrics != nil {
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(len(msgs)))
+			}
+
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
