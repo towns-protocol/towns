@@ -16,8 +16,6 @@ describe('bot tests', () => {
             bobProvider: botProvider,
         } = await setupWalletsAndContexts()
 
-        console.log('bot wallet: ', botWallet.address)
-
         const appRegistryDapp = new AppRegistryDapp(
             makeBaseChainConfig().chainConfig,
             ownerProvider,
@@ -35,17 +33,14 @@ describe('bot tests', () => {
         const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
 
-        await expect(bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
+        expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
     })
 
     test('unregistered bots cannot create app user streams', async () => {
-        const {
-            alicesWallet: wallet,
-            bob: bot,
-            bobsWallet: botWallet,
-            bobProvider: botProvider,
-        } = await setupWalletsAndContexts()
+        const { alicesWallet: wallet, bob: bot } = await setupWalletsAndContexts()
 
+        // Let's use the public key of the wallet as the bot's contract address for
+        // convenience here.
         await expect(bot.initializeUser({ appAddress: wallet.address })).rejects.toThrow(
             /7:PERMISSION_DENIED/,
         )
@@ -110,9 +105,14 @@ describe('bot tests', () => {
         const installedApps = await space!.AppAccount.read.getInstalledApps()
         expect(installedApps).toContain(foundAppAddress)
 
-        console.log('app validated s installed...')
+        // TODO: show bot cannot join space. other members cannot add.
 
         await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
+
+        // TODO: show bot cannot add itself to channel. other members also cannot add
+        // the bot to the channel.
+
+        // TODO: have bot join channel via being added by space owner.
     })
 
     test('an uninstalled bot cannot join a space or channel', async () => {
