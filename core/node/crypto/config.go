@@ -57,7 +57,7 @@ const (
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
-	ServerEnableNode2NodeAuthConfigKey                       = "server.enableNode2NodeAuth"
+	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
 )
 
 var (
