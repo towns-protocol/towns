@@ -10,7 +10,7 @@ describe('Web3Constants', () => {
     })
 
     it('instantiate provider', () => {
-        log('testing provider instanciation')
+        log('testing provider instantiation')
         const p = new LocalhostWeb3Provider('http://localhost:8545')
         expect(p).toBeDefined()
     })
