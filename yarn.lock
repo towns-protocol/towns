@@ -8772,7 +8772,7 @@ __metadata:
     ethereum-cryptography: ^3.2.0
     ts-node: ^10.9.1
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   languageName: unknown
   linkType: soft
 
@@ -8810,7 +8810,7 @@ __metadata:
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   languageName: unknown
   linkType: soft
 
@@ -8941,7 +8941,7 @@ __metadata:
     lodash.debounce: ^4.0.8
     ts-node: ^10.9.1
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   languageName: unknown
   linkType: soft
 
@@ -8990,7 +8990,7 @@ __metadata:
     eslint-plugin-tsdoc: ^0.3.0
     tsdown: ^0.12.3
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   peerDependencies:
     "@connectrpc/connect-node": ">=2.0.0"
     "@connectrpc/connect-web": ">=2.0.0"
@@ -9020,7 +9020,7 @@ __metadata:
     happy-dom: ^15.11.7
     tsdown: ^0.12.3
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   languageName: unknown
   linkType: soft
 
@@ -9067,7 +9067,7 @@ __metadata:
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
     vite-plugin-wasm: ^3.4.1
-    vitest: 3.2.3
+    vitest: ^3.2.3
     vitest-fetch-mock: ^0.4.3
   languageName: unknown
   linkType: soft
@@ -9113,7 +9113,7 @@ __metadata:
     prettier: ^3.5.3
     typescript: ^5.8.2
     uuid: ^8.3.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
     zod: ^3.21.4
   languageName: unknown
   linkType: soft
@@ -9149,7 +9149,7 @@ __metadata:
     pino-pretty: ^13.0.0
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
   languageName: unknown
   linkType: soft
 
@@ -9196,7 +9196,7 @@ __metadata:
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
     viem: ^2.29.3
-    vitest: 3.2.3
+    vitest: ^3.2.3
     zod: ^3.21.4
   languageName: unknown
   linkType: soft
@@ -29100,7 +29100,7 @@ __metadata:
     turbo: ^2.5.4
     typechain: ^8.1.1
     typescript: ^5.8.2
-    vitest: 3.2.3
+    vitest: ^3.2.3
     wait-on: ^7.0.1
   languageName: unknown
   linkType: soft
@@ -31227,7 +31227,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vitest@npm:3.2.3":
+"vitest@npm:^3.2.3":
   version: 3.2.3
   resolution: "vitest@npm:3.2.3"
   dependencies:
