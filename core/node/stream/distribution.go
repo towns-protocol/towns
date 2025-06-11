@@ -169,12 +169,12 @@ func (d *streamsDistributor) ChooseStreamNodes(
 		// if there are equal number of operators as replFactor but not enough to pick the
 		// desired candidates count ensure that the picked nodes are all from unique operators.
 		// This favors stream distribution over unique operators over balancing streams over nodes.
-		if replFactor < len(impl.operators) {
+		if replFactor <= len(impl.operators) {
 			candidateCount = replFactor
+			uniqueOperators = true
 		} else {
-			logging.FromCtx(ctx).Warnw("ChooseStreamNodes: candidate count is greater than number of unique operators",
+			logging.FromCtx(ctx).Warnw("ChooseStreamNodes: replication factor is greater than number of unique operators",
 				"replFactor", replFactor,
-				"candidateCount", candidateCount,
 				"numOperators", len(impl.operators))
 		}
 	}
@@ -184,12 +184,13 @@ func (d *streamsDistributor) ChooseStreamNodes(
 	candidatesFound := 0
 
 	h := xxhash.New()
-	for i := range nodes {
-		h.Write(streamID[:])
-		index := i + int(h.Sum64()%uint64(len(nodes)-i))
+	for candidatesFound < candidateCount {
+		if _, err := h.Write(streamID[:]); err != nil {
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Message("Unable to hash stream Id for node selection")
+		}
+		index := candidatesFound + int(h.Sum64()%uint64(len(nodes)-candidatesFound))
 		selectedNode := nodes[index]
-		nodes[index] = nodes[i]
-		nodes[i] = selectedNode
 
 		if uniqueOperators {
 			if slices.Contains(selectedOperators, selectedNode.Operator) {
@@ -198,10 +199,10 @@ func (d *streamsDistributor) ChooseStreamNodes(
 			selectedOperators = append(selectedOperators, selectedNode.Operator)
 		}
 
+		nodes[index] = nodes[candidatesFound]
+		nodes[candidatesFound] = selectedNode
+
 		candidatesFound++
-		if candidatesFound >= candidateCount {
-			break
-		}
 	}
 
 	if candidatesFound < candidateCount {
