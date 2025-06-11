@@ -187,14 +187,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @notice Removes a app from the registry
     /// @param revoker The address revoking the app
     /// @param appId The version ID of the app to remove
-    /// @return app The address of the removed app
-    /// @return version The version ID that was removed
     /// @dev Reverts if app is not registered, revoked, or banned
     /// @dev Spaces that install this app will need to uninstall it
-    function _removeApp(
-        address revoker,
-        bytes32 appId
-    ) internal returns (address app, bytes32 version) {
+    function _removeApp(address revoker, bytes32 appId) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
         Attestation memory att = _getAttestation(appId);
@@ -214,14 +209,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         request.uid = appId;
         _revoke(att.schema, request, revoker, 0, true);
 
-        version = appInfo.latestVersion;
-
         AppRegistryStorage.ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[
             appData.client
         ];
         clientInfo.app = address(0);
 
-        emit AppUnregistered(app, appId);
+        emit AppUnregistered(appData.module, appId);
     }
 
     /// @notice Installs an app to a specified account

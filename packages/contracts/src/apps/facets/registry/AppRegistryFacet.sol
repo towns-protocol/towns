@@ -66,9 +66,8 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @notice Remove a app from the registry
     /// @param versionId The app ID to remove
     /// @dev Only the owner of the app can remove it
-    /// @return version The version ID that was removed
-    function removeApp(bytes32 versionId) external nonReentrant returns (bytes32 version) {
-        (, version) = _removeApp(msg.sender, versionId);
+    function removeApp(bytes32 versionId) external nonReentrant {
+        _removeApp(msg.sender, versionId);
     }
 
     /// @notice Create an upgradeable simple app contract

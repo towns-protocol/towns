@@ -133,9 +133,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
     function test_removeApp() external givenAppIsRegistered {
         vm.prank(DEFAULT_DEV);
-        bytes32 revokedUid = registry.removeApp(DEFAULT_APP_ID);
+        registry.removeApp(DEFAULT_APP_ID);
 
-        assertEq(revokedUid, DEFAULT_APP_ID);
         assertEq(registry.getAppByClient(DEFAULT_CLIENT), address(0));
     }
 
