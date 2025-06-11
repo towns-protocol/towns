@@ -136,7 +136,24 @@ func NewDistributor(
 		}
 	})
 
-	// update internal statistic for stream node calculation
+	// update node registry state for stream node selection
+	nodeRegistryChainMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, riverRegistry.Address)
+	nodeRegistryChainMonitor.OnNodeAdded(blockNumber+1,
+		func(context.Context, *river.NodeRegistryV1NodeAdded) {
+			d.Reload()
+		})
+	nodeRegistryChainMonitor.OnNodeRemoved(blockNumber+1,
+		func(context.Context, *river.NodeRegistryV1NodeRemoved) {
+			d.Reload()
+		})
+	nodeRegistryChainMonitor.OnNodeStatusUpdated(
+		blockNumber+1,
+		func(context.Context, *river.NodeRegistryV1NodeStatusUpdated) {
+			d.Reload()
+		},
+	)
+
+	// update internal statistic for stream node selection
 	chainMonitor.OnContractWithTopicsEvent(blockNumber+1, riverRegistry.Address,
 		[][]common.Hash{{riverRegistry.StreamRegistryAbi.Events["StreamUpdated"].ID}}, d.onStreamUpdate)
 
