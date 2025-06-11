@@ -218,7 +218,9 @@ describe('Bot', { sequential: true }, () => {
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
-        await bobClient.riverConnection.call((client) => client.debugForceMakeMiniblock(channelId))
+        await bobClient.riverConnection.call((client) =>
+            client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
+        )
     }
 
     it('should receive a message forwarded', async () => {

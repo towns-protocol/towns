@@ -13,7 +13,7 @@ export class AppRegistryService {
         userId: Uint8Array,
         serviceUrl: string,
         opts: RpcOptions | undefined,
-        getSignature: (hash: Buffer) => Promise<Uint8Array>,
+        getSignature: (hash: Uint8Array) => Promise<Uint8Array>,
         extraFinishAuthParams: Record<string, any>,
     ) {
         const authenticationRpcClient = makeAuthenticationRpcClient(serviceUrl, opts)
