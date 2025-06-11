@@ -79,7 +79,7 @@ describe('bot tests', () => {
         const receipt = await tx.wait()
         const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
- 
+
         // Create bot user streams
         await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
 
