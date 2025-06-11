@@ -141,6 +141,7 @@ export interface IAppRegistryInterface extends utils.Interface {
     "isAppBanned(address)": FunctionFragment;
     "registerApp(address,address[])": FunctionFragment;
     "removeApp(bytes32)": FunctionFragment;
+    "uninstallApp(address,address,bytes)": FunctionFragment;
   };
 
   getFunction(
@@ -156,6 +157,7 @@ export interface IAppRegistryInterface extends utils.Interface {
       | "isAppBanned"
       | "registerApp"
       | "removeApp"
+      | "uninstallApp"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -210,6 +212,14 @@ export interface IAppRegistryInterface extends utils.Interface {
     functionFragment: "removeApp",
     values: [PromiseOrValue<BytesLike>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "uninstallApp",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "adminBanApp",
@@ -243,6 +253,10 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "removeApp", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "uninstallApp",
+    data: BytesLike
+  ): Result;
 
   events: {
     "AppBanned(address,bytes32)": EventFragment;
@@ -428,6 +442,13 @@ export interface IAppRegistry extends BaseContract {
       appId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    uninstallApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   adminBanApp(
@@ -481,6 +502,13 @@ export interface IAppRegistry extends BaseContract {
 
   removeApp(
     appId: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  uninstallApp(
+    app: PromiseOrValue<string>,
+    account: PromiseOrValue<string>,
+    data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -538,6 +566,13 @@ export interface IAppRegistry extends BaseContract {
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    uninstallApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -666,6 +701,13 @@ export interface IAppRegistry extends BaseContract {
       appId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    uninstallApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -720,6 +762,13 @@ export interface IAppRegistry extends BaseContract {
 
     removeApp(
       appId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    uninstallApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
