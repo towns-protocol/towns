@@ -85,7 +85,10 @@ func verifyCert(logger *logging.Log, cert *x509.Certificate) error {
 
 	now := time.Now()
 	if cert.NotBefore.After(now) || cert.NotAfter.Before(now) {
-		return RiverError(Err_UNAUTHENTICATED, "Certificate expired").LogError(logger)
+		return RiverError(Err_UNAUTHENTICATED, "Certificate expired").
+			Tag("notBefore", cert.NotBefore).
+			Tag("notAfter", cert.NotAfter).
+			LogError(logger)
 	}
 
 	var certExt node2NodeCertExt
@@ -113,12 +116,17 @@ func verifyCert(logger *logging.Log, cert *x509.Certificate) error {
 		certExt.Signature,
 	)
 	if err != nil {
-		return AsRiverError(err, Err_UNAUTHENTICATED).Message("Failed to extract public key from the cert signature").LogError(logger)
+		return AsRiverError(err, Err_UNAUTHENTICATED).
+			Message("Failed to extract public key from the cert signature").
+			LogError(logger)
 	}
 	recoveredAddr := ethcrypto.PubkeyToAddress(*sigPublicKey)
 
 	if recoveredAddr.Cmp(common.HexToAddress(certExt.Address)) != 0 {
-		return RiverError(Err_UNAUTHENTICATED, "Node-2-node cert signature does not match address").LogError(logger)
+		return RiverError(Err_UNAUTHENTICATED, "Node-2-node cert signature does not match address").
+			Tag("recoveredAddr", recoveredAddr).
+			Tag("certAddr", certExt.Address).
+			LogError(logger)
 	}
 
 	return nil

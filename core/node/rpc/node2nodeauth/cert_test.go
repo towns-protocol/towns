@@ -101,40 +101,42 @@ func TestVerifyCert(t *testing.T) {
 	tests := []struct {
 		name    string
 		cert    *x509.Certificate
-		wantErr bool
+		wantErr string
 	}{
 		{
-			name:    "Valid certificate",
-			cert:    x509Cert,
-			wantErr: false,
+			name: "Valid certificate",
+			cert: x509Cert,
 		},
 		{
 			name: "Expired certificate",
 			cert: &x509.Certificate{
-				Subject:    pkix.Name{Organization: []string{"towns"}},
+				Subject:    pkix.Name{Organization: []string{"towns.com"}},
 				NotBefore:  time.Now().Add(-2 * time.Hour),
 				NotAfter:   time.Now().Add(-1 * time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: x509Cert.Extensions[0].Value}},
 			},
-			wantErr: true,
+			wantErr: "Certificate expired",
 		},
 		{
 			name: "Invalid extension",
 			cert: &x509.Certificate{
-				Subject:    pkix.Name{Organization: []string{"towns"}},
+				Subject:    pkix.Name{Organization: []string{"towns.com"}},
 				NotBefore:  time.Now(),
 				NotAfter:   time.Now().Add(time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: []byte("invalid")}},
 			},
-			wantErr: true,
+			wantErr: "Failed to unmarshal extra extension",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := verifyCert(logger, tt.cert)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("verifyCert() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
