@@ -136,7 +136,6 @@ export interface EntitlementsManagerInterface extends utils.Interface {
     "EntitlementModuleRemoved(address,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
-    "SubscriptionUpdate(uint256,uint64)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
     "Unbanned(address,uint256)": EventFragment;
     "Unpaused(address)": EventFragment;
@@ -150,7 +149,6 @@ export interface EntitlementsManagerInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "EntitlementModuleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
@@ -244,18 +242,6 @@ export interface PausedEventObject {
 export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
 export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
-export interface SubscriptionUpdateEventObject {
-  tokenId: BigNumber;
-  expiration: BigNumber;
-}
-export type SubscriptionUpdateEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  SubscriptionUpdateEventObject
->;
-
-export type SubscriptionUpdateEventFilter =
-  TypedEventFilter<SubscriptionUpdateEvent>;
 
 export interface TransferEventObject {
   from: string;
@@ -502,15 +488,6 @@ export interface EntitlementsManager extends BaseContract {
 
     "Paused(address)"(account?: null): PausedEventFilter;
     Paused(account?: null): PausedEventFilter;
-
-    "SubscriptionUpdate(uint256,uint64)"(
-      tokenId?: PromiseOrValue<BigNumberish> | null,
-      expiration?: null
-    ): SubscriptionUpdateEventFilter;
-    SubscriptionUpdate(
-      tokenId?: PromiseOrValue<BigNumberish> | null,
-      expiration?: null
-    ): SubscriptionUpdateEventFilter;
 
     "Transfer(address,address,uint256)"(
       from?: PromiseOrValue<string> | null,

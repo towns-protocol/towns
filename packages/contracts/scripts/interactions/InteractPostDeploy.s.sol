@@ -47,7 +47,6 @@ contract InteractPostDeploy is Interaction {
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
-        ISpaceDelegation(baseRegistry).setRiverToken(townsBase);
         IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
         IRewardsDistribution(baseRegistry).setRewardNotifier(deployer, true);
         IRewardsDistribution(baseRegistry).notifyRewardAmount(MAX_CLAIMABLE_SUPPLY);

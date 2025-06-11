@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -202,7 +203,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 }
 
 func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
-	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(nil, streamId)
+	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")

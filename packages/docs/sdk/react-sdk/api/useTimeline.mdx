@@ -28,7 +28,7 @@ const messages = events.filter((event) => event.content?.kind === RiverTimelineE
 ```ts
 function useTimeline(
   streamId: string,
-  config?: ObservableConfig.FromObservable<TimelineEvents>,
+  config?: ObservableConfig.FromObservable<TimelineEvent[]>,
 ): ObservableValue<TimelineEvent[]>
 ```
 
@@ -44,7 +44,7 @@ The id of the stream to get the timeline events from.
 
 ### config
 
-- **Type:** `ObservableConfig.FromObservable<TimelineEvents>`
+- **Type:** `ObservableConfig.FromObservable<TimelineEvent[]>`
 - **Optional**
 
 Configuration options for the observable.

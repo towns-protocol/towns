@@ -112,6 +112,7 @@ message StreamEvent {
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
+        MetadataPayload metadata_payload = 111;
     }
 }
 
@@ -615,6 +616,52 @@ message MediaPayload {
     }
 }
 
+message StreamRecord {
+    bytes stream_id = 1;
+    bytes last_miniblock_hash = 2;
+    int64 last_miniblock_num = 3;
+    repeated bytes nodes = 4;
+    int64 replication_factor = 5;
+}
+
+message MetadataPayload {
+    message Snapshot {
+        Inception inception = 1;
+        repeated StreamRecord streams = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message NewStream {
+        bytes stream_id = 1;
+        bytes genesis_miniblock_hash = 2;
+        repeated bytes nodes = 3;
+        int64 replication_factor = 4;
+    }
+
+    message LastMiniblockUpdate {
+        bytes stream_id = 1;
+        bytes last_miniblock_hash = 2;
+        int64 last_miniblock_num = 3;
+    }
+
+    message PlacementUpdate {
+        bytes stream_id = 1;
+        repeated bytes nodes = 2;
+        int64 replication_factor = 3;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        NewStream new_stream = 2;
+        LastMiniblockUpdate last_miniblock_update = 3;
+        PlacementUpdate placement_update = 4;
+    }
+}
+
 /**
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
@@ -633,6 +680,7 @@ message Snapshot {
         DmChannelPayload.Snapshot dm_channel_content = 107;
         GdmChannelPayload.Snapshot gdm_channel_content = 108;
         UserInboxPayload.Snapshot user_inbox_content = 109;
+        MetadataPayload.Snapshot metadata_content = 110;
     }
 }
 
@@ -744,6 +792,9 @@ message EventRef {
 message StreamSettings {
     // Test setting for testing with manual miniblock creation through Info debug request. 
     bool disable_miniblock_creation = 1;
+
+    // Test setting to force creation as a light stream.
+    bool light_stream = 2;
 }
 
 /**

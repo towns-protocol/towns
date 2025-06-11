@@ -137,11 +137,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         );
 
         facet = facetHelper.getDeployedAddress("SpaceDelegationFacet");
-        addFacet(
-            makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()),
-            facet,
-            DeploySpaceDelegation.makeInitData(townsToken)
-        );
+        addCut(makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()));
 
         messenger = messengerHelper.deploy(deployer);
         facet = facetHelper.getDeployedAddress("MainnetDelegation");
@@ -224,11 +220,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
                     DeployMainnetDelegation.makeInitData(messenger)
                 );
             } else if (facetName.eq("SpaceDelegationFacet")) {
-                addFacet(
-                    makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()),
-                    facet,
-                    DeploySpaceDelegation.makeInitData(townsToken)
-                );
+                addCut(makeCut(facet, FacetCutAction.Add, DeploySpaceDelegation.selectors()));
             } else if (facetName.eq("ERC721ANonTransferable")) {
                 addFacet(
                     makeCut(facet, FacetCutAction.Add, DeployERC721ANonTransferable.selectors()),

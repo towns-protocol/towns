@@ -1,19 +1,20 @@
 import { makeAuthenticationRpcClient } from './makeAuthenticationRpcClient'
 import { makeNotificationRpcClient } from './makeNotificationRpcClient'
 import { bin_fromHexString, check } from '@towns-protocol/dlog'
-import { notificationServiceHash, riverSign } from './sign'
+import { riverSign, notificationServiceHash } from './sign'
 import { isDefined } from './check'
 import { Signer } from 'ethers'
 import { RpcOptions } from './rpcCommon'
 import { SignerContext } from './signerContext'
 import { hashPersonalMessage } from '@ethereumjs/util'
 
+// TODO: redo this to use the new auth service
 export class NotificationService {
     private static async _authenticateCommon(
         userId: Uint8Array,
         serviceUrl: string,
         opts: RpcOptions | undefined,
-        getSignature: (hash: Buffer) => Promise<Uint8Array>,
+        getSignature: (hash: Uint8Array) => Promise<Uint8Array>,
         extraFinishAuthParams: Record<string, any>,
     ) {
         const authenticationRpcClient = makeAuthenticationRpcClient(serviceUrl, opts)
