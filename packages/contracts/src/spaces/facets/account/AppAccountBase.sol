@@ -169,19 +169,11 @@ abstract contract AppAccountBase is
 
         App memory app = _getApp(module);
 
-        bytes32[] memory permissions = app.permissions;
+        if (app.client != client) return false;
 
-        // has to be both in the clients array and the permissions array
-        bool isClient = false;
-        if (app.client == client) {
-            isClient = true;
-        }
-
-        if (!isClient) return false;
-
-        uint256 permissionsLength = permissions.length;
+        uint256 permissionsLength = app.permissions.length;
         for (uint256 i; i < permissionsLength; ++i) {
-            if (permissions[i] == permission) {
+            if (app.permissions[i] == permission) {
                 return true;
             }
         }
