@@ -5,10 +5,16 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/nodes"
+
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -101,11 +107,19 @@ func TestVerifyCert(t *testing.T) {
 	tests := []struct {
 		name    string
 		cert    *x509.Certificate
+		mock    func(registry *mocks.MockNodeRegistry)
 		wantErr string
 	}{
 		{
 			name: "Valid certificate",
 			cert: x509Cert,
+			mock: func(registry *mocks.MockNodeRegistry) {
+				registry.On("GetNode", wallet.Address).
+					Return(
+						nodes.NewNodeRecord(wallet.Address, wallet.Address, "", river.NodeStatus_Operational, false, nil, nil),
+						nil,
+					)
+			},
 		},
 		{
 			name: "Expired certificate",
@@ -127,11 +141,27 @@ func TestVerifyCert(t *testing.T) {
 			},
 			wantErr: "Failed to unmarshal extra extension",
 		},
+		{
+			name: "Unknown node address",
+			cert: x509Cert,
+			mock: func(registry *mocks.MockNodeRegistry) {
+				registry.On("GetNode", wallet.Address).
+					Return(
+						nil,
+						errors.New("node not found"),
+					)
+			},
+			wantErr: "node not found",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := verifyCert(logger, tt.cert)
+			nodeRegistry := mocks.NewMockNodeRegistry(t)
+			if tt.mock != nil {
+				tt.mock(nodeRegistry)
+			}
+			err := verifyCert(logger, nodeRegistry, tt.cert)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.wantErr)

@@ -20,6 +20,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -39,7 +40,7 @@ var (
 
 // VerifyPeerCertificate returns a function that goes through the peer certificates
 // and verifies the node-2-node client certificate, and returns nil if the certificate is valid or not found.
-func VerifyPeerCertificate(logger *logging.Log) func([][]byte, [][]*x509.Certificate) error {
+func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
 		for _, raw := range rawCerts {
 			cert, err := x509.ParseCertificate(raw)
@@ -50,7 +51,7 @@ func VerifyPeerCertificate(logger *logging.Log) func([][]byte, [][]*x509.Certifi
 			// The given function is applicable for both internode and stream services.
 			// The given certificate is provided for the internode service only.
 			if len(cert.Subject.Organization) == 1 && cert.Subject.Organization[0] == certIssuer {
-				if err = verifyCert(logger, cert); err != nil {
+				if err = verifyCert(logger, nodeRegistry, cert); err != nil {
 					return err
 				}
 			}
@@ -71,7 +72,7 @@ type node2NodeCertExt struct {
 
 // verifyCert verifies the node-2-node client certificate.
 // The certificate must have a custom node2nodeCertExt extension.
-func verifyCert(logger *logging.Log, cert *x509.Certificate) error {
+func verifyCert(logger *logging.Log, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
 	if cert == nil {
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
 	}
@@ -127,6 +128,11 @@ func verifyCert(logger *logging.Log, cert *x509.Certificate) error {
 			Tag("recoveredAddr", recoveredAddr).
 			Tag("certAddr", certExt.Address).
 			LogError(logger)
+	}
+
+	// Make sure the recovered address is registered in the node registry.
+	if _, err = nodeRegistry.GetNode(recoveredAddr); err != nil {
+		return err
 	}
 
 	return nil
