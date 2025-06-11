@@ -2,6 +2,7 @@ package sync
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/towns-protocol/towns/core/node/infra"
 )
 
@@ -40,40 +41,25 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 		),
 	}
 
-	// Metrics for numeric values
-	numericMetrics := []struct {
-		name     string
-		help     string
-		getValue func() float64
-	}{
-		{
-			"stream_sync_active_ops_counter",
-			"Total number of active stream sync operations",
-			func() float64 { return float64(h.activeSyncOperations.Size()) },
+	metrics.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stream_sync_active_ops_counter",
+			Help: "Total number of active stream sync operations",
 		},
-		{
-			"stream_sync_shared_messages_buffer_size",
-			"Buffer size of the shared syncer messages",
-			func() float64 { return float64(h.subscriptionManager.GetStats().BufferSize) },
+		func() float64 { return float64(h.activeSyncOperations.Size()) },
+	)
+	metrics.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stream_sync_shared_messages_buffer_size",
+			Help: "Buffer size of the shared syncer messages",
 		},
-		{
-			"stream_sync_shared_syncing_streams_counter",
-			"Total number of streams currently being synced by the shared syncer",
-			func() float64 { return float64(h.subscriptionManager.GetStats().SyncingStreamsCount) },
+		func() float64 { return float64(h.subscriptionManager.GetStats().BufferSize) },
+	)
+	metrics.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stream_sync_shared_syncing_streams_counter",
+			Help: "Total number of streams currently being synced by the shared syncer",
 		},
-		// TODO: Total number of syncing streams of all active sync operations - legacy sync
-	}
-	for _, metric := range numericMetrics {
-		metrics.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name: metric.name,
-				Help: metric.help,
-			},
-			func(getValue func() float64) func() float64 {
-				return func() float64 {
-					return getValue()
-				}
-			}(metric.getValue),
-		)
-	}
+		func() float64 { return float64(h.subscriptionManager.GetStats().SyncingStreamsCount) },
+	)
 }
