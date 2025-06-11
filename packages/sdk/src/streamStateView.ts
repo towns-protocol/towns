@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check } from '@towns-protocol/dlog'
+import { dlog, dlogError, bin_toHexString, check, throwWithCode } from '@towns-protocol/dlog'
 import { isDefined, logNever } from './check'
 import {
     ChannelMessage,
@@ -42,6 +42,7 @@ import {
     isUserSettingsStreamId,
     isUserStreamId,
     isUserInboxStreamId,
+    isMetadataStreamId,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
@@ -183,6 +184,8 @@ export class StreamStateView {
         } else if (isUserInboxStreamId(streamId)) {
             this.contentKind = 'userInboxContent'
             this._userInboxContent = new StreamStateView_UserInbox(streamId)
+        } else if (isMetadataStreamId(streamId)) {
+            throwWithCode('Metadata streams are not supported in SDK', Err.UNIMPLEMENTED)
         } else {
             throw new Error(`Stream doesn't have a content kind ${streamId}`)
         }
@@ -252,6 +255,12 @@ export class StreamStateView {
                     snapshot,
                     snapshot.content.value,
                     encryptionEmitter,
+                )
+                break
+            case 'metadataContent':
+                throwWithCode(
+                    'View for Metadata streams is not implemented in SDK',
+                    Err.UNIMPLEMENTED,
                 )
                 break
             case undefined:
@@ -755,6 +764,9 @@ export class StreamStateView {
                 return this.userInboxContent
             case 'mediaContent':
                 return this.mediaContent
+            case 'metadataContent':
+                throwWithCode('Metadata streams are not supported in SDK', Err.UNIMPLEMENTED)
+                break
             case undefined:
                 throw new Error('Stream has no content')
             default:

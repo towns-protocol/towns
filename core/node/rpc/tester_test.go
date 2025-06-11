@@ -911,7 +911,7 @@ func (tc *testClient) joinChannel(
 		Make_UserPayload_Membership(
 			MembershipOp_SO_JOIN,
 			channelId,
-			nil,
+			common.Address{},
 			spaceId[:],
 			nil,
 		),

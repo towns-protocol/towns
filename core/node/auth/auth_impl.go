@@ -5,10 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -78,11 +79,11 @@ func (r *isEntitledResult) Reason() EntitlementResultReason {
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
 
-func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId string, permission Permission) *ChainAuthArgs {
+func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId common.Address, permission Permission) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindSpace,
 		spaceId:    spaceId,
-		principal:  common.HexToAddress(userId),
+		principal:  userId,
 		permission: permission,
 	}
 }
@@ -90,34 +91,34 @@ func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId string, permission
 func NewChainAuthArgsForChannel(
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
-	userId string,
+	userId common.Address,
 	permission Permission,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindChannel,
 		spaceId:    spaceId,
 		channelId:  channelId,
-		principal:  common.HexToAddress(userId),
+		principal:  userId,
 		permission: permission,
 	}
 }
 
-func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId string) *ChainAuthArgs {
+func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:      chainAuthKindIsSpaceMember,
 		spaceId:   spaceId,
-		principal: common.HexToAddress(userId),
+		principal: userId,
 	}
 }
 
 func NewChainAuthArgsForIsWalletLinked(
-	userAddress []byte,
-	walletAddress []byte,
+	userAddress common.Address,
+	walletAddress common.Address,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:          chainAuthKindIsWalletLinked,
-		principal:     common.BytesToAddress(userAddress),
-		walletAddress: common.BytesToAddress(walletAddress),
+		principal:     userAddress,
+		walletAddress: walletAddress,
 	}
 }
 

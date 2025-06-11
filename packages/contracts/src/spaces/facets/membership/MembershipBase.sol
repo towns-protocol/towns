@@ -2,20 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPricingModules} from "../../../factory/facets/architect/pricing/IPricingModules.sol";
 import {IMembershipBase} from "./IMembership.sol";
-
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
-import {IPricingModules} from "src/factory/facets/architect/pricing/IPricingModules.sol";
-import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
-
-import {MembershipStorage} from "./MembershipStorage.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {MembershipStorage} from "./MembershipStorage.sol";
 
 // contracts
 

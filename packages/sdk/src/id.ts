@@ -58,6 +58,7 @@ export enum StreamPrefix {
     UserMetadata = 'ad',
     UserInbox = 'a1',
     UserSettings = 'a5',
+    Metadata = 'dd',
 }
 
 const allowedStreamPrefixesVar = Object.values(StreamPrefix)
@@ -74,6 +75,7 @@ const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.Media]: 62,
     [StreamPrefix.DM]: 62,
     [StreamPrefix.GDM]: 62,
+    [StreamPrefix.Metadata]: 16,
 }
 
 export const makeStreamId = (prefix: StreamPrefix, identity: string): string => {
@@ -180,6 +182,8 @@ export const isGDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.GDM)
 export const isUserInboxStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.UserInbox)
+export const isMetadataStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.Metadata)
 
 export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     const prefix = streamId.slice(0, 2) as StreamPrefix

@@ -89,6 +89,14 @@ func (ss *SyncerSet) Run() {
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
+// SyncingStreamsCount returns the number of streams that are currently being synced by this syncer set.
+func (ss *SyncerSet) SyncingStreamsCount() int {
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
+
+	return len(ss.streamID2Syncer)
+}
+
 // Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) Modify(ctx context.Context, req client.ModifyRequest) error {
 	if ss.otelTracer != nil {

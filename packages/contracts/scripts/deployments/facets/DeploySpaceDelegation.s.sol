@@ -15,15 +15,12 @@ library DeploySpaceDelegation {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(7);
         arr.p(SpaceDelegationFacet.addSpaceDelegation.selector);
         arr.p(SpaceDelegationFacet.removeSpaceDelegation.selector);
         arr.p(SpaceDelegationFacet.getSpaceDelegation.selector);
         arr.p(SpaceDelegationFacet.getSpaceDelegationsByOperator.selector);
-        arr.p(SpaceDelegationFacet.setRiverToken.selector);
-        arr.p(SpaceDelegationFacet.riverToken.selector);
         arr.p(SpaceDelegationFacet.getTotalDelegation.selector);
-        arr.p(SpaceDelegationFacet.setMainnetDelegation.selector);
         arr.p(SpaceDelegationFacet.setSpaceFactory.selector);
         arr.p(SpaceDelegationFacet.getSpaceFactory.selector);
 
@@ -40,11 +37,7 @@ library DeploySpaceDelegation {
         return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function makeInitData(address riverToken) internal pure returns (bytes memory) {
-        return abi.encodeCall(SpaceDelegationFacet.__SpaceDelegation_init, (riverToken));
-    }
-
     function deploy() internal returns (address) {
-        return LibDeploy.deployCode("SpaceDelegationFacet.sol", "");
+        return LibDeploy.deployCode("SpaceDelegationFacet", "");
     }
 }

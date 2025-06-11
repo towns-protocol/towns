@@ -150,7 +150,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		node1.service.cache,
 		node1.service.nodeRegistry,
 		subscription.NewManager(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil),
-		nil,
+		nil, nil,
 	)
 	req.NoError(err, "NewStreamsSyncOperation")
 
@@ -179,7 +179,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
 			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:], nil),
+				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, common.Address{}, spaceID[:], nil),
 				MiniblockRefFromLastHash(miniBlockHashResp.Msg),
 			)
 			req.NoError(err)
@@ -400,7 +400,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
 			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:], nil),
+				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, common.Address{}, spaceID[:], nil),
 				&MiniblockRef{
 					Hash: common.BytesToHash(miniBlockHashResp.Msg.GetHash()),
 					Num:  miniBlockHashResp.Msg.GetMiniblockNum(),

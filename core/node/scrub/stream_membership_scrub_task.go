@@ -3,6 +3,7 @@ package scrub
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -108,7 +109,7 @@ func NewStreamMembershipScrubTasksProcessor(
 func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	ctx context.Context,
 	channelId StreamId,
-	member string,
+	member common.Address,
 	span trace.Span,
 ) error {
 	log := logging.FromCtx(ctx)
@@ -138,15 +139,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	if !isEntitledResult.IsEntitled() {
 		tp.entitlementLosses.Inc()
 
-		userId, err := AddressFromUserId(member)
-		if err != nil {
-			return err
-		}
-
-		userStreamId, err := UserStreamIdFromBytes(userId)
-		if err != nil {
-			return err
-		}
+		userStreamId := UserStreamIdFromAddr(member)
 
 		log.Debugw("Entitlement loss detected; adding LEAVE event for user",
 			"user",
@@ -167,7 +160,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			Make_UserPayload_Membership(
 				MembershipOp_SO_LEAVE,
 				channelId,
-				&member,
+				member,
 				spaceId[:],
 				&reason,
 			),
@@ -187,7 +180,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 	ctx context.Context,
 	channelId StreamId,
-	member string,
+	member common.Address,
 ) {
 	spaceId := channelId.SpaceID()
 
@@ -197,7 +190,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 		span.SetAttributes(
 			attribute.String("spaceId", spaceId.String()),
 			attribute.String("channelId", channelId.String()),
-			attribute.String("userId", member),
+			attribute.String("userId", member.Hex()),
 		)
 		defer span.End()
 	}
@@ -273,7 +266,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	}
 
 	for member := range members.Iter() {
-		tp.processMembership(ctx, streamId, member)
+		tp.processMembership(ctx, streamId, common.HexToAddress(member))
 	}
 
 	return nil

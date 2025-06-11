@@ -81,6 +81,8 @@ type (
 		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
+		// metrics is the set of metrics used to track sync operations
+		metrics *syncMetrics
 	}
 )
 
@@ -126,6 +128,7 @@ func (h *handlerImpl) SyncStreams(
 		h.nodeRegistry,
 		h.subscriptionManager,
 		h.otelTracer,
+		h.metrics,
 	)
 	if err != nil {
 		return err
@@ -147,7 +150,15 @@ func (h *handlerImpl) SyncStreams(
 	}
 
 	go h.runSyncStreams(req, sender, op, doneChan)
-	return <-doneChan
+
+	err = <-doneChan
+	if err != nil {
+		h.metrics.failedSyncOpsCounter.WithLabelValues(
+			req.Header().Get(UseSharedSyncHeaderName),
+			AsRiverError(err).Code.String(),
+		).Inc()
+	}
+	return err
 }
 
 // StreamsResponseSubscriber is helper interface that allows a custom streams sync subscriber to be given in unit tests.
@@ -194,7 +205,7 @@ func (h *handlerImpl) runSyncStreams(
 	op *StreamSyncOperation,
 	doneChan chan error,
 ) {
-	// send SyncID to client
+	// Send SyncID to client
 	if err := res.Send(&SyncStreamsResponse{
 		SyncId: op.SyncID,
 		SyncOp: SyncOp_SYNC_NEW,
