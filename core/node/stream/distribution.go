@@ -16,10 +16,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/linkdata/deadlock"
-	"github.com/twmb/murmur3"
 )
 
 const (
@@ -179,10 +179,10 @@ func (d *streamsDistributor) ChooseStreamNodes(
 	selectedOperators := make([]common.Address, 0, replFactor)
 	candidatesFound := 0
 
-	h := murmur3.New32()
+	h := xxhash.New()
 	for i := range nodes {
 		h.Write(streamID[:])
-		index := i + int(h.Sum32()%uint32(len(nodes)-i))
+		index := i + int(h.Sum64()%uint64(len(nodes)-i))
 		selectedNode := nodes[index]
 		nodes[index] = nodes[i]
 		nodes[i] = selectedNode
