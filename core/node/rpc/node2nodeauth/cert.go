@@ -40,6 +40,9 @@ var (
 
 // VerifyPeerCertificate returns a function that goes through the peer certificates
 // and verifies the node-2-node client certificate, and returns nil if the certificate is valid or not found.
+// Since the given certificate is required for the internode service (set of handlers) only, the RequireCertMiddleware
+// middleware is used to ensure that the certificate is present in the request. This function is
+// applicable for both internode and stream services, but the certificate is provided for the internode service only.
 func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
 		for _, raw := range rawCerts {
