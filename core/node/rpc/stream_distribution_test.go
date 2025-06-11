@@ -96,11 +96,12 @@ func testDistributionWithStateFromEnv(
 	riverRegistry *registries.RiverRegistryContract,
 ) {
 	var (
-		ctx, cancel       = context.WithCancel(t.Context())
-		require           = require.New(t)
-		streamID          StreamId
-		replFactor        = 3
-		streamsToAllocate = 5_000_000
+		ctx, cancel          = context.WithCancel(t.Context())
+		require              = require.New(t)
+		streamID             StreamId
+		replFactor           = 3
+		extraCandidatesCount = uint64(2)
+		streamsToAllocate    = 5_000_000
 	)
 	defer cancel()
 
@@ -114,7 +115,7 @@ func testDistributionWithStateFromEnv(
 		Settings: &crypto.OnChainSettings{
 			FromBlockNumber: blockNumber,
 			StreamDistribution: crypto.StreamDistribution{
-				CandidatesCount: uint64(replFactor + 2),
+				ExtraCandidatesCount: extraCandidatesCount,
 			},
 		},
 	}

@@ -23,9 +23,11 @@ import (
 )
 
 const (
-	// defaultCandidateCount is the number of candidate nodes to pick the best nodes from,
-	// this is also an on-chain setting
-	defaultCandidateCount = 4
+	// defaultExtraCandidatesCount is the number of extra candidate nodes to pick the best nodes from.
+	// That means that when ChooseStreamNodes selects nodes to place a stream it selects replication
+	// factor + extra candidates count nodes and then picks the best replication factor nodes from them.
+	// This is the default value for the on-chain setting `stream.distribution.extracandidatescount`.
+	defaultExtraCandidatesCount = 1
 )
 
 type (
@@ -95,7 +97,8 @@ type (
 
 var (
 	// ErrInsufficientNodesAvailable is returned when the distributor is unable to
-	// find enough nodes that the caller requested.
+	// choose enough nodes. This can happen when the number of operational nodes is
+	// less than the replication factor.
 	ErrInsufficientNodesAvailable = RiverError(
 		Err_BAD_CONFIG,
 		"replication factor is greater than number of operational nodes",
@@ -151,27 +154,28 @@ func (d *streamsDistributor) ChooseStreamNodes(
 	}
 
 	cfg := d.cfg.Get()
-	candidateCount := int(cfg.StreamDistribution.CandidatesCount)
-	if candidateCount <= 0 {
-		candidateCount = defaultCandidateCount
+	extraCandidatesCount := int(cfg.StreamDistribution.ExtraCandidatesCount)
+	if extraCandidatesCount <= 0 {
+		extraCandidatesCount = defaultExtraCandidatesCount
 	}
 
 	// pick candidateCount nodes and select the best replFactor nodes from them.
-	// with best being defined as least number of streams assigned to them.
-	candidateCount = min(len(impl.nodes), max(candidateCount, replFactor))
+	// With best being defined as least number of streams assigned.
+	candidateCount := replFactor + extraCandidatesCount
+	candidateCount = min(len(impl.nodes), candidateCount)
 	uniqueOperators := candidateCount <= len(impl.operators)
 
 	if !uniqueOperators {
-		// if there are equal number of operators as replFactor but not enough to
-		// pick the desired candidate count ensure that the picked nodes are all
-		// from unique operators. This favors stream distribution over unique operators
-		// over rebalancing.
+		// if there are equal number of operators as replFactor but not enough to pick the
+		// desired candidates count ensure that the picked nodes are all from unique operators.
+		// This favors stream distribution over unique operators over balancing streams over nodes.
 		if replFactor < len(impl.operators) {
 			candidateCount = replFactor
 		} else {
 			logging.FromCtx(ctx).Warnw("ChooseStreamNodes: candidate count is greater than number of unique operators",
-				"replication_factor", replFactor,
-				"num_operators", len(impl.operators))
+				"replFactor", replFactor,
+				"candidateCount", candidateCount,
+				"numOperators", len(impl.operators))
 		}
 	}
 
