@@ -171,13 +171,9 @@ abstract contract AppAccountBase is
 
         bytes32[] memory permissions = app.permissions;
 
-        // has to be both in the clients array and the permissions array
-        bool isClient = false;
-        if (app.client == client) {
-            isClient = true;
+        if (app.client != client) {
+            return false;
         }
-
-        if (!isClient) return false;
 
         uint256 permissionsLength = permissions.length;
         for (uint256 i; i < permissionsLength; ++i) {

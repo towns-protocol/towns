@@ -57,6 +57,7 @@ generate_go base base IDiamond diamond
 generate_go base base IDelegateRegistryV1 IDelegateRegistryV1
 generate_go base base IMembership membership
 generate_go base base IAppRegistry app_registry
+generate_go base base IAppAccount app_account
 
 # Full Base (and other) contracts for deployment from tests
 generate_go base/deploy deploy MockCrossChainEntitlement mock_cross_chain_entitlement
