@@ -14,7 +14,7 @@ const _abi = [
       {
         name: "app",
         type: "address",
-        internalType: "address",
+        internalType: "contract ITownsApp",
       },
     ],
     outputs: [
@@ -79,6 +79,16 @@ const _abi = [
             type: "address[]",
             internalType: "address[]",
           },
+          {
+            name: "installPrice",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "accessDuration",
+            type: "uint64",
+            internalType: "uint64",
+          },
         ],
       },
     ],
@@ -95,6 +105,113 @@ const _abi = [
       },
     ],
     stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "getAppById",
+    inputs: [
+      {
+        name: "appId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct IAppRegistryBase.App",
+        components: [
+          {
+            name: "appId",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "module",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "owner",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "clients",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "permissions",
+            type: "bytes32[]",
+            internalType: "bytes32[]",
+          },
+          {
+            name: "manifest",
+            type: "tuple",
+            internalType: "struct ExecutionManifest",
+            components: [
+              {
+                name: "executionFunctions",
+                type: "tuple[]",
+                internalType: "struct ManifestExecutionFunction[]",
+                components: [
+                  {
+                    name: "executionSelector",
+                    type: "bytes4",
+                    internalType: "bytes4",
+                  },
+                  {
+                    name: "skipRuntimeValidation",
+                    type: "bool",
+                    internalType: "bool",
+                  },
+                  {
+                    name: "allowGlobalValidation",
+                    type: "bool",
+                    internalType: "bool",
+                  },
+                ],
+              },
+              {
+                name: "executionHooks",
+                type: "tuple[]",
+                internalType: "struct ManifestExecutionHook[]",
+                components: [
+                  {
+                    name: "executionSelector",
+                    type: "bytes4",
+                    internalType: "bytes4",
+                  },
+                  {
+                    name: "entityId",
+                    type: "uint32",
+                    internalType: "uint32",
+                  },
+                  {
+                    name: "isPreHook",
+                    type: "bool",
+                    internalType: "bool",
+                  },
+                  {
+                    name: "isPostHook",
+                    type: "bool",
+                    internalType: "bool",
+                  },
+                ],
+              },
+              {
+                name: "interfaceIds",
+                type: "bytes4[]",
+                internalType: "bytes4[]",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -124,77 +241,6 @@ const _abi = [
   },
   {
     type: "function",
-    name: "getAttestation",
-    inputs: [
-      {
-        name: "appId",
-        type: "bytes32",
-        internalType: "bytes32",
-      },
-    ],
-    outputs: [
-      {
-        name: "",
-        type: "tuple",
-        internalType: "struct Attestation",
-        components: [
-          {
-            name: "uid",
-            type: "bytes32",
-            internalType: "bytes32",
-          },
-          {
-            name: "schema",
-            type: "bytes32",
-            internalType: "bytes32",
-          },
-          {
-            name: "time",
-            type: "uint64",
-            internalType: "uint64",
-          },
-          {
-            name: "expirationTime",
-            type: "uint64",
-            internalType: "uint64",
-          },
-          {
-            name: "revocationTime",
-            type: "uint64",
-            internalType: "uint64",
-          },
-          {
-            name: "refUID",
-            type: "bytes32",
-            internalType: "bytes32",
-          },
-          {
-            name: "recipient",
-            type: "address",
-            internalType: "address",
-          },
-          {
-            name: "attester",
-            type: "address",
-            internalType: "address",
-          },
-          {
-            name: "revocable",
-            type: "bool",
-            internalType: "bool",
-          },
-          {
-            name: "data",
-            type: "bytes",
-            internalType: "bytes",
-          },
-        ],
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
     name: "getLatestAppId",
     inputs: [
       {
@@ -211,6 +257,29 @@ const _abi = [
       },
     ],
     stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "installApp",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "contract ITownsApp",
+      },
+      {
+        name: "account",
+        type: "address",
+        internalType: "contract IAppAccount",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [],
+    stateMutability: "payable",
   },
   {
     type: "function",
@@ -238,7 +307,7 @@ const _abi = [
       {
         name: "app",
         type: "address",
-        internalType: "address",
+        internalType: "contract ITownsApp",
       },
       {
         name: "clients",
@@ -272,6 +341,29 @@ const _abi = [
         internalType: "bytes32",
       },
     ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "uninstallApp",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "contract ITownsApp",
+      },
+      {
+        name: "account",
+        type: "address",
+        internalType: "contract IAppAccount",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [],
     stateMutability: "nonpayable",
   },
   {
@@ -314,6 +406,31 @@ const _abi = [
   },
   {
     type: "event",
+    name: "AppInstalled",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "account",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "appId",
+        type: "bytes32",
+        indexed: true,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "AppRegistered",
     inputs: [
       {
@@ -339,6 +456,31 @@ const _abi = [
         name: "uid",
         type: "bytes32",
         indexed: false,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "AppUninstalled",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "account",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "appId",
+        type: "bytes32",
+        indexed: true,
         internalType: "bytes32",
       },
     ],
@@ -394,6 +536,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "AppNotInstalled",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "AppNotRegistered",
     inputs: [],
   },
@@ -405,6 +552,11 @@ const _abi = [
   {
     type: "error",
     name: "BannedApp",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InsufficientPayment",
     inputs: [],
   },
   {
@@ -425,6 +577,21 @@ const _abi = [
   {
     type: "error",
     name: "InvalidArrayInput",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvalidDuration",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvalidPrice",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "NotAllowed",
     inputs: [],
   },
   {
