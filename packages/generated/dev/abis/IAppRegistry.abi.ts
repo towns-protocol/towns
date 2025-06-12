@@ -78,8 +78,8 @@ export default [
           },
           {
             "name": "accessDuration",
-            "type": "uint64",
-            "internalType": "uint64"
+            "type": "uint48",
+            "internalType": "uint48"
           }
         ]
       }
@@ -221,8 +221,8 @@ export default [
           },
           {
             "name": "duration",
-            "type": "uint64",
-            "internalType": "uint64"
+            "type": "uint48",
+            "internalType": "uint48"
           }
         ]
       }
