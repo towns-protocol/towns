@@ -101,6 +101,13 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         appData.appId = att.uid;
     }
 
+    /// @notice Retrieves the app address associated with a client
+    /// @param client The client address
+    /// @return The app address associated with the client
+    function _getAppByClient(address client) internal view returns (address) {
+        return AppRegistryStorage.getLayout().client[client].app;
+    }
+
     /// @notice Creates a new app with the specified parameters
     /// @param params The parameters for creating the app
     /// @return app The address of the created app
@@ -108,9 +115,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @dev Validates inputs, deploys app contract, and registers it
     function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
         // Validate basic parameters
-        if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
-        if (params.permissions.length == 0 || params.clients.length == 0)
-            InvalidArrayInput.selector.revertWith();
+        if (bytes(params.name).length == 0) revert InvalidAppName();
+        if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
+        if (params.client == address(0)) InvalidAddressInput.selector.revertWith();
 
         _validatePricing(params.installPrice);
 
@@ -123,22 +130,23 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             params.accessDuration
         );
 
-        version = _registerApp(app, params.clients);
+        version = _registerApp(app, params.client);
         emit AppCreated(app, version);
     }
 
     /// @notice Registers a new app in the registry
     /// @param app The address of the app to register
-    /// @param clients Array of client addresses that can use the app
+    /// @param client The client address that can use the app
     /// @return version The version ID of the registered app
     /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
-    function _registerApp(
-        address app,
-        address[] memory clients
-    ) internal returns (bytes32 version) {
-        _verifyAddAppInputs(app, clients);
+    function _registerApp(address app, address client) internal returns (bytes32 version) {
+        _verifyAddAppInputs(app, client);
 
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
+        AppRegistryStorage.AppInfo storage appInfo = $.apps[app];
+        AppRegistryStorage.ClientInfo storage clientInfo = $.client[client];
+
+        if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
         ITownsApp appContract = ITownsApp(app);
@@ -156,7 +164,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             appId: EMPTY_UID,
             module: app,
             owner: owner,
-            clients: clients,
+            client: client,
             permissions: permissions,
             manifest: manifest
         });
@@ -171,6 +179,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         appInfo.latestVersion = version;
         appInfo.app = app;
+        clientInfo.app = app;
 
         emit AppRegistered(app, version);
     }
@@ -178,14 +187,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @notice Removes a app from the registry
     /// @param revoker The address revoking the app
     /// @param appId The version ID of the app to remove
-    /// @return app The address of the removed app
-    /// @return version The version ID that was removed
     /// @dev Reverts if app is not registered, revoked, or banned
     /// @dev Spaces that install this app will need to uninstall it
-    function _removeApp(
-        address revoker,
-        bytes32 appId
-    ) internal returns (address app, bytes32 version) {
+    function _removeApp(address revoker, bytes32 appId) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
         Attestation memory att = _getAttestation(appId);
@@ -205,9 +209,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         request.uid = appId;
         _revoke(att.schema, request, revoker, 0, true);
 
-        version = appInfo.latestVersion;
+        AppRegistryStorage.ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[
+            appData.client
+        ];
+        clientInfo.app = address(0);
 
-        emit AppUnregistered(app, appId);
+        emit AppUnregistered(appData.module, appId);
     }
 
     /// @notice Installs an app to a specified account
@@ -335,15 +342,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     /// @notice Verifies inputs for adding a new app
     /// @param app The app address to verify
-    /// @param clients Array of client addresses to verify
+    /// @param client The client address to verify
     /// @dev Reverts if any input is invalid or app doesn't implement required interfaces
-    function _verifyAddAppInputs(address app, address[] memory clients) internal view {
+    function _verifyAddAppInputs(address app, address client) internal view {
         if (app == address(0)) InvalidAddressInput.selector.revertWith();
-        if (clients.length == 0) InvalidArrayInput.selector.revertWith();
-
-        for (uint256 i = 0; i < clients.length; i++) {
-            if (clients[i] == address(0)) InvalidAddressInput.selector.revertWith();
-        }
+        if (client == address(0)) InvalidAddressInput.selector.revertWith();
 
         if (
             !IERC165(app).supportsInterface(type(IERC6900Module).interfaceId) ||

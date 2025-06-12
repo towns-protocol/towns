@@ -59,21 +59,16 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
     }
 
     modifier givenAppIsRegistered() {
-        address[] memory clients = new address[](1);
-        clients[0] = client;
-
         vm.prank(dev);
-        appId = registry.registerApp(mockModule, clients);
+        appId = registry.registerApp(mockModule, client);
         _;
     }
 
     modifier givenAppIsInstalled() {
         // setup clients
-        address[] memory clients = new address[](1);
-        clients[0] = client;
 
         vm.prank(dev);
-        appId = registry.registerApp(mockModule, clients);
+        appId = registry.registerApp(mockModule, client);
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
         uint256 totalRequired = registry.getAppPrice(address(mockModule));
@@ -104,9 +99,8 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Create")), false);
 
-        address[] memory clients = appAccount.getAppClients(address(mockModule));
-        assertEq(clients.length, 1);
-        assertEq(clients[0], client);
+        address app = registry.getAppByClient(client);
+        assertEq(app, address(mockModule));
     }
 
     function test_revertWhen_installApp_notRegistry() external {
@@ -142,11 +136,8 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         vm.prank(dev);
         MockInvalidModule invalidModule = new MockInvalidModule();
 
-        address[] memory clients = new address[](1);
-        clients[0] = client;
-
         vm.prank(dev);
-        appId = registry.registerApp(invalidModule, clients);
+        appId = registry.registerApp(invalidModule, client);
 
         uint256 price = registry.getAppPrice(address(invalidModule));
 
@@ -225,7 +216,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
     // execute
     function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {
         vm.prank(deployer);
-        registry.adminBanApp(mockModule);
+        registry.adminBanApp(address(mockModule));
 
         vm.prank(client);
         vm.expectRevert(

@@ -67,15 +67,12 @@ abstract contract AppAccountBase is
         _setGroupStatus(app.appId, true);
         _addApp(app.module, app.appId);
 
-        uint256 clientsLength = app.clients.length;
-        for (uint256 i; i < clientsLength; ++i) {
-            _grantGroupAccess({
-                groupId: app.appId,
-                account: app.clients[i],
-                grantDelay: _getGroupGrantDelay(app.appId),
-                executionDelay: 0
-            });
-        }
+        _grantGroupAccess({
+            groupId: app.appId,
+            account: app.client,
+            grantDelay: _getGroupGrantDelay(app.appId),
+            executionDelay: 0
+        });
 
         // Set up execution functions with the same module groupId
         uint256 executionFunctionsLength = app.manifest.executionFunctions.length;
@@ -123,10 +120,7 @@ abstract contract AppAccountBase is
         }
 
         // Revoke module's group access
-        uint256 clientsLength = app.clients.length;
-        for (uint256 i; i < clientsLength; ++i) {
-            _revokeGroupAccess(app.appId, app.clients[i]);
-        }
+        _revokeGroupAccess(app.appId, app.client);
 
         // Call module's onUninstall if uninstall data is provided
         // don't revert if it fails
@@ -175,24 +169,11 @@ abstract contract AppAccountBase is
 
         App memory app = _getApp(module);
 
-        address[] memory clients = app.clients;
-        bytes32[] memory permissions = app.permissions;
+        if (app.client != client) return false;
 
-        // has to be both in the clients array and the permissions array
-        bool isClient = false;
-        uint256 clientsLength = clients.length;
-        for (uint256 i; i < clientsLength; ++i) {
-            if (clients[i] == client) {
-                isClient = true;
-                break;
-            }
-        }
-
-        if (!isClient) return false;
-
-        uint256 permissionsLength = permissions.length;
+        uint256 permissionsLength = app.permissions.length;
         for (uint256 i; i < permissionsLength; ++i) {
-            if (permissions[i] == permission) {
+            if (app.permissions[i] == permission) {
                 return true;
             }
         }
@@ -226,10 +207,6 @@ abstract contract AppAccountBase is
 
     function _isAppInstalled(address module) internal view returns (bool) {
         return AppAccountStorage.getLayout().installedApps.contains(module);
-    }
-
-    function _getClients(address app) internal view returns (address[] memory) {
-        return _getApp(app).clients;
     }
 
     function _checkAuthorized(address module) internal view {

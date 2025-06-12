@@ -6,7 +6,7 @@
       {
         "name": "app",
         "type": "address",
-        "internalType": "contract ITownsApp"
+        "internalType": "address"
       }
     ],
     "outputs": [
@@ -67,9 +67,9 @@
             "internalType": "bytes32[]"
           },
           {
-            "name": "clients",
-            "type": "address[]",
-            "internalType": "address[]"
+            "name": "client",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "installPrice",
@@ -97,6 +97,25 @@
       }
     ],
     "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "getAppByClient",
+    "inputs": [
+      {
+        "name": "client",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -130,9 +149,9 @@
             "internalType": "address"
           },
           {
-            "name": "clients",
-            "type": "address[]",
-            "internalType": "address[]"
+            "name": "client",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "permissions",
@@ -302,9 +321,9 @@
         "internalType": "contract ITownsApp"
       },
       {
-        "name": "clients",
-        "type": "address[]",
-        "internalType": "address[]"
+        "name": "client",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [
@@ -326,13 +345,7 @@
         "internalType": "bytes32"
       }
     ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -544,6 +557,11 @@
   {
     "type": "error",
     "name": "BannedApp",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ClientAlreadyRegistered",
     "inputs": []
   },
   {

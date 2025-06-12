@@ -61,11 +61,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     }
 
     modifier givenAppIsRegistered() {
-        address[] memory clients = new address[](1);
-        clients[0] = DEFAULT_CLIENT;
-
         vm.prank(DEFAULT_DEV);
-        DEFAULT_APP_ID = registry.registerApp(mockModule, clients);
+        DEFAULT_APP_ID = registry.registerApp(mockModule, DEFAULT_CLIENT);
         _;
     }
 
@@ -77,7 +74,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         string memory schema = registry.getAppSchema();
         assertEq(
             schema,
-            "address app, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest"
+            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest"
         );
     }
 
@@ -87,94 +84,66 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
     function test_registerApp() external givenAppIsRegistered {
         assertEq(DEFAULT_APP_ID, registry.getLatestAppId(address(mockModule)));
+        assertEq(address(mockModule), registry.getAppByClient(DEFAULT_CLIENT));
     }
 
     function test_revertWhen_registerApp_EmptyApp() external {
-        address owner = _randomAddress();
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
         // App address cannot be zero
-        vm.prank(owner);
+        vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAddressInput.selector);
-        registry.registerApp(ITownsApp(address(0)), clients);
+        registry.registerApp(ITownsApp(address(0)), DEFAULT_CLIENT);
     }
 
-    function test_revertWhen_registerApp_EmptyClients() external {
+    function test_revertWhen_registerApp_EmptyClient() external {
         address owner = _randomAddress();
         MockPlugin app = new MockPlugin(owner);
 
-        address[] memory clients = new address[](0);
-
-        // Client list cannot be empty
+        // Client address cannot be zero
         vm.prank(owner);
-        vm.expectRevert(InvalidArrayInput.selector);
-        registry.registerApp(app, clients);
+        vm.expectRevert(InvalidAddressInput.selector);
+        registry.registerApp(app, address(0));
+    }
+
+    function test_revertWhen_registerApp_ClientAlreadyRegistered() external givenAppIsRegistered {
+        MockPlugin newApp = new MockPlugin(DEFAULT_DEV);
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(ClientAlreadyRegistered.selector);
+        registry.registerApp(newApp, DEFAULT_CLIENT);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   MODULE INFORMATION TESTS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_getAppClients() external {
-        address owner = _randomAddress();
+    function test_getAppByClient() external givenAppIsRegistered {
+        address app = registry.getAppByClient(DEFAULT_CLIENT);
+        assertEq(app, address(mockModule));
+    }
 
-        vm.prank(owner);
-        MockPlugin app = new MockPlugin(owner);
-
-        address[] memory clients = new address[](2);
-        clients[0] = _randomAddress();
-        clients[1] = _randomAddress();
-
-        vm.prank(owner);
-        bytes32 appId = registry.registerApp(app, clients);
-
-        App memory appInfo = registry.getAppById(appId);
-        address[] memory retrievedClients = appInfo.clients;
-        assertEq(retrievedClients.length, clients.length);
-        assertEq(retrievedClients[0], clients[0]);
-        assertEq(retrievedClients[1], clients[1]);
+    function test_getAppByClient_returnsZeroForUnregisteredClient() external view {
+        address unregisteredClient = _randomAddress();
+        address app = registry.getAppByClient(unregisteredClient);
+        assertEq(app, address(0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   MODULE REVOCATION TESTS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_removeApp() external {
-        address owner = _randomAddress();
+    function test_removeApp() external givenAppIsRegistered {
+        vm.prank(DEFAULT_DEV);
+        registry.removeApp(DEFAULT_APP_ID);
 
-        vm.prank(owner);
-        MockPlugin app = new MockPlugin(owner);
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
-        vm.prank(owner);
-        bytes32 appId = registry.registerApp(app, clients);
-
-        vm.prank(owner);
-        bytes32 revokedUid = registry.removeApp(appId);
-
-        assertEq(revokedUid, appId);
+        assertEq(registry.getAppByClient(DEFAULT_CLIENT), address(0));
     }
 
-    function test_removeApp_onlyOwner() external {
-        address owner = _randomAddress();
-
-        vm.prank(owner);
-        MockPlugin app = new MockPlugin(owner);
+    function test_removeApp_onlyOwner() external givenAppIsRegistered {
         address notOwner = _randomAddress();
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
-        vm.prank(owner);
-        bytes32 appId = registry.registerApp(app, clients);
 
         vm.prank(notOwner);
         vm.expectRevert(InvalidRevoker.selector);
-        registry.removeApp(appId);
+        registry.removeApp(DEFAULT_APP_ID);
     }
 
     function test_revertWhen_removeApp_AppNotRegistered() external {
@@ -188,26 +157,18 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_createSimpleApp() external {
-        address owner = _randomAddress();
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
-
-        uint256 installPrice = 0.001 ether;
-        uint64 accessDuration = 365 days;
 
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients,
-            installPrice: installPrice,
-            accessDuration: accessDuration
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
         });
 
-        vm.prank(owner);
+        vm.prank(DEFAULT_DEV);
         (address app, bytes32 appId) = registry.createApp(appData);
 
         App memory appInfo = registry.getAppById(appId);
@@ -215,75 +176,49 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         assertEq(appId, registry.getLatestAppId(app));
         assertEq(module, app);
+        assertEq(registry.getAppByClient(DEFAULT_CLIENT), app);
     }
 
     function test_revertWhen_createApp_EmptyName() external {
-        address owner = _randomAddress();
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
         AppParams memory appData = AppParams({
             name: "",
             permissions: permissions,
-            clients: clients,
+            client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
             accessDuration: DEFAULT_ACCESS_DURATION
         });
-        vm.prank(owner);
+        vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAppName.selector);
         registry.createApp(appData);
     }
 
     function test_revertWhen_createApp_EmptyPermissions() external {
-        address owner = _randomAddress();
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
         bytes32[] memory permissions = new bytes32[](0);
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients,
+            client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
             accessDuration: DEFAULT_ACCESS_DURATION
         });
-        vm.prank(owner);
-        vm.expectRevert(InvalidArrayInput.selector);
-        registry.createApp(appData);
-    }
-
-    function test_revertWhen_createApp_EmptyClients() external {
-        address owner = _randomAddress();
-        address[] memory clients = new address[](0);
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = bytes32("Read");
-        AppParams memory appData = AppParams({
-            name: "simple.app",
-            permissions: permissions,
-            clients: clients,
-            installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
-        });
-        vm.prank(owner);
+        vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidArrayInput.selector);
         registry.createApp(appData);
     }
 
     function test_revertWhen_createApp_ZeroAddressClient() external {
-        address owner = _randomAddress();
-        address[] memory clients = new address[](2);
-        clients[0] = _randomAddress();
-        clients[1] = address(0);
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
         AppParams memory appData = AppParams({
             name: "simple.app",
             permissions: permissions,
-            clients: clients,
+            client: address(0),
             installPrice: DEFAULT_INSTALL_PRICE,
             accessDuration: DEFAULT_ACCESS_DURATION
         });
-        vm.prank(owner);
+        vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAddressInput.selector);
         registry.createApp(appData);
     }
@@ -471,7 +406,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
     function test_revertWhen_installApp_bannedApp() external givenAppIsRegistered {
         vm.prank(deployer);
-        registry.adminBanApp(mockModule);
+        registry.adminBanApp(address(mockModule));
 
         uint256 price = registry.getAppPrice(address(mockModule));
 
@@ -518,23 +453,12 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(registry.getAppSchemaId(), newSchemaId);
     }
 
-    function test_adminBanApp() external {
-        address owner = _randomAddress();
-
-        vm.prank(owner);
-        MockPlugin app = new MockPlugin(owner);
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
-        vm.prank(owner);
-        bytes32 appId = registry.registerApp(app, clients);
-
+    function test_adminBanApp() external givenAppIsRegistered {
         vm.prank(deployer);
-        bytes32 bannedUid = registry.adminBanApp(app);
+        bytes32 bannedUid = registry.adminBanApp(address(mockModule));
 
-        assertEq(bannedUid, appId);
-        assertTrue(registry.isAppBanned(address(app)));
+        assertEq(bannedUid, DEFAULT_APP_ID);
+        assertTrue(registry.isAppBanned(address(mockModule)));
     }
 
     function test_adminBanApp_onlyOwner() external {
@@ -543,7 +467,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
-        registry.adminBanApp(app);
+        registry.adminBanApp(address(app));
     }
 
     function test_revertWhen_adminBanApp_AppNotRegistered() external {
@@ -552,7 +476,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         // Even the admin cannot ban a app that doesn't exist
         vm.prank(deployer);
         vm.expectRevert(AppNotRegistered.selector);
-        registry.adminBanApp(app);
+        registry.adminBanApp(address(app));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
