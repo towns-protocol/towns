@@ -353,13 +353,7 @@ const _abi = [
         internalType: "bytes32",
       },
     ],
-    outputs: [
-      {
-        name: "",
-        type: "bytes32",
-        internalType: "bytes32",
-      },
-    ],
+    outputs: [],
     stateMutability: "nonpayable",
   },
   {

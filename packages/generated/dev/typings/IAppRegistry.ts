@@ -590,7 +590,7 @@ export interface IAppRegistry extends BaseContract {
     removeApp(
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<void>;
 
     uninstallApp(
       app: PromiseOrValue<string>,
