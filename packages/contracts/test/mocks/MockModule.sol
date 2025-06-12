@@ -29,7 +29,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     bool public shouldFailUninstall;
 
     uint256 internal price;
-    uint64 internal duration;
+    uint48 internal duration;
 
     function initialize(
         bool _shouldFailInstall,
@@ -56,7 +56,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         price = _price;
     }
 
-    function setDuration(uint64 _duration) external {
+    function setDuration(uint48 _duration) external {
         duration = _duration;
     }
 
@@ -75,7 +75,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         return price;
     }
 
-    function accessDuration() external view returns (uint64) {
+    function accessDuration() external view returns (uint48) {
         return duration;
     }
 

@@ -33,7 +33,7 @@ import {AttestationBase} from "../attest/AttestationBase.sol";
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
 
-    uint64 private constant MAX_DURATION = 365 days;
+    uint48 private constant MAX_DURATION = 365 days;
 
     function __AppRegistry_init_unchained(
         address spaceFactory,
@@ -121,7 +121,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
         if (params.client == address(0)) InvalidAddressInput.selector.revertWith();
 
-        uint64 duration = _validateDuration(params.accessDuration);
+        uint48 duration = _validateDuration(params.accessDuration);
 
         app = LibClone.deployERC1967BeaconProxy(address(this));
         ISimpleApp(app).initialize(
@@ -156,8 +156,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         uint256 installPrice = appContract.installPrice();
         _validatePricing(installPrice);
 
-        uint64 accessDuration = appContract.accessDuration();
-        uint64 duration = _validateDuration(accessDuration);
+        uint48 accessDuration = appContract.accessDuration();
+        uint48 duration = _validateDuration(accessDuration);
 
         bytes32[] memory permissions = appContract.requiredPermissions();
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
@@ -347,7 +347,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (price > 0 && price < minPlatformFee) InvalidPrice.selector.revertWith();
     }
 
-    function _validateDuration(uint64 duration) internal pure returns (uint64) {
+    function _validateDuration(uint48 duration) internal pure returns (uint48) {
         if (duration > MAX_DURATION) InvalidDuration.selector.revertWith();
         if (duration == 0) duration = MAX_DURATION;
         return duration;

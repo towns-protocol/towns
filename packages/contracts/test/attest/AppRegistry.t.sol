@@ -34,7 +34,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     MockModule internal mockModule;
 
     uint256 private DEFAULT_INSTALL_PRICE = 0.001 ether;
-    uint64 private DEFAULT_ACCESS_DURATION = 365 days;
+    uint48 private DEFAULT_ACCESS_DURATION = 365 days;
     address private DEFAULT_CLIENT;
     address private DEFAULT_DEV;
     bytes32 private DEFAULT_APP_ID;
@@ -74,7 +74,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         string memory schema = registry.getAppSchema();
         assertEq(
             schema,
-            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest, uint64 duration"
+            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest, uint48 duration"
         );
     }
 

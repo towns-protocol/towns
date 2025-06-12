@@ -65,7 +65,7 @@ contract MockSavingsModule is OwnableFacet, ITownsApp {
     }
 
     /// @inheritdoc ITownsApp
-    function accessDuration() external pure returns (uint64) {
+    function accessDuration() external pure returns (uint48) {
         return 0;
     }
 

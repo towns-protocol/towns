@@ -43,7 +43,7 @@ interface IAppAccount is IAppAccountBase {
     /// @notice Gets the expiration of an app
     /// @param app The address of the app to get the expiration of
     /// @return The expiration of the app
-    function getAppExpiration(address app) external view returns (uint64);
+    function getAppExpiration(address app) external view returns (uint48);
 
     /// @notice Gets the apps installed on the account
     /// @return The apps installed on the account

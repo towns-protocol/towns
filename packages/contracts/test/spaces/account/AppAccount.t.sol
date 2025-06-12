@@ -265,7 +265,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
     }
 
     function test_isAppEntitled_expiredApp() external givenAppIsInstalled {
-        uint64 expiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 expiration = appAccount.getAppExpiration(address(mockModule));
 
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
 

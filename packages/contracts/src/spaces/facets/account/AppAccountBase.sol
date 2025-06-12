@@ -45,7 +45,7 @@ abstract contract AppAccountBase is
     bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
     bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
 
-    uint64 private constant DEFAULT_DURATION = 365 days;
+    uint48 private constant DEFAULT_DURATION = 365 days;
 
     // External Functions
     function _onlyRegistry() internal view {
@@ -137,13 +137,13 @@ abstract contract AppAccountBase is
     // Internal Functions
     function _getAppExpiration(
         bytes32 appId,
-        uint64 duration
-    ) internal view returns (uint64 expiration) {
-        uint64 currentExpiration = _getGroupExpiration(appId);
+        uint48 duration
+    ) internal view returns (uint48 expiration) {
+        uint48 currentExpiration = _getGroupExpiration(appId);
         if (currentExpiration > block.timestamp) {
             expiration = currentExpiration + duration;
         } else {
-            expiration = uint64(block.timestamp) + duration;
+            expiration = uint48(block.timestamp) + duration;
         }
     }
 
