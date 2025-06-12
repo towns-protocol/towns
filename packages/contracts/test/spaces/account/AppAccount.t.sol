@@ -24,7 +24,7 @@ import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // mocks
-import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
+import {MockModule} from "test/mocks/MockModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
 
 contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistryBase {
@@ -203,6 +203,19 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
     }
 
     // execute
+    function test_execute_noValueIsSent() external givenAppIsInstalled {
+        vm.deal(address(appAccount), 1 ether);
+
+        vm.prank(client);
+        appAccount.execute({
+            target: address(mockModule),
+            value: 1 ether,
+            data: abi.encodeWithSelector(mockModule.mockFunction.selector)
+        });
+
+        assertEq(address(appAccount).balance, 1 ether);
+        assertEq(address(mockModule).balance, 0);
+    }
     function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {
         vm.prank(deployer);
         registry.adminBanApp(address(mockModule));
