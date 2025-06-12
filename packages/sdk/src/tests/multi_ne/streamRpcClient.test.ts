@@ -4,7 +4,7 @@
 
 import { makeEvent, makeEvents, unpackStreamEnvelopes } from '../../sign'
 import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@towns-protocol/proto'
-import { bin_equal, dlog, bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
+import { bin_equal, dlog } from '@towns-protocol/dlog'
 import {
     makeEvent_test,
     makeRandomUserContext,

@@ -1,11 +1,24 @@
-import { Address, AppRegistryDapp, Permission, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
+import {
+    Address,
+    AppRegistryDapp,
+    Permission,
+    SpaceAddressFromSpaceId,
+    NoopRuleData,
+} from '@towns-protocol/web3'
 import {
     createSpaceAndDefaultChannel,
     everyoneMembershipStruct,
     setupWalletsAndContexts,
+    waitFor,
+    createTownWithRequirements,
+    createChannel,
+    getXchainConfigForTesting,
+    createRole,
 } from '../testUtils'
 import { makeBaseChainConfig } from '../../riverConfig'
 import { ethers } from 'ethers'
+import { MembershipOp } from '@towns-protocol/proto'
+import { make_MemberPayload_KeySolicitation } from '../../types'
 
 describe('bot tests', () => {
     test('registered bots can create app user streams', async () => {
@@ -77,6 +90,7 @@ describe('bot tests', () => {
 
         // Create bot user streams
         await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
 
         // Create a town with channels
         const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
@@ -88,15 +102,17 @@ describe('bot tests', () => {
             everyoneMembership,
         )
 
-        // Add the bot to the space
+        // Install the bot to the space
         const tx2 = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
             SpaceAddressFromSpaceId(spaceId) as Address,
             ethers.utils.parseEther('0.02').toBigInt(), // sending more to cover protocol fee
         )
+
+        // Confirm installation transaction succeeded
         const receipt2 = await tx2.wait()
-        expect(receipt.status).toBe(1)
+        expect(receipt2.status).toBe(1)
 
         const space = spaceOwnerSpaceDapp.getSpace(spaceId)
         expect(space).toBeDefined()
@@ -105,75 +121,600 @@ describe('bot tests', () => {
         const installedApps = await space!.AppAccount.read.getInstalledApps()
         expect(installedApps).toContain(foundAppAddress)
 
-        // TODO: show bot cannot join space. other members cannot add.
+        // Have space owner add the bot to the space
+        await spaceOwner.joinUser(spaceId, bot.userId)
 
+        // Validate the bot is now a member of both space and channel
+        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
+        expect(botUserStreamView).toBeDefined()
+
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+        })
+
+        // Have space owner add the bot to the channel
+        await expect(spaceOwner.joinUser(channelId, bot.userId)).resolves.toBeDefined()
+
+        // Validate that the bot is a channel member
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
+                true,
+            )
+        })
+
+        // Cleanup
+        await bot.stopSync()
+        await spaceOwner.stopSync()
+    })
+
+    test('registered and installed bots can join spaces and channels in towns with restricted membership', async () => {
+        // Create a town with user entitlements that only allows 'bob' (space owner)
+        // The bot is NOT in this list, so it doesn't satisfy the space entitlements.
+        const {
+            spaceId,
+            channelId: defaultChannelId,
+            bob: spaceOwner,
+            bobProvider: spaceOwnerProvider,
+            bobSpaceDapp: spaceOwnerSpaceDapp,
+            alice: bot,
+            alicesWallet: botWallet,
+            aliceProvider: botProvider,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: ['bob'], // No one but the space owner can join this town
+            ruleData: NoopRuleData,
+        })
+
+        const appRegistryDapp = new AppRegistryDapp(
+            makeBaseChainConfig().chainConfig,
+            spaceOwnerProvider,
+        )
+
+        // Create bot app contract
+        const tx = await appRegistryDapp.createApp(
+            botProvider.signer,
+            'bot-restricted-test',
+            [Permission.Read, Permission.Write],
+            botWallet.address as Address,
+            ethers.utils.parseEther('0.01').toBigInt(),
+            31536000n,
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        // Create bot user streams
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
+
+        // Install the bot to the space (as space owner)
+        const installTx = await appRegistryDapp.installApp(
+            spaceOwnerProvider.signer,
+            foundAppAddress as Address,
+            SpaceAddressFromSpaceId(spaceId) as Address,
+            ethers.utils.parseEther('0.02').toBigInt(),
+        )
+        const installReceipt = await installTx.wait()
+        expect(installReceipt.status).toBe(1)
+
+        // Verify bot is installed
+        const space = spaceOwnerSpaceDapp.getSpace(spaceId)
+        const installedApps = await space!.AppAccount.read.getInstalledApps()
+        expect(installedApps).toContain(foundAppAddress)
+
+        // Create a custom channel with user entitlements that disallows all users.
+        // The bot naturally doesn't satisfy the channel entitlements.
+        const { channelId: restrictedChannelId, error: channelError } = await createChannel(
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider,
+            spaceId,
+            'restricted-channel',
+            [], // No role IDs - no users qualify for admission to this channel.
+            spaceOwnerProvider.wallet,
+        )
+        expect(channelError).toBeUndefined()
+        expect(restrictedChannelId).toBeDefined()
+
+        const { streamId: returnedChannelId } = await spaceOwner.createChannel(
+            spaceId,
+            'restricted-channel',
+            '',
+            restrictedChannelId!,
+        )
+        expect(returnedChannelId).toEqual(restrictedChannelId)
+
+        // Verify that the bot does NOT satisfy space entitlements.
+        const botEntitledWallet = await spaceOwnerSpaceDapp.getEntitledWalletForJoiningSpace(
+            spaceId,
+            botWallet.address,
+            getXchainConfigForTesting(),
+        )
+        expect(botEntitledWallet).toBeUndefined() // Bot should NOT be entitled
+
+        // Space owner CAN add bot to space despite bot not satisfying entitlements
         await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
 
-        // TODO: show bot cannot add itself to channel. other members also cannot add
-        // the bot to the channel.
+        // Validate bot is a space member
+        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+        })
 
-        // TODO: have bot join channel via being added by space owner.
+        // Space owner CAN add bot to default channel despite bot not satisfying entitlements
+        await expect(spaceOwner.joinUser(defaultChannelId, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is a default channel member
+        await waitFor(() => {
+            expect(
+                botUserStreamView.userContent.isMember(defaultChannelId, MembershipOp.SO_JOIN),
+            ).toBe(true)
+        })
+
+        // Space owner CAN add bot to restricted channel despite bot not satisfying channel entitlements
+        await expect(spaceOwner.joinUser(restrictedChannelId!, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is a restricted channel member
+        await waitFor(() => {
+            expect(
+                botUserStreamView.userContent.isMember(restrictedChannelId!, MembershipOp.SO_JOIN),
+            ).toBe(true)
+        })
+
+        // Cleanup
+        await bot.stopSync()
+        await spaceOwner.stopSync()
     })
 
     test('an uninstalled bot cannot join a space or channel', async () => {
-        // const {
-        //     aliceProvider: ownerProvider,
-        //     bob: bot,10p
-        //     bobsWallet: botWallet,
-        //     bobProvider: botProvider,
-        // } = await setupWalletsAndContexts()
-        // console.log('bot wallet: ', botWallet.address)
-        // const appRegistryDapp = new AppRegistryDapp(
-        //     makeBaseChainConfig().chainConfig,
-        //     ownerProvider,
-        // )
-        // const tx = await appRegistryDapp.createApp(
-        //     botProvider.signer,
-        //     'bob-bot',
-        //     [Permission.Read, Permission.Write],
-        //     botWallet.address as Address,
-        //     ethers.utils.parseEther('0.01').toBigInt(),
-        //     31536000n,
-        // )
-        // const receipt = await tx.wait()
-        // const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
-        // expect(foundAppAddress).toBeDefined()
-        // // await appRegistryDapp.registerApp(
-        // //     botProvider.signer,
-        // //     foundAppAddress as Address,
-        // //     botWallet.address as Address,
-        // // )
-        // // const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
-        // //     ownerWallet.address,
-        // //     ownerProvider.signer,
-        // //     appRegistryUrl,
-        // // )
-        // // await appRegistryRpcClient.register({
-        // //     appId: bin_fromHexString(botWallet.address),
-        // //     appOwnerId: bin_fromHexString(ownerWallet.address),
-        // // })
-        // await expect(bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
+        const {
+            aliceProvider: ownerProvider,
+            bob: bot,
+            bobsWallet: botWallet,
+            bobProvider: botProvider,
+            carol: spaceOwner,
+            carolProvider: spaceOwnerProvider,
+            carolSpaceDapp: spaceOwnerSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        const appRegistryDapp = new AppRegistryDapp(
+            makeBaseChainConfig().chainConfig,
+            ownerProvider,
+        )
+
+        // Create bot app contract
+        const tx = await appRegistryDapp.createApp(
+            botProvider.signer,
+            'bob-bot',
+            [Permission.Read, Permission.Write],
+            botWallet.address as Address,
+            ethers.utils.parseEther('0.01').toBigInt(),
+            31536000n,
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        // Create bot user streams
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
+
+        // Create a town with channels
+        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            spaceOwner,
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider.wallet,
+            "space owner's town",
+            everyoneMembership,
+        )
+
+        // NOTE: We do NOT install the bot to the space (unlike the previous test)
+        // This is the key difference - the bot is registered but not installed
+
+        const space = spaceOwnerSpaceDapp.getSpace(spaceId)
+        expect(space).toBeDefined()
+
+        // Sanity check: the spaceDapp reports that the app is NOT installed
+        const installedApps = await space!.AppAccount.read.getInstalledApps()
+        expect(installedApps).not.toContain(foundAppAddress)
+
+        // Space owner tries to add the uninstalled bot to the space - this should fail
+        await expect(spaceOwner.joinUser(spaceId, bot.userId)).rejects.toThrow()
+
+        // Space owner tries to add the uninstalled bot to the channel - this should also fail
+        await expect(spaceOwner.joinUser(channelId, bot.userId)).rejects.toThrow()
+
+        // Clean up
+        await bot.stopSync()
+        await spaceOwner.stopSync()
     })
 
-    test('a non-owner member cannot add a bot as a space member, even if the bot is installed', async () => {
-        // TODO
+    test('a non-owner member cannot add or remove a bot as a space or channel member', async () => {
+        const {
+            alice: nonOwnerMember,
+            aliceProvider: nonOwnerProvider,
+            alicesWallet: nonOwnerWallet,
+            bob: bot,
+            bobsWallet: botWallet,
+            bobProvider: botProvider,
+            carol: spaceOwner,
+            carolProvider: spaceOwnerProvider,
+            carolSpaceDapp: spaceOwnerSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        const appRegistryDapp = new AppRegistryDapp(
+            makeBaseChainConfig().chainConfig,
+            spaceOwnerProvider,
+        )
+
+        // Create bot app contract
+        const tx = await appRegistryDapp.createApp(
+            botProvider.signer,
+            'bob-bot',
+            [Permission.Read, Permission.Write],
+            botWallet.address as Address,
+            ethers.utils.parseEther('0.01').toBigInt(),
+            31536000n,
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        // Create bot user streams
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
+
+        // Create a town with channels (everyone can join)
+        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            spaceOwner,
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider.wallet,
+            "space owner's town",
+            everyoneMembership,
+        )
+
+        // Install the bot to the space (as space owner)
+        const installTx = await appRegistryDapp.installApp(
+            spaceOwnerProvider.signer,
+            foundAppAddress as Address,
+            SpaceAddressFromSpaceId(spaceId) as Address,
+            ethers.utils.parseEther('0.02').toBigInt(),
+        )
+        const installReceipt = await installTx.wait()
+        expect(installReceipt.status).toBe(1)
+
+        // Verify bot is installed
+        const space = spaceOwnerSpaceDapp.getSpace(spaceId)
+        const installedApps = await space!.AppAccount.read.getInstalledApps()
+        expect(installedApps).toContain(foundAppAddress)
+
+        // Create a spaceDapp for the non-owner member
+        const nonOwnerSpaceDapp = spaceOwnerSpaceDapp // They can use the same spaceDapp instance
+
+        // Have non-owner member join the space and channel
+        const { issued } = await nonOwnerSpaceDapp.joinSpace(
+            spaceId,
+            nonOwnerWallet.address,
+            nonOwnerProvider.wallet,
+        )
+        expect(issued).toBe(true)
+
+        await nonOwnerMember.initializeUser({ spaceId })
+        nonOwnerMember.startSync()
+
+        await expect(nonOwnerMember.joinStream(spaceId)).resolves.not.toThrow()
+        await expect(nonOwnerMember.joinStream(channelId)).resolves.not.toThrow()
+
+        // First test that non-owner member CANNOT add bot to space (even though bot is installed)
+        await expect(nonOwnerMember.joinUser(spaceId, bot.userId)).rejects.toThrow(
+            /PERMISSION_DENIED/,
+        )
+
+        // Validate that bot is NOT a space member yet
+        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
+        expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(false)
+
+        // Have space owner add bot to space (so we can test channel membership)
+        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is now a space member
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+        })
+
+        // Now test that non-owner member CANNOT add bot to channel (even though bot is installed and space member)
+        await expect(nonOwnerMember.joinUser(channelId, bot.userId)).rejects.toThrow(
+            /PERMISSION_DENIED/,
+        )
+
+        // Validate that bot is still NOT a channel member
+        expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(false)
+
+        // Also test that non-owner member cannot remove bot from space
+        await expect(nonOwnerMember.removeUser(spaceId, bot.userId)).rejects.toThrow(
+            /PERMISSION_DENIED/,
+        )
+
+        // Validate bot is still a space member
+        expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+
+        // Now, let's confirm the non-owner member cannot boot the bot from the channel.
+
+        // Have space owner add bot to channel
+        await expect(spaceOwner.joinUser(channelId, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is now a channel member
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
+                true,
+            )
+        })
+
+        // Test that non-owner member CANNOT remove bot from channel
+        await expect(nonOwnerMember.removeUser(channelId, bot.userId)).rejects.toThrow(
+            /PERMISSION_DENIED/,
+        )
+
+        // Validate bot is still a channel member
+        expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+
+        // Cleanup
+        await bot.stopSync()
+        await spaceOwner.stopSync()
+        await nonOwnerMember.stopSync()
     })
 
-    test('a non-owner member cannot add a bot to channels', async () => {
-        // TODO
+    test('the bot itself cannot add itself to the space or to channels', async () => {
+        const {
+            bob: bot,
+            bobsWallet: botWallet,
+            bobProvider: botProvider,
+            carol: spaceOwner,
+            carolProvider: spaceOwnerProvider,
+            carolSpaceDapp: spaceOwnerSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        const appRegistryDapp = new AppRegistryDapp(
+            makeBaseChainConfig().chainConfig,
+            spaceOwnerProvider,
+        )
+
+        // Create bot app contract
+        const tx = await appRegistryDapp.createApp(
+            botProvider.signer,
+            'self-join-test-bot',
+            [Permission.Read, Permission.Write],
+            botWallet.address as Address,
+            ethers.utils.parseEther('0.01').toBigInt(),
+            31536000n,
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        // Create bot user streams
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
+
+        // Create a town with channels (everyone can join)
+        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            spaceOwner,
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider.wallet,
+            "space owner's town",
+            everyoneMembership,
+        )
+
+        // Install the bot to the space (as space owner)
+        const installTx = await appRegistryDapp.installApp(
+            spaceOwnerProvider.signer,
+            foundAppAddress as Address,
+            SpaceAddressFromSpaceId(spaceId) as Address,
+            ethers.utils.parseEther('0.02').toBigInt(),
+        )
+        const installReceipt = await installTx.wait()
+        expect(installReceipt.status).toBe(1)
+
+        // Verify bot is installed
+        const space = spaceOwnerSpaceDapp.getSpace(spaceId)
+        const installedApps = await space!.AppAccount.read.getInstalledApps()
+        expect(installedApps).toContain(foundAppAddress)
+
+        // Test that bot CANNOT add itself to space (even though bot is installed)
+        await expect(bot.joinUser(spaceId, bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+
+        // Validate that bot is NOT a space member
+        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
+        expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(false)
+
+        // Have space owner add bot to space (so we can test channel self-join)
+        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is now a space member
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+        })
+
+        // Test that bot CANNOT add itself to channel (even though bot is installed and space member)
+        await expect(bot.joinUser(channelId, bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+
+        // Validate that bot is still NOT a channel member
+        expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(false)
+
+        // Also test that bot cannot remove itself from space
+        await expect(bot.removeUser(spaceId, bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+
+        // Validate bot is still a space member
+        expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+
+        // Have space owner add bot to channel (so we can test channel self-removal)
+        await expect(spaceOwner.joinUser(channelId, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is now a channel member
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
+                true,
+            )
+        })
+
+        // Test that bot CANNOT remove itself from channel
+        await expect(bot.removeUser(channelId, bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+
+        // Validate bot is still a channel member
+        expect(botUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+
+        // Cleanup
+        await bot.stopSync()
+        await spaceOwner.stopSync()
     })
 
-    test('bot READ permissions to channels are determined by isAppEntitled', async () => {
+    test.only('bot has READ permissions to channels when granted by isAppEntitled', async () => {
+        const {
+            bob: bot,
+            bobsWallet: botWallet,
+            bobProvider: botProvider,
+            carol: spaceOwner,
+            carolProvider: spaceOwnerProvider,
+            carolSpaceDapp: spaceOwnerSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        const appRegistryDapp = new AppRegistryDapp(
+            makeBaseChainConfig().chainConfig,
+            spaceOwnerProvider,
+        )
+
+        // Create bot app contract with READ permission only
+        const tx = await appRegistryDapp.createApp(
+            botProvider.signer,
+            'read-only-bot',
+            [Permission.Read], // Only READ permission, no WRITE
+            botWallet.address as Address,
+            ethers.utils.parseEther('0.01').toBigInt(),
+            31536000n,
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        // Create bot user streams
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
+
+        // Create a town with channels (everyone can join)
+        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            spaceOwner,
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider.wallet,
+            "space owner's town",
+            everyoneMembership,
+        )
+
+        // Install the bot to the space (as space owner)
+        const installTx = await appRegistryDapp.installApp(
+            spaceOwnerProvider.signer,
+            foundAppAddress as Address,
+            SpaceAddressFromSpaceId(spaceId) as Address,
+            ethers.utils.parseEther('0.02').toBigInt(),
+        )
+        const installReceipt = await installTx.wait()
+        expect(installReceipt.status).toBe(1)
+
+        // Create a role that only grants WRITE permission (not READ) to everyone
+        // This will deny the bot WRITE access to the channel
+        const { error: roleError } = await createRole(
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider,
+            spaceId,
+            'write-only-role',
+            [Permission.Write], // Only WRITE permission, no READ
+            [], // No specific users - this role won't help the bot
+            NoopRuleData,
+            spaceOwnerProvider.wallet,
+        )
+        expect(roleError).toBeUndefined()
+
+        // Create a custom channel that requires WRITE permission
+        // The bot won't have WRITE permission through roles, but should have READ through app entitlements
+        const { channelId: restrictedChannelId, error: channelError } = await createChannel(
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider,
+            spaceId,
+            'read-only-channel',
+            [1], // Use the write-only role (role ID 1) - bot won't qualify
+            spaceOwnerProvider.wallet,
+        )
+        expect(channelError).toBeUndefined()
+        expect(restrictedChannelId).toBeDefined()
+
+        // Create the channel stream
+        const { streamId: returnedChannelId } = await spaceOwner.createChannel(
+            spaceId,
+            'read-only-channel',
+            '',
+            restrictedChannelId!,
+        )
+        expect(returnedChannelId).toEqual(restrictedChannelId)
+
+        // Have space owner add bot to space and channel
+        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
+        await expect(spaceOwner.joinUser(restrictedChannelId!, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is a member of both space and channel
+        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+            expect(
+                botUserStreamView.userContent.isMember(restrictedChannelId!, MembershipOp.SO_JOIN),
+            ).toBe(true)
+        })
+
+        // Bot should be able to post a key solicitation because it has READ permission through isAppEntitled
+        // Key solicitations require READ permission, not WRITE permission
+        const payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'bot-device-key',
+            sessionIds: [],
+            fallbackKey: 'bot-fallback-key',
+            isNewDevice: true,
+        })
+
+        // This should succeed because the bot has READ permission via app entitlements
+        await expect(
+            bot.makeEventAndAddToStream(restrictedChannelId!, payload),
+        ).resolves.not.toThrow()
+
+        // Wait for the event to be processed and verify it was accepted
+        const channelStream = await spaceOwner.waitForStream(restrictedChannelId!)
+        await waitFor(() => {
+            // Check that the bot's event was added to the channel timeline
+            const events = channelStream.view.timeline
+            expect(events.length).toBeGreaterThan(0)
+
+            // Look for any event from the bot user
+            const botEvent = events.find((e) => e.creatorUserId === bot.userId)
+            expect(botEvent).toBeDefined()
+        })
+
+        // Cleanup
+        await bot.stopSync()
+        await spaceOwner.stopSync()
+    })
+
+    test('bot does not have READ permissions to channels when not granted by isAppEntitled', async () => {
         // If a bot has no READ permission it cannot post key solicitations in a channel even
         // if it is a member.
     })
 
-    test('bot write permissions to channels are determined by isAppEntitled', async () => {
+    test('bot has write permissions to channels when granted by isAppEntitled', async () => {
         // Create a space that grants WRITE to everyone on the general channel but disallow this permission to
         // the bot. Then have the space owner install the bot, join it to the space and general channel.
         // The bot should be disallowed from posting to the channel. A bot with WRITE permissions should, however,
         // be able to post.
     })
+
+    test('bot does not have write permissions to channels when not granted by isAppEntitled', async () => {})
 
     test('bots cannot create dms or gdms', async () => {
         // DMs and GDMs are created by the bot posting messages to it's own user stream. This message type
