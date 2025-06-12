@@ -2003,7 +2003,7 @@ export class Client
     }
 
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
-        await this.initStream(streamId)
+        const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         return this.makeEventAndAddToStream(
             this.userStreamId,
@@ -2011,6 +2011,7 @@ export class Client
                 op: MembershipOp.SO_JOIN,
                 userId: addressFromUserId(userId),
                 streamId: streamIdAsBytes(streamId),
+                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'inviteUser' },
         )
