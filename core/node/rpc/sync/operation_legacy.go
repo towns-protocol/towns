@@ -58,8 +58,8 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 	var messagesSendToClient int
 	defer func() {
 		if syncOp.metrics != nil {
-			syncOp.metrics.sentMessagesCounter.DeleteLabelValues("true", syncOp.SyncID)
-			syncOp.metrics.messageBufferSizePerOpHistogram.DeleteLabelValues("true", syncOp.SyncID)
+			syncOp.metrics.sentMessagesCounter.DeleteLabelValues("false", syncOp.SyncID)
+			syncOp.metrics.messageBufferSizePerOpHistogram.DeleteLabelValues("false", syncOp.SyncID)
 		}
 		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 	}()
