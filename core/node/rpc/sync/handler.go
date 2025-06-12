@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -154,7 +155,7 @@ func (h *handlerImpl) SyncStreams(
 	err = <-doneChan
 	if err != nil {
 		h.metrics.failedSyncOpsCounter.WithLabelValues(
-			req.Header().Get(UseSharedSyncHeaderName),
+			fmt.Sprintf("%t", req.Header().Get(UseSharedSyncHeaderName) == "true"),
 			AsRiverError(err).Code.String(),
 		).Inc()
 	}
