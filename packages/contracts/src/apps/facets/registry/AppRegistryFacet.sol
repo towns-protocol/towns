@@ -104,6 +104,15 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _uninstallApp(address(app), address(account), data);
     }
 
+    function renewApp(
+        ITownsApp app,
+        IAppAccount account,
+        bytes calldata data
+    ) external payable nonReentrant {
+        _onlyAllowed(address(account));
+        _renewApp(address(app), address(account), data);
+    }
+
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getAppSchema() external view returns (string memory) {

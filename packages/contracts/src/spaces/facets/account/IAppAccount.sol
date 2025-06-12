@@ -27,6 +27,11 @@ interface IAppAccount is IAppAccountBase {
     /// @param data The data required for app uninstallation
     function onUninstallApp(bytes32 appId, bytes calldata data) external;
 
+    /// @notice Renews an app
+    /// @param appId The ID of the app to renew
+    /// @param data The data required for app renewal
+    function onRenewApp(bytes32 appId, bytes calldata data) external;
+
     /// @notice Enables an app
     /// @param app The address of the app to enable
     function enableApp(address app) external;

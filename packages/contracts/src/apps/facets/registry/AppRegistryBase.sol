@@ -257,6 +257,27 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppUninstalled(app, address(account), appId);
     }
 
+    function _renewApp(address app, address account, bytes calldata data) internal {
+        bytes32 appId = IAppAccount(account).getAppId(app);
+        if (appId == EMPTY_UID) AppNotInstalled.selector.revertWith();
+        if (_isBanned(app)) BannedApp.selector.revertWith();
+
+        Attestation memory att = _getAttestation(appId);
+        if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        if (att.revocationTime > 0) AppRevoked.selector.revertWith();
+
+        App memory appData = abi.decode(att.data, (App));
+
+        ITownsApp appContract = ITownsApp(app);
+        uint256 installPrice = appContract.installPrice();
+
+        _chargeForInstall(msg.sender, appData.owner, installPrice);
+
+        IAppAccount(account).onRenewApp(appId, data);
+
+        emit AppRenewed(app, account, appId);
+    }
+
     function _onlyAllowed(address account) internal view {
         if (IERC173(account).owner() != msg.sender) NotAllowed.selector.revertWith();
     }
