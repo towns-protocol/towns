@@ -472,7 +472,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
-        uint64 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
 
         // Move time forward but not past expiration
         vm.warp(block.timestamp + 30 days);
@@ -487,7 +487,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
-        uint64 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
         assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
 
         // Verify fee distribution
@@ -503,7 +503,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
-        uint64 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
 
         // Move time forward but not past expiration
         vm.warp(block.timestamp + 30 days);
@@ -515,7 +515,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
-        uint64 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
         assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
     }
 
@@ -528,7 +528,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
-        uint64 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
 
         // Move time forward but not past expiration
         vm.warp(block.timestamp + 30 days);
@@ -542,7 +542,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.renewApp{value: payment}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
-        uint64 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
         assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
 
         // Verify excess was refunded

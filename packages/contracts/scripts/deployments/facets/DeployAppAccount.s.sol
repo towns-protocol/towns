@@ -15,7 +15,7 @@ library DeployAppAccount {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(9);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
         arr.p(AppAccount.execute.selector);
         arr.p(AppAccount.onInstallApp.selector);
         arr.p(AppAccount.onUninstallApp.selector);

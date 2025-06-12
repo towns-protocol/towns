@@ -140,7 +140,7 @@ abstract contract AppAccountBase is
         if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
 
         // Calculate the new expiration time (extends current expiration by app duration)
-        uint64 newExpiration = _getAppExpiration(app.appId, app.duration);
+        uint48 newExpiration = _getAppExpiration(app.appId, app.duration);
 
         // Update the group expiration
         _setGroupExpiration(app.appId, newExpiration);

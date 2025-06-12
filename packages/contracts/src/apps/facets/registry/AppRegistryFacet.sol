@@ -104,6 +104,10 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _uninstallApp(address(app), address(account), data);
     }
 
+    /// @notice Renew an app
+    /// @param app The app address to renew
+    /// @param account The account to renew the app for
+    /// @param data The data to pass to the app's onRenewApp function
     function renewApp(
         ITownsApp app,
         IAppAccount account,
