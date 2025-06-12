@@ -394,10 +394,11 @@ abstract contract ExecutorBase is IExecutorBase {
         // Run pre hooks before execution
         _executePreHooks($, target, selector, value, data);
 
-        // Set the executionId for the target and selector using transient storage
+        // Mark the target and selector as authorized
+        bytes32 executionIdBefore = ExecutorStorage.getLayout().executionId;
         bytes32 executionId = _hashExecutionId(target, selector);
-        ExecutorStorage.setTransientExecutionId(executionId);
-        ExecutorStorage.setTargetExecutionId(target, executionId);
+        ExecutorStorage.getLayout().executionId = executionId;
+        ExecutorStorage.getLayout().executingTarget[target] = executionId;
 
         // Call the target
         result = LibCall.callContract(target, value, data);
@@ -405,8 +406,9 @@ abstract contract ExecutorBase is IExecutorBase {
         // Run post hooks after execution (will run even if execution fails)
         _executePostHooks($, target, selector);
 
-        // Clear transient storage to prevent composability issues
-        ExecutorStorage.clearTransientStorage(target);
+        // Reset the executionId
+        ExecutorStorage.getLayout().executionId = executionIdBefore;
+        delete ExecutorStorage.getLayout().executingTarget[target];
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
