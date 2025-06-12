@@ -57,6 +57,11 @@ const (
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
+
+	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
+	// replication factor must be picked as candidates to place a stream on. From these candidates
+	// the best replication factor nodes are picked.
+	StreamDistributionExtraCandidatesCountCountKey = "stream.distribution.extracandidatescount"
 )
 
 var (
@@ -136,6 +141,8 @@ type OnChainSettings struct {
 	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined with the default value and per stream type.
 	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
+	// StreamDistribution holds settings for the stream distribution algorithm.
+	StreamDistribution StreamDistribution `mapstructure:",squash"`
 }
 
 type XChainSettings struct {
@@ -196,6 +203,13 @@ func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 
 	default:
 		return m.Default
 	}
+}
+
+// StreamDistribution holds settings for the stream distribution algorithm.
+type StreamDistribution struct {
+	// ExtraCandidatesCount is the number of extra candidate nodes to select when determining the
+	// nodes to place a stream on. From these candidates the best replication factor nodes are picked.
+	ExtraCandidatesCount uint64 `mapstructure:"stream.distribution.extracandidatescount"`
 }
 
 func DefaultOnChainSettings() *OnChainSettings {
