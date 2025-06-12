@@ -412,7 +412,9 @@ abstract contract ExecutorBase is IExecutorBase {
 
         // Mark the target and selector as authorized
         bytes32 executionIdBefore = ExecutorStorage.getLayout().executionId;
-        ExecutorStorage.getLayout().executionId = _hashExecutionId(target, selector);
+        bytes32 executionId = _hashExecutionId(target, selector);
+        ExecutorStorage.getLayout().executionId = executionId;
+        ExecutorStorage.getLayout().executingTarget[target] = executionId;
 
         // Call the target
         result = LibCall.callContract(target, value, data);
@@ -422,6 +424,7 @@ abstract contract ExecutorBase is IExecutorBase {
 
         // Reset the executionId
         ExecutorStorage.getLayout().executionId = executionIdBefore;
+        delete ExecutorStorage.getLayout().executingTarget[target];
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
