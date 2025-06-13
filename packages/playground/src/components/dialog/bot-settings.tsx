@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
-import { isAddress } from 'viem'
+import { type Address } from 'viem'
 import { useMutation } from '@tanstack/react-query'
 import { AppRegistryService } from '@towns-protocol/sdk'
-import { useSyncAgent } from '@towns-protocol/react-sdk'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
@@ -32,52 +31,33 @@ const messageForwardingLabel = {
     [ForwardSettingValue.FORWARD_SETTING_NO_MESSAGES]: 'No Messages',
 }
 
-const botFormSchema = z.object({
-    address: z.string().refine((x) => isAddress(x), {
-        message: 'Must be a valid Ethereum address',
-    }),
-})
-
 const webhookFormSchema = z.object({
-    address: z.string().refine((x) => isAddress(x), {
-        message: 'Must be a valid Ethereum address',
-    }),
     webhookUrl: z.string().url({
         message: 'Must be a valid URL',
     }),
 })
 
 const appSettingsFormSchema = z.object({
-    address: z.string().refine((x) => isAddress(x), {
-        message: 'Must be a valid Ethereum address',
-    }),
     forwardSetting: z.nativeEnum(ForwardSettingValue),
 })
 
 const APP_REGISTRY_URL = 'https://localhost:6170'
 
-type BotFormSchema = z.infer<typeof botFormSchema>
 type WebhookFormSchema = z.infer<typeof webhookFormSchema>
 type AppSettingsFormSchema = z.infer<typeof appSettingsFormSchema>
 
 export const BotSettingsDialog = ({
+    appId,
     open,
     onOpenChange,
 }: {
+    appId: Address
     open: boolean
     onOpenChange: (open: boolean) => void
 }) => {
-    const botForm = useForm<BotFormSchema>({
-        resolver: zodResolver(botFormSchema),
-        defaultValues: {
-            address: '' as `0x${string}`,
-        },
-    })
-
     const webhookForm = useForm<WebhookFormSchema>({
         resolver: zodResolver(webhookFormSchema),
         defaultValues: {
-            address: '' as `0x${string}`,
             webhookUrl: '',
         },
     })
@@ -85,41 +65,40 @@ export const BotSettingsDialog = ({
     const appSettingsForm = useForm<AppSettingsFormSchema>({
         resolver: zodResolver(appSettingsFormSchema),
         defaultValues: {
-            address: '' as `0x${string}`,
             forwardSetting: ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
         },
     })
 
     const signer = useEthersSigner()
     const { address: signerAddress } = useAccount()
-    const { userId } = useSyncAgent()
+    // const { userId } = useSyncAgent()
 
-    const registerBotMutation = useMutation({
-        mutationFn: async ({ address }: BotFormSchema) => {
-            if (!signer || !signerAddress) {
-                return
-            }
+    // const registerBotMutation = useMutation({
+    //     mutationFn: async ({ address }: BotFormSchema) => {
+    //         if (!signer || !signerAddress) {
+    //             return
+    //         }
 
-            const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
-                signerAddress,
-                signer,
-                APP_REGISTRY_URL,
-            )
-            const appId = bin_fromHexString(address)
-            const { hs256SharedSecret } = await appRegistryRpcClient.register({
-                appId,
-                appOwnerId: bin_fromHexString(userId),
-            })
-            // Convert the Uint8Array secret to a Base64 string for display and copy-paste
-            return { jwtSecretBase64: bin_toBase64(hs256SharedSecret) }
-        },
-        onSuccess: () => {
-            botForm.reset()
-        },
-    })
+    //         const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
+    //             signerAddress,
+    //             signer,
+    //             APP_REGISTRY_URL,
+    //         )
+    //         const appId = bin_fromHexString(address)
+    //         const { hs256SharedSecret } = await appRegistryRpcClient.register({
+    //             appId,
+    //             appOwnerId: bin_fromHexString(userId),
+    //         })
+    //         // Convert the Uint8Array secret to a Base64 string for display and copy-paste
+    //         return { jwtSecretBase64: bin_toBase64(hs256SharedSecret) }
+    //     },
+    //     onSuccess: () => {
+    //         botForm.reset()
+    //     },
+    // })
 
     const registerWebhookMutation = useMutation({
-        mutationFn: async ({ address, webhookUrl }: WebhookFormSchema) => {
+        mutationFn: async ({ webhookUrl }: WebhookFormSchema) => {
             if (!signer || !signerAddress) {
                 return
             }
@@ -129,9 +108,8 @@ export const BotSettingsDialog = ({
                 signer,
                 APP_REGISTRY_URL,
             )
-            const appId = bin_fromHexString(address)
             await appRegistryRpcClient.registerWebhook({
-                appId,
+                appId: bin_fromHexString(appId),
                 webhookUrl,
             })
         },
@@ -141,7 +119,7 @@ export const BotSettingsDialog = ({
     })
 
     const updateSettingsMutation = useMutation({
-        mutationFn: async ({ address, forwardSetting }: AppSettingsFormSchema) => {
+        mutationFn: async ({ forwardSetting }: AppSettingsFormSchema) => {
             if (!signer || !signerAddress) {
                 return
             }
@@ -151,9 +129,8 @@ export const BotSettingsDialog = ({
                 signer,
                 APP_REGISTRY_URL,
             )
-            const appId = bin_fromHexString(address)
             await appRegistryRpcClient.setAppSettings({
-                appId,
+                appId: bin_fromHexString(appId),
                 settings: {
                     forwardSetting,
                 },
@@ -169,8 +146,6 @@ export const BotSettingsDialog = ({
             open={open}
             onOpenChange={(open) => {
                 onOpenChange(open)
-                botForm.reset()
-                registerBotMutation.reset()
                 webhookForm.reset()
                 registerWebhookMutation.reset()
                 appSettingsForm.reset()
@@ -181,36 +156,19 @@ export const BotSettingsDialog = ({
                 <DialogHeader>
                     <DialogTitle>Bot Settings</DialogTitle>
                     <DialogDescription>
-                        Register your bot and configure its webhook URL to receive space events.
+                        Configure your bot's webhook URL to receive space events.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">
                     {/* Bot Registration Form */}
-                    <Form {...botForm}>
+                    {/* <Form {...botForm}>
                         <form
                             className="space-y-4"
                             onSubmit={botForm.handleSubmit(async (data) => {
                                 await registerBotMutation.mutateAsync(data)
                             })}
-                        >
-                            <FormField
-                                control={botForm.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Bot Address</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="0x..." {...field} />
-                                        </FormControl>
-                                        <FormDescription>
-                                            The public address of your bot
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
+                        >                            
                             <Button
                                 type="submit"
                                 className="w-full"
@@ -238,7 +196,7 @@ export const BotSettingsDialog = ({
                                 </>
                             )}
                         </form>
-                    </Form>
+                    </Form> */}
 
                     <div className="my-4 h-px bg-border" />
 
@@ -250,23 +208,6 @@ export const BotSettingsDialog = ({
                                 await registerWebhookMutation.mutateAsync(data)
                             })}
                         >
-                            <FormField
-                                control={webhookForm.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Bot Address</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="0x..." {...field} />
-                                        </FormControl>
-                                        <FormDescription>
-                                            The bot address to register the webhook for
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             <FormField
                                 control={webhookForm.control}
                                 name="webhookUrl"
@@ -309,23 +250,6 @@ export const BotSettingsDialog = ({
                                 await updateSettingsMutation.mutateAsync(data)
                             })}
                         >
-                            <FormField
-                                control={appSettingsForm.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Bot Address</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="0x..." {...field} />
-                                        </FormControl>
-                                        <FormDescription>
-                                            The bot address to update settings for
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             <FormField
                                 control={appSettingsForm.control}
                                 name="forwardSetting"

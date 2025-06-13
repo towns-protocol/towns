@@ -16,7 +16,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Tooltip } from '@/components/ui/tooltip'
-import { BotSettingsDialog } from '@/components/dialog/bot-settings'
 import { MintBotDialog } from '@/components/dialog/mint-bot'
 
 export const SelectChannelRoute = () => {
@@ -24,8 +23,6 @@ export const SelectChannelRoute = () => {
     const { spaceId } = useParams<{ spaceId: string }>()
     const { data: space } = useSpace(spaceId!)
     const [createChannelDialogOpen, setCreateChannelDialogOpen] = useState(false)
-    const [botMintDialogOpen, setBotMintDialogOpen] = useState(false)
-    const [botSettingsDialogOpen, setBotSettingsDialogOpen] = useState(false)
     const onChannelChange = useCallback(
         (channelId: string) => {
             navigate(`/t/${spaceId}/${channelId}`)
@@ -49,21 +46,8 @@ export const SelectChannelRoute = () => {
                             <h2 className="text-xs">Select a channel to start messaging</h2>
                             <div className="flex items-center gap-2">
                                 <Tooltip title="Mint a new bot">
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => setBotMintDialogOpen(true)}
-                                    >
+                                    <Button variant="outline" size="icon">
                                         <BotIcon className="h-4 w-4" />
-                                    </Button>
-                                </Tooltip>
-                                <Tooltip title="Bot settings">
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => setBotSettingsDialogOpen(true)}
-                                    >
-                                        <GearIcon className="h-4 w-4" />
                                     </Button>
                                 </Tooltip>
 
@@ -119,11 +103,6 @@ export const SelectChannelRoute = () => {
                 }
                 main={<Outlet />}
             />
-            <BotSettingsDialog
-                open={botSettingsDialogOpen}
-                onOpenChange={setBotSettingsDialogOpen}
-            />
-            <MintBotDialog open={botMintDialogOpen} onOpenChange={setBotMintDialogOpen} />
         </SpaceProvider>
     )
 }
