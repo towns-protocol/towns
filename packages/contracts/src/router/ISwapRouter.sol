@@ -21,12 +21,14 @@ interface ISwapRouterBase {
     }
 
     /// @notice Parameters for Permit2 signature transfer with witness
+    /// @param owner The owner of the tokens (who signed the permit)
     /// @param token The token address
     /// @param amount The amount to permit
     /// @param nonce The permit nonce
     /// @param deadline The permit deadline
     /// @param signature The permit signature
     struct Permit2Params {
+        address owner;
         address token;
         uint256 amount;
         uint256 nonce;
@@ -59,6 +61,9 @@ interface ISwapRouterBase {
 
     /// @notice Error thrown when an invalid amount is provided
     error SwapRouter__InvalidAmount();
+
+    /// @notice Error thrown when the permit token does not match the swap input token
+    error SwapRouter__PermitTokenMismatch();
 
     /// @notice Error thrown when the output amount is less than the minimum expected
     error SwapRouter__InsufficientOutput();

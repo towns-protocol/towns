@@ -70,9 +70,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         _validateMembership(msg.sender);
 
         address swapRouter = getSwapRouter();
-        if (swapRouter == address(0)) {
-            SwapFacet__SwapRouterNotSet.selector.revertWith();
-        }
+        if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
 
         // handle ERC20 transfers before calling SwapRouter
         bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
@@ -93,43 +91,36 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         // execute swap through the router
         // forwarding `msg.value` may introduce double-spending if used with `multicall`
         // which has been handled by Solady Multicallable
-        try
-            ISwapRouter(swapRouter).executeSwap{value: msg.value}(
-                params,
-                routerParams,
-                actualPoster
-            )
-        returns (uint256 returnedAmount, uint256 protocolFee) {
-            // mint points based on the protocol fee if ETH is involved
-            if (
-                params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
-                params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
-            ) {
-                address airdropDiamond = _getAirdropDiamond();
-                uint256 points = _getPoints(
-                    airdropDiamond,
-                    ITownsPointsBase.Action.Swap,
-                    abi.encode(protocolFee)
-                );
-                _mintPoints(airdropDiamond, msg.sender, points);
-            }
-            emit SwapExecuted(
-                params.recipient,
-                params.tokenIn,
-                params.tokenOut,
-                params.amountIn,
-                returnedAmount,
-                poster // use original poster for the event
-            );
+        (uint256 returnedAmount, uint256 protocolFee) = ISwapRouter(swapRouter).executeSwap{
+            value: msg.value
+        }(params, routerParams, actualPoster);
 
-            // reset approval
-            if (!isNativeToken) {
-                params.tokenIn.safeApprove(swapRouter, 0);
-            }
-            return returnedAmount;
-        } catch {
-            SwapFacet__SwapFailed.selector.revertWith();
+        // mint points based on the protocol fee if ETH is involved
+        if (
+            params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
+            params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
+        ) {
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Swap,
+                abi.encode(protocolFee)
+            );
+            _mintPoints(airdropDiamond, msg.sender, points);
         }
+        emit SwapExecuted(
+            params.recipient,
+            params.tokenIn,
+            params.tokenOut,
+            params.amountIn,
+            returnedAmount,
+            poster // use original poster for the event
+        );
+
+        // reset approval
+        if (!isNativeToken) params.tokenIn.safeApprove(swapRouter, 0);
+
+        return returnedAmount;
     }
 
     /// @inheritdoc ISwapFacet
@@ -142,49 +133,39 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         _validateMembership(msg.sender);
 
         address swapRouter = getSwapRouter();
-        if (swapRouter == address(0)) {
-            SwapFacet__SwapRouterNotSet.selector.revertWith();
-        }
+        if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
 
         // handle poster based on collectPosterFeeToSpace
         address actualPoster = _resolveSwapPoster(poster);
 
         // execute swap through the router with permit
-        try
-            ISwapRouter(swapRouter).executeSwapWithPermit{value: msg.value}(
-                params,
-                routerParams,
-                permit,
-                actualPoster
-            )
-        returns (uint256 returnedAmount, uint256 protocolFee) {
-            // mint points based on the protocol fee if ETH is involved
-            if (
-                params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
-                params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
-            ) {
-                address airdropDiamond = _getAirdropDiamond();
-                uint256 points = _getPoints(
-                    airdropDiamond,
-                    ITownsPointsBase.Action.Swap,
-                    abi.encode(protocolFee)
-                );
-                _mintPoints(airdropDiamond, msg.sender, points);
-            }
+        (uint256 returnedAmount, uint256 protocolFee) = ISwapRouter(swapRouter)
+            .executeSwapWithPermit{value: msg.value}(params, routerParams, permit, actualPoster);
 
-            // emit event for successful swap
-            emit SwapExecuted(
-                params.recipient,
-                params.tokenIn,
-                params.tokenOut,
-                params.amountIn,
-                returnedAmount,
-                poster // use original poster for the event
+        // mint points based on the protocol fee if ETH is involved
+        if (
+            params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
+            params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
+        ) {
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Swap,
+                abi.encode(protocolFee)
             );
-            return returnedAmount;
-        } catch {
-            SwapFacet__SwapFailed.selector.revertWith();
+            _mintPoints(airdropDiamond, msg.sender, points);
         }
+
+        // emit event for successful swap
+        emit SwapExecuted(
+            params.recipient,
+            params.tokenIn,
+            params.tokenOut,
+            params.amountIn,
+            returnedAmount,
+            poster // use original poster for the event
+        );
+        return returnedAmount;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

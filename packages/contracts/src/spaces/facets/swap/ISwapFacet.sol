@@ -11,9 +11,6 @@ interface ISwapFacetBase {
     /// @notice Error thrown when the swap router address is not set
     error SwapFacet__SwapRouterNotSet();
 
-    /// @notice Error thrown when a swap execution fails
-    error SwapFacet__SwapFailed();
-
     /// @notice Error thrown when the total fee exceeds the maximum allowed
     error SwapFacet__TotalFeeTooHigh();
 

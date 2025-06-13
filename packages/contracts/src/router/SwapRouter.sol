@@ -100,25 +100,18 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         }
 
         // verify permit token matches params tokenIn
-        if (permit.token != params.tokenIn) {
-            SwapRouter__InvalidAmount.selector.revertWith();
-        }
+        if (permit.token != params.tokenIn) SwapRouter__PermitTokenMismatch.selector.revertWith();
 
         // ensure permit amount is sufficient
-        if (permit.amount < params.amountIn) {
-            SwapRouter__InvalidAmount.selector.revertWith();
-        }
+        if (permit.amount < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
 
         // prepare Permit2 transfer from data
         ISignatureTransfer.PermitTransferFrom memory permitTransferFrom = ISignatureTransfer
-            .PermitTransferFrom({
-                permitted: ISignatureTransfer.TokenPermissions({
-                    token: permit.token,
-                    amount: permit.amount
-                }),
-                nonce: permit.nonce,
-                deadline: permit.deadline
-            });
+            .PermitTransferFrom(
+                ISignatureTransfer.TokenPermissions(permit.token, permit.amount),
+                permit.nonce,
+                permit.deadline
+            );
 
         ISignatureTransfer.SignatureTransferDetails memory transferDetails = ISignatureTransfer
             .SignatureTransferDetails({to: address(this), requestedAmount: params.amountIn});
@@ -127,7 +120,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         ISignatureTransfer(PERMIT2).permitWitnessTransferFrom(
             permitTransferFrom,
             transferDetails,
-            msg.sender, // owner who signed the permit
+            permit.owner, // owner who signed the permit
             _witnessHash(params, routerParams, poster),
             WITNESS_TYPE_STRING,
             permit.signature
@@ -215,9 +208,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             LibCall.callContract(routerParams.router, value, routerParams.swapData);
 
             // reset approval for tokenIn
-            if (!isNativeToken) {
-                params.tokenIn.safeApprove(routerParams.approveTarget, 0);
-            }
+            if (!isNativeToken) params.tokenIn.safeApprove(routerParams.approveTarget, 0);
         }
 
         // use the actual received amount to handle fee-on-transfer tokens
@@ -324,9 +315,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param token The token to check
     /// @return uint256 The balance
     function _getBalance(address token) internal view returns (uint256) {
-        if (token == CurrencyTransfer.NATIVE_TOKEN) {
-            return address(this).balance;
-        }
+        if (token == CurrencyTransfer.NATIVE_TOKEN) return address(this).balance;
         return token.balanceOf(address(this));
     }
 
@@ -352,9 +341,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         protocolFee = BasisPoints.calculate(amount, protocolBps);
 
         // only calculate poster fee if the address is not zero
-        if (poster != address(0)) {
-            posterFee = BasisPoints.calculate(amount, posterBps);
-        }
+        if (poster != address(0)) posterFee = BasisPoints.calculate(amount, posterBps);
 
         // calculate amount after fees
         unchecked {

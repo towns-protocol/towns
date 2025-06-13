@@ -165,7 +165,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         token0.approve(everyoneSpace, defaultParams.amountIn);
 
         defaultRouterParams.swapData = "";
-        vm.expectRevert(SwapFacet__SwapFailed.selector);
+        // With empty calldata, the call to MockRouter will fail at the low level
+        // since MockRouter doesn't have a fallback function
+        vm.expectRevert();
         swapFacet.executeSwap(defaultParams, defaultRouterParams, POSTER);
         vm.stopPrank();
     }
