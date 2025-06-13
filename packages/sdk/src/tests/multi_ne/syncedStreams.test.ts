@@ -93,7 +93,7 @@ describe('syncStreams', () => {
         ])
 
         const streamsViewDelegate: StreamsViewDelegate = {
-            isDMMessageEventBlocked: (_event, _kind) => {
+            isDMMessageEventBlocked: (_event) => {
                 return false
             },
         }

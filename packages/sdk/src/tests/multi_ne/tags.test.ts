@@ -230,7 +230,7 @@ describe('makeTags', () => {
             },
         ]
 
-        streamsView.streamInitialized(streamId, 'channelContent', events)
+        streamsView.timelinesView.streamInitialized(streamId, events)
 
         const tags = makeTags(replyMessage, mockStreamView)
 
