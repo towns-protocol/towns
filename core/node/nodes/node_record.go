@@ -20,26 +20,6 @@ type NodeRecord struct {
 	nodeToNodeClient    NodeToNodeClient
 }
 
-func NewNodeRecord(
-	address common.Address,
-	operator common.Address,
-	url string,
-	status uint8,
-	local bool,
-	streamServiceClient StreamServiceClient,
-	nodeToNodeClient NodeToNodeClient,
-) *NodeRecord {
-	return &NodeRecord{
-		address:             address,
-		operator:            operator,
-		url:                 url,
-		status:              status,
-		local:               local,
-		streamServiceClient: streamServiceClient,
-		nodeToNodeClient:    nodeToNodeClient,
-	}
-}
-
 func (n *NodeRecord) Address() common.Address {
 	return n.address
 }
