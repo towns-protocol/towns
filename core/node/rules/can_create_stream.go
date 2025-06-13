@@ -79,7 +79,7 @@ type csUserInboxRules struct {
 
 /*
 *
-* CanCreateStreamEvent
+* CanCreateStream
 * a pure function with no side effects that returns a boolean value and prerequesits
 * for creating a stream.
 *
@@ -249,6 +249,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkDMInceptionPayload,
 			).
 			requireUserAddr(ru.inception.SecondPartyAddress).
+			requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
 			requireDerivedEvents(ru.derivedDMMembershipEvents)
 
 	case *GdmChannelPayload_Inception:
@@ -263,6 +264,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkGDMPayloads,
 			).
 			requireUserAddr(ru.getGDMUserIds()[1:]...).
+			requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
 			requireDerivedEvents(ru.derivedGDMMembershipEvents)
 
 	case *UserPayload_Inception:
@@ -445,6 +447,10 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 		}
 		return nil
 	}
+}
+
+func (ru *csParams) getCreatorIsNotRegisteredApp() (*auth.ChainAuthArgs, error) {
+	return auth.NewChainAuthArgsForIsNotBot(ru.creatorAddress), nil
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {

@@ -87,6 +87,13 @@ func NewChainAuthArgsForBot(userId common.Address, appContractAddress common.Add
 	}
 }
 
+func NewChainAuthArgsForIsNotBot(userId common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:      chainAuthKindIsNotBot,
+		principal: userId,
+	}
+}
+
 func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId common.Address, permission Permission) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindSpace,
@@ -140,6 +147,7 @@ const (
 	chainAuthKindIsSpaceMember
 	chainAuthKindIsWalletLinked
 	chainAuthKindIsBot
+	chainAuthKindIsNotBot
 )
 
 type ChainAuthArgs struct {
@@ -149,12 +157,9 @@ type ChainAuthArgs struct {
 	principal  common.Address
 	permission Permission
 
-	// appAddress determines what logic is used to evaluate a user's entitlement to perform
-	// actions on the network. If appAddress is not the zero address, then the check is for
-	// an app user.
-	// Specifically, app permissions checks are evaluated by checking
-	// the app's space-wide entitlements. Membership checks happen via an identical path for
-	// all types of users.
+	// appAddress is specified when the user must be a bot with a specific contract address in the registry.
+	// Otherwise it will be populated by the auth module during membership checks for the sake of entitlement
+	// evaluations.
 	appAddress common.Address
 
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
@@ -192,9 +197,9 @@ func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *Ch
 	return &ret
 }
 
-func (args *ChainAuthArgs) withAppAddress(address common.Address) *ChainAuthArgs {
+func (args *ChainAuthArgs) withAppAddress(appAddress common.Address) *ChainAuthArgs {
 	ret := *args
-	ret.appAddress = address
+	ret.appAddress = appAddress
 	return &ret
 }
 
@@ -773,29 +778,15 @@ func (ca *chainAuth) evaluateEntitlementData(
 	return false, nil
 }
 
+// isBotEntitled evaluates space or channel permission entitlement for a user that has been determined
+// to be a bot.
 func (ca *chainAuth) isBotEntitled(
 	ctx context.Context,
 	args *ChainAuthArgs,
 ) (bool, error) {
-	log := logging.FromCtx(ctx)
 	if args.kind == chainAuthKindIsSpaceMember {
-		log.Debugw("isBotEntitled", "kind", "isSpaceMember", "args", args)
-
-		// For space membership checks, use IsAppInstalled to check if the app is installed in the space
-		isInstalled, err := ca.spaceContract.IsAppInstalled(
-			ctx,
-			args.spaceId,
-			args.appAddress,
-		)
-		if err != nil {
-			return false, AsRiverError(
-				err,
-			).Message("Error checking if app is installed for space membership").
-				Tag("appAddress", args.appAddress).
-				Tag("clientAddress", args.principal).
-				Tag("spaceId", args.spaceId)
-		}
-		return isInstalled, nil
+		// membership has already been checked earlier in the IsEntitled logic.
+		return true, nil
 	}
 
 	isEntitled, err := ca.spaceContract.IsAppEntitled(
@@ -850,13 +841,9 @@ func (ca *chainAuth) evaluateWithEntitlements(
 		return false, nil
 	}
 
-	// Route bots via a separate entitlement path that calls to the space contract
-	isBot, contractAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
-	if err != nil {
-		return false, err
-	}
-	if isBot {
-		args.appAddress = contractAddress
+	// Route bots to a separate entitlement evaluation path.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
 		return ca.isBotEntitled(ctx, args)
 	}
 
@@ -1110,26 +1097,43 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsBot || args.kind == chainAuthKindIsNotBot {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
 }
 
+// checkIsBot checks to see if the user is a bot and returns a cache result if the auth check was related
+// to whether or not a user is a bot. Otherwise it will return a valid boolean, and the contract address of
+// the app if it is registered, or an error if the method encounters one.
 func (ca *chainAuth) checkIsBot(
 	ctx context.Context,
 	args *ChainAuthArgs,
-) (CacheResult, error) {
-	isBot, err := ca.appRegistryContract.IsRegisteredAppWithClient(ctx, args.appAddress, args.principal)
+) (CacheResult, bool, common.Address, error) {
+	logging.FromCtx(ctx).
+		Infow("checkIsBot", "kind", args.kind, "appAddress", args.appAddress, "principal", args.principal)
+
+	isBot, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
 	if err != nil {
-		return nil, err
+		return nil, false, common.Address{}, err
 	}
 
-	logging.FromCtx(ctx).
-		Infow("checkIsBot", "isBot", isBot, "err", err, "appAddress", args.appAddress, "principal", args.principal)
+	var reason EntitlementResultReason
+	if args.kind == chainAuthKindIsBot {
+		isEntitled := isBot && appAddress == args.appAddress
+		if !isEntitled {
+			reason = EntitlementResultReason_IS_NOT_BOT
+		}
+		return boolCacheResult{isEntitled, reason}, isBot, appAddress, nil
+	} else if args.kind == chainAuthKindIsNotBot {
+		if isBot {
+			reason = EntitlementResultReason_IS_BOT
+		}
+		return boolCacheResult{!isBot, reason}, isBot, appAddress, nil
+	}
 
-	return boolCacheResult{isBot, EntitlementResultReason_NONE}, nil
+	return nil, isBot, appAddress, nil
 }
 
 // checkBotMembership validates that the bot is a member of the space
@@ -1316,10 +1320,6 @@ func (ca *chainAuth) checkEntitlement(
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
 
-	if args.kind == chainAuthKindIsBot {
-		return ca.checkIsBot(ctx, args)
-	}
-
 	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
 	if err != nil {
 		return nil, err
@@ -1327,14 +1327,13 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult{false, reason}, nil
 	}
 
-	// Check: is user a bot?
-	isBot, contractAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+	cacheResult, isBot, appAddress, err := ca.checkIsBot(ctx, args)
 	if err != nil {
-		return boolCacheResult{}, err
-	}
-
-	if isBot {
-		args = args.withAppAddress(contractAddress)
+		return nil, err
+	} else if cacheResult != nil {
+		return cacheResult, nil
+	} else {
+		args = args.withAppAddress(appAddress)
 	}
 
 	// If the user is a bot, we route membership checks via a separate path on the space

@@ -331,7 +331,7 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 
 		isBot, _ := params.streamView.IsBotUser()
 		if isBot {
-			builder.requireChainAuth(ru.ownerChainAuthForInviter)
+			builder = builder.requireChainAuth(ru.ownerChainAuthForInviter)
 		}
 		return builder
 	case *UserPayload_UserMembershipAction_:
@@ -1477,7 +1477,13 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	}
 	// for joins and invites, require space membership
 	return &DerivedEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, common.BytesToAddress(ru.membership.InitiatorAddress), nil, nil),
+		Payload: events.Make_UserPayload_Membership(
+			MembershipOp_SO_JOIN,
+			*streamParentId,
+			common.BytesToAddress(ru.membership.InitiatorAddress),
+			nil,
+			nil,
+		),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -1487,36 +1493,54 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 // by the space owner; this authorization is required to ensure that bots are added to spaces or channels
 // directly by space owners. In the future we may add a specific permission type for this.
 func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs, error) {
-	inviter, err := shared.AddressHex(ru.userMembership.Inviter)
-	if err != nil {
-		return nil, err
-	}
-
 	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
 	if err != nil {
 		return nil, err
 	}
 
 	if streamId.Type() == shared.STREAM_SPACE_BIN {
-		return auth.NewChainAuthArgsForSpace(streamId, inviter, auth.PermissionOwnership), nil
+		return auth.NewChainAuthArgsForSpace(
+			streamId,
+			common.Address(ru.userMembership.Inviter),
+			auth.PermissionOwnership,
+		), nil
 	}
 
 	if streamId.Type() == shared.STREAM_CHANNEL_BIN {
-		return auth.NewChainAuthArgsForChannel(streamId.SpaceID(), streamId, inviter, auth.PermissionOwnership), nil
+		return auth.NewChainAuthArgsForChannel(
+			streamId.SpaceID(),
+			streamId,
+			common.Address(ru.userMembership.Inviter),
+			auth.PermissionOwnership,
+		), nil
 	}
 
 	return nil, RiverError(
 		Err_BAD_STREAM_ID,
 		"Invalid stream type for determining ownership",
 	).Tag("streamId", streamId).
-		Tag("inviter", inviter)
+		Tag("inviter", ru.userMembership.Inviter)
 }
 
 // validUserMembershipStreamForBot confirms that, if the user stream belongs to a bot, the bot is
 // being added to acceptible stream types. At this time the protocol does not support bot membership
 // in DM and GDM channels.
 func (ru *aeUserMembershipRules) validUserMembershipStreamForBot() (bool, error) {
+	log := logging.FromCtx(ru.params.ctx)
 	isBotUser, err := ru.params.streamView.IsBotUser()
+
+	log.Infow(
+		"validUserMembershipStreamForBot",
+		"isBotUser",
+		isBotUser,
+		"err",
+		err,
+		"membershipStreamId",
+		ru.userMembership.StreamId,
+		"userStreamId",
+		ru.params.streamView.StreamId(),
+	)
+
 	if err != nil {
 		return false, err
 	}
@@ -1529,6 +1553,22 @@ func (ru *aeUserMembershipRules) validUserMembershipStreamForBot() (bool, error)
 	if err != nil {
 		return false, err
 	}
+
+	log.Infow(
+		"validUserMembershipStreamForBot with details",
+		"isBotUser",
+		isBotUser,
+		"err",
+		err,
+		"membershipStreamId",
+		ru.userMembership.StreamId,
+		"userStreamId",
+		ru.params.streamView.StreamId(),
+		"streamIsDm",
+		streamId.Type() == shared.STREAM_DM_CHANNEL_BIN,
+		"streamIsGdm",
+		streamId.Type() == shared.STREAM_GDM_CHANNEL_BIN,
+	)
 
 	return streamId.Type() != shared.STREAM_DM_CHANNEL_BIN && streamId.Type() != shared.STREAM_GDM_CHANNEL_BIN, nil
 }
@@ -1644,7 +1684,13 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress), action.StreamParentId, nil)
+	payload := events.Make_UserPayload_Membership(
+		action.Op,
+		actionStreamId,
+		common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+		action.StreamParentId,
+		nil,
+	)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
 	if err != nil {
 		return nil, err
@@ -1871,7 +1917,12 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 		fallthrough
 
 	default:
-		return auth.PermissionUndefined, common.Address{}, RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
+		return auth.PermissionUndefined, common.Address{}, RiverError(
+			Err_BAD_EVENT,
+			"Need valid membership op",
+			"op",
+			membership.Op,
+		)
 	}
 }
 
