@@ -140,7 +140,7 @@ type OnChainSettings struct {
 
 	// ServerEnableNode2NodeAuth indicates whether node-to-node authentication is enabled.
 	// Options: 1 means enabled, 0 means disabled.
-	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enableNode2NodeAuth"`
+	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enablenode2nodeauth"`
 }
 
 type XChainSettings struct {

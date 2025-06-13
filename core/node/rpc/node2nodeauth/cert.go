@@ -20,7 +20,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -38,12 +37,16 @@ var (
 	certExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
 )
 
+// IsValidNodeFunc is a function type that checks if the given address is a valid node.
+// It returns an error if the address is not valid or not registered in the node registry.
+type IsValidNodeFunc func(addr common.Address) error
+
 // VerifyPeerCertificate returns a function that goes through the peer certificates
 // and verifies the node-2-node client certificate, and returns nil if the certificate is valid or not found.
 // Since the given certificate is required for the internode service (set of handlers) only, the RequireCertMiddleware
-// middleware is used to ensure that the certificate is present in the request. This function is
+// middleware is used to ensure that the certificate is already present on the internode request. This function is
 // applicable for both internode and stream services, but the certificate is provided for the internode service only.
-func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
+func VerifyPeerCertificate(logger *logging.Log, verifyNode IsValidNodeFunc) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
 		for _, raw := range rawCerts {
 			cert, err := x509.ParseCertificate(raw)
@@ -54,7 +57,7 @@ func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry)
 			// The given function is applicable for both internode and stream services.
 			// The given certificate is provided for the internode service only.
 			if len(cert.Subject.Organization) == 1 && cert.Subject.Organization[0] == certIssuer {
-				if err = verifyCert(logger, nodeRegistry, cert); err != nil {
+				if err = verifyCert(logger, verifyNode, cert); err != nil {
 					return err
 				}
 			}
@@ -75,7 +78,7 @@ type node2NodeCertExt struct {
 
 // verifyCert verifies the node-2-node client certificate.
 // The certificate must have a custom node2nodeCertExt extension.
-func verifyCert(logger *logging.Log, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
+func verifyCert(logger *logging.Log, verifyNode IsValidNodeFunc, cert *x509.Certificate) error {
 	if cert == nil {
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
 	}
@@ -134,11 +137,7 @@ func verifyCert(logger *logging.Log, nodeRegistry nodes.NodeRegistry, cert *x509
 	}
 
 	// Make sure the recovered address is registered in the node registry.
-	if _, err = nodeRegistry.GetNode(recoveredAddr); err != nil {
-		return err
-	}
-
-	return nil
+	return verifyNode(recoveredAddr)
 }
 
 // CertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.

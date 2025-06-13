@@ -11,11 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/contracts/river"
-	"github.com/towns-protocol/towns/core/node/nodes"
-
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
-
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -105,20 +101,16 @@ func TestVerifyCert(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name    string
-		cert    *x509.Certificate
-		mock    func(registry *mocks.MockNodeRegistry)
-		wantErr string
+		name       string
+		cert       *x509.Certificate
+		verifyCert IsValidNodeFunc
+		wantErr    string
 	}{
 		{
 			name: "Valid certificate",
 			cert: x509Cert,
-			mock: func(registry *mocks.MockNodeRegistry) {
-				registry.On("GetNode", wallet.Address).
-					Return(
-						nodes.NewNodeRecord(wallet.Address, wallet.Address, "", river.NodeStatus_Operational, false, nil, nil),
-						nil,
-					)
+			verifyCert: func(addr common.Address) error {
+				return nil
 			},
 		},
 		{
@@ -144,12 +136,8 @@ func TestVerifyCert(t *testing.T) {
 		{
 			name: "Unknown node address",
 			cert: x509Cert,
-			mock: func(registry *mocks.MockNodeRegistry) {
-				registry.On("GetNode", wallet.Address).
-					Return(
-						nil,
-						errors.New("node not found"),
-					)
+			verifyCert: func(addr common.Address) error {
+				return errors.New("node not found")
 			},
 			wantErr: "node not found",
 		},
@@ -157,11 +145,7 @@ func TestVerifyCert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodeRegistry := mocks.NewMockNodeRegistry(t)
-			if tt.mock != nil {
-				tt.mock(nodeRegistry)
-			}
-			err := verifyCert(logger, nodeRegistry, tt.cert)
+			err := verifyCert(logger, tt.verifyCert, tt.cert)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.wantErr)

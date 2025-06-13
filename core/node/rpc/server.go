@@ -470,7 +470,13 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 		// Since both stream and internode services are running on the same server,
 		// the client certificate is required for the internode service only so it should be optional here.
 		cfg.ClientAuth = tls.RequestClientCert
-		cfg.VerifyPeerCertificate = node2nodeauth.VerifyPeerCertificate(s.defaultLogger, s.nodeRegistry)
+		cfg.VerifyPeerCertificate = node2nodeauth.VerifyPeerCertificate(
+			s.defaultLogger,
+			func(addr common.Address) error {
+				_, err := s.nodeRegistry.GetNode(addr)
+				return err
+			},
+		)
 	}
 
 	return cfg, nil

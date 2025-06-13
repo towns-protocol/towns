@@ -37,12 +37,12 @@ type NodeRegistry interface {
 }
 
 type nodeRegistryImpl struct {
-	contract         *registries.RiverRegistryContract
-	onChainConfig    crypto.OnChainConfiguration
-	localNodeAddress common.Address
-	httpClient       *http.Client
+	contract           *registries.RiverRegistryContract
+	onChainConfig      crypto.OnChainConfiguration
+	localNodeAddress   common.Address
+	httpClient         *http.Client
 	httpClientWithCert *http.Client
-	connectOpts      []connect.ClientOption
+	connectOpts        []connect.ClientOption
 
 	mu                    sync.RWMutex
 	nodesLocked           map[common.Address]*NodeRecord
@@ -86,7 +86,7 @@ func LoadNodeRegistry(
 		onChainConfig:         onChainConfig,
 		localNodeAddress:      localNodeAddress,
 		httpClient:            httpClient,
-		httpClientWithCert: httpClientWithCert,
+		httpClientWithCert:    httpClientWithCert,
 		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
 		appliedBlockNumLocked: appliedBlockNum,
 		connectOpts:           connectOpts,

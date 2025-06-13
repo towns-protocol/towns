@@ -237,7 +237,24 @@ func (st *serviceTester) cleanup(f any) {
 }
 
 func (st *serviceTester) makeTestListener() (net.Listener, string) {
-	l, url := testcert.MakeTestListener(st.t, nil)
+	l, url := testcert.MakeTestListener(
+		st.t,
+		node2nodeauth.VerifyPeerCertificate(
+			logging.FromCtx(st.ctx),
+			func(addr common.Address) error {
+				node, err := st.btc.NodeRegistry.GetNode(nil, addr)
+				if err != nil {
+					return err
+				}
+
+				if node.NodeAddress.Cmp(addr) != 0 {
+					return fmt.Errorf("node address mismatch: expected %s, got %s", node.NodeAddress.Hex(), addr.Hex())
+				}
+
+				return nil
+			},
+		),
+	)
 	st.cleanup(l.Close)
 	return l, url
 }
