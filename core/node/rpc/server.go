@@ -33,6 +33,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -213,10 +214,15 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		s.riverChain = opts.RiverChain
 		s.listener = opts.Listener
 		s.httpClientMaker = opts.HttpClientMaker
+		s.httpClientMakerWithCert = opts.HttpClientMakerWithCert
 	}
 
 	if s.httpClientMaker == nil {
 		s.httpClientMaker = http_client.GetHttpClient
+	}
+
+	if s.httpClientMakerWithCert == nil {
+		s.httpClientMakerWithCert = http_client.GetHttpClientWithCert
 	}
 
 	if !s.config.Log.Simplify {
@@ -353,10 +359,19 @@ func (s *Service) initRiverChain() error {
 	if s.wallet != nil {
 		walletAddress = s.wallet.Address
 	}
+
 	httpClient, err := s.httpClientMaker(ctx, s.config)
 	if err != nil {
 		return err
 	}
+
+	httpClientWithCert, err := s.httpClientMakerWithCert(
+		ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet, s.riverChain.ChainId),
+	)
+	if err != nil {
+		return err
+	}
+
 	s.nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
 		s.registryContract,
@@ -365,6 +380,7 @@ func (s *Service) initRiverChain() error {
 		s.riverChain.ChainMonitor,
 		s.chainConfig,
 		httpClient,
+		httpClientWithCert,
 		s.otelConnectIterceptor,
 	)
 	if err != nil {
@@ -445,10 +461,25 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 		}
 	}
 
-	return &tls.Config{
+	cfg := &tls.Config{
 		Certificates: []tls.Certificate{*cert},
 		NextProtos:   []string{"h2"},
-	}, nil
+	}
+
+	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+		// Since both stream and internode services are running on the same server,
+		// the client certificate is required for the internode service only so it should be optional here.
+		cfg.ClientAuth = tls.RequestClientCert
+		cfg.VerifyPeerCertificate = node2nodeauth.VerifyPeerCertificate(
+			s.defaultLogger,
+			func(addr common.Address) error {
+				_, err := s.nodeRegistry.GetNode(addr)
+				return err
+			},
+		)
+	}
+
+	return cfg, nil
 }
 
 func (s *Service) runHttpServer() error {
@@ -758,6 +789,10 @@ func (s *Service) initHandlers() {
 	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
 
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
+	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+		s.defaultLogger.Info("Enabling node2node authentication")
+		nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
+	}
 	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
 	s.registerDebugHandlers()
@@ -839,11 +874,12 @@ func (s *Service) initAppRegistryHandlers() error {
 }
 
 type ServerStartOpts struct {
-	RiverChain          *crypto.Blockchain
-	Listener            net.Listener
-	HttpClientMaker     HttpClientMakerFunc
-	ScrubberMaker       func(context.Context, *Service) events.Scrubber
-	StreamEventListener track_streams.StreamEventListener
+	RiverChain              *crypto.Blockchain
+	Listener                net.Listener
+	HttpClientMaker         HttpClientMakerFunc
+	HttpClientMakerWithCert HttpClientMakerWithCertFunc
+	ScrubberMaker           func(context.Context, *Service) events.Scrubber
+	StreamEventListener     track_streams.StreamEventListener
 }
 
 // StartServer starts the server with the given configuration.

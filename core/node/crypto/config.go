@@ -57,6 +57,7 @@ const (
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
+	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
 
 	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
 	// replication factor must be picked as candidates to place a stream on. From these candidates
@@ -143,6 +144,9 @@ type OnChainSettings struct {
 	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
+	// ServerEnableNode2NodeAuth indicates whether node-to-node authentication is enabled.
+	// Options: 1 means enabled, 0 means disabled.
+	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enablenode2nodeauth"`
 }
 
 type XChainSettings struct {
@@ -256,6 +260,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 		XChain: XChainSettings{
 			Blockchains: []uint64{},
 		},
+
+		ServerEnableNode2NodeAuth: 0,
 	}
 }
 
