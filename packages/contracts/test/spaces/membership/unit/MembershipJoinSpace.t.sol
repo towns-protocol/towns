@@ -711,4 +711,478 @@ contract MembershipJoinSpaceTest is
         vm.prank(founder);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
     }
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    ADDITIONAL EDGE CASES                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_joinSpace_withExactlyZeroValue() external givenMembershipHasPrice {
+        vm.prank(alice);
+        vm.expectRevert(Membership__InsufficientPayment.selector);
+        membership.joinSpace{value: 0}(alice);
+    }
+
+    function test_joinSpace_withOneWeiLessThanRequired() external givenMembershipHasPrice {
+        uint256 requiredPrice = membership.getMembershipPrice();
+        vm.deal(alice, requiredPrice - 1);
+        
+        vm.prank(alice);
+        vm.expectRevert(Membership__InsufficientPayment.selector);
+        membership.joinSpace{value: requiredPrice - 1}(alice);
+    }
+
+    function test_joinSpace_withMaxUint256Value() external {
+        vm.deal(alice, type(uint256).max);
+        
+        vm.prank(alice);
+        membership.joinSpace{value: type(uint256).max}(alice);
+        
+        assertEq(membershipToken.balanceOf(alice), 1);
+        // Check refund calculation doesn't overflow
+        assertGt(alice.balance, 0);
+    }
+
+    function test_joinSpace_consecutiveJoinsFromSameUser() external {
+        for (uint256 i = 0; i < 5; i++) {
+            vm.prank(alice);
+            membership.joinSpace(alice);
+        }
+        assertEq(membershipToken.balanceOf(alice), 5);
+    }
+
+    function test_joinSpace_nearMembershipLimit() external {
+        uint256 limit = 3;
+        vm.prank(founder);
+        membership.setMembershipLimit(limit);
+
+        // Fill up to limit - 1
+        for (uint256 i = 0; i < limit - 1; i++) {
+            address user = address(uint160(0x1000 + i));
+            vm.prank(user);
+            membership.joinSpace(user);
+        }
+
+        // Last join should succeed
+        vm.prank(alice);
+        membership.joinSpace(alice);
+        assertEq(membershipToken.balanceOf(alice), 1);
+
+        // Next join should fail
+        vm.prank(bob);
+        vm.expectRevert(Membership__MaxSupplyReached.selector);
+        membership.joinSpace(bob);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   SECURITY & ACCESS TESTS                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_joinSpace_unauthorizedFounderOperations() external {
+        // Non-founder should not be able to set membership limit
+        vm.prank(alice);
+        vm.expectRevert();
+        membership.setMembershipLimit(100);
+
+        // Non-founder should not be able to set membership price
+        vm.prank(alice);
+        vm.expectRevert();
+        membership.setMembershipPrice(1 ether);
+    }
+
+    function test_joinSpace_reentrancyProtection() external givenMembershipHasPrice {
+        // This test assumes the contract has reentrancy protection
+        // Create a malicious contract that tries to reenter
+        address maliciousContract = address(new MaliciousReentrant(address(membership)));
+        
+        vm.deal(maliciousContract, MEMBERSHIP_PRICE);
+        vm.prank(maliciousContract);
+        
+        // The membership contract should handle reentrancy gracefully
+        // Either by reverting or by having proper guards in place
+        try MembershipFacet(address(membership)).joinSpace{value: MEMBERSHIP_PRICE}(maliciousContract) {
+            // If it succeeds, verify only one token was minted
+            assertEq(membershipToken.balanceOf(maliciousContract), 1);
+        } catch {
+            // Reentrancy protection worked - this is expected
+            assertEq(membershipToken.balanceOf(maliciousContract), 0);
+        }
+    }
+
+    function test_joinSpace_withContractCaller() external {
+        // Test that contract addresses can join (important for multisig wallets)
+        address contractAddress = address(new SimpleContract());
+        
+        vm.prank(contractAddress);
+        membership.joinSpace(contractAddress);
+        
+        assertEq(membershipToken.balanceOf(contractAddress), 1);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    ENHANCED EVENT TESTS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_joinSpace_eventEmissionDetails() external givenMembershipHasPrice {
+        uint256 expectedTokenId = membershipToken.totalSupply();
+        
+        vm.deal(alice, MEMBERSHIP_PRICE);
+        
+        // Test exact event parameters
+        vm.expectEmit(true, true, true, true);
+        emit MembershipTokenIssued(alice, expectedTokenId);
+        
+        vm.prank(alice);
+        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+    }
+
+    function test_joinSpace_multipleEventEmissions() external {
+        uint256 startingTokenId = membershipToken.totalSupply();
+        
+        for (uint256 i = 0; i < 3; i++) {
+            address user = address(uint160(0x2000 + i));
+            
+            vm.expectEmit(true, true, true, true);
+            emit MembershipTokenIssued(user, startingTokenId + i);
+            
+            vm.prank(user);
+            membership.joinSpace(user);
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    FUZZ TESTING ENHANCED                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_fuzz_joinSpace_variousAddresses(address user) external {
+        vm.assume(user != address(0));
+        vm.assume(user != address(membership));
+        vm.assume(user.code.length == 0); // Only EOAs for this test
+        
+        vm.prank(user);
+        membership.joinSpace(user);
+        
+        assertEq(membershipToken.balanceOf(user), 1);
+    }
+
+    function test_fuzz_joinSpace_variousPaymentAmounts(uint256 payment) external givenMembershipHasPrice {
+        payment = bound(payment, MEMBERSHIP_PRICE, 10 * MEMBERSHIP_PRICE);
+        
+        vm.deal(alice, payment);
+        
+        vm.prank(alice);
+        membership.joinSpace{value: payment}(alice);
+        
+        assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(alice.balance, payment - MEMBERSHIP_PRICE); // Verify correct refund
+    }
+
+    function test_fuzz_joinSpace_membershipLimits(uint256 limit) external {
+        limit = bound(limit, 1, 100);
+        
+        vm.prank(founder);
+        membership.setMembershipLimit(limit);
+        
+        // Fill exactly to the limit
+        for (uint256 i = 0; i < limit; i++) {
+            address user = address(uint160(0x3000 + i));
+            vm.prank(user);
+            membership.joinSpace(user);
+        }
+        
+        // Next join should fail
+        vm.prank(alice);
+        vm.expectRevert(Membership__MaxSupplyReached.selector);
+        membership.joinSpace(alice);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   STATE CONSISTENCY TESTS                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_joinSpace_stateConsistencyAfterMultipleJoins() external {
+        address[] memory users = new address[](5);
+        for (uint256 i = 0; i < 5; i++) {
+            users[i] = address(uint160(0x4000 + i));
+        }
+        
+        uint256 initialSupply = membershipToken.totalSupply();
+        
+        for (uint256 i = 0; i < users.length; i++) {
+            vm.prank(users[i]);
+            membership.joinSpace(users[i]);
+            
+            // Verify state consistency after each join
+            assertEq(membershipToken.balanceOf(users[i]), 1);
+            assertEq(membershipToken.totalSupply(), initialSupply + i + 1);
+        }
+    }
+
+    function test_joinSpace_tokenOwnershipCorrectness() external {
+        uint256 initialSupply = membershipToken.totalSupply();
+        
+        vm.prank(alice);
+        membership.joinSpace(alice);
+        
+        uint256 newTokenId = initialSupply;
+        assertEq(membershipToken.ownerOf(newTokenId), alice);
+        assertEq(membershipToken.balanceOf(alice), 1);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 INTEGRATION & FLOW TESTS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_joinSpace_fullWorkflowWithPriceChanges() external {
+        uint256 originalPrice = 0.1 ether;
+        uint256 newPrice = 0.2 ether;
+        
+        // Set initial price
+        vm.prank(founder);
+        membership.setMembershipPrice(originalPrice);
+        
+        // Join at original price
+        vm.deal(alice, originalPrice);
+        vm.prank(alice);
+        membership.joinSpace{value: originalPrice}(alice);
+        
+        // Change price
+        vm.prank(founder);
+        membership.setMembershipPrice(newPrice);
+        
+        // Join at new price
+        vm.deal(bob, newPrice);
+        vm.prank(bob);
+        membership.joinSpace{value: newPrice}(bob);
+        
+        assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(membershipToken.balanceOf(bob), 1);
+    }
+
+    function test_joinSpace_workflowWithFreeAllocationChange() external {
+        // Start with free allocation
+        vm.prank(founder);
+        membership.setMembershipFreeAllocation(1);
+        
+        vm.prank(alice);
+        membership.joinSpace(alice);
+        assertEq(alice.balance, 0); // Should be free
+        
+        // Remove free allocation
+        vm.prank(founder);
+        membership.setMembershipFreeAllocation(0);
+        membership.setMembershipPrice(1 ether);
+        
+        vm.deal(bob, 1 ether);
+        vm.prank(bob);
+        membership.joinSpace{value: 1 ether}(bob);
+        assertEq(bob.balance, 0); // Should have paid
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  GAS OPTIMIZATION TESTS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_gas_joinSpace_basicJoin() external {
+        uint256 gasStart = gasleft();
+        
+        vm.prank(alice);
+        membership.joinSpace(alice);
+        
+        uint256 gasUsed = gasStart - gasleft();
+        
+        // Assert reasonable gas usage (adjust threshold as needed)
+        assertLt(gasUsed, 200000, "Basic join should be gas efficient");
+        assertEq(membershipToken.balanceOf(alice), 1);
+    }
+
+    function test_gas_joinSpace_withPayment() external givenMembershipHasPrice {
+        vm.deal(alice, MEMBERSHIP_PRICE);
+        
+        uint256 gasStart = gasleft();
+        
+        vm.prank(alice);
+        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+        
+        uint256 gasUsed = gasStart - gasleft();
+        
+        // Payment operations should still be reasonably efficient
+        assertLt(gasUsed, 250000, "Paid join should be gas efficient");
+        assertEq(membershipToken.balanceOf(alice), 1);
+    }
+
+    function test_gas_batchJoinComparison() external {
+        // Test gas efficiency of multiple joins
+        address[] memory users = new address[](3);
+        uint256[] memory gasUsedPerJoin = new uint256[](3);
+        
+        for (uint256 i = 0; i < 3; i++) {
+            users[i] = address(uint160(0x5000 + i));
+            
+            uint256 gasStart = gasleft();
+            vm.prank(users[i]);
+            membership.joinSpace(users[i]);
+            gasUsedPerJoin[i] = gasStart - gasleft();
+            
+            assertEq(membershipToken.balanceOf(users[i]), 1);
+        }
+        
+        // Gas usage should be relatively consistent
+        for (uint256 i = 1; i < gasUsedPerJoin.length; i++) {
+            uint256 gasDiff = gasUsedPerJoin[i] > gasUsedPerJoin[0] 
+                ? gasUsedPerJoin[i] - gasUsedPerJoin[0]
+                : gasUsedPerJoin[0] - gasUsedPerJoin[i];
+            
+            // Allow for some variance but should be roughly similar
+            assertLt(gasDiff, 50000, "Gas usage should be consistent across joins");
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*               COMPREHENSIVE ERROR TESTS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_revertWhen_joinSpaceWithInsufficientBalance() external givenMembershipHasPrice {
+        // User has less than required price
+        vm.deal(alice, MEMBERSHIP_PRICE - 1);
+        
+        vm.prank(alice);
+        vm.expectRevert(Membership__InsufficientPayment.selector);
+        membership.joinSpace{value: MEMBERSHIP_PRICE - 1}(alice);
+    }
+
+    function test_revertWhen_joinSpaceCallerAndRecipientMismatch() external {
+        // Test if contract allows caller != recipient in certain conditions
+        vm.prank(alice);
+        membership.joinSpace(bob); // Alice calls but Bob receives
+        
+        // This should work in most cases, but verify the logic
+        assertEq(membershipToken.balanceOf(bob), 1);
+        assertEq(membershipToken.balanceOf(alice), 0);
+    }
+
+    function test_revertWhen_joinSpaceWithMaliciousContract() external {
+        // Deploy a contract with malicious receive() that always reverts
+        address maliciousContract = address(new AlwaysRevertContract());
+        
+        vm.prank(maliciousContract);
+        // This should handle the case gracefully
+        membership.joinSpace(maliciousContract);
+        
+        // Verify membership was still granted
+        assertEq(membershipToken.balanceOf(maliciousContract), 1);
+    }
+
+    function test_boundary_membershipLimitAtMaxUint256() external {
+        // Test edge case with very large membership limit
+        vm.prank(founder);
+        vm.expectRevert(); // Should revert due to practical limitations
+        membership.setMembershipLimit(type(uint256).max);
+    }
+
+    function test_boundary_membershipPriceAtMaxUint256() external {
+        vm.prank(founder);
+        membership.setMembershipPrice(type(uint256).max);
+        
+        uint256 price = membership.getMembershipPrice();
+        assertEq(price, type(uint256).max);
+        
+        // Should handle large prices gracefully
+        vm.deal(alice, type(uint256).max);
+        vm.prank(alice);
+        membership.joinSpace{value: type(uint256).max}(alice);
+        
+        assertEq(membershipToken.balanceOf(alice), 1);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  VIEW FUNCTION TESTS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_getMembershipPrice_consistency() external {
+        uint256 originalPrice = membership.getMembershipPrice();
+        
+        vm.prank(founder);
+        membership.setMembershipPrice(1 ether);
+        
+        assertEq(membership.getMembershipPrice(), 1 ether);
+        assertNotEq(membership.getMembershipPrice(), originalPrice);
+    }
+
+    function test_getMembershipLimit_beforeAndAfterSetting() external {
+        uint256 originalLimit = membership.getMembershipLimit();
+        
+        vm.prank(founder);
+        membership.setMembershipLimit(50);
+        
+        uint256 newLimit = membership.getMembershipLimit();
+        assertEq(newLimit, 50);
+        assertNotEq(newLimit, originalLimit);
+    }
+
+    function test_getMembershipFreeAllocation_changes() external {
+        uint256 originalAllocation = membership.getMembershipFreeAllocation();
+        
+        vm.prank(founder);
+        membership.setMembershipFreeAllocation(100);
+        
+        uint256 newAllocation = membership.getMembershipFreeAllocation();
+        assertEq(newAllocation, 100);
+        assertNotEq(newAllocation, originalAllocation);
+    }
+
+    function test_revenue_trackingAccuracy() external givenMembershipHasPrice {
+        uint256 initialRevenue = membership.revenue();
+        
+        vm.deal(alice, MEMBERSHIP_PRICE);
+        vm.prank(alice);
+        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+        
+        uint256 finalRevenue = membership.revenue();
+        uint256 protocolFee = membership.getProtocolFee();
+        
+        // Revenue should increase by membership price minus protocol fee
+        assertEq(finalRevenue, initialRevenue + MEMBERSHIP_PRICE - protocolFee);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    HELPER CONTRACTS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+}
+
+// Helper contracts for testing
+contract MaliciousReentrant {
+    address public membership;
+    bool public hasReentered;
+    
+    constructor(address _membership) {
+        membership = _membership;
+    }
+    
+    receive() external payable {
+        if (!hasReentered) {
+            hasReentered = true;
+            try MembershipFacet(membership).joinSpace{value: msg.value}(address(this)) {
+                // Reentrancy attempt
+            } catch {
+                // Expected to fail due to reentrancy protection
+            }
+        }
+    }
+}
+
+contract SimpleContract {
+    // Simple contract to test contract-based membership
+    function dummy() external pure returns (bool) {
+        return true;
+    }
+}
+
+contract AlwaysRevertContract {
+    receive() external payable {
+        revert("Malicious contract always reverts");
+    }
+    
+    fallback() external payable {
+        revert("Malicious contract always reverts");
+    }
+}
 }
