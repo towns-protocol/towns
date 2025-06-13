@@ -99,6 +99,26 @@ contract XChainTest is
         IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
     }
 
+    function test_provideXChainRefund_revertWhen_invalidValue() public {
+        // Setup: Create a request with value
+        address caller = _randomAddress();
+
+        // Create a request through the gated contract
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        vm.prank(caller);
+        bytes32 transactionId = gated.joinSpace(
+            caller,
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        vm.prank(deployer);
+        vm.expectRevert(EntitlementGated_InvalidValue.selector);
+        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
+    }
+
     function test_provideXChainRefund_revertWhen_notOwner() public {
         // Setup: Create a request with value
         address caller = _randomAddress();

@@ -49,6 +49,10 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
             EntitlementGated_TransactionCheckAlreadyCompleted.selector.revertWith();
         }
 
+        if (request.value == 0) {
+            EntitlementGated_InvalidValue.selector.revertWith();
+        }
+
         request.completed = true;
 
         XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
@@ -62,9 +66,6 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
             }
         }
 
-        // Transfer ETH from this contract (EntitlementChecker) to the receiver
-        // Since this function is called on the BaseRegistry but ETH is stored here,
-        // we need to transfer from address(this) which is the diamond contract
         CurrencyTransfer.transferCurrency(
             CurrencyTransfer.NATIVE_TOKEN,
             address(this),
