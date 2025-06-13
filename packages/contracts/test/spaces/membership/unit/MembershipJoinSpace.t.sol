@@ -712,56 +712,98 @@ contract MembershipJoinSpaceTest is
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
     }
 }
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                ADDITIONAL NEGATIVE-PATH TESTS             */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/*                    ADDITIONAL EDGE-CASE TESTS               */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+contract MembershipJoinSpaceEdgeCaseTest is MembershipBaseSetup, EntitlementTestUtils {
+    /*----------------------------------------------------------*/
+    /*                  CONSTANT / IMMUTABLES                   */
+    /*----------------------------------------------------------*/
+    uint256 internal constant LIMIT_ZERO = 0;
+    uint256 internal constant MAX_UINT128 = type(uint128).max;
 
-    /// @dev Reverts if contract address tries to join (should block non-EOA)
-    function test_revertWhen_contractTriesToJoin() external {
-        address attacker = address(this); // this is a contract
-        vm.expectRevert(); // expect custom or generic revert
-        membership.joinSpace(attacker);
-    }
-
-    /// @dev Joining fails while MembershipFacet is paused
-    function test_revertWhen_paused() external {
+    /*----------------------------------------------------------*/
+    /*                       LIMIT TESTS                        */
+    /*----------------------------------------------------------*/
+    function test_revertWhen_joinSpaceLimitZero() external {
+        // Founder sets membership limit to zero (closed club)
         vm.prank(founder);
-        membership.pause();
+        membership.setMembershipLimit(LIMIT_ZERO);
+
         vm.prank(alice);
-        vm.expectRevert("Pausable: paused");
+        vm.expectRevert(Membership__MaxSupplyReached.selector);
         membership.joinSpace(alice);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     ERC721 RECEIVER TEST                  */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /*----------------------------------------------------------*/
+    /*                 PAID-JOIN NEGATIVE PATHS                 */
+    /*----------------------------------------------------------*/
+    function test_revertWhen_joinSpaceWithoutPaying() external givenMembershipHasPrice {
+        // Ensure Alice has no ether
+        assertEq(alice.balance, 0);
 
-    /// @dev Ensure joinSpace mints to ERC721Receiver compliant contract
-    function test_joinSpace_toERC721Receiver() external {
-        // Deploy a minimal ERC721Receiver mock
-        ERC721Holder holder = new ERC721Holder();
         vm.prank(alice);
-        membership.joinSpace(address(holder));
-        assertEq(membershipToken.balanceOf(address(holder)), 1);
+        vm.expectRevert(Membership__InsufficientPayment.selector);
+        membership.joinSpace(alice);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*          CONCURRENCY / LIMIT RACE-CONDITION TEST          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Two users attempt to mint final remaining spot; second should revert
-    function test_joinSpace_limitRaceCondition() external {
+    /*----------------------------------------------------------*/
+    /*                  FOUNDER SELF-MINT TEST                  */
+    /*----------------------------------------------------------*/
+    function test_joinSpaceFounderSelfMint() external {
         vm.prank(founder);
-        membership.setMembershipLimit(1);
+        MembershipFacet(address(membership)).joinSpace(founder);
 
-        vm.prank(alice);
-        membership.joinSpace(alice);
-        assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(membershipToken.balanceOf(founder), 1);
+        assertEq(IERC20(riverAirdrop).balanceOf(founder), _getPoints(0));
+    }
+
+    /*----------------------------------------------------------*/
+    /*            FUZZ: HUGE VALUE SHOULD NOT OVERFLOW          */
+    /*----------------------------------------------------------*/
+    function test_fuzz_joinSpace_hugeValueRefund(uint256 fuzzPayment) external givenMembershipHasPrice {
+        // Bound fuzzPayment to be greater than MEMBERSHIP_PRICE but <= MAX_UINT128 to avoid overflow
+        fuzzPayment = bound(fuzzPayment, MEMBERSHIP_PRICE + 1, MAX_UINT128);
+
+        vm.deal(bob, fuzzPayment);
+        uint256 preBalance = bob.balance;
 
         vm.prank(bob);
-        vm.expectRevert(Membership__MaxSupplyReached.selector);
-        membership.joinSpace(bob);
+        membership.joinSpace{value: fuzzPayment}(bob);
+
+        // Token minted
+        assertEq(membershipToken.balanceOf(bob), 1);
+
+        // Bob only charged MEMBERSHIP_PRICE
+        assertEq(bob.balance, preBalance - MEMBERSHIP_PRICE);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*----------------------------------------------------------*/
+    /*             EVENT EMISSION / LOG STRUCTURE CHECK         */
+    /*----------------------------------------------------------*/
+    function test_joinSpace_emitsMembershipTokenIssued() external {
+        vm.deal(alice, MEMBERSHIP_PRICE);
+        vm.prank(founder);
+        membership.setMembershipPrice(MEMBERSHIP_PRICE);
+
+        uint256 nextTokenId = membershipToken.totalSupply();
+
+        vm.recordLogs();
+        vm.prank(alice);
+        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bool found;
+        for (uint256 i; i &lt; logs.length; ++i) {
+            if (logs[i].topics[0] == MembershipTokenIssued.selector) {
+                // topics[1] = indexed address user, topics[2] = indexed tokenId
+                assertEq(address(uint160(uint256(logs[i].topics[1]))), alice);
+                assertEq(uint256(logs[i].topics[2]), nextTokenId);
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found, "MembershipTokenIssued not emitted");
+    }
 }

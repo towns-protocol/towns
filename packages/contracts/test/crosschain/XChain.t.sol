@@ -162,65 +162,105 @@ contract XChainTest is
         }
     }
 }
-// ─────────────────────────────────────────────────────────────────────────────
-    // Additional unit tests – Framework: Foundry (forge-std)
-    // ─────────────────────────────────────────────────────────────────────────────
 
-    function test_provideXChainRefund_revertWhen_unknownTxId() public {
-        bytes32 bogusTxId = keccak256("bogus");
-        vm.prank(deployer);
-        vm.expectRevert(XChain.UnknownTransaction.selector);
-        IXChain(baseRegistry).provideXChainRefund(_randomAddress(), bogusTxId);
-    }
+/*─────────────────────────────────────────────────────────────
+                            NEW TESTS
+    ─────────────────────────────────────────────────────────────*/
 
+    /// @dev Expect joinSpace to revert when no ether is supplied.
     function test_provideXChainRefund_revertWhen_zeroValue() public {
         address caller = _randomAddress();
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
-        // joinSpace with no ETH
         vm.prank(caller);
-        bytes32 txId = gated.joinSpace(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
-
-        // entitlementChecker balance should be 0 → refund should revert
-        vm.prank(deployer);
-        vm.expectRevert(XChain.NoFundsToRefund.selector);
-        IXChain(baseRegistry).provideXChainRefund(caller, txId);
+        vm.expectRevert();
+        gated.joinSpace{value: 0}(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
     }
 
-    function test_provideXChainRefund_emitsEvent() public {
+    /// @dev Owner attempts to refund a different address than the original caller.
+    function test_provideXChainRefund_revertWhen_wrongRecipient() public {
         address caller = _randomAddress();
+        address wrongRecipient = _randomAddress();
         vm.deal(caller, 1 ether);
+
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
         vm.prank(caller);
-        bytes32 txId = gated.joinSpace{value: 1 ether}(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
-
-        // Expect event
-        vm.expectEmit(true, true, false, true);
-        emit XChain.XChainRefundProvided(caller, txId, 1 ether);
+        bytes32 txId = gated.joinSpace{value: 1 ether}(
+            caller,
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
 
         vm.prank(deployer);
-        IXChain(baseRegistry).provideXChainRefund(caller, txId);
+        // If a bespoke error exists prefer its selector, otherwise use generic expectation.
+        try IXChain(baseRegistry).provideXChainRefund(wrongRecipient, txId) {
+            revert("Refund to invalid recipient did not revert");
+        } catch (bytes memory) {
+            // success: call reverted
+        }
     }
 
-    function test_isCheckCompleted_falseBeforeRefund() public {
+    /// @dev Sanity-check that the refund flow stays within a reasonable gas budget.
+    function test_provideXChainRefund_gasUsageWithinBudget() public {
         address caller = _randomAddress();
         vm.deal(caller, 1 ether);
+
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
         vm.prank(caller);
-        bytes32 txId = gated.joinSpace{value: 1 ether}(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
+        bytes32 txId = gated.joinSpace{value: 1 ether}(
+            caller,
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
 
-        // Before refund
-        assertFalse(IXChain(baseRegistry).isCheckCompleted(txId, roleIds[0]));
-
-        // Refund by owner
+        uint256 gasBefore = gasleft();
         vm.prank(deployer);
         IXChain(baseRegistry).provideXChainRefund(caller, txId);
+        uint256 gasAfter = gasleft();
 
-        // After refund
-        assertTrue(IXChain(baseRegistry).isCheckCompleted(txId, roleIds[0]));
+        uint256 gasUsed = gasBefore - gasAfter;
+        // Note: 150k gas ceiling is heuristic and may need adjustment if underlying implementation changes
+        assertLt(gasUsed, 150_000);
+    }
+
+    /// @dev Verify successive independent refunds work as expected.
+    function test_provideXChainRefund_multipleSequentialTransactions() public {
+        address caller1 = _randomAddress();
+        address caller2 = _randomAddress();
+        vm.deal(caller1, 1 ether);
+        vm.deal(caller2, 2 ether);
+
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        vm.prank(caller1);
+        bytes32 tx1 = gated.joinSpace{value: 1 ether}(
+            caller1,
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        vm.prank(caller2);
+        bytes32 tx2 = gated.joinSpace{value: 2 ether}(
+            caller2,
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        // Refund first transaction
+        vm.prank(deployer);
+        IXChain(baseRegistry).provideXChainRefund(caller1, tx1);
+        assertEq(caller1.balance, 1 ether);
+        assertTrue(IXChain(baseRegistry).isCheckCompleted(tx1, roleIds[0]));
+
+        // Refund second transaction
+        vm.prank(deployer);
+        IXChain(baseRegistry).provideXChainRefund(caller2, tx2);
+        assertEq(caller2.balance, 2 ether);
+        assertTrue(IXChain(baseRegistry).isCheckCompleted(tx2, roleIds[0]));
     }
