@@ -5,10 +5,27 @@ pragma solidity ^0.8.23;
 
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
 
 // contracts
+
+/// @dev Struct to hold voting context and avoid stack too deep
+struct VotingContext {
+    bytes32 transactionId;
+    address caller;
+    uint256 value;
+    bool completed;
+}
+
+/// @dev Struct to hold vote counting results
+struct VoteResults {
+    uint256 passed;
+    uint256 failed;
+    uint256 totalNodes;
+    IEntitlementGatedBase.NodeVoteStatus finalStatus;
+}
 
 interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
     /// @notice Checks if a specific entitlement check request has been completed
