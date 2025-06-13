@@ -77,6 +77,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when native token is used with permit (not supported)
     error SwapRouter__NativeTokenNotSupportedWithPermit();
 
+    /// @notice Error thrown when recipient is not specified (address(0))
+    error SwapRouter__RecipientRequired();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
