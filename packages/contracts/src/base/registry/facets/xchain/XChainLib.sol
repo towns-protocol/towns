@@ -27,6 +27,7 @@ library XChainLib {
         uint256 blockNumber;
         address caller;
         bool completed;
+        address receiver;
     }
 
     struct Layout {
