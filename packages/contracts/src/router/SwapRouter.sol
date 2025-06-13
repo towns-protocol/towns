@@ -7,7 +7,7 @@ import {IArchitect} from "../factory/facets/architect/IArchitect.sol";
 import {ISwapFacet} from "../spaces/facets/swap/ISwapFacet.sol";
 import {ISwapRouter} from "./ISwapRouter.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {ISignatureTransfer} from "@uniswap/permit2/interfaces/ISignatureTransfer.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
 import {BasisPoints} from "../utils/libraries/BasisPoints.sol";
@@ -49,6 +49,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @notice Universal Permit2 contract address
     /// @dev This contract implements Uniswap's Permit2 protocol for signature-based token transfers
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    string internal constant WITNESS_TYPE =
+        "SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)";
+    bytes32 internal constant WITNESS_TYPE_HASH = keccak256(bytes(WITNESS_TYPE));
 
     /// @notice EIP-712 witness type string for SwapWitness
     /// @dev This string defines the structure of the witness data that binds permit signatures

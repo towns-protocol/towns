@@ -44,6 +44,12 @@ interface ISwapRouterBase {
         bytes swapData;
     }
 
+    struct SwapWitness {
+        ExactInputParams exactInputParams;
+        RouterParams routerParams;
+        address poster;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
