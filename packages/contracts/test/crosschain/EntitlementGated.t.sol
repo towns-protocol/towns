@@ -475,3 +475,87 @@ contract EntitlementGatedTest is
         // balance should have been refunded to caller (0 ether left in contract)
         assertEq(address(gated).balance, 0);
     }
+// =============================================================
+    //                       Additional Coverage V2
+    // =============================================================
+
+    function test_requestEntitlementCheckV2RuleDataV2_revertWhen_zeroValue() external {
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        vm.expectRevert(EntitlementGated_InvalidValue.selector);
+        gated.requestEntitlementCheckV2RuleDataV2{value: 0}(roleIds, RuleEntitlementUtil.getMockERC721RuleData());
+    }
+
+    function test_requestEntitlementCheckV1RuleDataV2_duplicateRoleIds() external {
+        uint256[] memory roleIds = new uint256[](3);
+        roleIds[0] = 0;
+        roleIds[1] = 0; // duplicate
+        roleIds[2] = 1;
+
+        // behaviour: duplicates are allowed but should not break the flow
+        bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2{value: 1 ether}(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+        assertTrue(requestId != bytes32(0));
+    }
+
+    function test_postEntitlementCheckResult_revert_wrongRoleId() external {
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        vm.prank(address(gated));
+        address[] memory _nodes = entitlementChecker.getRandomNodes(5);
+        bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        vm.prank(_nodes[0]);
+        vm.expectRevert(EntitlementGated_InvalidRoleIds.selector);
+        gated.postEntitlementCheckResult(requestId, 999, NodeVoteStatus.PASSED); // roleId not part of request
+    }
+
+    function test_fuzz_mixedVotes_leadsToFailAndRefund(bytes32 seed) external {
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        address caller = _randomAddress();
+        vm.deal(caller, 1 ether);
+
+        vm.prank(caller);
+        bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2{value: 1 ether}(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        vm.prank(address(gated));
+        address[] memory _nodes = entitlementChecker.getRandomNodes(5);
+
+        // deterministic shuffle based on seed for reproducibility
+        uint256 rand = uint256(seed);
+        uint256 passVotes;
+        for (uint256 i; i < 3; ++i) {
+            uint256 nodeIdx = (rand + i) % _nodes.length;
+            NodeVoteStatus vote = i % 2 == 0 ? NodeVoteStatus.FAILED : NodeVoteStatus.PASSED;
+            if (vote == NodeVoteStatus.PASSED) passVotes++;
+            vm.prank(_nodes[nodeIdx]);
+            gated.postEntitlementCheckResult(requestId, roleIds[0], vote);
+        }
+
+        // quorum is 3, require all same status; if mixed then FAILED path and refund expected
+        assertEq(address(gated).balance, passVotes == 3 ? 1 ether : 0);
+    }
+
+    function test_requestEntitlementCheckV1RuleDataV2_revertWhen_excessValue() external {
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        vm.deal(address(this), 2 ether);
+        vm.expectRevert(EntitlementGated_InvalidValue.selector);
+        gated.requestEntitlementCheckV1RuleDataV2{value: 2 ether}(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+    }

@@ -150,8 +150,67 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
             }
             assertEq(totalNodes, nodes.length);
         }
+    // =============================================================
+    //                       Additional Tests
+    // =============================================================
+
+    // Register exactly 25 nodes and verify count; attempt 26th should revert
+    function test_registerNode_limitOf25(address operator) external givenOperatorIsRegistered(operator) givenOperatorIsApproved(operator) {
+        // register 25 unique nodes
+        for (uint256 i = 0; i < 25; i++) {
+            address node = address(uint160(uint256(keccak256(abi.encode(i, operator)))));
+            vm.prank(operator);
+            entitlementChecker.registerNode(node);
+        }
+        assertEq(entitlementChecker.totalNodes(), 25);
+
+        // 26th registration should revert with limit error
+        address extraNode = address(uint160(uint256(keccak256("extraNode"))));
+        vm.prank(operator);
+        vm.expectRevert(EntitlementChecker_MaximumNodesReached.selector);
+        entitlementChecker.registerNode(extraNode);
     }
-}
+
+    // Revert when operator not approved tries to register
+    function test_registerNode_revertWhen_operatorNotApproved(address operator, address node) external givenOperatorIsRegistered(operator) {
+        vm.prank(operator);
+        vm.expectRevert(EntitlementChecker_InvalidNodeOperator.selector);
+        entitlementChecker.registerNode(node);
+    }
+
+    // Revert when unregisterNode is invoked by non-operator
+    function test_unregisterNode_revertWhen_callerNotOperator(address operator, address node, address attacker)
+        external
+        givenOperatorIsRegistered(operator)
+        givenOperatorIsApproved(operator)
+        givenNodeIsRegistered(operator, node)
+    {
+        vm.assume(attacker != operator && attacker != address(0));
+        vm.prank(attacker);
+        vm.expectRevert(EntitlementChecker_InvalidNodeOperator.selector);
+        entitlementChecker.unregisterNode(node);
+    }
+
+    // Ensure getRandomNodes returns exact number requested when possible
+    function test_getRandomNodes_exactCount() external {
+        uint256 count = entitlementChecker.totalNodes();
+        uint256 request = count > 5 ? 5 : count;
+        address[] memory nodes = entitlementChecker.getRandomNodes(request);
+        assertEq(nodes.length, request);
+    }
+
+    // Fuzz: multiple random calls should never return duplicates within a single array
+    function testFuzz_getRandomNodes_noDuplicates(uint8 request) external {
+        uint256 total = entitlementChecker.totalNodes();
+        request = uint8(bound(request, 1, total == 0 ? 1 : uint8(total)));
+        address[] memory nodes = entitlementChecker.getRandomNodes(request);
+        for (uint256 i = 0; i < nodes.length; i++) {
+            for (uint256 j = i + 1; j < nodes.length; j++) {
+                assertNotEq(nodes[i], nodes[j]);
+            }
+        }
+    }
+    }
 // =============================================================
 //     Invariant: totalNodes never exceeds 25
 // =============================================================
