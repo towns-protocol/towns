@@ -152,3 +152,12 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
         }
     }
 }
+// =============================================================
+//     Invariant: totalNodes never exceeds 25
+// =============================================================
+contract EntitlementCheckerInvariant is BaseSetup {
+    function invariant_totalNodesBounded() public {
+        uint256 total = entitlementChecker.totalNodes();
+        assertLe(total, 25);
+    }
+}

@@ -394,3 +394,84 @@ contract EntitlementGatedTest is
         }
     }
 }
+// =============================================================
+    //                      Additional Coverage
+    // =============================================================
+
+    function test_requestEntitlementCheckV1_revertWhen_insufficientValue() external {
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        // send only 0.5 ether when 1 ether is required
+        vm.deal(address(this), 1 ether);
+        vm.expectRevert(EntitlementGated_InvalidValue.selector);
+        gated.requestEntitlementCheckV2RuleDataV2{value: 0.5 ether}(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+    }
+
+    function test_requestEntitlementCheckV1_revertWhen_emptyRoleIds() external {
+        uint256[] memory roleIds = new uint256[](0);
+        vm.expectRevert(EntitlementGated_InvalidRoleIds.selector);
+        gated.requestEntitlementCheckV1RuleDataV2(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+    }
+
+    function test_fuzz_doubleNodeVote_differentRoleIds(
+        uint8 index,
+        uint256 roleIdA,
+        uint256 roleIdB
+    ) external {
+        vm.assume(roleIdA != roleIdB);
+        vm.assume(index < nodes.length);
+
+        uint256[] memory roleIds = new uint256[](2);
+        roleIds[0] = roleIdA;
+        roleIds[1] = roleIdB;
+
+        vm.prank(address(gated));
+        address[] memory _nodes = entitlementChecker.getRandomNodes(5);
+
+        bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        address votingNode = _nodes[index];
+
+        vm.startPrank(votingNode);
+        gated.postEntitlementCheckResult(requestId, roleIdA, NodeVoteStatus.PASSED);
+
+        // same node voting on a different roleId should succeed
+        gated.postEntitlementCheckResult(requestId, roleIdB, NodeVoteStatus.PASSED);
+        vm.stopPrank();
+    }
+
+    function test_refundOnFailedEntitlement() external {
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = 0;
+
+        address caller = _randomAddress();
+        vm.deal(caller, 1 ether);
+
+        vm.prank(caller);
+        bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2{value: 1 ether}(
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
+        );
+
+        // Simulate failed entitlement by having nodes vote FAILED
+        vm.prank(address(gated));
+        address[] memory _nodes = entitlementChecker.getRandomNodes(5);
+
+        for (uint256 i; i < 3; ++i) {
+            vm.prank(_nodes[i]);
+            gated.postEntitlementCheckResult(requestId, roleIds[0], NodeVoteStatus.FAILED);
+        }
+
+        // balance should have been refunded to caller (0 ether left in contract)
+        assertEq(address(gated).balance, 0);
+    }

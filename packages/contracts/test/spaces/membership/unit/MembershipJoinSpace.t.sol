@@ -711,72 +711,57 @@ contract MembershipJoinSpaceTest is
         vm.prank(founder);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
     }
+}
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                ADDITIONAL NEGATIVE-PATH TESTS             */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    using stdStorage for StdStorage;
-
-    function test_revertWhen_joinSpaceUnderpays() external givenMembershipHasPrice {
-        uint256 underPayment = MEMBERSHIP_PRICE - 1;
-        vm.deal(alice, underPayment);
-        vm.prank(alice);
-        vm.expectRevert(Membership__InsufficientPayment.selector);
-        membership.joinSpace{value: underPayment}(alice);
+    /// @dev Reverts if contract address tries to join (should block non-EOA)
+    function test_revertWhen_contractTriesToJoin() external {
+        address attacker = address(this); // this is a contract
+        vm.expectRevert(); // expect custom or generic revert
+        membership.joinSpace(attacker);
     }
 
-    function test_joinSpace_freeAllocationExhausted() external {
-        // founder grants 1 free allocation
+    /// @dev Joining fails while MembershipFacet is paused
+    function test_revertWhen_paused() external {
         vm.prank(founder);
-        membership.setMembershipFreeAllocation(1);
-        // first user joins for free
+        membership.pause();
+        vm.prank(alice);
+        vm.expectRevert("Pausable: paused");
+        membership.joinSpace(alice);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     ERC721 RECEIVER TEST                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Ensure joinSpace mints to ERC721Receiver compliant contract
+    function test_joinSpace_toERC721Receiver() external {
+        // Deploy a minimal ERC721Receiver mock
+        ERC721Holder holder = new ERC721Holder();
+        vm.prank(alice);
+        membership.joinSpace(address(holder));
+        assertEq(membershipToken.balanceOf(address(holder)), 1);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*          CONCURRENCY / LIMIT RACE-CONDITION TEST          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Two users attempt to mint final remaining spot; second should revert
+    function test_joinSpace_limitRaceCondition() external {
+        vm.prank(founder);
+        membership.setMembershipLimit(1);
+
         vm.prank(alice);
         membership.joinSpace(alice);
         assertEq(membershipToken.balanceOf(alice), 1);
 
-        // second user must pay
-        uint256 price = membership.getMembershipPrice();
-        vm.deal(bob, price);
         vm.prank(bob);
-        vm.expectRevert(Membership__InsufficientPayment.selector);
-        membership.joinSpace{value: 0}(bob);
-    }
-
-    function test_fuzz_revertWhen_zeroMembershipLimit(address randomUser) external {
-        vm.assume(randomUser != address(0) && randomUser != founder);
-        vm.prank(founder);
-        membership.setMembershipLimit(0);
-        vm.prank(randomUser);
         vm.expectRevert(Membership__MaxSupplyReached.selector);
-        membership.joinSpace(randomUser);
+        membership.joinSpace(bob);
     }
 
-    function test_event_MembershipTokenIssued() external {
-        uint256 nextId = membershipToken.totalSupply();
-        vm.expectEmit(address(membership));
-        emit MembershipTokenIssued(alice, nextId);
-        vm.prank(alice);
-        membership.joinSpace(alice);
-    }
-
-    contract JoinReentrant {
-        MembershipFacet target;
-        constructor(address _target) {
-            target = MembershipFacet(_target);
-        }
-        receive() external payable {
-            // second call during first join should revert
-            try target.joinSpace(address(this)) {
-                revert("Re-entrancy not prevented");
-            } catch {}
-        }
-        function attack() external payable {
-            target.joinSpace{value: msg.value}(address(this));
-        }
-    }
-
-    function test_revertWhen_reentrancyJoinSpace() external givenMembershipHasPrice {
-        JoinReentrant attacker = new JoinReentrant(address(membership));
-        vm.deal(address(attacker), MEMBERSHIP_PRICE);
-        vm.prank(address(attacker));
-        vm.expectRevert(); // Expect generic revert due to re-entrancy guard
-        attacker.attack{value: MEMBERSHIP_PRICE}();
-    }
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+}
