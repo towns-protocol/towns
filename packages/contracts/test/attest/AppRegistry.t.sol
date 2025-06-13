@@ -459,6 +459,172 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           RENEW APP TESTS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_renewApp_flow() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Get initial expiration
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+
+        // Move time forward but not past expiration
+        vm.warp(block.timestamp + 30 days);
+
+        // Renew the app
+        uint256 devInitialBalance = address(DEFAULT_DEV).balance;
+        uint256 protocolFee = _getProtocolFee(price);
+
+        hoax(founder, totalPrice);
+        vm.expectEmit(address(registry));
+        emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
+        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Verify new expiration is extended by duration
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
+
+        // Verify fee distribution
+        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(appAccount).balance, 0);
+    }
+
+    function test_renewApp_withFreeApp() external givenAppIsRegistered {
+        // First install the app
+        _setupAppWithPrice(0);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Get initial expiration
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+
+        // Move time forward but not past expiration
+        vm.warp(block.timestamp + 30 days);
+
+        vm.expectEmit(address(registry));
+        emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
+
+        hoax(founder, totalPrice);
+        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Verify new expiration is extended by duration
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
+    }
+
+    function test_renewApp_withExcessPayment() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Get initial expiration
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+
+        // Move time forward but not past expiration
+        vm.warp(block.timestamp + 30 days);
+
+        // Renew with excess payment
+        uint256 excess = 0.5 ether;
+        uint256 payment = totalPrice + excess;
+        uint256 founderInitialBalance = address(founder).balance;
+
+        hoax(founder, payment);
+        registry.renewApp{value: payment}(mockModule, appAccount, "");
+
+        // Verify new expiration is extended by duration
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
+
+        // Verify excess was refunded
+        assertEq(address(founder).balance - founderInitialBalance, excess);
+    }
+
+    function test_revertWhen_renewApp_notAllowed() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Try to renew as non-owner
+        vm.prank(_randomAddress());
+        vm.expectRevert(NotAllowed.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_appNotInstalled() external givenAppIsRegistered {
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+
+        hoax(founder, totalPrice);
+        vm.expectRevert(AppNotInstalled.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_appRevoked() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Revoke the app
+        vm.prank(DEFAULT_DEV);
+        registry.removeApp(DEFAULT_APP_ID);
+
+        // Try to renew
+        hoax(founder, totalPrice);
+        vm.expectRevert(AppRevoked.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_bannedApp() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Ban the app
+        vm.prank(deployer);
+        registry.adminBanApp(address(mockModule));
+
+        // Try to renew
+        hoax(founder, totalPrice);
+        vm.expectRevert(BannedApp.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_insufficientPayment() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Try to renew with insufficient payment
+        uint256 insufficientAmount = totalPrice - 1;
+        hoax(founder, insufficientAmount);
+        vm.expectRevert(InsufficientPayment.selector);
+        registry.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         ADMIN TESTS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 

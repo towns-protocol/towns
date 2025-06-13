@@ -145,6 +145,7 @@ export interface IAppRegistryInterface extends utils.Interface {
     "isAppBanned(address)": FunctionFragment;
     "registerApp(address,address)": FunctionFragment;
     "removeApp(bytes32)": FunctionFragment;
+    "renewApp(address,address,bytes)": FunctionFragment;
     "uninstallApp(address,address,bytes)": FunctionFragment;
   };
 
@@ -162,6 +163,7 @@ export interface IAppRegistryInterface extends utils.Interface {
       | "isAppBanned"
       | "registerApp"
       | "removeApp"
+      | "renewApp"
       | "uninstallApp"
   ): FunctionFragment;
 
@@ -222,6 +224,14 @@ export interface IAppRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
+    functionFragment: "renewApp",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "uninstallApp",
     values: [
       PromiseOrValue<string>,
@@ -266,6 +276,7 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "removeApp", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "renewApp", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "uninstallApp",
     data: BytesLike
@@ -276,6 +287,7 @@ export interface IAppRegistryInterface extends utils.Interface {
     "AppCreated(address,bytes32)": EventFragment;
     "AppInstalled(address,address,bytes32)": EventFragment;
     "AppRegistered(address,bytes32)": EventFragment;
+    "AppRenewed(address,address,bytes32)": EventFragment;
     "AppSchemaSet(bytes32)": EventFragment;
     "AppUninstalled(address,address,bytes32)": EventFragment;
     "AppUnregistered(address,bytes32)": EventFragment;
@@ -286,6 +298,7 @@ export interface IAppRegistryInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "AppCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppInstalled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppRegistered"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AppRenewed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppSchemaSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppUninstalled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AppUnregistered"): EventFragment;
@@ -333,6 +346,18 @@ export type AppRegisteredEvent = TypedEvent<
 >;
 
 export type AppRegisteredEventFilter = TypedEventFilter<AppRegisteredEvent>;
+
+export interface AppRenewedEventObject {
+  app: string;
+  account: string;
+  appId: string;
+}
+export type AppRenewedEvent = TypedEvent<
+  [string, string, string],
+  AppRenewedEventObject
+>;
+
+export type AppRenewedEventFilter = TypedEventFilter<AppRenewedEvent>;
 
 export interface AppSchemaSetEventObject {
   uid: string;
@@ -461,6 +486,13 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    renewApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     uninstallApp(
       app: PromiseOrValue<string>,
       account: PromiseOrValue<string>,
@@ -526,6 +558,13 @@ export interface IAppRegistry extends BaseContract {
   removeApp(
     appId: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  renewApp(
+    app: PromiseOrValue<string>,
+    account: PromiseOrValue<string>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   uninstallApp(
@@ -595,6 +634,13 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    renewApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     uninstallApp(
       app: PromiseOrValue<string>,
       account: PromiseOrValue<string>,
@@ -641,6 +687,17 @@ export interface IAppRegistry extends BaseContract {
       app?: PromiseOrValue<string> | null,
       uid?: null
     ): AppRegisteredEventFilter;
+
+    "AppRenewed(address,address,bytes32)"(
+      app?: PromiseOrValue<string> | null,
+      account?: PromiseOrValue<string> | null,
+      appId?: PromiseOrValue<BytesLike> | null
+    ): AppRenewedEventFilter;
+    AppRenewed(
+      app?: PromiseOrValue<string> | null,
+      account?: PromiseOrValue<string> | null,
+      appId?: PromiseOrValue<BytesLike> | null
+    ): AppRenewedEventFilter;
 
     "AppSchemaSet(bytes32)"(uid?: null): AppSchemaSetEventFilter;
     AppSchemaSet(uid?: null): AppSchemaSetEventFilter;
@@ -735,6 +792,13 @@ export interface IAppRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    renewApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     uninstallApp(
       app: PromiseOrValue<string>,
       account: PromiseOrValue<string>,
@@ -801,6 +865,13 @@ export interface IAppRegistry extends BaseContract {
     removeApp(
       appId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    renewApp(
+      app: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     uninstallApp(

@@ -134,6 +134,18 @@ abstract contract AppAccountBase is
         emit IERC6900Account.ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
+    function _onRenewApp(bytes32 appId, bytes calldata /* data */) internal {
+        // Get the app data to determine the duration
+        App memory app = _getAppRegistry().getAppById(appId);
+        if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+
+        // Calculate the new expiration time (extends current expiration by app duration)
+        uint48 newExpiration = _getAppExpiration(app.appId, app.duration);
+
+        // Update the group expiration
+        _setGroupExpiration(app.appId, newExpiration);
+    }
+
     // Internal Functions
     function _getAppExpiration(
         bytes32 appId,
