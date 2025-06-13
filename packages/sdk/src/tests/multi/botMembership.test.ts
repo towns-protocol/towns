@@ -1,3 +1,7 @@
+/**
+ * @group with-entitlements
+ */
+
 import {
     Address,
     AppRegistryDapp,
@@ -14,51 +18,16 @@ import {
     createChannel,
     getXchainConfigForTesting,
     createRole,
+    makeTestClient,
+    expectUserCanJoin,
 } from '../testUtils'
 import { makeBaseChainConfig } from '../../riverConfig'
+import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 import { make_MemberPayload_KeySolicitation } from '../../types'
 
-describe('bot tests', () => {
-    test('registered bots can create app user streams', async () => {
-        const {
-            aliceProvider: ownerProvider,
-            bob: bot,
-            bobsWallet: botWallet,
-            bobProvider: botProvider,
-        } = await setupWalletsAndContexts()
-
-        const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
-            ownerProvider,
-        )
-
-        const tx = await appRegistryDapp.createApp(
-            botProvider.signer,
-            'bob-bot',
-            [Permission.Read, Permission.Write],
-            botWallet.address as Address,
-            ethers.utils.parseEther('0.01').toBigInt(),
-            31536000n,
-        )
-        const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
-        expect(foundAppAddress).toBeDefined()
-
-        expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
-    })
-
-    test('unregistered bots cannot create app user streams', async () => {
-        const { alicesWallet: wallet, bob: bot } = await setupWalletsAndContexts()
-
-        // Let's use the public key of the wallet as the bot's contract address for
-        // convenience here.
-        await expect(bot.initializeUser({ appAddress: wallet.address })).rejects.toThrow(
-            /7:PERMISSION_DENIED/,
-        )
-    })
-
+describe('bot membership tests', () => {
     test('registered and installed bots can join spaces and channels', async () => {
         const {
             aliceProvider: ownerProvider,
@@ -147,7 +116,7 @@ describe('bot tests', () => {
         await spaceOwner.stopSync()
     })
 
-    test('registered and installed bots can join spaces and channels in towns with restricted membership', async () => {
+    test('registered and installed bots can join spaces and channels in towns with gated membership', async () => {
         // Create a town with user entitlements that only allows 'bob' (space owner)
         // The bot is NOT in this list, so it doesn't satisfy the space entitlements.
         const {
@@ -570,26 +539,26 @@ describe('bot tests', () => {
         await spaceOwner.stopSync()
     })
 
-    test.only('bot has READ permissions to channels when granted by isAppEntitled', async () => {
+    test('bots cannot be added to DMs or GDMs', async () => {
         const {
+            aliceProvider: ownerProvider,
             bob: bot,
             bobsWallet: botWallet,
             bobProvider: botProvider,
-            carol: spaceOwner,
-            carolProvider: spaceOwnerProvider,
-            carolSpaceDapp: spaceOwnerSpaceDapp,
+            carol,
         } = await setupWalletsAndContexts()
+
+        const dave = await makeTestClient()
 
         const appRegistryDapp = new AppRegistryDapp(
             makeBaseChainConfig().chainConfig,
-            spaceOwnerProvider,
+            ownerProvider,
         )
 
-        // Create bot app contract with READ permission only
         const tx = await appRegistryDapp.createApp(
             botProvider.signer,
-            'read-only-bot',
-            [Permission.Read], // Only READ permission, no WRITE
+            'bob-bot',
+            [Permission.Read, Permission.Write],
             botWallet.address as Address,
             ethers.utils.parseEther('0.01').toBigInt(),
             31536000n,
@@ -598,128 +567,14 @@ describe('bot tests', () => {
         const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
 
-        // Create bot user streams
-        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
-        bot.startSync()
+        expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
 
-        // Create a town with channels (everyone can join)
-        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
-        const { spaceId } = await createSpaceAndDefaultChannel(
-            spaceOwner,
-            spaceOwnerSpaceDapp,
-            spaceOwnerProvider.wallet,
-            "space owner's town",
-            everyoneMembership,
+        // GDMs with bot creators are disallowed.
+        expect(carol.createGDMChannel([bot.userId, dave.userId])).rejects.toThrow(
+            /PERMISSION_DENIED/,
         )
 
-        // Install the bot to the space (as space owner)
-        const installTx = await appRegistryDapp.installApp(
-            spaceOwnerProvider.signer,
-            foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
-            ethers.utils.parseEther('0.02').toBigInt(),
-        )
-        const installReceipt = await installTx.wait()
-        expect(installReceipt.status).toBe(1)
-
-        // Create a role that only grants WRITE permission (not READ) to everyone
-        // This will deny the bot WRITE access to the channel
-        const { error: roleError } = await createRole(
-            spaceOwnerSpaceDapp,
-            spaceOwnerProvider,
-            spaceId,
-            'write-only-role',
-            [Permission.Write], // Only WRITE permission, no READ
-            [], // No specific users - this role won't help the bot
-            NoopRuleData,
-            spaceOwnerProvider.wallet,
-        )
-        expect(roleError).toBeUndefined()
-
-        // Create a custom channel that requires WRITE permission
-        // The bot won't have WRITE permission through roles, but should have READ through app entitlements
-        const { channelId: restrictedChannelId, error: channelError } = await createChannel(
-            spaceOwnerSpaceDapp,
-            spaceOwnerProvider,
-            spaceId,
-            'read-only-channel',
-            [1], // Use the write-only role (role ID 1) - bot won't qualify
-            spaceOwnerProvider.wallet,
-        )
-        expect(channelError).toBeUndefined()
-        expect(restrictedChannelId).toBeDefined()
-
-        // Create the channel stream
-        const { streamId: returnedChannelId } = await spaceOwner.createChannel(
-            spaceId,
-            'read-only-channel',
-            '',
-            restrictedChannelId!,
-        )
-        expect(returnedChannelId).toEqual(restrictedChannelId)
-
-        // Have space owner add bot to space and channel
-        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
-        await expect(spaceOwner.joinUser(restrictedChannelId!, bot.userId)).resolves.toBeDefined()
-
-        // Validate bot is a member of both space and channel
-        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
-        await waitFor(() => {
-            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
-            expect(
-                botUserStreamView.userContent.isMember(restrictedChannelId!, MembershipOp.SO_JOIN),
-            ).toBe(true)
-        })
-
-        // Bot should be able to post a key solicitation because it has READ permission through isAppEntitled
-        // Key solicitations require READ permission, not WRITE permission
-        const payload = make_MemberPayload_KeySolicitation({
-            deviceKey: 'bot-device-key',
-            sessionIds: [],
-            fallbackKey: 'bot-fallback-key',
-            isNewDevice: true,
-        })
-
-        // This should succeed because the bot has READ permission via app entitlements
-        await expect(
-            bot.makeEventAndAddToStream(restrictedChannelId!, payload),
-        ).resolves.not.toThrow()
-
-        // Wait for the event to be processed and verify it was accepted
-        const channelStream = await spaceOwner.waitForStream(restrictedChannelId!)
-        await waitFor(() => {
-            // Check that the bot's event was added to the channel timeline
-            const events = channelStream.view.timeline
-            expect(events.length).toBeGreaterThan(0)
-
-            // Look for any event from the bot user
-            const botEvent = events.find((e) => e.creatorUserId === bot.userId)
-            expect(botEvent).toBeDefined()
-        })
-
-        // Cleanup
-        await bot.stopSync()
-        await spaceOwner.stopSync()
+        // DMs with bot creators are disallowed.
+        expect(carol.createDMChannel(bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
     })
-
-    test('bot does not have READ permissions to channels when not granted by isAppEntitled', async () => {
-        // If a bot has no READ permission it cannot post key solicitations in a channel even
-        // if it is a member.
-    })
-
-    test('bot has write permissions to channels when granted by isAppEntitled', async () => {
-        // Create a space that grants WRITE to everyone on the general channel but disallow this permission to
-        // the bot. Then have the space owner install the bot, join it to the space and general channel.
-        // The bot should be disallowed from posting to the channel. A bot with WRITE permissions should, however,
-        // be able to post.
-    })
-
-    test('bot does not have write permissions to channels when not granted by isAppEntitled', async () => {})
-
-    test('bots cannot create dms or gdms', async () => {
-        // DMs and GDMs are created by the bot posting messages to it's own user stream. This message type
-        // should be rejected as unpermitted for bots.
-    })
-
-    test('dms or gdms with a bot as a member cannot be created', () => {})
 })

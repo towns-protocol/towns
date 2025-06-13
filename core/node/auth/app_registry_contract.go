@@ -70,7 +70,7 @@ func (arc *AppRegistryContract) IsRegisteredAppWithClient(
 func (arc *AppRegistryContract) UserIsRegisteredAsApp(
 	ctx context.Context,
 	userId common.Address,
-) (bool, common.Address, error) {
+) (isApp bool, appContractAddress common.Address, err error) {
 	zeroAddress := common.Address{}
 	registeredAppAddress, err := arc.appRegistry.GetAppByClient(&bind.CallOpts{Context: ctx}, userId)
 	if err != nil {

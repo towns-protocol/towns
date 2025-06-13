@@ -34,7 +34,8 @@ const (
 	EntitlementResultReason_SPACE_DISABLED
 	EntitlementResultReason_CHANNEL_DISABLED
 	EntitlementResultReason_WALLET_NOT_LINKED
-
+	EntitlementResultReason_IS_BOT
+	EntitlementResultReason_IS_NOT_BOT
 	EntitlementResultReason_MAX // MAX - leave at the end
 )
 
@@ -47,6 +48,8 @@ var entitlementResultReasonDescriptions = []string{
 	"SPACE_DISABLED",
 	"CHANNEL_DISABLED",
 	"WALLET_NOT_LINKED",
+	"USER_IS_BOT",
+	"USER_IS_NOT_BOT",
 }
 
 func (r EntitlementResultReason) String() string {
