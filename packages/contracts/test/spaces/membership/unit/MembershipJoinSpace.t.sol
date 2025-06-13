@@ -711,4 +711,72 @@ contract MembershipJoinSpaceTest is
         vm.prank(founder);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
     }
-}
+
+    using stdStorage for StdStorage;
+
+    function test_revertWhen_joinSpaceUnderpays() external givenMembershipHasPrice {
+        uint256 underPayment = MEMBERSHIP_PRICE - 1;
+        vm.deal(alice, underPayment);
+        vm.prank(alice);
+        vm.expectRevert(Membership__InsufficientPayment.selector);
+        membership.joinSpace{value: underPayment}(alice);
+    }
+
+    function test_joinSpace_freeAllocationExhausted() external {
+        // founder grants 1 free allocation
+        vm.prank(founder);
+        membership.setMembershipFreeAllocation(1);
+        // first user joins for free
+        vm.prank(alice);
+        membership.joinSpace(alice);
+        assertEq(membershipToken.balanceOf(alice), 1);
+
+        // second user must pay
+        uint256 price = membership.getMembershipPrice();
+        vm.deal(bob, price);
+        vm.prank(bob);
+        vm.expectRevert(Membership__InsufficientPayment.selector);
+        membership.joinSpace{value: 0}(bob);
+    }
+
+    function test_fuzz_revertWhen_zeroMembershipLimit(address randomUser) external {
+        vm.assume(randomUser != address(0) && randomUser != founder);
+        vm.prank(founder);
+        membership.setMembershipLimit(0);
+        vm.prank(randomUser);
+        vm.expectRevert(Membership__MaxSupplyReached.selector);
+        membership.joinSpace(randomUser);
+    }
+
+    function test_event_MembershipTokenIssued() external {
+        uint256 nextId = membershipToken.totalSupply();
+        vm.expectEmit(address(membership));
+        emit MembershipTokenIssued(alice, nextId);
+        vm.prank(alice);
+        membership.joinSpace(alice);
+    }
+
+    contract JoinReentrant {
+        MembershipFacet target;
+        constructor(address _target) {
+            target = MembershipFacet(_target);
+        }
+        receive() external payable {
+            // second call during first join should revert
+            try target.joinSpace(address(this)) {
+                revert("Re-entrancy not prevented");
+            } catch {}
+        }
+        function attack() external payable {
+            target.joinSpace{value: msg.value}(address(this));
+        }
+    }
+
+    function test_revertWhen_reentrancyJoinSpace() external givenMembershipHasPrice {
+        JoinReentrant attacker = new JoinReentrant(address(membership));
+        vm.deal(address(attacker), MEMBERSHIP_PRICE);
+        vm.prank(address(attacker));
+        vm.expectRevert(); // Expect generic revert due to re-entrancy guard
+        attacker.attack{value: MEMBERSHIP_PRICE}();
+    }
+    }
