@@ -86,8 +86,8 @@ const _abi = [
           },
           {
             name: "accessDuration",
-            type: "uint64",
-            internalType: "uint64",
+            type: "uint48",
+            internalType: "uint48",
           },
         ],
       },
@@ -226,6 +226,11 @@ const _abi = [
                 internalType: "bytes4[]",
               },
             ],
+          },
+          {
+            name: "duration",
+            type: "uint48",
+            internalType: "uint48",
           },
         ],
       },

@@ -29,6 +29,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     bool public shouldFailUninstall;
 
     uint256 internal price;
+    uint48 internal duration;
 
     function initialize(
         bool _shouldFailInstall,
@@ -55,6 +56,10 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         price = _price;
     }
 
+    function setDuration(uint48 _duration) external {
+        duration = _duration;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      MODULE METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -70,8 +75,8 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         return price;
     }
 
-    function accessDuration() external pure returns (uint64) {
-        return 0;
+    function accessDuration() external view returns (uint48) {
+        return duration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

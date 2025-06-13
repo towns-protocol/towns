@@ -13,6 +13,6 @@ interface ISimpleApp {
         string calldata appId,
         bytes32[] calldata permissions,
         uint256 installPrice,
-        uint64 accessDuration
+        uint48 accessDuration
     ) external;
 }

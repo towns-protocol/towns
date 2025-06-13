@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 // contracts
 interface IAppAccountBase {
     error InvalidAppAddress(address app);
-    error InvalidManifest(address app);
+    error InvalidManifest();
     error UnauthorizedSelector();
     error NotEnoughEth();
     error AppAlreadyInstalled();
@@ -39,6 +39,11 @@ interface IAppAccount is IAppAccountBase {
     /// @param app The address of the app to get the ID of
     /// @return The ID of the app
     function getAppId(address app) external view returns (bytes32);
+
+    /// @notice Gets the expiration of an app
+    /// @param app The address of the app to get the expiration of
+    /// @return The expiration of the app
+    function getAppExpiration(address app) external view returns (uint48);
 
     /// @notice Gets the apps installed on the account
     /// @return The apps installed on the account

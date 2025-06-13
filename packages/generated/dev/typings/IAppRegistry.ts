@@ -93,13 +93,13 @@ export declare namespace IAppRegistryBase {
     string[],
     string,
     BigNumber,
-    BigNumber
+    number
   ] & {
     name: string;
     permissions: string[];
     client: string;
     installPrice: BigNumber;
-    accessDuration: BigNumber;
+    accessDuration: number;
   };
 
   export type AppStruct = {
@@ -109,6 +109,7 @@ export declare namespace IAppRegistryBase {
     client: PromiseOrValue<string>;
     permissions: PromiseOrValue<BytesLike>[];
     manifest: ExecutionManifestStruct;
+    duration: PromiseOrValue<BigNumberish>;
   };
 
   export type AppStructOutput = [
@@ -117,7 +118,8 @@ export declare namespace IAppRegistryBase {
     string,
     string,
     string[],
-    ExecutionManifestStructOutput
+    ExecutionManifestStructOutput,
+    number
   ] & {
     appId: string;
     module: string;
@@ -125,6 +127,7 @@ export declare namespace IAppRegistryBase {
     client: string;
     permissions: string[];
     manifest: ExecutionManifestStructOutput;
+    duration: number;
   };
 }
 
@@ -132,7 +135,7 @@ export interface IAppRegistryInterface extends utils.Interface {
   functions: {
     "adminBanApp(address)": FunctionFragment;
     "adminRegisterAppSchema(string,address,bool)": FunctionFragment;
-    "createApp((string,bytes32[],address,uint256,uint64))": FunctionFragment;
+    "createApp((string,bytes32[],address,uint256,uint48))": FunctionFragment;
     "getAppByClient(address)": FunctionFragment;
     "getAppById(bytes32)": FunctionFragment;
     "getAppSchema()": FunctionFragment;

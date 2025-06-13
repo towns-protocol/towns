@@ -16,7 +16,7 @@ interface IAppRegistryBase {
         bytes32[] permissions;
         address client;
         uint256 installPrice;
-        uint64 accessDuration;
+        uint48 accessDuration;
     }
 
     struct App {
@@ -26,6 +26,7 @@ interface IAppRegistryBase {
         address client;
         bytes32[] permissions;
         ExecutionManifest manifest;
+        uint48 duration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

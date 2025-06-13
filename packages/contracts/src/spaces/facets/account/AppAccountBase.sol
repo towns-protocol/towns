@@ -45,6 +45,8 @@ abstract contract AppAccountBase is
     bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
     bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
 
+    uint48 private constant DEFAULT_DURATION = 365 days;
+
     // External Functions
     function _onlyRegistry() internal view {
         if (msg.sender != address(_getAppRegistry())) InvalidCaller.selector.revertWith();
@@ -61,12 +63,9 @@ abstract contract AppAccountBase is
         // verify if already installed
         if (_isAppInstalled(app.module)) AppAlreadyInstalled.selector.revertWith();
 
-        _verifyManifests(app.module, app.manifest);
-
         // set the group status to active
-        _setGroupStatus(app.appId, true);
+        _setGroupStatus(app.appId, true, _getAppExpiration(app.appId, app.duration));
         _addApp(app.module, app.appId);
-
         _grantGroupAccess({
             groupId: app.appId,
             account: app.client,
@@ -136,6 +135,18 @@ abstract contract AppAccountBase is
     }
 
     // Internal Functions
+    function _getAppExpiration(
+        bytes32 appId,
+        uint48 duration
+    ) internal view returns (uint48 expiration) {
+        uint48 currentExpiration = _getGroupExpiration(appId);
+        if (currentExpiration > block.timestamp) {
+            expiration = currentExpiration + duration;
+        } else {
+            expiration = uint48(block.timestamp) + duration;
+        }
+    }
+
     function _addApp(address module, bytes32 appId) internal {
         AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
         $.installedApps.add(module);
@@ -164,12 +175,12 @@ abstract contract AppAccountBase is
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        bytes32 appId = _getInstalledAppId(module);
-        if (appId == EMPTY_UID) return false;
-
         App memory app = _getApp(module);
 
-        if (app.client != client) return false;
+        if (app.appId == EMPTY_UID) return false;
+
+        (bool hasClientAccess, , bool isGroupActive) = _hasGroupAccess(app.appId, client);
+        if (!hasClientAccess || !isGroupActive) return false;
 
         uint256 permissionsLength = app.permissions.length;
         for (uint256 i; i < permissionsLength; ++i) {
@@ -244,21 +255,6 @@ abstract contract AppAccountBase is
             module == deps[1] || // SpaceOperator
             module == deps[2] || // SpaceOwner
             module == deps[3]; // AppRegistry
-    }
-
-    function _verifyManifests(
-        address module,
-        ExecutionManifest memory cachedManifest
-    ) internal pure {
-        ExecutionManifest memory moduleManifest = ITownsApp(module).executionManifest();
-
-        // Hash all cached and latest manifests and compare
-        bytes32 moduleManifestHash = keccak256(abi.encode(moduleManifest));
-        bytes32 cachedManifestHash = keccak256(abi.encode(cachedManifest));
-
-        if (moduleManifestHash != cachedManifestHash) {
-            InvalidManifest.selector.revertWith(module);
-        }
     }
 
     function _isInvalidSelector(bytes4 selector) internal pure returns (bool) {

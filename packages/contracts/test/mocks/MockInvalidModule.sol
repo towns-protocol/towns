@@ -33,7 +33,7 @@ contract MockInvalidModule is OwnableFacet, ITownsApp {
         return 0;
     }
 
-    function accessDuration() external pure returns (uint64) {
+    function accessDuration() external pure returns (uint48) {
         return 0;
     }
 
