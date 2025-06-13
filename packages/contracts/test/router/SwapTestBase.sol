@@ -43,6 +43,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     function setUp() public virtual {
         DeployPermit2 deployer = new DeployPermit2();
         deployer.deployPermit2();
+        vm.label(permit2, "Permit2");
     }
 
     function _createSwapParams(
