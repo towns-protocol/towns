@@ -149,3 +149,14 @@ export const getStreamMetadataUrl = (environmentId: string) => {
             throw new Error(`No stream metadata url for environmentId ${environmentId}`)
     }
 }
+
+export const getAppRegistryUrl = (environmentId: string) => {
+    switch (environmentId) {
+        case 'local_multi':
+            return 'https://localhost:6170'
+        case 'local_multi_ne':
+            return 'https://localhost:6190'
+        default:
+            throw new Error(`No app registry url for environmentId ${environmentId}`)
+    }
+}

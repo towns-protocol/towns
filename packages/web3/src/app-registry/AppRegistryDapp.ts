@@ -2,10 +2,22 @@ import { ethers, type ContractReceipt, type ContractTransaction } from 'ethers'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
-import type { AppCreatedEventObject } from '@towns-protocol/generated/dev/typings/IAppRegistry'
+import type {
+    AppCreatedEventObject,
+    AppRegisteredEventObject,
+    IAppRegistryBase,
+} from '@towns-protocol/generated/dev/typings/IAppRegistry'
 import { Permission } from '../types/ContractTypes'
 
-type NonEmptyArray<T> = [T, ...T[]]
+export type BotInfo = {
+    appId: Address
+    app: {
+        client: Address
+        module: Address
+        owner: Address
+        permissions: Permission[]
+    }
+}
 
 export class AppRegistryDapp {
     private readonly appRegistry: IAppRegistryShim
@@ -22,7 +34,7 @@ export class AppRegistryDapp {
     public async createApp(
         signer: ethers.Signer,
         name: string,
-        permissions: NonEmptyArray<Permission>,
+        permissions: Permission[],
         client: Address,
         installPrice: bigint,
         accessDuration: bigint, // in seconds
@@ -45,6 +57,23 @@ export class AppRegistryDapp {
                         app: parsedLog.args.app,
                         uid: parsedLog.args.uid,
                     } satisfies AppCreatedEventObject
+                }
+            } catch {
+                // no need for error, this log is not from the contract we're interested in
+            }
+        }
+        return { app: '', uid: '' }
+    }
+
+    public getRegisterAppEvent(receipt: ContractReceipt): AppRegisteredEventObject {
+        for (const log of receipt.logs) {
+            try {
+                const parsedLog = this.appRegistry.interface.parseLog(log)
+                if (parsedLog.name === 'AppRegistered') {
+                    return {
+                        app: parsedLog.args.app,
+                        uid: parsedLog.args.uid,
+                    } satisfies AppRegisteredEventObject
                 }
             } catch {
                 // no need for error, this log is not from the contract we're interested in
@@ -101,6 +130,10 @@ export class AppRegistryDapp {
         return this.appRegistry.read.getLatestAppId(app)
     }
 
+    public async getAppById(appId: string): Promise<IAppRegistryBase.AppStructOutput> {
+        return this.appRegistry.read.getAppById(appId)
+    }
+
     public async adminRegisterAppSchema(
         signer: ethers.Signer,
         schema: string,
@@ -112,5 +145,51 @@ export class AppRegistryDapp {
 
     public async adminBanApp(signer: ethers.Signer, app: Address): Promise<ContractTransaction> {
         return this.appRegistry.write(signer).adminBanApp(app)
+    }
+
+    public async getAllAppsByOwner(targetOwner: Address, fromBlock?: number) {
+        const appCreatedEvents = await this.appRegistry.read.queryFilter(
+            this.appRegistry.read.filters.AppCreated(),
+            fromBlock,
+        )
+
+        const appRegisteredEvents = await this.appRegistry.read.queryFilter(
+            this.appRegistry.read.filters.AppRegistered(),
+            fromBlock,
+        )
+
+        const allAppIds = new Set([
+            ...appCreatedEvents.map((event) => event.args.uid),
+            ...appRegisteredEvents.map((event) => event.args.uid),
+        ])
+
+        const ownerApps: BotInfo[] = []
+        for (const appId of allAppIds) {
+            try {
+                const app = await this.appRegistry.read.getAppById(appId)
+                if (app.owner.toLowerCase() === targetOwner.toLowerCase()) {
+                    ownerApps.push({
+                        appId: appId as Address,
+                        app: {
+                            client: app.client as Address,
+                            module: app.module as Address,
+                            owner: app.owner as Address,
+                            permissions: app.permissions.map(
+                                (p) =>
+                                    Permission[
+                                        ethers.utils.parseBytes32String(
+                                            p,
+                                        ) as keyof typeof Permission
+                                    ],
+                            ),
+                        },
+                    })
+                }
+            } catch {
+                // no need for error, this app is not from the owner
+            }
+        }
+
+        return ownerApps
     }
 }
