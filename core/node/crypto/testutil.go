@@ -83,7 +83,7 @@ type BlockchainTestContext struct {
 
 	DeployerBlockchain  *Blockchain
 	NodeWallets         []*Wallet
-	operatorWallets     []*Wallet
+	OperatorWallets     []*Wallet
 	operatorBlockchains []*Blockchain
 }
 
@@ -241,7 +241,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		ChainId:             chainId,
 		BcClient:            client,
 		NodeWallets:         nodeWallets,
-		operatorWallets:     operatorWallets,
+		OperatorWallets:     operatorWallets,
 		operatorBlockchains: make([]*Blockchain, len(operatorWallets)),
 	}
 
@@ -513,7 +513,7 @@ func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blo
 func (c *BlockchainTestContext) OperatorForNodeIndex(ctx context.Context, nodeIndex int) *Blockchain {
 	operatorIndex := nodeIndex % len(c.operatorBlockchains)
 	if c.operatorBlockchains[operatorIndex] == nil {
-		c.operatorBlockchains[operatorIndex] = makeTestBlockchain(ctx, c.operatorWallets[operatorIndex], c.Client())
+		c.operatorBlockchains[operatorIndex] = makeTestBlockchain(ctx, c.OperatorWallets[operatorIndex], c.Client())
 	}
 	return c.operatorBlockchains[operatorIndex]
 }

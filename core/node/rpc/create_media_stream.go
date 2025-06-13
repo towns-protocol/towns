@@ -59,6 +59,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		streamId,
 		parsedEvents,
 		req.Metadata,
+		s.nodeRegistry,
 	)
 	if err != nil {
 		return nil, err

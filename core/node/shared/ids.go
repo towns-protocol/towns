@@ -291,9 +291,6 @@ func MetadataStreamIdFromShard(shard uint64) StreamId {
 }
 
 func ShardForStreamId(streamId StreamId, shardMask uint64) uint64 {
-	if shardMask == 0 {
-		shardMask = 0x3ff // 1023
-	}
 	hash := xxhash.Sum64(streamId[:])
 	shard := hash & shardMask
 	return shard

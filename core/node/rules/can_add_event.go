@@ -215,6 +215,8 @@ func (params *aeParams) canAddEvent() ruleBuilderAE {
 		return params.canAddMediaPayload(payload)
 	case *StreamEvent_MemberPayload:
 		return params.canAddMemberPayload(payload)
+	case *StreamEvent_MetadataPayload:
+		panic("give me callstack")
 	default:
 		return aeBuilder().
 			fail(unknownPayloadType(payload))

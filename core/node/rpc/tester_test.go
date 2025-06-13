@@ -40,6 +40,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -344,6 +345,8 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0
+
+	cfg.MetadataShardMask = 0b11
 
 	if options.configUpdater != nil {
 		options.configUpdater(cfg)
@@ -683,6 +686,23 @@ func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) tes
 	})
 
 	return clients
+}
+
+// newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
+func (st *serviceTester) createMetadataStreams() {
+	operatorClient := st.newTestClientWithWallet(0, testClientOpts{}, st.btc.OperatorWallets[0])
+
+	numStreams := st.nodes[0].service.config.MetadataShardMask + 1
+
+	var wg sync.WaitGroup
+	for i := uint64(0); i < numStreams; i++ {
+		wg.Add(1)
+		go func(i uint64) {
+			defer wg.Done()
+			operatorClient.createMetadataStream(i)
+		}(i)
+	}
+	wg.Wait()
 }
 
 func (tc *testClient) DefaultEncryptionDevice() app_client.EncryptionDevice {
@@ -1959,4 +1979,15 @@ func (tc *testClient) clearUpdatesForChannel(streamId StreamId) {
 
 func (tcs testClients) clearUpdatesForChannel(streamId StreamId) {
 	tcs.parallelForAll(func(tc *testClient) { tc.clearUpdatesForChannel(streamId) })
+}
+
+func (tc *testClient) createMetadataStream(i uint64) {
+	streamId := MetadataStreamIdFromShard(i)
+	resp, err := tc.rpcClient().CreateMetadataStream(tc.ctx, streamId)
+	tc.require.NoError(err)
+	tc.require.Equal(streamId, StreamId(resp.Msg.Stream.NextSyncCookie.StreamId))
+}
+
+func (tc *testClient) rpcClient() *rpc_client.RpcClient {
+	return rpc_client.NewRpcClient(tc.wallet, tc.client)
 }
