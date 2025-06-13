@@ -27,8 +27,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         uint256 value,
         bytes calldata data
     ) external payable nonReentrant returns (bytes memory result) {
-        _checkAuthorized(target);
-        (result, ) = _execute(target, value, data);
+        result = _onExecute(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

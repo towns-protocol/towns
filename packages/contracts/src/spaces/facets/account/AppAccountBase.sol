@@ -146,6 +146,15 @@ abstract contract AppAccountBase is
         _setGroupExpiration(app.appId, newExpiration);
     }
 
+    function _onExecute(
+        address target,
+        uint256,
+        bytes calldata data
+    ) internal returns (bytes memory result) {
+        _checkAuthorized(target);
+        (result, ) = _execute(target, 0, data);
+    }
+
     // Internal Functions
     function _getAppExpiration(
         bytes32 appId,
