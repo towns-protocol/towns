@@ -14,6 +14,8 @@ import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 abstract contract EntitlementGatedBase is IEntitlementGatedBase {
+    using CustomRevert for bytes4;
+
     modifier onlyEntitlementChecker() {
         if (msg.sender != address(EntitlementGatedStorage.layout().entitlementChecker)) {
             CustomRevert.revertWith(EntitlementGated_OnlyEntitlementChecker.selector);
@@ -152,6 +154,14 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           V2                               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Requests a V2 entitlement check with optimized validation and execution
+    /// @param walletAddress The wallet address to check entitlements for
+    /// @param senderAddress The original sender address (encoded in extraData)
+    /// @param transactionId The unique transaction identifier
+    /// @param entitlement The entitlement contract to use for checking
+    /// @param requestId The specific request identifier
+    /// @param value The amount of ETH to send with the request (if any)
     function _requestEntitlementCheckV2(
         address walletAddress,
         address senderAddress,
@@ -160,39 +170,79 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         uint256 requestId,
         uint256 value
     ) internal {
-        if (value > msg.value) {
-            CustomRevert.revertWith(EntitlementGated_InvalidValue.selector);
-        }
+        // Validate all inputs upfront
+        _validateEntitlementCheckInputs(walletAddress, entitlement, value);
 
+        // Setup transaction state
+        EntitlementGatedStorage.Layout storage $ = EntitlementGatedStorage.layout();
+        _setupTransaction($.transactions[transactionId], entitlement);
+
+        // Execute the entitlement check request
+        _executeEntitlementCheckRequest(
+            $.entitlementChecker,
+            walletAddress,
+            transactionId,
+            requestId,
+            value,
+            abi.encode(senderAddress)
+        );
+    }
+
+    /// @notice Validates inputs for entitlement check request
+    /// @param walletAddress The wallet address being checked
+    /// @param entitlement The entitlement contract
+    /// @param value The ETH value being sent
+    function _validateEntitlementCheckInputs(
+        address walletAddress,
+        IRuleEntitlement entitlement,
+        uint256 value
+    ) private view {
+        if (value > msg.value) {
+            EntitlementGated_InvalidValue.selector.revertWith();
+        }
         if (walletAddress == address(0)) {
-            CustomRevert.revertWith(EntitlementGated_InvalidAddress.selector);
+            EntitlementGated_InvalidAddress.selector.revertWith();
         }
         if (address(entitlement) == address(0)) {
-            CustomRevert.revertWith(EntitlementGated_InvalidEntitlement.selector);
+            EntitlementGated_InvalidEntitlement.selector.revertWith();
         }
+    }
 
-        EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
-        Transaction storage transaction = ds.transactions[transactionId];
-
+    /// @notice Sets up transaction state for entitlement checking
+    /// @param transaction Storage reference to the transaction
+    /// @param entitlement The entitlement contract to associate
+    function _setupTransaction(
+        Transaction storage transaction,
+        IRuleEntitlement entitlement
+    ) private {
         transaction.finalized = true;
         transaction.entitlement = entitlement;
+    }
 
-        bytes memory extraData = abi.encode(senderAddress);
-
+    /// @notice Executes the entitlement check request with optimized call pattern
+    /// @param checker The entitlement checker contract
+    /// @param walletAddress The wallet address to check
+    /// @param transactionId The transaction identifier
+    /// @param requestId The request identifier
+    /// @param value The ETH value to send
+    /// @param extraData Encoded additional data
+    function _executeEntitlementCheckRequest(
+        IEntitlementChecker checker,
+        address walletAddress,
+        bytes32 transactionId,
+        uint256 requestId,
+        uint256 value,
+        bytes memory extraData
+    ) private {
         if (value > 0) {
-            ds.entitlementChecker.requestEntitlementCheckV2{value: value}(
+            checker.requestEntitlementCheckV2{value: value}(
                 walletAddress,
                 transactionId,
                 requestId,
                 extraData
             );
         } else {
-            ds.entitlementChecker.requestEntitlementCheckV2(
-                walletAddress,
-                transactionId,
-                requestId,
-                extraData
-            );
+            checker.requestEntitlementCheckV2(walletAddress, transactionId, requestId, extraData);
         }
     }
 
@@ -201,11 +251,11 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         uint256,
         NodeVoteStatus result
     ) internal {
-        EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
-        Transaction storage transaction = ds.transactions[transactionId];
+        EntitlementGatedStorage.Layout storage $ = EntitlementGatedStorage.layout();
+        Transaction storage transaction = $.transactions[transactionId];
 
         if (!transaction.finalized) {
-            CustomRevert.revertWith(EntitlementGated_TransactionNotRegistered.selector);
+            EntitlementGated_TransactionNotRegistered.selector.revertWith();
         }
 
         emit EntitlementCheckResultPosted(transactionId, result);
