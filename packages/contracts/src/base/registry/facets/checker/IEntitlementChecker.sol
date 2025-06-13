@@ -11,6 +11,7 @@ interface IEntitlementCheckerBase {
     error EntitlementChecker_NoPendingRequests();
     error EntitlementChecker_InsufficientFunds();
     error EntitlementChecker_NoRefundsAvailable();
+    error EntitlementChecker_InvalidValue();
 
     // Events
     event NodeRegistered(address indexed nodeAddress);

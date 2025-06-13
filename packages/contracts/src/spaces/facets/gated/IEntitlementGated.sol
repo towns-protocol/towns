@@ -34,7 +34,7 @@ interface IEntitlementGatedBase {
     error EntitlementGated_OnlyEntitlementChecker();
     error EntitlementGated_InvalidEntitlement();
     error EntitlementGated_RequestIdNotFound();
-
+    error EntitlementGated_InvalidValue();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

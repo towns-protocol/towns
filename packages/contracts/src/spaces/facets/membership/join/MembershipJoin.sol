@@ -69,7 +69,10 @@ abstract contract MembershipJoin is
         _validateJoinSpace(receiver);
 
         bool shouldCharge = _shouldChargeForJoinSpace();
-        if (shouldCharge) _validatePayment();
+        uint256 requiredAmount;
+        if (shouldCharge) {
+            requiredAmount = _validatePayment();
+        }
 
         bytes4 selector = IMembership.joinSpace.selector;
 
@@ -81,13 +84,13 @@ abstract contract MembershipJoin is
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
             receiver,
             msg.sender,
-            transactionId
+            transactionId,
+            requiredAmount
         );
 
         if (!isCrosschainPending) {
             if (isEntitled) {
                 if (shouldCharge) _chargeForJoinSpace(transactionId);
-
                 _refundBalance(transactionId, receiver);
                 _issueToken(receiver);
             } else {
@@ -103,7 +106,10 @@ abstract contract MembershipJoin is
         _validateJoinSpace(receiver);
 
         bool shouldCharge = _shouldChargeForJoinSpace();
-        if (shouldCharge) _validatePayment();
+        uint256 requiredAmount;
+        if (shouldCharge) {
+            requiredAmount = _validatePayment();
+        }
 
         _validateUserReferral(receiver, referral);
 
@@ -119,7 +125,8 @@ abstract contract MembershipJoin is
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
             receiver,
             msg.sender,
-            transactionId
+            transactionId,
+            requiredAmount
         );
 
         if (!isCrosschainPending) {
@@ -150,10 +157,10 @@ abstract contract MembershipJoin is
         return price;
     }
 
-    function _validatePayment() internal view {
+    function _validatePayment() internal view returns (uint256 requiredAmount) {
         // Get the current membership price based on total supply
         uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-        uint256 requiredAmount = _getRequiredAmount(membershipPrice);
+        requiredAmount = _getRequiredAmount(membershipPrice);
         if (msg.value < requiredAmount) {
             CustomRevert.revertWith(Membership__InsufficientPayment.selector);
         }
@@ -177,39 +184,99 @@ abstract contract MembershipJoin is
     function _checkEntitlement(
         address receiver,
         address sender,
-        bytes32 transactionId
+        bytes32 transactionId,
+        uint256 requiredAmount
     ) internal virtual returns (bool isEntitled, bool isCrosschainPending) {
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
+
+        // PHASE 1: Check LOCAL entitlements first (no payment needed)
+        if (_checkLocalEntitlements(roles, receiver)) {
+            return (true, false);
+        }
+
+        // PHASE 2: No local entitlements passed - check crosschain entitlements
+        return _checkCrosschainEntitlements(roles, receiver, sender, transactionId, requiredAmount);
+    }
+
+    /// @notice Checks local entitlements
+    /// @param receiver The address to check entitlements for
+    /// @return isLocallyEntitled True if user has local entitlements
+    function _checkLocalEntitlements(
+        IRolesBase.Role[] memory roles,
+        address receiver
+    ) internal view returns (bool isLocallyEntitled) {
         address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
-        uint256 totalRoles = roles.length;
+        for (uint256 i; i < roles.length; ++i) {
+            if (roles[i].disabled) continue;
 
-        for (uint256 i; i < totalRoles; ++i) {
-            Role memory role = roles[i];
-            if (role.disabled) continue;
+            for (uint256 j; j < roles[i].entitlements.length; ++j) {
+                IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
 
-            for (uint256 j; j < role.entitlements.length; ++j) {
-                IEntitlement entitlement = IEntitlement(role.entitlements[j]);
-
-                if (entitlement.isEntitled(IN_TOWN, linkedWallets, JOIN_SPACE)) {
-                    isEntitled = true;
-                    return (isEntitled, false);
+                // Check local entitlements first
+                if (
+                    !entitlement.isCrosschain() &&
+                    entitlement.isEntitled(IN_TOWN, linkedWallets, JOIN_SPACE)
+                ) {
+                    // Local entitlement passed - return true (payment handled by existing flow)
+                    return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    /// @notice Handles crosschain entitlement checks with proper payment distribution
+    /// @param receiver The address to check entitlements for
+    /// @param sender The address sending the transaction
+    /// @param transactionId The transaction identifier
+    /// @param requiredAmount The required payment amount
+    /// @return isEntitled Whether user is entitled (always false for crosschain)
+    /// @return isCrosschainPending Whether crosschain checks are pending
+    function _checkCrosschainEntitlements(
+        IRolesBase.Role[] memory roles,
+        address receiver,
+        address sender,
+        bytes32 transactionId,
+        uint256 requiredAmount
+    ) internal returns (bool isEntitled, bool isCrosschainPending) {
+        bool paymentSent = false;
+
+        for (uint256 i; i < roles.length; ++i) {
+            if (roles[i].disabled) continue;
+
+            for (uint256 j; j < roles[i].entitlements.length; ++j) {
+                IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
 
                 if (entitlement.isCrosschain()) {
-                    _requestEntitlementCheckV2(
-                        receiver,
-                        sender,
-                        transactionId,
-                        IRuleEntitlement(address(entitlement)),
-                        role.id
-                    );
+                    if (!paymentSent) {
+                        // Send only the required amount to crosschain check
+                        // Excess will be handled by existing refund mechanisms
+                        _requestEntitlementCheckV2(
+                            receiver,
+                            sender,
+                            transactionId,
+                            IRuleEntitlement(address(entitlement)),
+                            roles[i].id,
+                            requiredAmount
+                        );
+                        paymentSent = true;
+                    } else {
+                        _requestEntitlementCheckV2(
+                            receiver,
+                            sender,
+                            transactionId,
+                            IRuleEntitlement(address(entitlement)),
+                            roles[i].id,
+                            0
+                        );
+                    }
                     isCrosschainPending = true;
                 }
             }
         }
 
-        return (isEntitled, isCrosschainPending);
+        return (false, isCrosschainPending);
     }
 
     /// @notice Determines if a charge should be applied for joining the space
