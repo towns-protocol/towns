@@ -33,10 +33,6 @@ contract XChainTest is
         gated = new MockEntitlementGated(entitlementChecker);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           TESTS                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     function test_provideXChainRefund() public {
         address caller = _randomAddress();
         vm.deal(caller, 1 ether);
@@ -86,14 +82,12 @@ contract XChainTest is
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
-        vm.recordLogs();
         vm.prank(caller);
         bytes32 transactionId = gated.joinSpace{value: 1 ether}(
             caller,
             roleIds,
             RuleEntitlementUtil.getMockERC721RuleData()
         );
-        Vm.Log[] memory requestLogs = vm.getRecordedLogs();
 
         // Provide refund as owner
         vm.prank(deployer);
@@ -162,65 +156,3 @@ contract XChainTest is
         }
     }
 }
-// ─────────────────────────────────────────────────────────────────────────────
-    // Additional unit tests – Framework: Foundry (forge-std)
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    function test_provideXChainRefund_revertWhen_unknownTxId() public {
-        bytes32 bogusTxId = keccak256("bogus");
-        vm.prank(deployer);
-        vm.expectRevert(XChain.UnknownTransaction.selector);
-        IXChain(baseRegistry).provideXChainRefund(_randomAddress(), bogusTxId);
-    }
-
-    function test_provideXChainRefund_revertWhen_zeroValue() public {
-        address caller = _randomAddress();
-        uint256[] memory roleIds = new uint256[](1);
-        roleIds[0] = 0;
-
-        // joinSpace with no ETH
-        vm.prank(caller);
-        bytes32 txId = gated.joinSpace(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
-
-        // entitlementChecker balance should be 0 → refund should revert
-        vm.prank(deployer);
-        vm.expectRevert(XChain.NoFundsToRefund.selector);
-        IXChain(baseRegistry).provideXChainRefund(caller, txId);
-    }
-
-    function test_provideXChainRefund_emitsEvent() public {
-        address caller = _randomAddress();
-        vm.deal(caller, 1 ether);
-        uint256[] memory roleIds = new uint256[](1);
-        roleIds[0] = 0;
-
-        vm.prank(caller);
-        bytes32 txId = gated.joinSpace{value: 1 ether}(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
-
-        // Expect event
-        vm.expectEmit(true, true, false, true);
-        emit XChain.XChainRefundProvided(caller, txId, 1 ether);
-
-        vm.prank(deployer);
-        IXChain(baseRegistry).provideXChainRefund(caller, txId);
-    }
-
-    function test_isCheckCompleted_falseBeforeRefund() public {
-        address caller = _randomAddress();
-        vm.deal(caller, 1 ether);
-        uint256[] memory roleIds = new uint256[](1);
-        roleIds[0] = 0;
-
-        vm.prank(caller);
-        bytes32 txId = gated.joinSpace{value: 1 ether}(caller, roleIds, RuleEntitlementUtil.getMockERC721RuleData());
-
-        // Before refund
-        assertFalse(IXChain(baseRegistry).isCheckCompleted(txId, roleIds[0]));
-
-        // Refund by owner
-        vm.prank(deployer);
-        IXChain(baseRegistry).provideXChainRefund(caller, txId);
-
-        // After refund
-        assertTrue(IXChain(baseRegistry).isCheckCompleted(txId, roleIds[0]));
-    }
