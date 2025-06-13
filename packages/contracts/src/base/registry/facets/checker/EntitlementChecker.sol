@@ -132,12 +132,20 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         XChainLib.Layout storage layout = XChainLib.layout();
 
         layout.requestsBySender[senderAddress].add(transactionId);
-        layout.requests[transactionId] = XChainLib.Request({
-            caller: space,
-            blockNumber: block.number,
-            value: msg.value,
-            completed: false
-        });
+
+        // Only create the request if it doesn't exist yet
+        XChainLib.Request storage request = layout.requests[transactionId];
+        if (request.caller == address(0)) {
+            // First time creating this request
+            layout.requests[transactionId] = XChainLib.Request({
+                caller: space,
+                blockNumber: block.number,
+                value: msg.value,
+                completed: false,
+                receiver: walletAddress
+            });
+        }
+        // If request already exists, don't overwrite it (preserves original value)
 
         address[] memory randomNodes = _getRandomNodes(5);
 

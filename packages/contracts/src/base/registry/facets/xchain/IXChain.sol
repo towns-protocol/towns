@@ -20,9 +20,11 @@ interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
         uint256 requestId
     ) external view returns (bool);
 
-    /// @notice Allows a sender to request a refund for timed-out entitlement checks
-    /// @dev Will revert if no refunds are available or if the contract has insufficient funds
-    function requestRefund() external;
+    /// @notice Allows protocol to provide a refund for a timed-out entitlement check
+    /// @dev Will revert if the contract has insufficient funds
+    /// @param receiver The address to receive the refund
+    /// @param transactionId The unique identifier of the transaction being checked
+    function provideXChainRefund(address receiver, bytes32 transactionId) external;
 
     /// @notice Posts the result of an entitlement check from a node
     /// @param transactionId The unique identifier of the transaction being checked

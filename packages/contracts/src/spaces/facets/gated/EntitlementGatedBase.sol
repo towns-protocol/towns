@@ -157,8 +157,13 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         address senderAddress,
         bytes32 transactionId,
         IRuleEntitlement entitlement,
-        uint256 requestId
+        uint256 requestId,
+        uint256 value
     ) internal {
+        if (value > msg.value) {
+            CustomRevert.revertWith(EntitlementGated_InvalidValue.selector);
+        }
+
         if (walletAddress == address(0)) {
             CustomRevert.revertWith(EntitlementGated_InvalidAddress.selector);
         }
@@ -174,12 +179,21 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
         bytes memory extraData = abi.encode(senderAddress);
 
-        ds.entitlementChecker.requestEntitlementCheckV2{value: msg.value}(
-            walletAddress,
-            transactionId,
-            requestId,
-            extraData
-        );
+        if (value > 0) {
+            ds.entitlementChecker.requestEntitlementCheckV2{value: value}(
+                walletAddress,
+                transactionId,
+                requestId,
+                extraData
+            );
+        } else {
+            ds.entitlementChecker.requestEntitlementCheckV2(
+                walletAddress,
+                transactionId,
+                requestId,
+                extraData
+            );
+        }
     }
 
     function _postEntitlementCheckResultV2(

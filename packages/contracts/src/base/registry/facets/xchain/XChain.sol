@@ -17,8 +17,9 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {EntitlementGated} from "src/spaces/facets/gated/EntitlementGated.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract XChain is IXChain, ReentrancyGuard, Facet {
+contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -36,44 +37,38 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IXChain
-    function requestRefund() external {
-        XChainLib.Layout storage layout = XChainLib.layout();
-        EnumerableSet.Bytes32Set storage senderRequests = layout.requestsBySender[msg.sender];
-
-        bytes32[] memory transactionIds = senderRequests.values();
-
-        if (transactionIds.length == 0) {
-            revert EntitlementChecker_NoPendingRequests();
+    function provideXChainRefund(address senderAddress, bytes32 transactionId) external onlyOwner {
+        if (!XChainLib.layout().requestsBySender[senderAddress].remove(transactionId)) {
+            revert EntitlementGated_TransactionCheckAlreadyCompleted();
         }
 
-        uint256 totalRefund;
+        XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
 
-        unchecked {
-            for (uint256 i; i < transactionIds.length; ++i) {
-                bytes32 transactionId = transactionIds[i];
-                XChainLib.Request storage request = layout.requests[transactionId];
+        if (request.completed) {
+            revert EntitlementGated_TransactionCheckAlreadyCompleted();
+        }
 
-                if (request.completed || block.number - request.blockNumber <= 900) {
-                    continue;
-                }
+        request.completed = true;
 
-                totalRefund += request.value;
-                request.completed = true;
-                senderRequests.remove(transactionId);
+        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+
+        // clean up checks if any
+        uint256 requestIdsLength = check.requestIds.length();
+        if (requestIdsLength > 0) {
+            for (uint256 i; i < requestIdsLength; ++i) {
+                uint256 requestId = check.requestIds.at(i);
+                check.voteCompleted[requestId] = true;
             }
         }
 
-        if (totalRefund == 0) revert EntitlementChecker_NoRefundsAvailable();
-        if (address(this).balance < totalRefund) {
-            revert EntitlementChecker_InsufficientFunds();
-        }
-
-        // Single transfer for all eligible refunds
+        // Transfer ETH from this contract (EntitlementChecker) to the receiver
+        // Since this function is called on the BaseRegistry but ETH is stored here,
+        // we need to transfer from address(this) which is the diamond contract
         CurrencyTransfer.transferCurrency(
             CurrencyTransfer.NATIVE_TOKEN,
             address(this),
-            msg.sender,
-            totalRefund
+            senderAddress,
+            request.value
         );
     }
 
