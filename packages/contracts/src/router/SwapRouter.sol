@@ -130,9 +130,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             LibCall.callContract(routerParams.router, value, routerParams.swapData);
 
             // reset approval for tokenIn
-            if (!isNativeToken) {
-                params.tokenIn.safeApprove(routerParams.approveTarget, 0);
-            }
+            if (!isNativeToken) params.tokenIn.safeApprove(routerParams.approveTarget, 0);
         }
 
         // use the actual received amount to handle fee-on-transfer tokens
@@ -239,9 +237,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param token The token to check
     /// @return uint256 The balance
     function _getBalance(address token) internal view returns (uint256) {
-        if (token == CurrencyTransfer.NATIVE_TOKEN) {
-            return address(this).balance;
-        }
+        if (token == CurrencyTransfer.NATIVE_TOKEN) return address(this).balance;
         return token.balanceOf(address(this));
     }
 
@@ -267,9 +263,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         protocolFee = BasisPoints.calculate(amount, protocolBps);
 
         // only calculate poster fee if the address is not zero
-        if (poster != address(0)) {
-            posterFee = BasisPoints.calculate(amount, posterBps);
-        }
+        if (poster != address(0)) posterFee = BasisPoints.calculate(amount, posterBps);
 
         // calculate amount after fees
         unchecked {

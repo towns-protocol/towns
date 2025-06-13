@@ -60,33 +60,6 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         });
     }
 
-    function _createPermitParams(
-        address token,
-        uint256 privateKey,
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline
-    ) internal view returns (PermitParams memory permitParams) {
-        (uint8 v, bytes32 r, bytes32 s) = signPermit(
-            privateKey,
-            token,
-            owner,
-            spender,
-            value,
-            deadline
-        );
-        permitParams = PermitParams({
-            owner: owner,
-            spender: spender,
-            value: value,
-            deadline: deadline,
-            v: v,
-            r: r,
-            s: s
-        });
-    }
-
     function _verifySwapResults(
         address tokenIn,
         address tokenOut,
