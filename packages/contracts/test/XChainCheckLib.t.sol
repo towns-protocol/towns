@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../src/XChainCheckLib.sol";
+import "src/XChainCheckLib.sol";
 
 contract XChainCheckLibTest is Test {
     using XChainCheckLib for bytes;

@@ -3,16 +3,16 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../src/XChainLib.sol";
+import "src/XChainLib.sol";
 
 contract XChainLibTest is Test {
     using XChainLib for bytes;
-    
+
     // Test constants for various scenarios
     bytes32 constant SAMPLE_HASH = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
     address constant SAMPLE_ADDRESS = 0x1234567890123456789012345678901234567890;
     uint256 constant SAMPLE_AMOUNT = 1000 * 1e18;
-    
+
     function setUp() public {
         // Setup any necessary state for tests
     }
@@ -21,7 +21,7 @@ contract XChainLibTest is Test {
     function test_encodeMessage_ValidInputs() public {
         bytes memory message = XChainLib.encodeMessage(SAMPLE_ADDRESS, SAMPLE_AMOUNT, SAMPLE_HASH);
         assertGt(message.length, 0, "Encoded message should not be empty");
-        
+
         // Test decoding to verify encoding correctness
         (address decodedAddress, uint256 decodedAmount, bytes32 decodedHash) = XChainLib.decodeMessage(message);
         assertEq(decodedAddress, SAMPLE_ADDRESS, "Address should match");
@@ -33,7 +33,7 @@ contract XChainLibTest is Test {
     function test_encodeMessage_ZeroValues() public {
         bytes memory message = XChainLib.encodeMessage(address(0), 0, bytes32(0));
         assertGt(message.length, 0, "Should handle zero values");
-        
+
         (address addr, uint256 amount, bytes32 hash) = XChainLib.decodeMessage(message);
         assertEq(addr, address(0), "Zero address should be preserved");
         assertEq(amount, 0, "Zero amount should be preserved");
@@ -44,10 +44,10 @@ contract XChainLibTest is Test {
         address maxAddr = address(type(uint160).max);
         uint256 maxAmount = type(uint256).max;
         bytes32 maxHash = bytes32(type(uint256).max);
-        
+
         bytes memory message = XChainLib.encodeMessage(maxAddr, maxAmount, maxHash);
         (address addr, uint256 amount, bytes32 hash) = XChainLib.decodeMessage(message);
-        
+
         assertEq(addr, maxAddr, "Max address should be preserved");
         assertEq(amount, maxAmount, "Max amount should be preserved");
         assertEq(hash, maxHash, "Max hash should be preserved");
@@ -69,10 +69,10 @@ contract XChainLibTest is Test {
     function test_decodeMessage_CorruptedData() public {
         // Create message with correct length but corrupted data
         bytes memory corruptedMessage = new bytes(96); // Assuming 96 bytes total
-        for (uint i = 0; i < corruptedMessage.length; i++) {
+        for (uint256 i = 0; i < corruptedMessage.length; i++) {
             corruptedMessage[i] = bytes1(uint8(i % 256));
         }
-        
+
         try XChainLib.decodeMessage(corruptedMessage) returns (address, uint256, bytes32) {
             // If it doesn't revert, that's also valid behavior
         } catch {
@@ -84,7 +84,7 @@ contract XChainLibTest is Test {
     function test_computeHash_Consistency() public {
         bytes32 hash1 = XChainLib.computeHash(SAMPLE_ADDRESS, SAMPLE_AMOUNT, SAMPLE_HASH);
         bytes32 hash2 = XChainLib.computeHash(SAMPLE_ADDRESS, SAMPLE_AMOUNT, SAMPLE_HASH);
-        
+
         assertEq(hash1, hash2, "Hash should be deterministic");
         assertNotEq(hash1, bytes32(0), "Hash should not be zero");
     }
@@ -94,7 +94,7 @@ contract XChainLibTest is Test {
         bytes32 hash2 = XChainLib.computeHash(address(0x1111), SAMPLE_AMOUNT, SAMPLE_HASH);
         bytes32 hash3 = XChainLib.computeHash(SAMPLE_ADDRESS, 999, SAMPLE_HASH);
         bytes32 hash4 = XChainLib.computeHash(SAMPLE_ADDRESS, SAMPLE_AMOUNT, bytes32(uint256(0x5555)));
-        
+
         assertNotEq(hash1, hash2, "Different addresses should produce different hashes");
         assertNotEq(hash1, hash3, "Different amounts should produce different hashes");
         assertNotEq(hash1, hash4, "Different data should produce different hashes");
@@ -115,7 +115,7 @@ contract XChainLibTest is Test {
     function testFuzz_encodeDecodeRoundTrip(address addr, uint256 amount, bytes32 data) public {
         bytes memory encoded = XChainLib.encodeMessage(addr, amount, data);
         (address decodedAddr, uint256 decodedAmount, bytes32 decodedData) = XChainLib.decodeMessage(encoded);
-        
+
         assertEq(decodedAddr, addr, "Fuzz: Address should round-trip correctly");
         assertEq(decodedAmount, amount, "Fuzz: Amount should round-trip correctly");
         assertEq(decodedData, data, "Fuzz: Data should round-trip correctly");
@@ -124,7 +124,7 @@ contract XChainLibTest is Test {
     function testFuzz_computeHash(address addr, uint256 amount, bytes32 data) public {
         bytes32 hash = XChainLib.computeHash(addr, amount, data);
         assertNotEq(hash, bytes32(0), "Fuzz: Hash should never be zero");
-        
+
         // Test consistency
         bytes32 hash2 = XChainLib.computeHash(addr, amount, data);
         assertEq(hash, hash2, "Fuzz: Hash should be deterministic");
@@ -144,10 +144,10 @@ contract XChainLibTest is Test {
         bytes memory message = XChainLib.encodeMessage(SAMPLE_ADDRESS, SAMPLE_AMOUNT, SAMPLE_HASH);
         bytes32 messageHash = XChainLib.computeHash(SAMPLE_ADDRESS, SAMPLE_AMOUNT, SAMPLE_HASH);
         bool isValid = XChainLib.validateMessage(message);
-        
+
         assertTrue(isValid, "Message should be valid");
         assertNotEq(messageHash, bytes32(0), "Hash should be non-zero");
-        
+
         (address addr, uint256 amount, bytes32 data) = XChainLib.decodeMessage(message);
         assertEq(addr, SAMPLE_ADDRESS, "Decoded address should match");
         assertEq(amount, SAMPLE_AMOUNT, "Decoded amount should match");
@@ -161,10 +161,10 @@ contract XChainLibTest is Test {
         boundaryAmounts[1] = 1;
         boundaryAmounts[2] = type(uint256).max - 1;
         boundaryAmounts[3] = type(uint256).max;
-        
-        for (uint i = 0; i < boundaryAmounts.length; i++) {
+
+        for (uint256 i = 0; i < boundaryAmounts.length; i++) {
             bytes memory message = XChainLib.encodeMessage(SAMPLE_ADDRESS, boundaryAmounts[i], SAMPLE_HASH);
-            (,uint256 decodedAmount,) = XChainLib.decodeMessage(message);
+            (, uint256 decodedAmount, ) = XChainLib.decodeMessage(message);
             assertEq(decodedAmount, boundaryAmounts[i], "Boundary amount should round-trip correctly");
         }
     }
@@ -174,7 +174,7 @@ contract XChainLibTest is Test {
         uint256 gasBefore = gasleft();
         XChainLib.encodeMessage(SAMPLE_ADDRESS, SAMPLE_AMOUNT, SAMPLE_HASH);
         uint256 gasUsed = gasBefore - gasleft();
-        
+
         assertLt(gasUsed, 100000, "Encoding should not use excessive gas");
     }
 }

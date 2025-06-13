@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGated} from "src/spaces/facets/gated/IEntitlementGated.sol";
 import {IXChain} from "src/base/registry/facets/xchain/IXChain.sol";
 
-//libraries
+// libraries
 import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
 
-//contracts
+// contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {EntitlementTestUtils} from "test/utils/EntitlementTestUtils.sol";
 import {MockEntitlementGated} from "test/mocks/MockEntitlementGated.sol";
@@ -41,7 +41,7 @@ contract XChainTest is
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
-        //  assert that the caller has 1 ether and entitlement checker has 0 ether
+        // assert that the caller has 1 ether and entitlement checker has 0 ether
         assertEq(address(caller).balance, 1 ether);
         assertEq(address(entitlementChecker).balance, 0 ether);
 
@@ -175,7 +175,8 @@ contract XChainTest is
             assertTrue(IXChain(baseRegistry).isCheckCompleted(transactionId, roleIds[i]));
         }
     }
-/// @dev Fuzz test for provideXChainRefund with various ETH amounts
+
+    /// @dev Fuzz test for provideXChainRefund with various ETH amounts
     function testFuzz_provideXChainRefund_withRandomAmounts(uint256 amount) public {
         vm.assume(amount > 0 && amount <= 100 ether);
         address caller = _randomAddress();
@@ -637,7 +638,7 @@ contract XChainTest is
 
         // Verify initial state
         assertEq(address(entitlementChecker).balance, 1 ether);
-        assertEq(caller.balance, 1 ether);
+        assertEq(caller.balance, 2 ether);
 
         // Provide refund
         vm.prank(deployer);

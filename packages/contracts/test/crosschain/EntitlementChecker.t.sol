@@ -151,8 +151,8 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
             assertEq(totalNodes, nodes.length);
         }
     }
-}
-// =============================================================
+
+    // =============================================================
     //                        Edge Cases & Access Control
     // =============================================================
 
