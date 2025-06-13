@@ -363,6 +363,29 @@ const _abi = [
   },
   {
     type: "function",
+    name: "renewApp",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "contract ITownsApp",
+      },
+      {
+        name: "account",
+        type: "address",
+        internalType: "contract IAppAccount",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
     name: "uninstallApp",
     inputs: [
       {
@@ -461,6 +484,31 @@ const _abi = [
         name: "uid",
         type: "bytes32",
         indexed: false,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "AppRenewed",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "account",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "appId",
+        type: "bytes32",
+        indexed: true,
         internalType: "bytes32",
       },
     ],
