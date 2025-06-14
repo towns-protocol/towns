@@ -29,6 +29,17 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     address internal feeRecipient;
     address internal POSTER = makeAddr("POSTER");
 
+    // Default empty permit params for tests that fail during early validation
+    Permit2Params internal defaultEmptyPermit =
+        Permit2Params({
+            owner: address(0),
+            token: address(0),
+            amount: 0,
+            nonce: 0,
+            deadline: 0,
+            signature: ""
+        });
+
     bytes32 internal constant _TOKEN_PERMISSIONS_TYPEHASH =
         keccak256("TokenPermissions(address token,uint256 amount)");
 
@@ -44,6 +55,17 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         DeployPermit2 deployer = new DeployPermit2();
         deployer.deployPermit2();
         vm.label(permit2, "Permit2");
+    }
+
+    function _encodeSwapData(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address swapRouter
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(MockRouter.swap, (tokenIn, tokenOut, amountIn, amountOut, swapRouter));
     }
 
     function _createSwapParams(
@@ -68,16 +90,10 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
             recipient: recipient
         });
 
-        // create swap data for mock router
-        bytes memory swapData = abi.encodeCall(
-            MockRouter.swap,
-            (tokenIn, tokenOut, amountIn, amountOut, swapRouter)
-        );
-
         routerParams = RouterParams({
             router: mockRouter,
             approveTarget: mockRouter,
-            swapData: swapData
+            swapData: _encodeSwapData(tokenIn, tokenOut, amountIn, amountOut, swapRouter)
         });
     }
 
