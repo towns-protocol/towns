@@ -14,6 +14,7 @@ const (
 	PermissionAddRemoveChannels
 	PermissionModifySpaceSettings
 	PermissionReact
+	PermissionOwnership
 )
 
 func (p Permission) String() string {
@@ -40,6 +41,8 @@ func (p Permission) String() string {
 		return "ModifySpaceSettings"
 	case PermissionReact:
 		return "React"
+	case PermissionOwnership:
+		return "Ownership"
 
 	default:
 		return "Unknown"
