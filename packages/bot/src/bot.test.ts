@@ -88,7 +88,7 @@ describe('Bot', { sequential: true }, () => {
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
         await appRegistryRpcClient.setAppSettings({
-            appId: bin_fromHexString(appAddress),
+            appId: bin_fromHexString(botWallet.address),
             settings: { forwardSetting },
         })
     }
@@ -134,6 +134,10 @@ describe('Bot', { sequential: true }, () => {
         if (!space) {
             throw new Error('Space not found')
         }
+
+        console.log('botWallet: ', botWallet.address)
+        console.log('appContractAddress: ', appAddress)
+
         // this adds the bot to the space (onchain)
         const tx = await appRegistryDapp.installApp(
             bob.signer,
@@ -164,7 +168,9 @@ describe('Bot', { sequential: true }, () => {
         await expect(
             bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId)),
         ).resolves.toBeDefined()
-        await expect(botClient.uploadDeviceKeys()).resolves.toBeDefined()
+        const addResult = await botClient.uploadDeviceKeys()
+        expect(addResult).toBeDefined()
+        expect(addResult.error).toBeUndefined()
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
         expect(exportedDevice).toBeDefined()
@@ -188,7 +194,7 @@ describe('Bot', { sequential: true }, () => {
         )
         appRegistryRpcClient = rpcClient
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
-            appId: bin_fromHexString(appAddress),
+            appId: bin_fromHexString(botWallet.address),
             appOwnerId: bin_fromHexString(bob.userId),
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -206,13 +212,13 @@ describe('Bot', { sequential: true }, () => {
             createServer,
         })
         await appRegistryRpcClient.registerWebhook({
-            appId: bin_fromHexString(appAddress),
+            appId: bin_fromHexString(botWallet.address),
             webhookUrl: WEBHOOK_URL,
         })
 
         // Verify webhook registration
         const { isRegistered, validResponse } = await appRegistryRpcClient.getStatus({
-            appId: bin_fromHexString(appAddress),
+            appId: bin_fromHexString(botWallet.address),
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)

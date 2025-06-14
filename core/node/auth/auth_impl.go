@@ -1111,13 +1111,22 @@ func (ca *chainAuth) checkIsBot(
 	ctx context.Context,
 	args *ChainAuthArgs,
 ) (CacheResult, bool, common.Address, error) {
-	logging.FromCtx(ctx).
-		Infow("checkIsBot", "kind", args.kind, "appAddress", args.appAddress, "principal", args.principal)
-
 	isBot, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
 	if err != nil {
 		return nil, false, common.Address{}, err
 	}
+
+	logging.FromCtx(ctx).
+		Debugw(
+			"checkIsBot",
+			"kind", args.kind,
+			"args.spaceId", args.spaceId,
+			"args.channelId", args.channelId,
+			"args.appAddress", args.appAddress,
+			"principal", args.principal,
+			"foundAppAddress", appAddress,
+			"isBot", isBot,
+		)
 
 	var reason EntitlementResultReason
 	if args.kind == chainAuthKindIsBot {
