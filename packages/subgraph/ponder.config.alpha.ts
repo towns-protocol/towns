@@ -10,7 +10,7 @@ import {
     entitlementCheckerAbi,
     nodeOperatorFacetAbi,
     spaceDelegationFacetAbi,
-    rewardsDistributionAbi,
+    rewardsDistributionV2Abi,
     xChainAbi,
 } from '@towns-protocol/contracts/typings'
 
@@ -39,6 +39,11 @@ if (!baseRegistry) {
     throw new Error('Base registry address not found')
 }
 
+const riverAirdrop = getContractAddress('riverAirdrop')
+if (!riverAirdrop) {
+    throw new Error('River airdrop address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -59,10 +64,16 @@ export default createConfig({
                 entitlementCheckerAbi,
                 nodeOperatorFacetAbi,
                 spaceDelegationFacetAbi,
-                rewardsDistributionAbi,
+                rewardsDistributionV2Abi,
                 xChainAbi,
             ]),
             address: baseRegistry,
+            startBlock,
+            network: 'alpha',
+        },
+        RiverAirdrop: {
+            abi: mergeAbis([rewardsDistributionV2Abi]),
+            address: riverAirdrop,
             startBlock,
             network: 'alpha',
         },
