@@ -20,22 +20,20 @@ interface ISwapRouterBase {
         address recipient;
     }
 
-    /// @notice Parameters for EIP-2612 permit approval
-    /// @param owner The owner of the tokens
-    /// @param spender The spender being approved
-    /// @param value The amount of tokens to approve
-    /// @param deadline The timestamp until which the permit is valid
-    /// @param v The recovery byte of the signature
-    /// @param r The first 32 bytes of the signature
-    /// @param s The second 32 bytes of the signature
-    struct PermitParams {
+    /// @notice Parameters for Permit2 signature transfer with witness
+    /// @param owner The owner of the tokens (who signed the permit)
+    /// @param token The token address
+    /// @param amount The amount to permit
+    /// @param nonce The permit nonce
+    /// @param deadline The permit deadline
+    /// @param signature The permit signature
+    struct Permit2Params {
         address owner;
-        address spender;
-        uint256 value;
+        address token;
+        uint256 amount;
+        uint256 nonce;
         uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
+        bytes signature;
     }
 
     /// @notice Parameters for external router interaction
@@ -48,6 +46,12 @@ interface ISwapRouterBase {
         bytes swapData;
     }
 
+    struct SwapWitness {
+        ExactInputParams exactInputParams;
+        RouterParams routerParams;
+        address poster;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -58,6 +62,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when an invalid amount is provided
     error SwapRouter__InvalidAmount();
 
+    /// @notice Error thrown when the permit token does not match the swap input token
+    error SwapRouter__PermitTokenMismatch();
+
     /// @notice Error thrown when the output amount is less than the minimum expected
     error SwapRouter__InsufficientOutput();
 
@@ -66,6 +73,12 @@ interface ISwapRouterBase {
 
     /// @notice Error thrown when an invalid BPS value is provided
     error SwapRouter__InvalidBps();
+
+    /// @notice Error thrown when native token is used with permit (not supported)
+    error SwapRouter__NativeTokenNotSupportedWithPermit();
+
+    /// @notice Error thrown when recipient is not specified (address(0))
+    error SwapRouter__RecipientRequired();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -129,26 +142,20 @@ interface ISwapRouter is ISwapRouterBase {
         address poster
     ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
-    //    /// @notice Executes a swap using EIP-2612 permit for token approval
-    //    /// @param params The parameters for the swap
-    //    /// tokenIn The token being sold
-    //    /// tokenOut The token being bought
-    //    /// amountIn The amount of tokenIn to swap
-    //    /// minAmountOut The minimum amount of tokenOut to receive
-    //    /// recipient The address to receive the output tokens
-    //    /// @param routerParams The router parameters for the swap
-    //    /// router The address of the router to use
-    //    /// approveTarget The address to approve the token transfer
-    //    /// swapData The calldata to execute on the router
-    //    /// @param permit The EIP-2612 permit data for token approval
-    //    /// @param poster The address that posted this swap opportunity
-    //    /// @return amountOut The amount of tokenOut received
-    //    function executeSwapWithPermit(
-    //        ExactInputParams calldata params,
-    //        RouterParams calldata routerParams,
-    //        PermitParams calldata permit,
-    //        address poster
-    //    ) external payable returns (uint256 amountOut);
+    /// @notice Executes a swap using Permit2 with witness data binding permit to swap intent
+    /// @dev Requires user to pre-approve tokens to Permit2 contract. Only supports ERC20 tokens.
+    /// @param params The exact input swap parameters that will be bound to the permit signature
+    /// @param routerParams The router interaction parameters that will be bound to the permit signature
+    /// @param permit The Permit2 data containing token, amount, nonce, deadline, and signature
+    /// @param poster The address that posted this swap opportunity (included in witness)
+    /// @return amountOut The amount of output tokens received after fees
+    /// @return protocolFee The amount of protocol fee collected
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
     /// @notice Calculate fees for ETH input swaps before execution
     /// @dev This function helps integrators determine the actual amount that will be sent to external
