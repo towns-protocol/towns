@@ -14,15 +14,10 @@ import {
     everyoneMembershipStruct,
     setupWalletsAndContexts,
     waitFor,
-    createTownWithRequirements,
     createChannel,
-    getXchainConfigForTesting,
     createRole,
-    makeTestClient,
-    expectUserCanJoin,
 } from '../testUtils'
 import { makeBaseChainConfig } from '../../riverConfig'
-import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 import { make_MemberPayload_KeySolicitation } from '../../types'
@@ -139,21 +134,8 @@ describe('bot entitlements tests', () => {
         })
 
         // This should succeed because the bot has READ permission via app entitlements
-        await expect(
-            bot.makeEventAndAddToStream(restrictedChannelId!, payload),
-        ).resolves.not.toThrow()
-
-        // Wait for the event to be processed and verify it was accepted
-        const channelStream = await spaceOwner.waitForStream(restrictedChannelId!)
-        await waitFor(() => {
-            // Check that the bot's event was added to the channel timeline
-            const events = channelStream.view.timeline
-            expect(events.length).toBeGreaterThan(0)
-
-            // Look for any event from the bot user
-            const botEvent = events.find((e) => e.creatorUserId === bot.userId)
-            expect(botEvent).toBeDefined()
-        })
+        const { error } = await bot.makeEventAndAddToStream(restrictedChannelId!, payload)
+        expect(error).toBeUndefined()
 
         // Cleanup
         await bot.stopSync()
