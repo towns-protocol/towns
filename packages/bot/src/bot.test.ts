@@ -135,9 +135,6 @@ describe('Bot', { sequential: true }, () => {
             throw new Error('Space not found')
         }
 
-        console.log('botWallet: ', botWallet.address)
-        console.log('appContractAddress: ', appAddress)
-
         // this adds the bot to the space (onchain)
         const tx = await appRegistryDapp.installApp(
             bob.signer,
