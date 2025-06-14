@@ -78,6 +78,7 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
     check(isDefined(process.env.RIVER_CHAIN_ID), 'RIVER_CHAIN_ID is not defined')
     check(isDefined(process.env.RIVER_CHAIN_RPC_URL), 'RIVER_CHAIN_RPC_URL is not defined')
     check(isDefined(process.env.RIVER_REGISTRY_ADDRESS), 'RIVER_REGISTRY_ADDRESS is not defined')
+    check(isDefined(process.env.APP_REGISTRY_ADDRESS), 'APP_REGISTRY_ADDRESS is not defined')
 
     return {
         base: {
@@ -146,5 +147,20 @@ export const getStreamMetadataUrl = (environmentId: string) => {
             return 'http://localhost:3003'
         default:
             throw new Error(`No stream metadata url for environmentId ${environmentId}`)
+    }
+}
+
+export const getAppRegistryUrl = (environmentId: string) => {
+    switch (environmentId) {
+        case 'local_multi':
+            return 'http://localhost:6170'
+        case 'local_multi_ne':
+            return 'http://localhost:6190'
+        case 'alpha':
+        case 'gamma':
+        case 'omega':
+        case 'delta':
+        default:
+            throw new Error(`No app registry url for environmentId ${environmentId}`)
     }
 }
