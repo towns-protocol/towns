@@ -13,3 +13,4 @@ deployments/*/*/addresses/facets/
 out/
 .env.gamma
 .env.omega
+.claude/
