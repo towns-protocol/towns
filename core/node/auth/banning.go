@@ -83,7 +83,7 @@ func (b *banning) IsBanned(ctx context.Context, wallets []common.Address) (bool,
 					Func("IsBanned").
 					Message("Failed to get owner of banned token")
 			}
-			// Ignore burned tokens or any resopnse that indicates a token id out of bounds
+			// Ignore burned tokens or any response that indicates a token id out of bounds
 			zeroAddress := common.Address{}
 			if !tokenOwnership.Burned && tokenOwnership.Addr != zeroAddress {
 				bannedAddresses[tokenOwnership.Addr] = struct{}{}
