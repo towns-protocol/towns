@@ -2,30 +2,16 @@
  * @group with-entitlements
  */
 
-import {
-    Address,
-    AppRegistryDapp,
-    Permission,
-    SpaceAddressFromSpaceId,
-    NoopRuleData,
-} from '@towns-protocol/web3'
+import { Address, AppRegistryDapp, Permission, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
 import {
     createSpaceAndDefaultChannel,
     everyoneMembershipStruct,
     setupWalletsAndContexts,
-    waitFor,
-    createTownWithRequirements,
-    createChannel,
-    getXchainConfigForTesting,
-    createRole,
-    makeTestClient,
     expectUserCanJoin,
 } from '../testUtils'
 import { makeBaseChainConfig } from '../../riverConfig'
 import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
-import { MembershipOp } from '@towns-protocol/proto'
-import { make_MemberPayload_KeySolicitation } from '../../types'
 
 describe('bot stream creation tests', () => {
     test('registered bots can only create app user streams with their registered app address', async () => {
@@ -146,12 +132,12 @@ describe('bot stream creation tests', () => {
         )
 
         // GDMs with bot creators are disallowed.
-        expect(bot.createGDMChannel([carol.userId, alice.userId])).rejects.toThrow(
+        await expect(bot.createGDMChannel([carol.userId, alice.userId])).rejects.toThrow(
             /PERMISSION_DENIED/,
         )
 
         // DMs with bot creators are disallowed.
-        expect(bot.createDMChannel(alice.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+        await expect(bot.createDMChannel(alice.userId)).rejects.toThrow(/PERMISSION_DENIED/)
 
         // Cleanup
         await carol.stopSync()

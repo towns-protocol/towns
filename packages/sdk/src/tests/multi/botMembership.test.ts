@@ -17,15 +17,11 @@ import {
     createTownWithRequirements,
     createChannel,
     getXchainConfigForTesting,
-    createRole,
     makeTestClient,
-    expectUserCanJoin,
 } from '../testUtils'
 import { makeBaseChainConfig } from '../../riverConfig'
-import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
-import { make_MemberPayload_KeySolicitation } from '../../types'
 
 describe('bot membership tests', () => {
     test('registered and installed bots can join spaces and channels', async () => {
@@ -570,11 +566,11 @@ describe('bot membership tests', () => {
         expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
 
         // GDMs with bot creators are disallowed.
-        expect(carol.createGDMChannel([bot.userId, dave.userId])).rejects.toThrow(
+        await expect(carol.createGDMChannel([bot.userId, dave.userId])).rejects.toThrow(
             /PERMISSION_DENIED/,
         )
 
         // DMs with bot creators are disallowed.
-        expect(carol.createDMChannel(bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+        await expect(carol.createDMChannel(bot.userId)).rejects.toThrow(/PERMISSION_DENIED/)
     })
 })
