@@ -79,10 +79,10 @@ func (r *isEntitledResult) Reason() EntitlementResultReason {
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
 
-func NewChainAuthArgsForBot(userId string, appContractAddress common.Address) *ChainAuthArgs {
+func NewChainAuthArgsForBot(userId common.Address, appContractAddress common.Address) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindIsBot,
-		principal:  common.HexToAddress(userId),
+		principal:  userId,
 		appAddress: appContractAddress,
 	}
 }

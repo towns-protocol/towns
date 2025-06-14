@@ -494,19 +494,19 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 }
 
 func (ru *csUserRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
 }
 
 func (ru *csUserMetadataRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
 }
 
 func (ru *csUserSettingsRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
 }
 
 func (ru *csUserInboxRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorUserId, common.Address(ru.inception.AppAddress)), nil
+	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
 }
 
 func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
@@ -748,7 +748,10 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	}, nil
 }
 
-func (ru *csGdmChannelRules) checkGDMMemberPayload(event *events.ParsedEvent, expectedUserAddress *common.Address) error {
+func (ru *csGdmChannelRules) checkGDMMemberPayload(
+	event *events.ParsedEvent,
+	expectedUserAddress *common.Address,
+) error {
 	payload := event.Event.GetMemberPayload()
 	if payload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel payload")
