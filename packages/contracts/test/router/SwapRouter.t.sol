@@ -31,6 +31,13 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     MockERC20 internal token1;
     address internal deployer = makeAddr("deployer");
 
+    // Default test parameters
+    ExactInputParams internal defaultInputParams;
+    RouterParams internal defaultRouterParams;
+    uint256 internal constant DEFAULT_AMOUNT_IN = 100 ether;
+    uint256 internal constant DEFAULT_AMOUNT_OUT = 95 ether;
+    address internal defaultRecipient = address(this);
+
     /// @dev Struct to avoid stack too deep errors in permit tests
     struct PermitTestParams {
         uint256 privateKey;
@@ -65,6 +72,16 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         pausableFacet = IPausable(address(swapRouter));
 
         vm.label(address(swapRouter), "SwapRouter");
+
+        (defaultInputParams, defaultRouterParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0),
+            address(token1),
+            DEFAULT_AMOUNT_IN,
+            DEFAULT_AMOUNT_OUT,
+            defaultRecipient
+        );
     }
 
     function test_storageSlot() external pure {
@@ -159,98 +176,85 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_executeSwap_revertWhen_invalidRouter() external {
-        address caller = address(this);
-        uint256 amountIn = 100 ether;
-        uint256 amountOut = 95 ether;
+        // test with invalid router
+        RouterParams memory routerParams = defaultRouterParams;
+        routerParams.router = makeAddr("invalidRouter");
 
-        // mint tokens and approve to ensure we get past the transfer step
-        token0.mint(caller, amountIn);
-        token0.approve(address(swapRouter), amountIn);
-
-        // get swap parameters
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0),
-            address(token1),
-            amountIn,
-            amountOut,
-            caller
-        );
-
-        // set to non-whitelisted router
-        address invalidRouter = makeAddr("invalidRouter");
-        routerParams.router = invalidRouter;
-
-        // expect revert with InvalidRouter
         vm.expectRevert(SwapRouter__InvalidRouter.selector);
-        swapRouter.executeSwap(inputParams, routerParams, POSTER);
+        swapRouter.executeSwap(defaultInputParams, routerParams, POSTER);
 
-        // also test with invalid approveTarget
+        // test with invalid approveTarget
         routerParams.router = mockRouter;
-        routerParams.approveTarget = invalidRouter;
+        routerParams.approveTarget = makeAddr("invalidRouter");
 
         vm.expectRevert(SwapRouter__InvalidRouter.selector);
-        swapRouter.executeSwap(inputParams, routerParams, POSTER);
+        swapRouter.executeSwap(defaultInputParams, routerParams, POSTER);
+    }
+
+    function test_executeSwap_revertWhen_recipientRequired() public {
+        // modify default params to have invalid recipient
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.recipient = address(0);
+
+        vm.expectRevert(SwapRouter__RecipientRequired.selector);
+        swapRouter.executeSwap(inputParams, defaultRouterParams, POSTER);
     }
 
     function test_executeSwap_revertWhen_invalidAmount_nativeToken() external {
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            CurrencyTransfer.NATIVE_TOKEN, // ETH in
-            address(token1), // token out
-            1 ether,
-            0.95 ether,
-            address(this)
-        );
+        // modify default params for ETH input
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.tokenIn = CurrencyTransfer.NATIVE_TOKEN;
+        inputParams.amountIn = 1 ether;
 
         // send incorrect ETH amount with the transaction
         uint256 incorrectAmount = 0.5 ether;
 
         vm.expectRevert(SwapRouter__InvalidAmount.selector);
-        swapRouter.executeSwap{value: incorrectAmount}(inputParams, routerParams, POSTER);
+        swapRouter.executeSwap{value: incorrectAmount}(inputParams, defaultRouterParams, POSTER);
+    }
+
+    function test_executeSwap_revertWhen_invalidBps() public {
+        // set invalid fees that exceed MAX_BPS (exceeding 100%)
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(5001, 5001); // 50.01% each
+
+        // mint tokens and approve
+        token0.mint(address(this), DEFAULT_AMOUNT_IN);
+        token0.approve(address(swapRouter), DEFAULT_AMOUNT_IN);
+
+        vm.expectRevert(SwapRouter__InvalidBps.selector);
+        swapRouter.executeSwap(defaultInputParams, defaultRouterParams, POSTER);
     }
 
     function test_executeSwap_revertWhen_insufficientOutput() external {
-        uint256 amountIn = 100 ether;
         uint256 actualOutAmount = 90 ether;
         uint256 minAmountOut = 95 ether; // higher than what the router will return
 
-        // create custom parameters where minAmountOut > actualOutAmount
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0), // token in
-            address(token1), // token out
-            amountIn,
-            actualOutAmount,
-            address(this)
-        );
+        // modify default params to set high minAmountOut
+        ExactInputParams memory inputParams = defaultInputParams;
         inputParams.minAmountOut = minAmountOut;
 
+        RouterParams memory routerParams = defaultRouterParams;
+        routerParams.swapData = _encodeSwapData(
+            address(token0),
+            address(token1),
+            DEFAULT_AMOUNT_IN,
+            actualOutAmount, // lower than minAmountOut
+            address(swapRouter)
+        );
+
         // mint tokens and approve
-        token0.mint(address(this), amountIn);
-        token0.approve(address(swapRouter), amountIn);
+        token0.mint(address(this), DEFAULT_AMOUNT_IN);
+        token0.approve(address(swapRouter), DEFAULT_AMOUNT_IN);
 
         vm.expectRevert(SwapRouter__InsufficientOutput.selector);
         swapRouter.executeSwap(inputParams, routerParams, POSTER);
     }
 
     function test_executeSwap_revertWhen_unexpectedETH() external {
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0), // ERC20 token (not native)
-            address(token1),
-            100 ether,
-            95 ether,
-            address(this)
-        );
-
         // send ETH with the transaction even though tokenIn is not native token
         vm.expectRevert(SwapRouter__UnexpectedETH.selector);
-        swapRouter.executeSwap{value: 0.1 ether}(inputParams, routerParams, POSTER);
+        swapRouter.executeSwap{value: 0.1 ether}(defaultInputParams, defaultRouterParams, POSTER);
     }
 
     function test_executeSwap_gas() public {
@@ -421,7 +425,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             makeAddr("caller"),
             makeAddr("recipient"),
             100 ether,
-            0.95 ether,
+            95 ether,
             PROTOCOL_BPS,
             POSTER_BPS
         );
@@ -486,124 +490,251 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
     }
 
+    function test_executeSwap_zeroPosterFee() public {
+        address recipient = makeAddr("recipient");
+
+        // set fees with zero poster fee
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, 0);
+
+        // modify default params to use custom recipient
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.recipient = recipient;
+
+        // mint tokens and approve
+        token0.mint(address(this), DEFAULT_AMOUNT_IN);
+        token0.approve(address(swapRouter), DEFAULT_AMOUNT_IN);
+
+        uint256 expectedProtocolFee = BasisPoints.calculate(DEFAULT_AMOUNT_OUT, PROTOCOL_BPS);
+
+        vm.expectEmit(address(swapRouter));
+        emit FeeDistribution(
+            address(token1),
+            feeRecipient,
+            address(0), // zero poster
+            expectedProtocolFee,
+            0 // zero poster fee
+        );
+
+        swapRouter.executeSwap(inputParams, defaultRouterParams, address(0)); // zero poster
+
+        // verify balances
+        assertEq(token0.balanceOf(address(this)), 0, "Caller should have no tokens left");
+        assertEq(
+            token1.balanceOf(feeRecipient),
+            expectedProtocolFee,
+            "Fee recipient should get protocol fee"
+        );
+        assertEq(token1.balanceOf(address(0)), 0, "Zero address should have no tokens");
+        assertEq(
+            token1.balanceOf(recipient),
+            DEFAULT_AMOUNT_OUT - expectedProtocolFee,
+            "Recipient should get remaining tokens"
+        );
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      SWAP WITH PERMIT                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_executeSwapWithPermit_revertWhen_invalidAmount() public {
-        uint256 privateKey = 0xabc;
-        privateKey = boundPrivateKey(privateKey);
-        address owner = vm.addr(privateKey);
-        uint256 deadline = block.timestamp + 1 hours;
-
-        uint256 amountIn = 100 ether;
-        uint256 permitValue = 50 ether; // less than amountIn
-        uint256 amountOut = 95 ether;
-
-        // get swap parameters first (needed for witness signing)
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0),
-            address(token1),
-            amountIn,
-            amountOut,
-            owner
-        );
-
-        // get the permit signature with insufficient value
-        Permit2Params memory permitParams = _createPermitParams(
-            privateKey,
-            owner,
-            address(token0),
-            permitValue,
-            address(swapRouter),
-            0, // nonce
-            deadline,
-            inputParams,
-            routerParams,
+    function test_executeSwapWithPermit_revertWhen_unexpectedETH() public {
+        // Send ETH with the transaction (not allowed for permit flows)
+        vm.expectRevert(SwapRouter__UnexpectedETH.selector);
+        swapRouter.executeSwapWithPermit{value: 0.1 ether}(
+            defaultInputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
             POSTER
         );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_invalidAmount() public {
+        uint256 permitValue = 50 ether; // less than DEFAULT_AMOUNT_IN
+
+        // create permit with insufficient amount
+        Permit2Params memory permitParams = defaultEmptyPermit;
+        permitParams.token = address(token0);
+        permitParams.amount = permitValue;
 
         // expect revert with InvalidAmount (permit value < amountIn)
         vm.expectRevert(SwapRouter__InvalidAmount.selector);
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            permitParams,
+            POSTER
+        );
     }
 
     function test_executeSwapWithPermit_revertWhen_permitTokenMismatch() public {
-        uint256 privateKey = 0xabc;
-        privateKey = boundPrivateKey(privateKey);
-        address owner = vm.addr(privateKey);
-        uint256 deadline = block.timestamp + 1 hours;
-
-        uint256 amountIn = 100 ether;
-        uint256 amountOut = 95 ether;
-
-        // get swap parameters with token0 as input
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0),
-            address(token1),
-            amountIn,
-            amountOut,
-            owner
-        );
-
-        // create permit for token1 (wrong token)
-        Permit2Params memory permitParams = _createPermitParams(
-            privateKey,
-            owner,
-            address(token1), // wrong token - should be token0
-            amountIn,
-            address(swapRouter),
-            0, // nonce
-            deadline,
-            inputParams,
-            routerParams,
-            POSTER
-        );
+        // create permit for wrong token
+        Permit2Params memory permitParams = defaultEmptyPermit;
+        permitParams.token = address(token1); // wrong token - should be token0
 
         vm.expectRevert(SwapRouter__PermitTokenMismatch.selector);
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            permitParams,
+            POSTER
+        );
     }
 
     function test_executeSwapWithPermit_revertWhen_nativeTokenNotSupported() public {
-        uint256 privateKey = 0xabc;
-        privateKey = boundPrivateKey(privateKey);
-        address owner = vm.addr(privateKey);
-        uint256 deadline = block.timestamp + 1 hours;
+        // create params with native token as input (not supported with permit)
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.tokenIn = CurrencyTransfer.NATIVE_TOKEN;
 
-        uint256 amountIn = 1 ether;
-        uint256 amountOut = 0.95 ether;
-
-        // get swap parameters with native token as input (not supported with permit)
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            CurrencyTransfer.NATIVE_TOKEN, // native token not supported
-            address(token1),
-            amountIn,
-            amountOut,
-            owner
+        vm.expectRevert(SwapRouter__NativeTokenNotSupportedWithPermit.selector);
+        swapRouter.executeSwapWithPermit(
+            inputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            POSTER
         );
+    }
 
-        // this permit won't even be used since the function will revert early
-        Permit2Params memory permitParams = _createPermitParams(
+    function test_executeSwapWithPermit_revertWhen_recipientRequired() public {
+        // create params with invalid recipient - no need for valid permit since validation happens early
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.recipient = address(0);
+
+        vm.expectRevert(SwapRouter__RecipientRequired.selector);
+        swapRouter.executeSwapWithPermit(
+            inputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            POSTER
+        );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_differentRecipient() public {
+        uint256 privateKey = boundPrivateKey(0xabc123);
+        address owner = vm.addr(privateKey);
+
+        (
+            ExactInputParams memory originalParams,
+            RouterParams memory originalRouterParams
+        ) = _createSwapParams(
+                address(swapRouter),
+                mockRouter,
+                address(token0),
+                address(token1),
+                100 ether,
+                95 ether,
+                makeAddr("legitimate")
+            );
+
+        Permit2Params memory originalPermit = _createPermitParams(
             privateKey,
             owner,
-            CurrencyTransfer.NATIVE_TOKEN,
-            amountIn,
+            address(token0),
+            100 ether,
             address(swapRouter),
-            0, // nonce
-            deadline,
-            inputParams,
-            routerParams,
+            0,
+            block.timestamp + 1 hours,
+            originalParams,
+            originalRouterParams,
             POSTER
         );
 
-        vm.expectRevert(SwapRouter__NativeTokenNotSupportedWithPermit.selector);
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        (
+            ExactInputParams memory maliciousParams,
+            RouterParams memory maliciousRouterParams
+        ) = _createSwapParams(
+                address(swapRouter),
+                mockRouter,
+                address(token0),
+                address(token1),
+                100 ether,
+                95 ether,
+                makeAddr("malicious")
+            );
+
+        token0.mint(owner, 100 ether);
+        vm.prank(owner);
+        token0.approve(permit2, 100 ether);
+
+        // Should fail with different recipient
+        vm.expectRevert();
+        swapRouter.executeSwapWithPermit(
+            maliciousParams,
+            maliciousRouterParams,
+            originalPermit,
+            POSTER
+        );
+
+        // Should work with original parameters
+        swapRouter.executeSwapWithPermit(
+            originalParams,
+            originalRouterParams,
+            originalPermit,
+            POSTER
+        );
+
+        assertGt(
+            token1.balanceOf(makeAddr("legitimate")),
+            0,
+            "Legitimate recipient should receive tokens"
+        );
+        assertEq(
+            token1.balanceOf(makeAddr("malicious")),
+            0,
+            "Malicious recipient should not receive tokens"
+        );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_differentPoster() public {
+        uint256 privateKey = boundPrivateKey(0xabc456);
+        address owner = vm.addr(privateKey);
+
+        (
+            ExactInputParams memory originalParams,
+            RouterParams memory originalRouterParams
+        ) = _createSwapParams(
+                address(swapRouter),
+                mockRouter,
+                address(token0),
+                address(token1),
+                100 ether,
+                95 ether,
+                makeAddr("recipient")
+            );
+
+        Permit2Params memory originalPermit = _createPermitParams(
+            privateKey,
+            owner,
+            address(token0),
+            100 ether,
+            address(swapRouter),
+            1,
+            block.timestamp + 1 hours,
+            originalParams,
+            originalRouterParams,
+            makeAddr("legitimatePoster")
+        );
+
+        token0.mint(owner, 100 ether);
+        vm.prank(owner);
+        token0.approve(permit2, 100 ether);
+
+        // Should fail with different poster
+        vm.expectRevert();
+        swapRouter.executeSwapWithPermit(
+            originalParams,
+            originalRouterParams,
+            originalPermit,
+            makeAddr("maliciousPoster")
+        );
+
+        // Should work with legitimate poster
+        swapRouter.executeSwapWithPermit(
+            originalParams,
+            originalRouterParams,
+            originalPermit,
+            makeAddr("legitimatePoster")
+        );
+        assertGt(token1.balanceOf(makeAddr("recipient")), 0, "Recipient should receive tokens");
     }
 
     function test_executeSwapWithPermit_gas() public {
@@ -694,7 +825,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             recipient: makeAddr("recipient"),
             deadline: block.timestamp + 1 hours,
             amountIn: 100 ether,
-            amountOut: 0.95 ether,
+            amountOut: 95 ether,
             treasuryBps: PROTOCOL_BPS,
             posterBps: POSTER_BPS
         });
@@ -770,5 +901,25 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.treasuryBps,
             params.posterBps
         );
+    }
+
+    function test_getETHInputFees() public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(100, 50); // 1% protocol, 0.5% poster
+
+        (uint256 amountInAfterFees, uint256 protocolFee, uint256 posterFee) = swapRouter
+            .getETHInputFees(1 ether, makeAddr("caller"), makeAddr("poster"));
+
+        assertEq(protocolFee, 0.01 ether, "Protocol fee should be 1%");
+        assertEq(posterFee, 0.005 ether, "Poster fee should be 0.5%");
+        assertEq(amountInAfterFees, 0.985 ether, "Amount after fees should be correct");
+
+        // test with zero poster
+        (uint256 amountInAfterFees2, uint256 protocolFee2, uint256 posterFee2) = swapRouter
+            .getETHInputFees(1 ether, makeAddr("caller"), address(0));
+
+        assertEq(protocolFee2, 0.01 ether, "Protocol fee should be same with zero poster");
+        assertEq(posterFee2, 0, "Poster fee should be zero with zero poster");
+        assertEq(amountInAfterFees2, 0.99 ether, "Amount should exclude poster fee");
     }
 }

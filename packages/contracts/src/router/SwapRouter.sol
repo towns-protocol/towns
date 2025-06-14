@@ -81,6 +81,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
+        // validate parameters before any transfers
+        _validateSwapParams(params, routerParams);
+
         // for standard swaps, handle token transfer with balance check for fee-on-transfer tokens
         uint256 actualAmountIn = params.amountIn;
 
@@ -106,6 +109,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         Permit2Params calldata permit,
         address poster
     ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
+        // validate parameters before any transfers
+        _validateSwapParams(params, routerParams);
+
         // ensure no ETH is sent
         if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
 
@@ -170,6 +176,25 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice Validates swap parameters before any transfers occur
+    /// @param params The parameters for the swap
+    /// @param routerParams The router parameters for the swap
+    function _validateSwapParams(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams
+    ) internal view {
+        // require explicit recipient
+        if (params.recipient == address(0)) SwapRouter__RecipientRequired.selector.revertWith();
+
+        // only allow whitelisted routers
+        if (!_isRouterWhitelisted(routerParams.router)) {
+            SwapRouter__InvalidRouter.selector.revertWith();
+        }
+        if (!_isRouterWhitelisted(routerParams.approveTarget)) {
+            SwapRouter__InvalidRouter.selector.revertWith();
+        }
+    }
+
     /// @notice Internal function to execute a swap with tokens already in the contract
     /// @param params The parameters for the swap
     /// @param routerParams The router parameters for the swap
@@ -183,17 +208,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         address poster,
         uint256 actualAmountIn
     ) internal returns (uint256 amountOut, uint256 protocolFee) {
-        // require explicit recipient
-        if (params.recipient == address(0)) SwapRouter__RecipientRequired.selector.revertWith();
-
-        // only allow whitelisted routers
-        if (!_isRouterWhitelisted(routerParams.router)) {
-            SwapRouter__InvalidRouter.selector.revertWith();
-        }
-        if (!_isRouterWhitelisted(routerParams.approveTarget)) {
-            SwapRouter__InvalidRouter.selector.revertWith();
-        }
-
         // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
 
