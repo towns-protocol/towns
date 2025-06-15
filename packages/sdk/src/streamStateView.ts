@@ -51,7 +51,7 @@ import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')

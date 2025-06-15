@@ -9,7 +9,7 @@ import {
 } from './models/timeline-types'
 import type { RiverConnection } from '../river-connection/riverConnection'
 import { Observable } from '../../observable/observable'
-import { TimelinesMap, TimelinesViewModel } from '../../streams-view/timelinesViewModel'
+import { TimelinesMap, TimelinesViewModel } from '../../views/streams/timelinesModel'
 
 export class MessageTimeline {
     events = new Observable<TimelineEvent[]>([])

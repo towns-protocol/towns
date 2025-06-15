@@ -1,17 +1,17 @@
-import { Observable } from '../observable/observable'
-import { TimelineEvent, RiverTimelineEvent } from '../sync-agent/timeline/models/timeline-types'
-import { LocalTimelineEvent, StreamTimelineEvent } from '../types'
+import { Observable } from '../../observable/observable'
+import { TimelineEvent, RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { LocalTimelineEvent, StreamTimelineEvent } from '../../types'
 import {
     makeTimelinesViewInterface,
     TimelinesViewInterface,
     TimelinesViewModel,
-} from './timelinesViewModel'
-import { StreamChange } from '../streamEvents'
+} from './timelinesModel'
+import { StreamChange } from '../../streamEvents'
 import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineEvents'
-import { DecryptedContent } from '../encryptedContentTypes'
+import { DecryptedContent } from '../../encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import isEqual from 'lodash/isEqual'
-import { isDMChannelStreamId } from '../id'
+import { isDMChannelStreamId } from '../../id'
 
 export interface TimelinesViewDelegate {
     isDMMessageEventBlocked(event: TimelineEvent): boolean

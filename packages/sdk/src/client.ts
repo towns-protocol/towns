@@ -182,7 +182,7 @@ import {
 } from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
