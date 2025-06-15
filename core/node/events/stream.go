@@ -1129,15 +1129,18 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
 	if view == nil {
+		s.mu.Unlock()
 		return // stream is not local, no need to apply miniblock updates
 	}
+
+	// Track if we need to submit a sync task after releasing the lock
+	needsSyncTask := false
 
 	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
 	// Sanity check
@@ -1158,7 +1161,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 			})
 			if err != nil {
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-					s.params.streamCache.SubmitReconcileStreamTask(s, nil)
+					needsSyncTask = true
 				} else {
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
@@ -1169,6 +1172,12 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	s.lastAppliedBlockNum = blockNum
+	s.mu.Unlock()
+
+	// Submit sync task after releasing the lock to avoid deadlock
+	if needsSyncTask {
+		s.params.streamCache.SubmitSyncStreamTask(s, nil)
+	}
 }
 
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
