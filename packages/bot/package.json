@@ -26,6 +26,7 @@
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
+        "@towns-protocol/sdk-crypto": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2",
         "fake-indexeddb": "^4.0.1",

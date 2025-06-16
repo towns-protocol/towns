@@ -2,6 +2,12 @@
     "name": "@towns-protocol/generated",
     "version": "0.0.243",
     "packageManager": "yarn@3.8.0",
+    "type": "module",
+    "imports": {
+        "#config/*": "./config/*",
+        "#dev/*": "./dev/*",
+        "#deployment/*": "./deployment/*"
+    },
     "publishConfig": {
         "access": "public"
     },

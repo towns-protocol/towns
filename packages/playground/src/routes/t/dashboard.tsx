@@ -14,7 +14,7 @@ import {
 } from '@towns-protocol/react-sdk'
 import { suspend } from 'suspend-react'
 import { Myself } from '@towns-protocol/sdk'
-import { DoorOpenIcon, DownloadIcon, PlusIcon, SettingsIcon, TrashIcon } from 'lucide-react'
+import { DoorOpenIcon, DownloadIcon, PlusIcon, SettingsIcon } from 'lucide-react'
 import type { BotInfo } from '@towns-protocol/web3'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { Button } from '@/components/ui/button'
@@ -358,7 +358,7 @@ const BotCard = ({ bot }: { bot: BotInfo }) => {
 
     return (
         <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-sm font-medium">{shortenAddress(bot.appId)}</p>
+            <p className="font-mono text-sm font-medium">{shortenAddress(bot.app.client)}</p>
             <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
                     <SettingsIcon className="h-4 w-4" />
@@ -369,11 +369,16 @@ const BotCard = ({ bot }: { bot: BotInfo }) => {
             </div>
 
             <BotSettingsDialog
-                appId={bot.appId}
+                appClientId={bot.app.client}
                 open={settingsOpen}
                 onOpenChange={setSettingsOpen}
             />
-            <BotInstallDialog appId={bot.appId} open={installOpen} onOpenChange={setInstallOpen} />
+            <BotInstallDialog
+                appId={bot.appId}
+                appClientId={bot.app.client}
+                open={installOpen}
+                onOpenChange={setInstallOpen}
+            />
         </div>
     )
 }

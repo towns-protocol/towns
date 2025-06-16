@@ -189,6 +189,7 @@ import {
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './streams-view/streamsView'
+import { isAddress } from 'ethers/lib/utils'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -2009,7 +2010,7 @@ export class Client
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
-                userId: addressFromUserId(userId),
+                userId: bin_fromHexString(userId),
                 streamId: streamIdAsBytes(streamId),
                 streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),

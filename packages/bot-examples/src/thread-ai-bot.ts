@@ -2,6 +2,7 @@
 import OpenAI from 'openai'
 import { makeTownsBot } from '@towns-protocol/bot'
 import { serve } from '@hono/node-server'
+import { createServer } from 'node:http2'
 
 type Context = {
     initialPrompt: string
@@ -24,6 +25,14 @@ const main = async () => {
         process.env.JWT_SECRET!,
         process.env.RIVER_ENV,
     )
+
+    bot.onChannelJoin(async (h, { channelId, userId }) => {
+        console.log(`🧵 user ${shortId(userId)} joined channel ${shortId(channelId)}`)
+        if (userId === bot.botId) {
+            await h.setUsername(channelId, 'thread-ai-bot')
+            await h.setDisplayName(channelId, 'Thread AI Bot')
+        }
+    })
 
     // New message means a new thread
     bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
@@ -89,8 +98,8 @@ const main = async () => {
     const shortId = (id: string) => id.slice(0, 4) + '..' + id.slice(-4)
 
     const { fetch } = await bot.start()
-    serve({ fetch, port: parseInt(process.env.PORT!) })
-    console.log(`✅ Thread AI Bot is running on http://localhost:${process.env.PORT}`)
+    serve({ fetch, port: parseInt(process.env.PORT!), createServer })
+    console.log(`✅ Thread AI Bot is running on https://localhost:${process.env.PORT}`)
 }
 
 void main()

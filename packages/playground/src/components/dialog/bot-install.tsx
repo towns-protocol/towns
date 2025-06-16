@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
-import { type Address } from 'viem'
-import { useChannel, useSpace, useUserSpaces } from '@towns-protocol/react-sdk'
+import { type Address, parseEther } from 'viem'
+import { useChannel, useSpace, useSyncAgent, useUserSpaces } from '@towns-protocol/react-sdk'
 import { ArrowLeftIcon, LoaderCircleIcon } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
+import { AppRegistryDapp, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
+import { makeBaseProvider } from '@towns-protocol/sdk'
+import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
@@ -10,6 +13,7 @@ import { Checkbox } from '../ui/checkbox'
 import { ScrollArea } from '../ui/scroll-area'
 
 interface BotInstallDialogProps {
+    appClientId: Address
     appId: Address
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -17,8 +21,15 @@ interface BotInstallDialogProps {
 
 type Step = 'space-selection' | 'channel-selection'
 
-export const BotInstallDialog = ({ appId, open, onOpenChange }: BotInstallDialogProps) => {
+export const BotInstallDialog = ({
+    appId,
+    appClientId,
+    open,
+    onOpenChange,
+}: BotInstallDialogProps) => {
     const { spaceIds } = useUserSpaces()
+    const sync = useSyncAgent()
+    const signer = useEthersSigner()
     const [currentStep, setCurrentStep] = useState<Step>('space-selection')
     const [state, setState] = useState<{
         spaceId: string
@@ -54,13 +65,33 @@ export const BotInstallDialog = ({ appId, open, onOpenChange }: BotInstallDialog
             if (!state.spaceId || state.channelIds.size === 0) {
                 return
             }
-            console.log('Installing bot:', {
+            if (!signer) {
+                throw new Error('No signer found')
+            }
+            const appRegistryDapp = new AppRegistryDapp(
+                sync.config.riverConfig.base.chainConfig,
+                makeBaseProvider(sync.config.riverConfig),
+            )
+            console.log({
                 appId,
-                spaceId: state.spaceId,
-                channelIds: Array.from(state.channelIds),
+                state,
+                spaceId: SpaceAddressFromSpaceId(state.spaceId as Address),
+                appClientId,
             })
-            // TODO: Install bot into space and channels
-            await new Promise((resolve) => setTimeout(resolve, 2000))
+            const tx = await appRegistryDapp.installApp(
+                signer,
+                appId,
+                SpaceAddressFromSpaceId(state.spaceId) as Address,
+                parseEther('0.2'),
+            )
+            await tx.wait()
+            await sync.riverConnection.call((client) => client.joinUser(state.spaceId, appClientId))
+            await Promise.all(
+                // TODO: can we batch those into a single call?
+                Array.from(state.channelIds).map((channelId) =>
+                    sync.riverConnection.call((client) => client.joinUser(channelId, appClientId)),
+                ),
+            )
         },
         onSuccess: () => {
             onOpenChange(false)

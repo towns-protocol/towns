@@ -47,11 +47,11 @@ type WebhookFormSchema = z.infer<typeof webhookFormSchema>
 type AppSettingsFormSchema = z.infer<typeof appSettingsFormSchema>
 
 export const BotSettingsDialog = ({
-    appId,
+    appClientId,
     open,
     onOpenChange,
 }: {
-    appId: Address
+    appClientId: Address
     open: boolean
     onOpenChange: (open: boolean) => void
 }) => {
@@ -109,7 +109,7 @@ export const BotSettingsDialog = ({
                 APP_REGISTRY_URL,
             )
             await appRegistryRpcClient.registerWebhook({
-                appId: bin_fromHexString(appId),
+                appId: bin_fromHexString(appClientId),
                 webhookUrl,
             })
         },
@@ -130,7 +130,7 @@ export const BotSettingsDialog = ({
                 APP_REGISTRY_URL,
             )
             await appRegistryRpcClient.setAppSettings({
-                appId: bin_fromHexString(appId),
+                appId: bin_fromHexString(appClientId),
                 settings: {
                     forwardSetting,
                 },

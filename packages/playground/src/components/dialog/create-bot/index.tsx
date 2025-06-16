@@ -165,7 +165,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 getAppRegistryUrl(riverConfig.environmentId),
             )
             const { hs256SharedSecret } = await appRegistryRpcClient.register({
-                appId: bin_fromHexString(appAddress),
+                appId: bin_fromHexString(botWallet.address),
                 appOwnerId: bin_fromHexString(user.id),
             })
             const jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
