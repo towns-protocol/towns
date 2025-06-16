@@ -14,8 +14,7 @@ import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
-// debuggging
-import {console} from "forge-std/console.sol";
+
 abstract contract MembershipBase is IMembershipBase {
     using SafeTransferLib for address;
 
@@ -180,8 +179,7 @@ abstract contract MembershipBase is IMembershipBase {
 
         IPlatformRequirements platform = _getPlatformRequirements();
 
-        // If pricing module is address(0), return minimum price
-        if (pricingModule == address(0)) return platform.getMembershipMinPrice();
+        if (pricingModule == address(0)) return platform.getMembershipFee();
 
         membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
         uint256 minPrice = platform.getMembershipMinPrice();
@@ -198,13 +196,15 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 minPrice = platform.getMembershipMinPrice();
+
+        uint256 minFee = platform.getMembershipFee();
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
 
         if (renewalPrice != 0) {
-            return renewalPrice;
+            return FixedPointMathLib.max(renewalPrice, minFee);
         }
 
+        uint256 minPrice = platform.getMembershipMinPrice();
         uint256 price = _getMembershipPrice(totalSupply);
         return FixedPointMathLib.max(price, minPrice);
     }
