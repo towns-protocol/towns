@@ -79,6 +79,21 @@ func (r *isEntitledResult) Reason() EntitlementResultReason {
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
 
+func NewChainAuthArgsForBot(userId common.Address, appContractAddress common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:       chainAuthKindIsBot,
+		principal:  userId,
+		appAddress: appContractAddress,
+	}
+}
+
+func NewChainAuthArgsForIsNotBot(userId common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:      chainAuthKindIsNotBot,
+		principal: userId,
+	}
+}
+
 func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId common.Address, permission Permission) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindSpace,
@@ -131,14 +146,22 @@ const (
 	chainAuthKindChannelEnabled
 	chainAuthKindIsSpaceMember
 	chainAuthKindIsWalletLinked
+	chainAuthKindIsBot
+	chainAuthKindIsNotBot
 )
 
 type ChainAuthArgs struct {
-	kind          chainAuthKind
-	spaceId       shared.StreamId
-	channelId     shared.StreamId
-	principal     common.Address
-	permission    Permission
+	kind       chainAuthKind
+	spaceId    shared.StreamId
+	channelId  shared.StreamId
+	principal  common.Address
+	permission Permission
+
+	// appAddress is specified when the user must be a bot with a specific contract address in the registry.
+	// Otherwise it will be populated by the auth module during membership checks for the sake of entitlement
+	// evaluations.
+	appAddress common.Address
+
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
 }
@@ -149,7 +172,7 @@ func (args *ChainAuthArgs) Principal() common.Address {
 
 func (args *ChainAuthArgs) String() string {
 	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s}",
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s}",
 		args.kind,
 		args.spaceId,
 		args.channelId,
@@ -157,6 +180,7 @@ func (args *ChainAuthArgs) String() string {
 		args.permission,
 		args.linkedWallets,
 		args.walletAddress.Hex(),
+		args.appAddress.Hex(),
 	)
 }
 
@@ -170,6 +194,12 @@ func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *Ch
 		builder.WriteString(addr.Hex())
 	}
 	ret.linkedWallets = builder.String()
+	return &ret
+}
+
+func (args *ChainAuthArgs) withAppAddress(appAddress common.Address) *ChainAuthArgs {
+	ret := *args
+	ret.appAddress = appAddress
 	return &ret
 }
 
@@ -204,6 +234,7 @@ type chainAuth struct {
 	blockchain              *crypto.Blockchain
 	evaluator               *entitlement.Evaluator
 	spaceContract           SpaceContract
+	appRegistryContract     *AppRegistryContract
 	walletLinkContract      *base.WalletLink
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
@@ -236,6 +267,7 @@ func NewChainAuth(
 	blockchain *crypto.Blockchain,
 	evaluator *entitlement.Evaluator,
 	architectCfg *config.ContractConfig,
+	appRegistryConfig *config.ContractConfig,
 	linkedWalletsLimit int,
 	contractCallsTimeoutMs int,
 	metrics infra.MetricsFactory,
@@ -247,6 +279,11 @@ func NewChainAuth(
 	}
 
 	walletLinkContract, err := base.NewWalletLink(architectCfg.Address, blockchain.Client)
+	if err != nil {
+		return nil, err
+	}
+
+	appRegistryContract, err := NewAppRegistryContract(ctx, appRegistryConfig, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -287,6 +324,7 @@ func NewChainAuth(
 		evaluator:               evaluator,
 		spaceContract:           spaceContract,
 		walletLinkContract:      walletLinkContract,
+		appRegistryContract:     appRegistryContract,
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
@@ -469,6 +507,7 @@ func (ca *chainAuth) areLinkedWalletsEntitled(
 		log.Debugw("isWalletEntitled", "kind", "channel", "args", args)
 		return ca.isEntitledToChannel(ctx, cfg, args)
 	} else if args.kind == chainAuthKindIsSpaceMember {
+		// Bot space memberships are handled earlier - we never get to this case if the user is a bot.
 		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args)
 		return true, EntitlementResultReason_NONE, nil // is space member is checked by the calling code in checkEntitlement
 	} else {
@@ -739,6 +778,34 @@ func (ca *chainAuth) evaluateEntitlementData(
 	return false, nil
 }
 
+// isBotEntitled evaluates space or channel permission entitlement for a user that has been determined
+// to be a bot.
+func (ca *chainAuth) isBotEntitled(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (bool, error) {
+	if args.kind == chainAuthKindIsSpaceMember {
+		// membership has already been checked earlier in the IsEntitled logic.
+		return true, nil
+	}
+
+	isEntitled, err := ca.spaceContract.IsAppEntitled(
+		ctx,
+		args.spaceId,
+		args.principal,
+		args.appAddress,
+		args.permission,
+	)
+	if err != nil {
+		return false, AsRiverError(
+			err,
+		).Message("Error checking space contract for bot entitlement").
+			Tag("appAddress", args.appAddress).
+			Tag("clientAddress", args.principal)
+	}
+	return isEntitled, nil
+}
+
 // evaluateWithEntitlements evaluates a user permission considering 3 factors:
 // 1. Are they the space owner? The space owner has su over all space operations.
 // 2. Are they banned from the space? If so, they are not entitled to anything.
@@ -768,6 +835,18 @@ func (ca *chainAuth) evaluateWithEntitlements(
 			return true, nil
 		}
 	}
+
+	// Short-circuit the rest of the evaluation if the auth check was for ownership of a space or channel.
+	if args.permission == PermissionOwnership {
+		return false, nil
+	}
+
+	// Route bots to a separate entitlement evaluation path.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
+		return ca.isBotEntitled(ctx, args)
+	}
+
 	// 2. Check if the user has been banned
 	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, wallets)
 	if err != nil {
@@ -938,7 +1017,7 @@ func (ca *chainAuth) getLinkedWallets(
 	return result.(*timestampedCacheValue).result.(*linkedWalletCacheValue).wallets, nil
 }
 
-func (ca *chainAuth) checkMembershipUncached(
+func (ca *chainAuth) checkWalletMembershipUncached(
 	ctx context.Context,
 	_ *config.Config,
 	args *ChainAuthArgs,
@@ -950,7 +1029,7 @@ func (ca *chainAuth) checkMembershipUncached(
 	return &membershipStatusCacheResult{status: membershipStatus}, nil
 }
 
-func (ca *chainAuth) checkMembership(
+func (ca *chainAuth) checkWalletMembership(
 	ctx context.Context,
 	cfg *config.Config,
 	address common.Address,
@@ -971,7 +1050,7 @@ func (ca *chainAuth) checkMembership(
 		ctx,
 		cfg,
 		&args,
-		ca.checkMembershipUncached,
+		ca.checkWalletMembershipUncached,
 	)
 	if err != nil {
 		// Errors here could be due to context cancellation if another wallet evaluates as a member.
@@ -1018,60 +1097,111 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsBot || args.kind == chainAuthKindIsNotBot {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
 }
 
-/** checkEntitlement checks if the user is entitled to the space / channel.
- * It checks the entitlments for the root key and all the wallets linked to it in parallel.
- * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
- * If any of the operations fail before getting positive result, the whole operation fails.
- * A prerequisite for this function is that one of the linked wallets is a member of the space.
- */
-func (ca *chainAuth) checkEntitlement(
+// checkIsBot checks to see if the user is a bot and returns a cache result if the auth check was related
+// to whether or not a user is a bot. Otherwise it will return a valid boolean, and the contract address of
+// the app if it is registered, or an error if the method encounters one.
+func (ca *chainAuth) checkIsBot(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (CacheResult, bool, common.Address, error) {
+	isBot, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+	if err != nil {
+		return nil, false, common.Address{}, err
+	}
+
+	logging.FromCtx(ctx).
+		Debugw(
+			"checkIsBot",
+			"kind", args.kind,
+			"args.spaceId", args.spaceId,
+			"args.channelId", args.channelId,
+			"args.appAddress", args.appAddress,
+			"principal", args.principal,
+			"foundAppAddress", appAddress,
+			"isBot", isBot,
+		)
+
+	var reason EntitlementResultReason
+	if args.kind == chainAuthKindIsBot {
+		isEntitled := isBot && appAddress == args.appAddress
+		if !isEntitled {
+			reason = EntitlementResultReason_IS_NOT_BOT
+		}
+		return boolCacheResult{isEntitled, reason}, isBot, appAddress, nil
+	} else if args.kind == chainAuthKindIsNotBot {
+		if isBot {
+			reason = EntitlementResultReason_IS_BOT
+		}
+		return boolCacheResult{!isBot, reason}, isBot, appAddress, nil
+	}
+
+	return nil, isBot, appAddress, nil
+}
+
+// checkBotMembership validates that the bot is a member of the space
+func (ca *chainAuth) checkBotMembership(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (bool, error) {
+	isInstalled, err := ca.spaceContract.IsAppInstalled(ctx, args.spaceId, args.appAddress)
+	if err != nil {
+		return false, err
+	}
+	return isInstalled, nil
+}
+
+// linkWallets fetches linked wallets for the user and returns a cache result if the authorization kind
+// was related to linked wallets. The way the caller should process the results is, if the cache result
+// is defined, then return it as the entitlement result. Otherwise, use the updated args which will
+// have linked wallets attached.
+func (ca *chainAuth) linkWallets(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
-) (CacheResult, error) {
+) (CacheResult, *ChainAuthArgs, error) {
 	log := logging.FromCtx(ctx)
-
-	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
-	defer cancel()
-
-	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
-	if err != nil {
-		return nil, err
-	} else if !isEnabled {
-		return boolCacheResult{false, reason}, nil
-	}
 
 	// Get all linked wallets.
 	wallets, err := ca.getLinkedWallets(ctx, cfg, args)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	// handle checking if the user is linked to a specific wallet
+	// Handle checking if the user is linked to a specific wallet
 	if args.kind == chainAuthKindIsWalletLinked {
 		for _, wallet := range wallets {
 			if wallet == args.walletAddress {
-				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil, nil
 			}
 		}
-		return boolCacheResult{false, EntitlementResultReason_WALLET_NOT_LINKED}, nil
+		return boolCacheResult{false, EntitlementResultReason_WALLET_NOT_LINKED}, nil, nil
 	}
 
 	// If the user has more linked wallets than we can evaluate, go ahead and short-circuit the evaluation.
 	if len(wallets) > ca.linkedWalletsLimit {
-		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
+		return nil, nil, RiverError(Err_RESOURCE_EXHAUSTED,
 			"too many wallets linked to the root key",
 			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
 	}
 
 	args = args.withLinkedWallets(wallets)
+	return nil, args, nil
+}
+
+func (ca *chainAuth) checkMembership(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+	wallets := deserializeWallets(args.linkedWallets)
 
 	isMemberCtx, isMemberCancel := context.WithCancel(ctx)
 	defer isMemberCancel()
@@ -1083,7 +1213,15 @@ func (ca *chainAuth) checkEntitlement(
 
 	for _, address := range wallets {
 		isMemberWg.Add(1)
-		go ca.checkMembership(isMemberCtx, cfg, address, args.spaceId, isMemberResults, isMemberError, &isMemberWg)
+		go ca.checkWalletMembership(
+			isMemberCtx,
+			cfg,
+			address,
+			args.spaceId,
+			isMemberResults,
+			isMemberError,
+			&isMemberWg,
+		)
 	}
 
 	// Wait for at least one true result or all to complete
@@ -1171,48 +1309,74 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP_EXPIRED}, nil
 	}
 
+	return nil, nil
+}
+
+/** checkEntitlement checks if the user is entitled to the space / channel.
+ * It checks the entitlements for the root key and all the wallets linked to it in parallel.
+ * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
+ * If any of the operations fail before getting positive result, the whole operation fails.
+ * A prerequisite for this function is that one of the linked wallets is a member of the space.
+ *
+ * In the case of bot users specifically, we do not support wallet linking at this time.
+ * Bot membership and entitlements are also evaluated via separate interfaces on the space contract.
+ */
+func (ca *chainAuth) checkEntitlement(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
+	defer cancel()
+
+	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
+	if err != nil {
+		return nil, err
+	} else if !isEnabled {
+		return boolCacheResult{false, reason}, nil
+	}
+
+	cacheResult, isBot, appAddress, err := ca.checkIsBot(ctx, args)
+	if err != nil {
+		return nil, err
+	} else if cacheResult != nil {
+		return cacheResult, nil
+	} else {
+		args = args.withAppAddress(appAddress)
+	}
+
+	// If the user is a bot, we route membership checks via a separate path on the space
+	// contract. If the user is a normal user, we check membership the normal way and run
+	// the check for each linked wallet. At this time, we do not support wallet linking
+	// for bots.
+	if isBot {
+		isMember, err := ca.checkBotMembership(ctx, args)
+		if err != nil {
+			return nil, err
+		}
+		if !isMember {
+			return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP}, nil
+		}
+	} else {
+		var result CacheResult
+		result, args, err = ca.linkWallets(ctx, cfg, args)
+		if err != nil {
+			return boolCacheResult{}, err
+		} else if result != nil {
+			return result, nil
+		}
+		result, err = ca.checkMembership(ctx, cfg, args)
+		if err != nil {
+			return boolCacheResult{}, err
+		} else if result != nil {
+			return result, nil
+		}
+	}
+
 	result, reason, err := ca.areLinkedWalletsEntitled(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	}
 
 	return boolCacheResult{result, reason}, nil
-}
-
-func (ca *chainAuth) GetMembershipStatus(
-	ctx context.Context,
-	cfg *config.Config,
-	spaceId shared.StreamId,
-	principal common.Address,
-) (*MembershipStatus, error) {
-	args := ChainAuthArgs{
-		kind:      chainAuthKindIsSpaceMember,
-		spaceId:   spaceId,
-		principal: principal,
-	}
-
-	result, cacheHit, err := ca.membershipCache.executeUsingCache(
-		ctx,
-		cfg,
-		&args,
-		ca.checkMembershipUncached,
-	)
-	if err != nil {
-		return nil, AsRiverError(err).Func("GetMembershipStatus").
-			Tag("spaceId", spaceId).
-			Tag("principal", principal)
-	}
-
-	if cacheHit {
-		ca.membershipCacheHit.Inc()
-	} else {
-		ca.membershipCacheMiss.Inc()
-	}
-
-	if cachedResult, ok := result.(*timestampedCacheValue).result.(*membershipStatusCacheResult); ok {
-		return cachedResult.GetMembershipStatus(), nil
-	}
-
-	// Fallback to direct contract call if cache type conversion fails
-	return ca.spaceContract.GetMembershipStatus(ctx, spaceId, principal)
 }

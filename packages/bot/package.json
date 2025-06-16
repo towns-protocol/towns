@@ -33,7 +33,7 @@
         "jsonwebtoken": "^9.0.2",
         "openai": "^4.95.1",
         "typed-emitter": "^2.1.0",
-        "viem": "^2.21.51"
+        "viem": "^2.29.3"
     },
     "devDependencies": {
         "@types/jsonwebtoken": "^9.0.9",
@@ -45,7 +45,7 @@
         "eslint-plugin-import-x": "^4.10.2",
         "eslint-plugin-tsdoc": "^0.3.0",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5"
+        "vitest": "^3.2.3"
     },
     "files": [
         "/dist"
