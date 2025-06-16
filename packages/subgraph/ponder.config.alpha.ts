@@ -10,7 +10,7 @@ import {
     entitlementCheckerAbi,
     nodeOperatorFacetAbi,
     spaceDelegationFacetAbi,
-    rewardsDistributionAbi,
+    rewardsDistributionV2Abi,
     xChainAbi,
 } from '@towns-protocol/contracts/typings'
 
@@ -44,12 +44,12 @@ export default createConfig({
         anvil: {
             chainId: 31337,
             transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            disableCache: false,
         },
         alpha: {
             chainId: 84532,
             transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            disableCache: false,
         },
     },
     contracts: {
@@ -59,7 +59,7 @@ export default createConfig({
                 entitlementCheckerAbi,
                 nodeOperatorFacetAbi,
                 spaceDelegationFacetAbi,
-                rewardsDistributionAbi,
+                rewardsDistributionV2Abi,
                 xChainAbi,
             ]),
             address: baseRegistry,
