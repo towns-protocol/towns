@@ -13,7 +13,7 @@ import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 import { ISyncedStream } from './syncedStreamsLoop'
 import { create } from '@bufbuild/protobuf'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger

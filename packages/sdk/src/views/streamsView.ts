@@ -1,4 +1,4 @@
-import { TimelinesView, TimelinesViewDelegate } from './timelinesView'
+import { TimelinesView, TimelinesViewDelegate } from './streams/timelines'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
