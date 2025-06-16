@@ -33,8 +33,8 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { CreateDm } from '@/components/form/dm/create'
 import { CreateBotDialog } from '@/components/dialog/create-bot'
 import { useAllBots } from '@/hooks/useAllBots'
-import { BotSettingsDialog } from '@/components/dialog/bot-settings'
 import { BotInstallDialog } from '@/components/dialog/bot-install'
+import { BotSettingsDialog } from '@/components/dialog/bot-settings'
 
 export const DashboardRoute = () => {
     const navigate = useNavigate()
@@ -374,7 +374,7 @@ const BotCard = ({ bot }: { bot: BotInfo }) => {
                 onOpenChange={setSettingsOpen}
             />
             <BotInstallDialog
-                appId={bot.appId}
+                appAddress={bot.app.module}
                 appClientId={bot.app.client}
                 open={installOpen}
                 onOpenChange={setInstallOpen}

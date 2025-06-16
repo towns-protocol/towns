@@ -29,6 +29,7 @@ import { InfoStep, infoSchema } from './steps/info'
 import { TypeStep } from './steps/type'
 import { ReviewStep } from './steps/review'
 import { WizardFooter } from './wizard-footer'
+import { BotCredentialsDialog } from './bot-credentials-dialog'
 
 const steps = [InfoStep, TypeStep, ReviewStep]
 
@@ -62,12 +63,20 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
     })
 
     const [step, setStep] = useState(0)
+    const [credentialsData, setCredentialsData] = useState<{
+        botAddress: string
+        appPrivateDataBase64: string
+        jwtSecretBase64: string
+    } | null>(null)
+    const [showCredentials, setShowCredentials] = useState(false)
     const CurrentStep = steps[step]
 
     useEffect(() => {
         if (!open) {
             form.reset()
             setStep(0)
+            setCredentialsData(null)
+            setShowCredentials(false)
         }
     }, [open, form])
 
@@ -171,18 +180,21 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             const jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
 
             return {
+                botAddress: botWallet.address,
                 appPrivateDataBase64,
                 jwtSecretBase64,
             }
         },
-        onSuccess: (appPrivateDataBase64) => {
+        onSuccess: (data) => {
             onOpenChange?.(false)
+            setCredentialsData(data)
+            setShowCredentials(true)
             if (user.id) {
                 queryClient.invalidateQueries({
                     queryKey: getAllBotsQueryKey(user.id),
                 })
             }
-            console.log('onSuccess', appPrivateDataBase64)
+            console.log('onSuccess', data)
         },
         onError: (error) => {
             console.error('onError', error)
@@ -190,24 +202,34 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
     })
 
     return (
-        <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-                <DialogTitle>Create a Bot</DialogTitle>
-                <DialogDescription>{CurrentStep.description}</DialogDescription>
-            </DialogHeader>
-            <FormProvider {...form}>
-                <form className="space-y-6" onSubmit={form.handleSubmit((data) => mutate(data))}>
-                    <CurrentStep />
-                    <WizardFooter
-                        step={step}
-                        totalSteps={steps.length}
-                        isNextDisabled={!form.formState.isValid}
-                        isMinting={isPending}
-                        onBack={back}
-                        onNext={next}
-                    />
-                </form>
-            </FormProvider>
-        </DialogContent>
+        <>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Create a Bot</DialogTitle>
+                    <DialogDescription>{CurrentStep.description}</DialogDescription>
+                </DialogHeader>
+                <FormProvider {...form}>
+                    <form
+                        className="space-y-6"
+                        onSubmit={form.handleSubmit((data) => mutate(data))}
+                    >
+                        <CurrentStep />
+                        <WizardFooter
+                            step={step}
+                            totalSteps={steps.length}
+                            isNextDisabled={!form.formState.isValid}
+                            isMinting={isPending}
+                            onBack={back}
+                            onNext={next}
+                        />
+                    </form>
+                </FormProvider>
+            </DialogContent>
+            <BotCredentialsDialog
+                open={showCredentials}
+                data={credentialsData}
+                onOpenChange={setShowCredentials}
+            />
+        </>
     )
 }

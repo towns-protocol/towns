@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { type Address, parseEther } from 'viem'
 import { useChannel, useSpace, useSyncAgent, useUserSpaces } from '@towns-protocol/react-sdk'
 import { ArrowLeftIcon, LoaderCircleIcon } from 'lucide-react'
-import { useMutation } from '@tanstack/react-query'
-import { AppRegistryDapp, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { AppRegistryDapp, SpaceAddressFromSpaceId, SpaceDapp } from '@towns-protocol/web3'
 import { makeBaseProvider } from '@towns-protocol/sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -14,7 +14,7 @@ import { ScrollArea } from '../ui/scroll-area'
 
 interface BotInstallDialogProps {
     appClientId: Address
-    appId: Address
+    appAddress: Address
     open: boolean
     onOpenChange: (open: boolean) => void
 }
@@ -22,7 +22,7 @@ interface BotInstallDialogProps {
 type Step = 'space-selection' | 'channel-selection'
 
 export const BotInstallDialog = ({
-    appId,
+    appAddress,
     appClientId,
     open,
     onOpenChange,
@@ -72,19 +72,28 @@ export const BotInstallDialog = ({
                 sync.config.riverConfig.base.chainConfig,
                 makeBaseProvider(sync.config.riverConfig),
             )
-            console.log({
-                appId,
-                state,
-                spaceId: SpaceAddressFromSpaceId(state.spaceId as Address),
-                appClientId,
-            })
-            const tx = await appRegistryDapp.installApp(
-                signer,
-                appId,
-                SpaceAddressFromSpaceId(state.spaceId) as Address,
-                parseEther('0.2'),
+            const spaceDapp = new SpaceDapp(
+                sync.config.riverConfig.base.chainConfig,
+                makeBaseProvider(sync.config.riverConfig),
             )
-            await tx.wait()
+            const space = spaceDapp.getSpace(state.spaceId)
+
+            if (!space) {
+                throw new Error('Space not found')
+            }
+            const isBotInstalled = await space.AppAccount.read
+                .getInstalledApps()
+                .then((apps) => apps.includes(appAddress))
+            if (!isBotInstalled) {
+                const tx = await appRegistryDapp.installApp(
+                    signer,
+                    appAddress,
+                    SpaceAddressFromSpaceId(state.spaceId) as Address,
+                    parseEther('0.02'),
+                )
+                await tx.wait()
+                console.log('bot installed')
+            }
             await sync.riverConnection.call((client) => client.joinUser(state.spaceId, appClientId))
             await Promise.all(
                 // TODO: can we batch those into a single call?
@@ -143,6 +152,7 @@ export const BotInstallDialog = ({
                         <ChannelSelectionStep
                             spaceId={state.spaceId}
                             selectedChannelIds={state.channelIds}
+                            appClientId={appClientId}
                             isInstalling={isPending}
                             onChannelToggle={handleChannelToggle}
                             onSelectAllChannels={(channelIds) =>
@@ -204,6 +214,7 @@ const SpaceSelectionStep = ({
 const ChannelSelectionStep = ({
     spaceId,
     selectedChannelIds,
+    appClientId,
     onChannelToggle,
     onSelectAllChannels,
     onBack,
@@ -212,6 +223,7 @@ const ChannelSelectionStep = ({
 }: {
     spaceId: string
     selectedChannelIds: Set<string>
+    appClientId: Address
     onSelectAllChannels: (channelIds: Set<string>) => void
     onChannelToggle: (channelId: string, checked: boolean) => void
     onBack: () => void
@@ -221,6 +233,7 @@ const ChannelSelectionStep = ({
     const { data: space } = useSpace(spaceId)
     const spaceName = space?.metadata?.name || 'Unnamed Space'
     const channelIds = useMemo(() => space?.channelIds || [], [space])
+    const sync = useSyncAgent()
 
     const isAllChannelsSelected = useMemo(() => {
         if (channelIds.length === 0) {
@@ -234,6 +247,29 @@ const ChannelSelectionStep = ({
         }
         return false
     }, [channelIds, selectedChannelIds])
+
+    const channelIdsThatBotIsIn = useCallback(
+        async (spaceId: string) => {
+            const botIsInChannelsId = []
+            const space = sync.spaces.getSpace(spaceId)
+            const channelIds = space.data.channelIds
+            for (const channelId of channelIds) {
+                const channel = space.getChannel(channelId)
+                const members = channel.members.value.data.userIds
+                if (members.includes(appClientId)) {
+                    botIsInChannelsId.push(channelId)
+                }
+            }
+            return botIsInChannelsId
+        },
+        [appClientId, sync.spaces],
+    )
+
+    const { data: botChannels } = useQuery({
+        queryKey: ['botChannels', spaceId, appClientId],
+        queryFn: () => channelIdsThatBotIsIn(spaceId),
+        enabled: !!spaceId && !!appClientId,
+    })
 
     const handleSelectAllChannels = useCallback(
         (checked: boolean) => {
@@ -277,8 +313,14 @@ const ChannelSelectionStep = ({
                                         key={channelId}
                                         spaceId={spaceId}
                                         channelId={channelId}
-                                        selected={selectedChannelIds.has(channelId)}
-                                        disabled={isInstalling}
+                                        selected={
+                                            selectedChannelIds.has(channelId) ||
+                                            (botChannels?.includes(channelId) ?? false)
+                                        }
+                                        disabled={
+                                            isInstalling ||
+                                            (botChannels?.includes(channelId) ?? false)
+                                        }
                                         onToggle={(checked) => onChannelToggle(channelId, checked)}
                                     />
                                 ))}
