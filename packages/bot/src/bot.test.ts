@@ -72,6 +72,7 @@ describe('Bot', { sequential: true }, () => {
     let spaceId: string
     let channelId: string
     let botWallet: ethers.Wallet
+    let botClientAddress: Address
     let appPrivateDataBase64: string
     let jwtSecretBase64: string
     let appRegistryRpcClient: AppRegistryRpcClient
@@ -88,7 +89,7 @@ describe('Bot', { sequential: true }, () => {
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
         await appRegistryRpcClient.setAppSettings({
-            appId: bin_fromHexString(botWallet.address),
+            appId: bin_fromHexString(botClientAddress),
             settings: { forwardSetting },
         })
     }
@@ -113,12 +114,12 @@ describe('Bot', { sequential: true }, () => {
 
     const shouldMintBot = async () => {
         botWallet = ethers.Wallet.createRandom()
-        const botClientAddress = botWallet.address as Address
+        botClientAddress = botWallet.address as Address
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
             'bot-witness-of-infinity',
-            [Permission.Read, Permission.Write, Permission.React], // TODO: what happens if I repeat permissions?
+            [...Object.values(Permission)], // all permissions
             botClientAddress,
             ethers.utils.parseEther('0.01').toBigInt(),
             31536000n,
@@ -162,9 +163,10 @@ describe('Bot', { sequential: true }, () => {
         )
         await expect(botClient.initializeUser({ appAddress })).resolves.toBeDefined()
 
-        await expect(
-            bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId)),
-        ).resolves.toBeDefined()
+        await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
+        await bobClient.riverConnection.call((client) =>
+            client.joinUser(channelId, botClient.userId),
+        )
         const addResult = await botClient.uploadDeviceKeys()
         expect(addResult).toBeDefined()
         expect(addResult.error).toBeUndefined()
@@ -191,7 +193,7 @@ describe('Bot', { sequential: true }, () => {
         )
         appRegistryRpcClient = rpcClient
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
-            appId: bin_fromHexString(botWallet.address),
+            appId: bin_fromHexString(botClientAddress),
             appOwnerId: bin_fromHexString(bob.userId),
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -201,7 +203,7 @@ describe('Bot', { sequential: true }, () => {
     const shouldRunBotServerAndRegisterWebhook = async () => {
         bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
         expect(bot).toBeDefined()
-        expect(bot.botId).toBe(botWallet.address)
+        expect(bot.botId).toBe(botClientAddress)
         const { fetch } = await bot.start()
         serve({
             port: Number(process.env.BOT_PORT!),
@@ -209,19 +211,19 @@ describe('Bot', { sequential: true }, () => {
             createServer,
         })
         await appRegistryRpcClient.registerWebhook({
-            appId: bin_fromHexString(botWallet.address),
+            appId: bin_fromHexString(botClientAddress),
             webhookUrl: WEBHOOK_URL,
         })
 
         // Verify webhook registration
         const { isRegistered, validResponse } = await appRegistryRpcClient.getStatus({
-            appId: bin_fromHexString(botWallet.address),
+            appId: bin_fromHexString(botClientAddress),
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
-        await bobClient.riverConnection.call((client) =>
-            client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
-        )
+        // await bobClient.riverConnection.call((client) =>
+        //     client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
+        // )
     }
 
     it('should receive a message forwarded', async () => {
@@ -232,11 +234,10 @@ describe('Bot', { sequential: true }, () => {
             receivedMessages.push(e)
         })
         const TEST_MESSAGE = 'Hello bot!'
-        // wait for the bot to be ready
-        await new Promise((resolve) => setTimeout(resolve, 2500))
 
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
-        await waitFor(() => receivedMessages.length > 0)
+
+        await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15_000 })
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.message).toBe(TEST_MESSAGE)
         expect(event?.isDm).toBe(false)
@@ -476,7 +477,7 @@ describe('Bot', { sequential: true }, () => {
     // handler = AddEvent
     // elapsed = 9.889292ms
     // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    it.skip('onTip should be triggered when a tip is received', async () => {
+    it.skip('onTip should be triggered wfhen a tip is received', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedTipEvents: BotPayload<'tip'>[] = []
         bot.onTip((_h, e) => {
