@@ -2,7 +2,9 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -44,8 +46,14 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// subscriptionManager is used to manage subscriptions for the sync operation
 		subscriptionManager *subscription.Manager
+		// syncingStreamsCount is used to track the number of streams currently being synced
+		syncingStreamsCount atomic.Int64
+		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
+		usingSharedSyncer bool
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
+		// metrics is the set of metrics used to track sync operations
+		metrics *syncMetrics
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -78,6 +86,7 @@ func NewStreamsSyncOperation(
 	nodeRegistry nodes.NodeRegistry,
 	subscriptionManager *subscription.Manager,
 	otelTracer trace.Tracer,
+	metrics *syncMetrics,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
@@ -95,6 +104,7 @@ func NewStreamsSyncOperation(
 		nodeRegistry:        nodeRegistry,
 		subscriptionManager: subscriptionManager,
 		otelTracer:          otelTracer,
+		metrics:             metrics,
 	}, nil
 }
 
@@ -111,6 +121,8 @@ func (syncOp *StreamSyncOperation) Run(
 		return err
 	}
 	defer sub.Close()
+
+	syncOp.usingSharedSyncer = true
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
@@ -143,7 +155,12 @@ func (syncOp *StreamSyncOperation) Run(
 	go syncOp.runCommandsProcessing(sub)
 
 	var messagesSendToClient int
-	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	defer func() {
+		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+		if syncOp.metrics != nil {
+			syncOp.metrics.sentMessagesHistogram.WithLabelValues("true").Observe(float64(messagesSendToClient))
+		}
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -175,7 +192,6 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 
 				messagesSendToClient++
-
 				syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
@@ -192,6 +208,10 @@ func (syncOp *StreamSyncOperation) Run(
 					return context.Cause(syncOp.ctx)
 				default:
 				}
+			}
+
+			if syncOp.metrics != nil {
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(sub.Messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
@@ -272,6 +292,12 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 			Func("AddStreamToSync")
 	}
 
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpHistogram.
+			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
+			Observe(float64(syncOp.syncingStreamsCount.Add(1)))
+	}
+
 	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
 }
 
@@ -314,6 +340,12 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 		return nil, RiverError(Err(status.GetCode()), status.GetMessage()).
 			Tag("streamId", shared.StreamId(status.GetStreamId())).
 			Func("RemoveStreamFromSync")
+	}
+
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpHistogram.
+			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
+			Observe(float64(syncOp.syncingStreamsCount.Add(-1)))
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
@@ -370,6 +402,14 @@ func (syncOp *StreamSyncOperation) ModifySync(
 
 	if err := syncOp.process(cmd); err != nil {
 		return nil, err
+	}
+
+	if syncOp.metrics != nil {
+		syncOp.metrics.syncingStreamsPerOpHistogram.
+			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
+			Observe(float64(syncOp.syncingStreamsCount.Add(
+				int64(len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())),
+			)))
 	}
 
 	return resp, nil

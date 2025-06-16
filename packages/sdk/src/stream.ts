@@ -13,7 +13,7 @@ import {
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly clientEmitter: TypedEmitter<StreamEvents>

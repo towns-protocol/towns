@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/towns-protocol/towns/core/node/rpc"
 	"math"
 	"net/http"
 	"strconv"
@@ -41,10 +42,14 @@ func getStreamFromNode(
 
 	remoteClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, remote.Url)
 
-	response, err := remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+	request := connect.NewRequest(&protocol.GetStreamRequest{
 		StreamId: streamID[:],
 		Optional: false,
-	}))
+	})
+	request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+	request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+	response, err := remoteClient.GetStream(ctx, request)
 	if err != nil {
 		return err
 	}

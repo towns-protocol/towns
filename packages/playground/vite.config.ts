@@ -47,5 +47,8 @@ export default ({ mode }: { mode: string }) => {
         optimizeDeps: {
             exclude: ['@towns-protocol/olm'],
         },
+        experimental: {
+            enableNativePlugin: true,
+        },
     })
 }

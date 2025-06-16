@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/rpc-connector",
-    "version": "0.0.236",
+    "version": "0.0.248",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "publishConfig": {
@@ -52,7 +52,7 @@
         "eslint-plugin-tsdoc": "^0.3.0",
         "tsdown": "^0.12.3",
         "typescript": "^5.8.2",
-        "vitest": "3.2.3"
+        "vitest": "^3.2.3"
     },
     "peerDependencies": {
         "@connectrpc/connect-node": ">=2.0.0",

@@ -51,7 +51,7 @@ import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -64,7 +64,7 @@ export class StreamStateView {
     readonly streamsView: StreamsView
     readonly contentKind: SnapshotCaseType
     readonly minipoolEvents = new Map<string, StreamTimelineEvent>()
-    isInitialized = false
+
     prevMiniblockHash?: Uint8Array
     prevMiniblockNum?: bigint
     lastEventNum = 0n
@@ -74,8 +74,16 @@ export class StreamStateView {
     // membership content
     membershipContent: StreamStateView_Members
 
+    get isInitialized(): boolean {
+        return this.streamsView.streamStatus.value[this.streamId]?.isInitialized ?? false
+    }
+
+    set isInitialized(value: boolean) {
+        this.streamsView.streamStatus.setIsInitialized(this.streamId, value)
+    }
+
     get timeline(): TimelineEvent[] {
-        return this.streamsView?.timelinesView.getState().timelines[this.streamId] ?? []
+        return this.streamsView.timelinesView.getState().timelines[this.streamId]
     }
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -177,7 +185,7 @@ export class StreamStateView {
             this._userContent = new StreamStateView_User(streamId)
         } else if (isUserSettingsStreamId(streamId)) {
             this.contentKind = 'userSettingsContent'
-            this._userSettingsContent = new StreamStateView_UserSettings(streamId)
+            this._userSettingsContent = new StreamStateView_UserSettings(streamId, this.streamsView)
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userMetadataContent'
             this._userMetadataContent = new StreamStateView_UserMetadata(streamId)
@@ -488,9 +496,8 @@ export class StreamStateView {
         this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
 
-        const timelineEvent = this.streamsView?.streamEventDecrypted(
+        const timelineEvent = this.streamsView.timelinesView.streamEventDecrypted(
             this.streamId,
-            this.contentKind,
             eventId,
             content,
         )
@@ -506,9 +513,8 @@ export class StreamStateView {
         content: DecryptionSessionError,
         _emitter: TypedEmitter<StreamStateEvents>,
     ) {
-        this.streamsView?.streamEventDecryptedContentError(
+        this.streamsView.timelinesView.streamEventDecryptedContentError(
             this.streamId,
-            this.contentKind,
             eventId,
             content,
         )
@@ -610,7 +616,7 @@ export class StreamStateView {
 
         // let everyone know
         this.isInitialized = true
-        this.streamsView?.streamInitialized(this.streamId, this.contentKind, [
+        this.streamsView.timelinesView.streamInitialized(this.streamId, [
             ...prepended,
             ...timelineEvents,
             ...appended,
@@ -636,7 +642,7 @@ export class StreamStateView {
             updated: updated.length > 0 ? updated : undefined,
             confirmed: confirmed.length > 0 ? confirmed : undefined,
         }
-        this.streamsView?.streamUpdated(this.streamId, this.contentKind, updatedData)
+        this.streamsView.timelinesView.streamUpdated(this.streamId, updatedData)
     }
 
     prependEvents(
@@ -675,7 +681,7 @@ export class StreamStateView {
             this.miniblockInfo.terminusReached = true
         }
         if (this.isInitialized) {
-            this.streamsView?.streamUpdated(this.streamId, this.contentKind, { prepended })
+            this.streamsView.timelinesView.streamUpdated(this.streamId, { prepended })
         }
         return prepended
     }
@@ -697,7 +703,7 @@ export class StreamStateView {
         this.minipoolEvents.set(localId, timelineEvent)
         this.getContent().onAppendLocalEvent(timelineEvent, emitter)
 
-        this.streamsView?.streamUpdated(this.streamId, this.contentKind, {
+        this.streamsView.timelinesView.streamUpdated(this.streamId, {
             appended: [timelineEvent],
         })
         return localId
@@ -721,9 +727,8 @@ export class StreamStateView {
         this.minipoolEvents.delete(localId)
         this.minipoolEvents.set(parsedEventHash, timelineEvent)
 
-        this.streamsView?.streamLocalEventUpdated(
+        this.streamsView.timelinesView.streamLocalEventUpdated(
             this.streamId,
-            this.contentKind,
             previousId,
             timelineEvent,
         )

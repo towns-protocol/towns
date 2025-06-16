@@ -56,7 +56,12 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 	go syncOp.runCommandsProcessingLegacy(syncers, messages)
 
 	var messagesSendToClient int
-	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	defer func() {
+		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+		if syncOp.metrics != nil {
+			syncOp.metrics.sentMessagesHistogram.WithLabelValues("false").Observe(float64(messagesSendToClient))
+		}
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -88,7 +93,6 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 				}
 
 				messagesSendToClient++
-
 				syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
@@ -105,6 +109,10 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 					return context.Cause(syncOp.ctx)
 				default:
 				}
+			}
+
+			if syncOp.metrics != nil {
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.

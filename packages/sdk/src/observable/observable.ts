@@ -9,6 +9,7 @@ export class Observable<T> {
     private _nextId = 0
     protected subscribers: Subscription<T>[] = []
     protected _value: T
+    protected _dispose?: () => void
 
     constructor(value: T) {
         this._value = value
@@ -16,6 +17,10 @@ export class Observable<T> {
 
     get value(): T {
         return this._value
+    }
+
+    set(fn: (prevValue: T) => T) {
+        this.setValue(fn(this.value))
     }
 
     setValue(newValue: T) {
@@ -72,6 +77,55 @@ export class Observable<T> {
             }
             return true
         })
+    }
+
+    //  T is the observable’s element type (unchanged)
+    //  U must NOT be undefined or null
+    //  U must be an object
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    map<U extends {}>(fn: (value: T, prevValue: T, state?: U) => U): Observable<U> {
+        const mappedObservable = new Observable(fn(this.value, this.value))
+
+        mappedObservable._dispose = this.subscribe((newValue, prevValue) => {
+            mappedObservable.setValue(fn(newValue, prevValue, mappedObservable.value))
+        })
+
+        return mappedObservable
+    }
+
+    throttle(ms: number): Observable<T> {
+        const throttledObservable = new Observable(this.value)
+        let timeoutId: NodeJS.Timeout | null = null
+        let pendingValue: T | null = null
+
+        const unsubscriber = this.subscribe((newValue) => {
+            pendingValue = newValue
+
+            if (timeoutId === null) {
+                timeoutId = setTimeout(() => {
+                    if (pendingValue !== null) {
+                        throttledObservable.setValue(pendingValue)
+                        pendingValue = null
+                    }
+                    timeoutId = null
+                }, ms)
+            }
+        })
+
+        throttledObservable._dispose = () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+                timeoutId = null
+            }
+            unsubscriber()
+        }
+
+        return throttledObservable
+    }
+
+    dispose() {
+        this.subscribers = []
+        this._dispose?.()
     }
 
     private notify(prevValue: T) {

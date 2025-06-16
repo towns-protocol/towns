@@ -15,8 +15,6 @@ import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 
-// contracts
-
 abstract contract MembershipBase is IMembershipBase {
     using SafeTransferLib for address;
 
@@ -177,16 +175,15 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view virtual returns (uint256 membershipPrice) {
         // get free allocation
         uint256 freeAllocation = _getMembershipFreeAllocation();
-
-        membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
-            freeAllocation,
-            totalSupply
-        );
+        address pricingModule = _getPricingModule();
 
         IPlatformRequirements platform = _getPlatformRequirements();
 
-        uint256 minPrice = platform.getMembershipMinPrice();
+        // If pricing module is address(0), return minimum price
+        if (pricingModule == address(0)) return platform.getMembershipMinPrice();
 
+        membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
+        uint256 minPrice = platform.getMembershipMinPrice();
         if (membershipPrice < minPrice) return platform.getMembershipFee();
     }
 
@@ -203,6 +200,7 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 minPrice = platform.getMembershipMinPrice();
 
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
+
         if (renewalPrice != 0) {
             return FixedPointMathLib.max(renewalPrice, minPrice);
         }
