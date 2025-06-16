@@ -51,12 +51,12 @@ export default createConfig({
         anvil: {
             id: 31337,
             rpc: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            disableCache: false,
         },
         gamma: {
             id: 84532,
             rpc: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            disableCache: false,
         },
     },
     contracts: {
