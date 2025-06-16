@@ -31,6 +31,7 @@ import {
     make_MemberPayload_Username,
     make_MemberPayload_DisplayName,
     make_UserMetadataPayload_ProfileImage,
+    spaceIdFromChannelId,
 } from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
 import EventEmitter from 'node:events'
@@ -210,6 +211,8 @@ export type BotEvents = {
 type BasePayload = {
     /** The user ID of the user that triggered the event */
     userId: string
+    /** The space ID that the event was triggered in */
+    spaceId: string
     /** channelId that the event was triggered in */
     channelId: string
     /** The ID of the event that triggered */
@@ -241,33 +244,33 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private async webhookResponseHandler(c: Context) {
         const authHeader = c.req.header('Authorization')
 
-        // if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        //     return c.text('Unauthorized: Missing or malformed token', 401)
-        // } else {
-        //     const tokenString = authHeader.substring(7)
-        //     try {
-        //         // Convert botId (Ethereum address string, e.g., "0xABC") to raw bytes,
-        //         // then to a lowercase hex string for the audience check.
-        //         // This must match how the Go service creates the 'aud' claim.
-        //         const botAddressBytes = bin_fromHexString(this.botId)
-        //         // Assumes lowercase hex output without "0x"
-        //         const expectedAudience = bin_toHexString(botAddressBytes)
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return c.text('Unauthorized: Missing or malformed token', 401)
+        } else {
+            const tokenString = authHeader.substring(7)
+            try {
+                // Convert botId (Ethereum address string, e.g., "0xABC") to raw bytes,
+                // then to a lowercase hex string for the audience check.
+                // This must match how the Go service creates the 'aud' claim.
+                const botAddressBytes = bin_fromHexString(this.botId)
+                // Assumes lowercase hex output without "0x"
+                const expectedAudience = bin_toHexString(botAddressBytes)
 
-        //         jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
-        //             algorithms: ['HS256'],
-        //             audience: expectedAudience,
-        //         })
-        //     } catch (err) {
-        //         console.error('Webhook: JWT verification failed', err)
-        //         let errorMessage = 'Unauthorized: Token verification failed'
-        //         if (err instanceof jwt.TokenExpiredError) {
-        //             errorMessage = 'Unauthorized: Token expired'
-        //         } else if (err instanceof jwt.JsonWebTokenError) {
-        //             errorMessage = `Unauthorized: Invalid token (${err.message})`
-        //         }
-        //         return c.text(errorMessage, 401)
-        //     }
-        // }
+                jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
+                    algorithms: ['HS256'],
+                    audience: expectedAudience,
+                })
+            } catch (err) {
+                console.error('Webhook: JWT verification failed', err)
+                let errorMessage = 'Unauthorized: Token verification failed'
+                if (err instanceof jwt.TokenExpiredError) {
+                    errorMessage = 'Unauthorized: Token expired'
+                } else if (err instanceof jwt.JsonWebTokenError) {
+                    errorMessage = `Unauthorized: Invalid token (${err.message})`
+                }
+                return c.text(errorMessage, 401)
+            }
+        }
 
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
@@ -336,6 +339,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 }
                 this.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
+                    spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     eventId: parsed.hashStr,
                     event: parsed,
@@ -368,6 +372,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
                             this.emit('eventRevoke', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
+                                spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
                                 refEventId: bin_toHexString(
                                     parsed.event.payload.value.content.value.eventId,
@@ -394,6 +399,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             if (membership.op === MembershipOp.SO_JOIN) {
                                 this.emit('channelJoin', this.client, {
                                     userId: userIdFromAddress(membership.userAddress),
+                                    spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
                                     eventId: parsed.hashStr,
                                 })
@@ -401,6 +407,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             if (membership.op === MembershipOp.SO_LEAVE) {
                                 this.emit('channelLeave', this.client, {
                                     userId: userIdFromAddress(membership.userAddress),
+                                    spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
                                     eventId: parsed.hashStr,
                                 })
@@ -437,6 +444,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                     const forwardPayload: BotPayload<'message'> = {
                         userId,
                         eventId: parsed.hashStr,
+                        spaceId: spaceIdFromChannelId(streamId),
                         channelId: streamId,
                         message: payload.value.content.value.body,
                         isDm: isDMChannelStreamId(streamId),
@@ -462,6 +470,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 this.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
+                    spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
@@ -474,6 +483,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 this.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
+                    spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
@@ -484,6 +494,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 this.emit('redaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
+                    spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                 })
