@@ -17,7 +17,12 @@ import { StreamsView } from './views/streamsView'
 
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
-    isUpToDate = false
+    get isUpToDate(): boolean {
+        return this.streamsView.streamStatus.value[this.streamId]?.isUpToDate ?? false
+    }
+    private set isUpToDate(value: boolean) {
+        this.streamsView.streamStatus.setIsUpToDate(this.streamId, value)
+    }
     readonly persistenceStore: IPersistenceStore
     constructor(
         userId: string,

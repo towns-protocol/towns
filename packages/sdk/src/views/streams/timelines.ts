@@ -41,7 +41,7 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         })
         this.setState = makeTimelinesViewInterface(
             (fn: (prevState: TimelinesViewModel) => TimelinesViewModel) => {
-                this.setValue(fn(this.value)) // todo batching
+                this.setValue(fn(this.value))
             },
         )
     }
