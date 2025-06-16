@@ -9165,7 +9165,7 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-prettier: ^5.2.6
     hono: ^4.5.0
-    ponder: ^0.11.11
+    ponder: ^0.11.17
     prettier: ^3.5.3
     tsx: ^4.7.1
     typescript: ^5.8.2
@@ -25030,9 +25030,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ponder@npm:^0.11.11":
-  version: 0.11.11
-  resolution: "ponder@npm:0.11.11"
+"ponder@npm:^0.11.17":
+  version: 0.11.17
+  resolution: "ponder@npm:0.11.17"
   dependencies:
     "@babel/code-frame": ^7.23.4
     "@commander-js/extra-typings": ^12.0.1
@@ -25078,7 +25078,7 @@ __metadata:
       optional: true
   bin:
     ponder: dist/esm/bin/ponder.js
-  checksum: 970297ac649b42face989f6364666b29160bce0661246c8580b09aca0a47e5968070f833cc830a742e92a5b173e5a4e9c8e2da658e9e7edc44a51a083bb1773f
+  checksum: 07450b78391b3256e2a209a73f14e4b45de1cac19025791335f8a48e9dfcb4ef6ddea21228a6dad143001f8591853eac4a44ee481d8fae6ace1a9ad1d980ebca
   languageName: node
   linkType: hard
 
