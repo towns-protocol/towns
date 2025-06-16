@@ -5,11 +5,17 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/towns-protocol/towns/core/node/rpc"
 	"math"
 	"net/http"
+	"reflect"
+	"slices"
 	"strconv"
 	"time"
+
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/rpc"
+	"github.com/towns-protocol/towns/core/node/shared"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -808,6 +814,278 @@ func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	streamId, err := shared.StreamIdFromString(args[0])
+	if err != nil {
+		return err
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	stream, err := registryContract.GetStream(ctx, streamId, blockchain.InitialBlockNum)
+	if err != nil {
+		return err
+	}
+
+	// find latest mb num on each node
+	allNodes, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+	if err != nil {
+		return err
+	}
+
+	lowest := func(nodeMbChain map[common.Address]map[int64]common.Hash) int64 {
+		lowest := int64(math.MaxInt64)
+		for _, chain := range nodeMbChain {
+			for num := range chain {
+				lowest = min(lowest, num)
+			}
+		}
+		return lowest
+	}
+
+	highest := func(nodeMbChain map[common.Address]map[int64]common.Hash) int64 {
+		highest := int64(math.MinInt64)
+		for _, chain := range nodeMbChain {
+			for num := range chain {
+				highest = max(highest, num)
+			}
+		}
+		return highest
+	}
+
+	atSameMbHeight := func(nodeMbChain map[common.Address]map[int64]common.Hash) bool {
+		return lowest(nodeMbChain) == highest(nodeMbChain)
+	}
+
+	atSameMbHash := func(nodeMbChain map[common.Address]map[int64]common.Hash) bool {
+		var first map[int64]common.Hash
+		for _, chain := range nodeMbChain {
+			if first == nil {
+				first = chain
+			} else {
+				if !reflect.DeepEqual(first, chain) {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+
+	allInSync := func(nodeMbChain map[common.Address]map[int64]common.Hash) bool {
+		return atSameMbHeight(nodeMbChain) && atSameMbHash(nodeMbChain)
+	}
+
+	getMiniblockHash := func(ctx context.Context, addr common.Address, num int64) (common.Hash, error) {
+		index := slices.IndexFunc(allNodes, func(n registries.NodeRecord) bool {
+			return n.NodeAddress == addr
+		})
+
+		if index == -1 {
+			return common.Hash{}, fmt.Errorf("node %s not found in registry", addr)
+		}
+
+		node := allNodes[index]
+
+		streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
+		request := connect.NewRequest(
+			&protocol.GetMiniblocksRequest{StreamId: streamId[:], FromInclusive: num, ToExclusive: num + 1},
+		)
+		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+		response, err := streamServiceClient.GetMiniblocks(ctx, request)
+		if err != nil {
+			return common.Hash{}, err
+		}
+
+		return common.BytesToHash(response.Msg.Miniblocks[0].Header.GetHash()), nil
+	}
+
+	hasForked := func(nodeMbChain map[common.Address]map[int64]common.Hash) (bool, error) {
+		lowest := lowest(nodeMbChain)
+		lowestHashes := make(map[common.Hash]struct{})
+		for node, chain := range nodeMbChain {
+			hash, contains := chain[lowest]
+			if !contains {
+				hash, err := getMiniblockHash(ctx, node, lowest)
+				if err != nil {
+					return false, err
+				}
+				lowestHashes[hash] = struct{}{}
+			} else {
+				lowestHashes[hash] = struct{}{}
+			}
+		}
+		return len(lowestHashes) != 1, nil
+	}
+
+	printChain := func(nodeMbChain map[common.Address]map[int64]common.Hash) {
+		for node, chain := range nodeMbChain {
+			fmt.Printf("Node %s:\n", node)
+			blockNums := make([]int64, 0, len(chain))
+			for num := range chain {
+				blockNums = append(blockNums, num)
+			}
+			slices.Sort(blockNums)
+
+			for _, num := range blockNums {
+				fmt.Printf("  %d: %s\n", num, chain[num])
+			}
+		}
+		println()
+	}
+
+	printFork := func(nodeMbChain map[common.Address]map[int64]common.Hash) error {
+		lowest := lowest(nodeMbChain)
+		// loop back over all nodes until a shared hash is found
+		for num := lowest; num >= 0; num-- {
+			hashes := make(map[common.Hash]struct{})
+			for node := range nodeMbChain {
+				hash, err := getMiniblockHash(ctx, node, num)
+				if err != nil {
+					return err
+				}
+				hashes[hash] = struct{}{}
+				nodeMbChain[node][num] = hash
+			}
+			if len(hashes) == 1 {
+				printChain(nodeMbChain)
+				fmt.Printf("Forked at %d\n", num+1)
+				return nil
+			}
+		}
+
+		return fmt.Errorf("no fork detected")
+	}
+
+	loadChain := func(addr common.Address, fromInclusive int64, toExclusive int64) (map[int64]common.Hash, error) {
+		index := slices.IndexFunc(allNodes, func(n registries.NodeRecord) bool {
+			return n.NodeAddress == addr
+		})
+
+		if index == -1 {
+			return nil, fmt.Errorf("node %s not found in registry", addr)
+		}
+
+		chain := make(map[int64]common.Hash)
+		node := allNodes[index]
+		streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
+		request := connect.NewRequest(&protocol.GetMiniblocksRequest{
+			StreamId:      streamId[:],
+			FromInclusive: fromInclusive,
+			ToExclusive:   toExclusive,
+			OmitSnapshots: true,
+		})
+		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+		response, err := streamServiceClient.GetMiniblocks(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		for i, mb := range response.Msg.GetMiniblocks() {
+			info, err := events.NewMiniblockInfoFromProto(
+				mb, response.Msg.GetMiniblockSnapshot(int64(i)),
+				events.NewParsedMiniblockInfoOpts().
+					WithDoNotParseEvents(true),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			chain[info.Ref.Num] = info.Ref.Hash
+		}
+
+		return chain, nil
+	}
+
+	loadLatestMb := func(ctx context.Context, stream *river.StreamWithId) (map[common.Address]map[int64]common.Hash, error) {
+		nodeMbChain := make(map[common.Address]map[int64]common.Hash)
+		for _, addr := range stream.Nodes() {
+			index := slices.IndexFunc(allNodes, func(n registries.NodeRecord) bool {
+				return n.NodeAddress == addr
+			})
+
+			if index == -1 {
+				return nil, fmt.Errorf("node %s not found in registry", addr)
+			}
+
+			node := allNodes[index]
+			streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
+			request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: streamId[:]})
+			request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+			request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+			response, err := streamServiceClient.GetLastMiniblockHash(ctx, request)
+			if err != nil {
+				return nil, err
+			}
+
+			nodeMbChain[addr] = make(map[int64]common.Hash)
+			nodeMbChain[addr][response.Msg.GetMiniblockNum()] = common.BytesToHash(response.Msg.GetHash())
+		}
+
+		return nodeMbChain, nil
+	}
+
+	nodeMbChain, err := loadLatestMb(ctx, stream)
+	if err != nil {
+		return err
+	}
+
+	if allInSync(nodeMbChain) {
+		fmt.Println("All nodes are in sync")
+		printChain(nodeMbChain)
+		return nil
+	}
+
+	if hasForked, err := hasForked(nodeMbChain); err != nil {
+		return err
+	} else if hasForked {
+		return printFork(nodeMbChain)
+	}
+
+	fromInclusive := max(0, lowest(nodeMbChain)-15)
+	toExclusive := fromInclusive + 18
+
+	for addr := range nodeMbChain {
+		chain, err := loadChain(addr, fromInclusive, toExclusive)
+		if err != nil {
+			return err
+		}
+		nodeMbChain[addr] = chain
+	}
+
+	fmt.Println("Node out of sync")
+	printChain(nodeMbChain)
+
+	return nil
+}
+
 func init() {
 	cmdStream := &cobra.Command{
 		Use:   "stream",
@@ -897,6 +1175,16 @@ max-block-range is optional and limits the number of blocks to consider (default
 		RunE:  runStreamValidateCmd,
 	}
 
+	cmdStreamCompareMiniblockChain := &cobra.Command{
+		Use:   "compare-miniblock-chain <stream-id>",
+		Short: "Compare miniblock chains",
+		Long:  `Compare miniblock chain by loading all miniblocks and comparing them between nodes.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamCompareMiniblockChainCmd(cmdConfig, args)
+		},
+	}
+
 	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
 	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
 	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
@@ -911,5 +1199,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamGetPartition)
 	cmdStream.AddCommand(cmdStreamUser)
 	cmdStream.AddCommand(cmdStreamValidate)
+	cmdStream.AddCommand(cmdStreamCompareMiniblockChain)
+
 	rootCmd.AddCommand(cmdStream)
 }
