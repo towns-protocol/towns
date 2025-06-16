@@ -14,7 +14,8 @@ import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
-
+// debuggging
+import {console} from "forge-std/console.sol";
 abstract contract MembershipBase is IMembershipBase {
     using SafeTransferLib for address;
 
@@ -198,11 +199,10 @@ abstract contract MembershipBase is IMembershipBase {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = _getPlatformRequirements();
         uint256 minPrice = platform.getMembershipMinPrice();
-
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
 
         if (renewalPrice != 0) {
-            return FixedPointMathLib.max(renewalPrice, minPrice);
+            return renewalPrice;
         }
 
         uint256 price = _getMembershipPrice(totalSupply);
