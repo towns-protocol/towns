@@ -11,6 +11,7 @@ import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {NodeOperatorStatus, NodeOperatorStorage} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {XChainLib} from "src/base/registry/facets/xchain/XChainLib.sol";
+import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -19,6 +20,8 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using CustomRevert for bytes4;
+
     // =============================================================
     //                           Initializer
     // =============================================================
@@ -34,7 +37,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         if (layout.operatorByNode[node] != operator) {
-            revert EntitlementChecker_InvalidNodeOperator();
+            EntitlementChecker_InvalidNodeOperator.selector.revertWith();
         }
         _;
     }
@@ -43,12 +46,12 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         NodeOperatorStorage.Layout storage nodeOperatorLayout = NodeOperatorStorage.layout();
 
         if (!nodeOperatorLayout.operators.contains(msg.sender)) {
-            revert EntitlementChecker_InvalidOperator();
+            EntitlementChecker_InvalidOperator.selector.revertWith();
         }
         _;
 
         if (nodeOperatorLayout.statusByOperator[msg.sender] != NodeOperatorStatus.Approved) {
-            revert EntitlementChecker_OperatorNotActive();
+            EntitlementChecker_OperatorNotActive.selector.revertWith();
         }
     }
 
@@ -61,7 +64,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         if (layout.nodes.contains(node)) {
-            revert EntitlementChecker_NodeAlreadyRegistered();
+            EntitlementChecker_NodeAlreadyRegistered.selector.revertWith();
         }
 
         layout.nodes.add(node);
@@ -75,7 +78,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         if (!layout.nodes.contains(node)) {
-            revert EntitlementChecker_NodeNotRegistered();
+            EntitlementChecker_NodeNotRegistered.selector.revertWith();
         }
 
         layout.nodes.remove(node);
@@ -132,12 +135,23 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         XChainLib.Layout storage layout = XChainLib.layout();
 
         layout.requestsBySender[senderAddress].add(transactionId);
-        layout.requests[transactionId] = XChainLib.Request({
-            caller: space,
-            blockNumber: block.number,
-            value: msg.value,
-            completed: false
-        });
+
+        // Only create the request if it doesn't exist yet
+        XChainLib.Request storage request = layout.requests[transactionId];
+        if (request.caller == address(0)) {
+            // First time creating this request
+            layout.requests[transactionId] = XChainLib.Request({
+                caller: space,
+                blockNumber: block.number,
+                value: msg.value,
+                completed: false,
+                receiver: walletAddress
+            });
+        } else {
+            if (msg.value != 0) {
+                EntitlementChecker_InvalidValue.selector.revertWith();
+            }
+        }
 
         address[] memory randomNodes = _getRandomNodes(5);
 
@@ -187,16 +201,16 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     // =============================================================
     //                           Internal
     // =============================================================
-    function _getRandomNodes(uint256 count) internal view returns (address[] memory) {
+    function _getRandomNodes(uint256 count) internal view returns (address[] memory randomNodes) {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         uint256 nodeCount = layout.nodes.length();
 
         if (count > nodeCount) {
-            revert EntitlementChecker_InsufficientNumberOfNodes();
+            EntitlementChecker_InsufficientNumberOfNodes.selector.revertWith();
         }
 
-        address[] memory randomNodes = new address[](count);
+        randomNodes = new address[](count);
         uint256[] memory indices = new uint256[](nodeCount);
 
         for (uint256 i; i < nodeCount; ++i) {
@@ -212,7 +226,6 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
                 indices[rand] = indices[--nodeCount];
             }
         }
-        return randomNodes;
     }
 
     // Generate a pseudo-random index based on a seed and the node count

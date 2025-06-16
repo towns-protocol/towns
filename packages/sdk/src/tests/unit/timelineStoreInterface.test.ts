@@ -2,7 +2,7 @@
  * @group core
  */
 
-import { TimelinesView } from '../../streams-view/timelinesView'
+import { TimelinesView } from '../../views/streams/timelines'
 import {
     ChannelMessageEvent,
     MessageTips,

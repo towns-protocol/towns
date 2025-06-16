@@ -2,7 +2,9 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -44,6 +46,10 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// subscriptionManager is used to manage subscriptions for the sync operation
 		subscriptionManager *subscription.Manager
+		// syncingStreamsCount is used to track the number of streams currently being synced
+		syncingStreamsCount atomic.Int64
+		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
+		usingSharedSyncer bool
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 		// metrics is the set of metrics used to track sync operations
@@ -116,6 +122,8 @@ func (syncOp *StreamSyncOperation) Run(
 	}
 	defer sub.Close()
 
+	syncOp.usingSharedSyncer = true
+
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
 		go func() {
@@ -148,11 +156,10 @@ func (syncOp *StreamSyncOperation) Run(
 
 	var messagesSendToClient int
 	defer func() {
-		if syncOp.metrics != nil {
-			syncOp.metrics.sentMessagesCounter.DeleteLabelValues("true", syncOp.SyncID)
-			syncOp.metrics.messageBufferSizePerOpHistogram.DeleteLabelValues("true", syncOp.SyncID)
-		}
 		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+		if syncOp.metrics != nil {
+			syncOp.metrics.sentMessagesHistogram.WithLabelValues("true").Observe(float64(messagesSendToClient))
+		}
 	}()
 
 	var msgs []*SyncStreamsResponse
@@ -185,10 +192,6 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 
 				messagesSendToClient++
-				if syncOp.metrics != nil {
-					syncOp.metrics.sentMessagesCounter.WithLabelValues("true", syncOp.SyncID).Inc()
-				}
-
 				syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
@@ -208,9 +211,7 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues(
-					"true", syncOp.SyncID,
-				).Observe(float64(sub.Messages.Len()))
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(sub.Messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
@@ -292,7 +293,9 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	}
 
 	if syncOp.metrics != nil {
-		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(1)
+		syncOp.metrics.syncingStreamsPerOpHistogram.
+			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
+			Observe(float64(syncOp.syncingStreamsCount.Add(1)))
 	}
 
 	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
@@ -340,7 +343,9 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	}
 
 	if syncOp.metrics != nil {
-		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Sub(1)
+		syncOp.metrics.syncingStreamsPerOpHistogram.
+			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
+			Observe(float64(syncOp.syncingStreamsCount.Add(-1)))
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
@@ -400,8 +405,11 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	}
 
 	if syncOp.metrics != nil {
-		diff := len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())
-		syncOp.metrics.syncingStreamsPerOpCounter.WithLabelValues(syncOp.SyncID).Add(float64(diff))
+		syncOp.metrics.syncingStreamsPerOpHistogram.
+			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
+			Observe(float64(syncOp.syncingStreamsCount.Add(
+				int64(len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())),
+			)))
 	}
 
 	return resp, nil

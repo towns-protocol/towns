@@ -54,25 +54,25 @@ import {
     TickerAttachment,
     EncryptedChannelPropertiesEvent,
     Membership,
-} from '../sync-agent/timeline/models/timeline-types'
-import { checkNever, isDefined, logNever } from '../check'
+} from '../../sync-agent/timeline/models/timeline-types'
+import { checkNever, isDefined, logNever } from '../../check'
 import {
     isLocalEvent,
     isRemoteEvent,
     ParsedEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
-} from '../types'
-import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../id'
+} from '../../types'
+import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
 import {
     getIsMentioned,
     getReactionParentId,
     getReplyParentId,
     getThreadParentId,
-} from './timelinesViewModel'
+} from './timelinesModel'
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
-import { DecryptedContent } from '../encryptedContentTypes'
+import { DecryptedContent } from '../../encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 
 const logger = dlogger('csb:timeline')

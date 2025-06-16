@@ -57,11 +57,10 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 
 	var messagesSendToClient int
 	defer func() {
-		if syncOp.metrics != nil {
-			syncOp.metrics.sentMessagesCounter.DeleteLabelValues("false", syncOp.SyncID)
-			syncOp.metrics.messageBufferSizePerOpHistogram.DeleteLabelValues("false", syncOp.SyncID)
-		}
 		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+		if syncOp.metrics != nil {
+			syncOp.metrics.sentMessagesHistogram.WithLabelValues("false").Observe(float64(messagesSendToClient))
+		}
 	}()
 
 	var msgs []*SyncStreamsResponse
@@ -94,10 +93,6 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 				}
 
 				messagesSendToClient++
-				if syncOp.metrics != nil {
-					syncOp.metrics.sentMessagesCounter.WithLabelValues("true", syncOp.SyncID).Inc()
-				}
-
 				syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
@@ -117,9 +112,7 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues(
-					"false", syncOp.SyncID,
-				).Observe(float64(messages.Len()))
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.

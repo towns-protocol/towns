@@ -51,7 +51,7 @@ import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -64,7 +64,7 @@ export class StreamStateView {
     readonly streamsView: StreamsView
     readonly contentKind: SnapshotCaseType
     readonly minipoolEvents = new Map<string, StreamTimelineEvent>()
-    isInitialized = false
+
     prevMiniblockHash?: Uint8Array
     prevMiniblockNum?: bigint
     lastEventNum = 0n
@@ -73,6 +73,14 @@ export class StreamStateView {
     syncCookie?: SyncCookie
     // membership content
     membershipContent: StreamStateView_Members
+
+    get isInitialized(): boolean {
+        return this.streamsView.streamStatus.value[this.streamId]?.isInitialized ?? false
+    }
+
+    set isInitialized(value: boolean) {
+        this.streamsView.streamStatus.setIsInitialized(this.streamId, value)
+    }
 
     get timeline(): TimelineEvent[] {
         return this.streamsView.timelinesView.getState().timelines[this.streamId]
@@ -177,7 +185,7 @@ export class StreamStateView {
             this._userContent = new StreamStateView_User(streamId)
         } else if (isUserSettingsStreamId(streamId)) {
             this.contentKind = 'userSettingsContent'
-            this._userSettingsContent = new StreamStateView_UserSettings(streamId)
+            this._userSettingsContent = new StreamStateView_UserSettings(streamId, this.streamsView)
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userMetadataContent'
             this._userMetadataContent = new StreamStateView_UserMetadata(streamId)

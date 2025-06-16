@@ -17,9 +17,9 @@ import {
     getIsMentioned,
     getReactionParentId,
     getThreadParentId,
-} from '../../../streams-view/timelinesViewModel'
+} from '../../../views/streams/timelinesModel'
 import { hexToBytes } from 'ethereum-cryptography/utils'
-import { getFallbackContent } from '../../../streams-view/timelineEvents'
+import { getFallbackContent } from '../../../views/streams/timelineEvents'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []

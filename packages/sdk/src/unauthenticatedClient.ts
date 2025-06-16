@@ -6,7 +6,7 @@ import { UnpackEnvelopeOpts, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
-import { StreamsView } from './streams-view/streamsView'
+import { StreamsView } from './views/streamsView'
 
 const SCROLLBACK_MULTIPLIER = 4n
 export class UnauthenticatedClient {

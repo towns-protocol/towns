@@ -5,7 +5,7 @@
 import { MembershipOp } from '@towns-protocol/proto'
 import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
-import { getFallbackContent } from '../../streams-view/timelineEvents'
+import { getFallbackContent } from '../../views/streams/timelineEvents'
 import { StreamStateView } from '../../streamStateView'
 import { dlog } from '@towns-protocol/dlog'
 

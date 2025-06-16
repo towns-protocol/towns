@@ -51,15 +51,15 @@ if (!riverAirdrop) {
 }
 
 export default createConfig({
-    networks: {
+    chains: {
         anvil: {
-            chainId: 31337,
-            transport: http(process.env.PONDER_RPC_URL_1),
+            id: 31337,
+            rpc: http(process.env.PONDER_RPC_URL_1),
             disableCache: true,
         },
         gamma: {
-            chainId: 84532,
-            transport: http(process.env.PONDER_RPC_URL_1),
+            id: 84532,
+            rpc: http(process.env.PONDER_RPC_URL_1),
             disableCache: true,
         },
     },
@@ -75,7 +75,7 @@ export default createConfig({
             ]),
             address: baseRegistry,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         RiverAirdrop: {
             abi: mergeAbis([rewardsDistributionV2Abi]),
@@ -87,7 +87,7 @@ export default createConfig({
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
@@ -99,19 +99,19 @@ export default createConfig({
                 parameter: 'space',
             }),
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         SwapRouter: {
             abi: swapRouterAbi,
             address: swapRouter,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
     },
 })
