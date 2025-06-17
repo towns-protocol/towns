@@ -63,11 +63,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "SwapFacet__SwapFailed",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "SwapFacet__SwapRouterNotSet",
     "inputs": []
   },
