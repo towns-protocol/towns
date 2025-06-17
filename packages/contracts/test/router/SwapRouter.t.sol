@@ -9,6 +9,7 @@ import {IPlatformRequirements} from "../../src/factory/facets/platform/requireme
 import {ISwapRouter} from "../../src/router/ISwapRouter.sol";
 
 // libraries
+import {SignatureVerification} from "@uniswap/permit2/src/libraries/SignatureVerification.sol";
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
 import {SwapRouterStorage} from "../../src/router/SwapRouterStorage.sol";
@@ -23,6 +24,40 @@ import {DeploySwapRouter} from "../../scripts/deployments/diamonds/DeploySwapRou
 import {SwapTestBase} from "./SwapTestBase.sol";
 
 contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
+    /// @dev Struct to avoid stack too deep errors in permit tests
+    struct PermitTestParams {
+        uint256 privateKey;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOut;
+        uint16 treasuryBps;
+        uint16 posterBps;
+    }
+
+    /// @dev Types of parameter tampering for front-running tests
+    enum TamperType {
+        RECIPIENT,
+        POSTER,
+        AMOUNT_IN,
+        AMOUNT_OUT,
+        TOKEN_IN,
+        TOKEN_OUT,
+        ROUTER
+    }
+
+    /// @dev Parameters for front-running tests to avoid stack too deep
+    struct FrontRunningParams {
+        uint256 privateKey;
+        uint256 amountIn;
+        uint256 amountOut;
+        address legitimateRecipient;
+        address legitimatePoster;
+        TamperType tamperType;
+        address maliciousAddress;
+        uint256 maliciousAmount;
+    }
+
     address internal spaceFactory;
     ISwapRouter internal swapRouter;
     IPausable internal pausableFacet;
@@ -34,20 +69,10 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     // Default test parameters
     ExactInputParams internal defaultInputParams;
     RouterParams internal defaultRouterParams;
+    Permit2Params internal defaultEmptyPermit;
     uint256 internal constant DEFAULT_AMOUNT_IN = 100 ether;
     uint256 internal constant DEFAULT_AMOUNT_OUT = 95 ether;
     address internal defaultRecipient = address(this);
-
-    /// @dev Struct to avoid stack too deep errors in permit tests
-    struct PermitTestParams {
-        uint256 privateKey;
-        address recipient;
-        uint256 deadline;
-        uint256 amountIn;
-        uint256 amountOut;
-        uint16 treasuryBps;
-        uint16 posterBps;
-    }
 
     function setUp() public override {
         super.setUp();
@@ -133,10 +158,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     }
 
     function test_executeSwap_revertWhen_paused() external {
-        address caller = address(this);
-        uint256 amountIn = 100 ether;
-        uint256 amountOut = 95 ether;
-
         // pause the router
         vm.prank(deployer);
         pausableFacet.pause();
@@ -147,9 +168,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             mockRouter,
             address(token0),
             address(token1),
-            amountIn,
-            amountOut,
-            caller
+            DEFAULT_AMOUNT_IN,
+            DEFAULT_AMOUNT_OUT,
+            address(this)
         );
 
         // expect revert when paused
@@ -261,8 +282,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         test_executeSwap(
             address(this),
             address(this),
-            100 ether,
-            95 ether,
+            DEFAULT_AMOUNT_IN,
+            DEFAULT_AMOUNT_OUT,
             PROTOCOL_BPS,
             POSTER_BPS
         );
@@ -424,8 +445,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         test_executeSwap_swapTokenToEth(
             makeAddr("caller"),
             makeAddr("recipient"),
-            100 ether,
-            95 ether,
+            DEFAULT_AMOUNT_IN,
+            DEFAULT_AMOUNT_OUT,
             PROTOCOL_BPS,
             POSTER_BPS
         );
@@ -548,15 +569,13 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
     }
 
-    function test_executeSwapWithPermit_revertWhen_invalidAmount() public {
-        uint256 permitValue = 50 ether; // less than DEFAULT_AMOUNT_IN
-
+    function test_executeSwapWithPermit_revertWhen_invalidAmount(uint256 permitAmount) public {
         // create permit with insufficient amount
         Permit2Params memory permitParams = defaultEmptyPermit;
         permitParams.token = address(token0);
-        permitParams.amount = permitValue;
+        permitParams.amount = bound(permitAmount, 0, DEFAULT_AMOUNT_IN - 1);
 
-        // expect revert with InvalidAmount (permit value < amountIn)
+        // expect revert with InvalidAmount (permit amount < amountIn)
         vm.expectRevert(SwapRouter__InvalidAmount.selector);
         swapRouter.executeSwapWithPermit(
             defaultInputParams,
@@ -608,86 +627,76 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
     }
 
-    function test_executeSwapWithPermit_revertWhen_differentRecipient() public {
-        uint256 privateKey = boundPrivateKey(0xabc123);
-        address owner = vm.addr(privateKey);
-
-        (
-            ExactInputParams memory originalParams,
-            RouterParams memory originalRouterParams
-        ) = _createSwapParams(
-                address(swapRouter),
-                mockRouter,
-                address(token0),
-                address(token1),
-                100 ether,
-                95 ether,
-                makeAddr("legitimate")
-            );
-
-        Permit2Params memory originalPermit = _createPermitParams(
-            privateKey,
-            owner,
-            address(token0),
-            100 ether,
-            address(swapRouter),
-            0,
-            block.timestamp + 1 hours,
-            originalParams,
-            originalRouterParams,
-            POSTER
-        );
-
-        (
-            ExactInputParams memory maliciousParams,
-            RouterParams memory maliciousRouterParams
-        ) = _createSwapParams(
-                address(swapRouter),
-                mockRouter,
-                address(token0),
-                address(token1),
-                100 ether,
-                95 ether,
-                makeAddr("malicious")
-            );
-
-        token0.mint(owner, 100 ether);
-        vm.prank(owner);
-        token0.approve(permit2, 100 ether);
-
-        // Should fail with different recipient
-        vm.expectRevert();
-        swapRouter.executeSwapWithPermit(
-            maliciousParams,
-            maliciousRouterParams,
-            originalPermit,
-            POSTER
-        );
-
-        // Should work with original parameters
-        swapRouter.executeSwapWithPermit(
-            originalParams,
-            originalRouterParams,
-            originalPermit,
-            POSTER
-        );
-
-        assertGt(
-            token1.balanceOf(makeAddr("legitimate")),
-            0,
-            "Legitimate recipient should receive tokens"
-        );
-        assertEq(
-            token1.balanceOf(makeAddr("malicious")),
-            0,
-            "Malicious recipient should not receive tokens"
+    function test_executeSwapWithPermit_revertWhen_differentRecipient(
+        uint256 privateKey,
+        address recipient
+    ) public {
+        test_executeSwapWithPermit_frontRunning(
+            FrontRunningParams({
+                privateKey: privateKey,
+                amountIn: DEFAULT_AMOUNT_IN,
+                amountOut: DEFAULT_AMOUNT_OUT,
+                legitimateRecipient: makeAddr("legitimate"),
+                legitimatePoster: POSTER,
+                tamperType: TamperType.RECIPIENT,
+                maliciousAddress: recipient,
+                maliciousAmount: 0
+            })
         );
     }
 
-    function test_executeSwapWithPermit_revertWhen_differentPoster() public {
-        uint256 privateKey = boundPrivateKey(0xabc456);
-        address owner = vm.addr(privateKey);
+    function test_executeSwapWithPermit_revertWhen_differentPoster(
+        uint256 privateKey,
+        address poster
+    ) public {
+        test_executeSwapWithPermit_frontRunning(
+            FrontRunningParams({
+                privateKey: privateKey,
+                amountIn: DEFAULT_AMOUNT_IN,
+                amountOut: DEFAULT_AMOUNT_OUT,
+                legitimateRecipient: makeAddr("recipient"),
+                legitimatePoster: makeAddr("legitimatePoster"),
+                tamperType: TamperType.POSTER,
+                maliciousAddress: poster,
+                maliciousAmount: 0
+            })
+        );
+    }
 
+    /// @notice Generic test for permit front-running attacks
+    /// @dev Tests that modifying swap parameters after permit signature should fail
+    function test_executeSwapWithPermit_frontRunning(FrontRunningParams memory params) internal {
+        // Bound inputs
+        params.privateKey = boundPrivateKey(params.privateKey);
+        params.amountIn = bound(params.amountIn, 1, type(uint128).max);
+        params.amountOut = bound(params.amountOut, 1, type(uint128).max);
+        params.maliciousAmount = bound(params.maliciousAmount, 1, type(uint128).max);
+
+        // Ensure addresses are valid and different
+        vm.assume(
+            params.legitimateRecipient != address(0) && params.legitimatePoster != address(0)
+        );
+        vm.assume(
+            params.maliciousAddress != address(0) &&
+                params.maliciousAddress != params.legitimateRecipient
+        );
+        vm.assume(
+            params.legitimateRecipient != feeRecipient &&
+                params.legitimateRecipient != params.legitimatePoster
+        );
+        vm.assume(
+            params.maliciousAddress != feeRecipient &&
+                params.maliciousAddress != params.legitimatePoster
+        );
+
+        address owner = vm.addr(params.privateKey);
+        vm.assume(
+            owner != feeRecipient &&
+                owner != params.legitimatePoster &&
+                owner != params.legitimateRecipient
+        );
+
+        // Create original swap parameters
         (
             ExactInputParams memory originalParams,
             RouterParams memory originalRouterParams
@@ -696,45 +705,45 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
                 mockRouter,
                 address(token0),
                 address(token1),
-                100 ether,
-                95 ether,
-                makeAddr("recipient")
+                params.amountIn,
+                params.amountOut,
+                params.legitimateRecipient
             );
 
+        // Create permit based on original parameters
         Permit2Params memory originalPermit = _createPermitParams(
-            privateKey,
+            params.privateKey,
             owner,
             address(token0),
-            100 ether,
+            params.amountIn,
             address(swapRouter),
-            1,
+            0,
             block.timestamp + 1 hours,
             originalParams,
             originalRouterParams,
-            makeAddr("legitimatePoster")
+            params.legitimatePoster
         );
 
-        token0.mint(owner, 100 ether);
+        // Create tampered parameters
+        (
+            ExactInputParams memory tamperedParams,
+            RouterParams memory tamperedRouterParams,
+            address tamperedPoster
+        ) = _createTamperedParams(params, originalParams, originalRouterParams);
+
+        // Setup tokens
+        token0.mint(owner, params.amountIn);
         vm.prank(owner);
-        token0.approve(permit2, 100 ether);
+        token0.approve(permit2, params.amountIn);
 
-        // Should fail with different poster
-        vm.expectRevert();
+        // Attempt swap with tampered parameters - should fail signature verification
+        vm.expectRevert(SignatureVerification.InvalidSigner.selector);
         swapRouter.executeSwapWithPermit(
-            originalParams,
-            originalRouterParams,
+            tamperedParams,
+            tamperedRouterParams,
             originalPermit,
-            makeAddr("maliciousPoster")
+            tamperedPoster
         );
-
-        // Should work with legitimate poster
-        swapRouter.executeSwapWithPermit(
-            originalParams,
-            originalRouterParams,
-            originalPermit,
-            makeAddr("legitimatePoster")
-        );
-        assertGt(token1.balanceOf(makeAddr("recipient")), 0, "Recipient should receive tokens");
     }
 
     function test_executeSwapWithPermit_gas() public {
@@ -742,8 +751,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             privateKey: 0xabc,
             recipient: makeAddr("recipient"),
             deadline: 1 hours,
-            amountIn: 100 ether,
-            amountOut: 95 ether,
+            amountIn: DEFAULT_AMOUNT_IN,
+            amountOut: DEFAULT_AMOUNT_OUT,
             treasuryBps: PROTOCOL_BPS,
             posterBps: POSTER_BPS
         });
@@ -824,8 +833,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             privateKey: 0xabc,
             recipient: makeAddr("recipient"),
             deadline: block.timestamp + 1 hours,
-            amountIn: 100 ether,
-            amountOut: 95 ether,
+            amountIn: DEFAULT_AMOUNT_IN,
+            amountOut: DEFAULT_AMOUNT_OUT,
             treasuryBps: PROTOCOL_BPS,
             posterBps: POSTER_BPS
         });
@@ -921,5 +930,43 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         assertEq(protocolFee2, 0.01 ether, "Protocol fee should be same with zero poster");
         assertEq(posterFee2, 0, "Poster fee should be zero with zero poster");
         assertEq(amountInAfterFees2, 0.99 ether, "Amount should exclude poster fee");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            UTILS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _createTamperedParams(
+        FrontRunningParams memory params,
+        ExactInputParams memory originalParams,
+        RouterParams memory originalRouterParams
+    )
+        internal
+        pure
+        returns (
+            ExactInputParams memory tamperedParams,
+            RouterParams memory tamperedRouterParams,
+            address tamperedPoster
+        )
+    {
+        tamperedParams = originalParams;
+        tamperedRouterParams = originalRouterParams;
+        tamperedPoster = params.legitimatePoster;
+
+        if (params.tamperType == TamperType.RECIPIENT) {
+            tamperedParams.recipient = params.maliciousAddress;
+        } else if (params.tamperType == TamperType.POSTER) {
+            tamperedPoster = params.maliciousAddress;
+        } else if (params.tamperType == TamperType.AMOUNT_IN) {
+            tamperedParams.amountIn = params.maliciousAmount;
+        } else if (params.tamperType == TamperType.AMOUNT_OUT) {
+            tamperedParams.minAmountOut = params.maliciousAmount;
+        } else if (params.tamperType == TamperType.TOKEN_IN) {
+            tamperedParams.tokenIn = params.maliciousAddress;
+        } else if (params.tamperType == TamperType.TOKEN_OUT) {
+            tamperedParams.tokenOut = params.maliciousAddress;
+        } else if (params.tamperType == TamperType.ROUTER) {
+            tamperedRouterParams.router = params.maliciousAddress;
+        }
     }
 }

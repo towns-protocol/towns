@@ -15,9 +15,10 @@ import {MockRouter} from "../mocks/MockRouter.sol";
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {DeployPermit2} from "@uniswap/permit2/test/utils/DeployPermit2.sol";
+import {Test} from "forge-std/Test.sol";
 
 /// @notice Base contract for swap-related tests with shared utilities
-abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
+abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase {
     using SafeTransferLib for address;
 
     address internal constant permit2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
@@ -28,17 +29,6 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
 
     address internal feeRecipient;
     address internal POSTER = makeAddr("POSTER");
-
-    // Default empty permit params for tests that fail during early validation
-    Permit2Params internal defaultEmptyPermit =
-        Permit2Params({
-            owner: address(0),
-            token: address(0),
-            amount: 0,
-            nonce: 0,
-            deadline: 0,
-            signature: ""
-        });
 
     bytes32 internal constant _TOKEN_PERMISSIONS_TYPEHASH =
         keccak256("TokenPermissions(address token,uint256 amount)");
