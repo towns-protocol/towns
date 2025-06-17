@@ -23,7 +23,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     uint16 internal constant POSTER_BPS = 50; // 0.5%
 
     address internal feeRecipient;
-    address internal poster = makeAddr("poster");
+    address internal POSTER = makeAddr("POSTER");
 
     function _createSwapParams(
         address swapRouter,
@@ -77,7 +77,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         if (tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
             assertEq(payer.balance, 0, "Incorrect ETH balance");
             assertEq(feeRecipient.balance, expectedProtocolFee, "Incorrect ETH protocol fee");
-            assertEq(poster.balance, expectedPosterFee, "Incorrect ETH poster fee");
+            assertEq(POSTER.balance, expectedPosterFee, "Incorrect ETH poster fee");
             assertEq(tokenOut.balanceOf(recipient), amountOut, "Incorrect tokenOut balance");
             return;
         }
@@ -93,7 +93,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
             expectedProtocolFee,
             "Incorrect protocol fee"
         );
-        assertEq(_getBalance(tokenOut, poster), expectedPosterFee, "Incorrect poster fee");
+        assertEq(_getBalance(tokenOut, POSTER), expectedPosterFee, "Incorrect poster fee");
     }
 
     function _getBalance(address token, address account) internal view returns (uint256) {
