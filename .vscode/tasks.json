@@ -265,7 +265,9 @@
       "label": "Both Casablancas",
       "dependsOn": [
         "Casablanca",
-        "Casablanca-No-Entitlements"
+        "Casablanca-No-Entitlements",
+        "AppRegistry",
+        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
