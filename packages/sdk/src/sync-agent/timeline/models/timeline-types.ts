@@ -19,6 +19,7 @@ import {
     ChannelMessage_Post_AttachmentSchema,
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
+    MembershipReason,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '@towns-protocol/encryption'
 import { isDefined, logNever } from '../../../check'
@@ -276,6 +277,7 @@ export interface StreamMembershipEvent {
     userId: string
     initiatorId: string
     membership: Membership
+    reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
 }
 
