@@ -26,10 +26,12 @@ export interface IAppAccountInterface extends utils.Interface {
   functions: {
     "disableApp(address)": FunctionFragment;
     "enableApp(address)": FunctionFragment;
+    "getAppExpiration(address)": FunctionFragment;
     "getAppId(address)": FunctionFragment;
     "getInstalledApps()": FunctionFragment;
     "isAppEntitled(address,address,bytes32)": FunctionFragment;
     "onInstallApp(bytes32,bytes)": FunctionFragment;
+    "onRenewApp(bytes32,bytes)": FunctionFragment;
     "onUninstallApp(bytes32,bytes)": FunctionFragment;
   };
 
@@ -37,10 +39,12 @@ export interface IAppAccountInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "disableApp"
       | "enableApp"
+      | "getAppExpiration"
       | "getAppId"
       | "getInstalledApps"
       | "isAppEntitled"
       | "onInstallApp"
+      | "onRenewApp"
       | "onUninstallApp"
   ): FunctionFragment;
 
@@ -50,6 +54,10 @@ export interface IAppAccountInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "enableApp",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAppExpiration",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -73,12 +81,20 @@ export interface IAppAccountInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
+    functionFragment: "onRenewApp",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "onUninstallApp",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
 
   decodeFunctionResult(functionFragment: "disableApp", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "enableApp", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getAppExpiration",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getAppId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getInstalledApps",
@@ -92,6 +108,7 @@ export interface IAppAccountInterface extends utils.Interface {
     functionFragment: "onInstallApp",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "onRenewApp", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "onUninstallApp",
     data: BytesLike
@@ -137,6 +154,11 @@ export interface IAppAccount extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getAppExpiration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[number]>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -152,6 +174,12 @@ export interface IAppAccount extends BaseContract {
     ): Promise<[boolean]>;
 
     onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    onRenewApp(
       appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -174,6 +202,11 @@ export interface IAppAccount extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getAppExpiration(
+    app: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<number>;
+
   getAppId(
     app: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -189,6 +222,12 @@ export interface IAppAccount extends BaseContract {
   ): Promise<boolean>;
 
   onInstallApp(
+    appId: PromiseOrValue<BytesLike>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  onRenewApp(
     appId: PromiseOrValue<BytesLike>,
     data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -211,6 +250,11 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    getAppExpiration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<number>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -226,6 +270,12 @@ export interface IAppAccount extends BaseContract {
     ): Promise<boolean>;
 
     onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    onRenewApp(
       appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -251,6 +301,11 @@ export interface IAppAccount extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    getAppExpiration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -266,6 +321,12 @@ export interface IAppAccount extends BaseContract {
     ): Promise<BigNumber>;
 
     onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    onRenewApp(
       appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -289,6 +350,11 @@ export interface IAppAccount extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    getAppExpiration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getAppId(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -304,6 +370,12 @@ export interface IAppAccount extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     onInstallApp(
+      appId: PromiseOrValue<BytesLike>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    onRenewApp(
       appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
