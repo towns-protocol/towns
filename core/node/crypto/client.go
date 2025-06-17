@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -107,6 +108,23 @@ func NewInstrumentedEthClient(
 	}
 }
 
+func (ic *otelEthClient) obfuscateProviderError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// Check for context cancellation or deadline exceeded
+	if errors.Is(err, context.Canceled) {
+		return fmt.Errorf("rpc provider unavailable for chain %s: %w", ic.chainId, context.Canceled)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("rpc provider unavailable for chain %s: %w", ic.chainId, context.DeadlineExceeded)
+	}
+
+	// For all other errors, return a generic error message
+	return fmt.Errorf("client call failed for chain %s", ic.chainId)
+}
+
 func (ic *otelEthClient) ChainID(ctx context.Context) (*big.Int, error) {
 	if ic.tracer != nil {
 		var span trace.Span
@@ -114,7 +132,8 @@ func (ic *otelEthClient) ChainID(ctx context.Context) (*big.Int, error) {
 		defer span.End()
 	}
 
-	return ic.Client.ChainID(ctx)
+	id, err := ic.Client.ChainID(ctx)
+	return id, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) BlockNumber(ctx context.Context) (uint64, error) {
@@ -124,7 +143,8 @@ func (ic *otelEthClient) BlockNumber(ctx context.Context) (uint64, error) {
 		defer span.End()
 	}
 
-	return ic.Client.BlockNumber(ctx)
+	blockNum, err := ic.Client.BlockNumber(ctx)
+	return blockNum, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
@@ -134,7 +154,8 @@ func (ic *otelEthClient) SuggestGasTipCap(ctx context.Context) (*big.Int, error)
 		defer span.End()
 	}
 
-	return ic.Client.SuggestGasTipCap(ctx)
+	gasTip, err := ic.Client.SuggestGasTipCap(ctx)
+	return gasTip, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
@@ -144,7 +165,8 @@ func (ic *otelEthClient) PendingCodeAt(ctx context.Context, account common.Addre
 		defer span.End()
 	}
 
-	return ic.Client.PendingCodeAt(ctx, account)
+	code, err := ic.Client.PendingCodeAt(ctx, account)
+	return code, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) SendTransaction(ctx context.Context, tx *types.Transaction) error {
@@ -159,7 +181,8 @@ func (ic *otelEthClient) SendTransaction(ctx context.Context, tx *types.Transact
 		span.SetAttributes(attribute.String("method_name", methodName))
 	}
 
-	return ic.Client.SendTransaction(ctx, tx)
+	err := ic.Client.SendTransaction(ctx, tx)
+	return ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
@@ -169,7 +192,8 @@ func (ic *otelEthClient) HeaderByNumber(ctx context.Context, number *big.Int) (*
 		defer span.End()
 	}
 
-	return ic.Client.HeaderByNumber(ctx, number)
+	header, err := ic.Client.HeaderByNumber(ctx, number)
+	return header, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error) {
@@ -178,7 +202,8 @@ func (ic *otelEthClient) BlockByNumber(ctx context.Context, number *big.Int) (*t
 		ctx, span = ic.tracer.Start(ctx, "eth_getBlockByNumber")
 		defer span.End()
 	}
-	return ic.Client.BlockByNumber(ctx, number)
+	block, err := ic.Client.BlockByNumber(ctx, number)
+	return block, ic.obfuscateProviderError(err)
 }
 
 // extractCallErrorStatus extracts the revert reason from an error if it is a contract error
@@ -251,7 +276,7 @@ func (ic *otelEthClient) makeEthCallWithTraceAndMetrics(
 		},
 	).Inc()
 
-	return data, err
+	return data, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
@@ -288,7 +313,8 @@ func (ic *otelEthClient) PendingCallContract(ctx context.Context, msg ethereum.C
 		span.SetAttributes(attribute.String("method_name", methodName))
 	}
 
-	return ic.Client.PendingCallContract(ctx, msg)
+	result, err := ic.Client.PendingCallContract(ctx, msg)
+	return result, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
@@ -298,7 +324,8 @@ func (ic *otelEthClient) NonceAt(ctx context.Context, account common.Address, bl
 		defer span.End()
 	}
 
-	return ic.Client.NonceAt(ctx, account, blockNumber)
+	nonce, err := ic.Client.NonceAt(ctx, account, blockNumber)
+	return nonce, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
@@ -308,7 +335,8 @@ func (ic *otelEthClient) PendingNonceAt(ctx context.Context, account common.Addr
 		defer span.End()
 	}
 
-	return ic.Client.PendingNonceAt(ctx, account)
+	nonce, err := ic.Client.PendingNonceAt(ctx, account)
+	return nonce, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
@@ -318,7 +346,8 @@ func (ic *otelEthClient) TransactionReceipt(ctx context.Context, txHash common.H
 		defer span.End()
 	}
 
-	return ic.Client.TransactionReceipt(ctx, txHash)
+	receipt, err := ic.Client.TransactionReceipt(ctx, txHash)
+	return receipt, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) BalanceAt(
@@ -332,7 +361,8 @@ func (ic *otelEthClient) BalanceAt(
 		defer span.End()
 	}
 
-	return ic.Client.BalanceAt(ctx, account, blockNumber)
+	balance, err := ic.Client.BalanceAt(ctx, account, blockNumber)
+	return balance, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
@@ -348,7 +378,8 @@ func (ic *otelEthClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery)
 			span.SetAttributes(attribute.String("to", q.ToBlock.String()))
 		}
 	}
-	return ic.Client.FilterLogs(ctx, q)
+	logs, err := ic.Client.FilterLogs(ctx, q)
+	return logs, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error) {
@@ -358,7 +389,8 @@ func (ic *otelEthClient) BlockByHash(ctx context.Context, hash common.Hash) (*ty
 		defer span.End()
 	}
 
-	return ic.Client.BlockByHash(ctx, hash)
+	block, err := ic.Client.BlockByHash(ctx, hash)
+	return block, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
@@ -368,7 +400,8 @@ func (ic *otelEthClient) CodeAt(ctx context.Context, account common.Address, blo
 		defer span.End()
 	}
 
-	return ic.Client.CodeAt(ctx, account, blockNumber)
+	code, err := ic.Client.CodeAt(ctx, account, blockNumber)
+	return code, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) CodeAtHash(
@@ -384,7 +417,8 @@ func (ic *otelEthClient) CodeAtHash(
 			ctx, span = ic.tracer.Start(ctx, "eth_getCode")
 			defer span.End()
 		}
-		return bh.CodeAtHash(ctx, contract, blockHash)
+		code, err := bh.CodeAtHash(ctx, contract, blockHash)
+		return code, ic.obfuscateProviderError(err)
 	}
 
 	if ic.tracer != nil {
@@ -397,10 +431,11 @@ func (ic *otelEthClient) CodeAtHash(
 
 	block, err := ic.BlockByHash(ctx, blockHash)
 	if err != nil {
-		return nil, err
+		return nil, ic.obfuscateProviderError(err)
 	}
 
-	return ic.CodeAt(ctx, contract, block.Number())
+	code, err := ic.CodeAt(ctx, contract, block.Number())
+	return code, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) EstimateGas(ctx context.Context, call ethereum.CallMsg) (uint64, error) {
@@ -410,7 +445,8 @@ func (ic *otelEthClient) EstimateGas(ctx context.Context, call ethereum.CallMsg)
 		defer span.End()
 	}
 
-	return ic.Client.EstimateGas(ctx, call)
+	gasLimit, err := ic.Client.EstimateGas(ctx, call)
+	return gasLimit, ic.obfuscateProviderError(err)
 }
 
 func (ic *otelEthClient) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
@@ -420,5 +456,6 @@ func (ic *otelEthClient) HeaderByHash(ctx context.Context, hash common.Hash) (*t
 		defer span.End()
 	}
 
-	return ic.Client.HeaderByHash(ctx, hash)
+	header, err := ic.Client.HeaderByHash(ctx, hash)
+	return header, ic.obfuscateProviderError(err)
 }

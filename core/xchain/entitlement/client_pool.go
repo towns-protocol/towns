@@ -71,7 +71,7 @@ func NewBlockchainClientPool(
 			continue
 		}
 
-		// Add metrics collection to contract calls for this chain
+		// Add metrics collection and secret obfuscation to contract calls for this chain
 		clients[chainID] = crypto.NewInstrumentedEthClient(client, chainID, metrics, tracer)
 	}
 
