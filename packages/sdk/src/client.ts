@@ -68,7 +68,6 @@ import {
 } from '@towns-protocol/dlog'
 import {
     AES_GCM_DERIVED_ALGORITHM,
-    BaseDecryptionExtensions,
     CryptoStore,
     DecryptionEvents,
     EntitlementsDelegate,
@@ -79,6 +78,7 @@ import {
     UserDevice,
     UserDeviceCollection,
     makeSessionKeys,
+    type BaseDecryptionExtensions,
     type EncryptionDeviceInitOpts,
 } from '@towns-protocol/encryption'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'

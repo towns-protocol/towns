@@ -9164,8 +9164,8 @@ __metadata:
     eslint-config-ponder: ^0.9.27
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-prettier: ^5.2.6
-    hono: ^4.5.0
-    ponder: ^0.11.11
+    hono: ^4.7.11
+    ponder: ^0.11.17
     prettier: ^3.5.3
     tsx: ^4.7.1
     typescript: ^5.8.2
@@ -18498,10 +18498,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.5.0":
-  version: 4.7.4
-  resolution: "hono@npm:4.7.4"
-  checksum: fcc4b48eaa51572f6db6b102a2ce9c69ead6c47cba9c4e9e816c5741894dc210913f29379967005591d43884ea8ad56a66859c4126bf0eeddc275d64fcb9af1c
+"hono@npm:^4.7.11":
+  version: 4.7.11
+  resolution: "hono@npm:4.7.11"
+  checksum: d3d8b63721e04e972f32371d49ad9f1f4caf2ace9357f22eea122eec4aadf694e6665dc02709d819f5f8d0ff26652e33f72a2d28ce356da2c525117cf2d16921
   languageName: node
   linkType: hard
 
@@ -25030,9 +25030,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ponder@npm:^0.11.11":
-  version: 0.11.11
-  resolution: "ponder@npm:0.11.11"
+"ponder@npm:^0.11.17":
+  version: 0.11.17
+  resolution: "ponder@npm:0.11.17"
   dependencies:
     "@babel/code-frame": ^7.23.4
     "@commander-js/extra-typings": ^12.0.1
@@ -25078,7 +25078,7 @@ __metadata:
       optional: true
   bin:
     ponder: dist/esm/bin/ponder.js
-  checksum: 970297ac649b42face989f6364666b29160bce0661246c8580b09aca0a47e5968070f833cc830a742e92a5b173e5a4e9c8e2da658e9e7edc44a51a083bb1773f
+  checksum: 07450b78391b3256e2a209a73f14e4b45de1cac19025791335f8a48e9dfcb4ef6ddea21228a6dad143001f8591853eac4a44ee481d8fae6ace1a9ad1d980ebca
   languageName: node
   linkType: hard
 

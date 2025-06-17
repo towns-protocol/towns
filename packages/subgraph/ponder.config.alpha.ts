@@ -49,12 +49,12 @@ export default createConfig({
         anvil: {
             chainId: 31337,
             transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            disableCache: false,
         },
         alpha: {
             chainId: 84532,
             transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            disableCache: false,
         },
     },
     contracts: {

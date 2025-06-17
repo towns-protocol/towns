@@ -1,6 +1,6 @@
 {
     "name": "create-towns-protocol-app",
-    "version": "0.0.248",
+    "version": "0.0.249",
     "bin": "index.js",
     "engines": {
         "node": "^18.0.0 || >=20.0.0"

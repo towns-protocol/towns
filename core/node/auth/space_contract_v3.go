@@ -230,7 +230,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 		expiresAt, err := membership.ExpiresAt(&bind.CallOpts{Context: ctx}, tokenId)
 		if err != nil {
 			log.Warnw("Failed to get expiration for token", "tokenId", tokenId, "error", err)
-			continue
+			return nil, err
 		}
 
 		// Token never expires
