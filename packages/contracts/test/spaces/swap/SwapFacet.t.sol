@@ -7,7 +7,6 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 import {ITownsPoints, ITownsPointsBase} from "../../../src/airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IImplementationRegistry} from "../../../src/factory/facets/registry/IImplementationRegistry.sol";
-import {ISwapRouter} from "../../../src/router/ISwapRouter.sol";
 import {IEntitlementBase} from "../../../src/spaces/entitlements/IEntitlement.sol";
 import {ISwapFacetBase, ISwapFacet} from "../../../src/spaces/facets/swap/ISwapFacet.sol";
 
@@ -18,69 +17,36 @@ import {SwapFacetStorage} from "../../../src/spaces/facets/swap/SwapFacetStorage
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
-import {DeployMockERC20, MockERC20} from "../../../scripts/deployments/utils/DeployMockERC20.s.sol";
 import {MembershipFacet} from "../../../src/spaces/facets/membership/MembershipFacet.sol";
-import {MockRouter} from "../../mocks/MockRouter.sol";
 
 // helpers
-import {DeploySwapRouter} from "../../../scripts/deployments/diamonds/DeploySwapRouter.s.sol";
-import {BaseSetup} from "../BaseSetup.sol";
 import {SwapTestBase} from "../../router/SwapTestBase.sol";
+import {BaseSetup} from "../BaseSetup.sol";
 
 contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase, IEntitlementBase {
     using SafeTransferLib for address;
 
     MembershipFacet internal membership;
-    MockERC20 internal token0;
-    MockERC20 internal token1;
-    ISwapRouter internal swapRouter;
     ISwapFacet internal swapFacet;
-    address internal mockRouter;
-    address internal user = makeAddr("user");
-
-    ExactInputParams internal defaultParams;
-    RouterParams internal defaultRouterParams;
+    address internal immutable user = makeAddr("user");
 
     function setUp() public override(BaseSetup, SwapTestBase) {
         BaseSetup.setUp();
+
+        _spaceFactory = spaceFactory;
+        _deployer = deployer;
         SwapTestBase.setUp();
 
-        DeployMockERC20 deployERC20 = new DeployMockERC20();
-        token0 = MockERC20(deployERC20.deploy(deployer));
-        token1 = MockERC20(deployERC20.deploy(deployer));
         membership = MembershipFacet(everyoneSpace);
         swapFacet = ISwapFacet(everyoneSpace);
-        feeRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
-        vm.label(feeRecipient, "FeeRecipient");
-
-        // deploy mock router and whitelist it
-        mockRouter = address(new MockRouter());
-        vm.prank(deployer);
-        IPlatformRequirements(spaceFactory).setRouterWhitelisted(mockRouter, true);
 
         // set swap fees
         vm.prank(deployer);
         IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
 
-        // deploy and initialize SwapRouter
-        DeploySwapRouter deploySwapRouter = new DeploySwapRouter();
-        deploySwapRouter.setDependencies(spaceFactory);
-        swapRouter = ISwapRouter(deploySwapRouter.deploy(deployer));
-        vm.label(address(swapRouter), "SwapRouter");
-
         // add the swap router to the space factory
         vm.prank(deployer);
         implementationRegistry.addImplementation(address(swapRouter));
-
-        (defaultParams, defaultRouterParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0),
-            address(token1),
-            1000,
-            900,
-            user
-        );
     }
 
     function test_storageSlot() external pure {
@@ -144,7 +110,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         vm.prank(nonMember);
         vm.expectRevert(Entitlement__NotMember.selector);
-        swapFacet.executeSwap(defaultParams, defaultRouterParams, POSTER);
+        swapFacet.executeSwap(defaultInputParams, defaultRouterParams, POSTER);
     }
 
     function test_executeSwap_revertIf_swapRouterNotSet() external givenMembership(user) {
@@ -156,19 +122,19 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         vm.prank(user);
         vm.expectRevert(SwapFacet__SwapRouterNotSet.selector);
-        swapFacet.executeSwap(defaultParams, defaultRouterParams, POSTER);
+        swapFacet.executeSwap(defaultInputParams, defaultRouterParams, POSTER);
     }
 
     function test_executeSwap_revertIf_swapFailed() external givenMembership(user) {
         vm.startPrank(user);
-        deal(address(token0), user, defaultParams.amountIn);
-        token0.approve(everyoneSpace, defaultParams.amountIn);
+        deal(address(token0), user, defaultInputParams.amountIn);
+        token0.approve(everyoneSpace, defaultInputParams.amountIn);
 
         defaultRouterParams.swapData = "";
         // With empty calldata, the call to MockRouter will fail at the low level
         // since MockRouter doesn't have a fallback function
         vm.expectRevert();
-        swapFacet.executeSwap(defaultParams, defaultRouterParams, POSTER);
+        swapFacet.executeSwap(defaultInputParams, defaultRouterParams, POSTER);
         vm.stopPrank();
     }
 

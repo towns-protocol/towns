@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISwapRouterBase} from "../../src/router/ISwapRouter.sol";
+import {IPlatformRequirements} from "../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {ISwapRouterBase, ISwapRouter} from "../../src/router/ISwapRouter.sol";
 import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
@@ -11,6 +12,8 @@ import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
+import {DeploySwapRouter} from "../../scripts/deployments/diamonds/DeploySwapRouter.s.sol";
+import {DeployMockERC20, MockERC20} from "../../scripts/deployments/utils/DeployMockERC20.s.sol";
 import {MockRouter} from "../mocks/MockRouter.sol";
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
@@ -20,15 +23,6 @@ import {Test} from "forge-std/Test.sol";
 /// @notice Base contract for swap-related tests with shared utilities
 abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase {
     using SafeTransferLib for address;
-
-    address internal constant permit2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-
-    uint16 internal constant MAX_FEE_BPS = 200; // 2%
-    uint16 internal constant PROTOCOL_BPS = 50; // 0.5%
-    uint16 internal constant POSTER_BPS = 50; // 0.5%
-
-    address internal feeRecipient;
-    address internal POSTER = makeAddr("POSTER");
 
     bytes32 internal constant _TOKEN_PERMISSIONS_TYPEHASH =
         keccak256("TokenPermissions(address token,uint256 amount)");
@@ -41,10 +35,62 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
     string internal constant SWAP_WITNESS_TYPE_STRING =
         "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)";
 
+    address internal constant permit2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    uint16 internal constant MAX_FEE_BPS = 200; // 2%
+    uint16 internal constant PROTOCOL_BPS = 50; // 0.5%
+    uint16 internal constant POSTER_BPS = 50; // 0.5%
+
+    // prerequisites, set before calling setUp()
+    address internal _deployer;
+    address internal _spaceFactory;
+
+    ISwapRouter internal swapRouter;
+    address internal mockRouter;
+    MockERC20 internal token0;
+    MockERC20 internal token1;
+    address internal feeRecipient;
+
+    // Default test parameters
+    ExactInputParams internal defaultInputParams;
+    RouterParams internal defaultRouterParams;
+    Permit2Params internal defaultEmptyPermit;
+    uint256 internal constant DEFAULT_AMOUNT_IN = 100 ether;
+    uint256 internal constant DEFAULT_AMOUNT_OUT = 95 ether;
+    address internal immutable defaultRecipient = makeAddr("defaultRecipient");
+    address internal immutable POSTER = makeAddr("POSTER");
+
     function setUp() public virtual {
-        DeployPermit2 deployer = new DeployPermit2();
-        deployer.deployPermit2();
+        new DeployPermit2().deployPermit2();
         vm.label(permit2, "Permit2");
+
+        DeployMockERC20 deployERC20 = new DeployMockERC20();
+        token0 = MockERC20(deployERC20.deploy(_deployer));
+        token1 = MockERC20(deployERC20.deploy(_deployer));
+
+        // deploy mock router and whitelist it
+        mockRouter = address(new MockRouter());
+        vm.prank(_deployer);
+        IPlatformRequirements(_spaceFactory).setRouterWhitelisted(mockRouter, true);
+
+        // deploy and initialize SwapRouter
+        DeploySwapRouter deploySwapRouter = new DeploySwapRouter();
+        deploySwapRouter.setDependencies(_spaceFactory);
+        swapRouter = ISwapRouter(deploySwapRouter.deploy(_deployer));
+        vm.label(address(swapRouter), "SwapRouter");
+
+        feeRecipient = IPlatformRequirements(_spaceFactory).getFeeRecipient();
+        vm.label(feeRecipient, "FeeRecipient");
+
+        (defaultInputParams, defaultRouterParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0),
+            address(token1),
+            DEFAULT_AMOUNT_IN,
+            DEFAULT_AMOUNT_OUT,
+            defaultRecipient
+        );
     }
 
     function _encodeSwapData(
@@ -52,15 +98,15 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         address tokenOut,
         uint256 amountIn,
         uint256 amountOut,
-        address swapRouter
+        address _swapRouter
     ) internal pure returns (bytes memory) {
         return
-            abi.encodeCall(MockRouter.swap, (tokenIn, tokenOut, amountIn, amountOut, swapRouter));
+            abi.encodeCall(MockRouter.swap, (tokenIn, tokenOut, amountIn, amountOut, _swapRouter));
     }
 
     function _createSwapParams(
-        address swapRouter,
-        address mockRouter,
+        address _swapRouter,
+        address _mockRouter,
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
@@ -81,9 +127,9 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         });
 
         routerParams = RouterParams({
-            router: mockRouter,
-            approveTarget: mockRouter,
-            swapData: _encodeSwapData(tokenIn, tokenOut, amountIn, amountOut, swapRouter)
+            router: _mockRouter,
+            approveTarget: _mockRouter,
+            swapData: _encodeSwapData(tokenIn, tokenOut, amountIn, amountOut, _swapRouter)
         });
     }
 

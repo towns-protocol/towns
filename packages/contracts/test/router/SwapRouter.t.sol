@@ -4,9 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
-import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 import {IPlatformRequirements} from "../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {ISwapRouter} from "../../src/router/ISwapRouter.sol";
 
 // libraries
 import {SignatureVerification} from "@uniswap/permit2/src/libraries/SignatureVerification.sol";
@@ -15,12 +13,7 @@ import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
 import {SwapRouterStorage} from "../../src/router/SwapRouterStorage.sol";
 
 // contracts
-import {DeployMockERC20, MockERC20} from "../../scripts/deployments/utils/DeployMockERC20.s.sol";
-import {MockRouter} from "../mocks/MockRouter.sol";
-
-// helpers
 import {DeploySpaceFactory} from "../../scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeploySwapRouter} from "../../scripts/deployments/diamonds/DeploySwapRouter.s.sol";
 import {SwapTestBase} from "./SwapTestBase.sol";
 
 contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
@@ -58,55 +51,19 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 maliciousAmount;
     }
 
+    address internal immutable deployer = makeAddr("deployer");
     address internal spaceFactory;
-    ISwapRouter internal swapRouter;
     IPausable internal pausableFacet;
-    address internal mockRouter;
-    MockERC20 internal token0;
-    MockERC20 internal token1;
-    address internal deployer = makeAddr("deployer");
-
-    // Default test parameters
-    ExactInputParams internal defaultInputParams;
-    RouterParams internal defaultRouterParams;
-    Permit2Params internal defaultEmptyPermit;
-    uint256 internal constant DEFAULT_AMOUNT_IN = 100 ether;
-    uint256 internal constant DEFAULT_AMOUNT_OUT = 95 ether;
-    address internal defaultRecipient = address(this);
 
     function setUp() public override {
-        super.setUp();
-
         DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
         spaceFactory = deploySpaceFactory.deploy(deployer);
+        _spaceFactory = spaceFactory;
+        _deployer = deployer;
 
-        DeployMockERC20 deployERC20 = new DeployMockERC20();
-        token0 = MockERC20(deployERC20.deploy(deployer));
-        token1 = MockERC20(deployERC20.deploy(deployer));
-        feeRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
+        super.setUp();
 
-        // deploy mock router and whitelist it
-        mockRouter = address(new MockRouter());
-        vm.prank(deployer);
-        IPlatformRequirements(spaceFactory).setRouterWhitelisted(mockRouter, true);
-
-        // deploy and initialize SwapRouter
-        DeploySwapRouter deploySwapRouter = new DeploySwapRouter();
-        deploySwapRouter.setDependencies(spaceFactory);
-        swapRouter = ISwapRouter(deploySwapRouter.deploy(deployer));
         pausableFacet = IPausable(address(swapRouter));
-
-        vm.label(address(swapRouter), "SwapRouter");
-
-        (defaultInputParams, defaultRouterParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0),
-            address(token1),
-            DEFAULT_AMOUNT_IN,
-            DEFAULT_AMOUNT_OUT,
-            defaultRecipient
-        );
     }
 
     function test_storageSlot() external pure {
