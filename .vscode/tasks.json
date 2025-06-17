@@ -93,6 +93,7 @@
         "WatchCasablancaWeb3",
         "WatchCasablancaSdk",
         "WatchReactSdk",
+        "WatchBot",
         "WatchStress",
       ],
       "group": {
@@ -380,6 +381,16 @@
       "label": "WatchReactSdk",
       "type": "shell",
       "command": "cd packages/react-sdk && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchBot",
+      "type": "shell",
+      "command": "cd packages/bot && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

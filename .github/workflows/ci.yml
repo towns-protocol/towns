@@ -468,6 +468,9 @@ jobs:
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
 
+            - name: Run Bot Uber Test (with entitlements)
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/bot
+
             - name: Archive River Node Logs and Settings
               if: always()
               uses: actions/upload-artifact@v4

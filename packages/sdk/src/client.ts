@@ -2029,7 +2029,7 @@ export class Client
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
-                userId: addressFromUserId(userId),
+                userId: bin_fromHexString(userId),
                 streamId: streamIdAsBytes(streamId),
                 streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
