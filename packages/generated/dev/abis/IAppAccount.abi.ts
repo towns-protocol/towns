@@ -27,6 +27,25 @@ export default [
   },
   {
     "type": "function",
+    "name": "getAppExpiration",
+    "inputs": [
+      {
+        "name": "app",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint48",
+        "internalType": "uint48"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getAppId",
     "inputs": [
       {
@@ -106,6 +125,24 @@ export default [
   },
   {
     "type": "function",
+    "name": "onRenewApp",
+    "inputs": [
+      {
+        "name": "appId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "data",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "onUninstallApp",
     "inputs": [
       {
@@ -146,13 +183,7 @@ export default [
   {
     "type": "error",
     "name": "InvalidManifest",
-    "inputs": [
-      {
-        "name": "app",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
+    "inputs": []
   },
   {
     "type": "error",
