@@ -46,11 +46,6 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         )
     }
 
-    // for backwards compatibility
-    getState() {
-        return this.value
-    }
-
     streamInitialized(streamId: string, messages: StreamTimelineEvent[]) {
         this.streamIds.add(streamId)
         const timelineEvents = messages
@@ -95,9 +90,7 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         decryptedContent: DecryptedContent,
     ): TimelineEvent | undefined {
-        const prevEvent = this.getState().timelines[streamId].find(
-            (event) => event.eventId === eventId,
-        )
+        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
         if (prevEvent) {
             const newEvent = toDecryptedEvent(prevEvent, decryptedContent, this.userId)
             if (!isEqual(newEvent, prevEvent)) {
@@ -113,9 +106,7 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         error: DecryptionSessionError,
     ) {
-        const prevEvent = this.getState().timelines[streamId].find(
-            (event) => event.eventId === eventId,
-        )
+        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
         if (prevEvent) {
             const newEvent = toDecryptedContentErrorEvent(prevEvent, error)
             if (newEvent !== prevEvent) {
