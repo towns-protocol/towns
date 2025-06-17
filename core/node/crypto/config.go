@@ -57,6 +57,12 @@ const (
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
+	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
+
+	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
+	// replication factor must be picked as candidates to place a stream on. From these candidates
+	// the best replication factor nodes are picked.
+	StreamDistributionExtraCandidatesCountCountKey = "stream.distribution.extracandidatescount"
 )
 
 var (
@@ -136,6 +142,11 @@ type OnChainSettings struct {
 	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined with the default value and per stream type.
 	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
+	// StreamDistribution holds settings for the stream distribution algorithm.
+	StreamDistribution StreamDistribution `mapstructure:",squash"`
+	// ServerEnableNode2NodeAuth indicates whether node-to-node authentication is enabled.
+	// Options: 1 means enabled, 0 means disabled.
+	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enablenode2nodeauth"`
 }
 
 type XChainSettings struct {
@@ -198,6 +209,13 @@ func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 
 	}
 }
 
+// StreamDistribution holds settings for the stream distribution algorithm.
+type StreamDistribution struct {
+	// ExtraCandidatesCount is the number of extra candidate nodes to select when determining the
+	// nodes to place a stream on. From these candidates the best replication factor nodes are picked.
+	ExtraCandidatesCount uint64 `mapstructure:"stream.distribution.extracandidatescount"`
+}
+
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 50,
@@ -242,6 +260,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 		XChain: XChainSettings{
 			Blockchains: []uint64{},
 		},
+
+		ServerEnableNode2NodeAuth: 0,
 	}
 }
 

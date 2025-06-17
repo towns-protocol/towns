@@ -35,6 +35,25 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getAppExpiration",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint48",
+        internalType: "uint48",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getAppId",
     inputs: [
       {
@@ -114,6 +133,24 @@ const _abi = [
   },
   {
     type: "function",
+    name: "onRenewApp",
+    inputs: [
+      {
+        name: "appId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "onUninstallApp",
     inputs: [
       {
@@ -154,13 +191,7 @@ const _abi = [
   {
     type: "error",
     name: "InvalidManifest",
-    inputs: [
-      {
-        name: "app",
-        type: "address",
-        internalType: "address",
-      },
-    ],
+    inputs: [],
   },
   {
     type: "error",

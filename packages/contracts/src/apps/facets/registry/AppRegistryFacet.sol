@@ -66,9 +66,8 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @notice Remove a app from the registry
     /// @param versionId The app ID to remove
     /// @dev Only the owner of the app can remove it
-    /// @return version The version ID that was removed
-    function removeApp(bytes32 versionId) external nonReentrant returns (bytes32 version) {
-        (, version) = _removeApp(msg.sender, versionId);
+    function removeApp(bytes32 versionId) external nonReentrant {
+        _removeApp(msg.sender, versionId);
     }
 
     /// @notice Create an upgradeable simple app contract
@@ -103,6 +102,19 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     ) external nonReentrant {
         _onlyAllowed(address(account));
         return _uninstallApp(address(app), address(account), data);
+    }
+
+    /// @notice Renew an app
+    /// @param app The app address to renew
+    /// @param account The account to renew the app for
+    /// @param data The data to pass to the app's onRenewApp function
+    function renewApp(
+        ITownsApp app,
+        IAppAccount account,
+        bytes calldata data
+    ) external payable nonReentrant {
+        _onlyAllowed(address(account));
+        _renewApp(address(app), address(account), data);
     }
 
     /// @notice Get the schema structure used for registering modules

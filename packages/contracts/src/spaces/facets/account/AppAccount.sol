@@ -27,8 +27,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         uint256 value,
         bytes calldata data
     ) external payable nonReentrant returns (bytes memory result) {
-        _checkAuthorized(target);
-        (result, ) = _execute(target, value, data);
+        result = _onExecute(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -48,6 +47,12 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
+    function onRenewApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry();
+        _onRenewApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
     function enableApp(address app) external onlyOwner {
         _enableApp(app);
     }
@@ -63,13 +68,13 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
-    function isAppInstalled(address app) external view returns (bool) {
-        return _isAppInstalled(app);
+    function getAppId(address app) external view returns (bytes32) {
+        return _getInstalledAppId(app);
     }
 
     /// @inheritdoc IAppAccount
-    function getAppId(address app) external view returns (bytes32) {
-        return _getInstalledAppId(app);
+    function getAppExpiration(address app) external view returns (uint48) {
+        return _getGroupExpiration(_getInstalledAppId(app));
     }
 
     /// @inheritdoc IAppAccount

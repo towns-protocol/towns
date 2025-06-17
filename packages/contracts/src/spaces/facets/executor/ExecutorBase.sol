@@ -52,6 +52,10 @@ abstract contract ExecutorBase is IExecutorBase {
         emit GroupStatusSet(groupId, status);
     }
 
+    function _getGroupExpiration(bytes32 groupId) internal view returns (uint48) {
+        return _getGroup(groupId).expiration;
+    }
+
     /// @notice Creates a new group and marks it as active without expiration.
     /// @param groupId The ID of the group to create.
     /// @param status The status to set (active/inactive).

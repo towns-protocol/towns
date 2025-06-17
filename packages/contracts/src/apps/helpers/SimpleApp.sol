@@ -22,7 +22,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         string calldata appId,
         bytes32[] calldata permissions,
         uint256 installPrice,
-        uint64 accessDuration
+        uint48 accessDuration
     ) external initializer {
         _setOwner(owner);
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
@@ -35,7 +35,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     /// @notice Updates the pricing of the app
     /// @param installPrice The new install price
     /// @param accessDuration The new access duration
-    function updatePricing(uint256 installPrice, uint64 accessDuration) external onlyOwner {
+    function updatePricing(uint256 installPrice, uint48 accessDuration) external onlyOwner {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         $.installPrice = installPrice;
         $.accessDuration = accessDuration;
@@ -70,7 +70,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         return $.installPrice;
     }
 
-    function _accessDuration() internal view override returns (uint64) {
+    function _accessDuration() internal view override returns (uint48) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         return $.accessDuration;
     }

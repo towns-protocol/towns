@@ -39,7 +39,7 @@ abstract contract BaseApp is ITownsApp {
         return _installPrice();
     }
 
-    function accessDuration() external view returns (uint64) {
+    function accessDuration() external view returns (uint48) {
         return _accessDuration();
     }
 
@@ -52,5 +52,5 @@ abstract contract BaseApp is ITownsApp {
 
     function _installPrice() internal view virtual returns (uint256) {}
 
-    function _accessDuration() internal view virtual returns (uint64) {}
+    function _accessDuration() internal view virtual returns (uint48) {}
 }

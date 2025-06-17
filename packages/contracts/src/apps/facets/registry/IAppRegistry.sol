@@ -16,7 +16,7 @@ interface IAppRegistryBase {
         bytes32[] permissions;
         address client;
         uint256 installPrice;
-        uint64 accessDuration;
+        uint48 accessDuration;
     }
 
     struct App {
@@ -26,6 +26,7 @@ interface IAppRegistryBase {
         address client;
         bytes32[] permissions;
         ExecutionManifest manifest;
+        uint48 duration;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -59,6 +60,7 @@ interface IAppRegistryBase {
     event AppCreated(address indexed app, bytes32 uid);
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
 }
 
 /// @title IAppRegistry Interface
@@ -108,8 +110,13 @@ interface IAppRegistry is IAppRegistryBase {
 
     /// @notice Remove a app from the registry
     /// @param appId The app ID to remove
-    /// @return The attestation UID that was removed
-    function removeApp(bytes32 appId) external returns (bytes32);
+    function removeApp(bytes32 appId) external;
+
+    /// @notice Renew an app
+    /// @param app The app address to renew
+    /// @param account The account to renew the app for
+    /// @param data The data to pass to the app's onRenewApp function
+    function renewApp(ITownsApp app, IAppAccount account, bytes calldata data) external payable;
 
     /// @notice Install an app
     /// @param app The app address to install

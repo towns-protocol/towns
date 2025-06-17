@@ -153,9 +153,13 @@ export const getStreamMetadataUrl = (environmentId: string) => {
 export const getAppRegistryUrl = (environmentId: string) => {
     switch (environmentId) {
         case 'local_multi':
-            return 'https://localhost:6170'
+            return 'http://localhost:6170'
         case 'local_multi_ne':
-            return 'https://localhost:6190'
+            return 'http://localhost:6190'
+        case 'alpha':
+        case 'gamma':
+        case 'omega':
+        case 'delta':
         default:
             throw new Error(`No app registry url for environmentId ${environmentId}`)
     }

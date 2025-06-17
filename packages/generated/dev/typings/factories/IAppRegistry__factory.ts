@@ -86,8 +86,8 @@ const _abi = [
           },
           {
             name: "accessDuration",
-            type: "uint64",
-            internalType: "uint64",
+            type: "uint48",
+            internalType: "uint48",
           },
         ],
       },
@@ -227,6 +227,11 @@ const _abi = [
               },
             ],
           },
+          {
+            name: "duration",
+            type: "uint48",
+            internalType: "uint48",
+          },
         ],
       },
     ],
@@ -353,14 +358,31 @@ const _abi = [
         internalType: "bytes32",
       },
     ],
-    outputs: [
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "renewApp",
+    inputs: [
       {
-        name: "",
-        type: "bytes32",
-        internalType: "bytes32",
+        name: "app",
+        type: "address",
+        internalType: "contract ITownsApp",
+      },
+      {
+        name: "account",
+        type: "address",
+        internalType: "contract IAppAccount",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
       },
     ],
-    stateMutability: "nonpayable",
+    outputs: [],
+    stateMutability: "payable",
   },
   {
     type: "function",
@@ -462,6 +484,31 @@ const _abi = [
         name: "uid",
         type: "bytes32",
         indexed: false,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "AppRenewed",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "account",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "appId",
+        type: "bytes32",
+        indexed: true,
         internalType: "bytes32",
       },
     ],

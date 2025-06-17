@@ -70,7 +70,7 @@ contract MockPlugin is OwnableFacet, ITownsApp {
         return 0;
     }
 
-    function accessDuration() external pure override returns (uint64) {
+    function accessDuration() external pure override returns (uint48) {
         return 0;
     }
 }

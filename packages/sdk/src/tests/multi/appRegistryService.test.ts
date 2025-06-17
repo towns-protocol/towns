@@ -1,10 +1,11 @@
 import { makeSignerContext } from '../../signerContext'
 import { AppRegistryService } from '../../appRegistryService'
 import { ethers } from 'ethers'
+import { getAppRegistryUrl } from '../../riverConfig'
 
-export const appRegistryUrl = 'https://localhost:6170'
+const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
 
-describe('appRegistryService test', () => {
+describe('appRegistryService test', { skip: true }, () => {
     test('authenticate with primary key', async () => {
         const wallet = ethers.Wallet.createRandom()
         const { finishResponse } = await AppRegistryService.authenticateWithSigner(

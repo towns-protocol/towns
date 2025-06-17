@@ -1094,6 +1094,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "EntitlementGated_InvalidValue",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "EntitlementGated_NodeAlreadyVoted",
     "inputs": []
   },

@@ -16,7 +16,7 @@ import { SyncedStream } from '../../syncedStream'
 import { StubPersistenceStore } from '../../persistenceStore'
 import { Envelope, StreamEvent, PlainMessage } from '@towns-protocol/proto'
 import { nanoid } from 'nanoid'
-import { StreamsView, StreamsViewDelegate } from '../../streams-view/streamsView'
+import { StreamsView, StreamsViewDelegate } from '../../views/streamsView'
 
 const log = dlog('csb:test:syncedStreams')
 
@@ -93,7 +93,7 @@ describe('syncStreams', () => {
         ])
 
         const streamsViewDelegate: StreamsViewDelegate = {
-            isDMMessageEventBlocked: (_event, _kind) => {
+            isDMMessageEventBlocked: (_event) => {
                 return false
             },
         }

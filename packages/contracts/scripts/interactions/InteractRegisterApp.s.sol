@@ -21,7 +21,7 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         permissions[0] = bytes32("Read");
 
         uint256 installPrice = 0.001 ether;
-        uint64 accessDuration = 365 days;
+        uint48 accessDuration = 365 days;
 
         AppParams memory appData = AppParams({
             name: "simple.app",

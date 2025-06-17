@@ -26,7 +26,7 @@ import { makeParsedEvent } from '../../sign'
 import { makeRemoteTimelineEvent, StreamTimelineEvent } from '../../types'
 import { bin_fromHexString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
-import { StreamsView } from '../../streams-view/streamsView'
+import { StreamsView } from '../../views/streamsView'
 
 interface TagsTestUser {
     userId: string
@@ -230,7 +230,7 @@ describe('makeTags', () => {
             },
         ]
 
-        streamsView.streamInitialized(streamId, 'channelContent', events)
+        streamsView.timelinesView.streamInitialized(streamId, events)
 
         const tags = makeTags(replyMessage, mockStreamView)
 

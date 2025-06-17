@@ -47,16 +47,16 @@ if (!swapRouter) {
 }
 
 export default createConfig({
-    networks: {
+    chains: {
         anvil: {
-            chainId: 31337,
-            transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            id: 31337,
+            rpc: http(process.env.PONDER_RPC_URL_1),
+            disableCache: false,
         },
         gamma: {
-            chainId: 84532,
-            transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            id: 84532,
+            rpc: http(process.env.PONDER_RPC_URL_1),
+            disableCache: false,
         },
     },
     contracts: {
@@ -71,13 +71,13 @@ export default createConfig({
             ]),
             address: baseRegistry,
             startBlock,
-            network: 'gamma',
+            chain: 'gamma',
         },
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
             startBlock,
-            network: 'gamma',
+            chain: 'gamma',
         },
         Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
@@ -89,19 +89,19 @@ export default createConfig({
                 parameter: 'space',
             }),
             startBlock,
-            network: 'gamma',
+            chain: 'gamma',
         },
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
             startBlock,
-            network: 'gamma',
+            chain: 'gamma',
         },
         SwapRouter: {
             abi: swapRouterAbi,
             address: swapRouter,
             startBlock,
-            network: 'gamma',
+            chain: 'gamma',
         },
     },
 })

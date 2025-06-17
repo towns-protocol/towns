@@ -74,6 +74,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 			s.riverChain.ChainMonitor,
 			s.chainConfig,
 			httpClient,
+			httpClient,
 			s.otelConnectIterceptor,
 		)
 		if err != nil {

@@ -24,5 +24,5 @@ interface ITownsApp is IERC6900Module, IERC6900ExecutionModule {
 
     /// @notice Returns the access duration of the app
     /// @return accessDuration The access duration of the app
-    function accessDuration() external view returns (uint64);
+    function accessDuration() external view returns (uint48);
 }

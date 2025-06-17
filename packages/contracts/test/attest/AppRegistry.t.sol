@@ -34,7 +34,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     MockModule internal mockModule;
 
     uint256 private DEFAULT_INSTALL_PRICE = 0.001 ether;
-    uint64 private DEFAULT_ACCESS_DURATION = 365 days;
+    uint48 private DEFAULT_ACCESS_DURATION = 365 days;
     address private DEFAULT_CLIENT;
     address private DEFAULT_DEV;
     bytes32 private DEFAULT_APP_ID;
@@ -74,7 +74,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         string memory schema = registry.getAppSchema();
         assertEq(
             schema,
-            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest"
+            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest, uint48 duration"
         );
     }
 
@@ -85,6 +85,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     function test_registerApp() external givenAppIsRegistered {
         assertEq(DEFAULT_APP_ID, registry.getLatestAppId(address(mockModule)));
         assertEq(address(mockModule), registry.getAppByClient(DEFAULT_CLIENT));
+        assertEq(registry.getAppById(DEFAULT_APP_ID).duration, DEFAULT_ACCESS_DURATION);
     }
 
     function test_revertWhen_registerApp_EmptyApp() external {
@@ -112,6 +113,15 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.registerApp(newApp, DEFAULT_CLIENT);
     }
 
+    function test_revertWhen_registerApp_InvalidDuration() external {
+        vm.prank(DEFAULT_DEV);
+        mockModule.setDuration(365 days + 1);
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(InvalidDuration.selector);
+        registry.registerApp(mockModule, DEFAULT_CLIENT);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   MODULE INFORMATION TESTS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -133,9 +143,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
     function test_removeApp() external givenAppIsRegistered {
         vm.prank(DEFAULT_DEV);
-        bytes32 revokedUid = registry.removeApp(DEFAULT_APP_ID);
+        registry.removeApp(DEFAULT_APP_ID);
 
-        assertEq(revokedUid, DEFAULT_APP_ID);
         assertEq(registry.getAppByClient(DEFAULT_CLIENT), address(0));
     }
 
@@ -221,6 +230,19 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAddressInput.selector);
+        registry.createApp(appData);
+    }
+
+    function test_revertWhen_createApp_InvalidDuration() external {
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: new bytes32[](1),
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: 365 days + 1
+        });
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(InvalidDuration.selector);
         registry.createApp(appData);
     }
 
@@ -434,6 +456,172 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         App memory app = registry.getAppById(DEFAULT_APP_ID);
         assertEq(app.appId, DEFAULT_APP_ID);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           RENEW APP TESTS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_renewApp_flow() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Get initial expiration
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+
+        // Move time forward but not past expiration
+        vm.warp(block.timestamp + 30 days);
+
+        // Renew the app
+        uint256 devInitialBalance = address(DEFAULT_DEV).balance;
+        uint256 protocolFee = _getProtocolFee(price);
+
+        hoax(founder, totalPrice);
+        vm.expectEmit(address(registry));
+        emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
+        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Verify new expiration is extended by duration
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
+
+        // Verify fee distribution
+        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(appAccount).balance, 0);
+    }
+
+    function test_renewApp_withFreeApp() external givenAppIsRegistered {
+        // First install the app
+        _setupAppWithPrice(0);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Get initial expiration
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+
+        // Move time forward but not past expiration
+        vm.warp(block.timestamp + 30 days);
+
+        vm.expectEmit(address(registry));
+        emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
+
+        hoax(founder, totalPrice);
+        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Verify new expiration is extended by duration
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
+    }
+
+    function test_renewApp_withExcessPayment() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Get initial expiration
+        uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
+
+        // Move time forward but not past expiration
+        vm.warp(block.timestamp + 30 days);
+
+        // Renew with excess payment
+        uint256 excess = 0.5 ether;
+        uint256 payment = totalPrice + excess;
+        uint256 founderInitialBalance = address(founder).balance;
+
+        hoax(founder, payment);
+        registry.renewApp{value: payment}(mockModule, appAccount, "");
+
+        // Verify new expiration is extended by duration
+        uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
+        assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
+
+        // Verify excess was refunded
+        assertEq(address(founder).balance - founderInitialBalance, excess);
+    }
+
+    function test_revertWhen_renewApp_notAllowed() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Try to renew as non-owner
+        vm.prank(_randomAddress());
+        vm.expectRevert(NotAllowed.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_appNotInstalled() external givenAppIsRegistered {
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+
+        hoax(founder, totalPrice);
+        vm.expectRevert(AppNotInstalled.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_appRevoked() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Revoke the app
+        vm.prank(DEFAULT_DEV);
+        registry.removeApp(DEFAULT_APP_ID);
+
+        // Try to renew
+        hoax(founder, totalPrice);
+        vm.expectRevert(AppRevoked.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_bannedApp() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Ban the app
+        vm.prank(deployer);
+        registry.adminBanApp(address(mockModule));
+
+        // Try to renew
+        hoax(founder, totalPrice);
+        vm.expectRevert(BannedApp.selector);
+        registry.renewApp(mockModule, appAccount, "");
+    }
+
+    function test_revertWhen_renewApp_insufficientPayment() external givenAppIsRegistered {
+        // First install the app
+        uint256 price = 1 ether;
+        _setupAppWithPrice(price);
+        uint256 totalPrice = registry.getAppPrice(address(mockModule));
+        hoax(founder, totalPrice);
+        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+
+        // Try to renew with insufficient payment
+        uint256 insufficientAmount = totalPrice - 1;
+        hoax(founder, insufficientAmount);
+        vm.expectRevert(InsufficientPayment.selector);
+        registry.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -78,15 +78,8 @@ contract MockEntitlementGated is EntitlementGated {
         }
         bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
 
-        for (uint256 i = 0; i < roleIds.length; i++) {
-            _requestEntitlementCheckV2(
-                msg.sender,
-                address(this),
-                transactionId,
-                IRuleEntitlement(address(this)),
-                roleIds[i]
-            );
-        }
+        _checkEntitlement(msg.sender, address(this), transactionId, roleIds);
+
         return transactionId;
     }
 
@@ -100,15 +93,22 @@ contract MockEntitlementGated is EntitlementGated {
         }
         bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
 
-        for (uint256 i = 0; i < roleIds.length; i++) {
-            _requestEntitlementCheckV2(
-                msg.sender,
-                address(this),
-                transactionId,
-                IRuleEntitlement(address(this)),
-                roleIds[i]
-            );
+        _checkEntitlement(msg.sender, address(this), transactionId, roleIds);
+        return transactionId;
+    }
+
+    function joinSpace(
+        address receiver,
+        uint256[] calldata roleIds,
+        IRuleEntitlement.RuleDataV2 calldata ruleData
+    ) external payable returns (bytes32) {
+        for (uint256 i; i < roleIds.length; ++i) {
+            ruleDatasV2ByRoleId[roleIds[i]] = ruleData;
         }
+        bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
+
+        _checkEntitlement(receiver, msg.sender, transactionId, roleIds);
+
         return transactionId;
     }
 
@@ -128,6 +128,39 @@ contract MockEntitlementGated is EntitlementGated {
                     "RuleEntitlementV2",
                     abi.encode(ruleDatasV2ByRoleId[roleId])
                 );
+        }
+    }
+
+    function _checkEntitlement(
+        address receiver,
+        address sender,
+        bytes32 transactionId,
+        uint256[] calldata roleIds
+    ) internal {
+        bool paymentSent = false;
+
+        // Only send payment with the first entitlement check
+        for (uint256 i; i < roleIds.length; ++i) {
+            if (!paymentSent) {
+                _requestEntitlementCheckV2(
+                    receiver,
+                    sender,
+                    transactionId,
+                    IRuleEntitlement(address(this)),
+                    roleIds[i],
+                    msg.value
+                );
+                paymentSent = true;
+            } else {
+                _requestEntitlementCheckV2(
+                    receiver,
+                    sender,
+                    transactionId,
+                    IRuleEntitlement(address(this)),
+                    roleIds[i],
+                    0
+                );
+            }
         }
     }
 }

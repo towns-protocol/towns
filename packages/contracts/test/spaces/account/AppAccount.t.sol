@@ -24,7 +24,7 @@ import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // mocks
-import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
+import {MockModule} from "test/mocks/MockModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
 
 contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistryBase {
@@ -121,17 +121,6 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         appAccount.onInstallApp(EMPTY_UID, "");
     }
 
-    function test_revertWhen_installApp_invalidManifest() external givenAppIsRegistered {
-        MockModuleV2 mockModuleV2 = new MockModuleV2();
-        mockModule.upgradeToAndCall(address(mockModuleV2), "");
-
-        vm.prank(appRegistry);
-        vm.expectRevert(
-            abi.encodeWithSelector(IAppAccountBase.InvalidManifest.selector, address(mockModule))
-        );
-        appAccount.onInstallApp(appId, "");
-    }
-
     function test_revertWhen_installApp_invalidSelector() external {
         vm.prank(dev);
         MockInvalidModule invalidModule = new MockInvalidModule();
@@ -214,6 +203,19 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
     }
 
     // execute
+    function test_execute_noValueIsSent() external givenAppIsInstalled {
+        vm.deal(address(appAccount), 1 ether);
+
+        vm.prank(client);
+        appAccount.execute({
+            target: address(mockModule),
+            value: 1 ether,
+            data: abi.encodeWithSelector(mockModule.mockFunction.selector)
+        });
+
+        assertEq(address(appAccount).balance, 1 ether);
+        assertEq(address(mockModule).balance, 0);
+    }
     function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {
         vm.prank(deployer);
         registry.adminBanApp(address(mockModule));
@@ -234,6 +236,8 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         vm.prank(founder);
         appAccount.disableApp(address(mockModule));
 
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), false);
+
         // Try to execute - should fail
         vm.prank(client);
         vm.expectRevert(IExecutorBase.UnauthorizedCall.selector);
@@ -247,6 +251,8 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         vm.prank(founder);
         appAccount.enableApp(address(mockModule));
 
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
+
         // Should be able to execute now
         vm.prank(client);
         appAccount.execute({
@@ -256,7 +262,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         });
     }
 
-    function test_isEntitled_clientWithoutPermission() external givenAppIsInstalled {
+    function test_isAppEntitled_nonExistentPermission() external givenAppIsInstalled {
         assertEq(
             appAccount.isAppEntitled(
                 address(mockModule),
@@ -267,8 +273,25 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         );
     }
 
-    function test_isEntitled_nonExistentApp() external view {
+    function test_isAppEntitled_nonExistentApp() external view {
         assertEq(appAccount.isAppEntitled(address(0xdead), client, keccak256("Read")), false);
+    }
+
+    function test_isAppEntitled_expiredApp() external givenAppIsInstalled {
+        uint48 expiration = appAccount.getAppExpiration(address(mockModule));
+
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), true);
+
+        vm.warp(expiration + 1);
+
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), false);
+    }
+
+    function test_isAppEntitled_invalidClient() external givenAppIsInstalled {
+        assertEq(
+            appAccount.isAppEntitled(address(mockModule), address(0xdead), keccak256("Read")),
+            false
+        );
     }
 
     function test_installApp_withInstallData() external givenAppIsRegistered {

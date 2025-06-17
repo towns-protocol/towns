@@ -12,9 +12,10 @@ import {XChain} from "src/base/registry/facets/xchain/XChain.sol";
 
 library DeployXChain {
     function selectors() internal pure returns (bytes4[] memory res) {
-        res = new bytes4[](2);
+        res = new bytes4[](3);
         res[0] = XChain.postEntitlementCheckResult.selector;
         res[1] = XChain.isCheckCompleted.selector;
+        res[2] = XChain.provideXChainRefund.selector;
     }
 
     function makeCut(
