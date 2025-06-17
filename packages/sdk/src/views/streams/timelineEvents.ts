@@ -310,6 +310,7 @@ function toTownsContent_MemberPayload(
                     userId: userIdFromAddress(value.content.value.userAddress),
                     initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
+                    reason: value.content.value.reason,
                 } satisfies StreamMembershipEvent,
             }
         case 'keySolicitation':
@@ -1164,7 +1165,10 @@ export function getFallbackContent(
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {
-            return `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}`
+            return `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}` +
+                content.reason
+                ? ` reason: ${content.reason}`
+                : ''
         }
         case RiverTimelineEvent.ChannelMessage:
             return `${senderDisplayName}: ${content.body}`

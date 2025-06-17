@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/otelconnect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -142,4 +143,8 @@ func (s *Service) BaseChain() *crypto.Blockchain {
 
 func (s *Service) RiverChain() *crypto.Blockchain {
 	return s.riverChain
+}
+
+func (s *Service) GetWalletAddress() common.Address {
+	return s.wallet.Address
 }

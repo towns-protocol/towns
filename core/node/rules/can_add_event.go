@@ -1470,7 +1470,13 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	}
 	// for joins and invites, require space membership
 	return &DerivedEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, common.BytesToAddress(ru.membership.InitiatorAddress), nil, nil),
+		Payload: events.Make_UserPayload_Membership(
+			MembershipOp_SO_JOIN,
+			*streamParentId,
+			common.BytesToAddress(ru.membership.InitiatorAddress),
+			nil,
+			nil,
+		),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -1571,6 +1577,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 			userAddress.Bytes(),
 			initiatorAddress,
 			userMembership.StreamParentId,
+			userMembership.Reason,
 		),
 		StreamId: toStreamId,
 	}, nil
@@ -1586,7 +1593,13 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress), action.StreamParentId, nil)
+	payload := events.Make_UserPayload_Membership(
+		action.Op,
+		actionStreamId,
+		common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+		action.StreamParentId,
+		nil,
+	)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
 	if err != nil {
 		return nil, err
@@ -1803,7 +1816,7 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 				initiatorId,
 			)
 		}
-		if userAddress != initiatorId {
+		if userAddress != initiatorId && !ru.params.isValidNode(initiatorId[:]) {
 			return auth.PermissionModifyBanning, initiatorId, nil
 		} else {
 			return auth.PermissionUndefined, userAddress, nil
@@ -1813,7 +1826,12 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 		fallthrough
 
 	default:
-		return auth.PermissionUndefined, common.Address{}, RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
+		return auth.PermissionUndefined, common.Address{}, RiverError(
+			Err_BAD_EVENT,
+			"Need valid membership op",
+			"op",
+			membership.Op,
+		)
 	}
 }
 
