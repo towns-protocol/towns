@@ -578,11 +578,23 @@ _test-from-dir $DIR *args:
         go test {{args}} | yarn exec pino-pretty
     fi
 
+_test-print-report-from-dir $DIR *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    cd $DIR
+    echo "Running go test from $(git rev-parse --show-prefix)"
+    if ! command -v gotestsum >/dev/null 2>&1; then
+        go install gotest.tools/gotestsum@latest
+    fi
+    gotestsum --hide-summary=skipped {{args}}
+
 # Run go tests from current directory
 test *args: (_test-from-dir invocation_directory() args)
 
 # Run all go tests from module root
 test-all *args: (_test-from-dir justfile_directory() "-v" args "./...")
+
+# Run all go tests from module root and print a report at the end
+test-all-report *args: (_test-print-report-from-dir justfile_directory() args "./...")
 
 # Run all go tests from current directory
 t *args: (_test-from-dir invocation_directory() "-v" args "./...")

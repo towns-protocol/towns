@@ -44,6 +44,7 @@ There are just commands to run go tests, `go test` works too:
 
     just test ./...  # Run go test
     just test-all # Run all go tests from module root
+    just test-all-report # Run all go tests from module root and print report at the end
     just t # Run all tests from current dir
 
     just t-debug -run TestMyName  # Run TestMyName with info logging and test printing
