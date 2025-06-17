@@ -108,12 +108,15 @@ func NewInstrumentedEthClient(
 	}
 }
 
+// obfuscateProviderError scrubs the specific error returned, which often contains secrets embedded
+// in the URL of the failed call, and returns a generic error that is as descriptive as possible.
 func (ic *otelEthClient) obfuscateProviderError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	// Check for context cancellation or deadline exceeded
+	// Check for context cancellation or deadline exceeded and retain this error type if possible
+	// to maximize non-privileged information in the returned error.
 	if errors.Is(err, context.Canceled) {
 		return fmt.Errorf("rpc provider unavailable for chain %s: %w", ic.chainId, context.Canceled)
 	}
