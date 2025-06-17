@@ -15,7 +15,6 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/rpc"
-	"github.com/towns-protocol/towns/core/node/shared"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -818,7 +817,7 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	streamId, err := shared.StreamIdFromString(args[0])
+	streamId, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
 	}
