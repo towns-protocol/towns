@@ -45,6 +45,11 @@ if (!swapRouter) {
     throw new Error('Swap router address not found')
 }
 
+const riverAirdrop = getContractAddress('riverAirdrop')
+if (!riverAirdrop) {
+    throw new Error('River airdrop address not found')
+}
+
 export default createConfig({
     chains: {
         anvil: {
@@ -71,6 +76,12 @@ export default createConfig({
             address: baseRegistry,
             startBlock,
             chain: 'anvil',
+        },
+        RiverAirdrop: {
+            abi: mergeAbis([rewardsDistributionV2Abi]),
+            address: riverAirdrop,
+            startBlock,
+            network: 'anvil',
         },
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
