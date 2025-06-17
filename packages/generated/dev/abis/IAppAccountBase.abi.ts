@@ -23,13 +23,7 @@ export default [
   {
     "type": "error",
     "name": "InvalidManifest",
-    "inputs": [
-      {
-        "name": "app",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
+    "inputs": []
   },
   {
     "type": "error",
