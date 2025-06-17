@@ -15,7 +15,7 @@ library DeployAppAccount {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(11);
         arr.p(AppAccount.execute.selector);
         arr.p(AppAccount.onInstallApp.selector);
         arr.p(AppAccount.onUninstallApp.selector);
@@ -26,6 +26,7 @@ library DeployAppAccount {
         arr.p(AppAccount.getAppId.selector);
         arr.p(AppAccount.enableApp.selector);
         arr.p(AppAccount.getAppExpiration.selector);
+        arr.p(AppAccount.isAppInstalled.selector);
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_

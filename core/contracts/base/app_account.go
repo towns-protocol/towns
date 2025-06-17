@@ -31,7 +31,7 @@ var (
 
 // AppAccountMetaData contains all meta data concerning the AppAccount contract.
 var AppAccountMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"disableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"enableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAppExpiration\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint48\",\"internalType\":\"uint48\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getInstalledApps\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppEntitled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"publicKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onInstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRenewApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onUninstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"AppAlreadyInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppAddress\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidCaller\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidManifest\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEnoughEth\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnauthorizedApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedSelector\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"disableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"enableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAppExpiration\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint48\",\"internalType\":\"uint48\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getInstalledApps\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppEntitled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"publicKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onInstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRenewApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onUninstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"AppAlreadyInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppAddress\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidCaller\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidManifest\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEnoughEth\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnauthorizedApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedSelector\",\"inputs\":[]}]",
 }
 
 // AppAccountABI is the input ABI used to generate the binding from.
@@ -302,6 +302,37 @@ func (_AppAccount *AppAccountSession) IsAppEntitled(app common.Address, publicKe
 // Solidity: function isAppEntitled(address app, address publicKey, bytes32 permission) view returns(bool)
 func (_AppAccount *AppAccountCallerSession) IsAppEntitled(app common.Address, publicKey common.Address, permission [32]byte) (bool, error) {
 	return _AppAccount.Contract.IsAppEntitled(&_AppAccount.CallOpts, app, publicKey, permission)
+}
+
+// IsAppInstalled is a free data retrieval call binding the contract method 0xe92df000.
+//
+// Solidity: function isAppInstalled(address app) view returns(bool)
+func (_AppAccount *AppAccountCaller) IsAppInstalled(opts *bind.CallOpts, app common.Address) (bool, error) {
+	var out []interface{}
+	err := _AppAccount.contract.Call(opts, &out, "isAppInstalled", app)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsAppInstalled is a free data retrieval call binding the contract method 0xe92df000.
+//
+// Solidity: function isAppInstalled(address app) view returns(bool)
+func (_AppAccount *AppAccountSession) IsAppInstalled(app common.Address) (bool, error) {
+	return _AppAccount.Contract.IsAppInstalled(&_AppAccount.CallOpts, app)
+}
+
+// IsAppInstalled is a free data retrieval call binding the contract method 0xe92df000.
+//
+// Solidity: function isAppInstalled(address app) view returns(bool)
+func (_AppAccount *AppAccountCallerSession) IsAppInstalled(app common.Address) (bool, error) {
+	return _AppAccount.Contract.IsAppInstalled(&_AppAccount.CallOpts, app)
 }
 
 // DisableApp is a paid mutator transaction binding the contract method 0xdb0fd53b.

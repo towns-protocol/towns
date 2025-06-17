@@ -30,6 +30,7 @@ export interface IAppAccountInterface extends utils.Interface {
     "getAppId(address)": FunctionFragment;
     "getInstalledApps()": FunctionFragment;
     "isAppEntitled(address,address,bytes32)": FunctionFragment;
+    "isAppInstalled(address)": FunctionFragment;
     "onInstallApp(bytes32,bytes)": FunctionFragment;
     "onRenewApp(bytes32,bytes)": FunctionFragment;
     "onUninstallApp(bytes32,bytes)": FunctionFragment;
@@ -43,6 +44,7 @@ export interface IAppAccountInterface extends utils.Interface {
       | "getAppId"
       | "getInstalledApps"
       | "isAppEntitled"
+      | "isAppInstalled"
       | "onInstallApp"
       | "onRenewApp"
       | "onUninstallApp"
@@ -77,6 +79,10 @@ export interface IAppAccountInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "isAppInstalled",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "onInstallApp",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
@@ -102,6 +108,10 @@ export interface IAppAccountInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "isAppEntitled",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isAppInstalled",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -173,6 +183,11 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    isAppInstalled(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     onInstallApp(
       appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
@@ -221,6 +236,11 @@ export interface IAppAccount extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  isAppInstalled(
+    app: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   onInstallApp(
     appId: PromiseOrValue<BytesLike>,
     data: PromiseOrValue<BytesLike>,
@@ -266,6 +286,11 @@ export interface IAppAccount extends BaseContract {
       app: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       permission: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    isAppInstalled(
+      app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -320,6 +345,11 @@ export interface IAppAccount extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    isAppInstalled(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     onInstallApp(
       appId: PromiseOrValue<BytesLike>,
       data: PromiseOrValue<BytesLike>,
@@ -366,6 +396,11 @@ export interface IAppAccount extends BaseContract {
       app: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       permission: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    isAppInstalled(
+      app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
