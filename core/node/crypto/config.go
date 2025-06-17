@@ -218,7 +218,7 @@ type StreamDistribution struct {
 
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
-		MediaMaxChunkCount: 50,
+		MediaMaxChunkCount: 21,
 		MediaMaxChunkSize:  1200000,
 
 		RecencyConstraintsAge: 11 * time.Second,
