@@ -66,7 +66,7 @@ func (b *BackoffTracker) Wait(ctx context.Context, lastErr error) error {
 				return ctxErr
 			}
 
-			if errors.Is(context.DeadlineExceeded, ctxErr) {
+			if errors.Is(ctxErr, context.DeadlineExceeded) {
 				if lastErr != nil {
 					return RiverErrorWithBases(Err_DEADLINE_EXCEEDED, "operation timed out", []error{lastErr})
 				}
