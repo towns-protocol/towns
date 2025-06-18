@@ -153,9 +153,9 @@ export const getStreamMetadataUrl = (environmentId: string) => {
 export const getAppRegistryUrl = (environmentId: string) => {
     switch (environmentId) {
         case 'local_multi':
-            return 'http://localhost:6170'
+            return 'https://localhost:6170'
         case 'local_multi_ne':
-            return 'http://localhost:6190'
+            return 'https://localhost:6190'
         case 'alpha':
         case 'gamma':
         case 'omega':
