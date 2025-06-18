@@ -180,7 +180,7 @@ jobs:
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
-    
+
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
@@ -679,7 +679,7 @@ jobs:
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
-            
+
             - name: Install gotestsum
               run: go install gotest.tools/gotestsum@latest
 
