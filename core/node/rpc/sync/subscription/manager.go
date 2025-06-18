@@ -160,7 +160,6 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 	subscriptions, ok := m.subscriptions[streamID]
 	if !ok || len(subscriptions) == 0 {
 		// No subscriptions for this stream, nothing to do. This should not happen in theory.
-		m.log.Errorw("Received an update for the stream with no subscribers", "streamId", streamID)
 		go m.dropStream(streamID)
 		m.sLock.Unlock()
 		return
@@ -235,14 +234,16 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
-			if loaded && len(backfillEvents) > 0 {
-				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-				})
-				msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-				})
+			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+				backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
+				if loaded && len(backfillEvents) > 0 {
+					msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
+					})
+					msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
+					})
+				}
 			}
 
 			subscription.Send(msg)

@@ -123,18 +123,22 @@ type syncClients struct {
 func makeSyncClients(tt *serviceTester, numNodes int) *syncClients {
 	clients := make([]*syncClient, numNodes)
 	for i := range numNodes {
-		clients[i] = &syncClient{
-			client:  tt.testClient(i),
-			err:     make(chan error, 1),
-			errC:    make(chan error, 100),
-			syncIdC: make(chan string, 100),
-			updateC: make(chan *protocol.StreamAndCookie, 100),
-			downC:   make(chan StreamId, 100),
-			pongC:   make(chan string, 100),
-		}
+		clients[i] = makeSyncClient(tt, i)
 	}
 
 	return &syncClients{clients: clients}
+}
+
+func makeSyncClient(tt *serviceTester, i int) *syncClient {
+	return &syncClient{
+		client:  tt.testClient(i),
+		err:     make(chan error, 1),
+		errC:    make(chan error, 100),
+		syncIdC: make(chan string, 100),
+		updateC: make(chan *protocol.StreamAndCookie, 100),
+		downC:   make(chan StreamId, 100),
+		pongC:   make(chan string, 100),
+	}
 }
 
 func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) {
@@ -598,7 +602,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	_, _, err = createUserMetadataStream(ctx, wallet, syncClient0, nil)
 	require.NoError(err)
 
-	// create space with 500 channels and add 1 event to each channel
+	// create space with 50 channels and add 1 event to each channel
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
 	require.NoError(err)
@@ -678,4 +682,89 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
 		time.Since(now),
 	)
+}
+
+// TestStreamSyncDownRightAfterSendingBackfillEvent tests a scenario where a sync client
+// receives a sync down message immediately after sending a backfill event.
+// It caused a panic in the past because the sync client was not able to handle it properly.
+func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
+	numNodes := 2
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 1})
+	ctx := tt.ctx
+	require := tt.require
+
+	syncClients := makeSyncClients(tt, numNodes)
+	syncClient0 := syncClients.clients[0].client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	_, _, err = createUserMetadataStream(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+
+	// create space with 1 channel and add 1 event to the channel
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
+	require.NoError(err)
+
+	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channel, channelHash, err := createChannel(
+		ctx,
+		wallet,
+		syncClient0,
+		spaceId,
+		channelId,
+		&protocol.StreamSettings{DisableMiniblockCreation: true},
+	)
+	require.NoError(err)
+	require.NotNil(channel)
+	b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
+	require.NoError(err)
+	require.Equal(int64(0), b0ref.Num)
+	addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
+
+	// Start syncing the stream from non stream node
+	var remoteNode, syncNode int
+	if tt.nodes[0].address.Cmp(common.BytesToAddress(channel.GetNodeAddress())) == 0 {
+		remoteNode = 1
+	} else {
+		syncNode = 1
+	}
+
+	// Create sync 1
+	sync0 := makeSyncClient(tt, remoteNode)
+	go sync0.sync(ctx, channel)
+	select {
+	case <-sync0.updateC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync channel update from client 0")
+	}
+
+	// Create sync 2 - backfilling
+	sync1 := makeSyncClient(tt, remoteNode)
+	go sync1.sync(ctx, channel)
+	select {
+	case <-sync1.updateC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync channel update from client 1")
+	}
+
+	// Forcing the node to send a sync down message right after the backfill one
+	_, err = tt.nodes[syncNode].service.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"flush_cache"}}))
+	require.NoError(err)
+
+	// Expect sync down message from both syncs
+	select {
+	case <-sync0.downC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync down message from client 0")
+	}
+	select {
+	case <-sync1.downC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync down message from client 1")
+	}
 }
