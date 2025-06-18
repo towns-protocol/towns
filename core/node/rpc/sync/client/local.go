@@ -134,7 +134,7 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 func (s *localSyncer) OnSyncError(error) {
 	s.activeStreamsMu.Lock()
 	for streamID, syncStream := range s.activeStreams {
-		syncStream.Unsub(s)
+		go syncStream.Unsub(s)
 		delete(s.activeStreams, streamID)
 		s.OnStreamSyncDown(streamID)
 	}

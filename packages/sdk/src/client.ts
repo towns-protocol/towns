@@ -1226,9 +1226,9 @@ export class Client
     }
 
     async getPersistedEvent(streamId: string, eventId: string): Promise<ParsedEvent | undefined> {
-        const timelineEvent = this.streamsView.timelinesView
-            .getState()
-            .timelines[streamId]?.find((e) => e.eventId === eventId)
+        const timelineEvent = this.streamsView.timelinesView.value.timelines[streamId]?.find(
+            (e) => e.eventId === eventId,
+        )
         if (!timelineEvent) {
             return undefined
         }
@@ -1248,9 +1248,9 @@ export class Client
     }
 
     async pin(streamId: string, eventId: string) {
-        const timelineEvent = this.streamsView.timelinesView
-            .getState()
-            .timelines[streamId]?.find((e) => e.eventId === eventId)
+        const timelineEvent = this.streamsView.timelinesView.value.timelines[streamId]?.find(
+            (e) => e.eventId === eventId,
+        )
         check(isDefined(timelineEvent), 'event not found')
         const blockNumber = timelineEvent.confirmedInBlockNum
         let event: ParsedEvent | undefined

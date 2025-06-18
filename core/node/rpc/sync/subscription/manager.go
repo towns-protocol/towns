@@ -157,14 +157,18 @@ func (m *Manager) start() {
 func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	// Send the message to all subscriptions for this stream.
 	m.sLock.Lock()
-	subscriptions, ok := m.subscriptions[streamID]
-	if !ok || len(subscriptions) == 0 {
+	subs, ok := m.subscriptions[streamID]
+	if !ok || len(subs) == 0 {
 		// No subscriptions for this stream, nothing to do. This should not happen in theory.
-		m.log.Errorw("Received an update for the stream with no subscribers", "streamId", streamID)
 		go m.dropStream(streamID)
+		delete(m.subscriptions, streamID)
 		m.sLock.Unlock()
 		return
 	}
+
+	// Clone subscriptions slice to avoid data race when iterating over it below and modifying on the
+	// subscription level (addStream/removeStream).
+	subscriptions := slices.Clone(subs)
 
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The given stream is no longer syncing, remove it from the subscriptions.
@@ -235,14 +239,16 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
-			if loaded && len(backfillEvents) > 0 {
-				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-				})
-				msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-				})
+			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+				backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
+				if loaded && len(backfillEvents) > 0 {
+					msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
+					})
+					msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
+					})
+				}
 			}
 
 			subscription.Send(msg)

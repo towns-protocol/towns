@@ -83,7 +83,7 @@ export class StreamStateView {
     }
 
     get timeline(): TimelineEvent[] {
-        return this.streamsView.timelinesView.getState().timelines[this.streamId]
+        return this.streamsView.timelinesView.value.timelines[this.streamId]
     }
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space

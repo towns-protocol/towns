@@ -179,8 +179,7 @@ abstract contract MembershipBase is IMembershipBase {
 
         IPlatformRequirements platform = _getPlatformRequirements();
 
-        // If pricing module is address(0), return minimum price
-        if (pricingModule == address(0)) return platform.getMembershipMinPrice();
+        if (pricingModule == address(0)) return platform.getMembershipFee();
 
         membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
         uint256 minPrice = platform.getMembershipMinPrice();
@@ -197,14 +196,15 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 minPrice = platform.getMembershipMinPrice();
 
+        uint256 minFee = platform.getMembershipFee();
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
 
         if (renewalPrice != 0) {
-            return FixedPointMathLib.max(renewalPrice, minPrice);
+            return FixedPointMathLib.max(renewalPrice, minFee);
         }
 
+        uint256 minPrice = platform.getMembershipMinPrice();
         uint256 price = _getMembershipPrice(totalSupply);
         return FixedPointMathLib.max(price, minPrice);
     }

@@ -1165,10 +1165,10 @@ export function getFallbackContent(
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {
-            return `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}` +
-                content.reason
-                ? ` reason: ${content.reason}`
-                : ''
+            return (
+                `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}` +
+                (content.reason ? ` reason: ${content.reason}` : '')
+            )
         }
         case RiverTimelineEvent.ChannelMessage:
             return `${senderDisplayName}: ${content.body}`

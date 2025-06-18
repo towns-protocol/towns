@@ -368,6 +368,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0
+	cfg.EnableTestAPIs = true
 
 	if options.configUpdater != nil {
 		options.configUpdater(cfg)

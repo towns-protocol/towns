@@ -4,8 +4,8 @@ import { StreamStatus } from './streams/streamStatus'
 import { TimelinesView, TimelinesViewDelegate } from './streams/timelines'
 import { makeUserSettingsStreamId } from '../id'
 import { UserSettingsStreams } from './streams/userSettingsStreams'
-import { FullyReadMarker } from '@towns-protocol/proto'
-import { unreadMarkersTransform } from './streams/unreadMarkersTransform'
+import { UnreadMarkersModel, unreadMarkersTransform } from './streams/unreadMarkersTransform'
+import { MentionsModel, spaceMentionsTransform } from './streams/spaceMentionsTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -14,7 +14,10 @@ export class StreamsView {
     readonly streamStatus: StreamStatus
     readonly timelinesView: TimelinesView
     readonly userSettingsStreams: UserSettingsStreams
-    readonly my: { unreadMarkers: Observable<{ markers: Record<string, FullyReadMarker> }> }
+    readonly my: {
+        unreadMarkers: Observable<UnreadMarkersModel>
+        spaceMentions: Observable<MentionsModel>
+    }
 
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
         const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
@@ -23,19 +26,31 @@ export class StreamsView {
         this.userSettingsStreams = new UserSettingsStreams()
         this.streamStatus = new StreamStatus()
 
+        const throttledTimelinesView = this.timelinesView.throttle(15)
+
         const myRemoteFullyReadMarkers = this.userSettingsStreams.map(
             (x) => x[userSettingsStreamId]?.fullyReadMarkers ?? {},
         )
 
+        const unreadMarkers = new Combine({
+            userId: new Observable(userId),
+            myRemoteFullyReadMarkers: myRemoteFullyReadMarkers.throttle(10),
+            timelinesView: throttledTimelinesView,
+        })
+            .throttle(250)
+            .map(unreadMarkersTransform)
+
+        const spaceMentions = new Combine({
+            timelinesView: throttledTimelinesView,
+            fullyReadMarkers: unreadMarkers,
+        })
+            .throttle(250)
+            .map(spaceMentionsTransform)
+
         ///
         this.my = {
-            unreadMarkers: new Combine({
-                userId: new Observable(userId),
-                myRemoteFullyReadMarkers: myRemoteFullyReadMarkers.throttle(10),
-                timelinesView: this.timelinesView.throttle(15),
-            })
-                .throttle(250)
-                .map(unreadMarkersTransform),
+            unreadMarkers,
+            spaceMentions,
         }
     }
 }
