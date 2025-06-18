@@ -752,9 +752,8 @@ func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
 		t.Fatalf("timed out waiting for sync channel update from client 1")
 	}
 
-	// Forcing the node to send a sync down message right after the backfill one
-	_, err = tt.nodes[syncNode].service.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"flush_cache"}}))
-	require.NoError(err)
+	// Close the sync node to force sending sync down message
+	tt.CloseNode(syncNode)
 
 	// Expect sync down message from both syncs
 	select {
