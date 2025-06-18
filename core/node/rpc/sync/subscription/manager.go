@@ -230,6 +230,20 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 			continue
 		}
 
+		// TODO: properly handle this scenario. This code block was added to avoid
+		// a panic issue that was occuring in production nodes.
+		if msg.Stream == nil {
+			m.log.Errorw(
+				"Unexpected sync response to subscription manager",
+				"streamId", streamID,
+				"SyncOp", msg.SyncOp,
+				"SyncId", msg.SyncId,
+				"TargetSyncIds", msg.TargetSyncIds,
+				"PongNonce", msg.PongNonce,
+			)
+			continue
+		}
+
 		wg.Add(1)
 		go func(subscription *Subscription) {
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
@@ -238,6 +252,19 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
 			if loaded && len(backfillEvents) > 0 {
 				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
+					// This is highly unlikely, but the log and handling below is here just in case this
+					// truly did cause a panic in the network. Either way, it doesn't hurt and won't affect
+					// the handling of regular events.
+					if e == nil {
+						m.log.Errorw(
+							"Sync response contains nil event",
+							"streamId", streamID,
+							"SyncOp", msg.SyncOp,
+							"SyncId", msg.SyncId,
+							"TargetSyncIds", msg.TargetSyncIds,
+						)
+						return false
+					}
 					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
 				})
 				msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
