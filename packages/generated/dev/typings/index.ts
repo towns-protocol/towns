@@ -57,6 +57,7 @@ export type { PlatformRequirementsFacet } from "./PlatformRequirementsFacet";
 export type { PrepayFacet } from "./PrepayFacet";
 export type { RewardsDistributionV2 } from "./RewardsDistributionV2";
 export type { Roles } from "./Roles";
+export type { SimpleApp } from "./SimpleApp";
 export type { SpaceOwner } from "./SpaceOwner";
 export type { StreamRegistry } from "./StreamRegistry";
 export type { TokenPausableFacet } from "./TokenPausableFacet";
@@ -122,6 +123,7 @@ export { PlatformRequirementsFacet__factory } from "./factories/PlatformRequirem
 export { PrepayFacet__factory } from "./factories/PrepayFacet__factory";
 export { RewardsDistributionV2__factory } from "./factories/RewardsDistributionV2__factory";
 export { Roles__factory } from "./factories/Roles__factory";
+export { SimpleApp__factory } from "./factories/SimpleApp__factory";
 export { SpaceOwner__factory } from "./factories/SpaceOwner__factory";
 export { StreamRegistry__factory } from "./factories/StreamRegistry__factory";
 export { TokenPausableFacet__factory } from "./factories/TokenPausableFacet__factory";
