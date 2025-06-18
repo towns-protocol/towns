@@ -10,7 +10,9 @@ const defaultStreamStatus: StreamStatusModel = {
     isUpToDate: false,
 }
 
-export class StreamStatus extends Observable<Record<string, StreamStatusModel>> {
+// entries in the map should never be undefined, but Records don't differentiate between
+// undefined and missing keys, so we need to use a Record with undefined values
+export class StreamStatus extends Observable<Record<string, StreamStatusModel | undefined>> {
     constructor() {
         super({})
     }

@@ -3,9 +3,10 @@ import { Combine } from '../observable/combine'
 import { StreamStatus } from './streams/streamStatus'
 import { TimelinesView, TimelinesViewDelegate } from './streams/timelines'
 import { makeUserSettingsStreamId } from '../id'
-import { UserSettingsStreams } from './streams/userSettingsStreams'
+import { UserSettingsStreamsView } from './streams/userSettingsStreams'
 import { UnreadMarkersModel, unreadMarkersTransform } from './streams/unreadMarkersTransform'
 import { MentionsModel, spaceMentionsTransform } from './streams/spaceMentionsTransform'
+import { SpaceStreamsView } from './streams/spaceStreams'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -13,7 +14,8 @@ export type StreamsViewDelegate = TimelinesViewDelegate
 export class StreamsView {
     readonly streamStatus: StreamStatus
     readonly timelinesView: TimelinesView
-    readonly userSettingsStreams: UserSettingsStreams
+    readonly userSettingsStreams: UserSettingsStreamsView
+    readonly spaceStreams: SpaceStreamsView
     readonly my: {
         unreadMarkers: Observable<UnreadMarkersModel>
         spaceMentions: Observable<MentionsModel>
@@ -23,7 +25,8 @@ export class StreamsView {
         const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
 
         this.timelinesView = new TimelinesView(userId, delegate)
-        this.userSettingsStreams = new UserSettingsStreams()
+        this.userSettingsStreams = new UserSettingsStreamsView()
+        this.spaceStreams = new SpaceStreamsView()
         this.streamStatus = new StreamStatus()
 
         const throttledTimelinesView = this.timelinesView.throttle(15)

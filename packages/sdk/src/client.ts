@@ -2035,8 +2035,9 @@ export class Client
         check(isDefined(this.userStreamId))
 
         if (isSpaceStreamId(streamId)) {
-            const channelIds =
-                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const channelIds = Object.keys(
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
 
             const userStream = this.stream(this.userStreamId)
             for (const channelId of channelIds) {
@@ -2064,8 +2065,9 @@ export class Client
         this.logCall('removeUser', streamId, userId)
 
         if (isSpaceStreamId(streamId)) {
-            const channelIds =
-                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const channelIds = Object.keys(
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
             const userStreamId = makeUserStreamId(userId)
             const userStream = await this.getStream(userStreamId)
 

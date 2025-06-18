@@ -169,7 +169,7 @@ export class StreamStateView {
         this.streamsView = streamsView || new StreamsView('', undefined) // always have a streams view to ensure we can use the timeline
         if (isSpaceStreamId(streamId)) {
             this.contentKind = 'spaceContent'
-            this._spaceContent = new StreamStateView_Space(streamId)
+            this._spaceContent = new StreamStateView_Space(streamId, this.streamsView.spaceStreams)
         } else if (isChannelStreamId(streamId)) {
             this.contentKind = 'channelContent'
             this._channelContent = new StreamStateView_Channel(streamId)
@@ -187,7 +187,10 @@ export class StreamStateView {
             this._userContent = new StreamStateView_User(streamId)
         } else if (isUserSettingsStreamId(streamId)) {
             this.contentKind = 'userSettingsContent'
-            this._userSettingsContent = new StreamStateView_UserSettings(streamId, this.streamsView)
+            this._userSettingsContent = new StreamStateView_UserSettings(
+                streamId,
+                this.streamsView.userSettingsStreams,
+            )
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userMetadataContent'
             this._userMetadataContent = new StreamStateView_UserMetadata(streamId)
