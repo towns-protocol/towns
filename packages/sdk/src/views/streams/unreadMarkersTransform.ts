@@ -12,11 +12,15 @@ type Input = {
     timelinesView: TimelinesViewModel
 }
 
-type Output = {
+export type UnreadMarkersModel = {
     markers: Record<string, FullyReadMarker>
 }
 
-export function unreadMarkersTransform(value: Input, prev: Input, state?: Output): Output {
+export function unreadMarkersTransform(
+    value: Input,
+    prev: Input,
+    state?: UnreadMarkersModel,
+): UnreadMarkersModel {
     console.log('unreadMarkersTransform', value, prev, state)
 
     state = state ?? { markers: {} }
