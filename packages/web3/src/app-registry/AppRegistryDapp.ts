@@ -103,12 +103,9 @@ export class AppRegistryDapp {
         /** The data to pass to the app's onInstall function */
         data?: Uint8Array,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).installApp(app, spaceAddress, data ?? new Uint8Array(0), {
-            gasLimit: 1_000_000,
-            maxFeePerGas: 20_000_000_000,
-            maxPriorityFeePerGas: 1_000_000_000,
-            value: price,
-        })
+        return this.shim
+            .write(signer)
+            .installApp(app, spaceAddress, data ?? new Uint8Array(0), { value: price })
     }
 
     public async removeApp(signer: ethers.Signer, appId: string): Promise<ContractTransaction> {
