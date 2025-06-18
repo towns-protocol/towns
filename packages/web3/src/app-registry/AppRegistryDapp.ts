@@ -2,6 +2,7 @@ import { ethers, type ContractReceipt, type ContractTransaction } from 'ethers'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
+import { SimpleAppShim } from './SimpleAppShim'
 import type {
     AppCreatedEventObject,
     AppRegisteredEventObject,
@@ -21,12 +22,18 @@ export type BotInfo = {
 
 export class AppRegistryDapp {
     public readonly shim: IAppRegistryShim
+    private readonly provider: ethers.providers.Provider
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         if (!config.addresses.appRegistry) {
             throw new Error('App registry address is not set')
         }
         this.shim = new IAppRegistryShim(config.addresses.appRegistry, provider)
+        this.provider = provider
+    }
+
+    public callApp(appAddress: Address): SimpleAppShim {
+        return new SimpleAppShim(appAddress, this.provider)
     }
 
     // TODO: better api for passing access duration
