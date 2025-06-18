@@ -100,8 +100,10 @@ export class AppRegistryDapp {
         spaceAddress: Address,
         /** The price of the app in wei */
         price: bigint,
+        /** The data to pass to the app's onInstall function */
+        data?: Uint8Array,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).installApp(app, spaceAddress, new Uint8Array(0), {
+        return this.shim.write(signer).installApp(app, spaceAddress, data ?? new Uint8Array(0), {
             gasLimit: 1_000_000,
             maxFeePerGas: 20_000_000_000,
             maxPriorityFeePerGas: 1_000_000_000,
