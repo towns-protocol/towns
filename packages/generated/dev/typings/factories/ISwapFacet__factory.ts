@@ -297,11 +297,6 @@ const _abi = [
   },
   {
     type: "error",
-    name: "SwapFacet__SwapFailed",
-    inputs: [],
-  },
-  {
-    type: "error",
     name: "SwapFacet__SwapRouterNotSet",
     inputs: [],
   },
@@ -328,6 +323,11 @@ const _abi = [
   {
     type: "error",
     name: "SwapRouter__InvalidRouter",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SwapRouter__NativeTokenNotSupportedWithPermit",
     inputs: [],
   },
   {

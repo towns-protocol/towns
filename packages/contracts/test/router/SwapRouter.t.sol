@@ -132,7 +132,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
 
         // expect revert when paused
         vm.expectRevert(Pausable__Paused.selector);
-        swapRouter.executeSwap(inputParams, routerParams, poster);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
     }
 
     function test_isPaused() external {
@@ -175,14 +175,14 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
 
         // expect revert with InvalidRouter
         vm.expectRevert(SwapRouter__InvalidRouter.selector);
-        swapRouter.executeSwap(inputParams, routerParams, poster);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
 
         // also test with invalid approveTarget
         routerParams.router = mockRouter;
         routerParams.approveTarget = invalidRouter;
 
         vm.expectRevert(SwapRouter__InvalidRouter.selector);
-        swapRouter.executeSwap(inputParams, routerParams, poster);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
     }
 
     function test_executeSwap_revertWhen_invalidAmount_nativeToken() external {
@@ -200,7 +200,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 incorrectAmount = 0.5 ether;
 
         vm.expectRevert(SwapRouter__InvalidAmount.selector);
-        swapRouter.executeSwap{value: incorrectAmount}(inputParams, routerParams, poster);
+        swapRouter.executeSwap{value: incorrectAmount}(inputParams, routerParams, POSTER);
     }
 
     function test_executeSwap_revertWhen_insufficientOutput() external {
@@ -225,7 +225,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         token0.approve(address(swapRouter), amountIn);
 
         vm.expectRevert(SwapRouter__InsufficientOutput.selector);
-        swapRouter.executeSwap(inputParams, routerParams, poster);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
     }
 
     function test_executeSwap_revertWhen_unexpectedETH() external {
@@ -241,7 +241,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
 
         // send ETH with the transaction even though tokenIn is not native token
         vm.expectRevert(SwapRouter__UnexpectedETH.selector);
-        swapRouter.executeSwap{value: 0.1 ether}(inputParams, routerParams, poster);
+        swapRouter.executeSwap{value: 0.1 ether}(inputParams, routerParams, POSTER);
     }
 
     function test_executeSwap_gas() public {
@@ -264,7 +264,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint16 posterBps
     ) public {
         vm.assume(caller != address(0) && caller != address(swapRouter) && caller != mockRouter);
-        vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != poster);
+        vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != POSTER);
 
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
@@ -304,7 +304,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         emit FeeDistribution(
             address(token1),
             feeRecipient,
-            poster,
+            POSTER,
             expectedTreasuryFee,
             expectedPosterFee
         );
@@ -321,7 +321,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
 
         // execute swap
-        swapRouter.executeSwap(inputParams, routerParams, poster);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
         vm.stopPrank();
 
         _verifySwapResults(
@@ -360,9 +360,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
                 caller != address(swapRouter) &&
                 caller != mockRouter &&
                 caller != feeRecipient &&
-                caller != poster
+                caller != POSTER
         );
-        vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != poster);
+        vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != POSTER);
 
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
@@ -376,7 +376,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         vm.prank(deployer);
         IPlatformRequirements(spaceFactory).setSwapFees(treasuryBps, posterBps);
 
-        (uint256 amountInAfterFees, , ) = swapRouter.getETHInputFees(amountIn, caller, poster);
+        (uint256 amountInAfterFees, , ) = swapRouter.getETHInputFees(amountIn, caller, POSTER);
 
         // get swap parameters for ETH to token
         (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
@@ -393,7 +393,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // execute swap with ETH
         deal(caller, amountIn);
         vm.prank(caller);
-        swapRouter.executeSwap{value: amountIn}(inputParams, routerParams, poster);
+        swapRouter.executeSwap{value: amountIn}(inputParams, routerParams, POSTER);
 
         _verifySwapResults(
             CurrencyTransfer.NATIVE_TOKEN,
@@ -426,7 +426,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint16 treasuryBps,
         uint16 posterBps
     ) public assumeEOA(caller) assumeEOA(recipient) {
-        vm.assume(recipient != feeRecipient && recipient != poster);
+        vm.assume(recipient != feeRecipient && recipient != POSTER);
         vm.assume(recipient.balance == 0);
         deal(caller, 0);
 
@@ -462,7 +462,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         deal(mockRouter, amountOut * 2);
 
         // execute swap
-        swapRouter.executeSwap(inputParams, routerParams, poster);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
         vm.stopPrank();
 
         _verifySwapResults(

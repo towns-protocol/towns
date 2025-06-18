@@ -23,7 +23,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     uint16 internal constant POSTER_BPS = 50; // 0.5%
 
     address internal feeRecipient;
-    address internal poster = makeAddr("poster");
+    address internal POSTER = makeAddr("POSTER");
 
     function _createSwapParams(
         address swapRouter,
@@ -60,33 +60,6 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         });
     }
 
-    function _createPermitParams(
-        address token,
-        uint256 privateKey,
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline
-    ) internal view returns (PermitParams memory permitParams) {
-        (uint8 v, bytes32 r, bytes32 s) = signPermit(
-            privateKey,
-            token,
-            owner,
-            spender,
-            value,
-            deadline
-        );
-        permitParams = PermitParams({
-            owner: owner,
-            spender: spender,
-            value: value,
-            deadline: deadline,
-            v: v,
-            r: r,
-            s: s
-        });
-    }
-
     function _verifySwapResults(
         address tokenIn,
         address tokenOut,
@@ -104,7 +77,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         if (tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
             assertEq(payer.balance, 0, "Incorrect ETH balance");
             assertEq(feeRecipient.balance, expectedProtocolFee, "Incorrect ETH protocol fee");
-            assertEq(poster.balance, expectedPosterFee, "Incorrect ETH poster fee");
+            assertEq(POSTER.balance, expectedPosterFee, "Incorrect ETH poster fee");
             assertEq(tokenOut.balanceOf(recipient), amountOut, "Incorrect tokenOut balance");
             return;
         }
@@ -120,7 +93,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
             expectedProtocolFee,
             "Incorrect protocol fee"
         );
-        assertEq(_getBalance(tokenOut, poster), expectedPosterFee, "Incorrect poster fee");
+        assertEq(_getBalance(tokenOut, POSTER), expectedPosterFee, "Incorrect poster fee");
     }
 
     function _getBalance(address token, address account) internal view returns (uint256) {

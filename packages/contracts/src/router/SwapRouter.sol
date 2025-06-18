@@ -52,22 +52,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         return _executeSwap(params, routerParams, msg.sender, poster);
     }
 
-    /// @inheritdoc ISwapRouter
-    //    function executeSwapWithPermit(
-    //        ExactInputParams calldata params,
-    //        RouterParams calldata routerParams,
-    //        PermitParams calldata permit,
-    //        address poster
-    //    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut) {
-    //        // sanity check
-    //        if (permit.value < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
-    //
-    //        _permit(params.tokenIn, permit);
-    //
-    //        // execute the swap with the permit owner as the payer
-    //        return _executeSwap(params, routerParams, permit.owner, poster);
-    //    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -112,9 +96,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             SwapRouter__InvalidRouter.selector.revertWith();
         }
 
-        // use `msg.sender` as recipient if not specified
-        address recipient = params.recipient == address(0) ? msg.sender : params.recipient;
-
         // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
 
@@ -149,9 +130,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             LibCall.callContract(routerParams.router, value, routerParams.swapData);
 
             // reset approval for tokenIn
-            if (!isNativeToken) {
-                params.tokenIn.safeApprove(routerParams.approveTarget, 0);
-            }
+            if (!isNativeToken) params.tokenIn.safeApprove(routerParams.approveTarget, 0);
         }
 
         // use the actual received amount to handle fee-on-transfer tokens
@@ -166,6 +145,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // slippage check after fees
         if (amountOut < params.minAmountOut) SwapRouter__InsufficientOutput.selector.revertWith();
 
+        // use `msg.sender` as recipient if not specified
+        address recipient = params.recipient == address(0) ? msg.sender : params.recipient;
+
         // transfer remaining tokens to the recipient
         CurrencyTransfer.transferCurrency(params.tokenOut, address(this), recipient, amountOut);
 
@@ -178,23 +160,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             amountOut,
             recipient
         );
-    }
-
-    /// @dev Calls the `permit` function of the ERC20 token
-    /// @param token The address of the ERC20 token
-    /// @param permit The permit parameters
-    function _permit(address token, PermitParams calldata permit) internal {
-        bytes4 selector = IERC20Permit.permit.selector;
-        assembly ("memory-safe") {
-            let fmp := mload(0x40)
-            mstore(fmp, selector)
-            // copy permit params to memory
-            calldatacopy(add(fmp, 0x04), permit, 0xe0)
-            if iszero(call(gas(), token, 0, fmp, 0xe4, 0, 0)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
-            }
-        }
     }
 
     /// @notice Collects and distributes both protocol and poster fees
@@ -272,9 +237,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param token The token to check
     /// @return uint256 The balance
     function _getBalance(address token) internal view returns (uint256) {
-        if (token == CurrencyTransfer.NATIVE_TOKEN) {
-            return address(this).balance;
-        }
+        if (token == CurrencyTransfer.NATIVE_TOKEN) return address(this).balance;
         return token.balanceOf(address(this));
     }
 
@@ -300,9 +263,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         protocolFee = BasisPoints.calculate(amount, protocolBps);
 
         // only calculate poster fee if the address is not zero
-        if (poster != address(0)) {
-            posterFee = BasisPoints.calculate(amount, posterBps);
-        }
+        if (poster != address(0)) posterFee = BasisPoints.calculate(amount, posterBps);
 
         // calculate amount after fees
         unchecked {

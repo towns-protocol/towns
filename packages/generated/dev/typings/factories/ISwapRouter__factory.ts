@@ -245,6 +245,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SwapRouter__NativeTokenNotSupportedWithPermit",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SwapRouter__UnexpectedETH",
     inputs: [],
   },
