@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSyncAgent } from './useSyncAgent'
-import { useUserDms, useUserGdms, useUserSpaces } from './index'
+import { useUserDms } from './useUserDms'
+import { useUserGdms } from './useUserGdms'
+import { useUserSpaces } from './useUserSpaces'
 
 export const useLeaveRedirect = (streamId: string) => {
   const navigate = useNavigate()
