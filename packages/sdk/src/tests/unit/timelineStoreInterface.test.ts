@@ -72,7 +72,7 @@ function execute(
             threads: threadsAppended,
             threadsStats: threadStatsAppended,
             tips: tipsAppended,
-        } = timelinesView.getState()
+        } = timelinesView.value
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesAppended[channelId])).toEqual(expected.timeline)
         // check threads
@@ -100,7 +100,7 @@ function execute(
             threads: threadsPrepended,
             threadsStats: threadStatsPrepended,
             tips: tipsPrepended,
-        } = timelinesView.getState()
+        } = timelinesView.value
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesPrepended[channelId])).toEqual(expected.timeline)
         // check threads
@@ -121,13 +121,13 @@ function execute(
 describe('UseTimelinesView', () => {
     const timelinesView = new TimelinesView('', undefined)
     beforeAll(() => {
-        const { timelines } = timelinesView.getState()
+        const { timelines } = timelinesView.value
         const setState = timelinesView.setState
         const roomIds = Object.keys(timelines)
         setState.reset(roomIds)
     })
     afterEach(() => {
-        const { timelines } = timelinesView.getState()
+        const { timelines } = timelinesView.value
         const setState = timelinesView.setState
         const roomIds = Object.keys(timelines)
         setState.reset(roomIds)
