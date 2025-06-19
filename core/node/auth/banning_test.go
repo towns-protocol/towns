@@ -16,9 +16,9 @@ func TestBanningCache(t *testing.T) {
 	start := time.Now()
 	isBanned, err := bannedAddressCache.IsBanned(
 		[]*big.Int{big.NewInt(1)},
-		func() (map[*big.Int]struct{}, error) {
-			return map[*big.Int]struct{}{
-				big.NewInt(1): {},
+		func() (map[string]struct{}, error) {
+			return map[string]struct{}{
+				big.NewInt(1).String(): {},
 			}, nil
 		},
 	)
@@ -37,9 +37,9 @@ func TestBanningCache(t *testing.T) {
 	start = time.Now()
 	isBanned, err = bannedAddressCache.IsBanned(
 		[]*big.Int{big.NewInt(1)},
-		func() (map[*big.Int]struct{}, error) {
-			return map[*big.Int]struct{}{
-				big.NewInt(2): {},
+		func() (map[string]struct{}, error) {
+			return map[string]struct{}{
+				big.NewInt(2).String(): {},
 			}, nil
 		},
 	)
@@ -57,9 +57,9 @@ func TestBanningCache(t *testing.T) {
 	// but this is extremely unlikely.
 	isBanned, err = bannedAddressCache.IsBanned(
 		[]*big.Int{big.NewInt(2)},
-		func() (map[*big.Int]struct{}, error) {
-			return map[*big.Int]struct{}{
-				big.NewInt(1): {},
+		func() (map[string]struct{}, error) {
+			return map[string]struct{}{
+				big.NewInt(1).String(): {},
 			}, nil
 		},
 	)
