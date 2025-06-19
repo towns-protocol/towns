@@ -66,19 +66,6 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
         })
     }
 
-    setTipsReceived(userStreamId: string, tipsReceived: bigint) {
-        this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
-            return {
-                ...prev,
-                [userStreamId]: {
-                    ...prevStream,
-                    tipsReceived: { ...prevStream.tipsReceived, tipsReceived },
-                },
-            }
-        })
-    }
-
     prependTokenTransfer(userStreamId: string, tokenTransfer: BlockchainTransaction_TokenTransfer) {
         this.set((prev) => {
             const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
