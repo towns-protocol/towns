@@ -29,6 +29,7 @@ import {DeploySwapFacet} from "../facets/DeploySwapFacet.s.sol";
 import {DeployTipping} from "../facets/DeployTipping.s.sol";
 import {DeployTreasury} from "../facets/DeployTreasury.s.sol";
 import {DeployAppAccount} from "../facets/DeployAppAccount.s.sol";
+import {DeployERC1271} from "../facets/DeployERC1271.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -119,6 +120,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("TippingFacet");
         facetHelper.add("Treasury");
         facetHelper.add("AppAccount");
+        facetHelper.add("ERC1271Facet");
 
         if (isAnvil()) {
             facetHelper.add("MockLegacyMembership");
@@ -181,6 +183,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
         facet = facetHelper.getDeployedAddress("AppAccount");
         addCut(makeCut(facet, FacetCutAction.Add, DeployAppAccount.selectors()));
+
+        facet = facetHelper.getDeployedAddress("ERC1271Facet");
+        addCut(makeCut(facet, FacetCutAction.Add, DeployERC1271.selectors()));
 
         if (isAnvil()) {
             facet = facetHelper.getDeployedAddress("MockLegacyMembership");
@@ -254,6 +259,8 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployTreasury.selectors()));
             } else if (facetName.eq("AppAccount")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAppAccount.selectors()));
+            } else if (facetName.eq("ERC1271Facet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployERC1271.selectors()));
             }
         }
     }
