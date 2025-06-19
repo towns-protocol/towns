@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"sync"
 	"time"
@@ -141,6 +142,7 @@ type ChainAuthArgs struct {
 	permission    Permission
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
+	tokenIdsStr   string // a serialized list of token ids to comply with the cache key constraints
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -171,6 +173,36 @@ func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *Ch
 	}
 	ret.linkedWallets = builder.String()
 	return &ret
+}
+
+func (args *ChainAuthArgs) appendTokenIds(tokenIds []*big.Int) *ChainAuthArgs {
+	// serialize the token ids,
+	builder := strings.Builder{}
+	//  start with args.tokenIdsStr
+	builder.WriteString(args.tokenIdsStr)
+	for i, tokenId := range tokenIds {
+		if i > 0 || len(args.tokenIdsStr) > 0 {
+			builder.WriteString(",")
+		}
+		builder.WriteString(tokenId.String())
+	}
+	ret := *args
+	ret.tokenIdsStr = builder.String()
+	return &ret
+}
+
+func (args *ChainAuthArgs) tokenIds() ([]*big.Int, error) {
+	// deserialize the token ids
+	tokenIds := make([]*big.Int, 0)
+	for _, tokenIdStr := range strings.Split(args.tokenIdsStr, ",") {
+		tokenId, ok := new(big.Int).SetString(tokenIdStr, 10)
+		if !ok {
+			return nil, RiverError(Err_INTERNAL, "Failed to parse token id").Func("tokenIds").
+				Tag("tokenIdStr", tokenIdStr)
+		}
+		tokenIds = append(tokenIds, tokenId)
+	}
+	return tokenIds, nil
 }
 
 func newArgsForEnabledSpace(spaceId shared.StreamId) *ChainAuthArgs {
@@ -769,7 +801,13 @@ func (ca *chainAuth) evaluateWithEntitlements(
 		}
 	}
 	// 2. Check if the user has been banned
-	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, wallets)
+	tokenIds, err := args.tokenIds()
+	if err != nil {
+		return false, AsRiverError(err).Func("evaluateEntitlements").
+			Tag("spaceId", args.spaceId).
+			Tag("userId", args.principal)
+	}
+	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, tokenIds)
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements").
 			Tag("spaceId", args.spaceId).
@@ -1101,6 +1139,7 @@ func (ca *chainAuth) checkEntitlement(
 	// meaning all checks have terminated, or if at least one check was positive.
 	for result := range isMemberResults {
 		if result.status.IsMember {
+			args = args.appendTokenIds(result.status.TokenIds)
 			isMember = true
 			// if not expired, cancel other checks, otherwise continue
 			if !result.status.IsExpired {
