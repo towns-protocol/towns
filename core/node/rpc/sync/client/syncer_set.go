@@ -20,6 +20,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// commonBufferSize is the size of the common messages buffer of the shared syncer.
+	commonBufferSize = 10240
+)
+
 type (
 	StreamsSyncer interface {
 		Run()
@@ -88,7 +93,7 @@ func NewSyncers(
 		nodeRegistry:     nodeRegistry,
 		localNodeAddress: localNodeAddress,
 		syncers:          make(map[common.Address]StreamsSyncer),
-		messages:         dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		messages:         dynmsgbuf.NewDynamicBufferWithSize[*SyncStreamsResponse](commonBufferSize),
 		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
 		streamLocks:      xsync.NewMap[StreamId, *sync.Mutex](),
 		otelTracer:       otelTracer,
