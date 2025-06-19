@@ -19,22 +19,22 @@ type Banning interface {
 	IsBanned(ctx context.Context, tokenIds []*big.Int) (bool, error)
 }
 
-type bannedAddressCache struct {
+type bannedTokensCache struct {
 	mu           sync.Mutex
 	cacheTtl     time.Duration
 	bannedTokens map[*big.Int]struct{}
 	lastUpdated  time.Time
 }
 
-func NewBannedAddressCache(ttl time.Duration) *bannedAddressCache {
-	return &bannedAddressCache{
+func NewBannedTokensCache(ttl time.Duration) *bannedTokensCache {
+	return &bannedTokensCache{
 		bannedTokens: map[(*big.Int)]struct{}{},
 		lastUpdated:  time.Time{},
 		cacheTtl:     ttl,
 	}
 }
 
-func (b *bannedAddressCache) IsBanned(
+func (b *bannedTokensCache) IsBanned(
 	tokenIds []*big.Int,
 	onMiss func() (map[*big.Int]struct{}, error),
 ) (bool, error) {
@@ -65,11 +65,11 @@ type banning struct {
 	tokenContract *baseContracts.Erc721aQueryable
 	spaceAddress  common.Address
 
-	bannedAddressCache *bannedAddressCache
+	bannedTokensCache *bannedTokensCache
 }
 
 func (b *banning) IsBanned(ctx context.Context, tokenIds []*big.Int) (bool, error) {
-	return b.bannedAddressCache.IsBanned(tokenIds, func() (map[*big.Int]struct{}, error) {
+	return b.bannedTokensCache.IsBanned(tokenIds, func() (map[*big.Int]struct{}, error) {
 		bannedTokens, err := b.contract.Banned(&bind.CallOpts{Context: ctx})
 		if err != nil {
 			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).
@@ -110,6 +110,6 @@ func NewBanning(
 		contract:           contract,
 		tokenContract:      tokenContract,
 		spaceAddress:       spaceAddress,
-		bannedAddressCache: NewBannedAddressCache(negativeCacheTTL),
+		bannedTokensCache: NewBannedTokensCache(negativeCacheTTL),
 	}, nil
 }

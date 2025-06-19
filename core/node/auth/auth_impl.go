@@ -191,17 +191,18 @@ func (args *ChainAuthArgs) appendTokenIds(tokenIds []*big.Int) *ChainAuthArgs {
 	return &ret
 }
 
-func (args *ChainAuthArgs) tokenIds() []*big.Int {
+func (args *ChainAuthArgs) tokenIds() ([]*big.Int, error) {
 	// deserialize the token ids
 	tokenIds := make([]*big.Int, 0)
 	for _, tokenIdStr := range strings.Split(args.tokenIdsStr, ",") {
 		tokenId, ok := new(big.Int).SetString(tokenIdStr, 10)
 		if !ok {
-			return nil
+			return nil, RiverError(Err_INTERNAL, "Failed to parse token id").Func("tokenIds").
+				Tag("tokenIdStr", tokenIdStr)
 		}
 		tokenIds = append(tokenIds, tokenId)
 	}
-	return tokenIds
+	return tokenIds, nil
 }
 
 func newArgsForEnabledSpace(spaceId shared.StreamId) *ChainAuthArgs {
@@ -800,7 +801,13 @@ func (ca *chainAuth) evaluateWithEntitlements(
 		}
 	}
 	// 2. Check if the user has been banned
-	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, args.tokenIds())
+	tokenIds, err := args.tokenIds()
+	if err != nil {
+		return false, AsRiverError(err).Func("evaluateEntitlements").
+			Tag("spaceId", args.spaceId).
+			Tag("userId", args.principal)
+	}
+	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, tokenIds)
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements").
 			Tag("spaceId", args.spaceId).

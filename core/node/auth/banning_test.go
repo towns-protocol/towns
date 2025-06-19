@@ -9,7 +9,7 @@ import (
 )
 
 func TestBanningCache(t *testing.T) {
-	bannedAddressCache := NewBannedAddressCache(1 * time.Second)
+	bannedAddressCache := NewBannedTokensCache(1 * time.Second)
 
 	require.Len(t, bannedAddressCache.bannedTokens, 0)
 
