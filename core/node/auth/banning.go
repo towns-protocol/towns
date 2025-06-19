@@ -22,13 +22,13 @@ type Banning interface {
 type bannedTokensCache struct {
 	mu           sync.Mutex
 	cacheTtl     time.Duration
-	bannedTokens map[*big.Int]struct{}
+	bannedTokens map[string]struct{}
 	lastUpdated  time.Time
 }
 
 func NewBannedTokensCache(ttl time.Duration) *bannedTokensCache {
 	return &bannedTokensCache{
-		bannedTokens: map[(*big.Int)]struct{}{},
+		bannedTokens: map[string]struct{}{},
 		lastUpdated:  time.Time{},
 		cacheTtl:     ttl,
 	}
@@ -36,7 +36,7 @@ func NewBannedTokensCache(ttl time.Duration) *bannedTokensCache {
 
 func (b *bannedTokensCache) IsBanned(
 	tokenIds []*big.Int,
-	onMiss func() (map[*big.Int]struct{}, error),
+	onMiss func() (map[string]struct{}, error),
 ) (bool, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -53,7 +53,7 @@ func (b *bannedTokensCache) IsBanned(
 	}
 
 	for _, tokenId := range tokenIds {
-		if _, banned := b.bannedTokens[tokenId]; banned {
+		if _, banned := b.bannedTokens[tokenId.String()]; banned {
 			return true, nil
 		}
 	}
@@ -69,16 +69,16 @@ type banning struct {
 }
 
 func (b *banning) IsBanned(ctx context.Context, tokenIds []*big.Int) (bool, error) {
-	return b.bannedTokensCache.IsBanned(tokenIds, func() (map[*big.Int]struct{}, error) {
+	return b.bannedTokensCache.IsBanned(tokenIds, func() (map[string]struct{}, error) {
 		bannedTokens, err := b.contract.Banned(&bind.CallOpts{Context: ctx})
 		if err != nil {
 			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).
 				Func("IsBanned").
 				Message("Failed to get banned token ids")
 		}
-		bannedTokensMap := make(map[*big.Int]struct{})
+		bannedTokensMap := make(map[string]struct{})
 		for _, tokenId := range bannedTokens {
-			bannedTokensMap[tokenId] = struct{}{}
+			bannedTokensMap[tokenId.String()] = struct{}{}
 		}
 		return bannedTokensMap, nil
 	})
@@ -107,9 +107,9 @@ func NewBanning(
 	}
 
 	return &banning{
-		contract:           contract,
-		tokenContract:      tokenContract,
-		spaceAddress:       spaceAddress,
+		contract:          contract,
+		tokenContract:     tokenContract,
+		spaceAddress:      spaceAddress,
 		bannedTokensCache: NewBannedTokensCache(negativeCacheTTL),
 	}, nil
 }
