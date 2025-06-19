@@ -147,7 +147,14 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         RouterParams memory routerParams,
         address poster
     ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-        bytes32 witness = _witnessHash(exactInputParams, routerParams, poster);
+        // construct SwapWitness struct
+        SwapWitness memory witness = SwapWitness({
+            exactInputParams: exactInputParams,
+            routerParams: routerParams,
+            poster: poster
+        });
+
+        bytes32 witnessHash = Permit2Hash.hash(witness);
         bytes32 tokenPermissions = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted)
         );
@@ -159,7 +166,7 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
                 spender,
                 permit.nonce,
                 permit.deadline,
-                witness
+                witnessHash
             )
         );
 
@@ -195,15 +202,6 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
             deadline,
             bytes.concat(r, s, bytes1(v))
         );
-    }
-
-    /// @notice Creates a witness hash binding permit signature to exact swap parameters
-    function _witnessHash(
-        ExactInputParams memory params,
-        RouterParams memory routerParams,
-        address poster
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(params, routerParams, poster));
     }
 
     function _verifySwapResults(

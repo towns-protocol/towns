@@ -132,7 +132,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
                 requestedAmount: params.amountIn
             }),
             permit.owner, // owner who signed the permit
-            _witnessHash(params, routerParams, poster),
+            Permit2Hash.hash(SwapWitness(params, routerParams, poster)),
             Permit2Hash.WITNESS_TYPE_STRING,
             permit.signature
         );
@@ -366,20 +366,5 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         unchecked {
             amountAfterFees = amount - protocolFee - posterFee;
         }
-    }
-
-    /// @notice Creates a witness hash binding permit signature to exact swap parameters
-    /// @dev This function constructs a SwapWitness struct and hashes it to create witness data
-    /// that cryptographically binds the permit signature to specific swap parameters
-    /// @param params The parameters for the swap
-    /// @param routerParams The router parameters for the swap
-    /// @param poster The address that posted this swap opportunity
-    /// @return bytes32 The witness hash
-    function _witnessHash(
-        ExactInputParams calldata params,
-        RouterParams calldata routerParams,
-        address poster
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(params, routerParams, poster));
     }
 }
