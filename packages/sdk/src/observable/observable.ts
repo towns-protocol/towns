@@ -19,17 +19,18 @@ export class Observable<T> {
         return this._value
     }
 
-    set(fn: (prevValue: T) => T) {
-        this.setValue(fn(this.value))
+    set(fn: (prevValue: T) => T): boolean {
+        return this.setValue(fn(this.value))
     }
 
-    setValue(newValue: T) {
+    setValue(newValue: T): boolean {
         if (this._value === newValue) {
-            return
+            return false
         }
         const prevValue = this._value
         this._value = newValue
         this.notify(prevValue)
+        return true
     }
 
     subscribe(

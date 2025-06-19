@@ -56,6 +56,8 @@ import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
 
+const EMPTY_TIMELINE: TimelineEvent[] = []
+
 // it's very important that the Stream is the emitter for all events
 // for any mutations, go through the stream
 export class StreamStateView {
@@ -83,7 +85,7 @@ export class StreamStateView {
     }
 
     get timeline(): TimelineEvent[] {
-        return this.streamsView.timelinesView.value.timelines[this.streamId]
+        return this.streamsView.timelinesView.value.timelines[this.streamId] ?? EMPTY_TIMELINE
     }
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
