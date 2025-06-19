@@ -5,7 +5,7 @@ pragma solidity ^0.8.18;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../../../utils/libraries/CustomRevert.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
@@ -296,6 +296,12 @@ library StakingRewards {
         }
     }
 
+    /// @notice Sets up a new reward distribution period
+    /// @dev Manually updates global reward state instead of calling updateGlobalReward()
+    /// since it resets the reward period timing. This function combines reward index update
+    /// with new period setup in a single operation.
+    /// @param self The staking rewards storage layout
+    /// @param reward The additional amount of rewards to distribute over the reward duration
     function notifyRewardAmount(Layout storage self, uint256 reward) internal {
         self.rewardPerTokenAccumulated = currentRewardPerTokenAccumulated(self);
 
@@ -333,6 +339,34 @@ library StakingRewards {
         ) {
             CustomRevert.revertWith(StakingRewards__InsufficientReward.selector);
         }
+    }
+
+    /// @notice Transfers all unclaimed rewards from one beneficiary to another
+    /// @dev Only updates the source treasure since reward math is associative
+    /// @param self The staking rewards storage layout
+    /// @param from The beneficiary to transfer rewards from
+    /// @param to The beneficiary to transfer rewards to
+    /// @return sweptAmount The amount of scaled rewards transferred
+    function sweepUnclaimedReward(
+        Layout storage self,
+        address from,
+        address to
+    ) internal returns (uint256 sweptAmount) {
+        updateGlobalReward(self);
+
+        Treasure storage fromTreasure = self.treasureByBeneficiary[from];
+        updateReward(self, fromTreasure);
+
+        sweptAmount = fromTreasure.unclaimedRewardSnapshot;
+        if (sweptAmount == 0) return 0;
+
+        Treasure storage toTreasure = self.treasureByBeneficiary[to];
+        // no updateReward needed: reward math is associative, pending rewards
+        // will be correctly calculated on next updateReward call
+
+        // transfer all unclaimed rewards from source to destination
+        toTreasure.unclaimedRewardSnapshot += sweptAmount;
+        fromTreasure.unclaimedRewardSnapshot = 0;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

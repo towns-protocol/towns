@@ -5,21 +5,21 @@ pragma solidity ^0.8.23;
 import {IRewardsDistribution} from "./IRewardsDistribution.sol";
 
 // libraries
+import {CustomRevert} from "../../../../../utils/libraries/CustomRevert.sol";
 import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
 import {StakingRewards} from "./StakingRewards.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
+import {UpgradeableBeaconBase} from "../../../../../diamond/facets/beacon/UpgradeableBeacon.sol";
+import {MainnetDelegationBase} from "../../mainnet/MainnetDelegationBase.sol";
 import {DelegationProxy} from "./DelegationProxy.sol";
 import {RewardsDistributionBase} from "./RewardsDistributionBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
 import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
-import {MainnetDelegationBase} from "src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
-import {UpgradeableBeaconBase} from "src/diamond/facets/beacon/UpgradeableBeacon.sol";
 
 contract RewardsDistributionV2 is
     IRewardsDistribution,
