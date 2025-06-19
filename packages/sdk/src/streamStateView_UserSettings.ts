@@ -19,23 +19,25 @@ import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { create, fromJsonString } from '@bufbuild/protobuf'
 import { streamIdFromBytes, userIdFromAddress } from './id'
-import { StreamsView } from './views/streamsView'
-import { UserSettingsStreamsView } from './views/streams/userSettingsStreams'
+import {
+    UserSettingsStreamModel,
+    UserSettingsStreamsView,
+} from './views/streams/userSettingsStreams'
 
 const log = dlog('csb:stream')
-const EMPTY_USER_BLOCKS = {}
-const EMPTY_FULLY_READ_MARKERS = {}
 
 export class StreamStateView_UserSettings extends StreamStateView_AbstractContent {
     readonly streamId: string
+
     get fullyReadMarkers(): Record<string, Record<string, FullyReadMarker>> {
-        return (
-            this.userSettingsStreamsView.value[this.streamId]?.fullyReadMarkers ??
-            EMPTY_FULLY_READ_MARKERS
-        )
+        return this.userSettingsStreamModel.fullyReadMarkers
     }
     get userBlocks(): Record<string, UserSettingsPayload_Snapshot_UserBlocks> {
-        return this.userSettingsStreamsView.value[this.streamId]?.userBlocks ?? EMPTY_USER_BLOCKS
+        return this.userSettingsStreamModel.userBlocks
+    }
+
+    get userSettingsStreamModel(): UserSettingsStreamModel {
+        return this.userSettingsStreamsView.get(this.streamId)
     }
 
     constructor(

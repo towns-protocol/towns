@@ -1,33 +1,33 @@
-import { Observable } from '../../observable/observable'
+import { ObservableRecord } from '../../observable/observableRecord'
 
 export type StreamStatusModel = {
+    streamId: string
     isInitialized: boolean
     isUpToDate: boolean
 }
 
-const defaultStreamStatus: StreamStatusModel = {
-    isInitialized: false,
-    isUpToDate: false,
-}
-
-// entries in the map should never be undefined, but Records don't differentiate between
-// undefined and missing keys, so we need to use a Record with undefined values
-export class StreamStatus extends Observable<Record<string, StreamStatusModel | undefined>> {
+export class StreamStatus extends ObservableRecord<string, StreamStatusModel> {
     constructor() {
-        super({})
+        super({
+            makeDefault: (streamId: string): StreamStatusModel => ({
+                streamId,
+                isInitialized: false,
+                isUpToDate: false,
+            }),
+        })
     }
 
     setIsUpToDate(streamId: string, isUpToDate: boolean) {
         this.set((prev) => ({
             ...prev,
-            [streamId]: { ...(prev[streamId] ?? defaultStreamStatus), isUpToDate },
+            [streamId]: { ...(prev[streamId] ?? this.makeDefault(streamId)), isUpToDate },
         }))
     }
 
     setIsInitialized(streamId: string, isInitialized: boolean) {
         this.set((prev) => ({
             ...prev,
-            [streamId]: { ...(prev[streamId] ?? defaultStreamStatus), isInitialized },
+            [streamId]: { ...(prev[streamId] ?? this.makeDefault(streamId)), isInitialized },
         }))
     }
 }

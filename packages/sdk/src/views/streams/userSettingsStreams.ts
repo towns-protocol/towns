@@ -4,18 +4,15 @@ import {
     UserSettingsPayload_Snapshot_UserBlocks_Block,
     UserSettingsPayload_Snapshot_UserBlocksSchema,
 } from '@towns-protocol/proto'
-import { Observable } from '../../observable/observable'
 import { create } from '@bufbuild/protobuf'
+import { ObservableRecord } from '../../observable/observableRecord'
 
 export interface UserSettingsStreamModel {
+    streamId: string
     fullyReadMarkers: Record<string, Record<string, FullyReadMarker>>
     userBlocks: Record<string, UserSettingsPayload_Snapshot_UserBlocks>
 }
 
-const EMPTY_USER_SETTINGS: UserSettingsStreamModel = {
-    fullyReadMarkers: {},
-    userBlocks: {},
-}
 const EMPTY_USER_BLOCKS: UserSettingsPayload_Snapshot_UserBlocks = create(
     UserSettingsPayload_Snapshot_UserBlocksSchema,
     {
@@ -24,26 +21,28 @@ const EMPTY_USER_BLOCKS: UserSettingsPayload_Snapshot_UserBlocks = create(
     },
 )
 
-// entries in the map should never be undefined, but Records don't differentiate between
-// undefined and missing keys, so we need to use a Record with undefined values
-export class UserSettingsStreamsView extends Observable<
-    Record<string, UserSettingsStreamModel | undefined>
-> {
+export class UserSettingsStreamsView extends ObservableRecord<string, UserSettingsStreamModel> {
     constructor() {
-        super({})
+        super({
+            makeDefault: (userSettingsStreamId: string): UserSettingsStreamModel => ({
+                streamId: userSettingsStreamId,
+                fullyReadMarkers: {},
+                userBlocks: {},
+            }),
+        })
     }
 
     setFullyReadMarkers(
-        userStreamId: string,
+        userSettingsStreamId: string,
         streamId: string,
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ): void {
         this.set((prev) => ({
             ...prev,
-            [userStreamId]: {
-                ...(prev[userStreamId] ?? EMPTY_USER_SETTINGS),
+            [userSettingsStreamId]: {
+                ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
                 fullyReadMarkers: {
-                    ...(prev[userStreamId]?.fullyReadMarkers ?? {}),
+                    ...(prev[userSettingsStreamId]?.fullyReadMarkers ?? {}),
                     [streamId]: fullyReadMarkers,
                 },
             },
@@ -51,16 +50,16 @@ export class UserSettingsStreamsView extends Observable<
     }
 
     setUserBlocks(
-        userStreamId: string,
+        userSettingsStreamId: string,
         userId: string,
         userBlocks: UserSettingsPayload_Snapshot_UserBlocks,
     ): void {
         this.set((prev) => ({
             ...prev,
-            [userStreamId]: {
-                ...(prev[userStreamId] ?? EMPTY_USER_SETTINGS),
+            [userSettingsStreamId]: {
+                ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
                 userBlocks: {
-                    ...(prev[userStreamId]?.userBlocks ?? {}),
+                    ...(prev[userSettingsStreamId]?.userBlocks ?? {}),
                     [userId]: userBlocks,
                 },
             },
@@ -68,20 +67,20 @@ export class UserSettingsStreamsView extends Observable<
     }
 
     updateUserBlock(
-        userStreamId: string,
+        userSettingsStreamId: string,
         userId: string,
         userBlock: UserSettingsPayload_Snapshot_UserBlocks_Block,
     ): void {
         this.set((prev) => ({
             ...prev,
-            [userStreamId]: {
-                ...(prev[userStreamId] ?? EMPTY_USER_SETTINGS),
+            [userSettingsStreamId]: {
+                ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
                 userBlocks: {
-                    ...(prev[userStreamId]?.userBlocks ?? {}),
+                    ...(prev[userSettingsStreamId]?.userBlocks ?? {}),
                     [userId]: {
-                        ...(prev[userStreamId]?.userBlocks[userId] ?? EMPTY_USER_BLOCKS),
+                        ...(prev[userSettingsStreamId]?.userBlocks[userId] ?? EMPTY_USER_BLOCKS),
                         blocks: [
-                            ...(prev[userStreamId]?.userBlocks[userId]?.blocks ?? []),
+                            ...(prev[userSettingsStreamId]?.userBlocks[userId]?.blocks ?? []),
                             userBlock,
                         ],
                     },

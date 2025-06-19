@@ -383,8 +383,8 @@ export class Client
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
                 if (
-                    payload.op === MembershipOp.SO_JOIN ||
-                    (payload.op === MembershipOp.SO_INVITE &&
+                    payload?.op === MembershipOp.SO_JOIN ||
+                    (payload?.op === MembershipOp.SO_INVITE &&
                         (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)))
                 ) {
                     acc.push(streamId)

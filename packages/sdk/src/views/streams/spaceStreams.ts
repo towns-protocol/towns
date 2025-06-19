@@ -1,4 +1,4 @@
-import { Observable } from '../../observable/observable'
+import { ObservableRecord } from '../../observable/observableRecord'
 
 export type ParsedChannelProperties = {
     isDefault: boolean
@@ -8,27 +8,33 @@ export type ParsedChannelProperties = {
 }
 
 export interface SpaceStreamModel {
+    streamId: string
     channelsMetadata: Record<string, ParsedChannelProperties>
 }
 
 // entries in the map should never be undefined, but Records don't differentiate between
 // undefined and missing keys, so we need to use a Record with undefined values
-export class SpaceStreamsView extends Observable<Record<string, SpaceStreamModel | undefined>> {
+export class SpaceStreamsView extends ObservableRecord<string, SpaceStreamModel> {
     constructor() {
-        super({})
+        super({
+            makeDefault: (spaceStreamId: string): SpaceStreamModel => ({
+                streamId: spaceStreamId,
+                channelsMetadata: {},
+            }),
+        })
     }
 
-    delete(spaceId: string, channelId: string) {
+    delete(spaceStreamId: string, channelId: string) {
         return this.set((prev) => {
-            if (prev[spaceId]?.channelsMetadata[channelId] === undefined) {
+            if (prev[spaceStreamId]?.channelsMetadata[channelId] === undefined) {
                 return prev
             }
-            const channelsMetadata = { ...prev[spaceId].channelsMetadata }
+            const channelsMetadata = { ...prev[spaceStreamId].channelsMetadata }
             delete channelsMetadata[channelId]
             return {
                 ...prev,
-                [spaceId]: {
-                    ...prev[spaceId],
+                [spaceStreamId]: {
+                    ...prev[spaceStreamId],
                     channelsMetadata,
                 },
             }
@@ -36,27 +42,29 @@ export class SpaceStreamsView extends Observable<Record<string, SpaceStreamModel
     }
 
     updateChannelMetadata(
-        spaceId: string,
+        spaceStreamId: string,
         channelId: string,
         properties: Partial<ParsedChannelProperties>,
     ) {
         this.set((prev) => {
-            const next = { ...prev }
-            const space = next[spaceId] ?? { channelsMetadata: {} }
-            const channel = space.channelsMetadata[channelId] ?? {
+            const prevSpace = prev[spaceStreamId] ?? this.makeDefault(spaceStreamId)
+            const prevChannel = prevSpace.channelsMetadata[channelId] ?? {
                 isDefault: false,
                 updatedAtEventNum: BigInt(0),
                 isAutojoin: false,
                 hideUserJoinLeaveEvents: false,
             }
-            next[spaceId] = {
-                ...space,
-                channelsMetadata: {
-                    ...space.channelsMetadata,
-                    [channelId]: { ...channel, ...properties },
+            const retVal = {
+                ...prev,
+                [spaceStreamId]: {
+                    ...prevSpace,
+                    channelsMetadata: {
+                        ...prevSpace.channelsMetadata,
+                        [channelId]: { ...prevChannel, ...properties },
+                    },
                 },
             }
-            return next
+            return retVal
         })
     }
 }

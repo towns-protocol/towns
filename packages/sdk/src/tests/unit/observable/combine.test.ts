@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { describe, it, expect, vi } from 'vitest'
 import { Observable } from '../../../observable/observable'
-import { Combine } from '../../../observable/combine'
+import { combine } from '../../../observable/combine'
 
 describe('Combine', () => {
     describe('constructor and basic functionality', () => {
@@ -10,7 +10,7 @@ describe('Combine', () => {
             const ageObs = new Observable(25)
             const isActiveObs = new Observable(true)
 
-            const combined = new Combine({
+            const combined = combine({
                 name: nameObs,
                 age: ageObs,
                 isActive: isActiveObs,
@@ -29,7 +29,7 @@ describe('Combine', () => {
             const objectObs = new Observable({ key: 'value' })
             const arrayObs = new Observable([1, 2, 3])
 
-            const combined = new Combine({
+            const combined = combine({
                 str: stringObs,
                 num: numberObs,
                 obj: objectObs,
@@ -46,13 +46,13 @@ describe('Combine', () => {
 
         it('should handle single observable', () => {
             const obs = new Observable('single')
-            const combined = new Combine({ single: obs })
+            const combined = combine({ single: obs })
 
             expect(combined.value).toEqual({ single: 'single' })
         })
 
         it('should handle empty object of observables', () => {
-            const combined = new Combine({})
+            const combined = combine({})
             expect(combined.value).toEqual({})
         })
     })
@@ -62,7 +62,7 @@ describe('Combine', () => {
             const nameObs = new Observable('John')
             const ageObs = new Observable(25)
 
-            const combined = new Combine({
+            const combined = combine({
                 name: nameObs,
                 age: ageObs,
             })
@@ -86,7 +86,7 @@ describe('Combine', () => {
             const nameObs = new Observable('John')
             const ageObs = new Observable(25)
 
-            const combined = new Combine({
+            const combined = combine({
                 name: nameObs,
                 age: ageObs,
             })
@@ -105,7 +105,7 @@ describe('Combine', () => {
             const nameObs = new Observable('John')
             const ageObs = new Observable(25)
 
-            const combined = new Combine({
+            const combined = combine({
                 name: nameObs,
                 age: ageObs,
             })
@@ -122,7 +122,7 @@ describe('Combine', () => {
             const obs1 = new Observable(1)
             const obs2 = new Observable(2)
 
-            const combined = new Combine({
+            const combined = combine({
                 a: obs1,
                 b: obs2,
             })
@@ -142,7 +142,7 @@ describe('Combine', () => {
     describe('subscription behavior', () => {
         it('should call multiple subscribers when values change', () => {
             const obs = new Observable('test')
-            const combined = new Combine({ value: obs })
+            const combined = combine({ value: obs })
 
             const subscriber1 = vi.fn()
             const subscriber2 = vi.fn()
@@ -158,7 +158,7 @@ describe('Combine', () => {
 
         it('should support subscription options', () => {
             const obs = new Observable(5)
-            const combined = new Combine({ num: obs })
+            const combined = combine({ num: obs })
 
             const subscriber = vi.fn()
             combined.subscribe(subscriber, { fireImediately: true })
@@ -168,7 +168,7 @@ describe('Combine', () => {
 
         it('should support conditional subscriptions', () => {
             const obs = new Observable(5)
-            const combined = new Combine({ num: obs })
+            const combined = combine({ num: obs })
 
             const subscriber = vi.fn()
             combined.subscribe(subscriber, {
@@ -184,7 +184,7 @@ describe('Combine', () => {
 
         it('should return unsubscribe function', () => {
             const obs = new Observable('test')
-            const combined = new Combine({ value: obs })
+            const combined = combine({ value: obs })
 
             const subscriber = vi.fn()
             const unsubscribe = combined.subscribe(subscriber)
@@ -203,7 +203,7 @@ describe('Combine', () => {
             const obs1 = new Observable(1)
             const obs2 = new Observable(2)
 
-            const combined = new Combine({
+            const combined = combine({
                 a: obs1,
                 b: obs2,
             })
@@ -224,7 +224,7 @@ describe('Combine', () => {
 
         it('should handle multiple dispose calls', () => {
             const obs = new Observable('test')
-            const combined = new Combine({ value: obs })
+            const combined = combine({ value: obs })
 
             // Should not throw error
             expect(() => {
@@ -237,7 +237,7 @@ describe('Combine', () => {
             const obs1 = new Observable(1)
             const obs2 = new Observable(2)
 
-            const combined = new Combine({
+            const combined = combine({
                 a: obs1,
                 b: obs2,
             })
@@ -252,7 +252,7 @@ describe('Combine', () => {
     describe('inheritance from Observable', () => {
         it('should support Observable methods like map', () => {
             const obs = new Observable(5)
-            const combined = new Combine({ num: obs })
+            const combined = combine({ num: obs })
 
             const mapped = combined.map((value) => ({
                 doubled: value.num * 2,
@@ -266,7 +266,7 @@ describe('Combine', () => {
 
         it('should support Observable methods like when', async () => {
             const obs = new Observable(5)
-            const combined = new Combine({ num: obs })
+            const combined = combine({ num: obs })
 
             const promise = combined.when((value) => value.num > 10)
 
@@ -278,7 +278,7 @@ describe('Combine', () => {
 
         it('should support setValue and set methods', () => {
             const obs = new Observable(5)
-            const combined = new Combine({ num: obs })
+            const combined = combine({ num: obs })
 
             const subscriber = vi.fn()
             combined.subscribe(subscriber)
@@ -299,7 +299,7 @@ describe('Combine', () => {
             const obs1 = new Observable<string | undefined>(undefined)
             const obs2 = new Observable<number | undefined>(undefined)
 
-            const combined = new Combine({
+            const combined = combine({
                 str: obs1,
                 num: obs2,
             })
@@ -318,7 +318,7 @@ describe('Combine', () => {
 
         it('should handle observables with null values', () => {
             const obs = new Observable<string | null>(null)
-            const combined = new Combine({ value: obs })
+            const combined = combine({ value: obs })
 
             expect(combined.value).toEqual({ value: null })
 
@@ -330,7 +330,7 @@ describe('Combine', () => {
             const userObs = new Observable({ name: 'John', details: { age: 25 } })
             const settingsObs = new Observable({ theme: 'dark', notifications: true })
 
-            const combined = new Combine({
+            const combined = combine({
                 user: userObs,
                 settings: settingsObs,
             })
@@ -349,7 +349,7 @@ describe('Combine', () => {
             const obs2 = new Observable(2)
             const obs3 = new Observable(3)
 
-            const combined = new Combine({
+            const combined = combine({
                 z: obs3,
                 a: obs1,
                 m: obs2,
