@@ -310,7 +310,7 @@ func (sc *SpaceContractV3) marshalEntitlements(
 func (sc *SpaceContractV3) IsBanned(
 	ctx context.Context,
 	spaceId shared.StreamId,
-	linkedWallets []common.Address,
+	tokenIds []*big.Int,
 ) (bool, error) {
 	log := logging.FromCtx(ctx).With("function", "SpaceContractV3.IsBanned")
 	space, err := sc.getSpace(ctx, spaceId)
@@ -318,7 +318,7 @@ func (sc *SpaceContractV3) IsBanned(
 		log.Warnw("Failed to get space", "space_id", spaceId, "error", err)
 		return false, err
 	}
-	return space.banning.IsBanned(ctx, linkedWallets)
+	return space.banning.IsBanned(ctx, tokenIds)
 }
 
 /**
