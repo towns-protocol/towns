@@ -691,7 +691,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // Setup tokens
         token0.mint(owner, params.amountIn);
         vm.prank(owner);
-        token0.approve(permit2, params.amountIn);
+        token0.approve(PERMIT2, params.amountIn);
 
         // Attempt swap with tampered parameters - should fail signature verification
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
@@ -768,7 +768,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // mint tokens for owner and approve Permit2
         token0.mint(owner, params.amountIn);
         vm.prank(owner);
-        token0.approve(permit2, params.amountIn);
+        token0.approve(PERMIT2, params.amountIn);
 
         // execute swap with permit
         swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
@@ -849,7 +849,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // mint tokens for owner and approve Permit2
         token0.mint(owner, params.amountIn);
         vm.prank(owner);
-        token0.approve(permit2, params.amountIn);
+        token0.approve(PERMIT2, params.amountIn);
 
         // fund mockRouter with ETH to swap out
         deal(mockRouter, params.amountOut * 2);

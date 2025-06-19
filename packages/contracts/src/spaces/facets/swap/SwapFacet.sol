@@ -141,8 +141,12 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
         // execute swap through the router with permit
         uint256 protocolFee;
-        (amountOut, protocolFee) = ISwapRouter(swapRouter)
-            .executeSwapWithPermit{value: msg.value}(params, routerParams, permit, actualPoster);
+        (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit{value: msg.value}(
+            params,
+            routerParams,
+            permit,
+            actualPoster
+        );
 
         // mint points based on the protocol fee if ETH is involved
         if (

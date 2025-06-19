@@ -7,9 +7,11 @@ import {ISwapRouterBase, ISwapRouter} from "../../src/router/ISwapRouter.sol";
 import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
+import {Permit2Hash} from "../../src/router/Permit2Hash.sol";
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {PermitHash} from "@uniswap/permit2/src/libraries/PermitHash.sol";
 
 // contracts
 import {DeploySwapRouter} from "../../scripts/deployments/diamonds/DeploySwapRouter.s.sol";
@@ -24,18 +26,7 @@ import {Test} from "forge-std/Test.sol";
 abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase {
     using SafeTransferLib for address;
 
-    bytes32 internal constant _TOKEN_PERMISSIONS_TYPEHASH =
-        keccak256("TokenPermissions(address token,uint256 amount)");
-
-    bytes32 internal constant _PERMIT_WITNESS_TRANSFER_FROM_TYPEHASH =
-        keccak256(
-            "PermitWitnessTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline,SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)"
-        );
-
-    string internal constant SWAP_WITNESS_TYPE_STRING =
-        "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)";
-
-    address internal constant permit2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     uint16 internal constant MAX_FEE_BPS = 200; // 2%
     uint16 internal constant PROTOCOL_BPS = 50; // 0.5%
@@ -61,9 +52,11 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
     address internal immutable POSTER = makeAddr("POSTER");
 
     function setUp() public virtual {
-        new DeployPermit2().deployPermit2();
-        vm.label(permit2, "Permit2");
+        // etch Permit2 to the deterministic address
+        new DeployPermit2().run();
+        vm.label(PERMIT2, "Permit2");
 
+        // deploy mock tokens
         DeployMockERC20 deployERC20 = new DeployMockERC20();
         token0 = MockERC20(deployERC20.deploy(_deployer));
         token1 = MockERC20(deployERC20.deploy(_deployer));
@@ -156,12 +149,12 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
     ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
         bytes32 witness = _witnessHash(exactInputParams, routerParams, poster);
         bytes32 tokenPermissions = keccak256(
-            abi.encode(_TOKEN_PERMISSIONS_TYPEHASH, permit.permitted)
+            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted)
         );
 
         bytes32 structHash = keccak256(
             abi.encode(
-                _PERMIT_WITNESS_TRANSFER_FROM_TYPEHASH,
+                Permit2Hash.PERMIT_WITNESS_TRANSFER_FROM_TYPEHASH,
                 tokenPermissions,
                 spender,
                 permit.nonce,
@@ -170,7 +163,7 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
             )
         );
 
-        return signIntent(privateKey, permit2, structHash);
+        return signIntent(privateKey, PERMIT2, structHash);
     }
 
     function _createPermitParams(

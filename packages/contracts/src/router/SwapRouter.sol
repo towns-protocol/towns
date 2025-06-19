@@ -13,6 +13,7 @@ import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTran
 import {BasisPoints} from "../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../utils/libraries/CustomRevert.sol";
+import {Permit2Hash} from "./Permit2Hash.sol";
 import {SwapRouterStorage} from "./SwapRouterStorage.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -49,16 +50,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @notice Universal Permit2 contract address
     /// @dev This contract implements Uniswap's Permit2 protocol for signature-based token transfers
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-
-    string internal constant WITNESS_TYPE =
-        "SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)";
-    bytes32 internal constant WITNESS_TYPE_HASH = keccak256(bytes(WITNESS_TYPE));
-
-    /// @notice EIP-712 witness type string for SwapWitness
-    /// @dev This string defines the structure of the witness data that binds permit signatures
-    /// to specific swap parameters, preventing front-running and parameter manipulation attacks
-    string internal constant WITNESS_TYPE_STRING =
-        "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)";
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -142,7 +133,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             }),
             permit.owner, // owner who signed the permit
             _witnessHash(params, routerParams, poster),
-            WITNESS_TYPE_STRING,
+            Permit2Hash.WITNESS_TYPE_STRING,
             permit.signature
         );
 
