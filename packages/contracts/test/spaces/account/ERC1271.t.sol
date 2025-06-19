@@ -39,7 +39,7 @@ contract ERC1271Test is BaseSetup {
         mockApp = new MockApp();
     }
 
-    function test_isValidSignature_validSignature() external view {
+    function test_isValidSignature_validPersonalSign() external view {
         bytes32 messageHash = MessageHashUtils.toEthSignedMessageHash(bytes(TEST_MESSAGE));
         bytes memory signature = _signPersonalSign(founderPrivateKey, messageHash);
         bytes4 result = erc1271Facet.isValidSignature(messageHash, signature);
@@ -50,13 +50,11 @@ contract ERC1271Test is BaseSetup {
         string memory contentsDescription = "Mail(address to,string contents)";
         string memory contents = "Hello, Towns!";
 
-        // Use MockApp to get the struct hash and domain separator
-        bytes32 structHash = mockApp.getMailStructHash(founder, contents);
-        bytes32 appDomainSeparator = mockApp.getDomainSeparator();
+        // Get signature data from MockApp
+        (bytes32 mailHash, bytes32 structHash, bytes32 appDomainSeparator) = mockApp
+            .getSignatureData(founder, contents);
 
-        // The hash that the app would create and pass to isValidSignature
-        bytes32 appHash = mockApp.createMailHash(founder, contents);
-
+        // Create the signature using the helper function
         bytes memory signature = _signTypedDataSign(
             founderPrivateKey,
             appDomainSeparator,
@@ -64,9 +62,49 @@ contract ERC1271Test is BaseSetup {
             contentsDescription
         );
 
-        // Pass the app hash to isValidSignature (this is what the app would pass)
-        bytes4 result = erc1271Facet.isValidSignature(appHash, signature);
-        assertEq(result, MAGICVALUE, "Should return magic value for valid EIP-712 signature");
+        // Test 1: Direct call to isValidSignature (existing test)
+        bytes4 result = erc1271Facet.isValidSignature(mailHash, signature);
+        assertEq(result, MAGICVALUE, "Direct isValidSignature should return magic value");
+
+        // Test 2: Real-world use case - MockApp validates the signature
+        bool isValid = mockApp.validateMailSignature(
+            address(everyoneSpace), // The ERC1271 contract
+            founder, // The recipient
+            contents, // The message contents
+            signature // The signature
+        );
+        assertTrue(isValid, "MockApp should validate the signature successfully");
+    }
+
+    function test_isValidSignature_invalidTypedDataSign() external {
+        string memory contents = "Hello, Towns!";
+
+        // Create a signature with wrong private key (using a different key instead of founder)
+        uint256 wrongPrivateKey = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
+        string memory contentsDescription = "Mail(address to,string contents)";
+        (bytes32 mailHash, bytes32 structHash, bytes32 appDomainSeparator) = mockApp
+            .getSignatureData(founder, contents);
+
+        // Sign with wrong private key
+        bytes memory invalidSignature = _signTypedDataSign(
+            wrongPrivateKey, // Wrong key!
+            appDomainSeparator,
+            structHash,
+            contentsDescription
+        );
+
+        // Test 1: Direct call should revert for completely invalid signature
+        vm.expectRevert();
+        erc1271Facet.isValidSignature(mailHash, invalidSignature);
+
+        // Test 2: MockApp should return false (it catches the revert)
+        bool isValid = mockApp.validateMailSignature(
+            address(everyoneSpace),
+            founder,
+            contents,
+            invalidSignature
+        );
+        assertFalse(isValid, "MockApp should reject signature from wrong signer");
     }
 
     function _signPersonalSign(
