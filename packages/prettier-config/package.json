@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/prettier-config",
-    "version": "0.0.250",
+    "version": "0.0.251",
     "license": "MIT",
     "main": "config.js",
     "publishConfig": {
