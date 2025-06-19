@@ -181,7 +181,7 @@ func (args *ChainAuthArgs) appendTokenIds(tokenIds []*big.Int) *ChainAuthArgs {
 	//  start with args.tokenIdsStr
 	builder.WriteString(args.tokenIdsStr)
 	for i, tokenId := range tokenIds {
-		if i > 0 {
+		if i > 0 || len(args.tokenIdsStr) > 0 {
 			builder.WriteString(",")
 		}
 		builder.WriteString(tokenId.String())
