@@ -31,7 +31,7 @@ abstract contract Entitled is
 
     function _isEntitledToSpace(
         address user,
-        string calldata permission
+        string memory permission
     ) internal view returns (bool) {
         return _isEntitledToChannel(IN_TOWN, user, bytes32(bytes(permission)));
     }
@@ -82,10 +82,8 @@ abstract contract Entitled is
     }
 
     function _validatePermission(string memory permission) internal view {
-        if (
-            _owner() == msg.sender ||
-            (!_paused() && _isEntitledToChannel(IN_TOWN, msg.sender, bytes32(bytes(permission))))
-        ) return;
+        if (_owner() == msg.sender || (!_paused() && _isEntitledToSpace(msg.sender, permission)))
+            return;
 
         CustomRevert.revertWith(Entitlement__NotAllowed.selector);
     }
