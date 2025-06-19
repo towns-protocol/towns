@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"sync"
 	"time"
@@ -141,6 +142,7 @@ type ChainAuthArgs struct {
 	permission    Permission
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
+	TokenId       []*big.Int // a serialized list of token ids to comply with the cache key constraints
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -170,6 +172,15 @@ func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *Ch
 		builder.WriteString(addr.Hex())
 	}
 	ret.linkedWallets = builder.String()
+	return &ret
+}
+
+func (args *ChainAuthArgs) withTokenIds(tokenIds []*big.Int) *ChainAuthArgs {
+	// loop over membership results, add token ids to the args
+	ret := *args
+	for _, tokenId := range tokenIds {
+		ret.TokenId = append(ret.TokenId, tokenId)
+	}
 	return &ret
 }
 
@@ -1101,6 +1112,7 @@ func (ca *chainAuth) checkEntitlement(
 	// meaning all checks have terminated, or if at least one check was positive.
 	for result := range isMemberResults {
 		if result.status.IsMember {
+			args = args.withTokenIds(result.status.TokenIds)
 			isMember = true
 			// if not expired, cancel other checks, otherwise continue
 			if !result.status.IsExpired {

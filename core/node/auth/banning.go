@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"math/big"
 	"sync"
 	"time"
 
@@ -15,44 +16,44 @@ import (
 )
 
 type Banning interface {
-	IsBanned(ctx context.Context, wallets []common.Address) (bool, error)
+	IsBanned(ctx context.Context, tokenIds []*big.Int) (bool, error)
 }
 
 type bannedAddressCache struct {
-	mu              sync.Mutex
-	cacheTtl        time.Duration
-	bannedAddresses map[common.Address]struct{}
-	lastUpdated     time.Time
+	mu           sync.Mutex
+	cacheTtl     time.Duration
+	bannedTokens map[*big.Int]struct{}
+	lastUpdated  time.Time
 }
 
 func NewBannedAddressCache(ttl time.Duration) *bannedAddressCache {
 	return &bannedAddressCache{
-		bannedAddresses: map[common.Address]struct{}{},
-		lastUpdated:     time.Time{},
-		cacheTtl:        ttl,
+		bannedTokens: map[(*big.Int)]struct{}{},
+		lastUpdated:  time.Time{},
+		cacheTtl:     ttl,
 	}
 }
 
 func (b *bannedAddressCache) IsBanned(
-	wallets []common.Address,
-	onMiss func() (map[common.Address]struct{}, error),
+	tokenIds []*big.Int,
+	onMiss func() (map[*big.Int]struct{}, error),
 ) (bool, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	zeroTime := time.Time{}
 	if b.lastUpdated == zeroTime || time.Since(b.lastUpdated) > b.cacheTtl {
-		bannedAddresses, err := onMiss()
+		bannedTokens, err := onMiss()
 		if err != nil {
 			return false, err
 		}
 
-		b.bannedAddresses = bannedAddresses
+		b.bannedTokens = bannedTokens
 		b.lastUpdated = time.Now()
 	}
 
-	for _, wallet := range wallets {
-		if _, banned := b.bannedAddresses[wallet]; banned {
+	for _, tokenId := range tokenIds {
+		if _, banned := b.bannedTokens[tokenId]; banned {
 			return true, nil
 		}
 	}
@@ -67,29 +68,19 @@ type banning struct {
 	bannedAddressCache *bannedAddressCache
 }
 
-func (b *banning) IsBanned(ctx context.Context, wallets []common.Address) (bool, error) {
-	return b.bannedAddressCache.IsBanned(wallets, func() (map[common.Address]struct{}, error) {
+func (b *banning) IsBanned(ctx context.Context, tokenIds []*big.Int) (bool, error) {
+	return b.bannedAddressCache.IsBanned(tokenIds, func() (map[*big.Int]struct{}, error) {
 		bannedTokens, err := b.contract.Banned(&bind.CallOpts{Context: ctx})
 		if err != nil {
 			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).
 				Func("IsBanned").
 				Message("Failed to get banned token ids")
 		}
-		bannedAddresses := map[common.Address]struct{}{}
-		for _, token := range bannedTokens {
-			tokenOwnership, err := b.tokenContract.ExplicitOwnershipOf(&bind.CallOpts{Context: ctx}, token)
-			if err != nil {
-				return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).
-					Func("IsBanned").
-					Message("Failed to get owner of banned token")
-			}
-			// Ignore burned tokens or any resopnse that indicates a token id out of bounds
-			zeroAddress := common.Address{}
-			if !tokenOwnership.Burned && tokenOwnership.Addr != zeroAddress {
-				bannedAddresses[tokenOwnership.Addr] = struct{}{}
-			}
+		bannedTokensMap := make(map[*big.Int]struct{})
+		for _, tokenId := range bannedTokens {
+			bannedTokensMap[tokenId] = struct{}{}
 		}
-		return bannedAddresses, nil
+		return bannedTokensMap, nil
 	})
 }
 
