@@ -274,6 +274,10 @@ function isCountedAsUnread(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
         case RiverTimelineEvent.ChannelMessage:
             return event.sender.id !== myUserId
+        case RiverTimelineEvent.ChannelMessageEncrypted:
+            return event.sender.id !== myUserId
+        case RiverTimelineEvent.ChannelMessageEncryptedWithRef:
+            return false
         default:
             return false
     }
