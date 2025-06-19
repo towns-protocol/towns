@@ -126,6 +126,7 @@ contract FeatureFacet is FeatureBase, IFeature {
 
 - **Visibility**: Always use explicit visibility modifiers
 - **Access Control**: Use modifiers for permission checks
+- **Events**: Emit events for state changes
 - **Gas Optimization**:
   - Pack storage variables
   - Use `calldata` for external function arrays/strings
@@ -299,4 +300,4 @@ Key environment variables needed:
 - [Diamond Standard (EIP-2535)](https://eips.ethereum.org/EIPS/eip-2535)
 - [Foundry Documentation](https://book.getfoundry.sh/)
 - [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts)
-- Internal docs in `/docs` directory (if available)
+- [Solady Contracts](https://vectorized.github.io/solady)
