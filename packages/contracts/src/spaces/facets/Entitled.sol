@@ -29,7 +29,14 @@ abstract contract Entitled is
 
     bytes32 internal constant IN_TOWN = 0x0;
 
-    function _isEntitled(
+    function _isEntitledToSpace(
+        address user,
+        string memory permission
+    ) internal view returns (bool) {
+        return _isEntitledToChannel(IN_TOWN, user, bytes32(bytes(permission)));
+    }
+
+    function _isEntitledToChannel(
         bytes32 channelId,
         address user,
         bytes32 permission
@@ -74,31 +81,11 @@ abstract contract Entitled is
         return false;
     }
 
-    function _isEntitledToSpace(
-        address user,
-        string calldata permission
-    ) internal view returns (bool) {
-        return _isEntitledToChannel(IN_TOWN, user, permission);
-    }
-
-    function _isEntitledToChannel(
-        bytes32 channelId,
-        address user,
-        string calldata permission
-    ) internal view returns (bool) {
-        return _isEntitled(channelId, user, bytes32(bytes(permission)));
-    }
-
-    function _isAllowed(bytes32 channelId, string memory permission) internal view returns (bool) {
-        return
-            _owner() == msg.sender ||
-            (!_paused() && _isEntitled(channelId, msg.sender, bytes32(bytes(permission))));
-    }
-
     function _validatePermission(string memory permission) internal view {
-        if (!_isAllowed(IN_TOWN, permission)) {
-            CustomRevert.revertWith(Entitlement__NotAllowed.selector);
-        }
+        if (_owner() == msg.sender || (!_paused() && _isEntitledToSpace(msg.sender, permission)))
+            return;
+
+        CustomRevert.revertWith(Entitlement__NotAllowed.selector);
     }
 
     function _isMember(address user) internal view returns (bool member) {
