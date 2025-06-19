@@ -24,7 +24,7 @@ export class SpaceStreamsView extends ObservableRecord<string, SpaceStreamModel>
         })
     }
 
-    delete(spaceStreamId: string, channelId: string) {
+    delete(spaceStreamId: string, channelId: string): boolean {
         return this.set((prev) => {
             if (prev[spaceStreamId]?.channelsMetadata[channelId] === undefined) {
                 return prev
