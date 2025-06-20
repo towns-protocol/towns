@@ -12,14 +12,24 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
+import { GdmStreamModel, GdmStreamsView } from './views/streams/gdmStreams'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly channelMetadata: StreamStateView_ChannelMetadata
 
-    lastEventCreatedAtEpochMs = 0n
+    get lastEventCreatedAtEpochMs(): bigint {
+        return this.gdmStreamModel.lastEventCreatedAtEpochMs
+    }
 
-    constructor(streamId: string) {
+    get gdmStreamModel(): GdmStreamModel {
+        return this.gdmStreamsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private gdmStreamsView: GdmStreamsView,
+    ) {
         super()
         this.channelMetadata = new StreamStateView_ChannelMetadata(streamId)
         this.streamId = streamId
@@ -126,7 +136,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         event: StreamTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.lastEventCreatedAtEpochMs = event.createdAtEpochMs
+        this.gdmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, event.createdAtEpochMs)
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
@@ -136,7 +146,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     ) {
         const createdAtEpochMs = event.event.createdAtEpochMs
         if (createdAtEpochMs > this.lastEventCreatedAtEpochMs) {
-            this.lastEventCreatedAtEpochMs = createdAtEpochMs
+            this.gdmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, createdAtEpochMs)
             stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
         }
     }

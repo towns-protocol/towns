@@ -13,7 +13,7 @@ import { Observable } from './observable'
  * const ageObs = new Observable(25)
  * const isActiveObs = new Observable(true)
  *
- * const combined = new Combine({
+ * const combined = combine({
  *   name: nameObs,
  *   age: ageObs,
  *   isActive: isActiveObs,
@@ -31,7 +31,13 @@ import { Observable } from './observable'
  * ```
  *
  */
-export class Combine<T extends Record<string, any>> extends Observable<T> {
+export const combine = <T extends Record<string, any>>(observables: {
+    [K in keyof T]: Observable<T[K]>
+}) => {
+    return new Combine(observables)
+}
+
+class Combine<T extends Record<string, any>> extends Observable<T> {
     private observables: { [K in keyof T]: Observable<T[K]> }
     private unsubscribers: (() => void)[] = []
 
