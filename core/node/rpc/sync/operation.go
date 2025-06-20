@@ -22,6 +22,11 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// defaultCommandReplyTimeout is the default timeout for command replies in the sync operation.
+	defaultCommandReplyTimeout = 30 * time.Second
+)
+
 type (
 	// StreamSyncOperation represents a stream sync operation that is currently in progress.
 	StreamSyncOperation struct {
@@ -438,11 +443,23 @@ func (syncOp *StreamSyncOperation) CancelSync(
 		reply:     make(chan error, 1),
 	}
 
-	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+	timeout := time.After(defaultCommandReplyTimeout)
+	select {
+	case syncOp.commands <- cmd:
+		select {
+		case err := <-cmd.reply:
+			if err == nil {
+				return connect.NewResponse(&CancelSyncResponse{}), nil
+			}
+			return nil, err
+		case <-timeout:
+			return nil, RiverError(Err_DEADLINE_EXCEEDED, "sync operation command timed out").
+				Func("CancelSync")
+		}
+	case <-timeout:
+		return nil, RiverError(Err_DEADLINE_EXCEEDED, "sync operation command timed out").
+			Func("CancelSync")
 	}
-
-	return connect.NewResponse(&CancelSyncResponse{}), nil
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
@@ -486,7 +503,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 			return RiverError(Err_CANCELED, "sync operation cancelled").
 				Tags("syncId", syncOp.SyncID)
 		}
-	case <-time.After(30 * time.Second): // TODO: make this configurable
+	case <-time.After(defaultCommandReplyTimeout): // TODO: make this configurable
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
 			Tags("syncId", syncOp.SyncID)
 		syncOp.log.Errorw("Sync operation command queue full", "error", err)
