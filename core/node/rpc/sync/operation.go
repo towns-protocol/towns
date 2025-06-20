@@ -288,7 +288,7 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("AddStreamToSync")
 	}
 
 	if status != nil {
@@ -338,7 +338,7 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("RemoveStreamFromSync")
 	}
 
 	if status != nil {
@@ -406,7 +406,7 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("ModifySync")
 	}
 
 	if syncOp.metrics != nil {
@@ -457,10 +457,12 @@ func (syncOp *StreamSyncOperation) CancelSync(
 			return nil, err
 		case <-timeout:
 			return nil, RiverError(Err_DEADLINE_EXCEEDED, "sync operation command timed out").
+				Tags("syncId", syncOp.SyncID).
 				Func("CancelSync")
 		}
 	case <-timeout:
 		return nil, RiverError(Err_DEADLINE_EXCEEDED, "sync operation command timed out").
+			Tags("syncId", syncOp.SyncID).
 			Func("CancelSync")
 	}
 }
@@ -482,7 +484,7 @@ func (syncOp *StreamSyncOperation) PingSync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("PingSync")
 	}
 
 	return connect.NewResponse(&PingSyncResponse{}), nil
