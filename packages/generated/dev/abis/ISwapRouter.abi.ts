@@ -146,16 +146,6 @@ export default [
             "internalType": "address"
           },
           {
-            "name": "token",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "amount",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
             "name": "nonce",
             "type": "uint256",
             "internalType": "uint256"
@@ -465,11 +455,6 @@ export default [
   {
     "type": "error",
     "name": "SwapRouter__NativeTokenNotSupportedWithPermit",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "SwapRouter__PermitTokenMismatch",
     "inputs": []
   },
   {

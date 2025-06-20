@@ -154,16 +154,6 @@ const _abi = [
             internalType: "address",
           },
           {
-            name: "token",
-            type: "address",
-            internalType: "address",
-          },
-          {
-            name: "amount",
-            type: "uint256",
-            internalType: "uint256",
-          },
-          {
             name: "nonce",
             type: "uint256",
             internalType: "uint256",
@@ -473,11 +463,6 @@ const _abi = [
   {
     type: "error",
     name: "SwapRouter__NativeTokenNotSupportedWithPermit",
-    inputs: [],
-  },
-  {
-    type: "error",
-    name: "SwapRouter__PermitTokenMismatch",
     inputs: [],
   },
   {

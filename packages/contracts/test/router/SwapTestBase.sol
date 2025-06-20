@@ -146,15 +146,8 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         ExactInputParams memory exactInputParams,
         RouterParams memory routerParams,
         address poster
-    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-        // construct SwapWitness struct
-        SwapWitness memory witness = SwapWitness({
-            exactInputParams: exactInputParams,
-            routerParams: routerParams,
-            poster: poster
-        });
-
-        bytes32 witnessHash = Permit2Hash.hash(witness);
+    ) internal view returns (bytes memory) {
+        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(exactInputParams, routerParams, poster));
         bytes32 tokenPermissions = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted)
         );
@@ -170,14 +163,13 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
             )
         );
 
-        return signIntent(privateKey, PERMIT2, structHash);
+        (uint8 v, bytes32 r, bytes32 s) = signIntent(privateKey, PERMIT2, structHash);
+        return bytes.concat(r, s, bytes1(v));
     }
 
     function _createPermitParams(
         uint256 privateKey,
         address owner,
-        address token,
-        uint256 amount,
         address spender,
         uint256 nonce,
         uint256 deadline,
@@ -185,23 +177,21 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         RouterParams memory routerParams,
         address poster
     ) internal view returns (Permit2Params memory permitParams) {
-        (uint8 v, bytes32 r, bytes32 s) = _signPermitWitnessTransfer(
+        bytes memory signature = _signPermitWitnessTransfer(
             privateKey,
-            _createPermitTransferFrom(token, amount, nonce, deadline),
+            _createPermitTransferFrom(
+                exactInputParams.tokenIn,
+                exactInputParams.amountIn,
+                nonce,
+                deadline
+            ),
             spender,
             exactInputParams,
             routerParams,
             poster
         );
 
-        permitParams = Permit2Params(
-            owner,
-            token,
-            amount,
-            nonce,
-            deadline,
-            bytes.concat(r, s, bytes1(v))
-        );
+        permitParams = Permit2Params(owner, nonce, deadline, signature);
     }
 
     function _verifySwapResults(
