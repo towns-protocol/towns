@@ -528,36 +528,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
     }
 
-    function test_executeSwapWithPermit_revertWhen_invalidAmount(uint256 permitAmount) public {
-        // create permit with insufficient amount
-        Permit2Params memory permitParams = defaultEmptyPermit;
-        permitParams.token = address(token0);
-        permitParams.amount = bound(permitAmount, 0, DEFAULT_AMOUNT_IN - 1);
-
-        // expect revert with InvalidAmount (permit amount < amountIn)
-        vm.expectRevert(SwapRouter__InvalidAmount.selector);
-        swapRouter.executeSwapWithPermit(
-            defaultInputParams,
-            defaultRouterParams,
-            permitParams,
-            POSTER
-        );
-    }
-
-    function test_executeSwapWithPermit_revertWhen_permitTokenMismatch() public {
-        // create permit for wrong token
-        Permit2Params memory permitParams = defaultEmptyPermit;
-        permitParams.token = address(token1); // wrong token - should be token0
-
-        vm.expectRevert(SwapRouter__PermitTokenMismatch.selector);
-        swapRouter.executeSwapWithPermit(
-            defaultInputParams,
-            defaultRouterParams,
-            permitParams,
-            POSTER
-        );
-    }
-
     function test_executeSwapWithPermit_revertWhen_nativeTokenNotSupported() public {
         // create params with native token as input (not supported with permit)
         ExactInputParams memory inputParams = defaultInputParams;
@@ -673,8 +643,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         Permit2Params memory originalPermit = _createPermitParams(
             params.privateKey,
             owner,
-            address(token0),
-            params.amountIn,
             address(swapRouter),
             0,
             block.timestamp + 1 hours,
@@ -757,8 +725,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
             owner,
-            address(token0),
-            params.amountIn,
             address(swapRouter),
             0, // nonce
             params.deadline,
@@ -838,8 +804,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
             owner,
-            address(token0),
-            params.amountIn,
             address(swapRouter),
             0, // nonce
             params.deadline,

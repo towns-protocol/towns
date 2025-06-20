@@ -118,19 +118,13 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             SwapRouter__NativeTokenNotSupportedWithPermit.selector.revertWith();
         }
 
-        // verify permit token matches params tokenIn
-        if (permit.token != params.tokenIn) SwapRouter__PermitTokenMismatch.selector.revertWith();
-
-        // ensure permit amount is sufficient
-        if (permit.amount < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
-
         // take balance snapshot before Permit2 transfer to handle fee-on-transfer tokens
         uint256 balanceBefore = params.tokenIn.balanceOf(address(this));
 
         // execute permit transfer from owner to this contract via Permit2
         ISignatureTransfer(PERMIT2).permitWitnessTransferFrom(
             ISignatureTransfer.PermitTransferFrom(
-                ISignatureTransfer.TokenPermissions(permit.token, permit.amount),
+                ISignatureTransfer.TokenPermissions(params.tokenIn, params.amountIn),
                 permit.nonce,
                 permit.deadline
             ),
