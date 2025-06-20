@@ -18,17 +18,21 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@towns-protocol/dlog'
-import { logNever } from './check'
+import { isDefined, logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
 import { fromBinary } from '@bufbuild/protobuf'
 import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { bytesToHex } from 'ethereum-cryptography/utils'
-import { ParsedChannelProperties, SpaceStreamsView } from './views/streams/spaceStreams'
+import {
+    ParsedChannelProperties,
+    SpaceStreamModel,
+    SpaceStreamsView,
+} from './views/streams/spaceStreams'
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
     get spaceChannelsMetadata(): Record<string, ParsedChannelProperties> {
-        return this.spacesView.value[this.streamId]?.channelsMetadata ?? {}
+        return this.spaceStreamModel.channelsMetadata
     }
 
     private spaceImage: ChunkedMedia | undefined
@@ -36,6 +40,10 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     private decryptionInProgress:
         | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
         | undefined
+
+    get spaceStreamModel(): SpaceStreamModel {
+        return this.spacesView.get(this.streamId)
+    }
 
     constructor(
         streamId: string,
@@ -231,9 +239,16 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 // first take settings from payload, then from local channel, then defaults
                 const channel = this.spaceChannelsMetadata[channelId]
                 const isDefault = isDefaultChannelId(channelId)
-                const isAutojoin = payload.settings?.autojoin ?? channel?.isAutojoin ?? isDefault
-                const hideUserJoinLeaveEvents =
-                    payload.settings?.hideUserJoinLeaveEvents ?? channel?.isAutojoin ?? false
+                const isAutojoin = isDefined(payload.settings?.autojoin)
+                    ? payload.settings.autojoin
+                    : isDefined(channel?.isAutojoin)
+                      ? channel.isAutojoin
+                      : isDefault
+                const hideUserJoinLeaveEvents = isDefined(payload.settings?.hideUserJoinLeaveEvents)
+                    ? payload.settings.hideUserJoinLeaveEvents
+                    : isDefined(channel?.hideUserJoinLeaveEvents)
+                      ? channel.hideUserJoinLeaveEvents
+                      : false
                 this.spacesView.updateChannelMetadata(this.streamId, channelId, {
                     isDefault,
                     updatedAtEventNum,
