@@ -1,7 +1,10 @@
 import { Observable } from './observable'
 
 /// ObservableRecord is a class that implements an observable record.
-/// default values are cached weakly so that they are not garbage collected
+/// the Record part is like a normal record
+/// this class has a makeDefault function that provides the default value for a key
+/// default values don't get added to the record, but they are cached
+/// We're using WeakRef to store default values, allowing them to be garbage collected when unused
 /// if the default value contains the streamId, you can pass makeDefault as a function
 /// otherwise you can pass a static default value
 /// in typscript it's assumed that all keys of Records have a value, even though that's obviously false
