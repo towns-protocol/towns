@@ -259,7 +259,7 @@ func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, e *river.NodeRe
 		newNode.url = e.Url
 		if !nn.local {
 			newNode.streamServiceClient = NewStreamServiceClient(n.httpClient, e.Url, n.connectOpts...)
-			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, e.Url, n.connectOpts...)
+			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClientWithCert, e.Url, n.connectOpts...)
 		}
 		n.nodesLocked[e.NodeAddress] = &newNode
 		n.resetLocked()
