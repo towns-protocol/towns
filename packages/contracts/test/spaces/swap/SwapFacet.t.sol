@@ -523,8 +523,6 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         Permit2Params memory permitParams = _createPermitParams(
             privateKey,
             owner,
-            address(token0),
-            amountIn,
             address(swapRouter),
             0, // nonce
             block.timestamp + 1 hours,
@@ -603,8 +601,6 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         Permit2Params memory permitParams = _createPermitParams(
             privateKey,
             owner,
-            address(token0),
-            amountIn,
             address(swapRouter),
             0, // nonce
             block.timestamp + 1 hours,
