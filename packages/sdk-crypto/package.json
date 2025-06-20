@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk-crypto",
-    "version": "0.0.251",
+    "version": "0.0.252",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "publishConfig": {
