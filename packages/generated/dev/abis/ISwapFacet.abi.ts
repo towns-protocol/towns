@@ -409,6 +409,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapFacet__UnexpectedETH",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__InsufficientOutput",
     "inputs": []
   },
