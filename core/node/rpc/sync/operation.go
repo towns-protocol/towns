@@ -443,6 +443,9 @@ func (syncOp *StreamSyncOperation) CancelSync(
 		reply:     make(chan error, 1),
 	}
 
+	// Not using syncOp.process here, because we want to ignore request context to avoid flakiness.
+	// The context could be cancelled by the client before the command is processed, which would lead to a timeout
+	// in the command processing and the client would receive the "sync operation cancelled" error response.
 	timeout := time.After(defaultCommandReplyTimeout)
 	select {
 	case syncOp.commands <- cmd:
