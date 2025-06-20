@@ -9,13 +9,13 @@ import { Observable } from './observable'
 /// otherwise you can pass a static default value
 /// in typscript it's assumed that all keys of Records have a value, even though that's obviously false
 /// this class actually does always have a default value if you call get(...)
-/// make default is also super usefull for updating the value property via set(...)
+/// `makeDefault` is especially useful when you want consistent, per-key objects that can also be modified and stored back via `set(...)`.
 export class ObservableRecord<
     KEY extends string | number | symbol,
     VALUE extends object,
 > extends Observable<Record<KEY, VALUE | undefined>> {
     // weak reference cache of default values
-    private defaultGenerator: { makeDefault: (key: KEY) => VALUE } | { defaultValue: VALUE }
+    private defaultSource: { makeDefault: (key: KEY) => VALUE } | { defaultValue: VALUE }
     private defaultValues = new Map<KEY, WeakRef<VALUE>>()
 
     constructor(
@@ -24,11 +24,10 @@ export class ObservableRecord<
             | { defaultValue: VALUE; initialValue?: Record<KEY, VALUE> },
     ) {
         super(params.initialValue ?? ({} as Record<KEY, VALUE>))
-        if ('makeDefault' in params) {
-            this.defaultGenerator = { makeDefault: params.makeDefault }
-        } else {
-            this.defaultGenerator = { defaultValue: params.defaultValue }
-        }
+        this.defaultSource =
+            'makeDefault' in params
+                ? { makeDefault: params.makeDefault }
+                : { defaultValue: params.defaultValue }
     }
 
     // For testing
@@ -53,13 +52,13 @@ export class ObservableRecord<
         // store default values in a weak reference cache
         // we want to return consistant values so that react components don't re-render
         // but once the value is no longer needed, we want to garbage collect it
-        if ('defaultValue' in this.defaultGenerator) {
-            return this.defaultGenerator.defaultValue
+        if ('defaultValue' in this.defaultSource) {
+            return this.defaultSource.defaultValue
         } else {
             let defaultVal = this.defaultValues.get(key)?.deref()
             if (!defaultVal) {
                 this.maybeCleanup()
-                defaultVal = this.defaultGenerator.makeDefault(key)
+                defaultVal = this.defaultSource.makeDefault(key)
                 this.defaultValues.set(key, new WeakRef(defaultVal))
             }
             return defaultVal
@@ -71,5 +70,13 @@ export class ObservableRecord<
     // same value as long as the value is not garbage collected
     get(key: KEY): VALUE {
         return this.value[key] ?? this.makeDefault(key)
+    }
+
+    // set a value for a specific key
+    setValueFor(key: KEY, value: VALUE) {
+        this.set((prev) => ({
+            ...prev,
+            [key]: value,
+        }))
     }
 }
