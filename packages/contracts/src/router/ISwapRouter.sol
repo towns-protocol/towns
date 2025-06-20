@@ -143,7 +143,11 @@ interface ISwapRouter is ISwapRouterBase {
     ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
     /// @notice Executes a swap using Permit2 with witness data binding permit to swap intent
-    /// @dev Requires user to pre-approve tokens to Permit2 contract. Only supports ERC20 tokens.
+    /// @dev Uses Uniswap's Permit2 protocol with witness binding for enhanced security.
+    /// Integration flow:
+    /// 1. User approves tokens to Permit2 contract (0x000000000022D473030F116dDEE9F6B43aC78BA3)
+    /// 2. Frontend generates permit signature using getPermit2MessageHash()
+    /// 3. Frontend calls this function with signed permit
     /// @param params The exact input swap parameters that will be bound to the permit signature
     /// @param routerParams The router interaction parameters that will be bound to the permit signature
     /// @param permit The Permit2 data containing token, amount, nonce, deadline, and signature
@@ -175,4 +179,33 @@ interface ISwapRouter is ISwapRouterBase {
         address caller,
         address poster
     ) external view returns (uint256 amountInAfterFees, uint256 protocolFee, uint256 posterFee);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        PERMIT2 UTILS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Get the next valid nonce for a user starting from a given point
+    /// @dev Iterates through nonces until finding one that hasn't been used
+    /// @param owner The address to get nonce for
+    /// @param startNonce The nonce to start searching from (inclusive - will return this nonce if available)
+    /// @return nonce The next available nonce at or after startNonce
+    function getNextNonce(address owner, uint256 startNonce) external view returns (uint256 nonce);
+
+    /// @notice Generate the EIP-712 message hash for Permit2 signature
+    /// @dev Generates the exact hash that needs to be signed for permit-based swaps
+    /// @param params Swap parameters that will be bound to permit signature
+    /// @param routerParams Router parameters that will be bound to permit signature
+    /// @param poster Address of poster (included in witness data)
+    /// @param amount Token amount to permit (should be >= params.amountIn)
+    /// @param nonce Permit nonce (use getNextNonce to find available nonce)
+    /// @param deadline Permit deadline (unix timestamp)
+    /// @return messageHash The EIP-712 message hash ready for signing
+    function getPermit2MessageHash(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        address poster,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    ) external view returns (bytes32 messageHash);
 }

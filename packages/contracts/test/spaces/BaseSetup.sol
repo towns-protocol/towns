@@ -2,16 +2,17 @@
 pragma solidity ^0.8.23;
 
 // utils
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
-import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 // interfaces
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
+import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
@@ -20,23 +21,15 @@ import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "src/tokens/towns/mainnet/ITowns.sol";
 
 // libraries
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {TownsLib} from "src/tokens/towns/base/TownsLib.sol";
 
 // contracts
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
-import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {MockMessenger} from "test/mocks/MockMessenger.sol";
 
 // deployments
-import {Architect} from "src/factory/facets/architect/Architect.sol";
-import {RuleEntitlement} from "src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {SpaceHelper} from "test/spaces/SpaceHelper.sol";
-import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
-import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
-
-// deployments
-
 import {DeployAppRegistry} from "scripts/deployments/diamonds/DeployAppRegistry.s.sol";
 import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
