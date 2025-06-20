@@ -63,64 +63,43 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
     /// @inheritdoc ISwapFacet
     function executeSwap(
-        ExactInputParams memory params,
+        ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        _validateMembership(msg.sender);
+        address swapRouter = _validateSwapPrerequisites();
 
-        address swapRouter = getSwapRouter();
-        if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
+        // create mutable copy in memory to modify amountIn for fee-on-transfer tokens
+        ExactInputParams memory paramsMemory = params;
 
         // handle ERC20 transfers before calling SwapRouter
         bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
+
         if (!isNativeToken) {
             // use the actual received amount to handle fee-on-transfer tokens
             uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
             params.tokenIn.safeTransferFrom(msg.sender, address(this), params.amountIn);
             // update amountIn based on the actual balance after transfer
-            params.amountIn = params.tokenIn.balanceOf(address(this)) - tokenInBalanceBefore;
+            paramsMemory.amountIn = params.tokenIn.balanceOf(address(this)) - tokenInBalanceBefore;
 
             // approve SwapRouter to spend the tokens
-            params.tokenIn.safeApprove(swapRouter, params.amountIn);
+            params.tokenIn.safeApprove(swapRouter, paramsMemory.amountIn);
         }
-
-        // handle poster based on collectPosterFeeToSpace
-        address actualPoster = _resolveSwapPoster(poster);
 
         // execute swap through the router
         // forwarding `msg.value` may introduce double-spending if used with `multicall`
         // which has been handled by Solady Multicallable
         uint256 protocolFee;
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwap{value: msg.value}(
-            params,
+            paramsMemory,
             routerParams,
-            actualPoster
+            _resolveSwapPoster(poster)
         );
 
-        // mint points based on the protocol fee if ETH is involved
-        if (
-            params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
-            params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
-        ) {
-            address airdropDiamond = _getAirdropDiamond();
-            uint256 points = _getPoints(
-                airdropDiamond,
-                ITownsPointsBase.Action.Swap,
-                abi.encode(protocolFee)
-            );
-            _mintPoints(airdropDiamond, msg.sender, points);
-        }
-        emit SwapExecuted(
-            params.recipient,
-            params.tokenIn,
-            params.tokenOut,
-            params.amountIn,
-            amountOut,
-            poster // use original poster for the event
-        );
+        // post-swap processing (points minting and events)
+        _afterSwap(params, amountOut, protocolFee, poster);
 
-        // reset approval
+        // reset approval for ERC20 tokens
         if (!isNativeToken) params.tokenIn.safeApprove(swapRouter, 0);
     }
 
@@ -131,46 +110,23 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         Permit2Params calldata permit,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        _validateMembership(msg.sender);
+        // Permit2 swaps do not support ETH
+        if (msg.value != 0) SwapFacet__UnexpectedETH.selector.revertWith();
 
-        address swapRouter = getSwapRouter();
-        if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
-
-        // handle poster based on collectPosterFeeToSpace
-        address actualPoster = _resolveSwapPoster(poster);
+        address swapRouter = _validateSwapPrerequisites();
 
         // execute swap through the router with permit
         uint256 protocolFee;
-        (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit{value: msg.value}(
+        (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit(
             params,
             routerParams,
             permit,
-            actualPoster
+            _resolveSwapPoster(poster)
         );
 
-        // mint points based on the protocol fee if ETH is involved
-        if (
-            params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
-            params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
-        ) {
-            address airdropDiamond = _getAirdropDiamond();
-            uint256 points = _getPoints(
-                airdropDiamond,
-                ITownsPointsBase.Action.Swap,
-                abi.encode(protocolFee)
-            );
-            _mintPoints(airdropDiamond, msg.sender, points);
-        }
-
-        // emit event for successful swap
-        emit SwapExecuted(
-            params.recipient,
-            params.tokenIn,
-            params.tokenOut,
-            params.amountIn,
-            amountOut,
-            poster // use original poster for the event
-        );
+        // post-swap processing (points minting and events)
+        // no approval reset needed since Permit2 handles token transfers
+        _afterSwap(params, amountOut, protocolFee, poster);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -211,6 +167,50 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         INTERNAL                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Post-swap processing: mint points for ETH swaps and emit events
+    /// @param params The swap parameters for event emission
+    /// @param amountOut The amount of output tokens received
+    /// @param protocolFee The protocol fee collected for points calculation
+    /// @param poster The original poster address (for event)
+    function _afterSwap(
+        ExactInputParams calldata params,
+        uint256 amountOut,
+        uint256 protocolFee,
+        address poster
+    ) internal {
+        // mint points based on the protocol fee if ETH is involved
+        if (
+            params.tokenIn == CurrencyTransfer.NATIVE_TOKEN ||
+            params.tokenOut == CurrencyTransfer.NATIVE_TOKEN
+        ) {
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Swap,
+                abi.encode(protocolFee)
+            );
+            _mintPoints(airdropDiamond, msg.sender, points);
+        }
+
+        emit SwapExecuted(
+            params.recipient,
+            params.tokenIn,
+            params.tokenOut,
+            params.amountIn,
+            amountOut,
+            poster // use original poster for the event
+        );
+    }
+
+    /// @notice Validates swap prerequisites (membership and SwapRouter availability)
+    /// @return swapRouter The address of the SwapRouter to use
+    function _validateSwapPrerequisites() internal view returns (address swapRouter) {
+        _validateMembership(msg.sender);
+
+        swapRouter = getSwapRouter();
+        if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
+    }
 
     function _getSpaceFactory() internal view returns (address) {
         return MembershipStorage.layout().spaceFactory;

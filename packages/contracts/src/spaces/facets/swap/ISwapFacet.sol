@@ -14,6 +14,9 @@ interface ISwapFacetBase {
     /// @notice Error thrown when the total fee exceeds the maximum allowed
     error SwapFacet__TotalFeeTooHigh();
 
+    /// @notice Error thrown when ETH is sent with permit swap (not supported)
+    error SwapFacet__UnexpectedETH();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -52,7 +55,7 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @param poster The address that posted this swap opportunity
     /// @return amountOut The amount of tokenOut received
     function executeSwap(
-        ExactInputParams memory params,
+        ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster
     ) external payable returns (uint256 amountOut);

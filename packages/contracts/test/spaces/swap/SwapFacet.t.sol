@@ -446,6 +446,223 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    executeSwapWithPermit                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_executeSwapWithPermit_revertIf_unexpectedETH() external givenMembership(user) {
+        deal(user, 1 ether); // Give user enough ETH
+        vm.prank(user);
+        vm.expectRevert(SwapFacet__UnexpectedETH.selector);
+        swapFacet.executeSwapWithPermit{value: 0.1 ether}(
+            defaultInputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            POSTER
+        );
+    }
+
+    function test_executeSwapWithPermit_revertIf_notMember(address nonMember) external {
+        vm.assume(nonMember != address(0));
+        vm.assume(everyoneSpace.balanceOf(nonMember) == 0);
+
+        vm.prank(nonMember);
+        vm.expectRevert(Entitlement__NotMember.selector);
+        swapFacet.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            POSTER
+        );
+    }
+
+    function test_executeSwapWithPermit_revertIf_swapRouterNotSet() external givenMembership(user) {
+        vm.mockCall(
+            spaceFactory,
+            abi.encodeCall(IImplementationRegistry.getLatestImplementation, bytes32("SwapRouter")),
+            abi.encode(address(0))
+        );
+
+        vm.prank(user);
+        vm.expectRevert(SwapFacet__SwapRouterNotSet.selector);
+        swapFacet.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            POSTER
+        );
+    }
+
+    function test_executeSwapWithPermit(
+        uint256 privateKey,
+        address recipient,
+        uint256 amountIn,
+        uint256 amountOut
+    ) external givenMembership(user) {
+        vm.assume(recipient != address(0) && recipient != POSTER && recipient != feeRecipient);
+
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+        vm.assume(owner != feeRecipient && owner != POSTER);
+
+        // ensure amountIn and amountOut are reasonable
+        amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
+        amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        // get swap parameters
+        (ExactInputParams memory params, RouterParams memory routerParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0),
+            address(token1),
+            amountIn,
+            amountOut,
+            recipient
+        );
+
+        // get the permit signature
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(token0),
+            amountIn,
+            address(swapRouter),
+            0, // nonce
+            block.timestamp + 1 hours,
+            params,
+            routerParams,
+            POSTER
+        );
+
+        // mint tokens for owner and approve Permit2
+        token0.mint(owner, amountIn);
+        vm.prank(owner);
+        token0.approve(PERMIT2, amountIn);
+
+        uint256 expectedAmountOut = _calculateExpectedAmountOut(amountOut);
+
+        vm.expectEmit(everyoneSpace);
+        emit SwapExecuted(
+            recipient,
+            params.tokenIn,
+            params.tokenOut,
+            params.amountIn,
+            expectedAmountOut,
+            POSTER
+        );
+
+        vm.prank(user);
+        uint256 actualAmountOut = swapFacet.executeSwapWithPermit(
+            params,
+            routerParams,
+            permitParams,
+            POSTER
+        );
+
+        assertEq(actualAmountOut, expectedAmountOut, "Returned amount should match expected");
+        _verifySwapResults(
+            address(token0),
+            address(token1),
+            owner, // owner is the one whose tokens were used
+            recipient,
+            amountIn,
+            amountOut,
+            PROTOCOL_BPS,
+            POSTER_BPS
+        );
+    }
+
+    function test_executeSwapWithPermit_swapTokenToEth(
+        uint256 privateKey,
+        address recipient,
+        uint256 amountIn,
+        uint256 amountOut
+    ) external givenMembership(user) assumeEOA(recipient) {
+        vm.assume(recipient != POSTER && recipient != feeRecipient);
+        vm.assume(recipient.balance == 0);
+
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+        vm.assume(owner != feeRecipient && owner != POSTER);
+
+        // ensure amountIn and amountOut are reasonable
+        amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
+        amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        // get swap parameters for token to ETH
+        (ExactInputParams memory params, RouterParams memory routerParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0),
+            CurrencyTransfer.NATIVE_TOKEN,
+            amountIn,
+            amountOut,
+            recipient
+        );
+
+        // get the permit signature
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(token0),
+            amountIn,
+            address(swapRouter),
+            0, // nonce
+            block.timestamp + 1 hours,
+            params,
+            routerParams,
+            POSTER
+        );
+
+        // mint tokens for owner and approve Permit2
+        token0.mint(owner, amountIn);
+        vm.prank(owner);
+        token0.approve(PERMIT2, amountIn);
+
+        // fund mockRouter with ETH to swap out
+        deal(mockRouter, amountOut * 2);
+
+        uint256 expectedAmountOut = _calculateExpectedAmountOut(amountOut);
+
+        // calculate protocol fee and expected points
+        uint256 protocolFee = BasisPoints.calculate(amountOut, PROTOCOL_BPS);
+        uint256 expectedPoints = _getPoints(protocolFee);
+
+        vm.expectEmit(address(riverAirdrop));
+        emit IERC20.Transfer(address(0), user, expectedPoints); // user is the one calling the function
+
+        vm.expectEmit(everyoneSpace);
+        emit SwapExecuted(
+            recipient,
+            params.tokenIn,
+            params.tokenOut,
+            params.amountIn,
+            expectedAmountOut,
+            POSTER
+        );
+
+        vm.prank(user);
+        swapFacet.executeSwapWithPermit(params, routerParams, permitParams, POSTER);
+
+        _verifySwapResults(
+            address(token0),
+            CurrencyTransfer.NATIVE_TOKEN,
+            owner, // owner is the one whose tokens were used
+            recipient,
+            amountIn,
+            amountOut,
+            PROTOCOL_BPS,
+            POSTER_BPS
+        );
+
+        // verify points were minted correctly to the caller (user)
+        assertEq(
+            riverAirdrop.balanceOf(user),
+            expectedPoints,
+            "ETH output swap should mint correct points to caller"
+        );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
