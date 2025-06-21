@@ -13,10 +13,10 @@ import {SwapRouter} from "../../../src/router/SwapRouter.sol";
 
 library DeploySwapRouterFacet {
     function selectors() internal pure returns (bytes4[] memory res) {
-        res = new bytes4[](2);
+        res = new bytes4[](3);
         res[0] = ISwapRouter.executeSwap.selector;
-        //        res[1] = ISwapRouter.executeSwapWithPermit.selector;
-        res[1] = ISwapRouter.getETHInputFees.selector;
+        res[1] = ISwapRouter.executeSwapWithPermit.selector;
+        res[2] = ISwapRouter.getETHInputFees.selector;
     }
 
     function makeCut(

@@ -9,4 +9,4 @@ crypto-lib/=node_modules/crypto-lib/src/
 @solidity/=node_modules/crypto-lib/src/
 @ethereum-attestation-service/eas-contracts/=node_modules/@ethereum-attestation-service/eas-contracts/contracts/
 @erc6900/reference-implementation/=node_modules/@erc6900/reference-implementation/src/
-@eth-infinitism/account-abstraction/=node_modules/account-abstraction/contracts/
+@uniswap/permit2/=node_modules/@uniswap/permit2/

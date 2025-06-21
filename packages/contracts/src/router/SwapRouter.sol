@@ -7,11 +7,13 @@ import {IArchitect} from "../factory/facets/architect/IArchitect.sol";
 import {ISwapFacet} from "../spaces/facets/swap/ISwapFacet.sol";
 import {ISwapRouter} from "./ISwapRouter.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
 import {BasisPoints} from "../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../utils/libraries/CustomRevert.sol";
+import {Permit2Hash} from "./Permit2Hash.sol";
 import {SwapRouterStorage} from "./SwapRouterStorage.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -21,11 +23,33 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
-/// @title SwapRouter
-/// @notice Handles swaps through whitelisted routers with fee collection
+/**
+ * @title SwapRouter
+ * @notice Handles swaps through whitelisted routers with fee collection
+ * @dev This contract provides two swap execution methods:
+ *
+ * Standard Swaps (`executeSwap`):
+ * - User transfers tokens to contract, then swap executes
+ * - Supports both ERC20 tokens and native ETH
+ * - Traditional approve/transferFrom flow
+ *
+ * Permit2 Swaps (`executeSwapWithPermit`):
+ * - Enhanced security using Uniswap's Permit2 protocol with witness data
+ * - Direct token transfer: User → SwapRouter → DEX (skips intermediate approvals)
+ * - ERC20 tokens only (native ETH not supported)
+ * - Cryptographically binds permit signatures to exact swap parameters
+ * - Prevents front-running attacks through witness data binding
+ * - Uses EIP-712 witness containing ExactInputParams, RouterParams, and poster
+ * - Requires pre-approval of tokens to Permit2 contract
+ * - Provides nonce-based replay protection and deadline-based time bounds
+ */
 contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
+
+    /// @notice Universal Permit2 contract address
+    /// @dev This contract implements Uniswap's Permit2 protocol for signature-based token transfers
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -48,8 +72,76 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
-        // for standard swaps, the msg.sender provides the tokens
-        return _executeSwap(params, routerParams, msg.sender, poster);
+        // validate parameters before any transfers
+        _validateSwapParams(params, routerParams);
+
+        // for standard swaps, handle token transfer with balance check for fee-on-transfer tokens
+        uint256 actualAmountIn = params.amountIn;
+
+        if (params.tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
+            // ensure no ETH is sent when tokenIn is not native
+            if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
+
+            // use the actual received amount to handle fee-on-transfer tokens
+            uint256 balanceBefore = params.tokenIn.balanceOf(address(this));
+            params.tokenIn.safeTransferFrom(msg.sender, address(this), params.amountIn);
+            actualAmountIn = params.tokenIn.balanceOf(address(this)) - balanceBefore;
+        }
+
+        return _executeSwap(params, routerParams, poster, actualAmountIn);
+    }
+
+    /// @inheritdoc ISwapRouter
+    /// @dev Uses Permit2 with witness data to bind permit signatures to exact swap parameters,
+    /// preventing front-running attacks. Requires user to pre-approve tokens to Permit2 contract.
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
+        // validate parameters before any transfers
+        _validateSwapParams(params, routerParams);
+
+        // ensure no ETH is sent
+        if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
+
+        // Permit2 only works with ERC20 tokens, not native ETH
+        if (params.tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
+            SwapRouter__NativeTokenNotSupportedWithPermit.selector.revertWith();
+        }
+
+        // verify permit token matches params tokenIn
+        if (permit.token != params.tokenIn) SwapRouter__PermitTokenMismatch.selector.revertWith();
+
+        // ensure permit amount is sufficient
+        if (permit.amount < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
+
+        // take balance snapshot before Permit2 transfer to handle fee-on-transfer tokens
+        uint256 balanceBefore = params.tokenIn.balanceOf(address(this));
+
+        // execute permit transfer from owner to this contract via Permit2
+        ISignatureTransfer(PERMIT2).permitWitnessTransferFrom(
+            ISignatureTransfer.PermitTransferFrom(
+                ISignatureTransfer.TokenPermissions(permit.token, permit.amount),
+                permit.nonce,
+                permit.deadline
+            ),
+            ISignatureTransfer.SignatureTransferDetails({
+                to: address(this),
+                requestedAmount: params.amountIn
+            }),
+            permit.owner, // owner who signed the permit
+            Permit2Hash.hash(SwapWitness(params, routerParams, poster)),
+            Permit2Hash.WITNESS_TYPE_STRING,
+            permit.signature
+        );
+
+        // calculate actual amount received (handles fee-on-transfer tokens)
+        uint256 actualAmountIn = params.tokenIn.balanceOf(address(this)) - balanceBefore;
+
+        // execute the swap with the actual amount received
+        return _executeSwap(params, routerParams, poster, actualAmountIn);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -75,19 +167,16 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Internal function to execute a swap with a specified payer
+    /// @notice Validates swap parameters before any transfers occur
     /// @param params The parameters for the swap
     /// @param routerParams The router parameters for the swap
-    /// @param payer The address providing the input tokens
-    /// @param poster The address that posted this swap opportunity
-    /// @return amountOut The amount of tokenOut received
-    /// @return protocolFee The protocol fee amount
-    function _executeSwap(
+    function _validateSwapParams(
         ExactInputParams calldata params,
-        RouterParams calldata routerParams,
-        address payer,
-        address poster
-    ) internal returns (uint256 amountOut, uint256 protocolFee) {
+        RouterParams calldata routerParams
+    ) internal view {
+        // require explicit recipient
+        if (params.recipient == address(0)) SwapRouter__RecipientRequired.selector.revertWith();
+
         // only allow whitelisted routers
         if (!_isRouterWhitelisted(routerParams.router)) {
             SwapRouter__InvalidRouter.selector.revertWith();
@@ -95,28 +184,34 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         if (!_isRouterWhitelisted(routerParams.approveTarget)) {
             SwapRouter__InvalidRouter.selector.revertWith();
         }
+    }
 
+    /// @notice Internal function to execute a swap with tokens already in the contract
+    /// @param params The parameters for the swap
+    /// @param routerParams The router parameters for the swap
+    /// @param poster The address that posted this swap opportunity
+    /// @param actualAmountIn The actual amount of input tokens received (after fee-on-transfer deductions)
+    /// @return amountOut The amount of tokenOut received
+    /// @return protocolFee The protocol fee amount
+    function _executeSwap(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        address poster,
+        uint256 actualAmountIn
+    ) internal returns (uint256 amountOut, uint256 protocolFee) {
         // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
 
         bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
         {
             uint256 value;
-            uint256 amountIn = params.amountIn;
 
             if (!isNativeToken) {
-                // ensure no ETH is sent when tokenIn is not native
-                if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
-
-                // use the actual received amount to handle fee-on-transfer tokens
-                uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
-                params.tokenIn.safeTransferFrom(payer, address(this), amountIn);
-                amountIn = params.tokenIn.balanceOf(address(this)) - tokenInBalanceBefore;
-
-                params.tokenIn.safeApprove(routerParams.approveTarget, amountIn);
+                // tokens are already in the contract, just approve the router
+                params.tokenIn.safeApprove(routerParams.approveTarget, actualAmountIn);
             } else {
                 // for native token, the value should be sent with the transaction
-                if (msg.value != amountIn) SwapRouter__InvalidAmount.selector.revertWith();
+                if (msg.value != params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
 
                 // calculate and collect fees before the swap for ETH input
                 (value, protocolFee, ) = _collectFees(
@@ -145,11 +240,13 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // slippage check after fees
         if (amountOut < params.minAmountOut) SwapRouter__InsufficientOutput.selector.revertWith();
 
-        // use `msg.sender` as recipient if not specified
-        address recipient = params.recipient == address(0) ? msg.sender : params.recipient;
-
         // transfer remaining tokens to the recipient
-        CurrencyTransfer.transferCurrency(params.tokenOut, address(this), recipient, amountOut);
+        CurrencyTransfer.transferCurrency(
+            params.tokenOut,
+            address(this),
+            params.recipient,
+            amountOut
+        );
 
         emit Swap(
             routerParams.router,
@@ -158,7 +255,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             params.tokenOut,
             params.amountIn,
             amountOut,
-            recipient
+            params.recipient
         );
     }
 

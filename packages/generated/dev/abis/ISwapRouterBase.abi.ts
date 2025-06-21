@@ -125,6 +125,16 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapRouter__PermitTokenMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__RecipientRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__UnexpectedETH",
     "inputs": []
   }

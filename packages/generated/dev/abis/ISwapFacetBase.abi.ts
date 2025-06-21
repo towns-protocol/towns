@@ -70,5 +70,10 @@ export default [
     "type": "error",
     "name": "SwapFacet__TotalFeeTooHigh",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapFacet__UnexpectedETH",
+    "inputs": []
   }
 ] as const

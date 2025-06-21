@@ -82,6 +82,116 @@ const _abi = [
   },
   {
     type: "function",
+    name: "executeSwapWithPermit",
+    inputs: [
+      {
+        name: "params",
+        type: "tuple",
+        internalType: "struct ISwapRouterBase.ExactInputParams",
+        components: [
+          {
+            name: "tokenIn",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "tokenOut",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "amountIn",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "minAmountOut",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "recipient",
+            type: "address",
+            internalType: "address",
+          },
+        ],
+      },
+      {
+        name: "routerParams",
+        type: "tuple",
+        internalType: "struct ISwapRouterBase.RouterParams",
+        components: [
+          {
+            name: "router",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "approveTarget",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "swapData",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+      {
+        name: "permit",
+        type: "tuple",
+        internalType: "struct ISwapRouterBase.Permit2Params",
+        components: [
+          {
+            name: "owner",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "token",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "amount",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "nonce",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "deadline",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "signature",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+      {
+        name: "poster",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "amountOut",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
     name: "getSwapFees",
     inputs: [],
     outputs: [
@@ -307,6 +417,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SwapFacet__UnexpectedETH",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SwapRouter__InsufficientOutput",
     inputs: [],
   },
@@ -328,6 +443,16 @@ const _abi = [
   {
     type: "error",
     name: "SwapRouter__NativeTokenNotSupportedWithPermit",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SwapRouter__PermitTokenMismatch",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SwapRouter__RecipientRequired",
     inputs: [],
   },
   {

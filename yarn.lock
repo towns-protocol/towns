@@ -8733,6 +8733,7 @@ __metadata:
     "@prb/test": ^0.6.4
     "@towns-protocol/diamond": ^0.5.4
     "@towns-protocol/prettier-config": "workspace:^"
+    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
     "@wagmi/cli": ^2.2.0
     account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
     crypto-lib: "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
@@ -10085,6 +10086,13 @@ __metadata:
   version: 1.2.0
   resolution: "@ungap/structured-clone@npm:1.2.0"
   checksum: 4f656b7b4672f2ce6e272f2427d8b0824ed11546a601d8d5412b9d7704e83db38a8d9f402ecdf2b9063fc164af842ad0ec4a55819f621ed7e7ea4d1efcc74524
+  languageName: node
+  linkType: hard
+
+"@uniswap/permit2@https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz":
+  version: 1.0.0
+  resolution: "@uniswap/permit2@https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
+  checksum: 3495dde36da77f18e7909f2b095c944811f128d3d147f6ab197651f99a9c46319cfb7551e6e24de6758da11a5486421e51a30fac247d8e5df5d278dacaee8fef
   languageName: node
   linkType: hard
 

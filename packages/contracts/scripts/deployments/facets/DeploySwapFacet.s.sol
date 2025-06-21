@@ -12,12 +12,12 @@ import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeploySwapFacet {
     function selectors() internal pure returns (bytes4[] memory res) {
-        res = new bytes4[](4);
+        res = new bytes4[](5);
         res[0] = ISwapFacet.setSwapFeeConfig.selector;
         res[1] = ISwapFacet.executeSwap.selector;
-        //        res[2] = ISwapFacet.executeSwapWithPermit.selector;
-        res[2] = ISwapFacet.getSwapFees.selector;
-        res[3] = ISwapFacet.getSwapRouter.selector;
+        res[2] = ISwapFacet.executeSwapWithPermit.selector;
+        res[3] = ISwapFacet.getSwapFees.selector;
+        res[4] = ISwapFacet.getSwapRouter.selector;
     }
 
     function makeCut(

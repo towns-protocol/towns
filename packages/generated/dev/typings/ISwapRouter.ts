@@ -61,16 +61,45 @@ export declare namespace ISwapRouterBase {
     approveTarget: string;
     swapData: string;
   };
+
+  export type Permit2ParamsStruct = {
+    owner: PromiseOrValue<string>;
+    token: PromiseOrValue<string>;
+    amount: PromiseOrValue<BigNumberish>;
+    nonce: PromiseOrValue<BigNumberish>;
+    deadline: PromiseOrValue<BigNumberish>;
+    signature: PromiseOrValue<BytesLike>;
+  };
+
+  export type Permit2ParamsStructOutput = [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    string
+  ] & {
+    owner: string;
+    token: string;
+    amount: BigNumber;
+    nonce: BigNumber;
+    deadline: BigNumber;
+    signature: string;
+  };
 }
 
 export interface ISwapRouterInterface extends utils.Interface {
   functions: {
     "executeSwap((address,address,uint256,uint256,address),(address,address,bytes),address)": FunctionFragment;
+    "executeSwapWithPermit((address,address,uint256,uint256,address),(address,address,bytes),(address,address,uint256,uint256,uint256,bytes),address)": FunctionFragment;
     "getETHInputFees(uint256,address,address)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "executeSwap" | "getETHInputFees"
+    nameOrSignatureOrTopic:
+      | "executeSwap"
+      | "executeSwapWithPermit"
+      | "getETHInputFees"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -78,6 +107,15 @@ export interface ISwapRouterInterface extends utils.Interface {
     values: [
       ISwapRouterBase.ExactInputParamsStruct,
       ISwapRouterBase.RouterParamsStruct,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "executeSwapWithPermit",
+    values: [
+      ISwapRouterBase.ExactInputParamsStruct,
+      ISwapRouterBase.RouterParamsStruct,
+      ISwapRouterBase.Permit2ParamsStruct,
       PromiseOrValue<string>
     ]
   ): string;
@@ -92,6 +130,10 @@ export interface ISwapRouterInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "executeSwap",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "executeSwapWithPermit",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -185,6 +227,14 @@ export interface ISwapRouter extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getETHInputFees(
       amountIn: PromiseOrValue<BigNumberish>,
       caller: PromiseOrValue<string>,
@@ -206,6 +256,14 @@ export interface ISwapRouter extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  executeSwapWithPermit(
+    params: ISwapRouterBase.ExactInputParamsStruct,
+    routerParams: ISwapRouterBase.RouterParamsStruct,
+    permit: ISwapRouterBase.Permit2ParamsStruct,
+    poster: PromiseOrValue<string>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   getETHInputFees(
     amountIn: PromiseOrValue<BigNumberish>,
     caller: PromiseOrValue<string>,
@@ -223,6 +281,16 @@ export interface ISwapRouter extends BaseContract {
     executeSwap(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber] & { amountOut: BigNumber; protocolFee: BigNumber }
+    >;
+
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
       poster: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<
@@ -294,6 +362,14 @@ export interface ISwapRouter extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     getETHInputFees(
       amountIn: PromiseOrValue<BigNumberish>,
       caller: PromiseOrValue<string>,
@@ -306,6 +382,14 @@ export interface ISwapRouter extends BaseContract {
     executeSwap(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
       poster: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
