@@ -9,7 +9,7 @@ import {
 import { StreamChange } from '../../streamEvents'
 import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineEvents'
 import { DecryptedContent } from '../../encryptedContentTypes'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError } from '../../decryptionExtensions'
 import isEqual from 'lodash/isEqual'
 import { isDMChannelStreamId } from '../../id'
 

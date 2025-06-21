@@ -21,7 +21,7 @@ import {
     ChannelMessage_PostSchema,
     MembershipReason,
 } from '@towns-protocol/proto'
-import type { DecryptionSessionError } from '@towns-protocol/encryption'
+import type { DecryptionSessionError } from '../../../decryptionExtensions'
 import { isDefined, logNever } from '../../../check'
 import { create } from '@bufbuild/protobuf'
 

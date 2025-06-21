@@ -21,9 +21,9 @@ import {
     GroupEncryptionSession,
     parseGroupEncryptionAlgorithmId,
     UserDevice,
-} from './olmLib'
+    GroupEncryptionCrypto,
+} from '@towns-protocol/encryption'
 import { create, fromJsonString } from '@bufbuild/protobuf'
-import { GroupEncryptionCrypto } from './groupEncryptionCrypto'
 
 export interface EntitlementsDelegate {
     isEntitled(

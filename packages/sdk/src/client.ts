@@ -69,18 +69,20 @@ import {
 import {
     AES_GCM_DERIVED_ALGORITHM,
     CryptoStore,
-    DecryptionEvents,
-    EntitlementsDelegate,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
     GroupEncryptionSession,
     IGroupEncryptionClient,
     UserDevice,
     UserDeviceCollection,
-    makeSessionKeys,
-    type BaseDecryptionExtensions,
     type EncryptionDeviceInitOpts,
 } from '@towns-protocol/encryption'
+import {
+    DecryptionEvents,
+    EntitlementsDelegate,
+    makeSessionKeys,
+    type BaseDecryptionExtensions,
+} from './decryptionExtensions'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'

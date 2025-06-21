@@ -73,7 +73,7 @@ import {
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../../encryptedContentTypes'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError } from '../../decryptionExtensions'
 
 const logger = dlogger('csb:timeline')
 

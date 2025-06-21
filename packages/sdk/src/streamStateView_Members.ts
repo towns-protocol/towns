@@ -25,7 +25,7 @@ import { StreamStateView_Members_Solicitations } from './streamStateView_Members
 import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { KeySolicitationContent } from '@towns-protocol/encryption'
+import { KeySolicitationContent } from './decryptionExtensions'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
