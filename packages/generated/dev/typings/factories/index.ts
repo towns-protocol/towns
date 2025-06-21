@@ -8,6 +8,7 @@ export { Architect__factory } from "./Architect__factory";
 export { Channels__factory } from "./Channels__factory";
 export { DropFacet__factory } from "./DropFacet__factory";
 export { EntitlementsManager__factory } from "./EntitlementsManager__factory";
+export { IAppAccount__factory } from "./IAppAccount__factory";
 export { IAppRegistry__factory } from "./IAppRegistry__factory";
 export { IArchitect__factory } from "./IArchitect__factory";
 export { IBanning__factory } from "./IBanning__factory";
@@ -53,6 +54,7 @@ export { PlatformRequirementsFacet__factory } from "./PlatformRequirementsFacet_
 export { PrepayFacet__factory } from "./PrepayFacet__factory";
 export { RewardsDistributionV2__factory } from "./RewardsDistributionV2__factory";
 export { Roles__factory } from "./Roles__factory";
+export { SimpleApp__factory } from "./SimpleApp__factory";
 export { SpaceOwner__factory } from "./SpaceOwner__factory";
 export { StreamRegistry__factory } from "./StreamRegistry__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
