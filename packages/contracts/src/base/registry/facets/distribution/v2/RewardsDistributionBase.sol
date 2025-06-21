@@ -2,18 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IRewardsDistributionBase} from "./IRewardsDistribution.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
 // libraries
-
+import {CustomRevert} from "../../../../../utils/libraries/CustomRevert.sol";
+import {SpaceDelegationStorage} from "../../delegation/SpaceDelegationStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "../../operator/NodeOperatorStorage.sol";
 import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
 import {StakingRewards} from "./StakingRewards.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SpaceDelegationStorage} from "src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
-import {NodeOperatorStatus, NodeOperatorStorage} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -32,6 +30,13 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     /*                           STAKING                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice Creates a new staking deposit for the specified owner
+    /// @dev Validates delegatee, deploys proxy, transfers tokens, and updates accounting
+    /// @param amount Amount of stake tokens to deposit
+    /// @param delegatee Address to delegate to (operator or space)
+    /// @param beneficiary Address that receives staking rewards
+    /// @param owner Address that owns the deposit
+    /// @return depositId The unique ID for this deposit
     function _stake(
         uint96 amount,
         address delegatee,
@@ -60,6 +65,10 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         emit Stake(owner, delegatee, beneficiary, depositId, amount);
     }
 
+    /// @notice Increases the stake amount for an existing deposit
+    /// @dev Validates ownership, transfers additional tokens, and updates deposit accounting
+    /// @param depositId The ID of the existing deposit to increase
+    /// @param amount Additional amount of stake tokens to add
     function _increaseStake(uint256 depositId, uint96 amount) internal {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
@@ -162,24 +171,14 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Sweeps the rewards in the space delegation to the operator if necessary
-    /// @dev Must be called after `StakingRewards.updateGlobalReward`
     function _sweepSpaceRewardsIfNecessary(address space) internal {
         address operator = _getOperatorBySpace(space);
         if (operator == address(0)) return;
 
         StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        StakingRewards.Treasure storage spaceTreasure = staking.treasureByBeneficiary[space];
-        staking.updateReward(spaceTreasure);
+        uint256 scaledReward = staking.sweepUnclaimedReward(space, operator);
 
-        uint256 scaledReward = spaceTreasure.unclaimedRewardSnapshot;
-        if (scaledReward == 0) return;
-
-        StakingRewards.Treasure storage operatorTreasure = staking.treasureByBeneficiary[operator];
-
-        operatorTreasure.unclaimedRewardSnapshot += scaledReward;
-        spaceTreasure.unclaimedRewardSnapshot = 0;
-
-        emit SpaceRewardsSwept(space, operator, scaledReward);
+        if (scaledReward != 0) emit SpaceRewardsSwept(space, operator, scaledReward);
     }
 
     /// @dev Checks if the delegatee is a space
