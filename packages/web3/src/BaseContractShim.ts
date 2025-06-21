@@ -27,6 +27,7 @@ export class BaseContractShim<
     private contractInterface?: T_CONTRACT['interface']
     private readContract?: T_CONTRACT
     private writeContract?: T_CONTRACT
+    private readContractWithRetry?: T_CONTRACT
 
     constructor(
         address: string,
@@ -54,8 +55,80 @@ export class BaseContractShim<
             this.readContract = this.connect(this.address, this.provider)
             this.contractInterface = this.readContract.interface
         }
-        return this.readContract
+
+        // Create retry-enabled proxy if not already created
+        if (!this.readContractWithRetry) {
+            this.readContractWithRetry = createReadRetryProxy(this.readContract)
+        }
+
+        return this.readContractWithRetry
     }
+
+    // private createRetryProxy(contract: T_CONTRACT): T_CONTRACT {
+    //     // Create a wrapper object that delegates to the original contract
+    //     const wrapper = Object.create(null) as T_CONTRACT
+
+    //     type ContractKey = keyof T_CONTRACT
+
+    //     // Copy all properties and methods from the original contract
+    //     const copyProperty = (obj: any, key: ContractKey | symbol) => {
+    //         try {
+    //             const descriptor = Object.getOwnPropertyDescriptor(obj, key)
+
+    //             if (descriptor) {
+    //                 if (typeof descriptor.value === 'function') {
+    //                     type F = T_CONTRACT[ContractKey]
+    //                     type P = Parameters<F>
+    //                     type R = ReturnType<F>
+    //                     const originalFunction = descriptor.value as (...args: P) => Promise<R>
+
+    //                     // Wrap functions with retry logic
+    //                     wrapper[key as ContractKey] = function (...args: P) {
+    //                         return retryWithBackoff(() => originalFunction.apply(contract, args))
+    //                     } as F
+    //                 } else {
+    //                     // Copy non-function properties as-is
+    //                     Object.defineProperty(wrapper, key, {
+    //                         ...descriptor,
+    //                         value: descriptor.value,
+    //                     })
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             // If we can't copy a property, skip it
+    //         }
+    //     }
+
+    //     // Copy properties from the contract instance
+    //     Object.getOwnPropertyNames(contract).forEach((key) => copyProperty(contract, key))
+    //     Object.getOwnPropertySymbols(contract).forEach((key) => copyProperty(contract, key))
+
+    //     // Copy properties from the prototype chain
+    //     let proto = Object.getPrototypeOf(contract)
+    //     while (proto && proto !== Object.prototype) {
+    //         Object.getOwnPropertyNames(proto).forEach((key) => {
+    //             if (key !== 'constructor' && !(key in wrapper)) {
+    //                 copyProperty(proto, key)
+    //             }
+    //         })
+    //         proto = Object.getPrototypeOf(proto)
+    //     }
+
+    //     // Return a proxy that falls back to the original contract for missing properties
+    //     return new Proxy(wrapper, {
+    //         get(target, prop): unknown {
+    //             // If the property exists on our wrapper, return it (with retry logic)
+    //             if (prop in target) {
+    //                 return target[prop as keyof T_CONTRACT]
+    //             }
+
+    //             // Otherwise, fall back to the original contract
+    //             // using a Proxy in the first place, instead of the wrapper, is basically a no-op b/c all the functions
+    //             // in ethers contracts are non-configurable, so we can't override them and it throws an error
+    //             return contract[prop as keyof T_CONTRACT]
+    //         },
+    //     })
+    // }
 
     public write(signer: ethers.Signer): T_CONTRACT {
         // lazy create an instance if it is not already cached
@@ -278,4 +351,105 @@ export class BaseContractShim<
     public parseLog(log: ethers.providers.Log) {
         return this.interface.parseLog(log)
     }
+}
+
+const retryConfig = {
+    maxAttempts: 5,
+    baseDelayMs: 500,
+    maxDelayMs: 8000,
+    backoffMultiplier: 2,
+}
+
+async function retryWithBackoff<T>(fn: () => Promise<T>, attemptNumber: number = 1): Promise<T> {
+    try {
+        return await fn()
+    } catch (error) {
+        const isLastAttempt = attemptNumber >= retryConfig.maxAttempts
+
+        if (isLastAttempt) {
+            throw error
+        }
+
+        const delayMs = Math.min(
+            retryConfig.baseDelayMs * Math.pow(retryConfig.backoffMultiplier, attemptNumber - 1),
+            retryConfig.maxDelayMs,
+        )
+
+        logger.log(
+            `Retrying call after error (attempt ${attemptNumber}/${retryConfig.maxAttempts}):`,
+            (error as Error)?.message || String(error),
+        )
+
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+        return retryWithBackoff(fn, attemptNumber + 1)
+    }
+}
+
+export function createReadRetryProxy<T_CONTRACT extends ContractType<Connect<ethers.Contract>>>(
+    contract: T_CONTRACT,
+): T_CONTRACT {
+    // Create a wrapper object that delegates to the original contract
+    const wrapper = Object.create(null) as T_CONTRACT
+
+    type ContractKey = keyof T_CONTRACT
+
+    // Copy all properties and methods from the original contract
+    const copyProperty = (obj: any, key: ContractKey) => {
+        try {
+            const descriptor = Object.getOwnPropertyDescriptor(obj, key)
+
+            if (descriptor) {
+                if (typeof descriptor.value === 'function') {
+                    type F = T_CONTRACT[ContractKey]
+                    type P = Parameters<F>
+                    type R = ReturnType<F>
+                    const originalFunction = descriptor.value as (...args: P) => Promise<R>
+
+                    // Wrap functions with retry logic
+                    wrapper[key] = function (...args: P) {
+                        return retryWithBackoff(() => originalFunction.apply(contract, args))
+                    } as F
+                } else {
+                    // Copy non-function properties as-is
+                    Object.defineProperty(wrapper, key, {
+                        ...descriptor,
+                        value: descriptor.value,
+                    })
+                }
+            }
+        } catch (error) {
+            // If we can't copy a property, skip it
+        }
+    }
+
+    // Copy properties from the contract instance
+    Object.getOwnPropertyNames(contract).forEach((key) => copyProperty(contract, key))
+    // we don't need to copy symbols, should be fine
+    // Object.getOwnPropertySymbols(contract).forEach((key) => copyProperty(contract, key))
+
+    // copy properties from the prototype chain
+    let proto = Object.getPrototypeOf(contract)
+    while (proto && proto !== Object.prototype) {
+        Object.getOwnPropertyNames(proto).forEach((key) => {
+            if (key !== 'constructor' && !(key in wrapper)) {
+                copyProperty(proto, key)
+            }
+        })
+        proto = Object.getPrototypeOf(proto)
+    }
+
+    // return a proxy that falls back to the original contract for missing properties
+    return new Proxy(wrapper, {
+        get(target, prop): unknown {
+            // If the property exists on our wrapper, return it (with retry logic)
+            if (prop in target) {
+                return target[prop as keyof T_CONTRACT]
+            }
+
+            // Otherwise, fall back to the original contract
+            // using a Proxy in the first place, instead of the wrapper, is basically a no-op b/c all the functions
+            // in ethers contracts are non-configurable, so we can't override them and it throws an error
+            return contract[prop as keyof T_CONTRACT]
+        },
+    })
 }
