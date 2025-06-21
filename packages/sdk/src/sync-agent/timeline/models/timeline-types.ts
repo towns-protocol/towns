@@ -263,12 +263,11 @@ export interface ChannelMessageMissingEvent {
     eventId: string
 }
 
-// TODO: membership here doenst map 1-1 to MembershipOp
+// the same as MembershipOp but with a different name
 export enum Membership {
     Join = 'join',
     Invite = 'invite',
     Leave = 'leave',
-    Ban = 'ban',
     None = '',
 }
 

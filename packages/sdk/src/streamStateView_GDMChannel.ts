@@ -31,7 +31,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         private gdmStreamsView: GdmStreamsView,
     ) {
         super()
-        this.channelMetadata = new StreamStateView_ChannelMetadata(streamId)
+        this.channelMetadata = new StreamStateView_ChannelMetadata(streamId, gdmStreamsView)
         this.streamId = streamId
     }
 
