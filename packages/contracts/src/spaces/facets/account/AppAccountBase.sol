@@ -20,10 +20,12 @@ import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {AppAccountStorage} from "./AppAccountStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {ExecutorStorage} from "../executor/ExecutorStorage.sol";
 
 // contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {TransferControlBase} from "./transfers/TransferControlBase.sol";
 
 // types
 import {ExecutionManifest, ManifestExecutionFunction} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -33,6 +35,7 @@ abstract contract AppAccountBase is
     IAppAccountBase,
     IAppRegistryBase,
     TokenOwnableBase,
+    TransferControlBase,
     ExecutorBase
 {
     using CustomRevert for bytes4;
@@ -148,11 +151,11 @@ abstract contract AppAccountBase is
 
     function _onExecute(
         address target,
-        uint256,
+        uint256 value,
         bytes calldata data
     ) internal returns (bytes memory result) {
         _checkAuthorized(target);
-        (result, ) = _execute(target, 0, data);
+        (result, ) = _execute(target, value, data);
     }
 
     // Internal Functions
@@ -211,6 +214,16 @@ abstract contract AppAccountBase is
         }
 
         return false;
+    }
+
+    function _onRequestTransfer(
+        address app,
+        address token,
+        address to,
+        uint256 amount
+    ) internal returns (bool success) {
+        if (!_isExecutingApp(app)) UnauthorizedTransferRequest.selector.revertWith();
+        return _requestTransfer(app, token, to, amount);
     }
 
     function _getApp(address module) internal view returns (App memory app) {
@@ -295,6 +308,27 @@ abstract contract AppAccountBase is
             selector == IERC6900ExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
             selector == ITownsApp.requiredPermissions.selector;
+    }
+
+    function _isExecutingApp(address app) internal view returns (bool) {
+        bytes32 currentExecutionId = ExecutorStorage.getLayout().executionId;
+        bytes32 executingTarget = ExecutorStorage.getLayout().executingTarget[app];
+
+        // If no execution is happening, return false
+        if (currentExecutionId == bytes32(0) || executingTarget == bytes32(0)) return false;
+        if (currentExecutionId != executingTarget) return false;
+
+        // Check if the app is installed (basic validation)
+        bytes32 appId = _getInstalledAppId(app);
+        if (appId == EMPTY_UID) return false;
+
+        // The execution ID is set when _execute runs and includes target+selector
+        // Since we can't easily extract the target from the execution ID,
+        // we verify the app has valid access and the execution context exists
+        (bool hasAccess, , bool isActive) = _hasGroupAccess(appId, app);
+
+        // Return true if app has access and there's an active execution context
+        return hasAccess && isActive;
     }
 
     // Override Functions
