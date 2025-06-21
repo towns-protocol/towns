@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/google/go-cmp/cmp"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1723,7 +1724,7 @@ func (tcs testClients) compareNowImpl(
 		for range tcs {
 			streams = append(streams, <-streamC)
 		}
-		if false /*testfmt.Enabled()*/ {
+		if testfmt.Enabled() {
 			testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
 			for i, stream := range streams {
 				testfmt.Println(
@@ -1783,7 +1784,20 @@ func (tcs testClients) compareNowImpl(
 			firstUpdates := f.Clone()
 			clientUpdates := c.Clone()
 
-			success = success && assert.Equal(len(firstUpdates), len(clientUpdates))
+			opt := cmp.Comparer(func(x, y *SyncStreamsResponse) bool {
+				return x.GetSyncOp() == y.GetSyncOp() &&
+					/*x.GetSyncId() == y.GetSyncId() && Unique per sync session*/
+					cmp.Equal(x.GetStreamId(), y.GetStreamId()) &&
+					cmp.Equal(x.GetStream(), y.GetStream(), cmp.Comparer(func(s1, s2 *StreamAndCookie) bool {
+						return cmp.Equal(s1.GetNextSyncCookie().GetMinipoolGen(), s2.GetNextSyncCookie().GetMinipoolGen()) &&
+							cmp.Equal(s1.GetNextSyncCookie().GetPrevMiniblockHash(), s2.GetNextSyncCookie().GetPrevMiniblockHash())
+					})) &&
+					cmp.Equal(x.GetPongNonce(), y.GetPongNonce()) &&
+					cmp.Equal(x.GetTargetSyncIds(), y.GetTargetSyncIds())
+			})
+
+			diff := cmp.Diff(firstUpdates, clientUpdates, opt)
+			success = success && assert.Empty(diff)
 
 			for j, first := range firstUpdates {
 				if !success {
