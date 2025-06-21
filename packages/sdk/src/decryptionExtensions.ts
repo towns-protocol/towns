@@ -24,6 +24,7 @@ import {
     GroupEncryptionCrypto,
 } from '@towns-protocol/encryption'
 import { create, fromJsonString } from '@bufbuild/protobuf'
+import { sortedArraysEqual } from './observable/utils'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -958,18 +959,6 @@ function dequeueUpToDate<T extends { streamId: string }>(
         return undefined
     }
     return items.splice(index, 1)[0]
-}
-
-function sortedArraysEqual(a: string[], b: string[]): boolean {
-    if (a.length !== b.length) {
-        return false
-    }
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) {
-            return false
-        }
-    }
-    return true
 }
 
 function takeFirst<T>(count: number, array: T[]): T[] {
