@@ -1796,6 +1796,10 @@ func (tcs testClients) compareNowImpl(
 					cmp.Equal(x.GetTargetSyncIds(), y.GetTargetSyncIds())
 			})
 
+			if diff := cmp.Diff(firstUpdates, clientUpdates, opt); diff != "" {
+				fmt.Printf("firstUpdates != clientUpdates: %s\n", diff)
+			}
+
 			diff := cmp.Diff(firstUpdates, clientUpdates, opt)
 			success = success && assert.Empty(diff)
 
