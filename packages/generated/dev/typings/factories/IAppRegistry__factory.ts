@@ -239,6 +239,25 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getAppPrice",
+    inputs: [
+      {
+        name: "app",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getAppSchema",
     inputs: [],
     outputs: [
