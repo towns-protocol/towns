@@ -23,6 +23,7 @@ import { Membership } from '../sync-agent/timeline/models/timeline-types'
 import { spaceIdsTransform } from './transforms/spaceIdsTransform'
 import { DmAndGdmModel, dmsAndGdmsTransform } from './transforms/dmsAndGdmsTransform'
 import { StreamMemberIdsView } from './streams/streamMemberIds'
+import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -50,6 +51,7 @@ export class StreamsView {
         memberships: Observable<Record<string, Membership>>
         spaceIds: Observable<string[]>
         dmsAndGdms: Observable<DmAndGdmModel[]>
+        dmsAndGdmsUnreadIds: Observable<Set<string>>
     }
 
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
@@ -117,6 +119,10 @@ export class StreamsView {
             .throttle(250)
             .map(dmsAndGdmsTransform)
 
+        const myDmsAndGdmsUnreadIds = combine({ myDmsAndGdms, unreadMarkers })
+            .throttle(250)
+            .map(dmsAndGdmsUnreadIdsTransform)
+
         ///
         this.my = {
             userId: myUserId,
@@ -129,6 +135,7 @@ export class StreamsView {
             memberships: myMemberships,
             spaceIds: mySpaceIds,
             dmsAndGdms: myDmsAndGdms,
+            dmsAndGdmsUnreadIds: myDmsAndGdmsUnreadIds,
         }
     }
 }
