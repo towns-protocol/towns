@@ -2,7 +2,6 @@ import {
     CryptoStore,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
-    makeSessionKeys,
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
     type UserDevice,
@@ -17,6 +16,7 @@ import {
 import { makeRiverConfig } from './riverConfig'
 import { ethers } from 'ethers'
 import { RiverRegistry } from '@towns-protocol/web3'
+import { makeSessionKeys } from './decryptionExtensions'
 import { makeRiverProvider } from './sync-agent/utils/providers'
 import { RiverDbManager } from './riverDbManager'
 import {
