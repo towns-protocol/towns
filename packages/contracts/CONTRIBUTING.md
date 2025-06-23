@@ -36,7 +36,7 @@ Before opening a pull request please:
 
 All contributions must follow the standards outlined in our [contracts.mdc](.cursor/rules/contracts.mdc) file. These include:
 
-1. All contracts should follow the Diamond Pattern (EIP-2535) for upgradeability
+1. All contracts should follow the Diamond Pattern ([EIP-2535](https://github.com/ethereum/ercs/blob/master/ERCS/erc-2535.md)) for upgradeability
 2. Use explicit visibility modifiers for all functions and state variables
 3. Implement proper access control using modifiers
 4. Follow gas optimization best practices
@@ -50,7 +50,7 @@ All contributions must follow the standards outlined in our [contracts.mdc](.cur
 
 ## Diamond Pattern Implementation & Facet Development
 
-The Towns Protocol uses the Diamond Pattern (EIP-2535) for contract upgradeability. When contributing new features or modifying existing ones, follow these guidelines:
+The Towns Protocol uses the Diamond Pattern ([EIP-2535](https://github.com/ethereum/ercs/blob/master/ERCS/erc-2535.md)) for contract upgradeability. When contributing new features or modifying existing ones, follow these guidelines:
 
 ### Architecture Overview
 
