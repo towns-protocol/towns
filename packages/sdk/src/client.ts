@@ -1249,19 +1249,20 @@ export class Client
 
     async pin(streamId: string, eventId: string) {
         const timelineEvent = this.streamsView.timelinesView.value.timelines[streamId]?.find(
-            (e) => e.eventId === eventId,
+            (e) => e.eventId === eventId || e.latestEventId === eventId,
         )
         check(isDefined(timelineEvent), 'event not found')
+        const originalEventId = timelineEvent.eventId
         const blockNumber = timelineEvent.confirmedInBlockNum
         let event: ParsedEvent | undefined
         if (blockNumber) {
             const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
             check(isDefined(miniblock), 'miniblock not found')
-            event = miniblock.events.find((e) => e.hashStr === eventId)
+            event = miniblock.events.find((e) => e.hashStr === originalEventId)
         } else {
             const stream = this.stream(streamId)
             check(isDefined(stream), 'stream not found')
-            event = stream.view.minipoolEvents.get(eventId)?.remoteEvent
+            event = stream.view.minipoolEvents.get(originalEventId)?.remoteEvent
         }
         check(isDefined(event), 'event not found')
         const streamEvent = event.event
