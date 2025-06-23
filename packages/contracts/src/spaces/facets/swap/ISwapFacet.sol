@@ -39,15 +39,15 @@ interface ISwapFacetBase {
 
     /// @notice Emitted when swap fee configuration is updated
     /// @param posterFeeBps Poster fee in basis points
-    /// @param collectPosterFeeToSpace Whether the poster fee is collected to the space
-    event SwapFeeConfigUpdated(uint16 posterFeeBps, bool collectPosterFeeToSpace);
+    /// @param forwardPosterFee Whether to forward the poster fee to the poster (default: false, fees go to space)
+    event SwapFeeConfigUpdated(uint16 posterFeeBps, bool forwardPosterFee);
 }
 
 interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @notice Set the swap fee configuration for this space
     /// @param posterFeeBps Poster fee in basis points
-    /// @param collectPosterFeeToSpace Whether to collect the poster fee to the space instead of the poster
-    function setSwapFeeConfig(uint16 posterFeeBps, bool collectPosterFeeToSpace) external;
+    /// @param forwardPosterFee Whether to forward the poster fee to the poster (default: false, fees go to space)
+    function setSwapFeeConfig(uint16 posterFeeBps, bool forwardPosterFee) external;
 
     /// @notice Execute a swap within the space context
     /// @param params The parameters for the swap
@@ -80,9 +80,9 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @notice Get the swap fees for this space
     /// @return protocolBps Treasury fee in basis points (from protocol config)
     /// @return posterBps Poster fee in basis points (space specific)
-    /// @return collectPosterFeeToSpace Whether the poster fee is collected to the space
+    /// @return forwardPosterFee Whether the poster fee is forwarded to the poster (default: false, fees go to space)
     function getSwapFees()
         external
         view
-        returns (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace);
+        returns (uint16 protocolBps, uint16 posterBps, bool forwardPosterFee);
 }
