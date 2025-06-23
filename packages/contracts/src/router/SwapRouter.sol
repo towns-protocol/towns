@@ -74,6 +74,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISwapRouter
+    /// @dev Handles refunds of unconsumed input tokens. For ERC20s, calculates actual received amount
+    /// to support fee-on-transfer tokens. For ETH, tracks original balance and refunds any unconsumed
+    /// ETH after the external router call. Refunds are sent back to msg.sender.
     function executeSwap(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
@@ -108,6 +111,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @inheritdoc ISwapRouter
     /// @dev Uses Permit2 with witness data to bind permit signatures to exact swap parameters,
     /// preventing front-running attacks. Requires user to pre-approve tokens to Permit2 contract.
+    /// Handles refunds of unconsumed ERC20 tokens back to the permit owner (not msg.sender).
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
