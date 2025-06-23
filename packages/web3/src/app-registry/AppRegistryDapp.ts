@@ -156,7 +156,7 @@ export class AppRegistryDapp {
         return this.shim.write(signer).adminRegisterAppSchema(schema, resolver, revocable)
     }
 
-    public async adminBanApp(signer: ethers.Signer, app: Add  ress): Promise<ContractTransaction> {
+    public async adminBanApp(signer: ethers.Signer, app: Address): Promise<ContractTransaction> {
         return this.shim.write(signer).adminBanApp(app)
     }
 
