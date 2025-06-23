@@ -20,8 +20,7 @@ import {
 import { hexToBytes } from 'ethereum-cryptography/utils'
 import { getFallbackContent } from '../../../views/streams/timelineEvents'
 import { bin_toHexString } from '@towns-protocol/dlog'
-
-const randomBytes = (len: number) => window.crypto.getRandomValues(new Uint8Array(len))
+import { randomBytes } from '../../../utils'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []
