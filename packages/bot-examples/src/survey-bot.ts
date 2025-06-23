@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
+import { createServer } from 'node:http2'
 
 type State = {
     messageToSurvey: {
@@ -126,8 +127,8 @@ async function main() {
         process.env.RIVER_ENV,
     )
     const { fetch } = await bot.start()
-    serve({ fetch, port: parseInt(process.env.PORT!) })
-    console.log(`✅ Survey Bot is running on http://localhost:${process.env.PORT}`)
+    serve({ fetch, port: parseInt(process.env.PORT!), createServer })
+    console.log(`✅ Survey Bot is running on https://localhost:${process.env.PORT}`)
 }
 
 void main()
