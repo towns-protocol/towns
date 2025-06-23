@@ -1,4 +1,4 @@
-import { ethers, type ContractReceipt, type ContractTransaction } from 'ethers'
+import { ethers, type BigNumber, type ContractReceipt, type ContractTransaction } from 'ethers'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
@@ -117,6 +117,10 @@ export class AppRegistryDapp {
 
     public async removeApp(signer: ethers.Signer, appId: string): Promise<ContractTransaction> {
         return this.shim.write(signer).removeApp(appId)
+    }
+
+    public async getAppPrice(app: Address): Promise<BigNumber> {
+        return this.shim.read.getAppPrice(app)
     }
 
     public async getAppSchema(): Promise<string> {
