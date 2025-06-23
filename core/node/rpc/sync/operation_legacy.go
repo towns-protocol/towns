@@ -86,19 +86,6 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 			}
 
 			for i, msg := range msgs {
-				msg.SyncId = syncOp.SyncID
-				if err := res.Send(msg); err != nil {
-					syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
-					return err
-				}
-
-				messagesSendToClient++
-				syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
-
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					return nil
-				}
-
 				select {
 				case <-syncOp.ctx.Done():
 					// clientErr non-nil indicates client hung up, get the error from the root ctx.
@@ -108,6 +95,18 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 					// otherwise syncOp is stopped internally.
 					return context.Cause(syncOp.ctx)
 				default:
+					msg.SyncId = syncOp.SyncID
+					if err := res.Send(msg); err != nil {
+						syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
+						return err
+					}
+
+					messagesSendToClient++
+					syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+
+					if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+						return nil
+					}
 				}
 			}
 
