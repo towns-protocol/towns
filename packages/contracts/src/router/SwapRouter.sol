@@ -175,7 +175,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISwapRouter
-    function getPermit2Nonce(address owner, uint256 startNonce) external view returns (uint256 nonce) {
+    function getPermit2Nonce(
+        address owner,
+        uint256 startNonce
+    ) external view returns (uint256 nonce) {
         unchecked {
             uint256 bitPos = startNonce & 0xff;
 
