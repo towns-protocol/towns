@@ -6,7 +6,6 @@ import {IPlatformRequirements} from "../factory/facets/platform/requirements/IPl
 import {IArchitect} from "../factory/facets/architect/IArchitect.sol";
 import {ISwapFacet} from "../spaces/facets/swap/ISwapFacet.sol";
 import {ISwapRouter} from "./ISwapRouter.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
@@ -17,8 +16,8 @@ import {Permit2Hash} from "./Permit2Hash.sol";
 import {SwapRouterStorage} from "./SwapRouterStorage.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {PermitHash} from "@uniswap/permit2/src/libraries/PermitHash.sol";
-import {LibCall} from "solady/utils/LibCall.sol";
 import {LibBit} from "solady/utils/LibBit.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts

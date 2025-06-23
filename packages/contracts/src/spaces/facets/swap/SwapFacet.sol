@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IImplementationRegistry} from "../../../factory/facets/registry/IImplementationRegistry.sol";
-import {ISwapRouter, ISwapRouterBase} from "../../../router/ISwapRouter.sol";
+import {ISwapRouter} from "../../../router/ISwapRouter.sol";
 import {ISwapFacet} from "./ISwapFacet.sol";
 
 // libraries
