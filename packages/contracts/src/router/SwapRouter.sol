@@ -15,7 +15,10 @@ import {CurrencyTransfer} from "../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../utils/libraries/CustomRevert.sol";
 import {Permit2Hash} from "./Permit2Hash.sol";
 import {SwapRouterStorage} from "./SwapRouterStorage.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {PermitHash} from "@uniswap/permit2/src/libraries/PermitHash.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
+import {LibBit} from "solady/utils/LibBit.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
@@ -50,6 +53,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @notice Universal Permit2 contract address
     /// @dev This contract implements Uniswap's Permit2 protocol for signature-based token transfers
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    /// @notice EIP-712 domain separator for Permit2
+    bytes32 internal immutable PERMIT2_DOMAIN_SEPARATOR =
+        ISignatureTransfer(PERMIT2).DOMAIN_SEPARATOR();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -161,6 +168,68 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
 
         // calculate fees and amount after fees
         return _calculateSwapFees(amountIn, protocolBps, posterBps, poster);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        PERMIT2 UTILS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc ISwapRouter
+    function getPermit2Nonce(
+        address owner,
+        uint256 startNonce
+    ) external view returns (uint256 nonce) {
+        unchecked {
+            uint256 bitPos = startNonce & 0xff;
+
+            for (uint256 wordPos = startNonce >> 8; wordPos <= type(uint248).max; ++wordPos) {
+                uint256 bitmap = ISignatureTransfer(PERMIT2).nonceBitmap(owner, uint248(wordPos));
+
+                // create mask to ignore bits below bitPos (set bits below bitPos to 1)
+                uint256 mask = (1 << bitPos) - 1;
+                uint256 availableBits = ~(bitmap | mask);
+
+                // if there are available bits in this word, find the first one
+                if (availableBits != 0) {
+                    // find first set bit in availableBits (which represents available nonces)
+                    uint256 firstZeroBit = LibBit.ffs(availableBits);
+                    return (wordPos << 8) | firstZeroBit;
+                }
+
+                bitPos = 0; // reset for next word
+            }
+
+            // no available nonces found
+            return type(uint256).max;
+        }
+    }
+
+    /// @inheritdoc ISwapRouter
+    function getPermit2MessageHash(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        address poster,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    ) external view returns (bytes32 messageHash) {
+        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(params, routerParams, poster));
+        bytes32 tokenPermissions = keccak256(
+            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, params.tokenIn, amount)
+        );
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                Permit2Hash.PERMIT_WITNESS_TRANSFER_FROM_TYPEHASH,
+                tokenPermissions,
+                address(this), // spender
+                nonce,
+                deadline,
+                witnessHash
+            )
+        );
+
+        return MessageHashUtils.toTypedDataHash(PERMIT2_DOMAIN_SEPARATOR, structHash);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

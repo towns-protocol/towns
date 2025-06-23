@@ -4,13 +4,15 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 import {IPlatformRequirements} from "../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {SignatureVerification} from "@uniswap/permit2/src/libraries/SignatureVerification.sol";
+import {Permit2Hash} from "../../src/router/Permit2Hash.sol";
+import {SwapRouterStorage} from "../../src/router/SwapRouterStorage.sol";
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
-import {SwapRouterStorage} from "../../src/router/SwapRouterStorage.sol";
 
 // contracts
 import {DeploySpaceFactory} from "../../scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
@@ -887,6 +889,161 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         assertEq(protocolFee2, 0.01 ether, "Protocol fee should be same with zero poster");
         assertEq(posterFee2, 0, "Poster fee should be zero with zero poster");
         assertEq(amountInAfterFees2, 0.99 ether, "Amount should exclude poster fee");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PERMIT2 UTILITIES                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_getPermit2Nonce(address user, uint256 startNonce, uint256 mask) external {
+        vm.assume(user != address(0));
+
+        // ensure there is at least an available nonce
+        uint256 startWordPos = startNonce >> 8;
+        uint256 startBitPos = startNonce & 0xff;
+        if (startWordPos == type(uint248).max) {
+            uint256 availableBits = ~(mask | ((1 << startBitPos) - 1));
+            vm.assume(availableBits != 0);
+        }
+
+        // invalidate some random nonces in startWordPos to create realistic bitmap scenarios
+        vm.prank(user);
+        ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(uint248(startWordPos), mask);
+
+        // get next nonce
+        uint256 returnedNonce = swapRouter.getPermit2Nonce(user, startNonce);
+
+        // verify returned nonce is >= startNonce (inclusivity)
+        assertGe(returnedNonce, startNonce, "Returned nonce should be >= startNonce");
+
+        // verify returned nonce is actually available by checking the bitmap
+        uint256 returnedWordPos = returnedNonce >> 8;
+        uint256 returnedBitPos = returnedNonce & 0xff;
+        uint256 bitmap = ISignatureTransfer(PERMIT2).nonceBitmap(user, uint248(returnedWordPos));
+
+        // the bit at returnedBitPos should be 0 (available)
+        assertEq((bitmap >> returnedBitPos) & 1, 0, "Returned nonce should be available");
+
+        // if startNonce is available, it should be returned (inclusivity test)
+        uint256 startBitmap = ISignatureTransfer(PERMIT2).nonceBitmap(user, uint248(startWordPos));
+
+        if ((startBitmap >> startBitPos) & 1 == 0) {
+            // startNonce is available, so it should be returned
+            assertEq(returnedNonce, startNonce, "Should return startNonce when it's available");
+        }
+    }
+
+    function test_getPermit2Nonce_wordBoundaries() external {
+        address user = makeAddr("user");
+
+        // test word boundary transition (255 -> 256)
+        vm.prank(user);
+        // fill first word
+        ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(0, type(uint256).max);
+
+        uint256 nonce = swapRouter.getPermit2Nonce(user, 0);
+        assertEq(nonce, 256, "Should jump to next word when current word is full");
+
+        // test specific boundary case
+        nonce = swapRouter.getPermit2Nonce(user, 255);
+        assertEq(nonce, 256, "Should return 256 when starting from 255 and first word is full");
+    }
+
+    function test_getPermit2Nonce_inclusivity() external {
+        address user = makeAddr("user");
+
+        // invalidate some nonces but leave specific ones available
+        vm.prank(user);
+        // invalidate nonces 1,2,3 (binary: 1110)
+        ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(0, 0x0e);
+
+        // test that available startNonce is returned
+        uint256 nonce = swapRouter.getPermit2Nonce(user, 0);
+        assertEq(nonce, 0, "Should return 0 when it's available");
+
+        nonce = swapRouter.getPermit2Nonce(user, 4);
+        assertEq(nonce, 4, "Should return 4 when it's available");
+
+        // test that unavailable startNonce returns next available
+        nonce = swapRouter.getPermit2Nonce(user, 1);
+        assertEq(nonce, 4, "Should return 4 when starting from unavailable nonce 1");
+
+        nonce = swapRouter.getPermit2Nonce(user, 2);
+        assertEq(nonce, 4, "Should return 4 when starting from unavailable nonce 2");
+    }
+
+    function test_getPermit2Nonce_maxWordPositionFull() external {
+        address user = makeAddr("user");
+
+        // fill the maximum word position completely
+        uint248 maxWordPos = type(uint248).max;
+        vm.prank(user);
+        ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(maxWordPos, type(uint256).max);
+
+        // test starting from the maximum word position - should return type(uint256).max
+        uint256 maxWordStartNonce = uint256(maxWordPos) << 8; // first nonce in max word
+        uint256 nonce = swapRouter.getPermit2Nonce(user, maxWordStartNonce);
+        assertEq(nonce, type(uint256).max, "Should return max uint256 when max word is full");
+
+        // test starting from last possible nonce
+        uint256 lastPossibleNonce = type(uint256).max; // last nonce in max word
+        nonce = swapRouter.getPermit2Nonce(user, lastPossibleNonce);
+        assertEq(
+            nonce,
+            type(uint256).max,
+            "Should return max uint256 when starting from last possible nonce and it's unavailable"
+        );
+    }
+
+    function test_getPermit2MessageHash(
+        uint256 privateKey,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    ) external {
+        privateKey = boundPrivateKey(privateKey);
+        deadline = bound(deadline, block.timestamp, type(uint256).max);
+
+        address signer = vm.addr(privateKey);
+
+        // mint tokens and approve Permit2
+        deal(address(token0), signer, amount);
+        vm.prank(signer);
+        token0.approve(PERMIT2, amount);
+
+        bytes32 messageHash = swapRouter.getPermit2MessageHash(
+            defaultInputParams,
+            defaultRouterParams,
+            POSTER,
+            amount,
+            nonce,
+            deadline
+        );
+
+        assertNotEq(messageHash, bytes32(0), "Message hash should not be zero");
+
+        // sign the message hash directly (it's already the final EIP-712 hash)
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, messageHash);
+        bytes memory signature = bytes.concat(r, s, bytes1(v));
+
+        // test that the signature works with actual Permit2 contract
+        vm.prank(address(swapRouter));
+        ISignatureTransfer(PERMIT2).permitWitnessTransferFrom(
+            ISignatureTransfer.PermitTransferFrom(
+                ISignatureTransfer.TokenPermissions(address(token0), amount),
+                nonce,
+                deadline
+            ),
+            ISignatureTransfer.SignatureTransferDetails(address(swapRouter), amount),
+            signer,
+            Permit2Hash.hash(SwapWitness(defaultInputParams, defaultRouterParams, POSTER)),
+            Permit2Hash.WITNESS_TYPE_STRING,
+            signature
+        );
+
+        // verify tokens were transferred successfully
+        assertEq(token0.balanceOf(address(swapRouter)), amount, "Tokens should be transferred");
+        assertEq(token0.balanceOf(signer), 0, "Signer should have no tokens left");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

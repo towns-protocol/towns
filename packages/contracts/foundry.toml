@@ -54,6 +54,6 @@ sort_imports = true
 
 [lint]
 severity = ["high", "med", "low", "gas"]
-exclude_lints = ["asm-keccak256"]
+exclude_lints = ["asm-keccak256", "incorrect-shift"]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
