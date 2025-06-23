@@ -313,9 +313,26 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             recipient
         );
 
+        // record balances before swap for refund verification
+        uint256 callerBalanceBefore = token0.balanceOf(caller);
+        uint256 swapRouterBalanceBefore = token0.balanceOf(address(swapRouter));
+
         // execute swap
         swapRouter.executeSwap(inputParams, routerParams, POSTER);
         vm.stopPrank();
+
+        // verify refund behavior: since this uses normal MockRouter.swap (full consumption),
+        // there should be no refund - user should have lost exactly amountIn
+        assertEq(
+            token0.balanceOf(caller),
+            callerBalanceBefore - amountIn,
+            "Caller should have lost exactly amountIn (no refund for full consumption)"
+        );
+        assertEq(
+            token0.balanceOf(address(swapRouter)),
+            swapRouterBalanceBefore,
+            "SwapRouter should have no remaining input tokens after full consumption"
+        );
 
         _verifySwapResults(
             address(token0),
@@ -336,7 +353,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             1 ether,
             0.95 ether,
             PROTOCOL_BPS,
-            POSTER_BPS
+            POSTER_BPS,
+            0 // no initial balance for gas test
         );
     }
 
@@ -346,7 +364,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 amountIn,
         uint256 amountOut,
         uint16 treasuryBps,
-        uint16 posterBps
+        uint16 posterBps,
+        uint256 initialBalance
     ) public {
         vm.assume(
             caller != address(0) &&
@@ -360,6 +379,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
         amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+        initialBalance = bound(initialBalance, 0, type(uint256).max - amountIn);
 
         // ensure fee basis points are within reasonable limits (0-10%)
         treasuryBps = uint16(bound(treasuryBps, 0, 1000));
@@ -383,10 +403,20 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
         inputParams.amountIn = amountIn;
 
+        // add random initial ETH balance to SwapRouter
+        deal(address(swapRouter), initialBalance);
+
         // execute swap with ETH
         deal(caller, amountIn);
         vm.prank(caller);
         swapRouter.executeSwap{value: amountIn}(inputParams, routerParams, POSTER);
+
+        // verify that SwapRouter has no leftover ETH from user's transaction
+        assertEq(
+            address(swapRouter).balance,
+            initialBalance,
+            "SwapRouter should have same balance as before (no leftover ETH from user)"
+        );
 
         _verifySwapResults(
             CurrencyTransfer.NATIVE_TOKEN,
@@ -528,36 +558,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
     }
 
-    function test_executeSwapWithPermit_revertWhen_invalidAmount(uint256 permitAmount) public {
-        // create permit with insufficient amount
-        Permit2Params memory permitParams = defaultEmptyPermit;
-        permitParams.token = address(token0);
-        permitParams.amount = bound(permitAmount, 0, DEFAULT_AMOUNT_IN - 1);
-
-        // expect revert with InvalidAmount (permit amount < amountIn)
-        vm.expectRevert(SwapRouter__InvalidAmount.selector);
-        swapRouter.executeSwapWithPermit(
-            defaultInputParams,
-            defaultRouterParams,
-            permitParams,
-            POSTER
-        );
-    }
-
-    function test_executeSwapWithPermit_revertWhen_permitTokenMismatch() public {
-        // create permit for wrong token
-        Permit2Params memory permitParams = defaultEmptyPermit;
-        permitParams.token = address(token1); // wrong token - should be token0
-
-        vm.expectRevert(SwapRouter__PermitTokenMismatch.selector);
-        swapRouter.executeSwapWithPermit(
-            defaultInputParams,
-            defaultRouterParams,
-            permitParams,
-            POSTER
-        );
-    }
-
     function test_executeSwapWithPermit_revertWhen_nativeTokenNotSupported() public {
         // create params with native token as input (not supported with permit)
         ExactInputParams memory inputParams = defaultInputParams;
@@ -627,9 +627,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     function test_executeSwapWithPermit_frontRunning(FrontRunningParams memory params) internal {
         // Bound inputs
         params.privateKey = boundPrivateKey(params.privateKey);
-        params.amountIn = bound(params.amountIn, 1, type(uint128).max);
-        params.amountOut = bound(params.amountOut, 1, type(uint128).max);
-        params.maliciousAmount = bound(params.maliciousAmount, 1, type(uint128).max);
+        params.amountIn = bound(params.amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
+        params.amountOut = bound(params.amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+        params.maliciousAmount = bound(params.maliciousAmount, 1, type(uint256).max);
 
         // Ensure addresses are valid and different
         vm.assume(
@@ -673,8 +673,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         Permit2Params memory originalPermit = _createPermitParams(
             params.privateKey,
             owner,
-            address(token0),
-            params.amountIn,
             address(swapRouter),
             0,
             block.timestamp + 1 hours,
@@ -757,8 +755,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
             owner,
-            address(token0),
-            params.amountIn,
             address(swapRouter),
             0, // nonce
             params.deadline,
@@ -838,8 +834,6 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
             owner,
-            address(token0),
-            params.amountIn,
             address(swapRouter),
             0, // nonce
             params.deadline,
@@ -889,6 +883,202 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         assertEq(protocolFee2, 0.01 ether, "Protocol fee should be same with zero poster");
         assertEq(posterFee2, 0, "Poster fee should be zero with zero poster");
         assertEq(amountInAfterFees2, 0.99 ether, "Amount should exclude poster fee");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        REFUND TESTS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_executeSwap_refundsExcessTokens(
+        uint256 amountIn,
+        uint256 actualConsumption,
+        uint256 amountOut,
+        address user,
+        address recipient
+    ) public {
+        // ensure addresses are valid and different
+        vm.assume(user != address(0) && user != address(swapRouter) && user != mockRouter);
+        vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != POSTER);
+
+        // ensure amountIn and amountOut are reasonable
+        amountIn = bound(amountIn, 2, type(uint256).max / BasisPoints.MAX_BPS);
+        amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        // ensure partial consumption (actualConsumption must be less than amountIn)
+        actualConsumption = bound(actualConsumption, 1, amountIn - 1);
+
+        // Create swap parameters using partialSwap function
+        (
+            ExactInputParams memory inputParams,
+            RouterParams memory routerParams
+        ) = _createPartialSwapParams(
+                address(token0),
+                address(token1),
+                amountIn,
+                actualConsumption,
+                amountOut,
+                recipient
+            );
+
+        // Setup: mint tokens to user and approve SwapRouter
+        token0.mint(user, amountIn);
+        vm.prank(user);
+        token0.approve(address(swapRouter), amountIn);
+
+        // Record initial balances
+        uint256 userBalanceBefore = token0.balanceOf(user);
+        uint256 swapRouterBalanceBefore = token0.balanceOf(address(swapRouter));
+
+        // Execute swap
+        vm.prank(user);
+        swapRouter.executeSwap(inputParams, routerParams, POSTER);
+
+        // Verify balances: user should receive refund
+        assertEq(
+            token0.balanceOf(user),
+            userBalanceBefore - actualConsumption,
+            "User should have received refund of unconsumed tokens"
+        );
+        assertEq(
+            token0.balanceOf(address(swapRouter)),
+            swapRouterBalanceBefore,
+            "SwapRouter should have no remaining input tokens"
+        );
+    }
+
+    function test_executeSwapWithPermit_refundsExcessTokens(
+        uint256 privateKeySeed,
+        uint256 amountIn,
+        uint256 actualConsumption,
+        uint256 amountOut,
+        address recipient
+    ) public {
+        // generate a valid private key from seed
+        uint256 privateKey = boundPrivateKey(privateKeySeed);
+        address owner = vm.addr(privateKey);
+
+        // ensure addresses are valid and different
+        vm.assume(owner != feeRecipient && owner != POSTER);
+        vm.assume(
+            recipient != address(0) &&
+                recipient != feeRecipient &&
+                recipient != POSTER &&
+                recipient != owner
+        );
+
+        // ensure amountIn and amountOut are reasonable
+        amountIn = bound(amountIn, 2, type(uint256).max / BasisPoints.MAX_BPS);
+        amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        // ensure partial consumption (actualConsumption must be less than amountIn)
+        actualConsumption = bound(actualConsumption, 1, amountIn - 1);
+
+        // Create swap parameters using partialSwap function
+        (
+            ExactInputParams memory inputParams,
+            RouterParams memory routerParams
+        ) = _createPartialSwapParams(
+                address(token0),
+                address(token1),
+                amountIn,
+                actualConsumption,
+                amountOut,
+                recipient
+            );
+
+        // Create permit signature
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(swapRouter),
+            0, // nonce
+            block.timestamp + 1 hours,
+            inputParams,
+            routerParams,
+            POSTER
+        );
+
+        // Setup: mint tokens and approve Permit2
+        token0.mint(owner, amountIn);
+        vm.prank(owner);
+        token0.approve(PERMIT2, amountIn);
+
+        // Record initial balances
+        uint256 ownerBalanceBefore = token0.balanceOf(owner);
+        uint256 swapRouterBalanceBefore = token0.balanceOf(address(swapRouter));
+
+        // Execute swap with permit
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+
+        // Verify balances: owner should receive refund
+        assertEq(
+            token0.balanceOf(owner),
+            ownerBalanceBefore - actualConsumption,
+            "Owner should have received refund of unconsumed tokens"
+        );
+        assertEq(
+            token0.balanceOf(address(swapRouter)),
+            swapRouterBalanceBefore,
+            "SwapRouter should have no remaining input tokens"
+        );
+    }
+
+    function test_executeSwap_ethRefundsExcessETH(
+        uint256 amountIn,
+        uint256 actualConsumption,
+        uint256 amountOut,
+        address user,
+        address recipient
+    ) public assumeEOA(user) {
+        // ensure addresses are valid and different, and user can receive ETH
+        vm.assume(user != feeRecipient && user != POSTER);
+        vm.assume(recipient != address(0) && recipient != feeRecipient && recipient != POSTER);
+
+        // ensure amountIn and amountOut are reasonable
+        amountIn = bound(amountIn, 2, type(uint256).max / BasisPoints.MAX_BPS);
+        amountOut = bound(amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        // ensure partial consumption (actualConsumption must be less than amountIn)
+        actualConsumption = bound(actualConsumption, 1, amountIn - 1);
+
+        // Fund user with ETH
+        deal(user, amountIn);
+
+        // Create swap parameters using partialSwap function for ETH
+        (
+            ExactInputParams memory inputParams,
+            RouterParams memory routerParams
+        ) = _createPartialSwapParams(
+                CurrencyTransfer.NATIVE_TOKEN,
+                address(token1),
+                amountIn,
+                actualConsumption,
+                amountOut,
+                recipient
+            );
+
+        // Record initial balances
+        uint256 userBalanceBefore = user.balance;
+        uint256 swapRouterBalanceBefore = address(swapRouter).balance;
+
+        // Execute swap with ETH
+        vm.prank(user);
+        swapRouter.executeSwap{value: amountIn}(inputParams, routerParams, POSTER);
+
+        // Verify balances: user should receive refund of unconsumed ETH
+        assertEq(
+            user.balance,
+            userBalanceBefore - actualConsumption,
+            "User should have received refund of unconsumed ETH"
+        );
+        assertEq(
+            address(swapRouter).balance,
+            swapRouterBalanceBefore,
+            "SwapRouter should have no remaining ETH"
+        );
+
+        // Verify recipient received output tokens
+        assertGt(token1.balanceOf(recipient), 0, "Recipient should have received output tokens");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

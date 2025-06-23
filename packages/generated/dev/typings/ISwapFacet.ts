@@ -65,8 +65,6 @@ export declare namespace ISwapRouterBase {
 
   export type Permit2ParamsStruct = {
     owner: PromiseOrValue<string>;
-    token: PromiseOrValue<string>;
-    amount: PromiseOrValue<BigNumberish>;
     nonce: PromiseOrValue<BigNumberish>;
     deadline: PromiseOrValue<BigNumberish>;
     signature: PromiseOrValue<BytesLike>;
@@ -74,15 +72,11 @@ export declare namespace ISwapRouterBase {
 
   export type Permit2ParamsStructOutput = [
     string,
-    string,
-    BigNumber,
     BigNumber,
     BigNumber,
     string
   ] & {
     owner: string;
-    token: string;
-    amount: BigNumber;
     nonce: BigNumber;
     deadline: BigNumber;
     signature: string;
@@ -92,7 +86,7 @@ export declare namespace ISwapRouterBase {
 export interface ISwapFacetInterface extends utils.Interface {
   functions: {
     "executeSwap((address,address,uint256,uint256,address),(address,address,bytes),address)": FunctionFragment;
-    "executeSwapWithPermit((address,address,uint256,uint256,address),(address,address,bytes),(address,address,uint256,uint256,uint256,bytes),address)": FunctionFragment;
+    "executeSwapWithPermit((address,address,uint256,uint256,address),(address,address,bytes),(address,uint256,uint256,bytes),address)": FunctionFragment;
     "getSwapFees()": FunctionFragment;
     "getSwapRouter()": FunctionFragment;
     "setSwapFeeConfig(uint16,bool)": FunctionFragment;
