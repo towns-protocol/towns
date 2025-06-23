@@ -184,12 +184,19 @@ interface ISwapRouter is ISwapRouterBase {
     /*                        PERMIT2 UTILS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Get the next valid nonce for a user starting from a given point
-    /// @dev Iterates through nonces until finding one that hasn't been used
-    /// @param owner The address to get nonce for
-    /// @param startNonce The nonce to start searching from (inclusive - will return this nonce if available)
-    /// @return nonce The next available nonce at or after startNonce
-    function getNextNonce(address owner, uint256 startNonce) external view returns (uint256 nonce);
+    /// @notice Get the next available Permit2 nonce for a user from Permit2's bitmap system
+    /// @dev Permit2 uses a bitmap system where each bit represents a nonce state (0=available, 1=used).
+    /// Nonces are organized in 256-nonce "words" (uint256 bitmaps). This function efficiently searches
+    /// through words starting from the one containing startNonce, using bit manipulation to find the
+    /// first available nonce. The search continues across word boundaries until an available nonce is
+    /// found or the maximum word position is reached.
+    /// @param owner The address to check nonce availability for
+    /// @param startNonce The nonce to start searching from (inclusive - will return this exact nonce if available)
+    /// @return nonce The next available nonce at or after startNonce, or type(uint256).max if no nonces are available (stop flag)
+    function getPermit2Nonce(
+        address owner,
+        uint256 startNonce
+    ) external view returns (uint256 nonce);
 
     /// @notice Generate the EIP-712 message hash for Permit2 signature
     /// @dev Generates the exact hash that needs to be signed for permit-based swaps
@@ -197,7 +204,7 @@ interface ISwapRouter is ISwapRouterBase {
     /// @param routerParams Router parameters that will be bound to permit signature
     /// @param poster Address of poster (included in witness data)
     /// @param amount Token amount to permit (should be >= params.amountIn)
-    /// @param nonce Permit nonce (use getNextNonce to find available nonce)
+    /// @param nonce Permit nonce (use getPermit2Nonce to find available nonce)
     /// @param deadline Permit deadline (unix timestamp)
     /// @return messageHash The EIP-712 message hash ready for signing
     function getPermit2MessageHash(

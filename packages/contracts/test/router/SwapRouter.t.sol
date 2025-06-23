@@ -895,7 +895,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     /*                      PERMIT2 UTILITIES                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_getNextNonce(address user, uint256 startNonce, uint256 mask) external {
+    function test_getPermit2Nonce(address user, uint256 startNonce, uint256 mask) external {
         vm.assume(user != address(0));
 
         // ensure there is at least an available nonce
@@ -911,7 +911,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(uint248(startWordPos), mask);
 
         // get next nonce
-        uint256 returnedNonce = swapRouter.getNextNonce(user, startNonce);
+        uint256 returnedNonce = swapRouter.getPermit2Nonce(user, startNonce);
 
         // verify returned nonce is >= startNonce (inclusivity)
         assertGe(returnedNonce, startNonce, "Returned nonce should be >= startNonce");
@@ -933,7 +933,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         }
     }
 
-    function test_getNextNonce_wordBoundaries() external {
+    function test_getPermit2Nonce_wordBoundaries() external {
         address user = makeAddr("user");
 
         // test word boundary transition (255 -> 256)
@@ -941,15 +941,15 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         // fill first word
         ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(0, type(uint256).max);
 
-        uint256 nonce = swapRouter.getNextNonce(user, 0);
+        uint256 nonce = swapRouter.getPermit2Nonce(user, 0);
         assertEq(nonce, 256, "Should jump to next word when current word is full");
 
         // test specific boundary case
-        nonce = swapRouter.getNextNonce(user, 255);
+        nonce = swapRouter.getPermit2Nonce(user, 255);
         assertEq(nonce, 256, "Should return 256 when starting from 255 and first word is full");
     }
 
-    function test_getNextNonce_inclusivity() external {
+    function test_getPermit2Nonce_inclusivity() external {
         address user = makeAddr("user");
 
         // invalidate some nonces but leave specific ones available
@@ -958,21 +958,21 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         ISignatureTransfer(PERMIT2).invalidateUnorderedNonces(0, 0x0e);
 
         // test that available startNonce is returned
-        uint256 nonce = swapRouter.getNextNonce(user, 0);
+        uint256 nonce = swapRouter.getPermit2Nonce(user, 0);
         assertEq(nonce, 0, "Should return 0 when it's available");
 
-        nonce = swapRouter.getNextNonce(user, 4);
+        nonce = swapRouter.getPermit2Nonce(user, 4);
         assertEq(nonce, 4, "Should return 4 when it's available");
 
         // test that unavailable startNonce returns next available
-        nonce = swapRouter.getNextNonce(user, 1);
+        nonce = swapRouter.getPermit2Nonce(user, 1);
         assertEq(nonce, 4, "Should return 4 when starting from unavailable nonce 1");
 
-        nonce = swapRouter.getNextNonce(user, 2);
+        nonce = swapRouter.getPermit2Nonce(user, 2);
         assertEq(nonce, 4, "Should return 4 when starting from unavailable nonce 2");
     }
 
-    function test_getNextNonce_maxWordPositionFull() external {
+    function test_getPermit2Nonce_maxWordPositionFull() external {
         address user = makeAddr("user");
 
         // fill the maximum word position completely
@@ -982,12 +982,12 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
 
         // test starting from the maximum word position - should return type(uint256).max
         uint256 maxWordStartNonce = uint256(maxWordPos) << 8; // first nonce in max word
-        uint256 nonce = swapRouter.getNextNonce(user, maxWordStartNonce);
+        uint256 nonce = swapRouter.getPermit2Nonce(user, maxWordStartNonce);
         assertEq(nonce, type(uint256).max, "Should return max uint256 when max word is full");
 
         // test starting from last possible nonce
         uint256 lastPossibleNonce = type(uint256).max; // last nonce in max word
-        nonce = swapRouter.getNextNonce(user, lastPossibleNonce);
+        nonce = swapRouter.getPermit2Nonce(user, lastPossibleNonce);
         assertEq(
             nonce,
             type(uint256).max,

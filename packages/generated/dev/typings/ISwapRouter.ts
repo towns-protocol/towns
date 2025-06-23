@@ -93,8 +93,8 @@ export interface ISwapRouterInterface extends utils.Interface {
     "executeSwap((address,address,uint256,uint256,address),(address,address,bytes),address)": FunctionFragment;
     "executeSwapWithPermit((address,address,uint256,uint256,address),(address,address,bytes),(address,address,uint256,uint256,uint256,bytes),address)": FunctionFragment;
     "getETHInputFees(uint256,address,address)": FunctionFragment;
-    "getNextNonce(address,uint256)": FunctionFragment;
     "getPermit2MessageHash((address,address,uint256,uint256,address),(address,address,bytes),address,uint256,uint256,uint256)": FunctionFragment;
+    "getPermit2Nonce(address,uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -102,8 +102,8 @@ export interface ISwapRouterInterface extends utils.Interface {
       | "executeSwap"
       | "executeSwapWithPermit"
       | "getETHInputFees"
-      | "getNextNonce"
       | "getPermit2MessageHash"
+      | "getPermit2Nonce"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -132,10 +132,6 @@ export interface ISwapRouterInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "getNextNonce",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getPermit2MessageHash",
     values: [
       ISwapRouterBase.ExactInputParamsStruct,
@@ -145,6 +141,10 @@ export interface ISwapRouterInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getPermit2Nonce",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(
@@ -160,11 +160,11 @@ export interface ISwapRouterInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getNextNonce",
+    functionFragment: "getPermit2MessageHash",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getPermit2MessageHash",
+    functionFragment: "getPermit2Nonce",
     data: BytesLike
   ): Result;
 
@@ -275,12 +275,6 @@ export interface ISwapRouter extends BaseContract {
       }
     >;
 
-    getNextNonce(
-      owner: PromiseOrValue<string>,
-      startNonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { nonce: BigNumber }>;
-
     getPermit2MessageHash(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
@@ -290,6 +284,12 @@ export interface ISwapRouter extends BaseContract {
       deadline: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string] & { messageHash: string }>;
+
+    getPermit2Nonce(
+      owner: PromiseOrValue<string>,
+      startNonce: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { nonce: BigNumber }>;
   };
 
   executeSwap(
@@ -320,12 +320,6 @@ export interface ISwapRouter extends BaseContract {
     }
   >;
 
-  getNextNonce(
-    owner: PromiseOrValue<string>,
-    startNonce: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   getPermit2MessageHash(
     params: ISwapRouterBase.ExactInputParamsStruct,
     routerParams: ISwapRouterBase.RouterParamsStruct,
@@ -335,6 +329,12 @@ export interface ISwapRouter extends BaseContract {
     deadline: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  getPermit2Nonce(
+    owner: PromiseOrValue<string>,
+    startNonce: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   callStatic: {
     executeSwap(
@@ -369,12 +369,6 @@ export interface ISwapRouter extends BaseContract {
       }
     >;
 
-    getNextNonce(
-      owner: PromiseOrValue<string>,
-      startNonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getPermit2MessageHash(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
@@ -384,6 +378,12 @@ export interface ISwapRouter extends BaseContract {
       deadline: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    getPermit2Nonce(
+      owner: PromiseOrValue<string>,
+      startNonce: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   filters: {
@@ -452,12 +452,6 @@ export interface ISwapRouter extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getNextNonce(
-      owner: PromiseOrValue<string>,
-      startNonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getPermit2MessageHash(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
@@ -465,6 +459,12 @@ export interface ISwapRouter extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getPermit2Nonce(
+      owner: PromiseOrValue<string>,
+      startNonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
@@ -492,12 +492,6 @@ export interface ISwapRouter extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getNextNonce(
-      owner: PromiseOrValue<string>,
-      startNonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getPermit2MessageHash(
       params: ISwapRouterBase.ExactInputParamsStruct,
       routerParams: ISwapRouterBase.RouterParamsStruct,
@@ -505,6 +499,12 @@ export interface ISwapRouter extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getPermit2Nonce(
+      owner: PromiseOrValue<string>,
+      startNonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };

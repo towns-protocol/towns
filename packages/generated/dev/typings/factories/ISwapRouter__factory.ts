@@ -241,30 +241,6 @@ const _abi = [
   },
   {
     type: "function",
-    name: "getNextNonce",
-    inputs: [
-      {
-        name: "owner",
-        type: "address",
-        internalType: "address",
-      },
-      {
-        name: "startNonce",
-        type: "uint256",
-        internalType: "uint256",
-      },
-    ],
-    outputs: [
-      {
-        name: "nonce",
-        type: "uint256",
-        internalType: "uint256",
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
     name: "getPermit2MessageHash",
     inputs: [
       {
@@ -347,6 +323,30 @@ const _abi = [
         name: "messageHash",
         type: "bytes32",
         internalType: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getPermit2Nonce",
+    inputs: [
+      {
+        name: "owner",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "startNonce",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "nonce",
+        type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "view",

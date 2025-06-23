@@ -17,7 +17,7 @@ library DeploySwapRouterFacet {
         res[0] = ISwapRouter.executeSwap.selector;
         res[1] = ISwapRouter.executeSwapWithPermit.selector;
         res[2] = ISwapRouter.getETHInputFees.selector;
-        res[3] = ISwapRouter.getNextNonce.selector;
+        res[3] = ISwapRouter.getPermit2Nonce.selector;
         res[4] = ISwapRouter.getPermit2MessageHash.selector;
     }
 
