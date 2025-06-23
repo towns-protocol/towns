@@ -25,6 +25,11 @@ MULTICALL3_ADDRESS=0xcA11bde05977b3631167028862bE2a173976CA11
 MULTICALL3_BYTECODE=$(cast code $MULTICALL3_ADDRESS --rpc-url $BASE_RPC_URL)
 cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
 
+# Deploy Permit2
+PERMIT2_ADDRESS=0x000000000022D473030F116dDEE9F6B43aC78BA3
+PERMIT2_BYTECODE=$(cast code $PERMIT2_ADDRESS --rpc-url $BASE_RPC_URL)
+cast rpc anvil_setCode $PERMIT2_ADDRESS $PERMIT2_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
+
 # Space Architect
 make clear-anvil-deployments context=$RIVER_ENV
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployProxyBatchDelegation
