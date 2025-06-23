@@ -20,6 +20,22 @@ interface ISwapRouterBase {
         address recipient;
     }
 
+    /// @notice Parameters for Permit2 signature transfer with witness
+    /// @param owner The owner of the tokens (who signed the permit)
+    /// @param token The token address
+    /// @param amount The amount to permit
+    /// @param nonce The permit nonce
+    /// @param deadline The permit deadline
+    /// @param signature The permit signature
+    struct Permit2Params {
+        address owner;
+        address token;
+        uint256 amount;
+        uint256 nonce;
+        uint256 deadline;
+        bytes signature;
+    }
+
     /// @notice Parameters for external router interaction
     /// @param router The address of the router to use
     /// @param approveTarget The address to approve token transfers
@@ -28,6 +44,12 @@ interface ISwapRouterBase {
         address router;
         address approveTarget;
         bytes swapData;
+    }
+
+    struct SwapWitness {
+        ExactInputParams exactInputParams;
+        RouterParams routerParams;
+        address poster;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -40,6 +62,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when an invalid amount is provided
     error SwapRouter__InvalidAmount();
 
+    /// @notice Error thrown when the permit token does not match the swap input token
+    error SwapRouter__PermitTokenMismatch();
+
     /// @notice Error thrown when the output amount is less than the minimum expected
     error SwapRouter__InsufficientOutput();
 
@@ -51,6 +76,9 @@ interface ISwapRouterBase {
 
     /// @notice Error thrown when native token is used with permit (not supported)
     error SwapRouter__NativeTokenNotSupportedWithPermit();
+
+    /// @notice Error thrown when recipient is not specified (address(0))
+    error SwapRouter__RecipientRequired();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -111,6 +139,21 @@ interface ISwapRouter is ISwapRouterBase {
     function executeSwap(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
+        address poster
+    ) external payable returns (uint256 amountOut, uint256 protocolFee);
+
+    /// @notice Executes a swap using Permit2 with witness data binding permit to swap intent
+    /// @dev Requires user to pre-approve tokens to Permit2 contract. Only supports ERC20 tokens.
+    /// @param params The exact input swap parameters that will be bound to the permit signature
+    /// @param routerParams The router interaction parameters that will be bound to the permit signature
+    /// @param permit The Permit2 data containing token, amount, nonce, deadline, and signature
+    /// @param poster The address that posted this swap opportunity (included in witness)
+    /// @return amountOut The amount of output tokens received after fees
+    /// @return protocolFee The amount of protocol fee collected
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
         address poster
     ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
