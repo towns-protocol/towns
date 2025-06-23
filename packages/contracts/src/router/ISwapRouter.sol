@@ -21,16 +21,13 @@ interface ISwapRouterBase {
     }
 
     /// @notice Parameters for Permit2 signature transfer with witness
+    /// @dev Token and amount are derived from ExactInputParams
     /// @param owner The owner of the tokens (who signed the permit)
-    /// @param token The token address
-    /// @param amount The amount to permit
     /// @param nonce The permit nonce
     /// @param deadline The permit deadline
     /// @param signature The permit signature
     struct Permit2Params {
         address owner;
-        address token;
-        uint256 amount;
         uint256 nonce;
         uint256 deadline;
         bytes signature;
@@ -61,9 +58,6 @@ interface ISwapRouterBase {
 
     /// @notice Error thrown when an invalid amount is provided
     error SwapRouter__InvalidAmount();
-
-    /// @notice Error thrown when the permit token does not match the swap input token
-    error SwapRouter__PermitTokenMismatch();
 
     /// @notice Error thrown when the output amount is less than the minimum expected
     error SwapRouter__InsufficientOutput();
@@ -150,7 +144,7 @@ interface ISwapRouter is ISwapRouterBase {
     /// 3. Frontend calls this function with signed permit
     /// @param params The exact input swap parameters that will be bound to the permit signature
     /// @param routerParams The router interaction parameters that will be bound to the permit signature
-    /// @param permit The Permit2 data containing token, amount, nonce, deadline, and signature
+    /// @param permit The Permit2 data containing owner, nonce, deadline, and signature
     /// @param poster The address that posted this swap opportunity (included in witness)
     /// @return amountOut The amount of output tokens received after fees
     /// @return protocolFee The amount of protocol fee collected
