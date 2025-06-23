@@ -126,6 +126,35 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         });
     }
 
+    function _createPartialSwapParams(
+        address tokenIn,
+        address tokenOut,
+        uint256 maxAmountIn,
+        uint256 actualAmountIn,
+        uint256 amountOut,
+        address recipient
+    )
+        internal
+        view
+        returns (ExactInputParams memory inputParams, RouterParams memory routerParams)
+    {
+        (inputParams, routerParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            tokenIn,
+            tokenOut,
+            maxAmountIn,
+            amountOut,
+            recipient
+        );
+
+        bytes memory swapData = abi.encodeCall(
+            MockRouter.partialSwap,
+            (tokenIn, tokenOut, maxAmountIn, actualAmountIn, amountOut, address(swapRouter))
+        );
+        routerParams.swapData = swapData;
+    }
+
     function _createPermitTransferFrom(
         address token,
         uint256 amount,

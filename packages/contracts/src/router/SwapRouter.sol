@@ -83,19 +83,26 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         _validateSwapParams(params, routerParams);
 
         // for standard swaps, handle token transfer with balance check for fee-on-transfer tokens
-        uint256 actualAmountIn = params.amountIn;
+        uint256 tokenInBalanceBefore;
 
         if (params.tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
             // ensure no ETH is sent when tokenIn is not native
             if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
 
             // use the actual received amount to handle fee-on-transfer tokens
-            uint256 balanceBefore = params.tokenIn.balanceOf(address(this));
+            tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
             params.tokenIn.safeTransferFrom(msg.sender, address(this), params.amountIn);
-            actualAmountIn = params.tokenIn.balanceOf(address(this)) - balanceBefore;
+        } else {
+            // for native token, the value should be sent with the transaction
+            if (msg.value != params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
+
+            // store original balance before router call for ETH refunds
+            unchecked {
+                tokenInBalanceBefore = address(this).balance - msg.value;
+            }
         }
 
-        return _executeSwap(params, routerParams, poster, actualAmountIn);
+        return _executeSwap(params, routerParams, poster, tokenInBalanceBefore, msg.sender);
     }
 
     /// @inheritdoc ISwapRouter
@@ -119,7 +126,7 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         }
 
         // take balance snapshot before Permit2 transfer to handle fee-on-transfer tokens
-        uint256 balanceBefore = params.tokenIn.balanceOf(address(this));
+        uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
 
         // execute permit transfer from owner to this contract via Permit2
         ISignatureTransfer(PERMIT2).permitWitnessTransferFrom(
@@ -138,11 +145,8 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             permit.signature
         );
 
-        // calculate actual amount received (handles fee-on-transfer tokens)
-        uint256 actualAmountIn = params.tokenIn.balanceOf(address(this)) - balanceBefore;
-
-        // execute the swap with the actual amount received
-        return _executeSwap(params, routerParams, poster, actualAmountIn);
+        // execute the swap with the balance before transfer
+        return _executeSwap(params, routerParams, poster, tokenInBalanceBefore, permit.owner);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -253,14 +257,16 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param params The parameters for the swap
     /// @param routerParams The router parameters for the swap
     /// @param poster The address that posted this swap opportunity
-    /// @param actualAmountIn The actual amount of input tokens received (after fee-on-transfer deductions)
+    /// @param tokenInBalanceBefore The balance of input token before any transfers (0 for ETH)
+    /// @param payer The address that should receive any refund of unconsumed input tokens
     /// @return amountOut The amount of tokenOut received
     /// @return protocolFee The protocol fee amount
     function _executeSwap(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster,
-        uint256 actualAmountIn
+        uint256 tokenInBalanceBefore,
+        address payer
     ) internal returns (uint256 amountOut, uint256 protocolFee) {
         // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
@@ -270,6 +276,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             uint256 value;
 
             if (!isNativeToken) {
+                // calculate actualAmountIn for ERC20
+                uint256 actualAmountIn = params.tokenIn.balanceOf(address(this)) -
+                    tokenInBalanceBefore;
+
                 // tokens are already in the contract, just approve the router
                 params.tokenIn.safeApprove(routerParams.approveTarget, actualAmountIn);
             } else {
@@ -289,6 +299,10 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
 
             // reset approval for tokenIn
             if (!isNativeToken) params.tokenIn.safeApprove(routerParams.approveTarget, 0);
+
+            // refund any unconsumed input tokens to the payer
+            uint256 refundAmount = _getBalance(params.tokenIn) - tokenInBalanceBefore;
+            CurrencyTransfer.transferCurrency(params.tokenIn, address(this), payer, refundAmount);
         }
 
         // use the actual received amount to handle fee-on-transfer tokens
