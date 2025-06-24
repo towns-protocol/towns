@@ -12,8 +12,8 @@ library SwapFacetStorage {
     struct Layout {
         /// @notice Poster fee in basis points (space-specific)
         uint16 posterFeeBps;
-        /// @notice Whether to collect the poster fee to the space instead of the poster
-        bool collectPosterFeeToSpace;
+        /// @notice Whether to forward the poster fee to the poster (default: false, fees go to space)
+        bool forwardPosterFee;
     }
 
     function layout() internal pure returns (Layout storage l) {

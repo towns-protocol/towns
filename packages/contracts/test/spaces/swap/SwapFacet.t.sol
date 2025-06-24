@@ -48,6 +48,10 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         // add the swap router to the space factory
         vm.prank(deployer);
         implementationRegistry.addImplementation(address(swapRouter));
+
+        // configure poster fee to go to poster (old behavior) for existing tests
+        vm.prank(founder);
+        swapFacet.setSwapFeeConfig(POSTER_BPS, true);
     }
 
     function test_storageSlot() external pure {
@@ -76,29 +80,29 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.setSwapFeeConfig(tooHighPosterFeeBps, true);
     }
 
-    function test_setSwapFeeConfig(uint16 newPosterFeeBps, bool collectToSpace) public {
+    function test_setSwapFeeConfig(uint16 newPosterFeeBps, bool forwardPosterFee) public {
         newPosterFeeBps = uint16(bound(newPosterFeeBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
 
         vm.expectEmit(everyoneSpace);
-        emit SwapFeeConfigUpdated(newPosterFeeBps, collectToSpace);
+        emit SwapFeeConfigUpdated(newPosterFeeBps, forwardPosterFee);
 
         vm.prank(founder);
-        swapFacet.setSwapFeeConfig(newPosterFeeBps, collectToSpace);
+        swapFacet.setSwapFeeConfig(newPosterFeeBps, forwardPosterFee);
 
-        (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace) = swapFacet
+        (uint16 protocolBps, uint16 posterBps, bool returnedForwardPosterFee) = swapFacet
             .getSwapFees();
         assertEq(protocolBps, PROTOCOL_BPS, "Treasury fee should match platform fee");
-        // if newPosterFeeBps is 0, it will be set to the platform's default
+        // Current logic: if forwardPosterFee=true OR newPosterFeeBps!=0, use newPosterFeeBps
         assertEq(
             posterBps,
-            collectToSpace
-                ? newPosterFeeBps
-                : newPosterFeeBps == 0
-                    ? POSTER_BPS
-                    : newPosterFeeBps,
+            (forwardPosterFee || newPosterFeeBps != 0) ? newPosterFeeBps : POSTER_BPS,
             "Poster fee should be updated"
         );
-        assertEq(collectPosterFeeToSpace, collectToSpace, "Collect to space should be updated");
+        assertEq(
+            returnedForwardPosterFee,
+            forwardPosterFee,
+            "Forward poster fee flag should be updated"
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -355,7 +359,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         address recipient,
         address poster_,
         uint16 posterBps,
-        bool collectToSpace
+        bool forwardPosterFee
     ) external givenMembership(caller) {
         vm.assume(caller != founder);
         vm.assume(
@@ -369,7 +373,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         // set fee config
         vm.prank(founder);
-        swapFacet.setSwapFeeConfig(posterBps, collectToSpace);
+        swapFacet.setSwapFeeConfig(posterBps, forwardPosterFee);
 
         // ensure amountIn and amountOut are reasonable
         amountIn = bound(amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
@@ -396,12 +400,12 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 posterFee;
 
         // determine poster fee based on configuration
-        if (collectToSpace) {
-            posterFee = BasisPoints.calculate(amountOut, posterBps);
-        } else if (poster_ != address(0)) {
+        if (!forwardPosterFee) {
             // if posterBps is 0, SwapFacet falls back to platform default
             uint16 actualPosterBps = posterBps == 0 ? POSTER_BPS : posterBps;
             posterFee = BasisPoints.calculate(amountOut, actualPosterBps);
+        } else if (poster_ != address(0)) {
+            posterFee = BasisPoints.calculate(amountOut, posterBps);
         }
         // else: poster_ == address(0), so no poster fee (posterFee remains 0)
 
@@ -421,7 +425,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster_);
 
         // verify fee distribution based on configuration
-        if (collectToSpace) {
+        if (!forwardPosterFee) {
             assertEq(
                 params.tokenOut.balanceOf(everyoneSpace),
                 posterFee,
@@ -611,9 +615,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
     ) external assumeEOA(caller) givenMembership(caller) {
         vm.assume(caller != founder && caller != POSTER && caller != feeRecipient);
 
-        // Set poster fee to be collected to space
+        // Set poster fee to be collected to space (default behavior, forwardPosterFee=false)
         vm.prank(founder);
-        swapFacet.setSwapFeeConfig(50, true); // 0.5% poster fee to space
+        swapFacet.setSwapFeeConfig(50, false); // 0.5% poster fee to space
 
         // Bound initial ETH balance to reasonable range
         initialETHBalance = bound(initialETHBalance, 0, type(uint256).max >> 1);

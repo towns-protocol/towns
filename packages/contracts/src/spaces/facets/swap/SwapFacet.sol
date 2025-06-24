@@ -40,10 +40,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISwapFacet
-    function setSwapFeeConfig(
-        uint16 posterFeeBps,
-        bool collectPosterFeeToSpace
-    ) external onlyOwner {
+    function setSwapFeeConfig(uint16 posterFeeBps, bool forwardPosterFee) external onlyOwner {
         // get protocol fee for validation
         IPlatformRequirements platform = _getPlatformRequirements();
         (uint16 protocolBps, ) = platform.getSwapFees();
@@ -54,9 +51,9 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         }
 
         SwapFacetStorage.Layout storage ds = SwapFacetStorage.layout();
-        (ds.posterFeeBps, ds.collectPosterFeeToSpace) = (posterFeeBps, collectPosterFeeToSpace);
+        (ds.posterFeeBps, ds.forwardPosterFee) = (posterFeeBps, forwardPosterFee);
 
-        emit SwapFeeConfigUpdated(posterFeeBps, collectPosterFeeToSpace);
+        emit SwapFeeConfigUpdated(posterFeeBps, forwardPosterFee);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -162,7 +159,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     function getSwapFees()
         public
         view
-        returns (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace)
+        returns (uint16 protocolBps, uint16 posterBps, bool forwardPosterFee)
     {
         SwapFacetStorage.Layout storage ds = SwapFacetStorage.layout();
 
@@ -170,15 +167,11 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         IPlatformRequirements platform = _getPlatformRequirements();
         (protocolBps, posterBps) = platform.getSwapFees();
 
-        collectPosterFeeToSpace = ds.collectPosterFeeToSpace;
+        uint16 spacePosterBps;
+        (spacePosterBps, forwardPosterFee) = (ds.posterFeeBps, ds.forwardPosterFee);
 
-        uint16 spacePosterBps = ds.posterFeeBps;
-        if (collectPosterFeeToSpace) {
-            posterBps = spacePosterBps;
-        } else {
-            // if spacePosterBps is not set, use protocol config
-            posterBps = spacePosterBps == 0 ? posterBps : spacePosterBps;
-        }
+        // if poster fee is forwarded or spacePosterBps is set, use spacePosterBps
+        if (forwardPosterFee || spacePosterBps != 0) posterBps = spacePosterBps;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -231,8 +224,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
         // for ETH, subtract poster fee if it was collected to space
         if (
-            tokenIn == CurrencyTransfer.NATIVE_TOKEN &&
-            SwapFacetStorage.layout().collectPosterFeeToSpace
+            tokenIn == CurrencyTransfer.NATIVE_TOKEN && !SwapFacetStorage.layout().forwardPosterFee
         ) {
             // get the poster fee that was collected to space
             (, uint16 posterBps, ) = getSwapFees();
@@ -266,11 +258,11 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /// @param poster The original poster address
     /// @return The actual poster address to use
     function _resolveSwapPoster(address poster) internal view returns (address) {
-        // if fees should be collected to space, return the space address
-        if (SwapFacetStorage.layout().collectPosterFeeToSpace) {
+        // default behavior: fees go to space, return the space address
+        if (!SwapFacetStorage.layout().forwardPosterFee) {
             return address(this);
         }
-        // if collectPosterFeeToSpace is false, return the poster as-is
+        // if fees should be forwarded to poster, return the poster as-is
         // (including address(0) which will skip poster fee)
         return poster;
     }

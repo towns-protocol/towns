@@ -196,7 +196,7 @@ const _abi = [
         internalType: "uint16",
       },
       {
-        name: "collectPosterFeeToSpace",
+        name: "forwardPosterFee",
         type: "bool",
         internalType: "bool",
       },
@@ -226,7 +226,7 @@ const _abi = [
         internalType: "uint16",
       },
       {
-        name: "collectPosterFeeToSpace",
+        name: "forwardPosterFee",
         type: "bool",
         internalType: "bool",
       },
@@ -374,7 +374,7 @@ const _abi = [
         internalType: "uint16",
       },
       {
-        name: "collectPosterFeeToSpace",
+        name: "forwardPosterFee",
         type: "bool",
         indexed: false,
         internalType: "bool",
