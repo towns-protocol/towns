@@ -1687,7 +1687,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs, error) {
 	streamId := ru.params.streamView.StreamId()
 
-	permission, permissionUser, err := ru.getPermissionForMembershipOp()
+	permission, permissionUser, appAddress, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
 	}
@@ -1703,14 +1703,14 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(
 			*streamId,
 			permissionUser,
-			common.BytesToAddress(ru.membership.AppAddress),
+			appAddress,
 		)
 	} else {
 		chainAuthArgs = auth.NewChainAuthArgsForSpace(
 			*streamId,
 			permissionUser,
 			permission,
-			common.BytesToAddress(ru.membership.AppAddress),
+			appAddress,
 		)
 	}
 	return chainAuthArgs, nil
@@ -1722,7 +1722,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, err
 	}
 
-	permission, permissionUser, err := ru.getPermissionForMembershipOp()
+	permission, permissionUser, appAddress, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
 	}
@@ -1734,15 +1734,6 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
 	if err != nil {
 		return nil, err
-	}
-
-	var appAddress common.Address
-	// The appAddress on the membership is associated with the user address on the membership event.
-	// Do not propgate the appAddress into the chain auth for the permissions check unless the user's
-	// permissions are being checked; otherwise the authorization logic may mistakenly assume, say, that
-	// the inviter is a bot.
-	if permissionUser == common.Address(ru.membership.UserAddress) {
-		appAddress = common.BytesToAddress(ru.membership.AppAddress)
 	}
 
 	// ModifyBanning is a space level permission
@@ -1868,9 +1859,12 @@ func (params *aeParams) creatorIsValidNode() (bool, error) {
 	return true, nil
 }
 
-func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, common.Address, error) {
+func (ru *aeMembershipRules) getPermissionForMembershipOp() (permission auth.Permission, permissionUser common.Address, appAddress common.Address, err error) {
 	if ru.membership == nil {
-		return auth.PermissionUndefined, common.Address{}, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
+			Err_INVALID_ARGUMENT,
+			"membership is nil",
+		)
 	}
 	membership := ru.membership
 
@@ -1880,11 +1874,11 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 
 	currentMembership, err := ru.params.streamView.GetMembership(userAddress.Bytes())
 	if err != nil {
-		return auth.PermissionUndefined, common.Address{}, err
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, err
 	}
 	if membership.Op == currentMembership {
 		// this could panic, the rule builder should never allow us to get here
-		return auth.PermissionUndefined, common.Address{}, RiverError(
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 			Err_FAILED_PRECONDITION,
 			"membershipOp should not be the same as currentMembership",
 		)
@@ -1893,7 +1887,7 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
 		if currentMembership == MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, common.Address{}, RiverError(
+			return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 				Err_FAILED_PRECONDITION,
 				"user is already a member of the channel",
 				"user",
@@ -1902,14 +1896,16 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 				initiatorId,
 			)
 		}
-		return auth.PermissionInvite, initiatorId, nil
+		permission = auth.PermissionInvite
+		permissionUser = initiatorId
 
 	case MembershipOp_SO_JOIN:
-		return auth.PermissionRead, userAddress, nil
+		permission = auth.PermissionRead
+		permissionUser = userAddress
 
 	case MembershipOp_SO_LEAVE:
 		if currentMembership != MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, common.Address{}, RiverError(
+			return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 				Err_FAILED_PRECONDITION,
 				"user is not a member of the channel",
 				"user",
@@ -1919,22 +1915,31 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, co
 			)
 		}
 		if userAddress != initiatorId && !ru.params.isValidNode(initiatorId[:]) {
-			return auth.PermissionModifyBanning, initiatorId, nil
+			permission = auth.PermissionModifyBanning
+			permissionUser = initiatorId
 		} else {
-			return auth.PermissionUndefined, userAddress, nil
+			permission = auth.PermissionUndefined
+			permissionUser = userAddress
 		}
 
 	case MembershipOp_SO_UNSPECIFIED:
 		fallthrough
 
 	default:
-		return auth.PermissionUndefined, common.Address{}, RiverError(
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 			Err_BAD_EVENT,
 			"Need valid membership op",
 			"op",
 			membership.Op,
 		)
 	}
+
+	// Set appAddress only if the permission user is the membership user address
+	if permissionUser == userAddress {
+		appAddress = common.BytesToAddress(ru.membership.AppAddress)
+	}
+
+	return permission, permissionUser, appAddress, nil
 }
 
 func (ru *aePinRules) validPin() (bool, error) {
