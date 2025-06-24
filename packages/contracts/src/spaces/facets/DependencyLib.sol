@@ -14,6 +14,12 @@ import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.
  * @dev Library for resolving contract dependencies via the Implementation Registry. Used for retrieving the latest implementation addresses for named dependencies within a space.
  */
 library DependencyLib {
+    // Constants for dependency names
+    bytes32 internal constant RIVER_AIRDROP = bytes32("RiverAirdrop");
+    bytes32 internal constant SPACE_OPERATOR = bytes32("SpaceOperator"); // BaseRegistry
+    bytes32 internal constant SPACE_OWNER = bytes32("Space Owner");
+    bytes32 internal constant APP_REGISTRY = bytes32("AppRegistry");
+
     /**
      * @notice Retrieves the latest implementation address for a given dependency name.
      * @dev Looks up the dependency in the Implementation Registry associated with the space factory.
