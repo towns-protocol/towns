@@ -3751,15 +3751,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hono/node-server@npm:^1.14.0":
-  version: 1.14.1
-  resolution: "@hono/node-server@npm:1.14.1"
-  peerDependencies:
-    hono: ^4
-  checksum: 250cae60a40dd8697e48d6f604c66ca9b585ee6e80cc3a48525ef0193c2042bb68fbd2f8988f44b3f416c3ebbb8c1084084079f66f3f82e31eb5cbd55f076920
-  languageName: node
-  linkType: hard
-
 "@hookform/resolvers@npm:^3.6.0":
   version: 3.6.0
   resolution: "@hookform/resolvers@npm:3.6.0"
@@ -8469,26 +8460,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/bot-examples@workspace:packages/bot-examples":
-  version: 0.0.0-use.local
-  resolution: "@towns-protocol/bot-examples@workspace:packages/bot-examples"
-  dependencies:
-    "@connectrpc/connect-node": ^2.0.0
-    "@hono/node-server": ^1.14.0
-    "@towns-protocol/bot": "workspace:^"
-    "@types/node": ^20.14.8
-    "@typescript-eslint/eslint-plugin": ^8.29.0
-    "@typescript-eslint/parser": ^8.29.0
-    eslint: ^8.57.1
-    eslint-import-resolver-typescript: ^4.3.2
-    eslint-plugin-import-x: ^4.10.2
-    openai: ^4.95.1
-    tsx: ^4.7.1
-    typescript: ^5.8.2
-  languageName: unknown
-  linkType: soft
-
-"@towns-protocol/bot@workspace:^, @towns-protocol/bot@workspace:packages/bot":
+"@towns-protocol/bot@workspace:packages/bot":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/bot@workspace:packages/bot"
   dependencies:
