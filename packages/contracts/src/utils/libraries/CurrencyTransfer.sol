@@ -2,20 +2,20 @@
 pragma solidity ^0.8.24;
 
 // interfaces
-import {IWETH} from "src/utils/interfaces/IWETH.sol";
+import {IWETH} from "../interfaces/IWETH.sol";
 
 // libraries
-
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CustomRevert} from "./CustomRevert.sol";
 
 // contracts
 
 library CurrencyTransfer {
     using SafeTransferLib for address;
+    using CustomRevert for bytes4;
 
     /// @dev The address interpreted as native token of the chain.
-    address internal constant NATIVE_TOKEN = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    address internal constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     /// @dev The ETH transfer has failed.
     error ETHTransferFailed();
@@ -35,15 +35,10 @@ library CurrencyTransfer {
     /// @param to The address to transfer to.
     /// @param amount The amount to transfer.
     function transferCurrency(address currency, address from, address to, uint256 amount) internal {
-        if (amount == 0) {
-            return;
-        }
+        if (amount == 0) return;
 
-        if (currency == NATIVE_TOKEN) {
-            safeTransferNativeToken(to, amount);
-        } else {
-            safeTransferERC20(currency, from, to, amount);
-        }
+        if (currency != NATIVE_TOKEN) safeTransferERC20(currency, from, to, amount);
+        else safeTransferNativeToken(to, amount);
     }
 
     /// @dev Transfers a given amount of currency. (With native token wrapping)
@@ -59,28 +54,17 @@ library CurrencyTransfer {
         uint256 amount,
         address _nativeTokenWrapper
     ) internal {
-        if (amount == 0) {
-            return;
-        }
+        if (amount == 0) return;
 
         if (currency == NATIVE_TOKEN) {
             if (from == address(this)) {
                 IWETH(_nativeTokenWrapper).withdraw(amount);
                 safeTransferNativeTokenWithWrapper(to, amount, _nativeTokenWrapper);
-            } else if (to == address(this)) {
-                if (amount != msg.value) {
-                    CustomRevert.revertWith(MsgValueMismatch.selector);
-                }
-
-                IWETH(_nativeTokenWrapper).deposit{value: msg.value}();
             } else {
-                // This is a fallback for the case where the contract receives native token and then
-                // transfers it to another address.
-                if (amount != msg.value) {
-                    CustomRevert.revertWith(MsgValueMismatch.selector);
-                }
+                if (amount != msg.value) MsgValueMismatch.selector.revertWith();
 
-                safeTransferNativeTokenWithWrapper(to, msg.value, _nativeTokenWrapper);
+                if (to == address(this)) IWETH(_nativeTokenWrapper).deposit{value: msg.value}();
+                else safeTransferNativeTokenWithWrapper(to, msg.value, _nativeTokenWrapper);
             }
         } else {
             safeTransferERC20(currency, from, to, amount);
@@ -89,15 +73,10 @@ library CurrencyTransfer {
 
     /// @dev Transfer `amount` of ERC20 token from `from` to `to`.
     function safeTransferERC20(address token, address from, address to, uint256 amount) internal {
-        if (from == to) {
-            return;
-        }
+        if (from == to) return;
 
-        if (from == address(this)) {
-            token.safeTransfer(to, amount);
-        } else {
-            token.safeTransferFrom(from, to, amount);
-        }
+        if (from != address(this)) token.safeTransferFrom(from, to, amount);
+        else token.safeTransfer(to, amount);
     }
 
     /// @dev Transfers `amount` of native token to `to`.
