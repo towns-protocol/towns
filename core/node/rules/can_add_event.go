@@ -1528,21 +1528,7 @@ func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs
 // being added to acceptible stream types. At this time the protocol does not support bot membership
 // in DM and GDM channels.
 func (ru *aeUserMembershipRules) validUserMembershipStreamForBot() (bool, error) {
-	log := logging.FromCtx(ru.params.ctx)
 	isBotUser, err := ru.params.streamView.IsBotUser()
-
-	log.Infow(
-		"validUserMembershipStreamForBot",
-		"isBotUser",
-		isBotUser,
-		"err",
-		err,
-		"membershipStreamId",
-		ru.userMembership.StreamId,
-		"userStreamId",
-		ru.params.streamView.StreamId(),
-	)
-
 	if err != nil {
 		return false, err
 	}
@@ -1555,22 +1541,6 @@ func (ru *aeUserMembershipRules) validUserMembershipStreamForBot() (bool, error)
 	if err != nil {
 		return false, err
 	}
-
-	log.Infow(
-		"validUserMembershipStreamForBot with details",
-		"isBotUser",
-		isBotUser,
-		"err",
-		err,
-		"membershipStreamId",
-		ru.userMembership.StreamId,
-		"userStreamId",
-		ru.params.streamView.StreamId(),
-		"streamIsDm",
-		streamId.Type() == shared.STREAM_DM_CHANNEL_BIN,
-		"streamIsGdm",
-		streamId.Type() == shared.STREAM_GDM_CHANNEL_BIN,
-	)
 
 	return streamId.Type() != shared.STREAM_DM_CHANNEL_BIN && streamId.Type() != shared.STREAM_GDM_CHANNEL_BIN, nil
 }
@@ -1737,13 +1707,6 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 		return nil, nil
 	}
 
-	log := logging.FromCtx(ru.params.ctx)
-	log.Infow(
-		"constructing space membership entitlements",
-		"membership", ru.membership,
-		"appAddress", ru.membership.AppAddress,
-	)
-
 	var chainAuthArgs *auth.ChainAuthArgs
 	// Space joins are a special case as they do not require an entitlement check. We simply
 	// verify that the user is a space member.
@@ -1856,16 +1819,6 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 		if err != nil {
 			return nil, err
 		}
-
-		log := logging.FromCtx(params.ctx)
-		log.Infow(
-			"Constructing chain auth for channel entitlements",
-			"permission",
-			permission,
-			"channel", channelId,
-			"user", userId,
-			"appAddress?", appAddress,
-		)
 
 		chainAuthArgs := auth.NewChainAuthArgsForChannel(
 			spaceId,
