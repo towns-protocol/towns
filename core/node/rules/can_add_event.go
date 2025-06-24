@@ -1735,6 +1735,10 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	}
 
 	var appAddress common.Address
+	// The appAddress on the membership is associated with the user address on the membership event.
+	// Do not propgate the appAddress into the chain auth for the permissions check unless the user's
+	// permissions are being checked; otherwise the authorization logic may mistakenly assume, say, that
+	// the inviter is a bot.
 	if permissionUser == common.Address(ru.membership.UserAddress) {
 		appAddress = common.BytesToAddress(ru.membership.AppAddress)
 	}
