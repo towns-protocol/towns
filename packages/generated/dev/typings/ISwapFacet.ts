@@ -214,7 +214,7 @@ export type SwapExecutedEventFilter = TypedEventFilter<SwapExecutedEvent>;
 
 export interface SwapFeeConfigUpdatedEventObject {
   posterFeeBps: number;
-  collectPosterFeeToSpace: boolean;
+  forwardPosterFee: boolean;
 }
 export type SwapFeeConfigUpdatedEvent = TypedEvent<
   [number, boolean],
@@ -283,7 +283,7 @@ export interface ISwapFacet extends BaseContract {
       [number, number, boolean] & {
         protocolBps: number;
         posterBps: number;
-        collectPosterFeeToSpace: boolean;
+        forwardPosterFee: boolean;
       }
     >;
 
@@ -291,7 +291,7 @@ export interface ISwapFacet extends BaseContract {
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -317,7 +317,7 @@ export interface ISwapFacet extends BaseContract {
     [number, number, boolean] & {
       protocolBps: number;
       posterBps: number;
-      collectPosterFeeToSpace: boolean;
+      forwardPosterFee: boolean;
     }
   >;
 
@@ -325,7 +325,7 @@ export interface ISwapFacet extends BaseContract {
 
   setSwapFeeConfig(
     posterFeeBps: PromiseOrValue<BigNumberish>,
-    collectPosterFeeToSpace: PromiseOrValue<boolean>,
+    forwardPosterFee: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -351,7 +351,7 @@ export interface ISwapFacet extends BaseContract {
       [number, number, boolean] & {
         protocolBps: number;
         posterBps: number;
-        collectPosterFeeToSpace: boolean;
+        forwardPosterFee: boolean;
       }
     >;
 
@@ -359,7 +359,7 @@ export interface ISwapFacet extends BaseContract {
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -418,11 +418,11 @@ export interface ISwapFacet extends BaseContract {
 
     "SwapFeeConfigUpdated(uint16,bool)"(
       posterFeeBps?: null,
-      collectPosterFeeToSpace?: null
+      forwardPosterFee?: null
     ): SwapFeeConfigUpdatedEventFilter;
     SwapFeeConfigUpdated(
       posterFeeBps?: null,
-      collectPosterFeeToSpace?: null
+      forwardPosterFee?: null
     ): SwapFeeConfigUpdatedEventFilter;
 
     "SwapRouterInitialized(address)"(
@@ -455,7 +455,7 @@ export interface ISwapFacet extends BaseContract {
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -482,7 +482,7 @@ export interface ISwapFacet extends BaseContract {
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
