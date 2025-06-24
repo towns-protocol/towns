@@ -84,6 +84,11 @@ interface IAppRegistry is IAppRegistryBase {
     /// @return The price
     function getAppPrice(address app) external view returns (uint256);
 
+    /// @notice Get the duration of an app
+    /// @param app The app address
+    /// @return duration The duration of the app
+    function getAppDuration(address app) external view returns (uint48);
+
     /// @notice Get the current version (attestation UID) for a app
     /// @param app The app address
     /// @return The attestation UID representing the current version

@@ -138,6 +138,7 @@ export interface IAppRegistryInterface extends utils.Interface {
     "createApp((string,bytes32[],address,uint256,uint48))": FunctionFragment;
     "getAppByClient(address)": FunctionFragment;
     "getAppById(bytes32)": FunctionFragment;
+    "getAppDuration(address)": FunctionFragment;
     "getAppPrice(address)": FunctionFragment;
     "getAppSchema()": FunctionFragment;
     "getAppSchemaId()": FunctionFragment;
@@ -157,6 +158,7 @@ export interface IAppRegistryInterface extends utils.Interface {
       | "createApp"
       | "getAppByClient"
       | "getAppById"
+      | "getAppDuration"
       | "getAppPrice"
       | "getAppSchema"
       | "getAppSchemaId"
@@ -192,6 +194,10 @@ export interface IAppRegistryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getAppById",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAppDuration",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getAppPrice",
@@ -260,6 +266,10 @@ export interface IAppRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getAppById", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getAppDuration",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getAppPrice",
     data: BytesLike
@@ -464,6 +474,11 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[IAppRegistryBase.AppStructOutput]>;
 
+    getAppDuration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[number]>;
+
     getAppPrice(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -543,6 +558,11 @@ export interface IAppRegistry extends BaseContract {
     overrides?: CallOverrides
   ): Promise<IAppRegistryBase.AppStructOutput>;
 
+  getAppDuration(
+    app: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<number>;
+
   getAppPrice(
     app: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -621,6 +641,11 @@ export interface IAppRegistry extends BaseContract {
       appId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<IAppRegistryBase.AppStructOutput>;
+
+    getAppDuration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<number>;
 
     getAppPrice(
       app: PromiseOrValue<string>,
@@ -785,6 +810,11 @@ export interface IAppRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getAppDuration(
+      app: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getAppPrice(
       app: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -862,6 +892,11 @@ export interface IAppRegistry extends BaseContract {
 
     getAppById(
       appId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getAppDuration(
+      app: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
