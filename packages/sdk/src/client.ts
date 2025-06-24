@@ -593,7 +593,7 @@ export class Client
                 this.signerContext,
                 make_UserPayload_Inception({
                     streamId: streamIdAsBytes(userStreamId),
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress: metadata?.appAddress,
                 }),
             ),
         ]
@@ -615,7 +615,7 @@ export class Client
                 this.signerContext,
                 make_UserMetadataPayload_Inception({
                     streamId: streamIdAsBytes(userMetadataStreamId),
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress: metadata?.appAddress,
                 }),
             ),
         ]
@@ -637,7 +637,7 @@ export class Client
                 this.signerContext,
                 make_UserInboxPayload_Inception({
                     streamId: streamIdAsBytes(userInboxStreamId),
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress: metadata?.appAddress,
                 }),
             ),
         ]
@@ -660,7 +660,7 @@ export class Client
                 this.signerContext,
                 make_UserSettingsPayload_Inception({
                     streamId: userSettingsStreamId,
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress: metadata?.appAddress,
                 }),
             ),
         ]
