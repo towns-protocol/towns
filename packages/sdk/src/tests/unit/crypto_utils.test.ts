@@ -2,8 +2,9 @@
  * @group main
  */
 
-import crypto from 'crypto'
 import { deriveKeyAndIV, encryptAESGCM } from '@towns-protocol/sdk-crypto'
+import { randomBytes } from '../../utils'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 describe('crypto_utils', () => {
     test('derivedKeyAndIV', async () => {
@@ -38,8 +39,8 @@ describe('crypto_utils', () => {
 
 function generateRandomSpaceId(): string {
     // Generate a random 32-byte buffer
-    const buffer = crypto.randomBytes(40)
+    const buffer = randomBytes(40)
 
     // Convert the buffer to a hexadecimal string and prefix with '0x'
-    return '0x' + buffer.toString('hex')
+    return '0x' + bin_toHexString(buffer)
 }
