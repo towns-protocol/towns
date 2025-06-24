@@ -267,7 +267,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_MediaPayload:
 		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
 	case *StreamEvent_MetadataPayload:
-		return update_Snapshot_Metadata(iSnapshot, payload.MetadataPayload, event)
+		return update_Snapshot_Metadata(iSnapshot, payload.MetadataPayload)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type", "payloadType", fmt.Sprintf("%T", event.Event.Payload))
 	}
@@ -1140,7 +1140,7 @@ func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *
 	}
 }
 
-func update_Snapshot_Metadata(iSnapshot *Snapshot, metadataPayload *MetadataPayload, _ *ParsedEvent) error {
+func update_Snapshot_Metadata(iSnapshot *Snapshot, metadataPayload *MetadataPayload) error {
 	snapshot, ok := iSnapshot.Content.(*Snapshot_MetadataContent)
 	if !ok {
 		return RiverError(Err_INVALID_ARGUMENT, "snapshot is not a metadata snapshot").
