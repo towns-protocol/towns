@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk",
-    "version": "0.0.242",
+    "version": "0.0.256",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -45,7 +45,7 @@
         "lodash": "^4.17.21",
         "nanoid": "^4.0.0",
         "p-limit": "^6.1.0",
-        "vitest": "3.2.3"
+        "vitest": "^3.2.3"
     },
     "devDependencies": {
         "@connectrpc/connect-web": "^2.0.0",

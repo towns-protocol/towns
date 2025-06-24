@@ -12,20 +12,27 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
-import { StreamStateView_ChannelMessages } from './streamStateView_Common_ChannelMessages'
+import { GdmStreamModel, GdmStreamsView } from './views/streams/gdmStreams'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly channelMetadata: StreamStateView_ChannelMetadata
-    readonly messages: StreamStateView_ChannelMessages
 
-    lastEventCreatedAtEpochMs = 0n
+    get lastEventCreatedAtEpochMs(): bigint {
+        return this.gdmStreamModel.lastEventCreatedAtEpochMs
+    }
 
-    constructor(streamId: string) {
+    get gdmStreamModel(): GdmStreamModel {
+        return this.gdmStreamsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private gdmStreamsView: GdmStreamsView,
+    ) {
         super()
-        this.channelMetadata = new StreamStateView_ChannelMetadata(streamId)
+        this.channelMetadata = new StreamStateView_ChannelMetadata(streamId, gdmStreamsView)
         this.streamId = streamId
-        this.messages = new StreamStateView_ChannelMessages(streamId, this)
     }
 
     applySnapshot(
@@ -56,14 +63,14 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 this.updateLastEvent(event.remoteEvent, undefined)
                 break
             case 'message':
-                this.updateLastEvent(event.remoteEvent, undefined)
-                this.messages.prependChannelMessage(
+                this.decryptEvent(
+                    'channelMessage',
                     event,
+                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
-                    undefined,
-                    payload.content.value,
                 )
+                this.updateLastEvent(event.remoteEvent, undefined)
                 break
             case 'channelProperties':
                 // nothing to do, conveyed in the snapshot
@@ -88,12 +95,12 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
             case 'message':
-                this.messages.appendChannelMessage(
+                this.decryptEvent(
+                    'channelMessage',
                     event,
+                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
-                    stateEmitter,
-                    payload.content.value,
                 )
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
@@ -114,8 +121,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     ): void {
         if (content.kind === 'channelProperties') {
             this.channelMetadata.onDecryptedContent(eventId, content, emitter)
-        } else if (content.kind === 'channelMessage') {
-            this.messages.onDecryptedContent(eventId, content, emitter)
         }
     }
 
@@ -131,7 +136,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         event: StreamTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.lastEventCreatedAtEpochMs = event.createdAtEpochMs
+        this.gdmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, event.createdAtEpochMs)
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
@@ -141,7 +146,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     ) {
         const createdAtEpochMs = event.event.createdAtEpochMs
         if (createdAtEpochMs > this.lastEventCreatedAtEpochMs) {
-            this.lastEventCreatedAtEpochMs = createdAtEpochMs
+            this.gdmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, createdAtEpochMs)
             stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
         }
     }

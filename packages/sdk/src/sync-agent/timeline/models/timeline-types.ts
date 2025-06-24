@@ -19,8 +19,9 @@ import {
     ChannelMessage_Post_AttachmentSchema,
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
+    MembershipReason,
 } from '@towns-protocol/proto'
-import type { DecryptionSessionError } from '@towns-protocol/encryption'
+import type { DecryptionSessionError } from '../../../decryptionExtensions'
 import { isDefined, logNever } from '../../../check'
 import { create } from '@bufbuild/protobuf'
 
@@ -262,12 +263,11 @@ export interface ChannelMessageMissingEvent {
     eventId: string
 }
 
-// TODO: membership here doenst map 1-1 to MembershipOp
+// the same as MembershipOp but with a different name
 export enum Membership {
     Join = 'join',
     Invite = 'invite',
     Leave = 'leave',
-    Ban = 'ban',
     None = '',
 }
 
@@ -276,6 +276,7 @@ export interface StreamMembershipEvent {
     userId: string
     initiatorId: string
     membership: Membership
+    reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
 }
 

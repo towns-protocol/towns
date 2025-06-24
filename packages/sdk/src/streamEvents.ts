@@ -15,11 +15,8 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import {
-    EventSignatureBundle,
-    KeySolicitationContent,
-    UserDevice,
-} from '@towns-protocol/encryption'
+import { UserDevice } from '@towns-protocol/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'

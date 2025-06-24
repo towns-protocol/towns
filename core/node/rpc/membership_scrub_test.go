@@ -201,6 +201,13 @@ func (o *ObservingEventAdder) AddEventPayload(
 	return newEvents, nil
 }
 
+func (o *ObservingEventAdder) GetWalletAddress() common.Address {
+	return o.adder.GetWalletAddress()
+}
+
+// force interface compliance, observing event adder should implemnt EventAdder interface
+var _ scrub.EventAdder = (*ObservingEventAdder)(nil)
+
 func (o *ObservingEventAdder) ObservedEvents() []struct {
 	streamId StreamId
 	payload  IsStreamEvent_Payload

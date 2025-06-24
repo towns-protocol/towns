@@ -24,6 +24,7 @@ export const rootConfig = defineConfig({
             RIVER_CHAIN_ID: process.env.RIVER_CHAIN_ID,
             RIVER_CHAIN_RPC_URL: process.env.RIVER_CHAIN_RPC_URL,
             RIVER_REGISTRY_ADDRESS: process.env.RIVER_REGISTRY_ADDRESS,
+            APP_REGISTRY_ADDRESS: process.env.APP_REGISTRY_ADDRESS,
         },
         testTimeout: 20_000,
     },

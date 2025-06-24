@@ -62,11 +62,31 @@ export declare namespace ISwapRouterBase {
     approveTarget: string;
     swapData: string;
   };
+
+  export type Permit2ParamsStruct = {
+    owner: PromiseOrValue<string>;
+    nonce: PromiseOrValue<BigNumberish>;
+    deadline: PromiseOrValue<BigNumberish>;
+    signature: PromiseOrValue<BytesLike>;
+  };
+
+  export type Permit2ParamsStructOutput = [
+    string,
+    BigNumber,
+    BigNumber,
+    string
+  ] & {
+    owner: string;
+    nonce: BigNumber;
+    deadline: BigNumber;
+    signature: string;
+  };
 }
 
 export interface ISwapFacetInterface extends utils.Interface {
   functions: {
     "executeSwap((address,address,uint256,uint256,address),(address,address,bytes),address)": FunctionFragment;
+    "executeSwapWithPermit((address,address,uint256,uint256,address),(address,address,bytes),(address,uint256,uint256,bytes),address)": FunctionFragment;
     "getSwapFees()": FunctionFragment;
     "getSwapRouter()": FunctionFragment;
     "setSwapFeeConfig(uint16,bool)": FunctionFragment;
@@ -75,6 +95,7 @@ export interface ISwapFacetInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "executeSwap"
+      | "executeSwapWithPermit"
       | "getSwapFees"
       | "getSwapRouter"
       | "setSwapFeeConfig"
@@ -85,6 +106,15 @@ export interface ISwapFacetInterface extends utils.Interface {
     values: [
       ISwapRouterBase.ExactInputParamsStruct,
       ISwapRouterBase.RouterParamsStruct,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "executeSwapWithPermit",
+    values: [
+      ISwapRouterBase.ExactInputParamsStruct,
+      ISwapRouterBase.RouterParamsStruct,
+      ISwapRouterBase.Permit2ParamsStruct,
       PromiseOrValue<string>
     ]
   ): string;
@@ -103,6 +133,10 @@ export interface ISwapFacetInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "executeSwap",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "executeSwapWithPermit",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -180,7 +214,7 @@ export type SwapExecutedEventFilter = TypedEventFilter<SwapExecutedEvent>;
 
 export interface SwapFeeConfigUpdatedEventObject {
   posterFeeBps: number;
-  collectPosterFeeToSpace: boolean;
+  forwardPosterFee: boolean;
 }
 export type SwapFeeConfigUpdatedEvent = TypedEvent<
   [number, boolean],
@@ -235,13 +269,21 @@ export interface ISwapFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getSwapFees(
       overrides?: CallOverrides
     ): Promise<
       [number, number, boolean] & {
         protocolBps: number;
         posterBps: number;
-        collectPosterFeeToSpace: boolean;
+        forwardPosterFee: boolean;
       }
     >;
 
@@ -249,7 +291,7 @@ export interface ISwapFacet extends BaseContract {
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -261,13 +303,21 @@ export interface ISwapFacet extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  executeSwapWithPermit(
+    params: ISwapRouterBase.ExactInputParamsStruct,
+    routerParams: ISwapRouterBase.RouterParamsStruct,
+    permit: ISwapRouterBase.Permit2ParamsStruct,
+    poster: PromiseOrValue<string>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   getSwapFees(
     overrides?: CallOverrides
   ): Promise<
     [number, number, boolean] & {
       protocolBps: number;
       posterBps: number;
-      collectPosterFeeToSpace: boolean;
+      forwardPosterFee: boolean;
     }
   >;
 
@@ -275,7 +325,7 @@ export interface ISwapFacet extends BaseContract {
 
   setSwapFeeConfig(
     posterFeeBps: PromiseOrValue<BigNumberish>,
-    collectPosterFeeToSpace: PromiseOrValue<boolean>,
+    forwardPosterFee: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -287,13 +337,21 @@ export interface ISwapFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getSwapFees(
       overrides?: CallOverrides
     ): Promise<
       [number, number, boolean] & {
         protocolBps: number;
         posterBps: number;
-        collectPosterFeeToSpace: boolean;
+        forwardPosterFee: boolean;
       }
     >;
 
@@ -301,7 +359,7 @@ export interface ISwapFacet extends BaseContract {
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -360,11 +418,11 @@ export interface ISwapFacet extends BaseContract {
 
     "SwapFeeConfigUpdated(uint16,bool)"(
       posterFeeBps?: null,
-      collectPosterFeeToSpace?: null
+      forwardPosterFee?: null
     ): SwapFeeConfigUpdatedEventFilter;
     SwapFeeConfigUpdated(
       posterFeeBps?: null,
-      collectPosterFeeToSpace?: null
+      forwardPosterFee?: null
     ): SwapFeeConfigUpdatedEventFilter;
 
     "SwapRouterInitialized(address)"(
@@ -383,13 +441,21 @@ export interface ISwapFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     getSwapFees(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSwapRouter(overrides?: CallOverrides): Promise<BigNumber>;
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -402,13 +468,21 @@ export interface ISwapFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    executeSwapWithPermit(
+      params: ISwapRouterBase.ExactInputParamsStruct,
+      routerParams: ISwapRouterBase.RouterParamsStruct,
+      permit: ISwapRouterBase.Permit2ParamsStruct,
+      poster: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     getSwapFees(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getSwapRouter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     setSwapFeeConfig(
       posterFeeBps: PromiseOrValue<BigNumberish>,
-      collectPosterFeeToSpace: PromiseOrValue<boolean>,
+      forwardPosterFee: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

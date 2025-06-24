@@ -15,8 +15,6 @@ import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 
-// contracts
-
 abstract contract MembershipBase is IMembershipBase {
     using SafeTransferLib for address;
 
@@ -177,16 +175,14 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view virtual returns (uint256 membershipPrice) {
         // get free allocation
         uint256 freeAllocation = _getMembershipFreeAllocation();
-
-        membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
-            freeAllocation,
-            totalSupply
-        );
+        address pricingModule = _getPricingModule();
 
         IPlatformRequirements platform = _getPlatformRequirements();
 
-        uint256 minPrice = platform.getMembershipMinPrice();
+        if (pricingModule == address(0)) return platform.getMembershipFee();
 
+        membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
+        uint256 minPrice = platform.getMembershipMinPrice();
         if (membershipPrice < minPrice) return platform.getMembershipFee();
     }
 
@@ -200,13 +196,15 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 minPrice = platform.getMembershipMinPrice();
 
+        uint256 minFee = platform.getMembershipFee();
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
+
         if (renewalPrice != 0) {
-            return FixedPointMathLib.max(renewalPrice, minPrice);
+            return FixedPointMathLib.max(renewalPrice, minFee);
         }
 
+        uint256 minPrice = platform.getMembershipMinPrice();
         uint256 price = _getMembershipPrice(totalSupply);
         return FixedPointMathLib.max(price, minPrice);
     }

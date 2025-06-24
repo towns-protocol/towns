@@ -19,6 +19,10 @@ import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { getUserIdFromStreamId } from './id'
 import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { fromBinary } from '@bufbuild/protobuf'
+import {
+    UserMetadataStreamModel,
+    UserMetadataStreamsView,
+} from './views/streams/userMetadataStreams'
 
 export class StreamStateView_UserMetadata extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -35,7 +39,14 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
     // user_id -> device_keys, fallback_keys
     readonly deviceKeys: UserDevice[] = []
 
-    constructor(streamId: string) {
+    get streamMetadataModel(): UserMetadataStreamModel {
+        return this.userMetadataStreamsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private userMetadataStreamsView: UserMetadataStreamsView,
+    ) {
         super()
         this.streamId = streamId
         this.streamCreatorId = getUserIdFromStreamId(streamId)

@@ -14,6 +14,21 @@
     "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "vitest.*"],
     "rules": {
         "no-console": "error",
+        "no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "crypto",
+                        "message": "SDK should be Web compatible. Follow the convention from @towns-protocol/rpc-connector and @towns-protocol/sdk-crypto if you need specific API."
+                    },
+                    {
+                        "name": "node:crypto",
+                        "message": "SDK should be Web compatible. Follow the convention from @towns-protocol/rpc-connector and @towns-protocol/sdk-crypto if you need specific API."
+                    }
+                ]
+            }
+        ],
         "import-x/no-extraneous-dependencies": [
             "error",
             {

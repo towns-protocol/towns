@@ -10,16 +10,17 @@ import {
     EventStatus,
     RiverTimelineEvent,
 } from '../../../sync-agent/timeline/models/timeline-types'
-import { randomBytes } from 'crypto'
 import { ETH_ADDRESS } from '@towns-protocol/web3'
 import { BlockchainTransaction_Tip, PlainMessage } from '@towns-protocol/proto'
 import {
     getIsMentioned,
     getReactionParentId,
     getThreadParentId,
-} from '../../../streams-view/timelinesViewModel'
+} from '../../../views/streams/timelinesModel'
 import { hexToBytes } from 'ethereum-cryptography/utils'
-import { getFallbackContent } from '../../../streams-view/timelineEvents'
+import { getFallbackContent } from '../../../views/streams/timelineEvents'
+import { bin_toHexString } from '@towns-protocol/dlog'
+import { randomBytes } from '../../../utils'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []
@@ -245,7 +246,7 @@ function makeTip(params: {
             },
         },
         tip,
-        transactionHash: randomBytes(32).toString('hex'),
+        transactionHash: bin_toHexString(randomBytes(32)),
         fromUserId: params.fromUserId,
         refEventId: params.messageId,
         toUserId: params.toUserId, // I'm cheating here and not putting it into the transaction because we use readable names for ids

@@ -40,9 +40,37 @@ abstract contract ExecutorBase is IExecutorBase {
 
     /// @notice Creates a new group and marks it as active.
     /// @param groupId The ID of the group to create.
-    function _setGroupStatus(bytes32 groupId, bool status) internal {
-        _getGroup(groupId).setStatus(status);
+    /// @param status The status to set (active/inactive).
+    /// @param expiration Optional timestamp when the group should expire (0 for no expiration).
+    function _setGroupStatus(bytes32 groupId, bool status, uint48 expiration) internal {
+        Group storage group = _getGroup(groupId);
+        group.setStatus(status);
+        if (status && expiration > 0) {
+            if (expiration <= block.timestamp) revert InvalidExpiration();
+            group.expiration = expiration;
+        }
         emit GroupStatusSet(groupId, status);
+    }
+
+    function _getGroupExpiration(bytes32 groupId) internal view returns (uint48) {
+        return _getGroup(groupId).expiration;
+    }
+
+    /// @notice Creates a new group and marks it as active without expiration.
+    /// @param groupId The ID of the group to create.
+    /// @param status The status to set (active/inactive).
+    function _setGroupStatus(bytes32 groupId, bool status) internal {
+        _setGroupStatus(groupId, status, 0);
+    }
+
+    /// @notice Sets or extends the expiration for a group.
+    /// @param groupId The ID of the group.
+    /// @param expiration The new expiration timestamp.
+    function _setGroupExpiration(bytes32 groupId, uint48 expiration) internal {
+        if (expiration <= block.timestamp) revert InvalidExpiration();
+        Group storage group = _getGroup(groupId);
+        group.expiration = expiration;
+        emit GroupExpirationSet(groupId, expiration);
     }
 
     /// @notice Grants access to a group for an account.
@@ -124,30 +152,36 @@ abstract contract ExecutorBase is IExecutorBase {
         return _getGroup(groupId).getGrantDelay();
     }
 
+    /// @notice Checks if a group is active and not expired.
+    /// @param groupId The ID of the group.
+    /// @return True if the group is active and not expired.
+    function _isGroupActive(bytes32 groupId) internal view returns (bool) {
+        Group storage group = _getGroup(groupId);
+        if (!group.active) return false;
+        if (group.expiration == 0) return true;
+        return group.expiration > block.timestamp;
+    }
+
     /// @notice Checks if an account has access to a group.
     /// @param groupId The ID of the group.
     /// @param account The account to check.
     /// @return isMember True if the account is a member.
     /// @return executionDelay The execution delay for the account.
-    /// @return active True if the group is active.
+    /// @return active True if the group is active and not expired.
     function _hasGroupAccess(
         bytes32 groupId,
         address account
     ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
         Group storage group = _getGroup(groupId);
-        (isMember, executionDelay, active) = group.hasAccess(account);
+        (isMember, executionDelay) = group.hasAccess(account);
+
+        // Check both active status and expiration
+        active = group.active && (group.expiration == 0 || group.expiration > block.timestamp);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ACCESS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Checks if a group is active.
-    /// @param groupId The ID of the group.
-    /// @return True if the group is active.
-    function _isGroupActive(bytes32 groupId) internal view returns (bool) {
-        return _getGroup(groupId).active;
-    }
 
     /// @notice Gets access details for an account in a group.
     /// @param groupId The ID of the group.

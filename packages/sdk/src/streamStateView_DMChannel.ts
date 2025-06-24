@@ -12,18 +12,29 @@ import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { userIdFromAddress } from './id'
-import { StreamStateView_ChannelMessages } from './streamStateView_Common_ChannelMessages'
+import { DmStreamModel, DmStreamsView } from './views/streams/dmStreams'
 export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly messages: StreamStateView_ChannelMessages
-    firstPartyId?: string
-    secondPartyId?: string
-    lastEventCreatedAtEpochMs = 0n
 
-    constructor(streamId: string) {
+    get firstPartyId(): string | undefined {
+        return this.dmStreamModel.firstPartyId
+    }
+    get secondPartyId(): string | undefined {
+        return this.dmStreamModel.secondPartyId
+    }
+    get lastEventCreatedAtEpochMs(): bigint {
+        return this.dmStreamModel.lastEventCreatedAtEpochMs
+    }
+    get dmStreamModel(): DmStreamModel {
+        return this.dmStreamsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private dmStreamsView: DmStreamsView,
+    ) {
         super()
         this.streamId = streamId
-        this.messages = new StreamStateView_ChannelMessages(streamId, this)
     }
 
     applySnapshot(
@@ -33,8 +44,11 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         if (content.inception) {
-            this.firstPartyId = userIdFromAddress(content.inception.firstPartyAddress)
-            this.secondPartyId = userIdFromAddress(content.inception.secondPartyAddress)
+            this.dmStreamsView.setParticipants(
+                this.streamId,
+                userIdFromAddress(content.inception.firstPartyAddress),
+                userIdFromAddress(content.inception.secondPartyAddress),
+            )
         }
     }
 
@@ -52,12 +66,12 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 break
 
             case 'message':
-                this.messages.appendChannelMessage(
+                this.decryptEvent(
+                    'channelMessage',
                     event,
+                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
-                    stateEmitter,
-                    payload.content.value,
                 )
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
@@ -82,14 +96,14 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 this.updateLastEvent(event.remoteEvent, undefined)
                 break
             case 'message':
-                this.updateLastEvent(event.remoteEvent, undefined)
-                this.messages.prependChannelMessage(
+                this.decryptEvent(
+                    'channelMessage',
                     event,
+                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
-                    undefined,
-                    payload.content.value,
                 )
+                this.updateLastEvent(event.remoteEvent, undefined)
                 break
             case undefined:
                 break
@@ -99,11 +113,11 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     }
 
     onDecryptedContent(
-        eventId: string,
-        content: DecryptedContent,
-        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        _eventId: string,
+        _content: DecryptedContent,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.messages.onDecryptedContent(eventId, content, stateEmitter)
+        // pass
     }
 
     onConfirmedEvent(
@@ -117,7 +131,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         event: StreamTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.lastEventCreatedAtEpochMs = event.createdAtEpochMs
+        this.dmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, event.createdAtEpochMs)
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
@@ -127,7 +141,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     ) {
         const createdAtEpochMs = event.event.createdAtEpochMs
         if (createdAtEpochMs > this.lastEventCreatedAtEpochMs) {
-            this.lastEventCreatedAtEpochMs = createdAtEpochMs
+            this.dmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, createdAtEpochMs)
             stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
         }
     }

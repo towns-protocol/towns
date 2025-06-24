@@ -54,26 +54,26 @@ import {
     TickerAttachment,
     EncryptedChannelPropertiesEvent,
     Membership,
-} from '../sync-agent/timeline/models/timeline-types'
-import { checkNever, isDefined, logNever } from '../check'
+} from '../../sync-agent/timeline/models/timeline-types'
+import { checkNever, isDefined, logNever } from '../../check'
 import {
     isLocalEvent,
     isRemoteEvent,
     ParsedEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
-} from '../types'
-import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../id'
+} from '../../types'
+import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
 import {
     getIsMentioned,
     getReactionParentId,
     getReplyParentId,
     getThreadParentId,
-} from './timelinesViewModel'
+} from './timelinesModel'
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
-import { DecryptedContent } from '../encryptedContentTypes'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptedContent } from '../../encryptedContentTypes'
+import { DecryptionSessionError } from '../../decryptionExtensions'
 
 const logger = dlogger('csb:timeline')
 
@@ -310,6 +310,7 @@ function toTownsContent_MemberPayload(
                     userId: userIdFromAddress(value.content.value.userAddress),
                     initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
+                    reason: value.content.value.reason,
                 } satisfies StreamMembershipEvent,
             }
         case 'keySolicitation':
@@ -1164,7 +1165,10 @@ export function getFallbackContent(
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {
-            return `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}`
+            return (
+                `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}` +
+                (content.reason ? ` reason: ${content.reason}` : '')
+            )
         }
         case RiverTimelineEvent.ChannelMessage:
             return `${senderDisplayName}: ${content.body}`

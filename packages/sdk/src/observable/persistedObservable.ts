@@ -76,7 +76,7 @@ export class PersistedObservable<T extends Identifiable>
         return super.value
     }
 
-    override setValue(_newValue: PersistedModel<T>) {
+    override setValue(_newValue: PersistedModel<T>): boolean {
         throw new Error('use updateData instead of set value')
     }
 
