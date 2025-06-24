@@ -92,14 +92,10 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         (uint16 protocolBps, uint16 posterBps, bool returnedForwardPosterFee) = swapFacet
             .getSwapFees();
         assertEq(protocolBps, PROTOCOL_BPS, "Treasury fee should match platform fee");
-        // Clean logic: forwardPosterFee=true uses protocol default if newPosterFeeBps=0
+        // Current logic: if forwardPosterFee=true OR newPosterFeeBps!=0, use newPosterFeeBps
         assertEq(
             posterBps,
-            forwardPosterFee
-                ? newPosterFeeBps == 0
-                    ? POSTER_BPS
-                    : newPosterFeeBps
-                : newPosterFeeBps,
+            (forwardPosterFee || newPosterFeeBps != 0) ? newPosterFeeBps : POSTER_BPS,
             "Poster fee should be updated"
         );
         assertEq(
@@ -405,11 +401,11 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         // determine poster fee based on configuration
         if (!forwardPosterFee) {
-            posterFee = BasisPoints.calculate(amountOut, posterBps);
-        } else if (poster_ != address(0)) {
             // if posterBps is 0, SwapFacet falls back to platform default
             uint16 actualPosterBps = posterBps == 0 ? POSTER_BPS : posterBps;
             posterFee = BasisPoints.calculate(amountOut, actualPosterBps);
+        } else if (poster_ != address(0)) {
+            posterFee = BasisPoints.calculate(amountOut, posterBps);
         }
         // else: poster_ == address(0), so no poster fee (posterFee remains 0)
 

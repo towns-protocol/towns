@@ -167,15 +167,11 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         IPlatformRequirements platform = _getPlatformRequirements();
         (protocolBps, posterBps) = platform.getSwapFees();
 
-        forwardPosterFee = ds.forwardPosterFee;
+        uint16 spacePosterBps;
+        (spacePosterBps, forwardPosterFee) = (ds.posterFeeBps, ds.forwardPosterFee);
 
-        uint16 spacePosterBps = ds.posterFeeBps;
-        if (!forwardPosterFee) {
-            posterBps = spacePosterBps;
-        } else {
-            // if spacePosterBps is not set, use protocol config
-            posterBps = spacePosterBps == 0 ? posterBps : spacePosterBps;
-        }
+        // if poster fee is forwarded or spacePosterBps is set, use spacePosterBps
+        if (forwardPosterFee || spacePosterBps != 0) posterBps = spacePosterBps;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
