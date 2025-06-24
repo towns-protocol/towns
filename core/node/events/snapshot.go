@@ -1141,8 +1141,8 @@ func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *
 }
 
 func update_Snapshot_Metadata(iSnapshot *Snapshot, metadataPayload *MetadataPayload, _ *ParsedEvent) error {
-	snapshot := iSnapshot.Content.(*Snapshot_MetadataContent)
-	if snapshot == nil {
+	snapshot, ok := iSnapshot.Content.(*Snapshot_MetadataContent)
+	if !ok {
 		return RiverError(Err_INVALID_ARGUMENT, "snapshot is not a metadata snapshot").
 			Func("update_Snapshot_Metadata")
 	}
@@ -1153,11 +1153,11 @@ func update_Snapshot_Metadata(iSnapshot *Snapshot, metadataPayload *MetadataPayl
 			Func("update_Snapshot_Metadata")
 	case *MetadataPayload_NewStream_:
 		streamRecord := &StreamRecord{
-			StreamId:             content.NewStream.GetStreamId(),
-			LastMiniblockHash:    content.NewStream.GetGenesisMiniblockHash(),
-			LastMiniblockNum:     0, // Genesis miniblock is always 0
-			Nodes:                content.NewStream.GetNodes(),
-			ReplicationFactor:    content.NewStream.GetReplicationFactor(),
+			StreamId:          content.NewStream.GetStreamId(),
+			LastMiniblockHash: content.NewStream.GetGenesisMiniblockHash(),
+			LastMiniblockNum:  0, // Genesis miniblock is always 0
+			Nodes:             content.NewStream.GetNodes(),
+			ReplicationFactor: content.NewStream.GetReplicationFactor(),
 		}
 		snapshot.MetadataContent.Streams = insertStreamRecord(snapshot.MetadataContent.Streams, streamRecord)
 		return nil
@@ -1182,7 +1182,7 @@ func update_Snapshot_Metadata(iSnapshot *Snapshot, metadataPayload *MetadataPayl
 		streamRecord.ReplicationFactor = content.PlacementUpdate.GetReplicationFactor()
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown metadata payload type %T", content).
+		return RiverError(Err_INVALID_ARGUMENT, "unknown metadata payload type", "type", fmt.Sprintf("%T", content)).
 			Func("update_Snapshot_Metadata")
 	}
 }
