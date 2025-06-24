@@ -31,7 +31,7 @@ var (
 
 // AppAccountMetaData contains all meta data concerning the AppAccount contract.
 var AppAccountMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"disableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"enableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getInstalledApps\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppEntitled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"publicKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onInstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onUninstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"AppAlreadyInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppAddress\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidCaller\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidManifest\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"NotEnoughEth\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnauthorizedApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedSelector\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"disableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"enableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAppExpiration\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint48\",\"internalType\":\"uint48\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getInstalledApps\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppEntitled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"publicKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onInstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRenewApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onUninstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"AppAlreadyInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppAddress\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidCaller\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidManifest\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEnoughEth\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnauthorizedApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedSelector\",\"inputs\":[]}]",
 }
 
 // AppAccountABI is the input ABI used to generate the binding from.
@@ -178,6 +178,37 @@ func (_AppAccount *AppAccountTransactorRaw) Transfer(opts *bind.TransactOpts) (*
 // Transact invokes the (paid) contract method with params as input values.
 func (_AppAccount *AppAccountTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _AppAccount.Contract.contract.Transact(opts, method, params...)
+}
+
+// GetAppExpiration is a free data retrieval call binding the contract method 0xd122c25c.
+//
+// Solidity: function getAppExpiration(address app) view returns(uint48)
+func (_AppAccount *AppAccountCaller) GetAppExpiration(opts *bind.CallOpts, app common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _AppAccount.contract.Call(opts, &out, "getAppExpiration", app)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetAppExpiration is a free data retrieval call binding the contract method 0xd122c25c.
+//
+// Solidity: function getAppExpiration(address app) view returns(uint48)
+func (_AppAccount *AppAccountSession) GetAppExpiration(app common.Address) (*big.Int, error) {
+	return _AppAccount.Contract.GetAppExpiration(&_AppAccount.CallOpts, app)
+}
+
+// GetAppExpiration is a free data retrieval call binding the contract method 0xd122c25c.
+//
+// Solidity: function getAppExpiration(address app) view returns(uint48)
+func (_AppAccount *AppAccountCallerSession) GetAppExpiration(app common.Address) (*big.Int, error) {
+	return _AppAccount.Contract.GetAppExpiration(&_AppAccount.CallOpts, app)
 }
 
 // GetAppId is a free data retrieval call binding the contract method 0x2ba9b839.
@@ -365,6 +396,27 @@ func (_AppAccount *AppAccountSession) OnInstallApp(appId [32]byte, data []byte) 
 // Solidity: function onInstallApp(bytes32 appId, bytes data) returns()
 func (_AppAccount *AppAccountTransactorSession) OnInstallApp(appId [32]byte, data []byte) (*types.Transaction, error) {
 	return _AppAccount.Contract.OnInstallApp(&_AppAccount.TransactOpts, appId, data)
+}
+
+// OnRenewApp is a paid mutator transaction binding the contract method 0x04fe5cdc.
+//
+// Solidity: function onRenewApp(bytes32 appId, bytes data) returns()
+func (_AppAccount *AppAccountTransactor) OnRenewApp(opts *bind.TransactOpts, appId [32]byte, data []byte) (*types.Transaction, error) {
+	return _AppAccount.contract.Transact(opts, "onRenewApp", appId, data)
+}
+
+// OnRenewApp is a paid mutator transaction binding the contract method 0x04fe5cdc.
+//
+// Solidity: function onRenewApp(bytes32 appId, bytes data) returns()
+func (_AppAccount *AppAccountSession) OnRenewApp(appId [32]byte, data []byte) (*types.Transaction, error) {
+	return _AppAccount.Contract.OnRenewApp(&_AppAccount.TransactOpts, appId, data)
+}
+
+// OnRenewApp is a paid mutator transaction binding the contract method 0x04fe5cdc.
+//
+// Solidity: function onRenewApp(bytes32 appId, bytes data) returns()
+func (_AppAccount *AppAccountTransactorSession) OnRenewApp(appId [32]byte, data []byte) (*types.Transaction, error) {
+	return _AppAccount.Contract.OnRenewApp(&_AppAccount.TransactOpts, appId, data)
 }
 
 // OnUninstallApp is a paid mutator transaction binding the contract method 0xa023fcbb.

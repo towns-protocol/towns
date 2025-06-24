@@ -44,6 +44,7 @@ type IAppRegistryBaseApp struct {
 	Client      common.Address
 	Permissions [][32]byte
 	Manifest    ExecutionManifest
+	Duration    *big.Int
 }
 
 // IAppRegistryBaseAppParams is an auto generated low-level Go binding around an user-defined struct.
@@ -52,7 +53,7 @@ type IAppRegistryBaseAppParams struct {
 	Permissions    [][32]byte
 	Client         common.Address
 	InstallPrice   *big.Int
-	AccessDuration uint64
+	AccessDuration *big.Int
 }
 
 // ManifestExecutionFunction is an auto generated low-level Go binding around an user-defined struct.
@@ -72,7 +73,7 @@ type ManifestExecutionHook struct {
 
 // AppRegistryMetaData contains all meta data concerning the AppRegistry contract.
 var AppRegistryMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"adminBanApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"adminRegisterAppSchema\",\"inputs\":[{\"name\":\"schema\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"resolver\",\"type\":\"address\",\"internalType\":\"contractISchemaResolver\"},{\"name\":\"revocable\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createApp\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.AppParams\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"installPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"accessDuration\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getAppByClient\",\"inputs\":[{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppById\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.App\",\"components\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"manifest\",\"type\":\"tuple\",\"internalType\":\"structExecutionManifest\",\"components\":[{\"name\":\"executionFunctions\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionFunction[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"skipRuntimeValidation\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowGlobalValidation\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"executionHooks\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionHook[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"entityId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"isPreHook\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"isPostHook\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"interfaceIds\",\"type\":\"bytes4[]\",\"internalType\":\"bytes4[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchema\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchemaId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"installApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"contractIAppAccount\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"isAppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"removeApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"uninstallApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"contractIAppAccount\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppCreated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppRegistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppSchemaSet\",\"inputs\":[{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUninstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUnregistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUpdated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AppAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppDoesNotImplementInterface\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppRevoked\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BannedApp\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ClientAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InsufficientPayment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAddressInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppName\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidArrayInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDuration\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrice\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAppOwner\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"adminBanApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"adminRegisterAppSchema\",\"inputs\":[{\"name\":\"schema\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"resolver\",\"type\":\"address\",\"internalType\":\"contractISchemaResolver\"},{\"name\":\"revocable\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createApp\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.AppParams\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"installPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"accessDuration\",\"type\":\"uint48\",\"internalType\":\"uint48\"}]}],\"outputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getAppByClient\",\"inputs\":[{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppById\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIAppRegistryBase.App\",\"components\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permissions\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"manifest\",\"type\":\"tuple\",\"internalType\":\"structExecutionManifest\",\"components\":[{\"name\":\"executionFunctions\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionFunction[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"skipRuntimeValidation\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowGlobalValidation\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"executionHooks\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionHook[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"entityId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"isPreHook\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"isPostHook\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"interfaceIds\",\"type\":\"bytes4[]\",\"internalType\":\"bytes4[]\"}]},{\"name\":\"duration\",\"type\":\"uint48\",\"internalType\":\"uint48\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppDuration\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint48\",\"internalType\":\"uint48\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppPrice\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchema\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppSchemaId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"installApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"contractIAppAccount\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"isAppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"client\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"removeApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"renewApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"contractIAppAccount\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"uninstallApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"contractITownsApp\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"contractIAppAccount\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AppBanned\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppCreated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppRegistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppRenewed\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppSchemaSet\",\"inputs\":[{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUninstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"appId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUnregistered\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AppUpdated\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"uid\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AppAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppDoesNotImplementInterface\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AppRevoked\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BannedApp\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ClientAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InsufficientPayment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAddressInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppName\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidArrayInput\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDuration\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrice\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAppOwner\",\"inputs\":[]}]",
 }
 
 // AppRegistryABI is the input ABI used to generate the binding from.
@@ -254,7 +255,7 @@ func (_AppRegistry *AppRegistryCallerSession) GetAppByClient(client common.Addre
 
 // GetAppById is a free data retrieval call binding the contract method 0xfb609045.
 //
-// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[])))
+// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]),uint48))
 func (_AppRegistry *AppRegistryCaller) GetAppById(opts *bind.CallOpts, appId [32]byte) (IAppRegistryBaseApp, error) {
 	var out []interface{}
 	err := _AppRegistry.contract.Call(opts, &out, "getAppById", appId)
@@ -271,16 +272,78 @@ func (_AppRegistry *AppRegistryCaller) GetAppById(opts *bind.CallOpts, appId [32
 
 // GetAppById is a free data retrieval call binding the contract method 0xfb609045.
 //
-// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[])))
+// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]),uint48))
 func (_AppRegistry *AppRegistrySession) GetAppById(appId [32]byte) (IAppRegistryBaseApp, error) {
 	return _AppRegistry.Contract.GetAppById(&_AppRegistry.CallOpts, appId)
 }
 
 // GetAppById is a free data retrieval call binding the contract method 0xfb609045.
 //
-// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[])))
+// Solidity: function getAppById(bytes32 appId) view returns((bytes32,address,address,address,bytes32[],((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]),uint48))
 func (_AppRegistry *AppRegistryCallerSession) GetAppById(appId [32]byte) (IAppRegistryBaseApp, error) {
 	return _AppRegistry.Contract.GetAppById(&_AppRegistry.CallOpts, appId)
+}
+
+// GetAppDuration is a free data retrieval call binding the contract method 0xf78b12cb.
+//
+// Solidity: function getAppDuration(address app) view returns(uint48)
+func (_AppRegistry *AppRegistryCaller) GetAppDuration(opts *bind.CallOpts, app common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _AppRegistry.contract.Call(opts, &out, "getAppDuration", app)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetAppDuration is a free data retrieval call binding the contract method 0xf78b12cb.
+//
+// Solidity: function getAppDuration(address app) view returns(uint48)
+func (_AppRegistry *AppRegistrySession) GetAppDuration(app common.Address) (*big.Int, error) {
+	return _AppRegistry.Contract.GetAppDuration(&_AppRegistry.CallOpts, app)
+}
+
+// GetAppDuration is a free data retrieval call binding the contract method 0xf78b12cb.
+//
+// Solidity: function getAppDuration(address app) view returns(uint48)
+func (_AppRegistry *AppRegistryCallerSession) GetAppDuration(app common.Address) (*big.Int, error) {
+	return _AppRegistry.Contract.GetAppDuration(&_AppRegistry.CallOpts, app)
+}
+
+// GetAppPrice is a free data retrieval call binding the contract method 0xb35bbe8d.
+//
+// Solidity: function getAppPrice(address app) view returns(uint256)
+func (_AppRegistry *AppRegistryCaller) GetAppPrice(opts *bind.CallOpts, app common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _AppRegistry.contract.Call(opts, &out, "getAppPrice", app)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetAppPrice is a free data retrieval call binding the contract method 0xb35bbe8d.
+//
+// Solidity: function getAppPrice(address app) view returns(uint256)
+func (_AppRegistry *AppRegistrySession) GetAppPrice(app common.Address) (*big.Int, error) {
+	return _AppRegistry.Contract.GetAppPrice(&_AppRegistry.CallOpts, app)
+}
+
+// GetAppPrice is a free data retrieval call binding the contract method 0xb35bbe8d.
+//
+// Solidity: function getAppPrice(address app) view returns(uint256)
+func (_AppRegistry *AppRegistryCallerSession) GetAppPrice(app common.Address) (*big.Int, error) {
+	return _AppRegistry.Contract.GetAppPrice(&_AppRegistry.CallOpts, app)
 }
 
 // GetAppSchema is a free data retrieval call binding the contract method 0x5db78f1f.
@@ -449,23 +512,23 @@ func (_AppRegistry *AppRegistryTransactorSession) AdminRegisterAppSchema(schema 
 	return _AppRegistry.Contract.AdminRegisterAppSchema(&_AppRegistry.TransactOpts, schema, resolver, revocable)
 }
 
-// CreateApp is a paid mutator transaction binding the contract method 0x2c4b902c.
+// CreateApp is a paid mutator transaction binding the contract method 0x035e0499.
 //
-// Solidity: function createApp((string,bytes32[],address,uint256,uint64) params) payable returns(address app, bytes32 appId)
+// Solidity: function createApp((string,bytes32[],address,uint256,uint48) params) payable returns(address app, bytes32 appId)
 func (_AppRegistry *AppRegistryTransactor) CreateApp(opts *bind.TransactOpts, params IAppRegistryBaseAppParams) (*types.Transaction, error) {
 	return _AppRegistry.contract.Transact(opts, "createApp", params)
 }
 
-// CreateApp is a paid mutator transaction binding the contract method 0x2c4b902c.
+// CreateApp is a paid mutator transaction binding the contract method 0x035e0499.
 //
-// Solidity: function createApp((string,bytes32[],address,uint256,uint64) params) payable returns(address app, bytes32 appId)
+// Solidity: function createApp((string,bytes32[],address,uint256,uint48) params) payable returns(address app, bytes32 appId)
 func (_AppRegistry *AppRegistrySession) CreateApp(params IAppRegistryBaseAppParams) (*types.Transaction, error) {
 	return _AppRegistry.Contract.CreateApp(&_AppRegistry.TransactOpts, params)
 }
 
-// CreateApp is a paid mutator transaction binding the contract method 0x2c4b902c.
+// CreateApp is a paid mutator transaction binding the contract method 0x035e0499.
 //
-// Solidity: function createApp((string,bytes32[],address,uint256,uint64) params) payable returns(address app, bytes32 appId)
+// Solidity: function createApp((string,bytes32[],address,uint256,uint48) params) payable returns(address app, bytes32 appId)
 func (_AppRegistry *AppRegistryTransactorSession) CreateApp(params IAppRegistryBaseAppParams) (*types.Transaction, error) {
 	return _AppRegistry.Contract.CreateApp(&_AppRegistry.TransactOpts, params)
 }
@@ -514,23 +577,44 @@ func (_AppRegistry *AppRegistryTransactorSession) RegisterApp(app common.Address
 
 // RemoveApp is a paid mutator transaction binding the contract method 0x1f1bf78b.
 //
-// Solidity: function removeApp(bytes32 appId) returns(bytes32)
+// Solidity: function removeApp(bytes32 appId) returns()
 func (_AppRegistry *AppRegistryTransactor) RemoveApp(opts *bind.TransactOpts, appId [32]byte) (*types.Transaction, error) {
 	return _AppRegistry.contract.Transact(opts, "removeApp", appId)
 }
 
 // RemoveApp is a paid mutator transaction binding the contract method 0x1f1bf78b.
 //
-// Solidity: function removeApp(bytes32 appId) returns(bytes32)
+// Solidity: function removeApp(bytes32 appId) returns()
 func (_AppRegistry *AppRegistrySession) RemoveApp(appId [32]byte) (*types.Transaction, error) {
 	return _AppRegistry.Contract.RemoveApp(&_AppRegistry.TransactOpts, appId)
 }
 
 // RemoveApp is a paid mutator transaction binding the contract method 0x1f1bf78b.
 //
-// Solidity: function removeApp(bytes32 appId) returns(bytes32)
+// Solidity: function removeApp(bytes32 appId) returns()
 func (_AppRegistry *AppRegistryTransactorSession) RemoveApp(appId [32]byte) (*types.Transaction, error) {
 	return _AppRegistry.Contract.RemoveApp(&_AppRegistry.TransactOpts, appId)
+}
+
+// RenewApp is a paid mutator transaction binding the contract method 0x50bf9d01.
+//
+// Solidity: function renewApp(address app, address account, bytes data) payable returns()
+func (_AppRegistry *AppRegistryTransactor) RenewApp(opts *bind.TransactOpts, app common.Address, account common.Address, data []byte) (*types.Transaction, error) {
+	return _AppRegistry.contract.Transact(opts, "renewApp", app, account, data)
+}
+
+// RenewApp is a paid mutator transaction binding the contract method 0x50bf9d01.
+//
+// Solidity: function renewApp(address app, address account, bytes data) payable returns()
+func (_AppRegistry *AppRegistrySession) RenewApp(app common.Address, account common.Address, data []byte) (*types.Transaction, error) {
+	return _AppRegistry.Contract.RenewApp(&_AppRegistry.TransactOpts, app, account, data)
+}
+
+// RenewApp is a paid mutator transaction binding the contract method 0x50bf9d01.
+//
+// Solidity: function renewApp(address app, address account, bytes data) payable returns()
+func (_AppRegistry *AppRegistryTransactorSession) RenewApp(app common.Address, account common.Address, data []byte) (*types.Transaction, error) {
+	return _AppRegistry.Contract.RenewApp(&_AppRegistry.TransactOpts, app, account, data)
 }
 
 // UninstallApp is a paid mutator transaction binding the contract method 0xac24cd4f.
@@ -1145,6 +1229,168 @@ func (_AppRegistry *AppRegistryFilterer) WatchAppRegistered(opts *bind.WatchOpts
 func (_AppRegistry *AppRegistryFilterer) ParseAppRegistered(log types.Log) (*AppRegistryAppRegistered, error) {
 	event := new(AppRegistryAppRegistered)
 	if err := _AppRegistry.contract.UnpackLog(event, "AppRegistered", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AppRegistryAppRenewedIterator is returned from FilterAppRenewed and is used to iterate over the raw logs and unpacked data for AppRenewed events raised by the AppRegistry contract.
+type AppRegistryAppRenewedIterator struct {
+	Event *AppRegistryAppRenewed // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AppRegistryAppRenewedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AppRegistryAppRenewed)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AppRegistryAppRenewed)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AppRegistryAppRenewedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AppRegistryAppRenewedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AppRegistryAppRenewed represents a AppRenewed event raised by the AppRegistry contract.
+type AppRegistryAppRenewed struct {
+	App     common.Address
+	Account common.Address
+	AppId   [32]byte
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterAppRenewed is a free log retrieval operation binding the contract event 0xcd92821b6ef75242495e80ef40036955c209df02d7319bff0345ad60a5855a28.
+//
+// Solidity: event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) FilterAppRenewed(opts *bind.FilterOpts, app []common.Address, account []common.Address, appId [][32]byte) (*AppRegistryAppRenewedIterator, error) {
+
+	var appRule []interface{}
+	for _, appItem := range app {
+		appRule = append(appRule, appItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var appIdRule []interface{}
+	for _, appIdItem := range appId {
+		appIdRule = append(appIdRule, appIdItem)
+	}
+
+	logs, sub, err := _AppRegistry.contract.FilterLogs(opts, "AppRenewed", appRule, accountRule, appIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AppRegistryAppRenewedIterator{contract: _AppRegistry.contract, event: "AppRenewed", logs: logs, sub: sub}, nil
+}
+
+// WatchAppRenewed is a free log subscription operation binding the contract event 0xcd92821b6ef75242495e80ef40036955c209df02d7319bff0345ad60a5855a28.
+//
+// Solidity: event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) WatchAppRenewed(opts *bind.WatchOpts, sink chan<- *AppRegistryAppRenewed, app []common.Address, account []common.Address, appId [][32]byte) (event.Subscription, error) {
+
+	var appRule []interface{}
+	for _, appItem := range app {
+		appRule = append(appRule, appItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var appIdRule []interface{}
+	for _, appIdItem := range appId {
+		appIdRule = append(appIdRule, appIdItem)
+	}
+
+	logs, sub, err := _AppRegistry.contract.WatchLogs(opts, "AppRenewed", appRule, accountRule, appIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AppRegistryAppRenewed)
+				if err := _AppRegistry.contract.UnpackLog(event, "AppRenewed", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseAppRenewed is a log parse operation binding the contract event 0xcd92821b6ef75242495e80ef40036955c209df02d7319bff0345ad60a5855a28.
+//
+// Solidity: event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId)
+func (_AppRegistry *AppRegistryFilterer) ParseAppRenewed(log types.Log) (*AppRegistryAppRenewed, error) {
+	event := new(AppRegistryAppRenewed)
+	if err := _AppRegistry.contract.UnpackLog(event, "AppRenewed", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

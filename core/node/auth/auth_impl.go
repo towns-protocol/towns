@@ -1194,18 +1194,22 @@ func (ca *chainAuth) checkIsApp(
 				"isApp", isApp,
 			)
 
-		var reason EntitlementResultReason
 		if args.kind == chainAuthKindIsApp {
-			isEntitled := isApp && appAddress == args.appAddress
-			if !isEntitled {
-				reason = EntitlementResultReason_IS_NOT_APP
+			if isApp {
+				if appAddress == args.appAddress {
+					return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+				} else {
+					return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
+				}
+			} else {
+				return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP}, nil
 			}
-			return boolCacheResult{isEntitled, reason}, nil
 		} else {
 			if isApp {
-				reason = EntitlementResultReason_IS_APP
+				return boolCacheResult{false, EntitlementResultReason_IS_APP}, nil
+			} else {
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 			}
-			return boolCacheResult{!isApp, reason}, nil
 		}
 	}
 
