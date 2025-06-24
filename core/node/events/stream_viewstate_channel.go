@@ -21,4 +21,3 @@ func (r *StreamView) GetChannelInception() (*ChannelPayload_Inception, error) {
 		return nil, RiverError(Err_WRONG_STREAM_TYPE, "Expected channel stream", "streamId", i.GetStreamId())
 	}
 }
-
