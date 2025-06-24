@@ -36,6 +36,7 @@ const (
 	EntitlementResultReason_WALLET_NOT_LINKED
 	EntitlementResultReason_IS_BOT
 	EntitlementResultReason_IS_NOT_BOT
+	EntitlementResultReason_BOT_ENTITLEMENTS
 	EntitlementResultReason_MAX // MAX - leave at the end
 )
 
@@ -50,6 +51,7 @@ var entitlementResultReasonDescriptions = []string{
 	"WALLET_NOT_LINKED",
 	"USER_IS_BOT",
 	"USER_IS_NOT_BOT",
+	"BOT_ENTITLEMENTS",
 }
 
 func (r EntitlementResultReason) String() string {

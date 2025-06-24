@@ -678,6 +678,11 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 	log.Debugw("isEntitledToChannelUncached", "args", args)
+	// Route bots to a separate entitlement evaluation path.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
+		return ca.isBotEntitled(ctx, args)
+	}
 
 	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
 		ctx,
@@ -797,13 +802,13 @@ func (ca *chainAuth) evaluateEntitlementData(
 func (ca *chainAuth) isBotEntitled(
 	ctx context.Context,
 	args *ChainAuthArgs,
-) (bool, error) {
+) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 	log.Infow("isBotEntitled", "args", args)
 	if args.kind == chainAuthKindIsSpaceMember {
 		log.Infow("isBotEntitled spaceMember - true", "args", args)
 		// membership has already been checked earlier in the IsEntitled logic.
-		return true, nil
+		return &boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
 
 	isEntitled, err := ca.spaceContract.IsAppEntitled(
@@ -817,13 +822,17 @@ func (ca *chainAuth) isBotEntitled(
 	log.Infow("isBotEntitled app entitlement", "args", args, "isEntitled", isEntitled, "err", err)
 
 	if err != nil {
-		return false, AsRiverError(
+		return nil, AsRiverError(
 			err,
 		).Message("Error checking space contract for bot entitlement").
 			Tag("appAddress", args.appAddress).
 			Tag("clientAddress", args.principal)
 	}
-	return isEntitled, nil
+	if !isEntitled {
+		return boolCacheResult{false, EntitlementResultReason_BOT_ENTITLEMENTS}, nil
+	}
+
+	return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 }
 
 // evaluateWithEntitlements evaluates a user permission considering 3 factors:
@@ -863,12 +872,6 @@ func (ca *chainAuth) evaluateWithEntitlements(
 		return false, nil
 	}
 
-	// Route bots to a separate entitlement evaluation path.
-	zeroAddress := common.Address{}
-	if args.appAddress != zeroAddress {
-		return ca.isBotEntitled(ctx, args)
-	}
-
 	// 2. Check if the user has been banned
 	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, wallets)
 	if err != nil {
@@ -905,6 +908,13 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 	log.Debugw("isEntitledToSpaceUncached", "args", args)
+
+	// Route bots to a separate entitlement evaluation path.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
+		return ca.isBotEntitled(ctx, args)
+	}
+
 	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
 		ctx,
 		cfg,
