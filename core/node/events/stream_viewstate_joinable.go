@@ -26,11 +26,11 @@ type JoinableStreamView interface {
 }
 
 func (r *StreamView) GetMemberSnapshotContent() (*protocol.MemberPayload_Snapshot, error) {
-	return r.snapshot.Members, nil
+	return r.snapshot.GetMembers(), nil
 }
 
 func (r *StreamView) GetMemberAppAddress(userId common.Address) (common.Address, error) {
-	// App addresses are only stored in membership events, not in snapshot members
+	// App addresses are only stored in membership evenpts, not in snapshot members
 	// Look through all events to find the app address for the specified user
 	var appAddress common.Address
 	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
