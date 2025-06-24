@@ -198,7 +198,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 
 	err := tp.processMemberImpl(ctx, channelId, member, span)
 	if err != nil {
-		logging.FromCtx(ctx).Warnw("Failed to scrub member", "channelId", channelId, "member", member, "error", err)
+		logging.FromCtx(ctx).Errorw("Failed to scrub member", "channelId", channelId, "member", member, "error", err)
 	}
 
 	if span != nil {
