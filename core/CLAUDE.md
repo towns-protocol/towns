@@ -19,12 +19,7 @@ This module implements the backend River node server for Towns Protocol, a distr
 
 ### Testing Commands
 
-- `just test-all` - Run all Go tests from module root
-- `just t` - Run all tests from current directory
-- `just t-debug -run TestName` - Run specific test with info logging
-- `just t-debug-debug -run TestName` - Run specific test with debug logging
-- `go test ./...` - Standard Go command to run all tests (just commands are wrappers)
-- `go test -v -run TestName ./package` - Run specific test with verbose output
+- Use standard Go test commands
 
 ### Infrastructure Commands
 
