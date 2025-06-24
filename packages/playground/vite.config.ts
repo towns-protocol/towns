@@ -1,4 +1,4 @@
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-oxc'
 import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite'
 import { default as checker } from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -46,6 +46,9 @@ export default ({ mode }: { mode: string }) => {
         },
         optimizeDeps: {
             exclude: ['@towns-protocol/olm'],
+        },
+        experimental: {
+            enableNativePlugin: true,
         },
     })
 }

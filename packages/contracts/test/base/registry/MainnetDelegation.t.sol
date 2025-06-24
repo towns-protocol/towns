@@ -339,7 +339,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint96 amount2
     ) external {
         vm.assume(delegator1 != delegator2 && delegator1 != address(0) && delegator2 != address(0));
-        amount1 = uint96(bound(amount1, 1, type(uint96).max - totalStaked));
+        amount1 = uint96(bound(amount1, 1, type(uint96).max - totalStaked - 1));
         amount2 = uint96(bound(amount2, 1, type(uint96).max - totalStaked - amount1));
 
         address[] memory delegators = new address[](2);

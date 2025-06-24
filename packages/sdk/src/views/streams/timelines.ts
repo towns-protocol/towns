@@ -1,20 +1,20 @@
-import { SnapshotCaseType } from '@towns-protocol/proto'
-import { Observable } from '../observable/observable'
-import { TimelineEvent, RiverTimelineEvent } from '../sync-agent/timeline/models/timeline-types'
-import { LocalTimelineEvent, StreamTimelineEvent } from '../types'
+import { Observable } from '../../observable/observable'
+import { TimelineEvent, RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { LocalTimelineEvent, StreamTimelineEvent } from '../../types'
 import {
     makeTimelinesViewInterface,
     TimelinesViewInterface,
     TimelinesViewModel,
-} from './timelinesViewModel'
-import { StreamChange } from '../streamEvents'
+} from './timelinesModel'
+import { StreamChange } from '../../streamEvents'
 import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineEvents'
-import { DecryptedContent } from '../encryptedContentTypes'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptedContent } from '../../encryptedContentTypes'
+import { DecryptionSessionError } from '../../decryptionExtensions'
 import isEqual from 'lodash/isEqual'
+import { isDMChannelStreamId } from '../../id'
 
 export interface TimelinesViewDelegate {
-    isDMMessageEventBlocked(event: TimelineEvent, kind: SnapshotCaseType): boolean
+    isDMMessageEventBlocked(event: TimelineEvent): boolean
 }
 
 export class TimelinesView extends Observable<TimelinesViewModel> {
@@ -41,43 +41,38 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         })
         this.setState = makeTimelinesViewInterface(
             (fn: (prevState: TimelinesViewModel) => TimelinesViewModel) => {
-                this.setValue(fn(this.value)) // todo batching
+                this.setValue(fn(this.value))
             },
         )
     }
 
-    // for backwards compatibility
-    getState() {
-        return this.value
-    }
-
-    initializeStream(streamId: string, kind: SnapshotCaseType, messages: StreamTimelineEvent[]) {
+    streamInitialized(streamId: string, messages: StreamTimelineEvent[]) {
         this.streamIds.add(streamId)
         const timelineEvents = messages
             .map((event) => toEvent(event, this.userId))
-            .filter((event) => this.filterFn(event, kind))
+            .filter((event) => this.filterFn(streamId, event))
         this.setState.appendEvents(timelineEvents, this.userId, streamId, 'initializeStream')
     }
 
-    streamUpdated(streamId: string, kind: SnapshotCaseType, change: StreamChange) {
+    streamUpdated(streamId: string, change: StreamChange) {
         const { prepended, appended, updated, confirmed } = change
         this.streamIds.add(streamId)
         if (prepended) {
             const events = prepended
                 .map((event) => toEvent(event, this.userId))
-                .filter((event) => this.filterFn(event, kind))
+                .filter((event) => this.filterFn(streamId, event))
             this.setState.prependEvents(events, this.userId, streamId)
         }
         if (appended) {
             const events = appended
                 .map((event) => toEvent(event, this.userId))
-                .filter((event) => this.filterFn(event, kind))
+                .filter((event) => this.filterFn(streamId, event))
             this.setState.appendEvents(events, this.userId, streamId)
         }
         if (updated) {
             const events = updated
                 .map((event) => toEvent(event, this.userId))
-                .filter((event) => this.filterFn(event, kind))
+                .filter((event) => this.filterFn(streamId, event))
             this.setState.updateEvents(events, this.userId, streamId)
         }
         if (confirmed) {
@@ -95,9 +90,7 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         decryptedContent: DecryptedContent,
     ): TimelineEvent | undefined {
-        const prevEvent = this.getState().timelines[streamId].find(
-            (event) => event.eventId === eventId,
-        )
+        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
         if (prevEvent) {
             const newEvent = toDecryptedEvent(prevEvent, decryptedContent, this.userId)
             if (!isEqual(newEvent, prevEvent)) {
@@ -113,9 +106,7 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         error: DecryptionSessionError,
     ) {
-        const prevEvent = this.getState().timelines[streamId].find(
-            (event) => event.eventId === eventId,
-        )
+        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
         if (prevEvent) {
             const newEvent = toDecryptedContentErrorEvent(prevEvent, error)
             if (newEvent !== prevEvent) {
@@ -126,19 +117,21 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
 
     streamLocalEventUpdated(
         streamId: string,
-        kind: SnapshotCaseType,
         localEventId: string,
         localEvent: LocalTimelineEvent,
     ) {
         this.streamIds.add(streamId)
         const event = toEvent(localEvent, this.userId)
-        if (this.filterFn(event, kind)) {
+        if (this.filterFn(streamId, event)) {
             this.setState.updateEvent(event, this.userId, streamId, localEventId)
         }
     }
 
-    private filterFn(event: TimelineEvent, kind: SnapshotCaseType): boolean {
-        if (this.delegate?.isDMMessageEventBlocked(event, kind) === true) {
+    private filterFn(streamId: string, event: TimelineEvent): boolean {
+        if (
+            isDMChannelStreamId(streamId) &&
+            this.delegate?.isDMMessageEventBlocked(event) === true
+        ) {
             return false
         }
         return (

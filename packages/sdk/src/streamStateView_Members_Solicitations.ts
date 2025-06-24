@@ -3,7 +3,7 @@ import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@to
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
-import { EventSignatureBundle, KeySolicitationContent } from '@towns-protocol/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
 import { check } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 

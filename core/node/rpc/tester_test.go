@@ -41,6 +41,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -96,7 +97,7 @@ type serviceTesterOpts struct {
 }
 
 func makeTestListener(t *testing.T) (net.Listener, string) {
-	l, url := testcert.MakeTestListener(t)
+	l, url := testcert.MakeTestListener(t, nil)
 	t.Cleanup(func() { _ = l.Close() })
 	return l, url
 }
@@ -173,6 +174,12 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		crypto.StreamEnableNewSnapshotFormatConfigKey,
 		crypto.ABIEncodeUint64(1),
 	)
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.ServerEnableNode2NodeAuthConfigKey,
+		crypto.ABIEncodeUint64(1),
+	)
 
 	if opts.start {
 		st.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
@@ -231,7 +238,24 @@ func (st *serviceTester) cleanup(f any) {
 }
 
 func (st *serviceTester) makeTestListener() (net.Listener, string) {
-	l, url := testcert.MakeTestListener(st.t)
+	l, url := testcert.MakeTestListener(
+		st.t,
+		node2nodeauth.VerifyPeerCertificate(
+			logging.FromCtx(st.ctx),
+			func(addr common.Address) error {
+				node, err := st.btc.NodeRegistry.GetNode(nil, addr)
+				if err != nil {
+					return err
+				}
+
+				if node.NodeAddress.Cmp(addr) != 0 {
+					return fmt.Errorf("node address mismatch: expected %s, got %s", node.NodeAddress.Hex(), addr.Hex())
+				}
+
+				return nil
+			},
+		),
+	)
 	st.cleanup(l.Close)
 	return l, url
 }
@@ -345,6 +369,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0
+	cfg.EnableTestAPIs = true
 
 	cfg.MetadataShardMask = 0b11
 
@@ -374,10 +399,11 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 
 	bc := st.btc.GetBlockchain(ctx, i)
 	service, err := StartServer(ctx, ctxCancel, cfg, &ServerStartOpts{
-		RiverChain:      bc,
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
-		ScrubberMaker:   options.scrubberMaker,
+		RiverChain:              bc,
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
+		ScrubberMaker:           options.scrubberMaker,
 	})
 	if err != nil {
 		st.require.Nil(service)
@@ -399,21 +425,27 @@ func (st *serviceTester) testClient(i int) protocolconnect.StreamServiceClient {
 }
 
 func (st *serviceTester) testNode2NodeClient(i int) protocolconnect.NodeToNodeClient {
-	return st.testNode2NodeClientForUrl(st.nodes[i].url)
+	return st.testNode2NodeClientForUrl(st.nodes[i].url, i)
 }
 
 func (st *serviceTester) testClientForUrl(url string) protocolconnect.StreamServiceClient {
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
-	return protocolconnect.NewStreamServiceClient(httpClient, url, connect.WithGRPCWeb())
+	return protocolconnect.NewStreamServiceClient(st.httpClient(), url, connect.WithGRPCWeb())
 }
 
-func (st *serviceTester) testNode2NodeClientForUrl(url string) protocolconnect.NodeToNodeClient {
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
-	return protocolconnect.NewNodeToNodeClient(httpClient, url, connect.WithGRPCWeb())
+func (st *serviceTester) testNode2NodeClientForUrl(url string, i int) protocolconnect.NodeToNodeClient {
+	return protocolconnect.NewNodeToNodeClient(st.httpClientWithCert(i), url, connect.WithGRPCWeb())
 }
 
 func (st *serviceTester) httpClient() *http.Client {
 	c, err := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
+	st.require.NoError(err)
+	return c
+}
+
+func (st *serviceTester) httpClientWithCert(i int) *http.Client {
+	c, err := testcert.GetHttp2LocalhostTLSClientWithCert(
+		st.ctx, st.getConfig(), node2nodeauth.CertGetter(nil, st.btc.NodeWallets[i], st.btc.ChainId),
+	)
 	st.require.NoError(err)
 	return c
 }

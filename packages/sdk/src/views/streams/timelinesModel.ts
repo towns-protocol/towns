@@ -11,7 +11,7 @@ import {
     TimelineEvent,
     TimelineEventConfirmation,
     TimelineEvent_OneOf,
-} from '../sync-agent/timeline/models/timeline-types'
+} from '../../sync-agent/timeline/models/timeline-types'
 import { dlogger } from '@towns-protocol/dlog'
 import { getFallbackContent } from './timelineEvents'
 

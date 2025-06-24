@@ -5,12 +5,12 @@ import (
 	"context"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
-
-	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -19,6 +19,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+const (
+	// commonBufferSize is the size of the common messages buffer of the shared syncer.
+	commonBufferSize = 10240
 )
 
 type (
@@ -56,7 +61,7 @@ type (
 		// muSyncers guards syncers map
 		muSyncers deadlock.Mutex
 		// stopped holds an indication if the sync operation is stopped
-		stopped bool
+		stopped atomic.Bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers map[common.Address]StreamsSyncer
 		// streamID2Syncer maps from a stream to its syncer
@@ -89,7 +94,7 @@ func NewSyncers(
 		nodeRegistry:     nodeRegistry,
 		localNodeAddress: localNodeAddress,
 		syncers:          make(map[common.Address]StreamsSyncer),
-		messages:         dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		messages:         dynmsgbuf.NewDynamicBufferWithSize[*SyncStreamsResponse](commonBufferSize),
 		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
 		streamLocks:      xsync.NewMap[StreamId, *sync.Mutex](),
 		otelTracer:       otelTracer,
@@ -99,11 +104,7 @@ func NewSyncers(
 
 func (ss *SyncerSet) Run() {
 	<-ss.globalCtx.Done() // node went down
-
-	ss.muSyncers.Lock()
-	ss.stopped = true
-	ss.muSyncers.Unlock()
-
+	ss.stopped.Store(true)
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
@@ -304,12 +305,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 // modify implements the actual modification logic
 func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
-	ss.muSyncers.Lock()
-	if ss.stopped {
-		ss.muSyncers.Unlock()
-		return RiverError(Err_CANCELED, "Sync operation stopped")
+	if ss.stopped.Load() {
+		return RiverError(Err_CANCELED, "Sync stopped")
 	}
-	ss.muSyncers.Unlock()
 
 	// Lock all affected streams (excluding backfill streams)
 	lockedStreams := ss.lockStreams(req)
@@ -645,6 +643,13 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		if err != nil {
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
+	}
+
+	// Check if SyncerSet is stopped before storing the given syncer.
+	// There could be a case when the node is stopped while we are trying to create a new syncer
+	// and add delta to the wait group. Just return an error in this case.
+	if ss.stopped.Load() {
+		return nil, RiverError(Err_CANCELED, "Sync stopped")
 	}
 
 	ss.syncers[nodeAddress] = syncer

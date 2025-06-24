@@ -1,17 +1,17 @@
+import { GroupEncryptionCrypto, UserDevice } from '@towns-protocol/encryption'
 import {
     BaseDecryptionExtensions,
     DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
     EventSignatureBundle,
-    GroupEncryptionCrypto,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
     KeySolicitationItem,
-    UserDevice,
-} from '@towns-protocol/encryption'
+} from './decryptionExtensions'
+
 import {
     AddEventResponse_Error,
     EncryptedData,

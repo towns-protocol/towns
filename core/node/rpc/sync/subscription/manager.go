@@ -55,7 +55,9 @@ func NewManager(
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) *Manager {
-	log := logging.FromCtx(ctx).With("node", localNodeAddr)
+	log := logging.FromCtx(ctx).
+		Named("shared-syncer").
+		With("node", localNodeAddr)
 
 	syncers, messages := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, otelTracer)
 
@@ -117,8 +119,21 @@ func (m *Manager) start() {
 			}
 
 			for _, msg := range msgs {
+				// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
+				if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+					m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
+					continue
+				}
+
+				// Get the stream ID from the message.
+				streamID, err := StreamIdFromBytes(msg.StreamID())
+				if err != nil {
+					m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
+					continue
+				}
+
 				// Distribute the messages to all relevant subscriptions.
-				m.distributeMessage(msg)
+				m.distributeMessage(streamID, msg)
 
 				// In case of the global context (the node itself) is done in the middle of the sending messages
 				// from the current batch, just interrupt the sending process and close.
@@ -139,37 +154,21 @@ func (m *Manager) start() {
 }
 
 // distributeMessage processes the given message and sends it to all relevant subscriptions.
-func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
-	// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
-	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-		m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
-		return
-	}
-
-	// Get the stream ID from the message. Depending on the operation type, it can be either from the message itself
-	// or from the next sync cookie of the stream.
-	var streamIDRaw []byte
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		streamIDRaw = msg.GetStreamId()
-	} else {
-		streamIDRaw = msg.GetStream().GetNextSyncCookie().GetStreamId()
-	}
-
-	streamID, err := StreamIdFromBytes(streamIDRaw)
-	if err != nil || streamID == (StreamId{}) {
-		m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
-		return
-	}
-
+func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	// Send the message to all subscriptions for this stream.
 	m.sLock.Lock()
-	subscriptions, ok := m.subscriptions[streamID]
-	if !ok || len(subscriptions) == 0 {
-		// No subscriptions for this stream, nothing to do.
+	subs, ok := m.subscriptions[streamID]
+	if !ok || len(subs) == 0 {
+		// No subscriptions for this stream, nothing to do. This should not happen in theory.
 		go m.dropStream(streamID)
+		delete(m.subscriptions, streamID)
 		m.sLock.Unlock()
 		return
 	}
+
+	// Clone subscriptions slice to avoid data race when iterating over it below and modifying on the
+	// subscription level (addStream/removeStream).
+	subscriptions := slices.Clone(subs)
 
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The given stream is no longer syncing, remove it from the subscriptions.
@@ -240,14 +239,16 @@ func (m *Manager) distributeMessage(msg *SyncStreamsResponse) {
 			msg := proto.Clone(msg).(*SyncStreamsResponse)
 
 			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
-			if loaded && len(backfillEvents) > 0 {
-				msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-				})
-				msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-				})
+			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+				backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
+				if loaded && len(backfillEvents) > 0 {
+					msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
+					})
+					msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
+					})
+				}
 			}
 
 			subscription.Send(msg)

@@ -28,6 +28,7 @@ type EventAdder interface {
 		payload IsStreamEvent_Payload,
 		tags *Tags,
 	) ([]*EventRef, error)
+	GetWalletAddress() common.Address
 }
 
 type streamMembershipScrubTaskProcessorImpl struct {
@@ -160,7 +161,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			Make_UserPayload_Membership(
 				MembershipOp_SO_LEAVE,
 				channelId,
-				member,
+				tp.eventAdder.GetWalletAddress(),
 				spaceId[:],
 				&reason,
 			),
@@ -197,7 +198,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 
 	err := tp.processMemberImpl(ctx, channelId, member, span)
 	if err != nil {
-		logging.FromCtx(ctx).Warnw("Failed to scrub member", "channelId", channelId, "member", member, "error", err)
+		logging.FromCtx(ctx).Errorw("Failed to scrub member", "channelId", channelId, "member", member, "error", err)
 	}
 
 	if span != nil {

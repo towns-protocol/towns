@@ -4,11 +4,8 @@
 
 import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import {
-    DecryptionStatus,
-    GroupEncryptionAlgorithmId,
-    UserDevice,
-} from '@towns-protocol/encryption'
+import { GroupEncryptionAlgorithmId, UserDevice } from '@towns-protocol/encryption'
+import { DecryptionStatus } from '../../decryptionExtensions'
 import {
     makeUserStreamId,
     makeUserSettingsStreamId,

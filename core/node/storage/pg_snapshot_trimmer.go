@@ -58,7 +58,7 @@ func newSnapshotTrimmer(
 ) *snapshotTrimmer {
 	st := &snapshotTrimmer{
 		ctx:          ctx,
-		log:          logging.FromCtx(ctx).Named("snapshotTrimmer"),
+		log:          logging.FromCtx(ctx).Named("snapshot-trimmer"),
 		store:        store,
 		config:       config,
 		minKeep:      minKeep,
