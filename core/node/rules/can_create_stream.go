@@ -184,6 +184,21 @@ func (ru *csParams) log() *logging.Log {
 	return logging.FromCtx(ru.ctx)
 }
 
+func (ru *csParams) inceptionAppAddress() []byte {
+	switch p := ru.inceptionPayload.(type) {
+	case *UserInboxPayload_Inception:
+		return p.AppAddress
+	case *UserMetadataPayload_Inception:
+		return p.AppAddress
+	case *UserPayload_Inception:
+		return p.AppAddress
+	case *UserSettingsPayload_Inception:
+		return p.AppAddress
+	default:
+		return nil
+	}
+}
+
 func (ru *csParams) canCreateStream() ruleBuilderCS {
 	builder := csBuilder(ru.creatorUserStreamId)
 
@@ -284,79 +299,44 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			params:    ru,
 			inception: inception,
 		}
-		builder = builder.check(
+		return builder.check(
 			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
 			ru.params.eventCountMatches(1),
 			ru.params.isUserStreamId,
-		)
-		if len(ru.inception.AppAddress) > 0 {
-			builder = builder.check(
-				ru.params.isEthereumAddress(ru.inception.AppAddress),
-			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
-		} else {
-			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
-		}
-		return builder
+		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserMetadataPayload_Inception:
 		ru := &csUserMetadataRules{
 			params:    ru,
 			inception: inception,
 		}
-		builder = builder.
-			check(
-				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_METADATA_KEY_BIN),
-				ru.params.eventCountMatches(1),
-				ru.params.isUserStreamId,
-			)
-		if len(ru.inception.AppAddress) > 0 {
-			builder = builder.check(
-				ru.params.isEthereumAddress(ru.inception.AppAddress),
-			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
-		} else {
-			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
-		}
-		return builder
+		return builder.check(
+			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_METADATA_KEY_BIN),
+			ru.params.eventCountMatches(1),
+			ru.params.isUserStreamId,
+		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserSettingsPayload_Inception:
 		ru := &csUserSettingsRules{
 			params:    ru,
 			inception: inception,
 		}
-		builder = builder.
-			check(
-				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_SETTINGS_BIN),
-				ru.params.eventCountMatches(1),
-				ru.params.isUserStreamId,
-			)
-		if len(ru.inception.AppAddress) > 0 {
-			builder = builder.check(
-				ru.params.isEthereumAddress(ru.inception.AppAddress),
-			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
-		} else {
-			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
-		}
-		return builder
+		return builder.check(
+			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_SETTINGS_BIN),
+			ru.params.eventCountMatches(1),
+			ru.params.isUserStreamId,
+		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserInboxPayload_Inception:
 		ru := &csUserInboxRules{
 			params:    ru,
 			inception: inception,
 		}
-		builder = builder.
-			check(
-				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_INBOX_BIN),
-				ru.params.eventCountMatches(1),
-				ru.params.isUserStreamId,
-			)
-		if len(ru.inception.AppAddress) > 0 {
-			builder = builder.check(
-				ru.params.isEthereumAddress(ru.inception.AppAddress),
-			).requireChainAuth(ru.getIsRegisteredAppChainAuth)
-		} else {
-			builder = builder.requireChainAuth(ru.params.getNewUserStreamChainAuth)
-		}
-		return builder
+		return builder.check(
+			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_INBOX_BIN),
+			ru.params.eventCountMatches(1),
+			ru.params.isUserStreamId,
+		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *MetadataPayload_Inception:
 		ru := &csMetadataRules{
@@ -383,24 +363,6 @@ func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 		} else {
 			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id type", "streamId", ru.streamId, "expectedType", expectedType)
 		}
-	}
-}
-
-func (ru *csParams) isEthereumAddress(address []byte) func() error {
-	return func() error {
-		if len(address) != 20 {
-			return RiverError(
-				Err_BAD_STREAM_CREATION_PARAMS,
-				"invalid ethereum address length",
-				"address",
-				address,
-				"length",
-				len(address),
-				"expectedLength",
-				20,
-			)
-		}
-		return nil
 	}
 }
 
@@ -550,22 +512,6 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 	return nil
 }
 
-func (ru *csUserRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
-}
-
-func (ru *csUserMetadataRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
-}
-
-func (ru *csUserSettingsRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
-}
-
-func (ru *csUserInboxRules) getIsRegisteredAppChainAuth() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForBot(ru.params.creatorAddress, common.Address(ru.inception.AppAddress)), nil
-}
-
 func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 	return auth.NewChainAuthArgsForSpace(
 		ru.params.streamId,
@@ -691,6 +637,24 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 	if ru.cfg.DisableBaseChain {
 		return nil, nil
 	}
+
+	appAddress := ru.inceptionAppAddress()
+	if len(appAddress) > 0 {
+		if len(appAddress) != 20 {
+			return nil, RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"invalid ethereum address length",
+				"address",
+				appAddress,
+				"length",
+				len(appAddress),
+				"expectedLength",
+				20,
+			)
+		}
+		return auth.NewChainAuthArgsForBot(ru.creatorAddress, common.Address(appAddress)), nil
+	}
+
 	// get the user id for the stream
 	userAddress, err := shared.GetUserAddressFromStreamId(ru.streamId)
 	if err != nil {
