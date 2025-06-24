@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGated} from "src/spaces/facets/gated/IEntitlementGated.sol";
-import {IXChain} from "src/base/registry/facets/xchain/IXChain.sol";
+import {IXChain, IXChainBase} from "src/base/registry/facets/xchain/IXChain.sol";
 
 //libraries
 import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
@@ -18,12 +18,15 @@ import {MockEntitlementGated} from "test/mocks/MockEntitlementGated.sol";
 import {Vm} from "forge-std/Test.sol";
 
 contract XChainTest is
+    IXChainBase,
     IEntitlementGatedBase,
     IEntitlementCheckerBase,
     EntitlementTestUtils,
     BaseSetup
 {
     MockEntitlementGated public gated;
+
+    uint256 internal constant REFUND_TIMEOUT_BLOCKS = 1202; // ~4 hours on Base (~12s blocks)
 
     function setUp() public override {
         super.setUp();
@@ -33,7 +36,7 @@ contract XChainTest is
         gated = new MockEntitlementGated(entitlementChecker);
     }
 
-    function test_provideXChainRefund() public {
+    function test_requestXChainRefund_only() public {
         address caller = _randomAddress();
         vm.deal(caller, 1 ether);
 
@@ -61,9 +64,12 @@ contract XChainTest is
         assertEq(address(resolverAddress).balance, 1 ether);
         assertEq(address(caller).balance, 0 ether);
 
-        // Provide refund as owner
-        vm.prank(deployer);
-        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
+        // Wait for refund timeout
+        vm.roll(block.number + REFUND_TIMEOUT_BLOCKS);
+
+        // Request refund
+        vm.prank(caller);
+        IXChain(baseRegistry).requestXChainRefund(transactionId);
 
         // Verify final state - caller should get their money back
         assertEq(address(resolverAddress).balance, 0 ether);
@@ -73,7 +79,7 @@ contract XChainTest is
         assertTrue(IXChain(baseRegistry).isCheckCompleted(transactionId, roleIds[0]));
     }
 
-    function test_provideXChainRefund_revertWhen_alreadyCompleted() public {
+    function test_requestXChainRefund_revertWhen_alreadyCompleted() public {
         // Setup: Create a request with value
         address caller = _randomAddress();
         vm.deal(caller, 1 ether);
@@ -89,17 +95,20 @@ contract XChainTest is
             RuleEntitlementUtil.getMockERC721RuleData()
         );
 
-        // Provide refund as owner
-        vm.prank(deployer);
-        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
+        // Wait for refund timeout
+        vm.roll(block.number + REFUND_TIMEOUT_BLOCKS);
+
+        // Request refund
+        vm.prank(caller);
+        IXChain(baseRegistry).requestXChainRefund(transactionId);
 
         // Try to provide refund again
-        vm.prank(deployer);
-        vm.expectRevert(EntitlementGated_TransactionCheckAlreadyCompleted.selector);
-        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
+        vm.prank(caller);
+        vm.expectRevert(TransactionCheckAlreadyCompleted.selector);
+        IXChain(baseRegistry).requestXChainRefund(transactionId);
     }
 
-    function test_provideXChainRefund_revertWhen_invalidValue() public {
+    function test_requestXChainRefund_revertWhen_invalidValue() public {
         // Setup: Create a request with value
         address caller = _randomAddress();
 
@@ -114,35 +123,15 @@ contract XChainTest is
             RuleEntitlementUtil.getMockERC721RuleData()
         );
 
-        vm.prank(deployer);
-        vm.expectRevert(EntitlementGated_InvalidValue.selector);
-        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
-    }
-
-    function test_provideXChainRefund_revertWhen_notOwner() public {
-        // Setup: Create a request with value
-        address caller = _randomAddress();
-        vm.deal(caller, 1 ether);
-
-        // Create a request through the gated contract
-        uint256[] memory roleIds = new uint256[](1);
-        roleIds[0] = 0;
+        // Wait for refund timeout
+        vm.roll(block.number + REFUND_TIMEOUT_BLOCKS);
 
         vm.prank(caller);
-        bytes32 transactionId = gated.joinSpace{value: 1 ether}(
-            caller,
-            roleIds,
-            RuleEntitlementUtil.getMockERC721RuleData()
-        );
-
-        // Try to provide refund as non-owner
-        address nonOwner = _randomAddress();
-        vm.prank(nonOwner);
-        vm.expectRevert();
-        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
+        vm.expectRevert(InvalidValue.selector);
+        IXChain(baseRegistry).requestXChainRefund(transactionId);
     }
 
-    function test_provideXChainRefund_multipleRequestIds() public {
+    function test_requestXChainRefund_multipleRequestIds() public {
         // Setup: Create a request with value and multiple role IDs
         address caller = _randomAddress();
         vm.deal(caller, 1 ether);
@@ -162,9 +151,12 @@ contract XChainTest is
         // Verify initial state
         assertEq(address(entitlementChecker).balance, 1 ether);
 
-        // Provide refund as owner
-        vm.prank(deployer);
-        IXChain(baseRegistry).provideXChainRefund(caller, transactionId);
+        // Wait for refund timeout
+        vm.roll(block.number + REFUND_TIMEOUT_BLOCKS);
+
+        // Request refund
+        vm.prank(caller);
+        IXChain(baseRegistry).requestXChainRefund(transactionId);
 
         // Verify final state
         assertEq(address(entitlementChecker).balance, 0);

@@ -102,4 +102,24 @@ library XChainCheckLib {
             ? IEntitlementGatedBase.NodeVoteStatus.PASSED
             : IEntitlementGatedBase.NodeVoteStatus.FAILED;
     }
+
+    function completeVotes(XChainLib.Check storage self) internal {
+        uint256 requestIdsLength = self.requestIds.length();
+        if (requestIdsLength > 0) {
+            for (uint256 i; i < requestIdsLength; ++i) {
+                uint256 requestId = self.requestIds.at(i);
+                self.voteCompleted[requestId] = true;
+            }
+        }
+    }
+
+    function areAllRequestsCompleted(XChainLib.Check storage self) internal view returns (bool) {
+        uint256 requestIdsLength = self.requestIds.length();
+        for (uint256 i; i < requestIdsLength; ++i) {
+            if (!self.voteCompleted[self.requestIds.at(i)]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

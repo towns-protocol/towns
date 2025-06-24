@@ -34,23 +34,23 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     //                           Modifiers
     // =============================================================
     modifier onlyNodeOperator(address node, address operator) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        if (layout.operatorByNode[node] != operator) {
+        if ($.operatorByNode[node] != operator) {
             EntitlementChecker_InvalidNodeOperator.selector.revertWith();
         }
         _;
     }
 
     modifier onlyRegisteredApprovedOperator() {
-        NodeOperatorStorage.Layout storage nodeOperatorLayout = NodeOperatorStorage.layout();
+        NodeOperatorStorage.Layout storage $ = NodeOperatorStorage.layout();
 
-        if (!nodeOperatorLayout.operators.contains(msg.sender)) {
+        if (!$.operators.contains(msg.sender)) {
             EntitlementChecker_InvalidOperator.selector.revertWith();
         }
         _;
 
-        if (nodeOperatorLayout.statusByOperator[msg.sender] != NodeOperatorStatus.Approved) {
+        if ($.statusByOperator[msg.sender] != NodeOperatorStatus.Approved) {
             EntitlementChecker_OperatorNotActive.selector.revertWith();
         }
     }
@@ -61,50 +61,48 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
 
     /// @inheritdoc IEntitlementChecker
     function registerNode(address node) external onlyRegisteredApprovedOperator {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        if (layout.nodes.contains(node)) {
+        if ($.nodes.contains(node)) {
             EntitlementChecker_NodeAlreadyRegistered.selector.revertWith();
         }
 
-        layout.nodes.add(node);
-        layout.operatorByNode[node] = msg.sender;
+        $.nodes.add(node);
+        $.operatorByNode[node] = msg.sender;
 
         emit NodeRegistered(node);
     }
 
     /// @inheritdoc IEntitlementChecker
     function unregisterNode(address node) external onlyNodeOperator(node, msg.sender) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        if (!layout.nodes.contains(node)) {
+        if (!$.nodes.contains(node)) {
             EntitlementChecker_NodeNotRegistered.selector.revertWith();
         }
 
-        layout.nodes.remove(node);
-        delete layout.operatorByNode[node];
+        $.nodes.remove(node);
+        delete $.operatorByNode[node];
 
         emit NodeUnregistered(node);
     }
 
     /// @inheritdoc IEntitlementChecker
     function isValidNode(address node) external view returns (bool) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
-        return layout.nodes.contains(node);
+        return EntitlementCheckerStorage.layout().nodes.contains(node);
     }
 
     /// @inheritdoc IEntitlementChecker
     function getNodeCount() external view returns (uint256) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
-        return layout.nodes.length();
+        return EntitlementCheckerStorage.layout().nodes.length();
     }
 
     /// @inheritdoc IEntitlementChecker
     function getNodeAtIndex(uint256 index) external view returns (address) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        require(index < layout.nodes.length(), "Index out of bounds");
-        return layout.nodes.at(index);
+        require(index < $.nodes.length(), "Index out of bounds");
+        return $.nodes.at(index);
     }
 
     /// @inheritdoc IEntitlementChecker
@@ -132,15 +130,15 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         address space = msg.sender;
         address senderAddress = abi.decode(extraData, (address));
 
-        XChainLib.Layout storage layout = XChainLib.layout();
+        XChainLib.Layout storage $ = XChainLib.getLayout();
 
-        layout.requestsBySender[senderAddress].add(transactionId);
+        $.requestsBySender[senderAddress].add(transactionId);
 
         // Only create the request if it doesn't exist yet
-        XChainLib.Request storage request = layout.requests[transactionId];
+        XChainLib.Request storage request = $.requests[transactionId];
         if (request.caller == address(0)) {
             // First time creating this request
-            layout.requests[transactionId] = XChainLib.Request({
+            $.requests[transactionId] = XChainLib.Request({
                 caller: space,
                 blockNumber: block.number,
                 value: msg.value,
@@ -155,7 +153,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
 
         address[] memory randomNodes = _getRandomNodes(5);
 
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+        XChainLib.Check storage check = $.checks[transactionId];
 
         check.requestIds.add(requestId);
 
@@ -181,13 +179,13 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
 
     /// @inheritdoc IEntitlementChecker
     function getNodesByOperator(address operator) external view returns (address[] memory nodes) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
-        uint256 totalNodeCount = layout.nodes.length();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
+        uint256 totalNodeCount = $.nodes.length();
         nodes = new address[](totalNodeCount);
         uint256 nodeCount;
         for (uint256 i; i < totalNodeCount; ++i) {
-            address node = layout.nodes.at(i);
-            if (layout.operatorByNode[node] == operator) {
+            address node = $.nodes.at(i);
+            if ($.operatorByNode[node] == operator) {
                 unchecked {
                     nodes[nodeCount++] = node;
                 }
@@ -202,9 +200,9 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     //                           Internal
     // =============================================================
     function _getRandomNodes(uint256 count) internal view returns (address[] memory randomNodes) {
-        EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
+        EntitlementCheckerStorage.Layout storage $ = EntitlementCheckerStorage.layout();
 
-        uint256 nodeCount = layout.nodes.length();
+        uint256 nodeCount = $.nodes.length();
 
         if (count > nodeCount) {
             EntitlementChecker_InsufficientNumberOfNodes.selector.revertWith();
@@ -221,7 +219,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
             for (uint256 i; i < count; ++i) {
                 // Adjust random function to generate within range 0 to n-1
                 uint256 rand = _pseudoRandom(i, nodeCount);
-                randomNodes[i] = layout.nodes.at(indices[rand]);
+                randomNodes[i] = $.nodes.at(indices[rand]);
                 // Move the last element to the used slot and reduce the pool size
                 indices[rand] = indices[--nodeCount];
             }

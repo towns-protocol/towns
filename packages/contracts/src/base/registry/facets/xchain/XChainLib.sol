@@ -10,6 +10,8 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library XChainLib {
+    using EnumerableSet for EnumerableSet.UintSet;
+
     // keccak256(abi.encode(uint256(keccak256("xchain.entitlement.transactions.storage")) - 1)) &
     // ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
@@ -37,10 +39,9 @@ library XChainLib {
         mapping(bytes32 => Check) checks;
     }
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 slot = STORAGE_SLOT;
+    function getLayout() internal pure returns (Layout storage $) {
         assembly {
-            l.slot := slot
+            $.slot := STORAGE_SLOT
         }
     }
 }

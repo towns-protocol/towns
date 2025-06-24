@@ -25,6 +25,8 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
     using CustomRevert for bytes4;
     using XChainCheckLib for XChainLib.Check;
 
+    uint256 internal constant REFUND_TIMEOUT_BLOCKS = 1200; // ~4 hours on Base (~12s blocks)
+
     function __XChain_init() external onlyInitializing {
         _addInterface(type(IEntitlementGated).interfaceId);
     }
@@ -34,44 +36,46 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         bytes32 transactionId,
         uint256 requestId
     ) external view returns (bool) {
-        return XChainLib.layout().checks[transactionId].voteCompleted[requestId];
+        return XChainLib.getLayout().checks[transactionId].voteCompleted[requestId];
     }
 
     /// @inheritdoc IXChain
-    function provideXChainRefund(address senderAddress, bytes32 transactionId) external onlyOwner {
-        if (!XChainLib.layout().requestsBySender[senderAddress].remove(transactionId)) {
-            EntitlementGated_TransactionCheckAlreadyCompleted.selector.revertWith();
+    function requestXChainRefund(bytes32 transactionId) external nonReentrant {
+        XChainLib.Layout storage $ = XChainLib.getLayout();
+
+        if (!$.requestsBySender[msg.sender].remove(transactionId)) {
+            TransactionCheckAlreadyCompleted.selector.revertWith();
         }
 
-        XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
+        XChainLib.Request storage request = $.requests[transactionId];
+
+        if (block.number < request.blockNumber + REFUND_TIMEOUT_BLOCKS) {
+            RefundNotYetAvailable.selector.revertWith();
+        }
 
         if (request.completed) {
-            EntitlementGated_TransactionCheckAlreadyCompleted.selector.revertWith();
+            TransactionCheckAlreadyCompleted.selector.revertWith();
         }
 
         if (request.value == 0) {
-            EntitlementGated_InvalidValue.selector.revertWith();
+            InvalidValue.selector.revertWith();
         }
+
+        XChainLib.Check storage check = $.checks[transactionId];
 
         request.completed = true;
 
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
-
-        // clean up checks if any
-        uint256 requestIdsLength = check.requestIds.length();
-        if (requestIdsLength > 0) {
-            for (uint256 i; i < requestIdsLength; ++i) {
-                uint256 requestId = check.requestIds.at(i);
-                check.voteCompleted[requestId] = true;
-            }
-        }
+        // Clean up checks if any
+        check.completeVotes();
 
         CurrencyTransfer.transferCurrency(
             CurrencyTransfer.NATIVE_TOKEN,
             address(this),
-            senderAddress,
+            msg.sender,
             request.value
         );
+
+        emit RefundProcessed(msg.sender, transactionId, request.value);
     }
 
     /// @inheritdoc IXChain
@@ -80,8 +84,10 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         uint256 requestId,
         NodeVoteStatus result
     ) external nonReentrant {
-        XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+        XChainLib.Layout storage $ = XChainLib.getLayout();
+
+        XChainLib.Request storage request = $.requests[transactionId];
+        XChainLib.Check storage check = $.checks[transactionId];
 
         VotingContext memory context = check.validateVotingEligibility(
             request,
@@ -115,7 +121,7 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         NodeVoteStatus finalStatus
     ) internal {
         // Mark this specific request as completed
-        XChainLib.layout().checks[context.transactionId].voteCompleted[requestId] = true;
+        XChainLib.getLayout().checks[context.transactionId].voteCompleted[requestId] = true;
 
         // In V2, each entitlement check is independent - finalize immediately when voting completes
         _finalizeTransaction(context, finalStatus);
@@ -128,9 +134,11 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
         VotingContext memory context,
         NodeVoteStatus finalStatus
     ) internal {
+        XChainLib.Layout storage $ = XChainLib.getLayout();
+
         // Mark transaction as completed and clean up
-        XChainLib.layout().requests[context.transactionId].completed = true;
-        XChainLib.layout().requestsBySender[context.caller].remove(context.transactionId);
+        $.requests[context.transactionId].completed = true;
+        $.requestsBySender[context.caller].remove(context.transactionId);
 
         // Call back to the original caller with the result
         EntitlementGated(context.caller).postEntitlementCheckResultV2{value: context.value}(
@@ -138,21 +146,5 @@ contract XChain is IXChain, ReentrancyGuard, OwnableBase, Facet {
             0,
             finalStatus
         );
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Internal                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _checkAllRequestsCompleted(bytes32 transactionId) internal view returns (bool) {
-        XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
-
-        uint256 requestIdsLength = check.requestIds.length();
-        for (uint256 i; i < requestIdsLength; ++i) {
-            if (!check.voteCompleted[check.requestIds.at(i)]) {
-                return false;
-            }
-        }
-        return true;
     }
 }

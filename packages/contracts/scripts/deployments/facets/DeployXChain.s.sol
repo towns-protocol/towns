@@ -15,7 +15,7 @@ library DeployXChain {
         res = new bytes4[](3);
         res[0] = XChain.postEntitlementCheckResult.selector;
         res[1] = XChain.isCheckCompleted.selector;
-        res[2] = XChain.provideXChainRefund.selector;
+        res[2] = XChain.requestXChainRefund.selector;
     }
 
     function makeCut(

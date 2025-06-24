@@ -26,7 +26,25 @@ struct VoteResults {
     IEntitlementGatedBase.NodeVoteStatus finalStatus;
 }
 
-interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
+interface IXChainBase {
+    error Unauthorized();
+    error TransactionCheckAlreadyCompleted();
+    error RefundNotYetAvailable();
+    error InvalidValue();
+    error VotingInProgress();
+
+    /// @notice Emitted when a refund is processed
+    /// @param senderAddress The address that received the refund
+    /// @param transactionId The transaction ID that was refunded
+    /// @param amount The amount refunded
+    event RefundProcessed(
+        address indexed senderAddress,
+        bytes32 indexed transactionId,
+        uint256 amount
+    );
+}
+
+interface IXChain is IXChainBase, IEntitlementGatedBase, IEntitlementCheckerBase {
     /// @notice Checks if a specific entitlement check request has been completed
     /// @param transactionId The unique identifier of the transaction
     /// @param requestId The ID of the specific check request
@@ -38,9 +56,8 @@ interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
 
     /// @notice Allows protocol to provide a refund for a timed-out entitlement check
     /// @dev Will revert if the contract has insufficient funds
-    /// @param senderAddress The address to receive the refund
     /// @param transactionId The unique identifier of the transaction being checked
-    function provideXChainRefund(address senderAddress, bytes32 transactionId) external;
+    function requestXChainRefund(bytes32 transactionId) external;
 
     /// @notice Posts the result of an entitlement check from a node
     /// @param transactionId The unique identifier of the transaction being checked
