@@ -16,7 +16,7 @@ type UserStreamView interface {
 	IsMemberOf(streamId shared.StreamId) bool
 	HasTransaction(evmReceipt *BlockchainTransactionReceipt,
 		solanaReceipt *SolanaBlockchainTransactionReceipt) (bool, error)
-	IsBotUser() (bool, error)
+	IsAppUser() (bool, error)
 }
 
 var _ UserStreamView = (*StreamView)(nil)
@@ -151,7 +151,7 @@ func (r *StreamView) HasTransaction(
 	return retValue, err
 }
 
-func (r *StreamView) IsBotUser() (bool, error) {
+func (r *StreamView) IsAppUser() (bool, error) {
 	inception, err := r.GetUserInception()
 	if err != nil {
 		return false, err

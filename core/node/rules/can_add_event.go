@@ -326,11 +326,11 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 		builder := aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsValidNode).
 			check(ru.validUserMembershipTransition).
-			check(ru.validUserMembershipStreamForBot).
+			check(ru.validUserMembershipStream).
 			requireParentEvent(ru.parentEventForUserMembership)
 
-		isBot, _ := params.streamView.IsBotUser()
-		if isBot {
+		isApp, _ := params.streamView.IsAppUser()
+		if isApp {
 			builder = builder.requireChainAuth(ru.ownerChainAuthForInviter)
 		}
 		return builder
@@ -1489,8 +1489,8 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 }
 
 // ownerChainAuthForInviter validates that the inviter on the UserMembership event has space ownership.
-// For bots, we expect the user membership event to be derived from a user membership action posted
-// by the space owner; this authorization is required to ensure that bots are added to spaces or channels
+// For apps, we expect the user membership event to be derived from a user membership action posted
+// by the space owner; this authorization is required to ensure that apps are added to spaces or channels
 // directly by space owners.
 func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs, error) {
 	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
@@ -1524,16 +1524,16 @@ func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs
 		Tag("inviter", ru.userMembership.Inviter)
 }
 
-// validUserMembershipStreamForBot confirms that, if the user stream belongs to a bot, the bot is
-// being added to acceptible stream types. At this time the protocol does not support bot membership
-// in DM and GDM channels.
-func (ru *aeUserMembershipRules) validUserMembershipStreamForBot() (bool, error) {
-	isBotUser, err := ru.params.streamView.IsBotUser()
+// validUserMembershipStream confirms that, if the user stream belongs to an app, the app is
+// being added to acceptible stream types. At this time the protocol does not support app membership
+// in DM and GDM channels. At this time, non-app users are allowed to join streams of all types.
+func (ru *aeUserMembershipRules) validUserMembershipStream() (bool, error) {
+	isAppUser, err := ru.params.streamView.IsAppUser()
 	if err != nil {
 		return false, err
 	}
 
-	if !isBotUser {
+	if !isAppUser {
 		return true, nil
 	}
 
