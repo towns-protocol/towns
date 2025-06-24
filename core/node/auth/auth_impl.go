@@ -1171,6 +1171,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 // checkIsApp checks to see if the user is an app and returns a cache result if the auth check was related
 // to whether or not a user is an app. Otherwise it will return a valid boolean, and the contract address of
 // the app if it is registered, or an error if the method encounters one.
+// TODO: it may be valuable to cache this in the future.
 func (ca *chainAuth) checkIsApp(
 	ctx context.Context,
 	args *ChainAuthArgs,
@@ -1432,11 +1433,11 @@ func (ca *chainAuth) checkEntitlement(
 		return boolCacheResult{false, reason}, nil
 	}
 
-	cacheResult, err := ca.checkIsApp(ctx, args)
+	isAppResult, err := ca.checkIsApp(ctx, args)
 	if err != nil {
 		return nil, err
-	} else if cacheResult != nil {
-		return cacheResult, nil
+	} else if isAppResult != nil {
+		return isAppResult, nil
 	}
 
 	// If the user is an app, we route membership checks via a separate path on the space
