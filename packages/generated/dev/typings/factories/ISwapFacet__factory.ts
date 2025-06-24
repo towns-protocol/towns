@@ -149,16 +149,6 @@ const _abi = [
             internalType: "address",
           },
           {
-            name: "token",
-            type: "address",
-            internalType: "address",
-          },
-          {
-            name: "amount",
-            type: "uint256",
-            internalType: "uint256",
-          },
-          {
             name: "nonce",
             type: "uint256",
             internalType: "uint256",
@@ -206,7 +196,7 @@ const _abi = [
         internalType: "uint16",
       },
       {
-        name: "collectPosterFeeToSpace",
+        name: "forwardPosterFee",
         type: "bool",
         internalType: "bool",
       },
@@ -236,7 +226,7 @@ const _abi = [
         internalType: "uint16",
       },
       {
-        name: "collectPosterFeeToSpace",
+        name: "forwardPosterFee",
         type: "bool",
         internalType: "bool",
       },
@@ -384,7 +374,7 @@ const _abi = [
         internalType: "uint16",
       },
       {
-        name: "collectPosterFeeToSpace",
+        name: "forwardPosterFee",
         type: "bool",
         indexed: false,
         internalType: "bool",
@@ -443,11 +433,6 @@ const _abi = [
   {
     type: "error",
     name: "SwapRouter__NativeTokenNotSupportedWithPermit",
-    inputs: [],
-  },
-  {
-    type: "error",
-    name: "SwapRouter__PermitTokenMismatch",
     inputs: [],
   },
   {

@@ -53,7 +53,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "indexed": false,
         "internalType": "bool"

@@ -141,16 +141,6 @@ export default [
             "internalType": "address"
           },
           {
-            "name": "token",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "amount",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
             "name": "nonce",
             "type": "uint256",
             "internalType": "uint256"
@@ -198,7 +188,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "internalType": "bool"
       }
@@ -228,7 +218,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "internalType": "bool"
       }
@@ -376,7 +366,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "indexed": false,
         "internalType": "bool"
@@ -435,11 +425,6 @@ export default [
   {
     "type": "error",
     "name": "SwapRouter__NativeTokenNotSupportedWithPermit",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "SwapRouter__PermitTokenMismatch",
     "inputs": []
   },
   {
