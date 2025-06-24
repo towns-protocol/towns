@@ -1493,7 +1493,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 // ownerChainAuthForInviter validates that the inviter on the UserMembership event has space ownership.
 // For bots, we expect the user membership event to be derived from a user membership action posted
 // by the space owner; this authorization is required to ensure that bots are added to spaces or channels
-// directly by space owners. In the future we may add a specific permission type for this.
+// directly by space owners.
 func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs, error) {
 	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
 	if err != nil {
@@ -1643,20 +1643,6 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 		return nil, err
 	}
 	appAddress := common.BytesToAddress(lastSnap.Inception.AppAddress)
-	logging.FromCtx(ru.params.ctx).
-		Infow(
-			"Constructing derived membership event",
-			"Op",
-			userMembership.Op,
-			"toStream",
-			toStreamId,
-			"userId",
-			userAddress,
-			"streamParent",
-			userMembership.StreamParentId,
-			"appAddress",
-			appAddress,
-		)
 
 	return &DerivedEvent{
 		Payload: events.Make_MemberPayload_Membership(
