@@ -5811,7 +5811,7 @@ type MemberPayload_Membership struct {
 	StreamParentId   []byte           `protobuf:"bytes,4,opt,name=stream_parent_id,json=streamParentId,proto3,oneof" json:"stream_parent_id,omitempty"`
 	Reason           MembershipReason `protobuf:"varint,5,opt,name=reason,proto3,enum=river.MembershipReason" json:"reason,omitempty"`
 	// app_address is defined as the contract address of the app associated with this
-	// userId. It only applies if the user is a bot.
+	// userId. It applies, for example, if the user is a bot.
 	AppAddress []byte `protobuf:"bytes,6,opt,name=app_address,json=appAddress,proto3,oneof" json:"app_address,omitempty"`
 }
 
