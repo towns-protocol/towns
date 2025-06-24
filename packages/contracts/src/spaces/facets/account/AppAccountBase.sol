@@ -191,7 +191,7 @@ abstract contract AppAccountBase is
         _setGroupStatus(appId, false);
     }
 
-    function _isEntitled(
+    function _isAppEntitled(
         address module,
         address client,
         bytes32 permission
@@ -219,12 +219,7 @@ abstract contract AppAccountBase is
         return _getAppRegistry().getAppById(appId);
     }
 
-    function _getPlatformRequirements() private view returns (IPlatformRequirements) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        return IPlatformRequirements(ms.spaceFactory);
-    }
-
-    function _getAppRegistry() private view returns (IAppRegistry) {
+    function _getAppRegistry() internal view returns (IAppRegistry) {
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
         return IAppRegistry(ms.getDependency(APP_REGISTRY));
     }
