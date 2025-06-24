@@ -417,7 +417,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
             const missingSessionIds = appEvent.payload.value.sessionIds.filter(
                 (sessionId) => sessionId !== '',
             )
-            const { eventId } = await this.client.sendKeySolicitation(streamId, missingSessionIds)
+            await this.client.sendKeySolicitation(streamId, missingSessionIds)
         } else {
             logNever(appEvent.payload)
         }
