@@ -50,6 +50,11 @@ print-env:
 clean: _require_run_env
     @rm -rf ${RUN_BASE}
 
+clear-logs: _require_run_env (_loop-instances "_clear_instance_logs")
+
+_clear_instance_logs $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
+    @rm -rf $INSTANCE_DIR/logs/*
+
 _anvil-start $NAME $PORT $CHAIN_ID:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     mkdir -p ./run_files/anvil

@@ -233,13 +233,15 @@ func (args *ChainAuthArgs) appendTokenIds(tokenIds []*big.Int) *ChainAuthArgs {
 func (args *ChainAuthArgs) tokenIds() ([]*big.Int, error) {
 	// deserialize the token ids
 	tokenIds := make([]*big.Int, 0)
-	for _, tokenIdStr := range strings.Split(args.tokenIdsStr, ",") {
-		tokenId, ok := new(big.Int).SetString(tokenIdStr, 10)
-		if !ok {
-			return nil, RiverError(Err_INTERNAL, "Failed to parse token id").Func("tokenIds").
-				Tag("tokenIdStr", tokenIdStr)
+	if len(args.tokenIdsStr) > 0 {
+		for _, tokenIdStr := range strings.Split(args.tokenIdsStr, ",") {
+			tokenId, ok := new(big.Int).SetString(tokenIdStr, 10)
+			if !ok {
+				return nil, RiverError(Err_INTERNAL, "Failed to parse token id").Func("tokenIds").
+					Tag("tokenIdStr", tokenIdStr)
+			}
+			tokenIds = append(tokenIds, tokenId)
 		}
-		tokenIds = append(tokenIds, tokenId)
 	}
 	return tokenIds, nil
 }
@@ -899,13 +901,15 @@ func (ca *chainAuth) evaluateWithEntitlements(
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements").
 			Tag("spaceId", args.spaceId).
-			Tag("userId", args.principal)
+			Tag("userId", args.principal).
+			Tag("appAddress", args.appAddress)
 	}
 	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, tokenIds)
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements").
 			Tag("spaceId", args.spaceId).
-			Tag("userId", args.principal)
+			Tag("userId", args.principal).
+			Tag("appAddress", args.appAddress)
 	}
 	if banned {
 		log.Warnw(
@@ -1145,26 +1149,22 @@ func (ca *chainAuth) checkStreamIsEnabled(
 	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (bool, EntitlementResultReason, error) {
-	switch args.kind {
-	case chainAuthKindSpace, chainAuthKindIsSpaceMember, chainAuthKindSpaceEnabled:
+	if args.kind == chainAuthKindSpace || args.kind == chainAuthKindIsSpaceMember {
 		isEnabled, reason, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
 		if err != nil {
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	case chainAuthKindChannel, chainAuthKindChannelEnabled:
+	} else if args.kind == chainAuthKindChannel {
 		isEnabled, reason, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
 		if err != nil {
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	case chainAuthKindIsWalletLinked, chainAuthKindIsBot, chainAuthKindIsNotBot:
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsBot || args.kind == chainAuthKindIsNotBot {
 		return true, EntitlementResultReason_NONE, nil
-	default:
-		return false, EntitlementResultReason_NONE, RiverError(
-			Err_INTERNAL,
-			"Unknown chain auth kind",
-		).Func("checkStreamIsEnabled")
+	} else {
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
 }
 
