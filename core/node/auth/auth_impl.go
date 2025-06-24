@@ -541,23 +541,21 @@ func (ca *chainAuth) areLinkedWalletsEntitled(
 	args *ChainAuthArgs,
 ) (bool, EntitlementResultReason, error) {
 	log := logging.FromCtx(ctx)
-	switch args.kind {
-	case chainAuthKindSpace:
-		log.Debugw("isWalletEntitled", "kind", "space", "args", args)
+	if args.kind == chainAuthKindSpace {
+		log.Debugw("areLinkedWalletsEntitled", "kind", "space", "args", args)
 		return ca.isEntitledToSpace(ctx, cfg, args)
-	case chainAuthKindChannel:
-		log.Debugw("isWalletEntitled", "kind", "channel", "args", args)
+	} else if args.kind == chainAuthKindChannel {
+		log.Debugw("areLinkedWalletsEntitled", "kind", "channel", "args", args)
 		return ca.isEntitledToChannel(ctx, cfg, args)
-	case chainAuthKindIsSpaceMember:
+	} else if args.kind == chainAuthKindIsSpaceMember {
 		// Bot space memberships are handled earlier - we never get to this case if the user is a bot.
-		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args)
+		log.Debugw("areLinkedWalletsEntitled", "kind", "isSpaceMember", "args", args)
 		return true, EntitlementResultReason_NONE, nil // is space member is checked by the calling code in checkEntitlement
-	default:
-		return false, EntitlementResultReason_NONE, RiverError(
-			Err_INTERNAL,
-			"Unknown chain auth kind",
-		).Func("isWalletEntitled")
 	}
+	return false, EntitlementResultReason_NONE, RiverError(
+		Err_INTERNAL,
+		"Unexpected chain auth kind",
+	).Func("areLinkedWalletsEntitled").Tag("kind", args.kind)
 }
 
 func (ca *chainAuth) isSpaceEnabledUncached(
@@ -1148,13 +1146,13 @@ func (ca *chainAuth) checkStreamIsEnabled(
 	args *ChainAuthArgs,
 ) (bool, EntitlementResultReason, error) {
 	switch args.kind {
-	case chainAuthKindSpace, chainAuthKindIsSpaceMember:
+	case chainAuthKindSpace, chainAuthKindIsSpaceMember, chainAuthKindSpaceEnabled:
 		isEnabled, reason, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
 		if err != nil {
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	case chainAuthKindChannel:
+	case chainAuthKindChannel, chainAuthKindChannelEnabled:
 		isEnabled, reason, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
 		if err != nil {
 			return false, reason, err
@@ -1451,7 +1449,7 @@ func (ca *chainAuth) checkEntitlement(
 		if err != nil {
 			return nil, err
 		}
-		if result.IsAllowed() == false {
+		if !result.IsAllowed() {
 			return result, nil
 		}
 	} else {
