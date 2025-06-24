@@ -61,6 +61,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		streamId,
 		parsedEvents,
 		req.Metadata,
+		s.nodeRegistry,
 	)
 	if err != nil {
 		return nil, nil, err
