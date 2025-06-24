@@ -47,43 +47,41 @@ func (s *Service) info(
 	if len(request.Msg.Debug) > 0 {
 		debug := request.Msg.Debug[0]
 
-		switch debug {
-		case "error":
+		if debug == "error" {
 			return nil, RiverError(Err_DEBUG_ERROR, "Error requested through Info request")
-		case "network_error":
+		} else if debug == "network_error" {
 			connectErr := connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable"))
 			return nil, AsRiverError(connectErr).AsConnectError()
-		case "error_untyped":
+		} else if debug == "error_untyped" {
 			return nil, errors.New("error requested through Info request")
-		case "make_miniblock":
+		} else if debug == "make_miniblock" {
 			return s.debugInfoMakeMiniblock(ctx, request)
-		case "drop_stream":
+		} else if debug == "drop_stream" {
 			return s.debugDropStream(ctx, request)
 		}
 
 		if s.config.EnableTestAPIs {
-			switch debug {
-			case "ping":
+			if debug == "ping" {
 				log.Infow("PINGED")
 				return connect.NewResponse(&InfoResponse{
 					Graffiti: "pong",
 				}), nil
-			case "panic":
+			} else if debug == "panic" {
 				log.Errorw("panic requested through Info request")
 				panic("panic requested through Info request")
-			case "flush_cache":
+			} else if debug == "flush_cache" {
 				log.Infow("FLUSHING CACHE")
 				s.cache.ForceFlushAll(ctx)
 				return connect.NewResponse(&InfoResponse{
 					Graffiti: "cache flushed",
 				}), nil
-			case "exit":
+			} else if debug == "exit" {
 				log.Infow("GOT REQUEST TO EXIT NODE")
 				s.exitSignal <- errors.New("info_debug_exit")
 				return connect.NewResponse(&InfoResponse{
 					Graffiti: "exiting...",
 				}), nil
-			case "sleep":
+			} else if debug == "sleep" {
 				sleepDuration := 30 * time.Second
 				log.Infow("SLEEPING FOR", "sleepDuration", sleepDuration)
 				select {

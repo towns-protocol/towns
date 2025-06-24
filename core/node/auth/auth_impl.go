@@ -835,10 +835,7 @@ func (ca *chainAuth) isBotEntitled(
 	ctx context.Context,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
-	log := logging.FromCtx(ctx)
-	log.Infow("isBotEntitled", "args", args)
 	if args.kind == chainAuthKindIsSpaceMember {
-		log.Infow("isBotEntitled spaceMember - true", "args", args)
 		// membership has already been checked earlier in the IsEntitled logic.
 		return &boolCacheResult{true, EntitlementResultReason_NONE}, nil
 	}
@@ -850,9 +847,6 @@ func (ca *chainAuth) isBotEntitled(
 		args.appAddress,
 		args.permission,
 	)
-
-	log.Infow("isBotEntitled app entitlement", "args", args, "isEntitled", isEntitled, "err", err)
-
 	if err != nil {
 		return nil, AsRiverError(
 			err,
@@ -878,8 +872,6 @@ func (ca *chainAuth) evaluateWithEntitlements(
 	entitlements []types.Entitlement,
 ) (bool, error) {
 	log := logging.FromCtx(ctx)
-
-	log.Infow("evaluateWithEntitlements", "args", args, "owner", owner)
 
 	// 1. Check if the user is the space owner
 	// Space owner has su over all space operations.
@@ -1221,6 +1213,9 @@ func (ca *chainAuth) checkIsBot(
 	return nil, nil
 }
 
+// checkBotMembership validates that the bot is a member of the space. If the bot
+// is not installed on the space, it will return a false entitlement result that
+// can be propogated back up the call stack.
 func (ca *chainAuth) checkBotMembership(
 	ctx context.Context,
 	cfg *config.Config,
@@ -1242,9 +1237,6 @@ func (ca *chainAuth) checkBotMembership(
 	return result, err
 }
 
-// checkBotMembership validates that the bot is a member of the space. If the bot
-// is not installed on the space, it will return a false entitlement result that
-// can be propogated back up the call stack.
 func (ca *chainAuth) checkBotMembershipUncached(
 	ctx context.Context,
 	_ *config.Config,
@@ -1299,11 +1291,7 @@ func (ca *chainAuth) linkWallets(
 	return nil, args, nil
 }
 
-// checkMembership checks for space membership, and only returns a non-nil CacheResult
-// if the supplied user is not a space member. If a nil result is returned, the user
-// is indeed a member.
-// The reason for this is, lack of space membership guarantees that a user is not entitled.
-// However, membership is still insufficient to meet the requirements of entitlement.
+// checkMembership checks for space membership, considering all of a user's linked wallets.
 func (ca *chainAuth) checkMembership(
 	ctx context.Context,
 	cfg *config.Config,
