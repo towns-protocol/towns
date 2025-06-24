@@ -424,7 +424,6 @@ export class Client
         const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
         const initUserMetadata = {
             spaceId,
-            appAddress,
         }
 
         const initializeUserStartTime = performance.now()
@@ -441,10 +440,10 @@ export class Client
             initUserMetadataStream,
             initUserSettingsStream,
         ] = await Promise.all([
-            getTime(() => this.initUserStream(initUserMetadata)),
-            getTime(() => this.initUserInboxStream(initUserMetadata)),
-            getTime(() => this.initUserMetadataStream(initUserMetadata)),
-            getTime(() => this.initUserSettingsStream(initUserMetadata)),
+            getTime(() => this.initUserStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserInboxStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserMetadataStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserSettingsStream(initUserMetadata, appAddress)),
         ])
         this.initUserJoinedStreams()
 
@@ -471,35 +470,39 @@ export class Client
         this.streams.onNetworkStatusChanged(isOnline)
     }
 
-    private async initUserStream(metadata?: { spaceId?: Uint8Array; appAddress?: Uint8Array }) {
+    private async initUserStream(metadata?: { spaceId?: Uint8Array }, appAddress?: Uint8Array) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
         if (!(await userStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userStreamId)) ??
-                (await this.createUserStream(this.userStreamId, metadata))
+                (await this.createUserStream(this.userStreamId, metadata, appAddress))
             await userStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserInboxStream(metadata?: {
-        spaceId?: Uint8Array
-        appAddress?: Uint8Array
-    }) {
+    private async initUserInboxStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userInboxStreamId = makeUserInboxStreamId(this.userId)
         const userInboxStream = this.createSyncedStream(this.userInboxStreamId)
         if (!(await userInboxStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userInboxStreamId)) ??
-                (await this.createUserInboxStream(this.userInboxStreamId, metadata))
+                (await this.createUserInboxStream(this.userInboxStreamId, metadata, appAddress))
             await userInboxStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserMetadataStream(metadata?: {
-        spaceId?: Uint8Array
-        appAddress?: Uint8Array
-    }) {
+    private async initUserMetadataStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userMetadataStreamId = makeUserMetadataStreamId(this.userId)
         const userMetadataStream = this.createSyncedStream(this.userMetadataStreamId)
 
@@ -524,7 +527,11 @@ export class Client
             } else {
                 const createUserMetadataStreamResponse = await getTime(() => {
                     check(!!this.userMetadataStreamId, 'userMetadataStreamId must be set')
-                    return this.createUserMetadataStream(this.userMetadataStreamId, metadata)
+                    return this.createUserMetadataStream(
+                        this.userMetadataStreamId,
+                        metadata,
+                        appAddress,
+                    )
                 })
                 initUserMetadataStreamCreateUserMetadataStreamTime =
                     createUserMetadataStreamResponse.time
@@ -556,16 +563,22 @@ export class Client
         return times
     }
 
-    private async initUserSettingsStream(metadata?: {
-        spaceId?: Uint8Array
-        appAddress?: Uint8Array
-    }) {
+    private async initUserSettingsStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
         const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
         if (!(await userSettingsStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userSettingsStreamId)) ??
-                (await this.createUserSettingsStream(this.userSettingsStreamId, metadata))
+                (await this.createUserSettingsStream(
+                    this.userSettingsStreamId,
+                    metadata,
+                    appAddress,
+                ))
             await userSettingsStream.initializeFromResponse(response)
         }
     }
@@ -586,14 +599,15 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; appAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserPayload_Inception({
                     streamId: streamIdAsBytes(userStreamId),
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress,
                 }),
             ),
         ]
@@ -608,14 +622,15 @@ export class Client
 
     private async createUserMetadataStream(
         userMetadataStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; appAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserMetadataPayload_Inception({
                     streamId: streamIdAsBytes(userMetadataStreamId),
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress,
                 }),
             ),
         ]
@@ -630,14 +645,15 @@ export class Client
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; appAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserInboxPayload_Inception({
                     streamId: streamIdAsBytes(userInboxStreamId),
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress,
                 }),
             ),
         ]
@@ -652,7 +668,8 @@ export class Client
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array; appAddress?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
         const userSettingsEvents = [
@@ -660,7 +677,7 @@ export class Client
                 this.signerContext,
                 make_UserSettingsPayload_Inception({
                     streamId: userSettingsStreamId,
-                    appAddress: metadata?.appAddress ?? bin_fromHexString(''),
+                    appAddress,
                 }),
             ),
         ]
