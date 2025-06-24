@@ -67,6 +67,8 @@ export type SyncedStreamEvents = {
     streamSyncStateChange: (newState: SyncState) => void
     streamRemovedFromSync: (streamId: string) => void
     streamSyncActive: (active: boolean) => void
+    streamSyncBatchCompleted: (details: { duration: number; count: number }) => void
+    streamSyncTimedOut: (details: { duration: number }) => void
 }
 
 /// Stream state events, emitted after initialization
