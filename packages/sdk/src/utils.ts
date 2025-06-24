@@ -129,4 +129,4 @@ export async function getTime<T>(fn: () => Promise<T>) {
     return { result, time: end - start }
 }
 
-export const randomBytes = (len: number) => window.crypto.getRandomValues(new Uint8Array(len))
+export const randomBytes = (len: number) => crypto.getRandomValues(new Uint8Array(len))
