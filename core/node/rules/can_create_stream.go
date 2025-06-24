@@ -520,6 +520,7 @@ func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 		ru.params.streamId,
 		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels, // todo should be isOwner...
+		common.Address{},
 	), nil
 }
 
@@ -532,6 +533,7 @@ func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, erro
 		spaceId, // check parent space id
 		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels,
+		common.Address{},
 	), nil
 }
 
@@ -653,6 +655,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 		return auth.NewChainAuthArgsForIsSpaceMember(
 			spaceId,
 			userAddress,
+			common.Address{},
 		), nil
 	} else {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true must be provided in metadata for user stream")
@@ -678,6 +681,7 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 			channelId,
 			ru.params.creatorAddress,
 			auth.PermissionWrite,
+			common.Address{},
 		), nil
 	} else if shared.ValidSpaceStreamIdBytes(ru.inception.SpaceId) {
 		spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
@@ -688,7 +692,8 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 		return auth.NewChainAuthArgsForSpace(
 			spaceId,
 			ru.params.creatorAddress,
-			auth.PermissionModifySpaceSettings, // todo should it be isOwner?
+			auth.PermissionModifySpaceSettings, // TODO: should it be Owner?
+			common.Address{},
 		), nil
 	} else {
 		return nil, nil

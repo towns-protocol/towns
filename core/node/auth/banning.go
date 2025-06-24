@@ -41,7 +41,7 @@ func (b *bannedAddressCache) IsBanned(
 	defer b.mu.Unlock()
 
 	zeroTime := time.Time{}
-	if b.lastUpdated == zeroTime || time.Since(b.lastUpdated) > b.cacheTtl {
+	if b.lastUpdated.Equal(zeroTime) || time.Since(b.lastUpdated) > b.cacheTtl {
 		bannedAddresses, err := onMiss()
 		if err != nil {
 			return false, err

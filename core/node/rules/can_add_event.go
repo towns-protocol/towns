@@ -1503,6 +1503,7 @@ func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs
 			streamId,
 			common.Address(ru.userMembership.Inviter),
 			auth.PermissionOwnership,
+			common.Address{},
 		), nil
 	}
 
@@ -1512,6 +1513,7 @@ func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs
 			streamId,
 			common.Address(ru.userMembership.Inviter),
 			auth.PermissionOwnership,
+			common.Address{},
 		), nil
 	}
 
@@ -1663,12 +1665,34 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 		initiatorAddress = creatorAddress
 	}
 
+	// Pass along the app address to the stream where the user's membership is changing.
+	lastSnap, err := ru.params.streamView.GetUserSnapshotContent()
+	if err != nil {
+		return nil, err
+	}
+	appAddress := common.BytesToAddress(lastSnap.Inception.AppAddress)
+	logging.FromCtx(ru.params.ctx).
+		Infow(
+			"Constructing derived membership event",
+			"Op",
+			userMembership.Op,
+			"toStream",
+			toStreamId,
+			"userId",
+			userAddress,
+			"streamParent",
+			userMembership.StreamParentId,
+			"appAddress",
+			appAddress,
+		)
+
 	return &DerivedEvent{
 		Payload: events.Make_MemberPayload_Membership(
 			userMembership.Op,
 			userAddress.Bytes(),
 			initiatorAddress,
 			userMembership.StreamParentId,
+			appAddress,
 		),
 		StreamId: toStreamId,
 	}, nil
@@ -1713,16 +1737,28 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 		return nil, nil
 	}
 
+	log := logging.FromCtx(ru.params.ctx)
+	log.Infow(
+		"constructing space membership entitlements",
+		"membership", ru.membership,
+		"appAddress", ru.membership.AppAddress,
+	)
+
 	var chainAuthArgs *auth.ChainAuthArgs
 	// Space joins are a special case as they do not require an entitlement check. We simply
 	// verify that the user is a space member.
 	if ru.membership.Op == MembershipOp_SO_JOIN {
-		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(*streamId, permissionUser)
+		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(
+			*streamId,
+			permissionUser,
+			common.BytesToAddress(ru.membership.AppAddress),
+		)
 	} else {
 		chainAuthArgs = auth.NewChainAuthArgsForSpace(
 			*streamId,
 			permissionUser,
 			permission,
+			common.BytesToAddress(ru.membership.AppAddress),
 		)
 	}
 	return chainAuthArgs, nil
@@ -1748,6 +1784,11 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, err
 	}
 
+	var appAddress common.Address
+	if permissionUser == common.Address(ru.membership.UserAddress) {
+		appAddress = common.BytesToAddress(ru.membership.AppAddress)
+	}
+
 	// ModifyBanning is a space level permission
 	// but users with this entitlement should also be entitled to kick users from the channel
 	if permission == auth.PermissionModifyBanning {
@@ -1755,6 +1796,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 			spaceId,
 			permissionUser,
 			permission,
+			appAddress,
 		), nil
 	}
 
@@ -1763,6 +1805,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		*ru.params.streamView.StreamId(),
 		permissionUser,
 		permission,
+		appAddress,
 	)
 
 	return chainAuthArgs, nil
@@ -1778,16 +1821,22 @@ func (params *aeParams) spaceEntitlements(permission auth.Permission) func() (*a
 		}
 		permissionUser := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 
+		appAddress, err := params.streamView.GetMemberAppAddress(permissionUser)
+		if err != nil {
+			return nil, err
+		}
+
 		chainAuthArgs := auth.NewChainAuthArgsForSpace(
 			*spaceId,
 			permissionUser,
 			permission,
+			appAddress,
 		)
 		return chainAuthArgs, nil
 	}
 }
 
-// retrun a function that can be used to check if a user has a permission for a channel
+// return a function that can be used to check if a user has a permission for a channel
 func (params *aeParams) channelEntitlements(permission auth.Permission) func() (*auth.ChainAuthArgs, error) {
 	return func() (*auth.ChainAuthArgs, error) {
 		userId := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
@@ -1803,11 +1852,27 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 			return nil, err
 		}
 
+		appAddress, err := params.streamView.GetMemberAppAddress(userId)
+		if err != nil {
+			return nil, err
+		}
+
+		log := logging.FromCtx(params.ctx)
+		log.Infow(
+			"Constructing chain auth for channel entitlements",
+			"permission",
+			permission,
+			"channel", channelId,
+			"user", userId,
+			"appAddress?", appAddress,
+		)
+
 		chainAuthArgs := auth.NewChainAuthArgsForChannel(
 			spaceId,
 			channelId,
 			userId,
 			permission,
+			appAddress,
 		)
 
 		return chainAuthArgs, nil

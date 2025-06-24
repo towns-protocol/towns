@@ -85,6 +85,7 @@ func isEntitledForSpaceAndChannel(
 		channelId,
 		userId,
 		auth.PermissionRead,
+		common.Address{},
 	)
 
 	isEntitledResult, err := chainAuth.IsEntitled(

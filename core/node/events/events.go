@@ -174,6 +174,7 @@ func Make_MemberPayload_Membership(
 	userAddress []byte,
 	initiatorAddress []byte,
 	streamParentId []byte,
+	appAddress common.Address,
 ) *StreamEvent_MemberPayload {
 	return &StreamEvent_MemberPayload{
 		MemberPayload: &MemberPayload{
@@ -183,6 +184,7 @@ func Make_MemberPayload_Membership(
 					UserAddress:      userAddress,
 					InitiatorAddress: initiatorAddress,
 					StreamParentId:   streamParentId,
+					AppAddress:       appAddress[:],
 				},
 			},
 		},
@@ -323,7 +325,7 @@ func Make_ChannelPayload_Membership(
 	} else {
 		spaceIdBytes = nil
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, spaceIdBytes)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, spaceIdBytes, common.Address{})
 }
 
 func Make_DMChannelPayload_Message(content string) *StreamEvent_DmChannelPayload {
@@ -393,7 +395,7 @@ func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorI
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, common.Address{})
 }
 
 // todo delete and replace with Make_MemberPayload_Membership
@@ -409,7 +411,7 @@ func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiator
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, common.Address{})
 }
 
 func Make_SpacePayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_SpacePayload {
@@ -438,7 +440,7 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId st
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, common.Address{})
 }
 
 func Make_SpacePayload_SpaceImage(
