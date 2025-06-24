@@ -720,7 +720,7 @@ func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) tes
 	return clients
 }
 
-// newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
+// createMetadataStreams creates metadata streams for all shards using the operator client.
 func (st *serviceTester) createMetadataStreams() {
 	operatorClient := st.newTestClientWithWallet(0, testClientOpts{}, st.btc.OperatorWallets[0])
 
