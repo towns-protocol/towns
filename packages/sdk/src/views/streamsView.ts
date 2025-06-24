@@ -24,8 +24,14 @@ import { spaceIdsTransform } from './transforms/spaceIdsTransform'
 import { DmAndGdmModel, dmsAndGdmsTransform } from './transforms/dmsAndGdmsTransform'
 import { StreamMemberIdsView } from './streams/streamMemberIds'
 import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTransform'
+import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
+
+class Consts {
+    static obj = {}
+    static arr = []
+}
 
 // a view of all the streams
 export class StreamsView {
@@ -52,6 +58,7 @@ export class StreamsView {
         spaceIds: Observable<string[]>
         dmsAndGdms: Observable<DmAndGdmModel[]>
         dmsAndGdmsUnreadIds: Observable<Set<string>>
+        blockedUserIds: Observable<Set<string>>
     }
 
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
@@ -83,7 +90,13 @@ export class StreamsView {
         const myUserSettingsStream = this.userSettingsStreams.map((x) => x[userSettingsStreamId])
 
         // grab the remote fully read markers
-        const myRemoteFullyReadMarkers = myUserSettingsStream.map((x) => x?.fullyReadMarkers ?? {})
+        const myRemoteFullyReadMarkers = myUserSettingsStream
+            .throttle(10)
+            .map((x) => x?.fullyReadMarkers ?? Consts.obj)
+
+        const myRemoteUserBlocks = myUserSettingsStream
+            .throttle(10)
+            .map((x) => x?.userBlocks ?? Consts.obj)
 
         // combine the userId, my remote fully read markers, and the timelines view
         // to get the unread markers
@@ -123,6 +136,8 @@ export class StreamsView {
             .throttle(250)
             .map(dmsAndGdmsUnreadIdsTransform)
 
+        const myBlockedUserIds = myRemoteUserBlocks.map(blockedUserIdsTransform)
+
         ///
         this.my = {
             userId: myUserId,
@@ -136,6 +151,7 @@ export class StreamsView {
             spaceIds: mySpaceIds,
             dmsAndGdms: myDmsAndGdms,
             dmsAndGdmsUnreadIds: myDmsAndGdmsUnreadIds,
+            blockedUserIds: myBlockedUserIds,
         }
     }
 }
