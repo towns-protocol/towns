@@ -699,16 +699,20 @@ func Make_MetadataPayload_Inception(
 
 func Make_MetadataPayload_NewStream(
 	streamId StreamId,
-	genesisMiniblockHash []byte,
-	nodes [][]byte,
+	genesisMiniblockHash common.Hash,
+	nodeAddresses []common.Address,
 	replicationFactor int64,
 ) *StreamEvent_MetadataPayload {
+	nodes := make([][]byte, len(nodeAddresses))
+	for i, addr := range nodeAddresses {
+		nodes[i] = addr.Bytes()
+	}
 	return &StreamEvent_MetadataPayload{
 		MetadataPayload: &MetadataPayload{
 			Content: &MetadataPayload_NewStream_{
 				NewStream: &MetadataPayload_NewStream{
 					StreamId:             streamId[:],
-					GenesisMiniblockHash: genesisMiniblockHash,
+					GenesisMiniblockHash: genesisMiniblockHash[:],
 					Nodes:                nodes,
 					ReplicationFactor:    replicationFactor,
 				},
@@ -719,7 +723,7 @@ func Make_MetadataPayload_NewStream(
 
 func Make_MetadataPayload_LastMiniblockUpdate(
 	streamId StreamId,
-	lastMiniblockHash []byte,
+	lastMiniblockHash common.Hash,
 	lastMiniblockNum int64,
 ) *StreamEvent_MetadataPayload {
 	return &StreamEvent_MetadataPayload{
@@ -727,7 +731,7 @@ func Make_MetadataPayload_LastMiniblockUpdate(
 			Content: &MetadataPayload_LastMiniblockUpdate_{
 				LastMiniblockUpdate: &MetadataPayload_LastMiniblockUpdate{
 					StreamId:          streamId[:],
-					LastMiniblockHash: lastMiniblockHash,
+					LastMiniblockHash: lastMiniblockHash[:],
 					LastMiniblockNum:  lastMiniblockNum,
 				},
 			},
@@ -737,9 +741,13 @@ func Make_MetadataPayload_LastMiniblockUpdate(
 
 func Make_MetadataPayload_PlacementUpdate(
 	streamId StreamId,
-	nodes [][]byte,
+	nodeAddresses []common.Address,
 	replicationFactor int64,
 ) *StreamEvent_MetadataPayload {
+	nodes := make([][]byte, len(nodeAddresses))
+	for i, addr := range nodeAddresses {
+		nodes[i] = addr.Bytes()
+	}
 	return &StreamEvent_MetadataPayload{
 		MetadataPayload: &MetadataPayload{
 			Content: &MetadataPayload_PlacementUpdate_{
