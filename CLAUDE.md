@@ -139,10 +139,3 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - PostgreSQL runs on port 5433 for local development
 - HTTPS certificates managed via `generate-certs.sh`
 
-## Cursor Rules Integration
-
-The `/core/.cursorrules` file contains specific guidance for Go development including:
-- Technology stack preferences
-- Directory structure explanation  
-- Development patterns and conventions
-- Testing approaches and utilities
