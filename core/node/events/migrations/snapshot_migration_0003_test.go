@@ -26,8 +26,8 @@ func TestSnapshotMigration0003(t *testing.T) {
 		},
 	}
 
-	migratedSnapshot := snapshot_migration_0003(userSnap)
+	snapshot_migration_0003(userSnap)
 
-	require.Equal(t, 0, len(migratedSnapshot.GetUserContent().TipsSent))
-	require.Equal(t, 0, len(migratedSnapshot.GetUserContent().TipsReceived))
+	require.Equal(t, 0, len(userSnap.GetUserContent().TipsSent))
+	require.Equal(t, 0, len(userSnap.GetUserContent().TipsReceived))
 }

@@ -13,7 +13,7 @@ func TestSnapshotMigration0000(t *testing.T) {
 	// a no-op migration for the initial snapshot
 	snapshot := &Snapshot{}
 	// just pass an empty snapshot
-	migratedSnapshot := snapshot_migration_0000(snapshot)
-	// expect that a valid snapshot is returned
-	require.NotNil(t, migratedSnapshot)
+	snapshot_migration_0000(snapshot)
+	// expect that the snapshot is still valid after migration
+	require.NotNil(t, snapshot)
 }

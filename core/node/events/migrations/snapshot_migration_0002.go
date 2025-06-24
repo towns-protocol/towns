@@ -5,7 +5,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
-func snapshot_migration_0002(iSnapshot *Snapshot) *Snapshot {
+func snapshot_migration_0002(iSnapshot *Snapshot) {
 	switch snapshot := iSnapshot.Content.(type) {
 	case *Snapshot_SpaceContent:
 		for _, channel := range snapshot.SpaceContent.Channels {
@@ -23,5 +23,4 @@ func snapshot_migration_0002(iSnapshot *Snapshot) *Snapshot {
 			}
 		}
 	}
-	return iSnapshot
 }

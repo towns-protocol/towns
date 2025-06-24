@@ -13,13 +13,13 @@ import (
  * and log those appearing in get 25% of members, checking if they map to
  * username or display_name encrypted payloads
  */
-func snapshot_migration_0004(iSnapshot *Snapshot) *Snapshot {
-	return snapshot_migration_0004_(iSnapshot, false)
+func snapshot_migration_0004(iSnapshot *Snapshot) {
+	snapshot_migration_0004_(iSnapshot, false)
 }
 
-func snapshot_migration_0004_(iSnapshot *Snapshot, force bool) *Snapshot {
+func snapshot_migration_0004_(iSnapshot *Snapshot, force bool) {
 	if iSnapshot.Members == nil || (len(iSnapshot.Members.Joined) < 500 && !force) {
-		return iSnapshot
+		return
 	}
 
 	members := iSnapshot.Members.Joined
@@ -100,6 +100,4 @@ func snapshot_migration_0004_(iSnapshot *Snapshot, force bool) *Snapshot {
 			}
 		}
 	}
-
-	return iSnapshot
 }

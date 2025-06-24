@@ -244,7 +244,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 
 // mutate snapshot with content of event if applicable
 func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64, eventNum int64) error {
-	iSnapshot = migrations.MigrateSnapshot(iSnapshot)
+	migrations.MigrateSnapshot(iSnapshot)
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
 		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, event.Event.CreatorAddress, eventNum, event.Hash.Bytes())
