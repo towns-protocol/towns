@@ -123,6 +123,10 @@ export class AppRegistryDapp {
         return this.shim.read.getAppPrice(app)
     }
 
+    public async getAppDuration(app: Address): Promise<number> {
+        return this.shim.read.getAppDuration(app)
+    }
+
     public async getAppSchema(): Promise<string> {
         return this.shim.read.getAppSchema()
     }
