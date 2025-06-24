@@ -291,4 +291,9 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
             data: ""
         });
     }
+
+    function _uninstallAppOnEveryoneSpace(address app) internal {
+        vm.prank(founder);
+        IAppRegistry(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
+    }
 }

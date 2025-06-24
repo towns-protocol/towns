@@ -407,4 +407,24 @@ contract ChannelsTest is BaseSetup, IEntitlementBase, IChannelBase {
         vm.expectRevert(Entitlement__NotAllowed.selector);
         IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
     }
+
+    function test_createChannel_reverts_when_app_is_uninstalled() public {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.AddRemoveChannels));
+        address app = _createTestApp(permissions);
+
+        bytes32 channelId = "my-cool-channel";
+        string memory channelMetadata = "Metadata";
+
+        _installAppOnEveryoneSpace(app);
+
+        vm.prank(appClient);
+        IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
+
+        _uninstallAppOnEveryoneSpace(app);
+
+        vm.prank(appClient);
+        vm.expectRevert(Entitlement__NotAllowed.selector);
+        IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
+    }
 }
