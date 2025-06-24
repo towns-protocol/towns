@@ -19,6 +19,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+type NodeRegistryChecks interface {
+	IsOperator(address common.Address) bool
+}
+
 type csParams struct {
 	ctx                   context.Context
 	cfg                   *config.Config
@@ -30,6 +34,7 @@ type csParams struct {
 	inceptionPayload      IsInceptionPayload
 	creatorAddress        common.Address
 	creatorUserStreamId   shared.StreamId
+	nodeRegistryChecks    NodeRegistryChecks
 }
 
 type csSpaceRules struct {
@@ -77,6 +82,11 @@ type csUserInboxRules struct {
 	inception *UserInboxPayload_Inception
 }
 
+type csMetadataRules struct {
+	params    *csParams
+	inception *MetadataPayload_Inception
+}
+
 /*
 *
 * CanCreateStreamEvent
@@ -102,6 +112,7 @@ func CanCreateStream(
 	streamId shared.StreamId,
 	parsedEvents []*events.ParsedEvent,
 	requestMetadata map[string][]byte,
+	nodeRegistryChecks NodeRegistryChecks,
 ) (*CreateStreamRules, error) {
 	if len(parsedEvents) == 0 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
@@ -161,6 +172,7 @@ func CanCreateStream(
 		inceptionPayload:      inceptionPayload,
 		creatorAddress:        creatorAddress,
 		creatorUserStreamId:   creatorUserStreamId,
+		nodeRegistryChecks:    nodeRegistryChecks,
 	}
 
 	builder := r.canCreateStream()
@@ -317,6 +329,19 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			).
 			requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
+	case *MetadataPayload_Inception:
+		ru := &csMetadataRules{
+			params:    ru,
+			inception: inception,
+		}
+		return builder.
+			check(
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_METADATA_BIN),
+				ru.params.eventCountMatches(1),
+				ru.params.metadataShardIsInRange,
+				ru.params.creatorIsOperator,
+			)
+
 	default:
 		return builder.fail(unknownPayloadType(inception))
 	}
@@ -401,6 +426,24 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 		}
 		return nil
 	}
+}
+
+func (ru *csParams) creatorIsOperator() error {
+	if ru.nodeRegistryChecks.IsOperator(ru.creatorAddress) {
+		return nil
+	}
+	return RiverError(Err_PERMISSION_DENIED, "creator is not an operator", "creator", ru.creatorAddress)
+}
+
+func (ru *csParams) metadataShardIsInRange() error {
+	shard, err := shared.ShardFromMetadataStreamId(ru.streamId)
+	if err != nil {
+		return err
+	}
+	if shard <= ru.cfg.MetadataShardMask {
+		return nil
+	}
+	return RiverError(Err_BAD_STREAM_ID, "metadata shard is out of range", "shard", shard, "mask", ru.cfg.MetadataShardMask)
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {

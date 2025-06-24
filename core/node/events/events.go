@@ -680,3 +680,19 @@ func Make_MiniblockHeader(miniblockHeader *MiniblockHeader) *StreamEvent_Miniblo
 		MiniblockHeader: miniblockHeader,
 	}
 }
+
+func Make_MetadataPayload_Inception(
+	streamId StreamId,
+	settings *StreamSettings,
+) *StreamEvent_MetadataPayload {
+	return &StreamEvent_MetadataPayload{
+		MetadataPayload: &MetadataPayload{
+			Content: &MetadataPayload_Inception_{
+				Inception: &MetadataPayload_Inception{
+					StreamId: streamId[:],
+					Settings: settings,
+				},
+			},
+		},
+	}
+}

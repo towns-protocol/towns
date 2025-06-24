@@ -192,6 +192,12 @@ func make_SnapshotContent(iInception IsInceptionPayload) (IsSnapshot_Content, er
 				Inception: inception,
 			},
 		}, nil
+	case *MetadataPayload_Inception:
+		return &Snapshot_MetadataContent{
+			MetadataContent: &MetadataPayload_Snapshot{
+				Inception: inception,
+			},
+		}, nil
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown inception type %T", iInception))
 	}
@@ -261,7 +267,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_MediaPayload:
 		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown payload type %T", event.Event.Payload))
+		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type", "payloadType", fmt.Sprintf("%T", event.Event.Payload))
 	}
 }
 

@@ -81,6 +81,7 @@ func GetDefaultConfig() *Config {
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
+		MetadataShardMask: 0x3ff, // 1023
 	}
 }
 
@@ -193,9 +194,9 @@ type Config struct {
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
 
-	// TestOnlyMetadataShardMask is the mask used to determine the shard for metadata streams.
+	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
-	TestOnlyMetadataShardMask uint64
+	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
 }
 
 type TLSConfig struct {
