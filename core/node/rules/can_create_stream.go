@@ -413,7 +413,7 @@ func (ru *csParams) eventCountInRange(min, max int) func() error {
 }
 
 func (ru *csParams) getCreatorIsNotRegisteredApp() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForIsNotBot(ru.creatorAddress), nil
+	return auth.NewChainAuthArgsForIsNotApp(ru.creatorAddress), nil
 }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
@@ -602,7 +602,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 				20,
 			)
 		}
-		return auth.NewChainAuthArgsForBot(ru.creatorAddress, common.Address(appAddress)), nil
+		return auth.NewChainAuthArgsForApp(ru.creatorAddress, common.Address(appAddress)), nil
 	}
 
 	// get the user id for the stream
