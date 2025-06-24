@@ -9,6 +9,7 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 ## Essential Commands
 
 ### Root-level commands (from project root):
+
 - `yarn install && yarn prepare` - Install dependencies and setup hooks
 - `yarn build` - Build all packages using turbo
 - `yarn test` - Run all tests
@@ -18,6 +19,7 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 - `yarn prettier:fix` - Fix code formatting
 
 ### Go backend commands (from /core directory):
+
 - Testing:
   - `just test-all` - Run all Go tests from module root
   - `just t` - Run all Go tests from current directory
@@ -37,6 +39,7 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
   - `just anvils-stop` - Stop local Anvil chains
 
 ### Contract commands (from root):
+
 - `yarn workspace @towns-protocol/contracts exec anvil` - Start Anvil
 - `yarn workspace @towns-protocol/contracts exec cast` - Use Cast CLI
 
@@ -47,7 +50,8 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 **River Nodes** (`/core/node/`): Distributed messaging infrastructure forming the backbone of the network. Nodes use a stream-based architecture where all communication happens through streams (spaces, channels, DMs, user streams).
 
 **Dual-Chain Architecture**:
-- **River Chain**: Custom L2 for stream metadata and node coordination  
+
+- **River Chain**: Custom L2 for stream metadata and node coordination
 - **Base Chain**: For entitlements, permissions, and smart contracts
 
 **Storage Layer** (`/core/node/storage/`): PostgreSQL-based persistent storage with miniblock structure for efficient replication.
@@ -59,7 +63,7 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 - `/core/` - Go backend implementation (River nodes)
   - `node/rpc/` - gRPC/HTTP API service layer
   - `node/events/` - Stream management and event processing
-  - `node/storage/` - PostgreSQL storage implementation  
+  - `node/storage/` - PostgreSQL storage implementation
   - `node/auth/` - Authentication and entitlement system
   - `node/crypto/` - Blockchain interaction layer
   - `node/sync/` - Cross-node stream synchronization
@@ -71,9 +75,10 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 ### Stream-Based Messaging
 
 All communication flows through **streams**:
+
 - **Spaces**: Top-level communities with channels and members
 - **Channels**: Public discussion channels within spaces
-- **Direct Messages**: Private 1:1 conversations  
+- **Direct Messages**: Private 1:1 conversations
 - **Group DMs**: Private multi-party conversations
 - **User streams**: Personal metadata and settings
 
@@ -82,6 +87,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 ## Development Workflow
 
 ### Local Development Setup
+
 1. Install prerequisites: Go, Node v20.x, Docker, Anvil, Just, jq
 2. Run `yarn install && yarn prepare`
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
@@ -90,18 +96,21 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
    - `RUN_ENV=multi_ne just config-and-start` - Faster environment without entitlement checks (required for other SDK tests)
 
 ### Testing Strategy
+
 - **Unit tests**: Individual component testing, run frequently during development
 - **Integration tests**: Cross-component testing within packages
 - **E2E tests**: Full system testing (run post-merge, don't gate PRs)
 
 ### Go Development Patterns
+
 - Use structured logging with zap
 - Implement proper error handling with RiverError types
 - Follow the existing patterns for blockchain interaction
 - Use testify for test assertions
 - Implement proper context cancellation for graceful shutdowns
 
-### JavaScript/TypeScript Development  
+### JavaScript/TypeScript Development
+
 - Follow existing patterns in `/packages/` for SDK development
 - Use proper TypeScript types, especially for blockchain interactions
 - Implement proper error handling and validation
@@ -110,6 +119,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 ## Key Technology Stack
 
 ### Backend (Go)
+
 - **gRPC/gRPCWeb**: API layer via connectrpc.com
 - **PostgreSQL**: Primary database via pgx/v5
 - **Ethereum**: Blockchain interaction via go-ethereum
@@ -118,12 +128,14 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - **OpenTelemetry**: Observability and tracing
 
 ### Frontend/SDK (TypeScript)
+
 - **Turbo**: Monorepo build system
 - **Viem/Wagmi**: Ethereum interaction
 - **Protocol Buffers**: Service definitions
 - **Jest/Vitest**: Testing framework
 
 ### Infrastructure
+
 - **Docker**: Local PostgreSQL and Redis
 - **Anvil**: Local blockchain development
 - **Just**: Command runner for Go workflows
@@ -138,11 +150,3 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - Local chains run on ports 8545 (Base) and 8546 (River)
 - PostgreSQL runs on port 5433 for local development
 - HTTPS certificates managed via `generate-certs.sh`
-
-## Cursor Rules Integration
-
-The `/core/.cursorrules` file contains specific guidance for Go development including:
-- Technology stack preferences
-- Directory structure explanation  
-- Development patterns and conventions
-- Testing approaches and utilities
