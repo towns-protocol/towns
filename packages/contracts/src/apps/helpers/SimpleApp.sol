@@ -17,6 +17,8 @@ import {SimpleAppStorage} from "src/apps/helpers/SimpleAppStorage.sol";
 contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     using SimpleAppStorage for SimpleAppStorage.Layout;
 
+    receive() external payable {}
+
     function initialize(
         address owner,
         string calldata appId,

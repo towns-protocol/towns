@@ -4,12 +4,13 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {ITownsPoints, ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
+import {ITownsPoints} from "src/airdrop/points/ITownsPoints.sol";
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
+import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
 
@@ -26,6 +27,9 @@ import {DeployMockERC20, MockERC20} from "scripts/deployments/utils/DeployMockER
 
 // helpers
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
+
+// debuggging
+import {console} from "forge-std/console.sol";
 
 contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     DeployMockERC20 internal deployERC20 = new DeployMockERC20();
@@ -233,5 +237,39 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
                 channelId: channelId
             })
         );
+    }
+
+    function test_tipBotApp(
+        address sender,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId
+    ) external {
+        vm.assume(sender != platformRecipient);
+        vm.assume(appClient != platformRecipient);
+        amount = bound(amount, 0.0003 ether, 1 ether);
+
+        uint256 initialBalance = appClient.balance;
+
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        address app = _createTestApp(permissions);
+
+        _installAppOnEveryoneSpace(app);
+
+        hoax(sender, amount);
+        tipping.tip{value: amount}(
+            TipRequest({
+                receiver: appClient,
+                tokenId: 0,
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: amount,
+                messageId: messageId,
+                channelId: channelId
+            })
+        );
+
+        assertGt(app.balance, initialBalance);
+        assertEq(appClient.balance, 0);
     }
 }
