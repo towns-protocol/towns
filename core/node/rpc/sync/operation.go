@@ -151,7 +151,10 @@ func (syncOp *StreamSyncOperation) Run(
 				reply: make(chan error, 1),
 			}
 			if err := syncOp.process(cmd); err != nil {
-				syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				if IsRiverErrorCode(err, Err_INVALID_ARGUMENT) {
+					syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				}
+				syncOp.cancel(err)
 			}
 		}()
 	}

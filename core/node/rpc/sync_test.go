@@ -541,6 +541,18 @@ func TestSyncWithManyStreams(t *testing.T) {
 		time.Since(now),
 	)
 
+	// provide invalid stream id
+	t.Run("invalid stream id provided", func(t *testing.T) {
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId: syncClients.clients[0].syncId,
+			AddStreams: []*protocol.SyncCookie{{
+				StreamId: []byte("Invalid"),
+			}},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
 	// add two same streams in the modify sync request and expect error
 	t.Run("duplicate add streams", func(t *testing.T) {
 		channel, _ := produceChannel()
@@ -575,6 +587,26 @@ func TestSyncWithManyStreams(t *testing.T) {
 		}))
 		require.Error(err)
 		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	// expect for the latest update when no minipool number is provided
+	t.Run("no minipool number provided", func(t *testing.T) {
+		channel, _ := produceChannel()
+		connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{{
+			NodeAddress: channel.GetNodeAddress(),
+			StreamId:    channel.GetStreamId(),
+		}}})
+		connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+		resp, err := syncClient0.SyncStreams(ctx, connReq)
+		require.NoError(err)
+		require.True(resp.Receive())
+		require.NoError(resp.Err())
+		require.Equal(protocol.SyncOp_SYNC_NEW, resp.Msg().GetSyncOp(), resp.Msg())
+		require.True(resp.Receive())
+		require.NoError(resp.Err())
+		require.Equal(protocol.SyncOp_SYNC_UPDATE, resp.Msg().GetSyncOp(), resp.Msg())
+		require.Equal(channel.GetStreamId(), resp.Msg().StreamID(), resp.Msg())
 	})
 
 	// finish testing
