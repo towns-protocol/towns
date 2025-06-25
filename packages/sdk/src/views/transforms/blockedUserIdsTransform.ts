@@ -1,5 +1,5 @@
 import { UserSettingsPayload_Snapshot_UserBlocks } from '@towns-protocol/proto'
-import { isEqual } from 'lodash'
+import { isEqual } from 'lodash-es'
 
 type Input = Record<string, UserSettingsPayload_Snapshot_UserBlocks>
 
