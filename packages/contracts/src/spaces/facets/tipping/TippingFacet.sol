@@ -3,15 +3,17 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ITipping} from "./ITipping.sol";
-import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
-import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IAppRegistry} from "../../../apps/facets/registry/AppRegistryFacet.sol";
 
 // libraries
 import {TippingBase} from "./TippingBase.sol";
-import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {MembershipStorage} from "../membership/MembershipStorage.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {DependencyLib} from "../DependencyLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -34,6 +36,10 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
         );
 
         uint256 tipAmount = tipRequest.amount;
+        address receiver = tipRequest.receiver;
+
+        address botApp = _getBotAppAddress(receiver);
+        if (botApp != address(0)) receiver = botApp;
 
         if (tipRequest.currency == CurrencyTransfer.NATIVE_TOKEN) {
             uint256 protocolFee = _payProtocol(msg.sender, tipRequest.amount);
@@ -48,19 +54,13 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
             _mintPoints(airdropDiamond, msg.sender, points);
         }
 
-        TippingBase.tip(
-            msg.sender,
-            tipRequest.receiver,
-            tipRequest.tokenId,
-            tipRequest.currency,
-            tipAmount
-        );
+        TippingBase.tip(msg.sender, receiver, tipRequest.tokenId, tipRequest.currency, tipAmount);
 
         emit Tip(
             tipRequest.tokenId,
             tipRequest.currency,
             msg.sender,
-            tipRequest.receiver,
+            receiver,
             tipRequest.amount,
             tipRequest.messageId,
             tipRequest.channelId
@@ -119,5 +119,12 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
             platform.getFeeRecipient(),
             protocolFee
         );
+    }
+
+    function _getBotAppAddress(address client) internal view returns (address) {
+        return
+            IAppRegistry(
+                DependencyLib.getDependency(MembershipStorage.layout(), DependencyLib.APP_REGISTRY)
+            ).getAppByClient(client);
     }
 }
