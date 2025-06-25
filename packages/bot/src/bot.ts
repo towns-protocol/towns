@@ -53,6 +53,7 @@ import {
     type ChunkedMedia,
     EncryptedDataSchema,
     type EncryptedData,
+    Tags,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -223,6 +224,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     botId: string
     viemClient: ViemClient
     private readonly jwtSecret: Uint8Array
+    private currentMessageTags: PlainMessage<Tags> | undefined
 
     constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
         super()
@@ -230,6 +232,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         this.botId = clientV2.userId
         this.viemClient = viemClient
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
+        this.currentMessageTags = undefined
         this.server = new Hono()
         this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
@@ -334,6 +337,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 if (!parsed.event.payload.case) {
                     continue
                 }
+                this.currentMessageTags = parsed.event.tags
                 this.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     spaceId: spaceIdFromChannelId(streamId),
@@ -507,7 +511,14 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * @param message - The cleartext of the message
      */
     async sendMessage(streamId: string, message: string, opts?: MessageOpts) {
-        return this.client.sendMessage(streamId, message, opts)
+        const result = await this.client.sendMessage(
+            streamId,
+            message,
+            opts,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
     }
 
     /**
@@ -517,7 +528,14 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * @param reaction - The reaction to send
      */
     async sendReaction(streamId: string, refEventId: string, reaction: string) {
-        return this.client.sendReaction(streamId, refEventId, reaction)
+        const result = await this.client.sendReaction(
+            streamId,
+            refEventId,
+            reaction,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
     }
 
     /**
@@ -526,7 +544,9 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * @param refEventId - The eventId of the event to remove
      */
     async removeEvent(streamId: string, refEventId: string) {
-        return this.client.removeEvent(streamId, refEventId)
+        const result = await this.client.removeEvent(streamId, refEventId, this.currentMessageTags)
+        this.currentMessageTags = undefined
+        return result
     }
 
     /**
@@ -536,7 +556,14 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * @param message - The new message text
      */
     async editMessage(streamId: string, messageId: string, message: string) {
-        return this.client.editMessage(streamId, messageId, message)
+        const result = await this.client.editMessage(
+            streamId,
+            messageId,
+            message,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
     }
 
     writeContract<
@@ -672,17 +699,22 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
     const sendMessageEvent = async ({
         streamId,
         payload,
+        tags,
     }: {
         streamId: string
         payload: ChannelMessage
+        tags?: PlainMessage<Tags>
     }) => {
         const stream = await client.getStream(streamId)
         const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
             await client.rpc.getLastMiniblockHash({
                 streamId: streamIdAsBytes(streamId),
             })
-        // TODO: Bot messages doesnt have the participants due to the lack of stream view / timeline capabilities
-        const tags = unsafe_makeTags(payload)
+        const eventTags = {
+            ...unsafe_makeTags(payload),
+            participatingUserAddresses: tags?.participatingUserAddresses || [],
+            threadId: tags?.threadId || undefined,
+        }
         const encryptionAlgorithm = stream.snapshot.members?.encryptionAlgorithm?.algorithm
 
         const message = await client.crypto.encryptGroupEvent(
@@ -700,7 +732,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 make_ChannelPayload_Message(message),
                 prevMiniblockHash,
                 prevMiniblockNum,
-                tags,
+                eventTags,
             )
         } else if (isDMChannelStreamId(streamId)) {
             event = await makeEvent(
@@ -708,7 +740,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 make_DMChannelPayload_Message(message),
                 prevMiniblockHash,
                 prevMiniblockNum,
-                tags,
+                eventTags,
             )
         } else if (isGDMChannelStreamId(streamId)) {
             event = await makeEvent(
@@ -716,7 +748,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 make_GDMChannelPayload_Message(message),
                 prevMiniblockHash,
                 prevMiniblockNum,
-                tags,
+                eventTags,
             )
         } else {
             throw new Error(`Invalid stream ID type: ${streamId}`)
@@ -785,6 +817,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
             attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
         },
+        tags?: PlainMessage<Tags>,
     ) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
@@ -805,10 +838,15 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 },
             },
         })
-        return sendMessageEvent({ streamId, payload })
+        return sendMessageEvent({ streamId, payload, tags })
     }
 
-    const editMessage = async (streamId: string, messageId: string, message: string) => {
+    const editMessage = async (
+        streamId: string,
+        messageId: string,
+        message: string,
+        tags?: PlainMessage<Tags>,
+    ) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'edit',
@@ -820,7 +858,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 },
             },
         })
-        return sendMessageEvent({ streamId, payload })
+        return sendMessageEvent({ streamId, payload, tags })
     }
 
     const sendDm = (
@@ -834,18 +872,23 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         },
     ) => sendMessage(userId, message, opts)
 
-    const sendReaction = async (streamId: string, messageId: string, reaction: string) => {
+    const sendReaction = async (
+        streamId: string,
+        messageId: string,
+        reaction: string,
+        tags?: PlainMessage<Tags>,
+    ) => {
         const payload = create(ChannelMessageSchema, {
             payload: { case: 'reaction', value: { refEventId: messageId, reaction } },
         })
-        return sendMessageEvent({ streamId, payload })
+        return sendMessageEvent({ streamId, payload, tags })
     }
 
-    const removeEvent = async (streamId: string, messageId: string) => {
+    const removeEvent = async (streamId: string, messageId: string, tags?: PlainMessage<Tags>) => {
         const payload = create(ChannelMessageSchema, {
             payload: { case: 'redaction', value: { refEventId: messageId } },
         })
-        return sendMessageEvent({ streamId, payload })
+        return sendMessageEvent({ streamId, payload, tags })
     }
 
     const setUsername = async (streamId: string, username: string) => {
