@@ -112,7 +112,7 @@ export default createConfig({
             abi: mergeAbis([rewardsDistributionV2Abi]),
             address: riverAirdrop,
             startBlock,
-            network: 'gamma',
+            chain: 'gamma',
         },
     },
 })
