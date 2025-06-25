@@ -107,8 +107,10 @@ func (ss *SyncerSet) Modify(ctx context.Context, req client.ModifyRequest) error
 	}
 
 	// Validate modify request
-	if err := req.Validate(); err != nil {
+	if valid, err := req.Validate(); err != nil {
 		return AsRiverError(err, Err_INVALID_ARGUMENT).Tag("syncId", ss.syncID)
+	} else if !valid {
+		return nil
 	}
 
 	addingFailuresLock := sync.Mutex{}

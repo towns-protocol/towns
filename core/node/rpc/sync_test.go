@@ -767,3 +767,30 @@ func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
 		t.Fatalf("timed out waiting for sync down message from client 1")
 	}
 }
+
+func TestStreamSyncWithInvalidStreamID(t *testing.T) {
+	numNodes := 1
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 1})
+	ctx := tt.ctx
+	require := tt.require
+
+	syncClients := makeSyncClients(tt, numNodes)
+	syncClient0 := syncClients.clients[0].client
+
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: []*protocol.SyncCookie{{
+			StreamId: []byte("Invalid"),
+		}},
+	})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+	resp, err := syncClient0.SyncStreams(ctx, connReq)
+	require.NoError(err)
+	require.True(resp.Receive())
+	require.NoError(resp.Err())
+	require.Equal(protocol.SyncOp_SYNC_NEW, resp.Msg().GetSyncOp())
+	require.True(resp.Receive())
+	require.NoError(resp.Err())
+	require.Equal(protocol.SyncOp_SYNC_DOWN, resp.Msg().GetSyncOp())
+	require.Equal([]byte("Invalid"), resp.Msg().GetStreamId())
+}
