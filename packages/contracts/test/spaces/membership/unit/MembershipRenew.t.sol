@@ -312,4 +312,32 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         // Verify membership was renewed
         assertGt(freeMembership.expiresAt(tokenId), originalExpiration);
     }
+
+    function test_renewMembershipPaidTown() external {
+        vm.startPrank(founder);
+        membership.setMembershipFreeAllocation(1);
+        membership.setMembershipPrice(0.005 ether);
+        vm.stopPrank();
+
+        vm.deal(alice, 0.005 ether);
+
+        vm.startPrank(alice);
+        membership.joinSpace{value: 0.005 ether}(alice);
+        vm.stopPrank();
+
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+
+        uint256 originalExpiration = membership.expiresAt(tokenId);
+
+        // Warp to expiration
+        vm.warp(originalExpiration);
+
+        vm.deal(alice, renewalPrice);
+
+        vm.prank(alice);
+        membership.renewMembership{value: renewalPrice}(tokenId);
+
+        assertGt(membership.expiresAt(tokenId), originalExpiration);
+    }
 }
