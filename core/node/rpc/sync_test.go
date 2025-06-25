@@ -768,7 +768,7 @@ func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
 	}
 }
 
-func TestStreamSyncWithInvalidStreamID(t *testing.T) {
+func TestStreamSyncWithInvalidRequest(t *testing.T) {
 	numNodes := 1
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 1})
 	ctx := tt.ctx
@@ -777,9 +777,14 @@ func TestStreamSyncWithInvalidStreamID(t *testing.T) {
 	syncClients := makeSyncClients(tt, numNodes)
 	syncClient0 := syncClients.clients[0].client
 
+	stream1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: []*protocol.SyncCookie{{
 			StreamId: []byte("Invalid"),
+		}, {
+			StreamId: stream1[:],
+		}, {
+			StreamId: stream1[:],
 		}},
 	})
 	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
@@ -793,4 +798,8 @@ func TestStreamSyncWithInvalidStreamID(t *testing.T) {
 	require.NoError(resp.Err())
 	require.Equal(protocol.SyncOp_SYNC_DOWN, resp.Msg().GetSyncOp())
 	require.Equal([]byte("Invalid"), resp.Msg().GetStreamId())
+	require.True(resp.Receive())
+	require.NoError(resp.Err())
+	require.Equal(protocol.SyncOp_SYNC_DOWN, resp.Msg().GetSyncOp())
+	require.Equal(stream1[:], resp.Msg().GetStreamId())
 }
