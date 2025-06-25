@@ -100,7 +100,7 @@ func (s *Service) getGenesisMediaEvent(ctx context.Context, streamId StreamId) (
 
 	var mediaEvent StreamEvent
 	if err = proto.Unmarshal(mb.GetEvents()[0].Event, &mediaEvent); err != nil {
-		return nil, RiverError(Err_INTERNAL, "Failed to decode stream event from genesis miniblock")
+		return nil, RiverErrorWithBase(Err_INTERNAL, "Failed to decode stream event from genesis miniblock", err)
 	}
 
 	if mediaEvent.GetMediaPayload().GetInception() == nil {
