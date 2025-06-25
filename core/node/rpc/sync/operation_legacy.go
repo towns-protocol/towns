@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
@@ -48,7 +48,7 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 				reply: make(chan error, 1),
 			}
 			if err := syncOp.process(cmd); err != nil {
-				if base.IsRiverErrorCode(err, Err_INVALID_ARGUMENT) {
+				if IsRiverErrorCode(err, Err_INVALID_ARGUMENT) {
 					syncOp.log.Errorw("Unable to add initial sync position", "error", err)
 				}
 				syncOp.cancel(err)
