@@ -196,10 +196,8 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	// Validate modify request
-	if valid, err := req.Validate(); err != nil {
+	if err := req.Validate(); err != nil {
 		return AsRiverError(err).Func("SyncerSet.Modify")
-	} else if !valid {
-		return nil
 	}
 
 	addingFailuresLock := sync.Mutex{}
@@ -675,13 +673,11 @@ func (ss *SyncerSet) rmStream(streamID StreamId) {
 // When the returned bool is false, the client receives the error through a callback
 // so the caller must stop execution and return nil.
 // When the returned error isn't nil, the caller is responsible to report the error to the client.
-func (mr *ModifyRequest) Validate() (bool, error) {
+func (mr *ModifyRequest) Validate() error {
 	// Make sure the request is not empty
 	if len(mr.ToAdd) == 0 && len(mr.ToRemove) == 0 && len(mr.ToBackfill) == 0 {
-		return false, RiverError(Err_INVALID_ARGUMENT, "Empty modify sync request")
+		return RiverError(Err_INVALID_ARGUMENT, "Empty modify sync request")
 	}
-
-	var invalid bool
 
 	// Prevent duplicates in the backfill list
 	seen := make(map[StreamId]struct{})
@@ -689,23 +685,11 @@ func (mr *ModifyRequest) Validate() (bool, error) {
 		for _, c := range backfill.GetStreams() {
 			streamId, err := StreamIdFromBytes(c.GetStreamId())
 			if err != nil {
-				mr.BackfillingFailureHandler(&SyncStreamOpStatus{
-					StreamId: c.GetStreamId(),
-					Code:     int32(Err_INVALID_ARGUMENT),
-					Message:  "Invalid stream ID in backfill operation",
-				})
-				invalid = true
-				continue
+				return RiverError(Err_INVALID_ARGUMENT, "Invalid stream in backfill list")
 			}
 
 			if _, exists := seen[streamId]; exists {
-				mr.BackfillingFailureHandler(&SyncStreamOpStatus{
-					StreamId: c.GetStreamId(),
-					Code:     int32(Err_INVALID_ARGUMENT),
-					Message:  "Duplicate stream in backfill operation",
-				})
-				invalid = true
-				continue
+				return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in backfill list")
 			}
 			seen[streamId] = struct{}{}
 		}
@@ -716,74 +700,32 @@ func (mr *ModifyRequest) Validate() (bool, error) {
 	for _, c := range mr.ToAdd {
 		streamId, err := StreamIdFromBytes(c.GetStreamId())
 		if err != nil {
-			mr.AddingFailureHandler(&SyncStreamOpStatus{
-				StreamId: c.GetStreamId(),
-				Code:     int32(Err_INVALID_ARGUMENT),
-				Message:  "Invalid stream ID in adding operation",
-			})
-			invalid = true
-			continue
+			return RiverError(Err_INVALID_ARGUMENT, "Invalid stream in add list")
 		}
 
 		if _, exists := seen[streamId]; exists {
-			mr.AddingFailureHandler(&SyncStreamOpStatus{
-				StreamId: c.GetStreamId(),
-				Code:     int32(Err_INVALID_ARGUMENT),
-				Message:  "Duplicate stream in adding operation",
-			})
-			invalid = true
-			continue
+			return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in add list")
 		}
 		seen[streamId] = struct{}{}
 	}
 
 	// Prevent duplicates in the remove list
-	seen = make(map[StreamId]struct{}, len(mr.ToRemove))
+	removeSeen := make(map[StreamId]struct{}, len(mr.ToRemove))
 	for _, s := range mr.ToRemove {
 		streamId, err := StreamIdFromBytes(s)
 		if err != nil {
-			mr.RemovingFailureHandler(&SyncStreamOpStatus{
-				StreamId: s,
-				Code:     int32(Err_INVALID_ARGUMENT),
-				Message:  "Invalid stream ID in backfill operation",
-			})
-			invalid = true
-			continue
+			return RiverError(Err_INVALID_ARGUMENT, "Invalid stream in remove list")
 		}
+
+		if _, exists := removeSeen[streamId]; exists {
+			return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in remove list")
+		}
+		removeSeen[streamId] = struct{}{}
 
 		if _, exists := seen[streamId]; exists {
-			mr.RemovingFailureHandler(&SyncStreamOpStatus{
-				StreamId: s,
-				Code:     int32(Err_INVALID_ARGUMENT),
-				Message:  "Duplicate stream in removing operation",
-			})
-			invalid = true
-			continue
-		}
-		seen[streamId] = struct{}{}
-	}
-
-	// Prevent passing the same stream to both add and remove operations
-	if !invalid {
-		for _, c := range mr.ToAdd {
-			for _, s := range mr.ToRemove {
-				if StreamId(c.GetStreamId()) == StreamId(s) {
-					mr.AddingFailureHandler(&SyncStreamOpStatus{
-						StreamId: s,
-						Code:     int32(Err_INVALID_ARGUMENT),
-						Message:  "The given stream is specified in removal list",
-					})
-					mr.RemovingFailureHandler(&SyncStreamOpStatus{
-						StreamId: s,
-						Code:     int32(Err_INVALID_ARGUMENT),
-						Message:  "The given stream is specified in adding list",
-					})
-					invalid = true
-					continue
-				}
-			}
+			return RiverError(Err_INVALID_ARGUMENT, "Stream in remove list is also in add list")
 		}
 	}
 
-	return !invalid, nil
+	return nil
 }

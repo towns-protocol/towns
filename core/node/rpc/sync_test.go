@@ -543,66 +543,50 @@ func TestSyncWithManyStreams(t *testing.T) {
 
 	// provide invalid stream id
 	t.Run("invalid stream id provided", func(t *testing.T) {
-		resp, err := syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 			SyncId: syncClients.clients[0].syncId,
 			AddStreams: []*protocol.SyncCookie{{
 				StreamId: []byte("Invalid"),
 			}},
 		}))
-		require.NoError(err)
-		require.Len(resp.Msg.GetAdds(), 1)
-		require.Equal(resp.Msg.GetAdds()[0].GetCode(), int32(protocol.Err_INVALID_ARGUMENT))
-		require.Equal(resp.Msg.GetAdds()[0].GetStreamId(), []byte("Invalid"))
-		require.Equal(resp.Msg.GetAdds()[0].GetMessage(), "Invalid stream ID in adding operation")
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// add two same streams in the modify sync request and expect error
 	t.Run("duplicate add streams", func(t *testing.T) {
 		channel, _ := produceChannel()
-		resp, err := syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 			SyncId:     syncClients.clients[0].syncId,
 			AddStreams: []*protocol.SyncCookie{channel, channel},
 		}))
-		require.NoError(err)
-		require.Len(resp.Msg.GetAdds(), 1)
-		require.Equal(resp.Msg.GetAdds()[0].GetCode(), int32(protocol.Err_INVALID_ARGUMENT))
-		require.Equal(resp.Msg.GetAdds()[0].GetStreamId(), channel.GetStreamId())
-		require.Equal(resp.Msg.GetAdds()[0].GetMessage(), "Duplicate stream in adding operation")
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// remove two same streams in the modify sync request and expect error
 	t.Run("duplicate remove streams", func(t *testing.T) {
-		resp, err := syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 			SyncId: syncClients.clients[0].syncId,
 			RemoveStreams: [][]byte{
 				channelCookies[len(channelCookies)-1].StreamId,
 				channelCookies[len(channelCookies)-1].StreamId,
 			},
 		}))
-		require.NoError(err)
-		require.Len(resp.Msg.GetRemovals(), 1)
-		require.Equal(resp.Msg.GetRemovals()[0].GetCode(), int32(protocol.Err_INVALID_ARGUMENT))
-		require.Equal(resp.Msg.GetRemovals()[0].GetStreamId(), channelCookies[len(channelCookies)-1].StreamId)
-		require.Equal(resp.Msg.GetRemovals()[0].GetMessage(), "Duplicate stream in removing operation")
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// passing the same stream in add and remove streams in the modify sync request and expect error
 	t.Run("same stream in remove and add", func(t *testing.T) {
 		channel, _ := produceChannel()
-		resp, err := syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 			SyncId:        syncClients.clients[0].syncId,
 			AddStreams:    []*protocol.SyncCookie{channel},
 			RemoveStreams: [][]byte{channel.StreamId},
 		}))
-		require.NoError(err)
-		require.Len(resp.Msg.GetAdds(), 1)
-		require.Equal(resp.Msg.GetAdds()[0].GetCode(), int32(protocol.Err_INVALID_ARGUMENT))
-		require.Equal(resp.Msg.GetAdds()[0].GetStreamId(), channel.StreamId)
-		require.Equal(resp.Msg.GetAdds()[0].GetMessage(), "The given stream is specified in removal list")
-		require.Len(resp.Msg.GetRemovals(), 1)
-		require.Equal(resp.Msg.GetRemovals()[0].GetCode(), int32(protocol.Err_INVALID_ARGUMENT))
-		require.Equal(resp.Msg.GetRemovals()[0].GetStreamId(), channel.StreamId)
-		require.Equal(resp.Msg.GetRemovals()[0].GetMessage(), "The given stream is specified in adding list")
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// finish testing

@@ -87,10 +87,8 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	// Validate the given request first
-	if valid, err := req.Validate(); err != nil {
+	if err := req.Validate(); err != nil {
 		return err
-	} else if !valid {
-		return nil
 	}
 
 	// Prepare a request to be sent to the syncer set if needed
