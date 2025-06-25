@@ -70,6 +70,14 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		streamIdBytes := event.StreamId
 		stream, err := s.cache.GetStreamNoWait(ctx, streamIdBytes)
 		if err != nil || stream == nil {
+			// Include the base error if it exists.
+			if err != nil {
+				return nil, RiverErrorWithBase(
+					Err_PERMISSION_DENIED,
+					"stream does not exist",
+					err,
+				).Tag("streamId", streamIdBytes)
+			}
 			return nil, RiverError(Err_PERMISSION_DENIED, "stream does not exist", "streamId", streamIdBytes)
 		}
 	}
@@ -83,12 +91,12 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			creatorStreamView, err = stream.GetView(ctx)
 		}
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "error", err)
+			return nil, RiverErrorWithBase(Err_PERMISSION_DENIED, "failed to load creator stream", err)
 		}
 		for _, streamIdBytes := range csRules.RequiredMemberships {
 			streamId, err := StreamIdFromBytes(streamIdBytes)
 			if err != nil {
-				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "error", err)
+				return nil, RiverErrorWithBase(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", err)
 			}
 			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
@@ -100,12 +108,20 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	for _, userAddress := range csRules.RequiredUserAddrs {
 		addr, err := BytesToAddress(userAddress)
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
+			return nil, RiverErrorWithBase(
+				Err_PERMISSION_DENIED,
+				"invalid user id",
+				err,
+			).Tag("requiredUser", userAddress)
 		}
 		userStreamId := UserStreamIdFromAddr(addr)
 		_, err = s.cache.GetStreamNoWait(ctx, userStreamId)
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUser", userAddress)
+			return nil, RiverErrorWithBase(
+				Err_PERMISSION_DENIED,
+				"user does not exist",
+				err,
+			).Tag("requiredUser", userAddress)
 		}
 	}
 
@@ -136,7 +152,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	for _, de := range csRules.DerivedEvents {
 		_, err = s.AddEventPayload(ctx, de.StreamId, de.Payload, de.Tags)
 		if err != nil {
-			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "error", err)
+			return nil, RiverErrorWithBase(Err_INTERNAL, "failed to add derived event", err)
 		}
 	}
 
@@ -147,7 +163,9 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		// Make sure the given chunk index is 0 as it is the first chunk
 		if chunk.GetChunkIndex() != 0 {
 			return nil, RiverError(Err_INVALID_ARGUMENT, "initial chunk index must be zero").
-				Func("createMediaStream")
+				Func("createMediaStream").
+				Tag("streamId", streamId).
+				Tag("chunkIndex", chunk.GetChunkIndex())
 		}
 
 		// Make sure the given chunk size does not exceed the maximum chunk size
@@ -157,7 +175,8 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 				"chunk size must be less than or equal to",
 				"s.chainConfig.Get().MediaMaxChunkSize",
 				s.chainConfig.Get().MediaMaxChunkSize).
-				Func("createMediaStream")
+				Func("createMediaStream").
+				Tag("chunkSize", len(chunk.GetData()))
 		}
 
 		mbHash, err := s.replicatedAddMediaEvent(
