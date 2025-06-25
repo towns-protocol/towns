@@ -3751,6 +3751,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hono/node-server@npm:^1.14.0":
+  version: 1.14.4
+  resolution: "@hono/node-server@npm:1.14.4"
+  peerDependencies:
+    hono: ^4
+  checksum: 1eed16a0d10e923179c2adeefe8517c799dbd7b5b03a6cce4c43555daa024920fc59bcf7c484d106c16366b0c09739d031f4c3c3be037f87df18828a96f9595d
+  languageName: node
+  linkType: hard
+
 "@hookform/resolvers@npm:^3.6.0":
   version: 3.6.0
   resolution: "@hookform/resolvers@npm:3.6.0"
@@ -8460,7 +8469,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/bot@workspace:packages/bot":
+"@towns-protocol/bot@workspace:^, @towns-protocol/bot@workspace:packages/bot":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/bot@workspace:packages/bot"
   dependencies:
@@ -8589,6 +8598,61 @@ __metadata:
 "@towns-protocol/eslint-config@workspace:^, @towns-protocol/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/eslint-config@workspace:packages/eslint-config"
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-ask-poll@workspace:packages/examples/bot-ask-poll":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-ask-poll@workspace:packages/examples/bot-ask-poll"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    tsx: ^4.7.1
+    typescript: ^5.8.2
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    tsx: ^4.7.1
+    typescript: ^5.8.2
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-thread-ai@workspace:packages/examples/bot-thread-ai":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-thread-ai@workspace:packages/examples/bot-thread-ai"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    openai: ^5.7.0
+    tsx: ^4.7.1
+    typescript: ^5.8.2
   languageName: unknown
   linkType: soft
 
@@ -23786,6 +23850,23 @@ __metadata:
   bin:
     openai: bin/cli
   checksum: 25d7d92cafa69faf2224d298af590e4eb471b661522fe4947c5fd69130387cbab701cf02a329368b07fc8568a31ac9c8d09b59ed88f937a166a77b42229c54e9
+  languageName: node
+  linkType: hard
+
+"openai@npm:^5.7.0":
+  version: 5.7.0
+  resolution: "openai@npm:5.7.0"
+  peerDependencies:
+    ws: ^8.18.0
+    zod: ^3.23.8
+  peerDependenciesMeta:
+    ws:
+      optional: true
+    zod:
+      optional: true
+  bin:
+    openai: bin/cli
+  checksum: 3f175ce520cc277fe14f9b0c6cd523e91e972b309db6d8457fb1d5d4b992c309312367eaacf0ab3ade4fbeeb97c39cdcdea3d7689f8c8f888ca57cef0c9fe547
   languageName: node
   linkType: hard
 
