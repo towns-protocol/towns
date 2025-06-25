@@ -672,6 +672,9 @@ func (ss *SyncerSet) rmStream(streamID StreamId) {
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.
+// When the returned bool is false, the client receives the error through a callback
+// so the caller must stop execution and return nil.
+// When the returned error isn't nil, the caller is responsible to report the error to the client.
 func (mr *ModifyRequest) Validate() (bool, error) {
 	// Make sure the request is not empty
 	if len(mr.ToAdd) == 0 && len(mr.ToRemove) == 0 && len(mr.ToBackfill) == 0 {
