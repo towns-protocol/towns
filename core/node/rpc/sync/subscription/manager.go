@@ -102,7 +102,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 func (m *Manager) start() {
 	defer func() {
 		m.stopped.Store(true)
-		m.cancelAllSubscriptions(m.globalCtx.Err())
+		m.cancelAllSubscriptions()
 	}()
 
 	var msgs []*SyncStreamsResponse
@@ -128,7 +128,7 @@ func (m *Manager) start() {
 				// Get the stream ID from the message.
 				streamID, err := StreamIdFromBytes(msg.StreamID())
 				if err != nil {
-					m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
+					m.log.Errorw("Failed to get stream ID from the message", "streamId", msg.StreamID(), "error", err)
 					continue
 				}
 
@@ -280,12 +280,12 @@ func (m *Manager) dropStream(streamID StreamId) {
 }
 
 // cancelAllSubscriptions cancels all subscriptions with the given error.
-func (m *Manager) cancelAllSubscriptions(err error) {
+func (m *Manager) cancelAllSubscriptions() {
 	m.sLock.Lock()
 	for _, subscriptions := range m.subscriptions {
 		for _, sub := range subscriptions {
 			if !sub.isClosed() {
-				sub.cancel(err)
+				sub.cancel(m.globalCtx.Err())
 			}
 		}
 	}
