@@ -81,7 +81,7 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 }
 
 func (sm *syncMetrics) actions(cmd *subCommand, useSharedSync bool) {
-	if sm == nil {
+	if sm == nil || cmd == nil {
 		return
 	}
 
