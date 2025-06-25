@@ -133,7 +133,7 @@ export class SyncedStreamsLoop {
     private lastLogInflightAt = 0
     private syncStartedAt: number | undefined = undefined
     private processedStreamCount = 0
-    private syncTimeoutId: NodeJS.Timeout | undefined
+    private streamSyncStalled: NodeJS.Timeout | undefined
     private readonly MAX_IN_FLIGHT_COOKIES = 40
     private readonly MIN_IN_FLIGHT_COOKIES = 10
     private readonly MAX_IN_FLIGHT_STREAMS_TO_DELETE = 40
@@ -474,7 +474,7 @@ export class SyncedStreamsLoop {
                     syncState: this.syncState,
                 })
                 this.stopPing()
-                clearTimeout(this.syncTimeoutId)
+                clearTimeout(this.streamSyncStalled)
                 if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                     this.setSyncState(SyncState.NotSyncing)
                     this.streams.forEach((streamRecord) => {
@@ -822,14 +822,14 @@ export class SyncedStreamsLoop {
                                 })
                                 this.syncStartedAt = undefined
                                 this.processedStreamCount = 0
-                                clearTimeout(this.syncTimeoutId)
+                                clearTimeout(this.streamSyncStalled)
                             } else {
                                 this.log(
                                     `sync status inflight:${this.inFlightSyncCookies.size} enqueued:${this.pendingSyncCookies.length}`,
                                 )
 
-                                clearTimeout(this.syncTimeoutId)
-                                this.syncTimeoutId = setTimeout(() => {
+                                clearTimeout(this.streamSyncStalled)
+                                this.streamSyncStalled = setTimeout(() => {
                                     if (this.syncStartedAt) {
                                         const duration = performance.now() - this.syncStartedAt
                                         this.logError(`sync timed out after ${duration}ms`)
@@ -837,7 +837,7 @@ export class SyncedStreamsLoop {
                                             duration,
                                         })
                                     }
-                                    this.syncTimeoutId = undefined
+                                    this.streamSyncStalled = undefined
                                 }, 10_000)
                             }
                             this.lastLogInflightAt = Date.now()
