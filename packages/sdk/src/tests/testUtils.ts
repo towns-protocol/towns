@@ -41,7 +41,7 @@ import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
 import assert from 'assert'
-import _ from 'lodash'
+import { forEachRight } from 'lodash-es'
 import { MockEntitlementsDelegate } from '../utils'
 import { SignerContext, makeSignerContext } from '../signerContext'
 import {
@@ -462,7 +462,7 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     f: T,
 ): ReturnType<T> | undefined => {
     let ret: ReturnType<T> | undefined = undefined
-    _.forEachRight(events, (v): boolean => {
+    forEachRight(events, (v): boolean => {
         const r = f(v)
         if (r !== undefined) {
             ret = r

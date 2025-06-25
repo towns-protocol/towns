@@ -1,4 +1,3 @@
-import reverse from 'lodash/reverse'
 import {
     MessageTipEvent,
     MessageTips,
@@ -407,7 +406,7 @@ export function makeTimelinesViewInterface(
 
     function prependEvents(events: TimelineEvent[], userId: string, streamId: string) {
         setState((state) => {
-            for (const event of reverse(events)) {
+            for (const event of [...events].reverse()) {
                 const editsEventId = getEditsId(event.content)
                 const redactsEventId = getRedactsId(event.content)
                 if (redactsEventId) {

@@ -8535,7 +8535,6 @@ __metadata:
     "@towns-protocol/olm": 3.2.28
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
-    "@types/lodash": ^4.14.186
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -8783,7 +8782,7 @@ __metadata:
     "@towns-protocol/sdk-crypto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/debug": ^4.1.8
-    "@types/lodash": ^4.14.186
+    "@types/lodash-es": ^4.17.12
     "@types/node": ^20.14.8
     "@types/seedrandom": ^3.0.4
     "@typescript-eslint/eslint-plugin": ^8.29.0
@@ -8798,7 +8797,7 @@ __metadata:
     ethers: ^5.7.2
     fake-indexeddb: ^4.0.1
     happy-dom: ^15.11.7
-    lodash: ^4.17.21
+    lodash-es: ^4.17.21
     nanoid: ^4.0.0
     p-limit: ^6.1.0
     seedrandom: ^3.0.5
@@ -8869,7 +8868,6 @@ __metadata:
     "@towns-protocol/sdk": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/debug": ^4.1.8
-    "@types/lodash": ^4.14.186
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -8917,7 +8915,6 @@ __metadata:
     "@isaacs/ttlcache": ^1.4.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
-    "@types/lodash": ^4.14.186
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -8927,7 +8924,6 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
     ethers: ^5.7.2
-    lodash: ^4.17.21
     lru-cache: ^11.0.1
     nanoid: ^4.0.0
     typed-emitter: ^2.1.0
@@ -9253,10 +9249,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.14.186":
-  version: 4.14.202
-  resolution: "@types/lodash@npm:4.14.202"
-  checksum: a91acf3564a568c6f199912f3eb2c76c99c5a0d7e219394294213b3f2d54f672619f0fde4da22b29dc5d4c31457cd799acc2e5cb6bd90f9af04a1578483b6ff7
+"@types/lodash-es@npm:^4.17.12":
+  version: 4.17.12
+  resolution: "@types/lodash-es@npm:4.17.12"
+  dependencies:
+    "@types/lodash": "*"
+  checksum: 990a99e2243bebe9505cb5ad19fbc172beb4a8e00f9075c99fc06c46c2801ffdb40bc2867271cf580d5f48994fc9fb076ec92cd60a20e621603bf22114e5b077
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:*":
+  version: 4.17.18
+  resolution: "@types/lodash@npm:4.17.18"
+  checksum: 539b2a01a83062888c36e53450b03ff2fbb4631a8226df38e1d77888c954c931b0b1abcbb26bb4f19ffc37da5b0be4db8b3002560d2acc036e8d28ebad132c47
   languageName: node
   linkType: hard
 
@@ -20225,6 +20230,13 @@ __metadata:
   dependencies:
     p-locate: ^5.0.0
   checksum: 72eb661788a0368c099a184c59d2fee760b3831c9c1c33955e8a19ae4a21b4116e53fa736dc086cdeb9fce9f7cc508f2f92d2d3aae516f133e16a2bb59a39f5a
+  languageName: node
+  linkType: hard
+
+"lodash-es@npm:^4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 05cbffad6e2adbb331a4e16fbd826e7faee403a1a04873b82b42c0f22090f280839f85b95393f487c1303c8a3d2a010048bf06151a6cbe03eee4d388fb0a12d2
   languageName: node
   linkType: hard
 
