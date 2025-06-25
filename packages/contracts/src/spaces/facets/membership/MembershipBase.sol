@@ -204,9 +204,8 @@ abstract contract MembershipBase is IMembershipBase {
             return FixedPointMathLib.max(renewalPrice, minFee);
         }
 
-        uint256 minPrice = platform.getMembershipMinPrice();
         uint256 price = _getMembershipPrice(totalSupply);
-        return FixedPointMathLib.max(price, minPrice);
+        return FixedPointMathLib.max(price, minFee);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

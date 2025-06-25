@@ -3,12 +3,17 @@ pragma solidity ^0.8.19;
 
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
+import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 
 //interfaces
 import {IERC5643Base} from "src/diamond/facets/token/ERC5643/IERC5643.sol";
+import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
 //libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+
+// debuggging
+import {console} from "forge-std/console.sol";
 
 //contracts
 
@@ -268,5 +273,43 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
 
         vm.prank(alice);
         membership.renewMembership{value: renewalPrice}(tokenId);
+    }
+
+    function test_renewMembershipFreeTown() external {
+        MembershipFacet freeMembership = MembershipFacet(freeSpace);
+        IERC721AQueryable freeMembershipTokenQueryable = IERC721AQueryable(freeSpace);
+
+        // Alice joins for free
+        vm.prank(alice);
+        freeMembership.joinSpace(alice);
+
+        uint256 tokenId = freeMembershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 originalExpiration = freeMembership.expiresAt(tokenId);
+
+        // Warp to expiration
+        vm.warp(originalExpiration);
+
+        // Get protocol fee recipient and check initial balance
+        address protocol = platformReqs.getFeeRecipient();
+        uint256 protocolBalanceBefore = protocol.balance;
+
+        // Calculate protocol fee (should be 0 since base price is 0)
+        uint256 renewalPrice = freeMembership.getMembershipRenewalPrice(tokenId);
+        uint256 protocolFee = platformReqs.getMembershipFee();
+
+        assertEq(renewalPrice, protocolFee);
+
+        // Fund Alice's wallet with protocol fee
+        vm.deal(alice, renewalPrice);
+
+        // Renew membership
+        vm.prank(alice);
+        freeMembership.renewMembership{value: renewalPrice}(tokenId);
+
+        // Verify protocol fee was paid
+        assertEq(protocol.balance - protocolBalanceBefore, protocolFee);
+
+        // Verify membership was renewed
+        assertGt(freeMembership.expiresAt(tokenId), originalExpiration);
     }
 }
