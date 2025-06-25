@@ -340,6 +340,42 @@ ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
     }
 })
 
+ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        // Find existing stake record by depositId
+        const existingStake = await context.db.sql.query.stakers.findFirst({
+            where: eq(schema.stakers.depositId, event.args.depositId),
+        })
+
+        if (existingStake && existingStake.amount !== null) {
+            const newAmount =
+                existingStake.amount - event.args.amount > 0n
+                    ? existingStake.amount - event.args.amount
+                    : 0n
+            // Update existing stake amount by subtracting the withdrawn amount
+            await context.db.sql
+                .update(schema.stakers)
+                .set({
+                    amount: newAmount,
+                    createdAt: blockNumber,
+                })
+                .where(eq(schema.stakers.depositId, event.args.depositId))
+        } else {
+            console.warn(
+                `No existing stake found for depositId ${event.args.depositId} in Withdraw event`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing BaseRegistry:Withdraw at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
 ponder.on('BaseRegistry:OperatorRegistered', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
