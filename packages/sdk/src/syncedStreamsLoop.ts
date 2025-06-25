@@ -804,6 +804,8 @@ export class SyncedStreamsLoop {
                     const streamId = streamIdAsString(streamIdBytes)
                     if (this.inFlightSyncCookies.has(streamId)) {
                         this.inFlightSyncCookies.delete(streamId)
+                        this.processedStreamCount++
+
                         if (
                             this.inFlightSyncCookies.size === 0 ||
                             Date.now() - this.lastLogInflightAt > 5000
@@ -867,7 +869,6 @@ export class SyncedStreamsLoop {
                             undefined,
                         )
                     }
-                    this.processedStreamCount++
                 } catch (err) {
                     const e = err as any
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
