@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 // utils
@@ -187,6 +187,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(appId, registry.getLatestAppId(app));
         assertEq(module, app);
         assertEq(registry.getAppByClient(DEFAULT_CLIENT), app);
+        assertEq(registry.getAppDuration(app), DEFAULT_ACCESS_DURATION);
     }
 
     function test_revertWhen_createApp_EmptyName() external {

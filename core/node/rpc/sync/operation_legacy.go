@@ -5,6 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
@@ -47,7 +48,10 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 				reply: make(chan error, 1),
 			}
 			if err := syncOp.process(cmd); err != nil {
-				syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				if IsRiverErrorCode(err, Err_INVALID_ARGUMENT) {
+					syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				}
+				syncOp.cancel(err)
 			}
 		}()
 	}
@@ -86,19 +90,6 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 			}
 
 			for i, msg := range msgs {
-				msg.SyncId = syncOp.SyncID
-				if err := res.Send(msg); err != nil {
-					syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
-					return err
-				}
-
-				messagesSendToClient++
-				syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
-
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					return nil
-				}
-
 				select {
 				case <-syncOp.ctx.Done():
 					// clientErr non-nil indicates client hung up, get the error from the root ctx.
@@ -108,6 +99,18 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 					// otherwise syncOp is stopped internally.
 					return context.Cause(syncOp.ctx)
 				default:
+					msg.SyncId = syncOp.SyncID
+					if err := res.Send(msg); err != nil {
+						syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
+						return err
+					}
+
+					messagesSendToClient++
+					syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+
+					if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+						return nil
+					}
 				}
 			}
 

@@ -19,17 +19,18 @@ export class Observable<T> {
         return this._value
     }
 
-    set(fn: (prevValue: T) => T) {
-        this.setValue(fn(this.value))
+    set(fn: (prevValue: T) => T): boolean {
+        return this.setValue(fn(this.value))
     }
 
-    setValue(newValue: T) {
+    setValue(newValue: T): boolean {
         if (this._value === newValue) {
-            return
+            return false
         }
         const prevValue = this._value
         this._value = newValue
         this.notify(prevValue)
+        return true
     }
 
     subscribe(
@@ -79,11 +80,8 @@ export class Observable<T> {
         })
     }
 
-    //  T is the observable’s element type (unchanged)
-    //  U must NOT be undefined or null
-    //  U must be an object
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    map<U extends {}>(fn: (value: T, prevValue: T, state?: U) => U): Observable<U> {
+    //  T is the observable’s element type, U is the mapped element type
+    map<U>(fn: (value: T, prevValue: T, prevResult?: U) => U): Observable<U> {
         const mappedObservable = new Observable(fn(this.value, this.value))
 
         mappedObservable._dispose = this.subscribe((newValue, prevValue) => {

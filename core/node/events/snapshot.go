@@ -192,6 +192,12 @@ func make_SnapshotContent(iInception IsInceptionPayload) (IsSnapshot_Content, er
 				Inception: inception,
 			},
 		}, nil
+	case *MetadataPayload_Inception:
+		return &Snapshot_MetadataContent{
+			MetadataContent: &MetadataPayload_Snapshot{
+				Inception: inception,
+			},
+		}, nil
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown inception type %T", iInception))
 	}
@@ -238,7 +244,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 
 // mutate snapshot with content of event if applicable
 func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64, eventNum int64) error {
-	iSnapshot = migrations.MigrateSnapshot(iSnapshot)
+	migrations.MigrateSnapshot(iSnapshot)
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
 		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, event.Event.CreatorAddress, eventNum, event.Hash.Bytes())
@@ -260,8 +266,10 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		return update_Snapshot_Member(iSnapshot, payload.MemberPayload, event.Event.CreatorAddress, miniblockNum, eventNum, event.Hash.Bytes())
 	case *StreamEvent_MediaPayload:
 		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
+	case *StreamEvent_MetadataPayload:
+		return update_Snapshot_Metadata(iSnapshot, payload.MetadataPayload)
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown payload type %T", event.Event.Payload))
+		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type", "payloadType", fmt.Sprintf("%T", event.Event.Payload))
 	}
 }
 
@@ -1130,4 +1138,87 @@ func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *
 			}
 		}
 	}
+}
+
+func update_Snapshot_Metadata(iSnapshot *Snapshot, metadataPayload *MetadataPayload) error {
+	snapshot, ok := iSnapshot.Content.(*Snapshot_MetadataContent)
+	if !ok {
+		return RiverError(Err_INVALID_ARGUMENT, "snapshot is not a metadata snapshot").
+			Func("update_Snapshot_Metadata")
+	}
+
+	switch content := metadataPayload.GetContent().(type) {
+	case *MetadataPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update snapshot with inception event").
+			Func("update_Snapshot_Metadata")
+	case *MetadataPayload_NewStream_:
+		streamRecord := &StreamRecord{
+			StreamId:          content.NewStream.GetStreamId(),
+			LastMiniblockHash: content.NewStream.GetGenesisMiniblockHash(),
+			LastMiniblockNum:  0, // Genesis miniblock is always 0
+			Nodes:             content.NewStream.GetNodes(),
+			ReplicationFactor: content.NewStream.GetReplicationFactor(),
+		}
+		snapshot.MetadataContent.Streams = insertStreamRecord(snapshot.MetadataContent.Streams, streamRecord)
+		return nil
+	case *MetadataPayload_LastMiniblockUpdate_:
+		streamRecord, err := findStreamRecord(snapshot.MetadataContent.Streams, content.LastMiniblockUpdate.GetStreamId())
+		if err != nil {
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find stream record for LastMiniblockUpdate").
+				Func("update_Snapshot_Metadata").
+				Tag("streamId", hex.EncodeToString(content.LastMiniblockUpdate.GetStreamId()))
+		}
+		streamRecord.LastMiniblockHash = content.LastMiniblockUpdate.GetLastMiniblockHash()
+		streamRecord.LastMiniblockNum = content.LastMiniblockUpdate.GetLastMiniblockNum()
+		return nil
+	case *MetadataPayload_PlacementUpdate_:
+		streamRecord, err := findStreamRecord(snapshot.MetadataContent.Streams, content.PlacementUpdate.GetStreamId())
+		if err != nil {
+			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find stream record for PlacementUpdate").
+				Func("update_Snapshot_Metadata").
+				Tag("streamId", hex.EncodeToString(content.PlacementUpdate.GetStreamId()))
+		}
+		streamRecord.Nodes = content.PlacementUpdate.GetNodes()
+		streamRecord.ReplicationFactor = content.PlacementUpdate.GetReplicationFactor()
+		return nil
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown metadata payload type", "type", fmt.Sprintf("%T", content)).
+			Func("update_Snapshot_Metadata")
+	}
+}
+
+func findStreamRecord(
+	streams []*StreamRecord,
+	streamId []byte,
+) (*StreamRecord, error) {
+	streamRecord, err := findSorted(
+		streams,
+		streamId,
+		bytes.Compare,
+		func(stream *StreamRecord) []byte {
+			return stream.StreamId
+		},
+	)
+	if err != nil {
+		return nil, AsRiverError(err).Func("findStreamRecord").
+			Tag("streamId", hex.EncodeToString(streamId))
+	}
+	return streamRecord, nil
+}
+
+func insertStreamRecord(
+	streams []*StreamRecord,
+	newStreams ...*StreamRecord,
+) []*StreamRecord {
+	for _, stream := range newStreams {
+		streams = insertSorted(
+			streams,
+			stream,
+			bytes.Compare,
+			func(stream *StreamRecord) []byte {
+				return stream.StreamId
+			},
+		)
+	}
+	return streams
 }

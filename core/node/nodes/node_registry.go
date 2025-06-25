@@ -35,6 +35,8 @@ type NodeRegistry interface {
 	GetValidNodeAddresses() []common.Address
 
 	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
+
+	IsOperator(address common.Address) bool
 }
 
 type nodeRegistryImpl struct {
@@ -259,7 +261,7 @@ func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, e *river.NodeRe
 		newNode.url = e.Url
 		if !nn.local {
 			newNode.streamServiceClient = NewStreamServiceClient(n.httpClient, e.Url, n.connectOpts...)
-			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, e.Url, n.connectOpts...)
+			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClientWithCert, e.Url, n.connectOpts...)
 		}
 		n.nodesLocked[e.NodeAddress] = &newNode
 		n.resetLocked()
@@ -326,4 +328,67 @@ func (n *nodeRegistryImpl) ChooseStreamNodes(
 	replFactor int,
 ) ([]common.Address, error) {
 	return n.streamPicker.ChooseStreamNodes(ctx, streamId, replFactor)
+}
+
+// CloneWithClients returns a new node registry with cloned values from n and the given
+// httpClient and httpClientWithCert.
+func (n *nodeRegistryImpl) CloneWithClients(
+	httpClient *http.Client,
+	httpClientWithCert *http.Client,
+) *nodeRegistryImpl {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+
+	clone := &nodeRegistryImpl{
+		contract:              n.contract,
+		onChainConfig:         n.onChainConfig,
+		localNodeAddress:      n.localNodeAddress,
+		httpClient:            httpClient,
+		httpClientWithCert:    httpClientWithCert,
+		streamPicker:          n.streamPicker,
+		appliedBlockNumLocked: n.appliedBlockNumLocked,
+	}
+
+	clone.connectOpts = make([]connect.ClientOption, len(n.connectOpts))
+	copy(clone.connectOpts, n.connectOpts)
+
+	clone.nodesLocked = make(map[common.Address]*NodeRecord, len(n.nodesLocked))
+	for addr, node := range n.nodesLocked {
+		clonedNode := &NodeRecord{
+			address:             node.address,
+			operator:            node.operator,
+			url:                 node.url,
+			status:              node.status,
+			local:               node.local,
+			streamServiceClient: node.streamServiceClient,
+			nodeToNodeClient:    node.nodeToNodeClient,
+		}
+		clone.nodesLocked[addr] = clonedNode
+	}
+
+	clone.allNodesLocked = make([]*NodeRecord, len(n.allNodesLocked))
+	for i, node := range n.allNodesLocked {
+		clone.allNodesLocked[i] = clone.nodesLocked[node.address]
+	}
+
+	clone.activeNodesLocked = make([]*NodeRecord, len(n.activeNodesLocked))
+	for i, node := range n.activeNodesLocked {
+		clone.activeNodesLocked[i] = clone.nodesLocked[node.address]
+	}
+
+	clone.validAddrsLocked = make([]common.Address, len(n.validAddrsLocked))
+	copy(clone.validAddrsLocked, n.validAddrsLocked)
+
+	clone.operatorsLocked = make(map[common.Address]bool, len(n.operatorsLocked))
+	for addr, val := range n.operatorsLocked {
+		clone.operatorsLocked[addr] = val
+	}
+
+	return clone
+}
+
+func (n *nodeRegistryImpl) IsOperator(address common.Address) bool {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.operatorsLocked[address]
 }

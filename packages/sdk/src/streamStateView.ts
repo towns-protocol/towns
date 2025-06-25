@@ -49,12 +49,14 @@ import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError } from './decryptionExtensions'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
+
+const EMPTY_TIMELINE: TimelineEvent[] = []
 
 // it's very important that the Stream is the emitter for all events
 // for any mutations, go through the stream
@@ -75,7 +77,7 @@ export class StreamStateView {
     membershipContent: StreamStateView_Members
 
     get isInitialized(): boolean {
-        return this.streamsView.streamStatus.value[this.streamId]?.isInitialized ?? false
+        return this.streamsView.streamStatus.get(this.streamId).isInitialized
     }
 
     set isInitialized(value: boolean) {
@@ -83,7 +85,7 @@ export class StreamStateView {
     }
 
     get timeline(): TimelineEvent[] {
-        return this.streamsView.timelinesView.value.timelines[this.streamId]
+        return this.streamsView.timelinesView.value.timelines[this.streamId] ?? EMPTY_TIMELINE
     }
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -167,31 +169,46 @@ export class StreamStateView {
         this.streamsView = streamsView || new StreamsView('', undefined) // always have a streams view to ensure we can use the timeline
         if (isSpaceStreamId(streamId)) {
             this.contentKind = 'spaceContent'
-            this._spaceContent = new StreamStateView_Space(streamId)
+            this._spaceContent = new StreamStateView_Space(streamId, this.streamsView.spaceStreams)
         } else if (isChannelStreamId(streamId)) {
             this.contentKind = 'channelContent'
             this._channelContent = new StreamStateView_Channel(streamId)
         } else if (isDMChannelStreamId(streamId)) {
             this.contentKind = 'dmChannelContent'
-            this._dmChannelContent = new StreamStateView_DMChannel(streamId)
+            this._dmChannelContent = new StreamStateView_DMChannel(
+                streamId,
+                this.streamsView.dmStreams,
+            )
         } else if (isGDMChannelStreamId(streamId)) {
             this.contentKind = 'gdmChannelContent'
-            this._gdmChannelContent = new StreamStateView_GDMChannel(streamId)
+            this._gdmChannelContent = new StreamStateView_GDMChannel(
+                streamId,
+                this.streamsView.gdmStreams,
+            )
         } else if (isMediaStreamId(streamId)) {
             this.contentKind = 'mediaContent'
             this._mediaContent = new StreamStateView_Media(streamId)
         } else if (isUserStreamId(streamId)) {
             this.contentKind = 'userContent'
-            this._userContent = new StreamStateView_User(streamId)
+            this._userContent = new StreamStateView_User(streamId, this.streamsView.userStreams)
         } else if (isUserSettingsStreamId(streamId)) {
             this.contentKind = 'userSettingsContent'
-            this._userSettingsContent = new StreamStateView_UserSettings(streamId, this.streamsView)
+            this._userSettingsContent = new StreamStateView_UserSettings(
+                streamId,
+                this.streamsView.userSettingsStreams,
+            )
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userMetadataContent'
-            this._userMetadataContent = new StreamStateView_UserMetadata(streamId)
+            this._userMetadataContent = new StreamStateView_UserMetadata(
+                streamId,
+                this.streamsView.userMetadataStreams,
+            )
         } else if (isUserInboxStreamId(streamId)) {
             this.contentKind = 'userInboxContent'
-            this._userInboxContent = new StreamStateView_UserInbox(streamId)
+            this._userInboxContent = new StreamStateView_UserInbox(
+                streamId,
+                this.streamsView.userInboxStreams,
+            )
         } else if (isMetadataStreamId(streamId)) {
             throwWithCode('Metadata streams are not supported in SDK', Err.UNIMPLEMENTED)
         } else {
@@ -199,7 +216,10 @@ export class StreamStateView {
         }
 
         this.prevSnapshotMiniblockNum = 0n
-        this.membershipContent = new StreamStateView_Members(streamId)
+        this.membershipContent = new StreamStateView_Members(
+            streamId,
+            this.streamsView.streamMemberIds,
+        )
     }
 
     private applySnapshot(

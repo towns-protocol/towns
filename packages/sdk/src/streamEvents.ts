@@ -15,11 +15,8 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import {
-    EventSignatureBundle,
-    KeySolicitationContent,
-    UserDevice,
-} from '@towns-protocol/encryption'
+import { UserDevice } from '@towns-protocol/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
@@ -70,6 +67,8 @@ export type SyncedStreamEvents = {
     streamSyncStateChange: (newState: SyncState) => void
     streamRemovedFromSync: (streamId: string) => void
     streamSyncActive: (active: boolean) => void
+    streamSyncBatchCompleted: (details: { duration: number; count: number }) => void
+    streamSyncTimedOut: (details: { duration: number }) => void
 }
 
 /// Stream state events, emitted after initialization

@@ -175,11 +175,9 @@ func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBack
 		if !slices.ContainsFunc(subscriptions, func(sub *Subscription) bool {
 			return sub.syncID == s.syncID
 		}) {
-			if cookie.GetMinipoolGen() > 0 || len(cookie.GetPrevMiniblockHash()) > 0 {
-				// The given stream should be backfilled and then start syncing.
-				shouldBackfill = true
-				s.initializingStreams.Store(streamID, struct{}{})
-			}
+			// The given stream should be backfilled and then start syncing.
+			shouldBackfill = true
+			s.initializingStreams.Store(streamID, struct{}{})
 			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
 		}
 	}

@@ -69,18 +69,20 @@ import {
 import {
     AES_GCM_DERIVED_ALGORITHM,
     CryptoStore,
-    DecryptionEvents,
-    EntitlementsDelegate,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
     GroupEncryptionSession,
     IGroupEncryptionClient,
     UserDevice,
     UserDeviceCollection,
-    makeSessionKeys,
-    type BaseDecryptionExtensions,
     type EncryptionDeviceInitOpts,
 } from '@towns-protocol/encryption'
+import {
+    DecryptionEvents,
+    EntitlementsDelegate,
+    makeSessionKeys,
+    type BaseDecryptionExtensions,
+} from './decryptionExtensions'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -383,8 +385,8 @@ export class Client
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
                 if (
-                    payload.op === MembershipOp.SO_JOIN ||
-                    (payload.op === MembershipOp.SO_INVITE &&
+                    payload?.op === MembershipOp.SO_JOIN ||
+                    (payload?.op === MembershipOp.SO_INVITE &&
                         (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)))
                 ) {
                     acc.push(streamId)
@@ -1251,7 +1253,7 @@ export class Client
         const timelineEvent = this.streamsView.timelinesView.value.timelines[streamId]?.find(
             (e) => e.eventId === eventId,
         )
-        check(isDefined(timelineEvent), 'event not found')
+        check(isDefined(timelineEvent), 'pin timeline event not found')
         const blockNumber = timelineEvent.confirmedInBlockNum
         let event: ParsedEvent | undefined
         if (blockNumber) {
@@ -1263,9 +1265,9 @@ export class Client
             check(isDefined(stream), 'stream not found')
             event = stream.view.minipoolEvents.get(eventId)?.remoteEvent
         }
-        check(isDefined(event), 'event not found')
+        check(isDefined(event), 'pin event not found')
         const streamEvent = event.event
-        check(isDefined(streamEvent), 'streamEvent not found')
+        check(isDefined(streamEvent), 'pin streamEvent not found')
         const result = await this.makeEventAndAddToStream(
             streamId,
             make_MemberPayload_Pin(event.hash, streamEvent),
@@ -1947,9 +1949,13 @@ export class Client
     async retrySendMessage(streamId: string, localId: string): Promise<void> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found' + streamId)
-        const event = stream.view.minipoolEvents.get(localId)
-        check(isDefined(event), 'event not found')
-        check(isDefined(event.localEvent), 'event not found')
+        const event =
+            stream.view.minipoolEvents.get(localId) ??
+            Array.from(stream.view.minipoolEvents.values()).find(
+                (e) => e.localEvent?.localId === localId,
+            )
+        check(isDefined(event), 'retry event not found')
+        check(isDefined(event.localEvent), 'retry local event not found')
         check(event.localEvent.status === 'failed', 'event not in failed state')
         await this.makeAndSendChannelMessageEvent(
             streamId,
@@ -2035,8 +2041,9 @@ export class Client
         check(isDefined(this.userStreamId))
 
         if (isSpaceStreamId(streamId)) {
-            const channelIds =
-                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const channelIds = Object.keys(
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
 
             const userStream = this.stream(this.userStreamId)
             for (const channelId of channelIds) {
@@ -2064,8 +2071,9 @@ export class Client
         this.logCall('removeUser', streamId, userId)
 
         if (isSpaceStreamId(streamId)) {
-            const channelIds =
-                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const channelIds = Object.keys(
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
             const userStreamId = makeUserStreamId(userId)
             const userStream = await this.getStream(userStreamId)
 

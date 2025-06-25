@@ -92,6 +92,14 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         }
     }
 
+    function _getAppDuration(address app) internal view returns (uint48 duration) {
+        try ITownsApp(app).accessDuration() returns (uint48 accessDuration) {
+            return _validateDuration(accessDuration);
+        } catch {
+            return MAX_DURATION;
+        }
+    }
+
     /// @notice Retrieves detailed information about an app by its ID
     /// @param appId The unique identifier of the app
     /// @return appData A struct containing all app information including module, owner, clients, permissions, and manifest

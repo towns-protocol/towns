@@ -19,30 +19,30 @@ import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { create, fromJsonString } from '@bufbuild/protobuf'
 import { streamIdFromBytes, userIdFromAddress } from './id'
-import { StreamsView } from './views/streamsView'
+import {
+    UserSettingsStreamModel,
+    UserSettingsStreamsView,
+} from './views/streams/userSettingsStreams'
 
 const log = dlog('csb:stream')
-const EMPTY_USER_BLOCKS = {}
-const EMPTY_FULLY_READ_MARKERS = {}
 
 export class StreamStateView_UserSettings extends StreamStateView_AbstractContent {
     readonly streamId: string
+
     get fullyReadMarkers(): Record<string, Record<string, FullyReadMarker>> {
-        return (
-            this.streamsView.userSettingsStreams.value[this.streamId]?.fullyReadMarkers ??
-            EMPTY_FULLY_READ_MARKERS
-        )
+        return this.userSettingsStreamModel.fullyReadMarkers
     }
     get userBlocks(): Record<string, UserSettingsPayload_Snapshot_UserBlocks> {
-        return (
-            this.streamsView.userSettingsStreams.value[this.streamId]?.userBlocks ??
-            EMPTY_USER_BLOCKS
-        )
+        return this.userSettingsStreamModel.userBlocks
+    }
+
+    get userSettingsStreamModel(): UserSettingsStreamModel {
+        return this.userSettingsStreamsView.get(this.streamId)
     }
 
     constructor(
         streamId: string,
-        private readonly streamsView: StreamsView,
+        private readonly userSettingsStreamsView: UserSettingsStreamsView,
     ) {
         super()
         this.streamId = streamId
@@ -56,7 +56,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
         for (const userBlocks of content.userBlocksList) {
             const userId = userIdFromAddress(userBlocks.userId)
-            this.streamsView.userSettingsStreams.setUserBlocks(this.streamId, userId, userBlocks)
+            this.userSettingsStreamsView.setUserBlocks(this.streamId, userId, userBlocks)
         }
     }
 
@@ -121,7 +121,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         const streamId = streamIdFromBytes(payload.streamId)
         const fullyReadMarkersContent = fromJsonString(FullyReadMarkersSchema, content.data)
 
-        this.streamsView.userSettingsStreams.setFullyReadMarkers(
+        this.userSettingsStreamsView.setFullyReadMarkers(
             this.streamId,
             streamId,
             fullyReadMarkersContent.markers,
@@ -138,7 +138,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             eventNum: payload.eventNum,
             isBlocked: payload.isBlocked,
         } satisfies PlainMessage<UserSettingsPayload_Snapshot_UserBlocks_Block>)
-        this.streamsView.userSettingsStreams.updateUserBlock(this.streamId, userId, userBlock)
+        this.userSettingsStreamsView.updateUserBlock(this.streamId, userId, userBlock)
         emitter?.emit('userBlockUpdated', payload)
     }
 

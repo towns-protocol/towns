@@ -1,4 +1,4 @@
-import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { EntitlementsDelegate } from '../../decryptionExtensions'
 import { Permission, SpaceDapp } from '@towns-protocol/web3'
 import { RiverConfig } from '../../riverConfig'
 

@@ -20,22 +20,17 @@ interface ISwapRouterBase {
         address recipient;
     }
 
-    /// @notice Parameters for EIP-2612 permit approval
-    /// @param owner The owner of the tokens
-    /// @param spender The spender being approved
-    /// @param value The amount of tokens to approve
-    /// @param deadline The timestamp until which the permit is valid
-    /// @param v The recovery byte of the signature
-    /// @param r The first 32 bytes of the signature
-    /// @param s The second 32 bytes of the signature
-    struct PermitParams {
+    /// @notice Parameters for Permit2 signature transfer with witness
+    /// @dev Token and amount are derived from ExactInputParams
+    /// @param owner The owner of the tokens (who signed the permit)
+    /// @param nonce The permit nonce
+    /// @param deadline The permit deadline
+    /// @param signature The permit signature
+    struct Permit2Params {
         address owner;
-        address spender;
-        uint256 value;
+        uint256 nonce;
         uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
+        bytes signature;
     }
 
     /// @notice Parameters for external router interaction
@@ -46,6 +41,12 @@ interface ISwapRouterBase {
         address router;
         address approveTarget;
         bytes swapData;
+    }
+
+    struct SwapWitness {
+        ExactInputParams exactInputParams;
+        RouterParams routerParams;
+        address poster;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -66,6 +67,12 @@ interface ISwapRouterBase {
 
     /// @notice Error thrown when an invalid BPS value is provided
     error SwapRouter__InvalidBps();
+
+    /// @notice Error thrown when native token is used with permit (not supported)
+    error SwapRouter__NativeTokenNotSupportedWithPermit();
+
+    /// @notice Error thrown when recipient is not specified (address(0))
+    error SwapRouter__RecipientRequired();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -129,26 +136,24 @@ interface ISwapRouter is ISwapRouterBase {
         address poster
     ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
-    //    /// @notice Executes a swap using EIP-2612 permit for token approval
-    //    /// @param params The parameters for the swap
-    //    /// tokenIn The token being sold
-    //    /// tokenOut The token being bought
-    //    /// amountIn The amount of tokenIn to swap
-    //    /// minAmountOut The minimum amount of tokenOut to receive
-    //    /// recipient The address to receive the output tokens
-    //    /// @param routerParams The router parameters for the swap
-    //    /// router The address of the router to use
-    //    /// approveTarget The address to approve the token transfer
-    //    /// swapData The calldata to execute on the router
-    //    /// @param permit The EIP-2612 permit data for token approval
-    //    /// @param poster The address that posted this swap opportunity
-    //    /// @return amountOut The amount of tokenOut received
-    //    function executeSwapWithPermit(
-    //        ExactInputParams calldata params,
-    //        RouterParams calldata routerParams,
-    //        PermitParams calldata permit,
-    //        address poster
-    //    ) external payable returns (uint256 amountOut);
+    /// @notice Executes a swap using Permit2 with witness data binding permit to swap intent
+    /// @dev Uses Uniswap's Permit2 protocol with witness binding for enhanced security.
+    /// Integration flow:
+    /// 1. User approves tokens to Permit2 contract (0x000000000022D473030F116dDEE9F6B43aC78BA3)
+    /// 2. Frontend generates permit signature using getPermit2MessageHash()
+    /// 3. Frontend calls this function with signed permit
+    /// @param params The exact input swap parameters that will be bound to the permit signature
+    /// @param routerParams The router interaction parameters that will be bound to the permit signature
+    /// @param permit The Permit2 data containing owner, nonce, deadline, and signature
+    /// @param poster The address that posted this swap opportunity (included in witness)
+    /// @return amountOut The amount of output tokens received after fees
+    /// @return protocolFee The amount of protocol fee collected
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
     /// @notice Calculate fees for ETH input swaps before execution
     /// @dev This function helps integrators determine the actual amount that will be sent to external
@@ -168,4 +173,40 @@ interface ISwapRouter is ISwapRouterBase {
         address caller,
         address poster
     ) external view returns (uint256 amountInAfterFees, uint256 protocolFee, uint256 posterFee);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        PERMIT2 UTILS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Get the next available Permit2 nonce for a user from Permit2's bitmap system
+    /// @dev Permit2 uses a bitmap system where each bit represents a nonce state (0=available, 1=used).
+    /// Nonces are organized in 256-nonce "words" (uint256 bitmaps). This function efficiently searches
+    /// through words starting from the one containing startNonce, using bit manipulation to find the
+    /// first available nonce. The search continues across word boundaries until an available nonce is
+    /// found or the maximum word position is reached.
+    /// @param owner The address to check nonce availability for
+    /// @param startNonce The nonce to start searching from (inclusive - will return this exact nonce if available)
+    /// @return nonce The next available nonce at or after startNonce, or type(uint256).max if no nonces are available (stop flag)
+    function getPermit2Nonce(
+        address owner,
+        uint256 startNonce
+    ) external view returns (uint256 nonce);
+
+    /// @notice Generate the EIP-712 message hash for Permit2 signature
+    /// @dev Generates the exact hash that needs to be signed for permit-based swaps
+    /// @param params Swap parameters that will be bound to permit signature
+    /// @param routerParams Router parameters that will be bound to permit signature
+    /// @param poster Address of poster (included in witness data)
+    /// @param amount Token amount to permit (should be >= params.amountIn)
+    /// @param nonce Permit nonce (use getPermit2Nonce to find available nonce)
+    /// @param deadline Permit deadline (unix timestamp)
+    /// @return messageHash The EIP-712 message hash ready for signing
+    function getPermit2MessageHash(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        address poster,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    ) external view returns (bytes32 messageHash);
 }

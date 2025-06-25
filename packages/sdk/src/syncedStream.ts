@@ -18,7 +18,7 @@ import { StreamsView } from './views/streamsView'
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
     get isUpToDate(): boolean {
-        return this.streamsView.streamStatus.value[this.streamId]?.isUpToDate ?? false
+        return this.streamsView.streamStatus.get(this.streamId).isUpToDate
     }
     private set isUpToDate(value: boolean) {
         this.streamsView.streamStatus.setIsUpToDate(this.streamId, value)
