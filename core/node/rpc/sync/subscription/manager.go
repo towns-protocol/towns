@@ -128,7 +128,7 @@ func (m *Manager) start() {
 				// Get the stream ID from the message.
 				streamID, err := StreamIdFromBytes(msg.StreamID())
 				if err != nil {
-					m.log.Errorw("Failed to get stream ID from the message", "op", streamID, "err", err)
+					m.log.Errorw("Failed to get stream ID from the message", "streamId", msg.StreamID(), "error", err)
 					continue
 				}
 
