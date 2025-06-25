@@ -10,7 +10,7 @@ import { StreamChange } from '../../streamEvents'
 import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineEvents'
 import { DecryptedContent } from '../../encryptedContentTypes'
 import { DecryptionSessionError } from '../../decryptionExtensions'
-import isEqual from 'lodash/isEqual'
+import { isEqual } from 'lodash-es'
 import { isDMChannelStreamId } from '../../id'
 
 export interface TimelinesViewDelegate {

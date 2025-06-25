@@ -23,7 +23,7 @@ import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@towns-protocol/web3'
 import { check } from '@towns-protocol/dlog'
-import chunk from 'lodash/chunk'
+import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
 import {

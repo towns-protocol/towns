@@ -27,14 +27,12 @@
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
-        "lodash": "^4.17.21",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "viem": "^2.29.3",
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "@types/lodash": "^4.14.186",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
