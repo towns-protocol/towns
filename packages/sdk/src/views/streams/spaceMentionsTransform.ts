@@ -1,4 +1,4 @@
-import isEqual from 'lodash/isEqual'
+import { isEqual } from 'lodash-es'
 import { isChannelStreamId, spaceIdFromChannelId } from '../../id'
 import { MentionResult } from '../../sync-agent/timeline/models/timeline-types'
 import { TimelinesViewModel } from './timelinesModel'
