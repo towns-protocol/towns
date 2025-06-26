@@ -372,7 +372,8 @@ func (s *Service) Register(
 
 	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app)); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
-			Message("Error subscribing to app's user inbox stream to watch for keys")
+			Message("Error subscribing to app's user inbox stream to watch for keys").
+			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddress(app))
 	}
 
 	return &connect.Response[RegisterResponse]{

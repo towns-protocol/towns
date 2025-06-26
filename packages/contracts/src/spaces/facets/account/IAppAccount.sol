@@ -40,6 +40,10 @@ interface IAppAccount is IAppAccountBase {
     /// @param app The address of the app to disable
     function disableApp(address app) external;
 
+    /// @notice Checks if an app is installed
+    /// @param app The address of the app
+    function isAppInstalled(address app) external view returns (bool);
+
     /// @notice Gets the ID of an app
     /// @param app The address of the app to get the ID of
     /// @return The ID of the app
