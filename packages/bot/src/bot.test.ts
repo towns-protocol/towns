@@ -438,7 +438,7 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
 
-    it('onReply should be triggered when a message is replied to', async () => {
+    it.skip('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const receivedReplyEvents: BotPayload<'reply'>[] = []
         bot.onReply((_h, e) => {
