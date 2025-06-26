@@ -1165,8 +1165,11 @@ export class SpaceDapp {
         if (err?.name !== UNKNOWN_ERROR) {
             return err
         }
-        const nonSpaceContracts = [this.pricingModules, this.walletLink]
+        const nonSpaceContracts = [this.airdrop.riverPoints, this.pricingModules, this.walletLink]
         for (const contract of nonSpaceContracts) {
+            if (!contract) {
+                continue
+            }
             err = contract.parseError(args.error)
             if (err?.name !== UNKNOWN_ERROR) {
                 return err
