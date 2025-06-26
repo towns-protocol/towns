@@ -332,7 +332,12 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 			requireParentEvent(ru.parentEventForUserMembership)
 
 		isApp, _ := params.streamView.IsAppUser()
-		if isApp {
+		isNodeInitiator := params.isValidNode(content.UserMembership.Inviter)
+		isNodeBoot := content.UserMembership.Op == MembershipOp_SO_LEAVE && isNodeInitiator
+		// Adding bots to spaces and channels requires ownership, but removals can also be initiated
+		// by nodes when streams are scrubbed. Thus we require space owner permissions only for app
+		// payloads that are not node-initiated leave events.
+		if isApp && !isNodeBoot {
 			builder = builder.requireChainAuth(ru.ownerChainAuthForInviter)
 		}
 		return builder
