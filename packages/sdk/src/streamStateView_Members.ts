@@ -619,6 +619,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         return this.joinedUsers
     }
 
+    joinedOrPendingJoinedParticipants(): Set<string> {
+        return new Set([...this.joinedUsers, ...this.pendingJoinedUsers])
+    }
+
     joinedOrInvitedParticipants(): Set<string> {
         return new Set([...this.joinedUsers, ...this.invitedUsers])
     }
