@@ -87,7 +87,7 @@ import {
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
 import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
-import type { BlankEnv, BlankSchema, Schema } from 'hono/types'
+import type { BlankEnv } from 'hono/types'
 
 type BotActions = ReturnType<typeof buildBotActions>
 

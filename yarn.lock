@@ -8497,6 +8497,8 @@ __metadata:
     typescript: ^5.8.2
     viem: ^2.29.3
     vitest: ^3.2.3
+  peerDependencies:
+    hono: ^4.7.11
   languageName: unknown
   linkType: soft
 
@@ -8613,6 +8615,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     tsx: ^4.7.1
     typescript: ^5.8.2
   languageName: unknown
@@ -8631,6 +8634,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     tsx: ^4.7.1
     typescript: ^5.8.2
   languageName: unknown
@@ -8649,6 +8653,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     openai: ^5.7.0
     tsx: ^4.7.1
     typescript: ^5.8.2
