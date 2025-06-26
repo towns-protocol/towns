@@ -4,7 +4,7 @@
 import { dlogger } from '@towns-protocol/dlog'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
 import { Bot } from '../../../sync-agent/utils/bot'
-import { findMessageByText, waitFor } from '../../testUtils'
+import { findMessageByText, waitFor, waitForValue } from '../../testUtils'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const logger = dlogger('csb:test:syncAgents')
@@ -138,10 +138,13 @@ describe('syncAgents.test.ts', () => {
         const space = bob.spaces.getSpace(spaceId)
         const channel = space.getDefaultChannel()
         const channelId = channel.data.id
-        const event = findMessageByText(channel.timeline.events.value, 'Hello, World!')
-        expect(event).toBeDefined()
+        const event = await waitForValue(() => {
+            const event = findMessageByText(channel.timeline.events.value, 'Hello, World!')
+            expect(event).toBeDefined()
+            return event!
+        })
         // bob can pin
-        const result = await channel.pin(event!.eventId)
+        const result = await channel.pin(event.eventId)
         expect(result).toBeDefined()
         expect(result.error).toBeUndefined()
         await waitFor(() =>
@@ -151,7 +154,7 @@ describe('syncAgents.test.ts', () => {
             ).toBe(1),
         )
         // bob can unpin
-        const result2 = await channel.unpin(event!.eventId)
+        const result2 = await channel.unpin(event.eventId)
         expect(result2).toBeDefined()
         expect(result2.error).toBeUndefined()
 
@@ -181,7 +184,7 @@ describe('syncAgents.test.ts', () => {
         )
         await txn2.wait()
         // alice can pin
-        const result3 = await aliceChannel.pin(event!.eventId)
+        const result3 = await aliceChannel.pin(event.eventId)
         expect(result3).toBeDefined()
         expect(result3.error).toBeUndefined()
     })
