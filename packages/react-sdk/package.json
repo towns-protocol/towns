@@ -1,7 +1,7 @@
 {
     "name": "@towns-protocol/react-sdk",
     "description": "React Hooks for Towns Protocol SDK",
-    "version": "0.0.257",
+    "version": "0.0.258",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
