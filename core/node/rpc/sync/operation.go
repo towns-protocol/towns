@@ -240,6 +240,7 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subsc
 		case <-syncOp.ctx.Done():
 			return
 		case cmd := <-syncOp.commands:
+			syncOp.metrics.actions(cmd, syncOp.usingSharedSyncer)
 			if cmd.ModifySyncReq != nil {
 				cmd.Reply(sub.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
