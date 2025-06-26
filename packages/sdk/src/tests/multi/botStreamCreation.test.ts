@@ -75,7 +75,9 @@ describe('bot stream creation tests', () => {
         )
     })
 
-    test('bots cannot create dms or gdms', async () => {
+    // TODO: re-enable this test when the app registry contract is validated and deployed to all
+    // environments.
+    test.skip('bots cannot create dms or gdms', async () => {
         // DMs and GDMs are created by the bot posting messages to it's own user stream. This message type
         // should be rejected as unpermitted for bots.
         const {
