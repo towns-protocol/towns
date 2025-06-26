@@ -176,7 +176,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         if (operator == address(0)) return;
 
         StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        uint256 scaledReward = staking.sweepUnclaimedReward(space, operator);
+        uint256 scaledReward = staking.transferReward(space, operator);
 
         if (scaledReward != 0) emit SpaceRewardsSwept(space, operator, scaledReward);
     }
