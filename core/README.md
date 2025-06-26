@@ -121,10 +121,10 @@ There are addition install steps for go tools in [./node/README.md](./node/READM
 
 Protobufs are generated for go and typescript
 
-    cd proto
+    cd ../packages/proto
     yarn buf:generate
 
-    cd node
+    cd ../code/node
     go generate -v -x protocol/gen.go
 
 # Setting up local CA for TLS
