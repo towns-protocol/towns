@@ -3,6 +3,7 @@
  **************************************************************************/
 export * from './appRegistryService'
 export * from './check'
+export * from './client-v2'
 export * from './client'
 export * from './clientDecryptionExtensions'
 export * from './decryptionExtensions'
