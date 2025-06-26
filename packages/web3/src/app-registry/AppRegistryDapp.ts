@@ -115,6 +115,20 @@ export class AppRegistryDapp {
             .installApp(app, spaceAddress, data ?? new Uint8Array(0), { value: price })
     }
 
+    /** To uninstall a smart contract app from a space */
+    public async uninstallApp(
+        /** The signer of the app owner */
+        signer: ethers.Signer,
+        /** The address of the app to uninstall */
+        app: Address,
+        /** The address of the space to uninstall the app from */
+        spaceAddress: Address,
+        /** The data to pass to the app's onUninstall function */
+        data?: Uint8Array,
+    ): Promise<ContractTransaction> {
+        return this.shim.write(signer).uninstallApp(app, spaceAddress, data ?? new Uint8Array(0))
+    }
+
     public async removeApp(signer: ethers.Signer, appId: string): Promise<ContractTransaction> {
         return this.shim.write(signer).removeApp(appId)
     }

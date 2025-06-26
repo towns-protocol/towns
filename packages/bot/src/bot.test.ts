@@ -521,4 +521,21 @@ describe('Bot', { sequential: true }, () => {
             expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
         },
     )
+
+    it('never receive message from a uninstalled app', async () => {
+        await appRegistryDapp.uninstallApp(
+            bob.signer,
+            appAddress,
+            SpaceAddressFromSpaceId(spaceId) as Address,
+        )
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedEvents: OnMentionedType[] = []
+        bot.onMentioned((_h, e) => {
+            receivedMentionedEvents.push(e)
+        })
+        const TEST_MESSAGE = 'wont be received'
+        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
+        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
 })
