@@ -181,7 +181,7 @@ func TestDefaultAvailable(t *testing.T) {
 
 	s := btc.OnChainConfig.Get()
 	assert.EqualValues(1, s.ReplicationFactor)
-	assert.EqualValues(50, s.MediaMaxChunkCount)
+	assert.EqualValues(21, s.MediaMaxChunkCount)
 	assert.Equal(5*time.Minute, s.StreamCacheExpiration)
 	assert.Equal(11*time.Second, s.RecencyConstraintsAge)
 }
