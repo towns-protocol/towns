@@ -53,11 +53,14 @@ jobs:
                   ECR_REPOSITORY: xchain-monitor
                   IS_LATEST_OR_PUSH: ${{ github.event_name == 'push' || github.event.inputs.is_latest }}
               run: |
+                  COMMIT_HASH=$(git describe --tags --always --dirty)
+                  echo "Building docker image with following tags: $COMMIT_HASH, ${{ github.sha }}"
                   docker build \
                     --build-arg GIT_SHA=${{ github.sha }} \
                     -f ./packages/xchain-monitor/Dockerfile \
                     -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest \
                     -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:${{ github.sha }} \
+                    -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$COMMIT_HASH \
                     .
 
                   if [ $IS_LATEST_OR_PUSH == true ]; then
@@ -68,6 +71,7 @@ jobs:
                   fi
 
                   docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:${{ github.sha }}
+                  docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$COMMIT_HASH
 
             # If action failed, we send a slack notification
             - name: Slack notification
