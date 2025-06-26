@@ -232,3 +232,8 @@ message ExportedDevice {
     repeated GroupSession inboundSessions = 4;
     repeated HybridGroupSession hybridGroupSessions = 5;
 }
+
+message AppPrivateData {
+    string private_key = 1;
+    ExportedDevice encryption_device = 2;
+}

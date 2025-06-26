@@ -283,4 +283,85 @@ describe('bot entitlements tests', () => {
         await botWithWrite.stopSync()
         await spaceOwner.stopSync()
     })
+
+    test('bot does not have write permissions to channels when not granted by isAppEntitled', async () => {
+        const {
+            alice: spaceOwner,
+            aliceProvider: spaceOwnerProvider,
+            aliceSpaceDapp: spaceOwnerSpaceDapp,
+            bob: bot,
+            bobsWallet: botWallet,
+            bobProvider: botProvider,
+        } = await setupWalletsAndContexts()
+
+        const appRegistryDapp = new AppRegistryDapp(
+            makeBaseChainConfig().chainConfig,
+            spaceOwnerProvider,
+        )
+
+        // Create bot app contract with READ permission only (no WRITE)
+        const tx = await appRegistryDapp.createApp(
+            botProvider.signer,
+            'read-only-bot-no-write',
+            [Permission.Read], // Only READ permission, no WRITE
+            botWallet.address as Address,
+            ethers.utils.parseEther('0.01').toBigInt(),
+            31536000n,
+        )
+        const receipt = await tx.wait()
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        expect(foundAppAddress).toBeDefined()
+
+        // Create bot user streams
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        bot.startSync()
+
+        // Create a town with channels where everyone can join and has write permissions
+        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
+        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
+            spaceOwner,
+            spaceOwnerSpaceDapp,
+            spaceOwnerProvider.wallet,
+            "space owner's town",
+            everyoneMembership,
+        )
+
+        // Install the bot to the space (as space owner)
+        const installTx = await appRegistryDapp.installApp(
+            spaceOwnerProvider.signer,
+            foundAppAddress as Address,
+            SpaceAddressFromSpaceId(spaceId) as Address,
+            ethers.utils.parseEther('0.02').toBigInt(),
+        )
+        const installReceipt = await installTx.wait()
+        expect(installReceipt.status).toBe(1)
+
+        // Verify bot is installed
+        const space = spaceOwnerSpaceDapp.getSpace(spaceId)
+        const installedApps = await space!.AppAccount.read.getInstalledApps()
+        expect(installedApps).toContain(foundAppAddress)
+
+        // Have space owner add bot to space and default channel
+        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
+        await expect(spaceOwner.joinUser(defaultChannelId, bot.userId)).resolves.toBeDefined()
+
+        // Validate bot is a member of both space and channel
+        const botUserStreamView = bot.stream(bot.userStreamId!)!.view
+        await waitFor(() => {
+            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+            expect(
+                botUserStreamView.userContent.isMember(defaultChannelId, MembershipOp.SO_JOIN),
+            ).toBe(true)
+        })
+
+        // Bot should NOT be able to post a message because it lacks WRITE permission through isAppEntitled
+        // Even though the space grants write permissions to all users, the bot's app contract only has READ permission
+        await expect(
+            bot.sendMessage(defaultChannelId, 'Message from read-only bot'),
+        ).rejects.toThrow(/PERMISSION_DENIED/)
+
+        // Cleanup
+        await bot.stopSync()
+        await spaceOwner.stopSync()
+    })
 })
