@@ -254,11 +254,12 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	}
 
 	subsystem := mode
-	if mode == ServerModeFull {
+	switch mode {
+	case ServerModeFull:
 		subsystem = "stream"
-	} else if mode == ServerModeNotification {
+	case ServerModeNotification:
 		subsystem = "notification"
-	} else if mode == ServerModeAppRegistry {
+	case ServerModeAppRegistry:
 		subsystem = "app_registry"
 	}
 
@@ -311,6 +312,7 @@ func (s *Service) initBaseChain() error {
 			s.baseChain,
 			s.entitlementEvaluator,
 			&cfg.ArchitectContract,
+			&cfg.AppRegistryContract,
 			cfg.BaseChain.LinkedWalletsLimit,
 			cfg.BaseChain.ContractCallsTimeoutMs,
 			s.metrics,

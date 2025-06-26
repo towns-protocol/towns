@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -64,11 +65,21 @@ func TestCache(t *testing.T) {
 	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	channelId := testutils.MakeChannelId(spaceId)
 
+	argsKey := func() *ChainAuthArgs {
+		return NewChainAuthArgsForChannel(
+			spaceId,
+			channelId,
+			common.HexToAddress("0x3"),
+			PermissionWrite,
+			common.Address{1, 2, 3},
+		)
+	}
+
 	var cacheMissForReal bool
 	result, cacheHit, err := c.executeUsingCache(
 		ctx,
 		cfg,
-		NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite),
+		argsKey(),
 		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
 			return &simpleCacheResult{allowed: true}, nil
@@ -83,7 +94,7 @@ func TestCache(t *testing.T) {
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
 		cfg,
-		NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite),
+		argsKey(),
 		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
 			return &simpleCacheResult{allowed: false}, nil
@@ -96,13 +107,13 @@ func TestCache(t *testing.T) {
 
 	// Bust negative cache, validate next computation was a cache miss with expected
 	// result
-	c.bust(NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite))
+	c.bust(argsKey())
 
 	cacheMissForReal = false
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
 		cfg,
-		NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite),
+		argsKey(),
 		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
 			return &simpleCacheResult{allowed: true}, nil
@@ -118,7 +129,7 @@ func TestCache(t *testing.T) {
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
 		cfg,
-		NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite),
+		argsKey(),
 		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
 			return &simpleCacheResult{allowed: true}, nil
@@ -131,13 +142,13 @@ func TestCache(t *testing.T) {
 
 	// Bust positive cache, validate next computation was a cache miss with expected
 	// result
-	c.bust(NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite))
+	c.bust(argsKey())
 
 	cacheMissForReal = false
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
 		cfg,
-		NewChainAuthArgsForChannel(spaceId, channelId, common.HexToAddress("0x3"), PermissionWrite),
+		argsKey(),
 		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
 			return &simpleCacheResult{allowed: true}, nil

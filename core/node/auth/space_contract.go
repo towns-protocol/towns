@@ -74,4 +74,16 @@ type SpaceContract interface {
 		ctx context.Context,
 		spaceId shared.StreamId,
 	) ([]types.BaseChannel, error)
+	IsAppEntitled(
+		ctx context.Context,
+		spaceId shared.StreamId,
+		appClient common.Address,
+		appAddress common.Address,
+		permission Permission,
+	) (bool, error)
+	IsAppInstalled(
+		ctx context.Context,
+		spaceId shared.StreamId,
+		appAddress common.Address,
+	) (bool, error)
 }

@@ -71,6 +71,7 @@ func isEntitledForSpaceAndChannel(
 		baseChain,
 		evaluator,
 		&cfg.ArchitectContract,
+		&cfg.AppRegistryContract,
 		20,
 		30000,
 		metricsFactory,
@@ -84,6 +85,7 @@ func isEntitledForSpaceAndChannel(
 		channelId,
 		userId,
 		auth.PermissionRead,
+		common.Address{},
 	)
 
 	isEntitledResult, err := chainAuth.IsEntitled(
