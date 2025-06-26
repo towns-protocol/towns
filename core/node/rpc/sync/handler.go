@@ -2,19 +2,22 @@ package sync
 
 import (
 	"context"
-	"sync"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -73,10 +76,14 @@ type (
 		streamCache *StreamCache
 		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
 		nodeRegistry nodes.NodeRegistry
+		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
+		activeSyncOperations *xsync.Map[string, *StreamSyncOperation]
+		// subscriptionManager is used to manage subscriptions to streams
+		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
-		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
-		activeSyncOperations sync.Map
+		// metrics is the set of metrics used to track sync operations
+		metrics *syncMetrics
 	}
 )
 
@@ -89,17 +96,23 @@ var (
 // It keeps internally a map of in progress stream sync operations and forwards add stream, remove sream, cancel sync
 // requests to the associated stream sync operation.
 func NewHandler(
+	ctx context.Context,
 	nodeAddr common.Address,
 	cache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	metrics infra.MetricsFactory,
 	otelTracer trace.Tracer,
-) *handlerImpl {
-	return &handlerImpl{
-		nodeAddr:     nodeAddr,
-		streamCache:  cache,
-		nodeRegistry: nodeRegistry,
-		otelTracer:   otelTracer,
+) Handler {
+	h := &handlerImpl{
+		nodeAddr:             nodeAddr,
+		streamCache:          cache,
+		nodeRegistry:         nodeRegistry,
+		activeSyncOperations: xsync.NewMap[string, *StreamSyncOperation](),
+		subscriptionManager:  subscription.NewManager(ctx, nodeAddr, cache, nodeRegistry, otelTracer),
+		otelTracer:           otelTracer,
 	}
+	h.setupSyncMetrics(metrics)
+	return h
 }
 
 func (h *handlerImpl) SyncStreams(
@@ -108,7 +121,16 @@ func (h *handlerImpl) SyncStreams(
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
-	op, err := NewStreamsSyncOperation(ctx, syncId, h.nodeAddr, h.streamCache, h.nodeRegistry, h.otelTracer)
+	op, err := NewStreamsSyncOperation(
+		ctx,
+		syncId,
+		h.nodeAddr,
+		h.streamCache,
+		h.nodeRegistry,
+		h.subscriptionManager,
+		h.otelTracer,
+		h.metrics,
+	)
 	if err != nil {
 		return err
 	}
@@ -129,7 +151,19 @@ func (h *handlerImpl) SyncStreams(
 	}
 
 	go h.runSyncStreams(req, sender, op, doneChan)
-	return <-doneChan
+
+	var errCode string
+	err = <-doneChan
+	if err != nil {
+		errCode = AsRiverError(err).Code.String()
+	}
+
+	h.metrics.completedSyncOpsCounter.WithLabelValues(
+		fmt.Sprintf("%t", req.Header().Get(UseSharedSyncHeaderName) == "true"),
+		errCode,
+	).Inc()
+
+	return err
 }
 
 // StreamsResponseSubscriber is helper interface that allows a custom streams sync subscriber to be given in unit tests.
@@ -176,7 +210,7 @@ func (h *handlerImpl) runSyncStreams(
 	op *StreamSyncOperation,
 	doneChan chan error,
 ) {
-	// send SyncID to client
+	// Send SyncID to client
 	if err := res.Send(&SyncStreamsResponse{
 		SyncId: op.SyncID,
 		SyncOp: SyncOp_SYNC_NEW,
@@ -186,7 +220,13 @@ func (h *handlerImpl) runSyncStreams(
 	}
 
 	// run until sub.ctx expires or until the client calls CancelSync
-	doneChan <- op.Run(req, res)
+	if req.Header().Get(UseSharedSyncHeaderName) == "true" {
+		// Run sync operation using shared syncer.
+		doneChan <- op.Run(req, res)
+	} else {
+		// Run sync operation using legacy syncer.
+		doneChan <- op.RunLegacy(req, res)
+	}
 }
 
 func (h *handlerImpl) AddStreamToSync(
@@ -197,7 +237,7 @@ func (h *handlerImpl) AddStreamToSync(
 	defer cancel()
 
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
-		return op.(*StreamSyncOperation).AddStreamToSync(ctx, req)
+		return op.AddStreamToSync(ctx, req)
 	}
 	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
 		Tag("nodeAddress", h.nodeAddr).
@@ -213,7 +253,7 @@ func (h *handlerImpl) RemoveStreamFromSync(
 	defer cancel()
 
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
-		return op.(*StreamSyncOperation).RemoveStreamFromSync(ctx, req)
+		return op.RemoveStreamFromSync(ctx, req)
 	}
 	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
 		Tag("nodeAddress", h.nodeAddr).
@@ -228,7 +268,7 @@ func (h *handlerImpl) ModifySync(
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
-		return op.(*StreamSyncOperation).ModifySync(ctx, req)
+		return op.ModifySync(ctx, req)
 	}
 	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
 		Tag("nodeAddress", h.nodeAddr).
@@ -242,7 +282,7 @@ func (h *handlerImpl) CancelSync(
 ) (*connect.Response[CancelSyncResponse], error) {
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		// sync op is dropped from h.activeSyncOps when SyncStreams returns
-		return op.(*StreamSyncOperation).CancelSync(ctx, req)
+		return op.CancelSync(ctx, req)
 	}
 	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
 		Tag("nodeAddress", h.nodeAddr).
@@ -255,7 +295,7 @@ func (h *handlerImpl) PingSync(
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
-		return op.(*StreamSyncOperation).PingSync(ctx, req)
+		return op.PingSync(ctx, req)
 	}
 	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
 		Tag("nodeAddress", h.nodeAddr).
@@ -269,7 +309,7 @@ func (h *handlerImpl) DebugDropStream(
 	streamID shared.StreamId,
 ) error {
 	if op, ok := h.activeSyncOperations.Load(syncID); ok {
-		return op.(*StreamSyncOperation).debugDropStream(ctx, streamID)
+		return op.debugDropStream(ctx, streamID)
 	}
 	return RiverError(Err_NOT_FOUND, "unknown sync operation").
 		Tag("nodeAddress", h.nodeAddr).

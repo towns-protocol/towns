@@ -1,7 +1,7 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { getLatestBlockNumber, getCreatedDate } from './utils'
+import { getLatestBlockNumber } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -156,16 +156,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         return
     }
 
-    const createdDate = getCreatedDate(blockTimestamp)
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(
-            `SwapRouter:SwapExecuted blockTimestamp is invalid`,
-            transactionHash,
-            blockTimestamp,
-        )
-        return
-    }
-
     try {
         const existing = await context.db.sql.query.swap.findFirst({
             where: eq(schema.swap.txHash, transactionHash),
@@ -180,7 +170,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 poster: event.args.poster,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
@@ -193,13 +183,6 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     const blockNumber = event.block.number
     const blockTimestamp = event.block.timestamp
     const transactionHash = event.transaction.hash
-
-    const createdDate = getCreatedDate(blockTimestamp)
-
-    if (!createdDate || isNaN(createdDate.getTime())) {
-        console.error(`SwapRouter:Swap blockTimestamp is invalid`, transactionHash, blockTimestamp)
-        return
-    }
 
     try {
         // update swap router swap table
@@ -216,7 +199,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
                 amountIn: event.args.amountIn,
                 amountOut: event.args.amountOut,
                 recipient: event.args.recipient,
-                createdDate: createdDate,
+                blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
         }
@@ -274,6 +257,172 @@ ponder.on('SwapRouter:SwapRouterInitialized', async ({ event, context }) => {
     } catch (error) {
         console.error(
             `Error processing SwapRouter:SwapRouterInitialized at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('BaseRegistry:Stake', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        const existing = await context.db.sql.query.stakers.findFirst({
+            where: eq(schema.stakers.depositId, event.args.depositId),
+        })
+        if (!existing) {
+            await context.db.insert(schema.stakers).values({
+                depositId: event.args.depositId,
+                owner: event.args.owner,
+                delegatee: event.args.delegatee,
+                beneficiary: event.args.beneficiary,
+                amount: event.args.amount,
+                createdAt: blockNumber,
+            })
+        }
+    } catch (error) {
+        console.error(`Error processing StakingRewards:Stake at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        const existing = await context.db.sql.query.stakers.findFirst({
+            where: eq(schema.stakers.depositId, event.args.depositId),
+        })
+        if (!existing) {
+            await context.db.insert(schema.stakers).values({
+                depositId: event.args.depositId,
+                owner: event.args.owner,
+                delegatee: event.args.delegatee,
+                beneficiary: event.args.beneficiary,
+                amount: event.args.amount,
+                createdAt: blockNumber,
+            })
+        }
+    } catch (error) {
+        console.error(`Error processing RiverAirdrop:Stake at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        // Find existing stake record by depositId
+        const existingStake = await context.db.sql.query.stakers.findFirst({
+            where: eq(schema.stakers.depositId, event.args.depositId),
+        })
+
+        if (existingStake) {
+            // Update existing stake amount
+            await context.db.sql
+                .update(schema.stakers)
+                .set({
+                    amount: (existingStake.amount ?? 0n) + event.args.amount, // Add new amount to existing
+                    createdAt: blockNumber,
+                })
+                .where(eq(schema.stakers.depositId, event.args.depositId))
+        } else {
+            console.warn(
+                `No existing stake found for depositId ${event.args.depositId} in IncreaseStake event`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing BaseRegistry:IncreaseStake at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        // Find existing stake record by depositId
+        const existingStake = await context.db.sql.query.stakers.findFirst({
+            where: eq(schema.stakers.depositId, event.args.depositId),
+        })
+
+        if (existingStake && existingStake.amount !== null) {
+            const newAmount =
+                existingStake.amount - event.args.amount > 0n
+                    ? existingStake.amount - event.args.amount
+                    : 0n
+            // Update existing stake amount by subtracting the withdrawn amount
+            await context.db.sql
+                .update(schema.stakers)
+                .set({
+                    amount: newAmount,
+                    createdAt: blockNumber,
+                })
+                .where(eq(schema.stakers.depositId, event.args.depositId))
+        } else {
+            console.warn(
+                `No existing stake found for depositId ${event.args.depositId} in Withdraw event`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing BaseRegistry:Withdraw at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('BaseRegistry:OperatorRegistered', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        const existing = await context.db.sql.query.operator.findFirst({
+            where: eq(schema.operator.address, event.args.operator),
+        })
+        if (!existing) {
+            await context.db.insert(schema.operator).values({
+                address: event.args.operator,
+                status: 0, // Initial status is always Standby per NodeOperatorFacet.sol
+                createdAt: blockNumber,
+            })
+        }
+    } catch (error) {
+        console.error(
+            `Error processing BaseRegistry:OperatorRegistered at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('BaseRegistry:OperatorStatusChanged', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        const existing = await context.db.sql.query.operator.findFirst({
+            where: eq(schema.operator.address, event.args.operator),
+        })
+        if (existing) {
+            await context.db.sql
+                .update(schema.operator)
+                .set({
+                    status: event.args.newStatus, // Status is one of: Standby, Approved, Active, Exiting
+                    createdAt: blockNumber,
+                })
+                .where(eq(schema.operator.address, event.args.operator))
+        } else {
+            console.warn(
+                `No existing operator found for address ${event.args.operator} in OperatorStatusChanged event`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing BaseRegistry:OperatorStatusChanged at blockNumber ${blockNumber}:`,
             error,
         )
     }

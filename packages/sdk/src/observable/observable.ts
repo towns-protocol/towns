@@ -9,6 +9,7 @@ export class Observable<T> {
     private _nextId = 0
     protected subscribers: Subscription<T>[] = []
     protected _value: T
+    protected _dispose?: () => void
 
     constructor(value: T) {
         this._value = value
@@ -18,10 +19,18 @@ export class Observable<T> {
         return this._value
     }
 
-    setValue(newValue: T) {
+    set(fn: (prevValue: T) => T): boolean {
+        return this.setValue(fn(this.value))
+    }
+
+    setValue(newValue: T): boolean {
+        if (this._value === newValue) {
+            return false
+        }
         const prevValue = this._value
         this._value = newValue
         this.notify(prevValue)
+        return true
     }
 
     subscribe(
@@ -69,6 +78,52 @@ export class Observable<T> {
             }
             return true
         })
+    }
+
+    //  T is the observable’s element type, U is the mapped element type
+    map<U>(fn: (value: T, prevValue: T, prevResult?: U) => U): Observable<U> {
+        const mappedObservable = new Observable(fn(this.value, this.value))
+
+        mappedObservable._dispose = this.subscribe((newValue, prevValue) => {
+            mappedObservable.setValue(fn(newValue, prevValue, mappedObservable.value))
+        })
+
+        return mappedObservable
+    }
+
+    throttle(ms: number): Observable<T> {
+        const throttledObservable = new Observable(this.value)
+        let timeoutId: NodeJS.Timeout | null = null
+        let pendingValue: T | null = null
+
+        const unsubscriber = this.subscribe((newValue) => {
+            pendingValue = newValue
+
+            if (timeoutId === null) {
+                timeoutId = setTimeout(() => {
+                    if (pendingValue !== null) {
+                        throttledObservable.setValue(pendingValue)
+                        pendingValue = null
+                    }
+                    timeoutId = null
+                }, ms)
+            }
+        })
+
+        throttledObservable._dispose = () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+                timeoutId = null
+            }
+            unsubscriber()
+        }
+
+        return throttledObservable
+    }
+
+    dispose() {
+        this.subscribers = []
+        this._dispose?.()
     }
 
     private notify(prevValue: T) {

@@ -45,17 +45,22 @@ if (!swapRouter) {
     throw new Error('Swap router address not found')
 }
 
+const riverAirdrop = getContractAddress('riverAirdrop')
+if (!riverAirdrop) {
+    throw new Error('River airdrop address not found')
+}
+
 export default createConfig({
-    networks: {
+    chains: {
         anvil: {
-            chainId: 31337,
-            transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            id: 31337,
+            rpc: http(process.env.PONDER_RPC_URL_1),
+            disableCache: false,
         },
         gamma: {
-            chainId: 84532,
-            transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            id: 84532,
+            rpc: http(process.env.PONDER_RPC_URL_1),
+            disableCache: false,
         },
     },
     contracts: {
@@ -70,13 +75,19 @@ export default createConfig({
             ]),
             address: baseRegistry,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
+        },
+        RiverAirdrop: {
+            abi: mergeAbis([rewardsDistributionV2Abi]),
+            address: riverAirdrop,
+            startBlock,
+            chain: 'anvil',
         },
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
@@ -88,19 +99,19 @@ export default createConfig({
                 parameter: 'space',
             }),
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         SwapRouter: {
             abi: swapRouterAbi,
             address: swapRouter,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
     },
 })

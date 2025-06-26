@@ -2,22 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPricingModules} from "../../../factory/facets/architect/pricing/IPricingModules.sol";
 import {IMembershipBase} from "./IMembership.sol";
-
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
-import {IPricingModules} from "src/factory/facets/architect/pricing/IPricingModules.sol";
-import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
-
-import {MembershipStorage} from "./MembershipStorage.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-
-// contracts
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {MembershipStorage} from "./MembershipStorage.sol";
 
 abstract contract MembershipBase is IMembershipBase {
     using SafeTransferLib for address;
@@ -179,16 +175,14 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view virtual returns (uint256 membershipPrice) {
         // get free allocation
         uint256 freeAllocation = _getMembershipFreeAllocation();
-
-        membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
-            freeAllocation,
-            totalSupply
-        );
+        address pricingModule = _getPricingModule();
 
         IPlatformRequirements platform = _getPlatformRequirements();
 
-        uint256 minPrice = platform.getMembershipMinPrice();
+        if (pricingModule == address(0)) return platform.getMembershipFee();
 
+        membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
+        uint256 minPrice = platform.getMembershipMinPrice();
         if (membershipPrice < minPrice) return platform.getMembershipFee();
     }
 
@@ -202,13 +196,15 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = _getPlatformRequirements();
-        uint256 minPrice = platform.getMembershipMinPrice();
 
+        uint256 minFee = platform.getMembershipFee();
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
+
         if (renewalPrice != 0) {
-            return FixedPointMathLib.max(renewalPrice, minPrice);
+            return FixedPointMathLib.max(renewalPrice, minFee);
         }
 
+        uint256 minPrice = platform.getMembershipMinPrice();
         uint256 price = _getMembershipPrice(totalSupply);
         return FixedPointMathLib.max(price, minPrice);
     }

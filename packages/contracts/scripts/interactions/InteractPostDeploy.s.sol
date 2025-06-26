@@ -3,10 +3,11 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IImplementationRegistry} from "../../src/factory/facets/registry/IImplementationRegistry.sol";
-import {SpaceDelegationFacet} from "src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
+import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -41,12 +42,14 @@ contract InteractPostDeploy is Interaction {
         vm.startBroadcast(deployer);
         MockTowns(townsBase).localMint(riverAirdrop, MAX_CLAIMABLE_SUPPLY);
         MockTowns(townsBase).localMint(STAKER, MAX_CLAIMABLE_SUPPLY);
+        MockTowns(townsBase).localMint(baseRegistry, MAX_CLAIMABLE_SUPPLY);
         ISpaceOwner(spaceOwner).setFactory(spaceFactory);
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
-        SpaceDelegationFacet(baseRegistry).setRiverToken(townsBase);
         IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
+        IRewardsDistribution(baseRegistry).setRewardNotifier(deployer, true);
+        IRewardsDistribution(baseRegistry).notifyRewardAmount(MAX_CLAIMABLE_SUPPLY);
 
         INodeOperator operatorFacet = INodeOperator(baseRegistry);
         operatorFacet.registerOperator(OPERATOR);

@@ -78,6 +78,7 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
     check(isDefined(process.env.RIVER_CHAIN_ID), 'RIVER_CHAIN_ID is not defined')
     check(isDefined(process.env.RIVER_CHAIN_RPC_URL), 'RIVER_CHAIN_RPC_URL is not defined')
     check(isDefined(process.env.RIVER_REGISTRY_ADDRESS), 'RIVER_REGISTRY_ADDRESS is not defined')
+    check(isDefined(process.env.APP_REGISTRY_ADDRESS), 'APP_REGISTRY_ADDRESS is not defined')
 
     return {
         base: {
@@ -86,10 +87,10 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                 baseRegistry: process.env.BASE_REGISTRY_ADDRESS as Address,
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
                 spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
-                towns: process.env.TOWNS_ADDRESS as Address,
                 utils: {
                     mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
                     member: process.env.MEMBER_ADDRESS as Address | undefined,
+                    towns: process.env.TOWNS_ADDRESS as Address,
                 },
             },
         } satisfies BaseChainConfig,
@@ -146,5 +147,21 @@ export const getStreamMetadataUrl = (environmentId: string) => {
             return 'http://localhost:3003'
         default:
             throw new Error(`No stream metadata url for environmentId ${environmentId}`)
+    }
+}
+
+export const getAppRegistryUrl = (environmentId: string) => {
+    switch (environmentId) {
+        case 'local_multi':
+            return 'https://localhost:6170'
+        case 'local_multi_ne':
+            return 'https://localhost:6190'
+        case 'alpha':
+            return 'https://app-registry.alpha.towns.com'
+        case 'gamma':
+        case 'omega':
+        case 'delta':
+        default:
+            throw new Error(`No app registry url for environmentId ${environmentId}`)
     }
 }

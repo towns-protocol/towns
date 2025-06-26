@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -49,7 +50,14 @@ func makeTestSpaceStream(
 	join := makeEnvelopeWithPayload_T(
 		t,
 		userWallet,
-		Make_MemberPayload_Membership(protocol.MembershipOp_SO_JOIN, userAddess, userAddess, nil),
+		Make_MemberPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			userAddess,
+			userAddess,
+			nil,
+			nil,
+			common.Address{},
+		),
 		nil,
 	)
 

@@ -90,3 +90,6 @@ go.work.sum
 # Ponder
 packages/subgraph/.ponder
 packages/generated/**/*.bin
+
+# Claude local settings
+**/.claude/settings.local.json

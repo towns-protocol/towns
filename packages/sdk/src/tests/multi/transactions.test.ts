@@ -2,15 +2,15 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
-import crypto from 'crypto'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 import { deepCopy } from 'ethers/lib/utils'
+import { randomBytes } from '../../utils'
 
 const base_log = dlog('csb:test:transactions')
 
@@ -154,7 +154,7 @@ describe('transactions', () => {
     test('cantModifyReceiptLogData', async () => {
         // modify existing log should not be accepted
         const modifiedReceipt = cloneDeep(dummyReceipt)
-        modifiedReceipt.logs[0].data = crypto.randomBytes(32).toString('hex')
+        modifiedReceipt.logs[0].data = bin_toHexString(randomBytes(32))
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
         ).rejects.toThrow('Log data mismatch')
@@ -163,7 +163,7 @@ describe('transactions', () => {
     test('cantModifyReceiptLogAddress', async () => {
         // modify existing log should not be accepted
         const modifiedReceipt = cloneDeep(dummyReceipt)
-        modifiedReceipt.logs[0].address = crypto.randomBytes(32).toString('hex')
+        modifiedReceipt.logs[0].address = bin_toHexString(randomBytes(32))
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
         ).rejects.toThrow('Log address mismatch')
@@ -172,7 +172,7 @@ describe('transactions', () => {
     test('cantModifyReceiptLogTopics', async () => {
         // modify existing log should not be accepted
         const modifiedReceipt = cloneDeep(dummyReceipt)
-        modifiedReceipt.logs[0].topics[0] = crypto.randomBytes(32).toString('hex')
+        modifiedReceipt.logs[0].topics[0] = bin_toHexString(randomBytes(32))
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
         ).rejects.toThrow('Log topic mismatch')
@@ -180,7 +180,7 @@ describe('transactions', () => {
 
     test('cantModifyReceiptLogTopicsCount', async () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
-        modifiedReceipt.logs[0].topics.push(crypto.randomBytes(32).toString('hex'))
+        modifiedReceipt.logs[0].topics.push(bin_toHexString(randomBytes(32)))
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
         ).rejects.toThrow('Log topics count mismatch')
@@ -189,7 +189,7 @@ describe('transactions', () => {
     test('cantAddEventWithInvalidHash', async () => {
         // send dummyReceipt with invalid hash
         const modifiedReceipt = cloneDeep(dummyReceipt)
-        modifiedReceipt.transactionHash = crypto.randomBytes(32).toString('hex')
+        modifiedReceipt.transactionHash = bin_toHexString(randomBytes(32))
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
         ).rejects.toThrow()

@@ -1,23 +1,29 @@
-import type {
-    ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo,
-    ChannelMessage_Post,
-    ChannelMessage_Post_Content_EmbeddedMessage_Info,
-    FullyReadMarker,
-    ChunkedMedia_AESGCM,
-    ChannelMessage_Post_Content_Image_Info,
-    MediaInfo as MediaInfoStruct,
-    PayloadCaseType,
-    ChannelOp,
-    SpacePayload_ChannelSettings,
-    ChannelProperties,
-    BlockchainTransaction,
-    UserPayload_ReceivedBlockchainTransaction,
-    BlockchainTransaction_Tip,
-    BlockchainTransaction_SpaceReview_Action,
-    BlockchainTransaction_TokenTransfer,
-    PlainMessage,
+import {
+    type ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo,
+    type ChannelMessage_Post,
+    type ChannelMessage_Post_Content_EmbeddedMessage_Info,
+    type FullyReadMarker,
+    type ChunkedMedia_AESGCM,
+    type ChannelMessage_Post_Content_Image_Info,
+    type MediaInfo as MediaInfoStruct,
+    type PayloadCaseType,
+    type ChannelOp,
+    type SpacePayload_ChannelSettings,
+    type ChannelProperties,
+    type BlockchainTransaction,
+    type UserPayload_ReceivedBlockchainTransaction,
+    type BlockchainTransaction_Tip,
+    type BlockchainTransaction_SpaceReview_Action,
+    type BlockchainTransaction_TokenTransfer,
+    type PlainMessage,
+    ChannelMessage_Post_AttachmentSchema,
+    ChannelMessage_Post_Attachment,
+    ChannelMessage_PostSchema,
+    MembershipReason,
 } from '@towns-protocol/proto'
-import type { DecryptionSessionError } from '@towns-protocol/encryption'
+import type { DecryptionSessionError } from '../../../decryptionExtensions'
+import { isDefined, logNever } from '../../../check'
+import { create } from '@bufbuild/protobuf'
 
 export enum EventStatus {
     /** The event was not sent and will no longer be retried. */
@@ -257,12 +263,11 @@ export interface ChannelMessageMissingEvent {
     eventId: string
 }
 
-// TODO: membership here doenst map 1-1 to MembershipOp
+// the same as MembershipOp but with a different name
 export enum Membership {
     Join = 'join',
     Invite = 'invite',
     Leave = 'leave',
-    Ban = 'ban',
     None = '',
 }
 
@@ -271,6 +276,7 @@ export interface StreamMembershipEvent {
     userId: string
     initiatorId: string
     membership: Membership
+    reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
 }
 
@@ -497,4 +503,113 @@ export function isMessageTipEvent(event: TimelineEvent): event is MessageTipEven
         event.content?.kind === RiverTimelineEvent.TipEvent &&
         event.content.transaction?.content.case === 'tip'
     )
+}
+
+export function transformAttachments(attachments?: Attachment[]): ChannelMessage_Post_Attachment[] {
+    if (!attachments) {
+        return []
+    }
+
+    return attachments
+        .map((attachment) => {
+            switch (attachment.type) {
+                case 'chunked_media':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'chunkedMedia',
+                            value: {
+                                info: attachment.info,
+                                streamId: attachment.streamId,
+                                encryption: {
+                                    case: 'aesgcm',
+                                    value: attachment.encryption,
+                                },
+                                thumbnail: {
+                                    info: attachment.thumbnail?.info,
+                                    content: attachment.thumbnail?.content,
+                                },
+                            },
+                        },
+                    })
+
+                case 'embedded_media':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'embeddedMedia',
+                            value: {
+                                info: attachment.info,
+                                content: attachment.content,
+                            },
+                        },
+                    })
+                case 'image':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'image',
+                            value: {
+                                info: attachment.info,
+                            },
+                        },
+                    })
+                case 'embedded_message': {
+                    const { channelMessageEvent, ...content } = attachment
+                    if (!channelMessageEvent) {
+                        return
+                    }
+                    const post = create(ChannelMessage_PostSchema, {
+                        threadId: channelMessageEvent.threadId,
+                        threadPreview: channelMessageEvent.threadPreview,
+                        content: {
+                            case: 'text' as const,
+                            value: {
+                                ...channelMessageEvent,
+                                attachments: transformAttachments(channelMessageEvent.attachments),
+                            },
+                        },
+                    })
+                    const value = create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'embeddedMessage',
+                            value: {
+                                ...content,
+                                post,
+                            },
+                        },
+                    })
+                    return value
+                }
+                case 'unfurled_link':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'unfurledUrl',
+                            value: {
+                                url: attachment.url,
+                                title: attachment.title,
+                                description: attachment.description,
+                                image: attachment.image
+                                    ? {
+                                          height: attachment.image.height,
+                                          width: attachment.image.width,
+                                          url: attachment.image.url,
+                                      }
+                                    : undefined,
+                            },
+                        },
+                    })
+                case 'ticker':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'ticker',
+                            value: {
+                                chainId: attachment.chainId,
+                                address: attachment.address,
+                            },
+                        },
+                    })
+                default:
+                    logNever(attachment)
+                    return undefined
+            }
+        })
+        .filter(isDefined)
 }

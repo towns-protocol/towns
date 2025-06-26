@@ -303,9 +303,6 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 	fromInclusive int64,
 	toExclusive int64,
 ) (int64, error) {
-	ctx, cancel := context.WithTimeout(s.params.ServerCtx, 120*time.Second)
-	defer cancel()
-
 	pageSize := s.params.Config.StreamReconciliation.GetMiniblocksPageSize
 	if pageSize <= 0 {
 		pageSize = 128
@@ -317,6 +314,8 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 			return currentFromInclusive, nil
 		}
 
+		ctx, cancel := context.WithTimeout(s.params.ServerCtx, time.Minute)
+
 		currentToExclusive := min(currentFromInclusive+pageSize, toExclusive)
 
 		mbs, err := s.params.RemoteMiniblockProvider.GetMbs(
@@ -327,14 +326,17 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 			currentToExclusive,
 		)
 		if err != nil {
+			cancel()
 			return currentFromInclusive, err
 		}
 
 		if len(mbs) == 0 {
+			cancel()
 			return currentFromInclusive, nil
 		}
 
 		err = stream.importMiniblocks(ctx, mbs)
+		cancel()
 		if err != nil {
 			return currentFromInclusive, err
 		}
@@ -378,6 +380,12 @@ func newRetryableReconciliationTasks(nextRetry time.Duration) *retryableReconcil
 		pendingTasksFifo:  list.New(),
 		nextRetryDuration: nextRetry,
 	}
+}
+
+func (r *retryableReconciliationTasks) Len() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.pendingTasksFifo.Len()
 }
 
 // Add adds or updates a retryable reconciliation task for the given streamId.

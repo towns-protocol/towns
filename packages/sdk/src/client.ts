@@ -54,6 +54,7 @@ import {
     SessionKeysSchema,
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
+    InfoResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -67,19 +68,21 @@ import {
 } from '@towns-protocol/dlog'
 import {
     AES_GCM_DERIVED_ALGORITHM,
-    BaseDecryptionExtensions,
     CryptoStore,
-    DecryptionEvents,
-    EntitlementsDelegate,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
     GroupEncryptionSession,
     IGroupEncryptionClient,
     UserDevice,
     UserDeviceCollection,
-    makeSessionKeys,
     type EncryptionDeviceInitOpts,
 } from '@towns-protocol/encryption'
+import {
+    DecryptionEvents,
+    EntitlementsDelegate,
+    makeSessionKeys,
+    type BaseDecryptionExtensions,
+} from './decryptionExtensions'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -154,11 +157,18 @@ import {
     make_MemberPayload_EncryptionAlgorithm,
     SolanaTransactionReceipt,
     isSolanaTransactionReceipt,
+    ParsedEvent,
 } from './types'
 
 import debug from 'debug'
 import { Stream } from './stream'
-import { getTime, usernameChecksum } from './utils'
+import {
+    ethereumAddressAsBytes,
+    getTime,
+    isEthereumAddress,
+    stripUndefinedMetadata,
+    usernameChecksum,
+} from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import {
@@ -172,9 +182,15 @@ import { SyncState } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
-import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
+import {
+    decryptAESGCM,
+    deriveKeyAndIV,
+    encryptAESGCM,
+    uint8ArrayToBase64,
+} from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { StreamsView } from './views/streamsView'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -185,7 +201,7 @@ export type ClientOptions = {
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
-    streamOpts?: { useModifySync?: boolean }
+    streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
 }
 
 type SendChannelMessageOptions = {
@@ -206,6 +222,8 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
+    readonly streamsView: StreamsView
+    readonly logId: string
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -234,7 +252,6 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
-    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -260,6 +277,19 @@ export class Client
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)
+        this.streamsView = new StreamsView(this.userId, {
+            isDMMessageEventBlocked: (event) => {
+                if (!this?.userSettingsStreamId) {
+                    return false
+                }
+                const stream = this.stream(this.userSettingsStreamId)
+                check(isDefined(stream), 'stream must be defined')
+                return stream.view.userSettingsContent.isUserBlockedAt(
+                    event.sender.id,
+                    event.eventNum,
+                )
+            },
+        })
         this.defaultGroupEncryptionAlgorithm =
             opts?.defaultGroupEncryptionAlgorithm ??
             GroupEncryptionAlgorithmId.HybridGroupEncryption
@@ -339,6 +369,7 @@ export class Client
         const stream = new SyncedStream(
             this.userId,
             streamIdAsString(streamId),
+            this.streamsView,
             this,
             this.logEmitFromStream,
             this.persistenceStore,
@@ -360,8 +391,8 @@ export class Client
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
                 if (
-                    payload.op === MembershipOp.SO_JOIN ||
-                    (payload.op === MembershipOp.SO_INVITE &&
+                    payload?.op === MembershipOp.SO_JOIN ||
+                    (payload?.op === MembershipOp.SO_INVITE &&
                         (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)))
                 ) {
                     acc.push(streamId)
@@ -377,6 +408,7 @@ export class Client
     async initializeUser(opts?: {
         spaceId?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
+        appAddress?: Uint8Array | string
     }): Promise<{
         initCryptoTime: number
         initUserStreamTime: number
@@ -384,11 +416,15 @@ export class Client
         initUserMetadataStreamTime: number
         initUserSettingsStreamTime: number
     }> {
-        const initUserMetadata = opts?.spaceId
-            ? {
-                  spaceId: streamIdAsBytes(opts?.spaceId),
-              }
-            : undefined
+        if (opts?.appAddress && !isEthereumAddress(opts.appAddress)) {
+            throw Error('appAddress must be an ethereum address')
+        }
+        const appAddress = opts?.appAddress ? ethereumAddressAsBytes(opts.appAddress) : undefined
+
+        const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
+        const initUserMetadata = {
+            spaceId,
+        }
 
         const initializeUserStartTime = performance.now()
         this.logCall('initializeUser', this.userId)
@@ -404,10 +440,10 @@ export class Client
             initUserMetadataStream,
             initUserSettingsStream,
         ] = await Promise.all([
-            getTime(() => this.initUserStream(initUserMetadata)),
-            getTime(() => this.initUserInboxStream(initUserMetadata)),
-            getTime(() => this.initUserMetadataStream(initUserMetadata)),
-            getTime(() => this.initUserSettingsStream(initUserMetadata)),
+            getTime(() => this.initUserStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserInboxStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserMetadataStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserSettingsStream(initUserMetadata, appAddress)),
         ])
         this.initUserJoinedStreams()
 
@@ -434,29 +470,39 @@ export class Client
         this.streams.onNetworkStatusChanged(isOnline)
     }
 
-    private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {
+    private async initUserStream(metadata?: { spaceId?: Uint8Array }, appAddress?: Uint8Array) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
         if (!(await userStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userStreamId)) ??
-                (await this.createUserStream(this.userStreamId, metadata))
+                (await this.createUserStream(this.userStreamId, metadata, appAddress))
             await userStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserInboxStream(metadata?: { spaceId: Uint8Array }) {
+    private async initUserInboxStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userInboxStreamId = makeUserInboxStreamId(this.userId)
         const userInboxStream = this.createSyncedStream(this.userInboxStreamId)
         if (!(await userInboxStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userInboxStreamId)) ??
-                (await this.createUserInboxStream(this.userInboxStreamId, metadata))
+                (await this.createUserInboxStream(this.userInboxStreamId, metadata, appAddress))
             await userInboxStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserMetadataStream(metadata?: { spaceId: Uint8Array }) {
+    private async initUserMetadataStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userMetadataStreamId = makeUserMetadataStreamId(this.userId)
         const userMetadataStream = this.createSyncedStream(this.userMetadataStreamId)
 
@@ -481,7 +527,11 @@ export class Client
             } else {
                 const createUserMetadataStreamResponse = await getTime(() => {
                     check(!!this.userMetadataStreamId, 'userMetadataStreamId must be set')
-                    return this.createUserMetadataStream(this.userMetadataStreamId, metadata)
+                    return this.createUserMetadataStream(
+                        this.userMetadataStreamId,
+                        metadata,
+                        appAddress,
+                    )
                 })
                 initUserMetadataStreamCreateUserMetadataStreamTime =
                     createUserMetadataStreamResponse.time
@@ -513,13 +563,22 @@ export class Client
         return times
     }
 
-    private async initUserSettingsStream(metadata?: { spaceId: Uint8Array }) {
+    private async initUserSettingsStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
         const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
         if (!(await userSettingsStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userSettingsStreamId)) ??
-                (await this.createUserSettingsStream(this.userSettingsStreamId, metadata))
+                (await this.createUserSettingsStream(
+                    this.userSettingsStreamId,
+                    metadata,
+                    appAddress,
+                ))
             await userSettingsStream.initializeFromResponse(response)
         }
     }
@@ -540,69 +599,77 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserPayload_Inception({
                     streamId: streamIdAsBytes(userStreamId),
+                    appAddress,
                 }),
             ),
         ]
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userEvents,
             streamId: streamIdAsBytes(userStreamId),
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserMetadataStream(
         userMetadataStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserMetadataPayload_Inception({
                     streamId: streamIdAsBytes(userMetadataStreamId),
+                    appAddress,
                 }),
             ),
         ]
-
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: streamIdAsBytes(userMetadataStreamId),
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserInboxPayload_Inception({
                     streamId: streamIdAsBytes(userInboxStreamId),
+                    appAddress,
                 }),
             ),
         ]
-
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userInboxEvents,
             streamId: streamIdAsBytes(userInboxStreamId),
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
         const userSettingsEvents = [
@@ -610,14 +677,16 @@ export class Client
                 this.signerContext,
                 make_UserSettingsPayload_Inception({
                     streamId: userSettingsStreamId,
+                    appAddress,
                 }),
             ),
         ]
 
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
@@ -1202,16 +1271,50 @@ export class Client
         })
     }
 
+    async getPersistedEvent(streamId: string, eventId: string): Promise<ParsedEvent | undefined> {
+        const timelineEvent = this.streamsView.timelinesView.value.timelines[streamId]?.find(
+            (e) => e.eventId === eventId,
+        )
+        if (!timelineEvent) {
+            return undefined
+        }
+        const blockNumber = timelineEvent.confirmedInBlockNum
+        if (!blockNumber) {
+            return undefined
+        }
+        const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
+        if (!miniblock) {
+            return undefined
+        }
+        const event = miniblock.events.find((e) => e.hashStr === eventId)
+        if (!event) {
+            return undefined
+        }
+        return event
+    }
+
     async pin(streamId: string, eventId: string) {
-        const stream = this.streams.get(streamId)
-        check(isDefined(stream), 'stream not found')
-        const event = stream.view.events.get(eventId)
-        check(isDefined(event), 'event not found')
-        const remoteEvent = event.remoteEvent
-        check(isDefined(remoteEvent), 'remoteEvent not found')
+        const timelineEvent = this.streamsView.timelinesView.value.timelines[streamId]?.find(
+            (e) => e.eventId === eventId,
+        )
+        check(isDefined(timelineEvent), 'pin timeline event not found')
+        const blockNumber = timelineEvent.confirmedInBlockNum
+        let event: ParsedEvent | undefined
+        if (blockNumber) {
+            const miniblock = await this.persistenceStore.getMiniblock(streamId, blockNumber)
+            check(isDefined(miniblock), 'miniblock not found')
+            event = miniblock.events.find((e) => e.hashStr === eventId)
+        } else {
+            const stream = this.stream(streamId)
+            check(isDefined(stream), 'stream not found')
+            event = stream.view.minipoolEvents.get(eventId)?.remoteEvent
+        }
+        check(isDefined(event), 'pin event not found')
+        const streamEvent = event.event
+        check(isDefined(streamEvent), 'pin streamEvent not found')
         const result = await this.makeEventAndAddToStream(
             streamId,
-            make_MemberPayload_Pin(remoteEvent.hash, remoteEvent.event),
+            make_MemberPayload_Pin(event.hash, streamEvent),
             {
                 method: 'pin',
             },
@@ -1309,7 +1412,10 @@ export class Client
         return streamView
     }
 
-    private async _getStream(streamId: string | Uint8Array): Promise<StreamStateView> {
+    private async _getStream(
+        streamId: string | Uint8Array,
+        streamsView?: StreamsView,
+    ): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({
@@ -1319,7 +1425,7 @@ export class Client
                 response.stream,
                 this.opts?.unpackEnvelopeOpts,
             )
-            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
+            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
             throw err
@@ -1329,8 +1435,9 @@ export class Client
     private streamViewFromUnpackedResponse(
         streamId: string | Uint8Array,
         unpackedResponse: ParsedStreamResponse,
+        streamsView: StreamsView | undefined,
     ): StreamStateView {
-        const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
+        const streamView = new StreamStateView(this.userId, streamIdAsString(streamId), streamsView)
         streamView.initialize(
             unpackedResponse.streamAndCookie.nextSyncCookie,
             unpackedResponse.streamAndCookie.events,
@@ -1362,7 +1469,10 @@ export class Client
         return streamView
     }
 
-    private async _getStreamEx(streamId: string | Uint8Array): Promise<StreamStateView> {
+    private async _getStreamEx(
+        streamId: string | Uint8Array,
+        streamsView?: StreamsView,
+    ): Promise<StreamStateView> {
         try {
             this.logCall('getStreamEx', streamId)
             const response = this.rpcClient.getStreamEx({
@@ -1398,7 +1508,7 @@ export class Client
                 )
             }
             const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
-            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
+            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)
             throw err
@@ -1826,9 +1936,6 @@ export class Client
         if (!stream) {
             throw new Error(`stream not found: ${streamId}`)
         }
-        if (!stream.view.events.has(payload.refEventId)) {
-            throw new Error(`ref event not found: ${payload.refEventId}`)
-        }
         return this.sendChannelMessage(streamId, {
             payload: {
                 case: 'redaction',
@@ -1886,9 +1993,13 @@ export class Client
     async retrySendMessage(streamId: string, localId: string): Promise<void> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found' + streamId)
-        const event = stream.view.events.get(localId)
-        check(isDefined(event), 'event not found')
-        check(isDefined(event.localEvent), 'event not found')
+        const event =
+            stream.view.minipoolEvents.get(localId) ??
+            Array.from(stream.view.minipoolEvents.values()).find(
+                (e) => e.localEvent?.localId === localId,
+            )
+        check(isDefined(event), 'retry event not found')
+        check(isDefined(event.localEvent), 'retry local event not found')
         check(event.localEvent.status === 'failed', 'event not in failed state')
         await this.makeAndSendChannelMessageEvent(
             streamId,
@@ -1912,14 +2023,15 @@ export class Client
     }
 
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
-        await this.initStream(streamId)
+        const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         return this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
-                userId: addressFromUserId(userId),
+                userId: bin_fromHexString(userId),
                 streamId: streamIdAsBytes(streamId),
+                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'inviteUser' },
         )
@@ -1974,8 +2086,9 @@ export class Client
         check(isDefined(this.userStreamId))
 
         if (isSpaceStreamId(streamId)) {
-            const channelIds =
-                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const channelIds = Object.keys(
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
 
             const userStream = this.stream(this.userStreamId)
             for (const channelId of channelIds) {
@@ -2003,8 +2116,9 @@ export class Client
         this.logCall('removeUser', streamId, userId)
 
         if (isSpaceStreamId(streamId)) {
-            const channelIds =
-                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const channelIds = Object.keys(
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
             const userStreamId = makeUserStreamId(userId)
             const userStream = await this.getStream(userStreamId)
 
@@ -2817,10 +2931,15 @@ export class Client
 
     public async debugForceMakeMiniblock(
         streamId: string,
-        opts: { forceSnapshot?: boolean } = {},
-    ): Promise<void> {
-        await this.rpcClient.info({
-            debug: ['make_miniblock', streamId, opts.forceSnapshot === true ? 'true' : 'false'],
+        opts: { forceSnapshot?: boolean; lastKnownMiniblockNum?: bigint }, // call will error if current miniblock is less than or equal to lastKnownMiniblockNum
+    ): Promise<InfoResponse> {
+        return this.rpcClient.info({
+            debug: [
+                'make_miniblock',
+                streamId,
+                opts.forceSnapshot === true ? 'true' : 'false',
+                `${opts.lastKnownMiniblockNum ?? -1n}`,
+            ],
         })
     }
 

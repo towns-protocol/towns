@@ -2,15 +2,15 @@ package nodes
 
 import (
 	"context"
-	"hash/fnv"
 	"net/http"
 	"slices"
 	"sync"
 
+	"github.com/towns-protocol/towns/core/node/stream"
+
 	"connectrpc.com/connect"
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -35,14 +35,20 @@ type NodeRegistry interface {
 	GetValidNodeAddresses() []common.Address
 
 	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
+
+	IsOperator(address common.Address) bool
 }
 
 type nodeRegistryImpl struct {
-	contract         *registries.RiverRegistryContract
-	onChainConfig    crypto.OnChainConfiguration
-	localNodeAddress common.Address
-	httpClient       *http.Client
-	connectOpts      []connect.ClientOption
+	contract           *registries.RiverRegistryContract
+	onChainConfig      crypto.OnChainConfiguration
+	localNodeAddress   common.Address
+	httpClient         *http.Client
+	httpClientWithCert *http.Client
+	connectOpts        []connect.ClientOption
+
+	// streamPicker is used to choose nodes for a stream.
+	streamPicker stream.Distributor
 
 	mu                    sync.RWMutex
 	nodesLocked           map[common.Address]*NodeRecord
@@ -66,6 +72,7 @@ func LoadNodeRegistry(
 	chainMonitor crypto.ChainMonitor,
 	onChainConfig crypto.OnChainConfiguration,
 	httpClient *http.Client,
+	httpClientWithCert *http.Client,
 	connectOtelIterceptor *otelconnect.Interceptor,
 ) (*nodeRegistryImpl, error) {
 	log := logging.FromCtx(ctx)
@@ -80,14 +87,21 @@ func LoadNodeRegistry(
 		connectOpts = append(connectOpts, connect.WithInterceptors(connectOtelIterceptor))
 	}
 
+	streamPicker, err := stream.NewDistributor(ctx, onChainConfig, appliedBlockNum, chainMonitor, contract)
+	if err != nil {
+		return nil, err
+	}
+
 	ret := &nodeRegistryImpl{
 		contract:              contract,
 		onChainConfig:         onChainConfig,
 		localNodeAddress:      localNodeAddress,
 		httpClient:            httpClient,
+		httpClientWithCert:    httpClientWithCert,
 		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
 		appliedBlockNumLocked: appliedBlockNum,
 		connectOpts:           connectOpts,
+		streamPicker:          streamPicker,
 	}
 
 	localFound := false
@@ -120,30 +134,12 @@ func LoadNodeRegistry(
 		)
 	}
 
-	chainMonitor.OnContractWithTopicsEvent(
-		appliedBlockNum+1,
-		contract.Address,
-		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeAdded"].ID}},
-		ret.OnNodeAdded,
-	)
-	chainMonitor.OnContractWithTopicsEvent(
-		appliedBlockNum+1,
-		contract.Address,
-		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeRemoved"].ID}},
-		ret.OnNodeRemoved,
-	)
-	chainMonitor.OnContractWithTopicsEvent(
-		appliedBlockNum+1,
-		contract.Address,
-		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeStatusUpdated"].ID}},
-		ret.OnNodeStatusUpdated,
-	)
-	chainMonitor.OnContractWithTopicsEvent(
-		appliedBlockNum+1,
-		contract.Address,
-		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeUrlUpdated"].ID}},
-		ret.OnNodeUrlUpdated,
-	)
+	// register node registry callbacks
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, contract.Address)
+	nodeRegistryMonitor.OnNodeAdded(appliedBlockNum+1, ret.OnNodeAdded)
+	nodeRegistryMonitor.OnNodeRemoved(appliedBlockNum+1, ret.OnNodeRemoved)
+	nodeRegistryMonitor.OnNodeStatusUpdated(appliedBlockNum+1, ret.OnNodeStatusUpdated)
+	nodeRegistryMonitor.OnNodeUrlUpdated(appliedBlockNum+1, ret.OnNodeUrlUpdated)
 
 	return ret, nil
 }
@@ -187,21 +183,15 @@ func (n *nodeRegistryImpl) addNodeLocked(
 		nn.local = true
 	} else {
 		nn.streamServiceClient = NewStreamServiceClient(n.httpClient, url, n.connectOpts...)
-		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, url, n.connectOpts...)
+		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClientWithCert, url, n.connectOpts...)
 	}
 	n.nodesLocked[addr] = nn
 	return nn, true
 }
 
 // OnNodeAdded can apply INodeRegistry::NodeAdded event against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
+func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, e *river.NodeRegistryV1NodeAdded) {
 	log := logging.FromCtx(ctx)
-
-	var e river.NodeRegistryV1NodeAdded
-	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
-		log.Errorw("OnNodeAdded: unable to decode NodeAdded event")
-		return
-	}
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -214,46 +204,35 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 			"node",
 			nodeRecord.address,
 			"blockNum",
-			event.BlockNumber,
+			e.Raw.BlockNumber,
 			"operator",
 			e.Operator,
 		)
 	} else {
-		log.Errorw("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "operator", e.Operator, "nodes", n.allNodesLocked)
+		log.Errorw("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry",
+			"blockNum", e.Raw.BlockNumber, "node", e.NodeAddress, "operator", e.Operator, "nodes", n.allNodesLocked)
 	}
 }
 
 // OnNodeRemoved can apply INodeRegistry::NodeRemoved event against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
+func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, e *river.NodeRegistryV1NodeRemoved) {
 	log := logging.FromCtx(ctx)
-
-	var e river.NodeRegistryV1NodeRemoved
-	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeRemoved", event); err != nil {
-		log.Errorw("OnNodeRemoved: unable to decode NodeRemoved event")
-		return
-	}
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if _, exists := n.nodesLocked[e.NodeAddress]; exists {
 		delete(n.nodesLocked, e.NodeAddress)
 		n.resetLocked()
-		log.Infow("NodeRegistry: NodeRemoved", "blockNum", event.BlockNumber, "node", e.NodeAddress)
+		log.Infow("NodeRegistry: NodeRemoved", "blockNum", e.Raw.BlockNumber, "node", e.NodeAddress)
 	} else {
 		log.Errorw("NodeRegistry: Got NodeRemoved for node that does not exist in NodeRegistry",
-			"blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.allNodesLocked)
+			"blockNum", e.Raw.BlockNumber, "node", e.NodeAddress, "nodes", n.allNodesLocked)
 	}
 }
 
 // OnNodeStatusUpdated can apply INodeRegistry::NodeStatusUpdated event against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.Log) {
+func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, e *river.NodeRegistryV1NodeStatusUpdated) {
 	log := logging.FromCtx(ctx)
-
-	var e river.NodeRegistryV1NodeStatusUpdated
-	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeStatusUpdated", event); err != nil {
-		log.Errorw("OnNodeStatusUpdated: unable to decode NodeStatusUpdated event")
-		return
-	}
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -263,21 +242,16 @@ func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.
 		newNode.status = e.Status
 		n.nodesLocked[e.NodeAddress] = &newNode
 		n.resetLocked()
-		log.Infow("NodeRegistry: NodeStatusUpdated", "blockNum", event.BlockNumber, "node", nn)
+		log.Infow("NodeRegistry: NodeStatusUpdated", "blockNum", e.Raw.BlockNumber, "node", nn)
 	} else {
-		log.Errorw("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.allNodesLocked)
+		log.Errorw("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry",
+			"blockNum", e.Raw.BlockNumber, "node", e.NodeAddress, "nodes", n.allNodesLocked)
 	}
 }
 
 // OnNodeUrlUpdated can apply INodeRegistry::NodeUrlUpdated events against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log) {
+func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, e *river.NodeRegistryV1NodeUrlUpdated) {
 	log := logging.FromCtx(ctx)
-
-	var e river.NodeRegistryV1NodeUrlUpdated
-	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeUrlUpdated", event); err != nil {
-		log.Errorw("OnNodeUrlUpdated: unable to decode NodeUrlUpdated event")
-		return
-	}
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -287,14 +261,14 @@ func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log
 		newNode.url = e.Url
 		if !nn.local {
 			newNode.streamServiceClient = NewStreamServiceClient(n.httpClient, e.Url, n.connectOpts...)
-			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, e.Url, n.connectOpts...)
+			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClientWithCert, e.Url, n.connectOpts...)
 		}
 		n.nodesLocked[e.NodeAddress] = &newNode
 		n.resetLocked()
-		log.Infow("NodeRegistry: NodeUrlUpdated", "blockNum", event.BlockNumber, "node", nn)
+		log.Infow("NodeRegistry: NodeUrlUpdated", "blockNum", e.Raw.BlockNumber, "node", nn)
 	} else {
 		log.Errorw("NodeRegistry: Got NodeUrlUpdated for node that does not exist in NodeRegistry",
-			"blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.allNodesLocked)
+			"blockNum", e.Raw.BlockNumber, "node", e.NodeAddress, "nodes", n.allNodesLocked)
 	}
 }
 
@@ -353,52 +327,68 @@ func (n *nodeRegistryImpl) ChooseStreamNodes(
 	streamId StreamId,
 	replFactor int,
 ) ([]common.Address, error) {
+	return n.streamPicker.ChooseStreamNodes(ctx, streamId, replFactor)
+}
+
+// CloneWithClients returns a new node registry with cloned values from n and the given
+// httpClient and httpClientWithCert.
+func (n *nodeRegistryImpl) CloneWithClients(
+	httpClient *http.Client,
+	httpClientWithCert *http.Client,
+) *nodeRegistryImpl {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 
-	uniqueOperators := false
-	if replFactor <= len(n.operatorsLocked) {
-		uniqueOperators = true
-	} else {
-		logging.FromCtx(ctx).Warnw("ChooseStreamNodes: replication factor is greater than number of unique operators", "replication_factor", replFactor, "num_operators", len(n.operatorsLocked))
+	clone := &nodeRegistryImpl{
+		contract:              n.contract,
+		onChainConfig:         n.onChainConfig,
+		localNodeAddress:      n.localNodeAddress,
+		httpClient:            httpClient,
+		httpClientWithCert:    httpClientWithCert,
+		streamPicker:          n.streamPicker,
+		appliedBlockNumLocked: n.appliedBlockNumLocked,
 	}
 
-	if len(n.activeNodesLocked) < replFactor {
-		return nil, RiverError(
-			Err_BAD_CONFIG,
-			"replication factor is greater than number of operational nodes",
-			"replication_factor",
-			replFactor,
-			"num_nodes",
-			len(n.activeNodesLocked),
-		)
-	}
+	clone.connectOpts = make([]connect.ClientOption, len(n.connectOpts))
+	copy(clone.connectOpts, n.connectOpts)
 
-	nodes := slices.Clone(n.activeNodesLocked)
-	selectedOperators := make([]common.Address, 0, replFactor)
-	addrs := make([]common.Address, 0, replFactor)
-
-	// Knuth shuffle until required number of nodes from different operators is selected
-	h := fnv.New64a()
-	for i := 0; i < len(nodes); i++ {
-		h.Write(streamId[:])
-		index := i + int(h.Sum64()%uint64(len(nodes)-i))
-		selectedNode := nodes[index]
-		nodes[index] = nodes[i]
-		nodes[i] = selectedNode
-
-		if uniqueOperators {
-			if slices.Contains(selectedOperators, selectedNode.operator) {
-				continue
-			}
-			selectedOperators = append(selectedOperators, selectedNode.operator)
+	clone.nodesLocked = make(map[common.Address]*NodeRecord, len(n.nodesLocked))
+	for addr, node := range n.nodesLocked {
+		clonedNode := &NodeRecord{
+			address:             node.address,
+			operator:            node.operator,
+			url:                 node.url,
+			status:              node.status,
+			local:               node.local,
+			streamServiceClient: node.streamServiceClient,
+			nodeToNodeClient:    node.nodeToNodeClient,
 		}
-
-		addrs = append(addrs, selectedNode.Address())
-		if len(addrs) == replFactor {
-			return addrs, nil
-		}
+		clone.nodesLocked[addr] = clonedNode
 	}
 
-	return nil, RiverError(Err_INTERNAL, "ChooseStreamNodes: should not happen")
+	clone.allNodesLocked = make([]*NodeRecord, len(n.allNodesLocked))
+	for i, node := range n.allNodesLocked {
+		clone.allNodesLocked[i] = clone.nodesLocked[node.address]
+	}
+
+	clone.activeNodesLocked = make([]*NodeRecord, len(n.activeNodesLocked))
+	for i, node := range n.activeNodesLocked {
+		clone.activeNodesLocked[i] = clone.nodesLocked[node.address]
+	}
+
+	clone.validAddrsLocked = make([]common.Address, len(n.validAddrsLocked))
+	copy(clone.validAddrsLocked, n.validAddrsLocked)
+
+	clone.operatorsLocked = make(map[common.Address]bool, len(n.operatorsLocked))
+	for addr, val := range n.operatorsLocked {
+		clone.operatorsLocked[addr] = val
+	}
+
+	return clone
+}
+
+func (n *nodeRegistryImpl) IsOperator(address common.Address) bool {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.operatorsLocked[address]
 }

@@ -50,6 +50,11 @@ print-env:
 clean: _require_run_env
     @rm -rf ${RUN_BASE}
 
+clear-logs: _require_run_env (_loop-instances "_clear_instance_logs")
+
+_clear_instance_logs $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
+    @rm -rf $INSTANCE_DIR/logs/*
+
 _anvil-start $NAME $PORT $CHAIN_ID:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     mkdir -p ./run_files/anvil
@@ -127,6 +132,7 @@ deploy-contracts: _require_run_env anvils
     echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_APPREGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/appRegistry.json)" >> ${RUN_BASE}/contracts.env
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -252,6 +258,16 @@ _register-node-base $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
             "registerNode(address)" \
             $NODE_ADDRESS > /dev/null
     fi
+
+# get the contract addresses from the node registry contract deployed to river chain
+get_all_node_addresses: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    source ${RUN_BASE}/contracts.env
+    cast call \
+            --rpc-url ${RPC_RIVER} \
+            $RIVER_REGISTRYCONTRACT_ADDRESS \
+            "getAllNodeAddresses()"
 
 just-register-nodes-base: _require_run_env (_loop-instances-seq "_register-node-base")
 
@@ -568,11 +584,23 @@ _test-from-dir $DIR *args:
         go test {{args}} | yarn exec pino-pretty
     fi
 
+_test-print-report-from-dir $DIR *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    cd $DIR
+    echo "Running go test from $(git rev-parse --show-prefix)"
+    if ! command -v gotestsum >/dev/null 2>&1; then
+        go install gotest.tools/gotestsum@latest
+    fi
+    gotestsum --hide-summary=skipped {{args}}
+
 # Run go tests from current directory
 test *args: (_test-from-dir invocation_directory() args)
 
 # Run all go tests from module root
 test-all *args: (_test-from-dir justfile_directory() "-v" args "./...")
+
+# Run all go tests from module root and print a report at the end
+test-all-report *args: (_test-print-report-from-dir justfile_directory() args "./...")
 
 # Run all go tests from current directory
 t *args: (_test-from-dir invocation_directory() "-v" args "./...")

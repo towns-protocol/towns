@@ -10,7 +10,7 @@ import {
     entitlementCheckerAbi,
     nodeOperatorFacetAbi,
     spaceDelegationFacetAbi,
-    rewardsDistributionAbi,
+    rewardsDistributionV2Abi,
     xChainAbi,
 } from '@towns-protocol/contracts/typings'
 
@@ -39,17 +39,22 @@ if (!baseRegistry) {
     throw new Error('Base registry address not found')
 }
 
+const riverAirdrop = getContractAddress('riverAirdrop')
+if (!riverAirdrop) {
+    throw new Error('River airdrop address not found')
+}
+
 export default createConfig({
-    networks: {
+    chains: {
         anvil: {
-            chainId: 31337,
-            transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            id: 31337,
+            rpc: http(process.env.PONDER_RPC_URL_1),
+            disableCache: false,
         },
         alpha: {
-            chainId: 84532,
-            transport: http(process.env.PONDER_RPC_URL_1),
-            disableCache: true,
+            id: 84532,
+            rpc: http(process.env.PONDER_RPC_URL_1),
+            disableCache: false,
         },
     },
     contracts: {
@@ -59,18 +64,24 @@ export default createConfig({
                 entitlementCheckerAbi,
                 nodeOperatorFacetAbi,
                 spaceDelegationFacetAbi,
-                rewardsDistributionAbi,
+                rewardsDistributionV2Abi,
                 xChainAbi,
             ]),
             address: baseRegistry,
             startBlock,
-            network: 'alpha',
+            chain: 'alpha',
+        },
+        RiverAirdrop: {
+            abi: mergeAbis([rewardsDistributionV2Abi]),
+            address: riverAirdrop,
+            startBlock,
+            chain: 'alpha',
         },
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
             startBlock,
-            network: 'alpha',
+            chain: 'alpha',
         },
         Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
@@ -82,13 +93,13 @@ export default createConfig({
                 parameter: 'space',
             }),
             startBlock,
-            network: 'alpha',
+            chain: 'alpha',
         },
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
             startBlock,
-            network: 'alpha',
+            chain: 'alpha',
         },
     },
 })

@@ -11,11 +11,11 @@ interface ISwapFacetBase {
     /// @notice Error thrown when the swap router address is not set
     error SwapFacet__SwapRouterNotSet();
 
-    /// @notice Error thrown when a swap execution fails
-    error SwapFacet__SwapFailed();
-
     /// @notice Error thrown when the total fee exceeds the maximum allowed
     error SwapFacet__TotalFeeTooHigh();
+
+    /// @notice Error thrown when ETH is sent with permit swap (not supported)
+    error SwapFacet__UnexpectedETH();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -39,15 +39,15 @@ interface ISwapFacetBase {
 
     /// @notice Emitted when swap fee configuration is updated
     /// @param posterFeeBps Poster fee in basis points
-    /// @param collectPosterFeeToSpace Whether the poster fee is collected to the space
-    event SwapFeeConfigUpdated(uint16 posterFeeBps, bool collectPosterFeeToSpace);
+    /// @param forwardPosterFee Whether to forward the poster fee to the poster (default: false, fees go to space)
+    event SwapFeeConfigUpdated(uint16 posterFeeBps, bool forwardPosterFee);
 }
 
 interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @notice Set the swap fee configuration for this space
     /// @param posterFeeBps Poster fee in basis points
-    /// @param collectPosterFeeToSpace Whether to collect the poster fee to the space instead of the poster
-    function setSwapFeeConfig(uint16 posterFeeBps, bool collectPosterFeeToSpace) external;
+    /// @param forwardPosterFee Whether to forward the poster fee to the poster (default: false, fees go to space)
+    function setSwapFeeConfig(uint16 posterFeeBps, bool forwardPosterFee) external;
 
     /// @notice Execute a swap within the space context
     /// @param params The parameters for the swap
@@ -55,23 +55,23 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @param poster The address that posted this swap opportunity
     /// @return amountOut The amount of tokenOut received
     function executeSwap(
-        ExactInputParams memory params,
+        ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster
     ) external payable returns (uint256 amountOut);
 
-    //    /// @notice Execute a swap with EIP-2612 permit
-    //    /// @param params The parameters for the swap
-    //    /// @param routerParams The router parameters for the swap
-    //    /// @param permit The permit data for token approval
-    //    /// @param poster The address that posted this swap opportunity
-    //    /// @return amountOut The amount of tokenOut received
-    //    function executeSwapWithPermit(
-    //        ExactInputParams calldata params,
-    //        RouterParams calldata routerParams,
-    //        PermitParams calldata permit,
-    //        address poster
-    //    ) external payable returns (uint256 amountOut);
+    /// @notice Execute a swap with Permit2 witness binding permit to swap intent
+    /// @param params The parameters for the swap
+    /// @param routerParams The router parameters for the swap
+    /// @param permit The Permit2 permit data
+    /// @param poster The address that posted this swap opportunity
+    /// @return amountOut The amount of tokenOut received
+    function executeSwapWithPermit(
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
+        Permit2Params calldata permit,
+        address poster
+    ) external payable returns (uint256 amountOut);
 
     /// @notice Get the current swap router address
     /// @return The address of the swap router
@@ -80,9 +80,9 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @notice Get the swap fees for this space
     /// @return protocolBps Treasury fee in basis points (from protocol config)
     /// @return posterBps Poster fee in basis points (space specific)
-    /// @return collectPosterFeeToSpace Whether the poster fee is collected to the space
+    /// @return forwardPosterFee Whether the poster fee is forwarded to the poster (default: false, fees go to space)
     function getSwapFees()
         external
         view
-        returns (uint16 protocolBps, uint16 posterBps, bool collectPosterFeeToSpace);
+        returns (uint16 protocolBps, uint16 posterBps, bool forwardPosterFee);
 }

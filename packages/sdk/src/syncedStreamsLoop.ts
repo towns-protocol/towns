@@ -132,6 +132,8 @@ export class SyncedStreamsLoop {
     private pendingStreamsToDelete: string[] = []
     private lastLogInflightAt = 0
     private syncStartedAt: number | undefined = undefined
+    private processedStreamCount = 0
+    private streamSyncStalled: NodeJS.Timeout | undefined
     private readonly MAX_IN_FLIGHT_COOKIES = 40
     private readonly MIN_IN_FLIGHT_COOKIES = 10
     private readonly MAX_IN_FLIGHT_STREAMS_TO_DELETE = 40
@@ -148,7 +150,7 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { useModifySync?: boolean } | undefined,
+        private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -354,6 +356,7 @@ export class SyncedStreamsLoop {
                         )
                     }
                     this.syncStartedAt = performance.now()
+                    this.processedStreamCount = 0
 
                     this.log(
                         'sync ITERATION start',
@@ -375,7 +378,12 @@ export class SyncedStreamsLoop {
                             {
                                 syncPos: syncCookies,
                             },
-                            { timeoutMs: -1 },
+                            {
+                                timeoutMs: -1,
+                                headers: this.streamOpts?.useSharedSyncer
+                                    ? { 'X-Use-Shared-Sync': 'true' }
+                                    : undefined,
+                            },
                         )
 
                         const iterator = streams[Symbol.asyncIterator]()
@@ -466,6 +474,7 @@ export class SyncedStreamsLoop {
                     syncState: this.syncState,
                 })
                 this.stopPing()
+                clearTimeout(this.streamSyncStalled)
                 if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                     this.setSyncState(SyncState.NotSyncing)
                     this.streams.forEach((streamRecord) => {
@@ -761,7 +770,7 @@ export class SyncedStreamsLoop {
     private syncClosed() {
         this.stopPing()
         if (this.syncState === SyncState.Canceling) {
-            this.log('server acknowledged our close atttempt', this.syncId)
+            this.log('server acknowledged our close attempt', this.syncId)
         } else {
             this.log('server cancelled unepexectedly, go through the retry loop', this.syncId)
             this.setSyncState(SyncState.Retrying)
@@ -795,6 +804,8 @@ export class SyncedStreamsLoop {
                     const streamId = streamIdAsString(streamIdBytes)
                     if (this.inFlightSyncCookies.has(streamId)) {
                         this.inFlightSyncCookies.delete(streamId)
+                        this.processedStreamCount++
+
                         if (
                             this.inFlightSyncCookies.size === 0 ||
                             Date.now() - this.lastLogInflightAt > 5000
@@ -805,11 +816,29 @@ export class SyncedStreamsLoop {
                             ) {
                                 const duration = performance.now() - this.syncStartedAt
                                 this.log('sync completed in', duration, 'ms')
+                                this.clientEmitter.emit('streamSyncBatchCompleted', {
+                                    duration,
+                                    count: this.processedStreamCount,
+                                })
                                 this.syncStartedAt = undefined
+                                this.processedStreamCount = 0
+                                clearTimeout(this.streamSyncStalled)
                             } else {
                                 this.log(
                                     `sync status inflight:${this.inFlightSyncCookies.size} enqueued:${this.pendingSyncCookies.length}`,
                                 )
+
+                                clearTimeout(this.streamSyncStalled)
+                                this.streamSyncStalled = setTimeout(() => {
+                                    if (this.syncStartedAt) {
+                                        const duration = performance.now() - this.syncStartedAt
+                                        this.logError(`sync timed out after ${duration}ms`)
+                                        this.clientEmitter.emit('streamSyncTimedOut', {
+                                            duration,
+                                        })
+                                    }
+                                    this.streamSyncStalled = undefined
+                                }, 10_000)
                             }
                             this.lastLogInflightAt = Date.now()
                         }
@@ -825,7 +854,12 @@ export class SyncedStreamsLoop {
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,
-                            this.unpackEnvelopeOpts,
+                            // Miniblocks are not provided in the sync updates so skipping signature validation
+                            // that ensures that the snapshot creator is the same address as its miniblock creator.
+                            {
+                                disableHashValidation: false,
+                                disableSignatureValidation: true,
+                            },
                         )
                         streamRecord.syncCookie = streamAndCookie.nextSyncCookie
                         await streamRecord.stream.appendEvents(

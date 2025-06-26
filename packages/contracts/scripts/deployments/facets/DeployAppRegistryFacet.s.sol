@@ -16,18 +16,23 @@ library DeployAppRegistryFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(16);
         arr.p(AppRegistryFacet.getAppSchema.selector);
         arr.p(AppRegistryFacet.getAppSchemaId.selector);
-        arr.p(AppRegistryFacet.getAttestation.selector);
+        arr.p(AppRegistryFacet.getAppById.selector);
         arr.p(AppRegistryFacet.getLatestAppId.selector);
         arr.p(AppRegistryFacet.registerApp.selector);
         arr.p(AppRegistryFacet.removeApp.selector);
         arr.p(AppRegistryFacet.createApp.selector);
+        arr.p(AppRegistryFacet.installApp.selector);
+        arr.p(AppRegistryFacet.uninstallApp.selector);
+        arr.p(AppRegistryFacet.getAppPrice.selector);
+        arr.p(AppRegistryFacet.getAppDuration.selector);
         arr.p(AppRegistryFacet.adminRegisterAppSchema.selector);
         arr.p(AppRegistryFacet.adminBanApp.selector);
         arr.p(AppRegistryFacet.isAppBanned.selector);
-
+        arr.p(AppRegistryFacet.getAppByClient.selector);
+        arr.p(AppRegistryFacet.renewApp.selector);
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_
@@ -47,13 +52,14 @@ library DeployAppRegistryFacet {
     }
 
     function makeInitData(
+        address spaceFactory,
         string memory schema,
         address resolver
     ) internal pure returns (bytes memory) {
         return
             abi.encodeCall(
                 AppRegistryFacet.__AppRegistry_init,
-                (schema, ISchemaResolver(resolver))
+                (spaceFactory, schema, ISchemaResolver(resolver))
             );
     }
 

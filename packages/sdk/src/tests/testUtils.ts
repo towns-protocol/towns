@@ -33,15 +33,15 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from '../id'
-import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
+import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
-import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { EntitlementsDelegate } from '../decryptionExtensions'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
 import assert from 'assert'
-import _ from 'lodash'
+import { forEachRight } from 'lodash-es'
 import { MockEntitlementsDelegate } from '../utils'
 import { SignerContext, makeSignerContext } from '../signerContext'
 import {
@@ -300,6 +300,10 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
         persistenceStoreName: persistenceDbName,
+        streamOpts: {
+            useModifySync: true,
+            useSharedSyncer: true,
+        },
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
@@ -458,7 +462,7 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     f: T,
 ): ReturnType<T> | undefined => {
     let ret: ReturnType<T> | undefined = undefined
-    _.forEachRight(events, (v): boolean => {
+    forEachRight(events, (v): boolean => {
         const r = f(v)
         if (r !== undefined) {
             ret = r
@@ -1027,6 +1031,7 @@ export function waitFor<T extends void | boolean>(
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let timedOut = false
         let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
         const intervalId = setInterval(checkCallback, pollIntervalMS)
@@ -1045,6 +1050,7 @@ export function waitFor<T extends void | boolean>(
         }
         function onTimeout() {
             lastError = lastError ?? timeoutContext
+            timedOut = true
             onDone()
         }
         function checkCallback() {
@@ -1055,15 +1061,14 @@ export function waitFor<T extends void | boolean>(
                     promiseStatus = 'pending'
                     result.then(
                         (res) => {
-                            promiseStatus = 'resolved'
-                            onDone(res)
+                            if (!timedOut) {
+                                promiseStatus = 'resolved'
+                                onDone(res)
+                            }
                         },
                         (err) => {
                             promiseStatus = 'rejected'
-                            // splat the error to get a stack trace, i don't know why this works
-                            lastError = {
-                                ...err,
-                            }
+                            lastError = err
                         },
                     )
                 } else {
@@ -1126,16 +1131,22 @@ export function getChannelMessagePayload(event?: ChannelMessage) {
     return undefined
 }
 
+export function getTimelineMessagePayload(event?: TimelineEvent) {
+    if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return event.content.body
+    }
+    return undefined
+}
+
 export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(
         'eventDecrypted',
-        (streamId: string, contentKind: SnapshotCaseType, event: DecryptedTimelineEvent): void => {
+        (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
             recipientReceivesMessageWithoutError.runAndDone(() => {
-                const content = event.decryptedContent
-                expect(content).toBeDefined()
-                check(content.kind === 'channelMessage')
-                expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
+                expect(event.content).toBeDefined()
+                check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                expect(event.content.body).toEqual(expectedMessageText)
             })
         },
     )

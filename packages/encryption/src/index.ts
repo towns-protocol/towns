@@ -4,7 +4,6 @@
 export * from './base'
 export * from './cryptoAesGcm'
 export * from './cryptoStore'
-export * from './decryptionExtensions'
 export * from './derivedEncryption'
 export * from './encryptionDelegate'
 export * from './encryptionDevice'
