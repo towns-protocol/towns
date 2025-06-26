@@ -3,6 +3,8 @@ package events
 import (
 	"bytes"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 
@@ -11,14 +13,50 @@ import (
 )
 
 type JoinableStreamView interface {
+	GetMemberSnapshotContent() (*protocol.MemberPayload_Snapshot, error)
+	GetMemberAppAddress(userId common.Address) (common.Address, error)
 	GetChannelMembers() (mapset.Set[string], error)
 	GetMembership(userAddress []byte) (protocol.MembershipOp, error)
 	GetKeySolicitations(userAddress []byte) ([]*protocol.MemberPayload_KeySolicitation, error)
 	GetPinnedMessages() ([]*protocol.MemberPayload_SnappedPin, error)
-	HasTransaction(evmReceipt *protocol.BlockchainTransactionReceipt, solanaReceipt *protocol.SolanaBlockchainTransactionReceipt) (bool, error) // defined in userStreamView
+	HasTransaction(
+		evmReceipt *protocol.BlockchainTransactionReceipt,
+		solanaReceipt *protocol.SolanaBlockchainTransactionReceipt,
+	) (bool, error) // defined in userStreamView
 }
 
-var _ JoinableStreamView = (*StreamView)(nil)
+func (r *StreamView) GetMemberSnapshotContent() (*protocol.MemberPayload_Snapshot, error) {
+	return r.snapshot.GetMembers(), nil
+}
+
+func (r *StreamView) GetMemberAppAddress(userId common.Address) (common.Address, error) {
+	// App addresses are only stored in membership evenpts, not in snapshot members
+	// Look through all events to find the app address for the specified user
+	var appAddress common.Address
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *protocol.StreamEvent_MemberPayload:
+			switch payload := payload.MemberPayload.Content.(type) {
+			case *protocol.MemberPayload_Membership_:
+				if bytes.Equal(payload.Membership.UserAddress, userId.Bytes()) && len(payload.Membership.AppAddress) > 0 {
+					appAddress = common.BytesToAddress(payload.Membership.AppAddress)
+					return false, nil // Stop iteration, we found the app address for this user
+				}
+			default:
+				break
+			}
+		}
+		return true, nil
+	}
+
+	// Start from beginning to find the app address for the specified user
+	err := r.forEachEvent(0, updateFn)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	return appAddress, nil
+}
 
 // TODO: FIX: REFACTOR: make it to be GetChannelMembers() (map[common.Address]struct{}, error)
 func (r *StreamView) GetChannelMembers() (mapset.Set[string], error) {
