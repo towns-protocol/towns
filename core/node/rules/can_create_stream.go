@@ -466,9 +466,11 @@ func (ru *csParams) metadataShardIsInRange() error {
 	)
 }
 
-func (ru *csParams) getCreatorIsNotRegisteredApp() (*auth.ChainAuthArgs, error) {
-	return auth.NewChainAuthArgsForIsNotApp(ru.creatorAddress), nil
-}
+// TODO: re-enable usage of this check when the app registry contract is verified and deployed
+// on all production environments.
+// func (ru *csParams) getCreatorIsNotRegisteredApp() (*auth.ChainAuthArgs, error) {
+// 	return auth.NewChainAuthArgsForIsNotApp(ru.creatorAddress), nil
+// }
 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
 	const joinEventIndex = 1
