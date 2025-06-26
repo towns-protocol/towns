@@ -138,14 +138,14 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
-			).Func("createStream")
+			).Func("createMediaStream")
 		}
 	}
 
 	// create the stream
 	resp, err := s.createReplicatedMediaStream(ctx, streamId, []*ParsedEvent{parsedEvents[0]})
-	if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
-		return nil, err
+	if err != nil {
+		return nil, AsRiverError(err).Func("createMediaStream")
 	}
 
 	// add derived events
@@ -185,7 +185,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			resp,
 			parsedEvents[0].Event.GetMediaPayload().GetInception().GetChunkCount() == 1,
 		)
-		if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+		if err != nil {
 			return nil, AsRiverError(err).Func("createMediaStream")
 		}
 
@@ -205,6 +205,7 @@ func (s *Service) createReplicatedMediaStream(
 	if err != nil {
 		return nil, err
 	}
+	mbHash := mb.Header.Hash
 
 	mbBytes, err := proto.Marshal(mb)
 	if err != nil {
@@ -251,7 +252,14 @@ func (s *Service) createReplicatedMediaStream(
 	})
 
 	if err = sender.Wait(); err != nil {
-		return nil, err
+		if !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			return nil, err
+		}
+
+		mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, 0, remotes, isLocal)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	nodesListRaw := make([][]byte, len(nodesList))
@@ -263,6 +271,72 @@ func (s *Service) createReplicatedMediaStream(
 		StreamId:          streamId[:],
 		Nodes:             nodesListRaw,
 		MiniblockNum:      1, // the block number after the genesis one is 1
-		PrevMiniblockHash: mb.Header.Hash,
+		PrevMiniblockHash: mbHash,
 	}, nil
+}
+
+// getEphemeralStreamMbHash returns the miniblock hash by the given miniblock number for an ephemeral stream
+// (not registered onchain yet).
+// It first tries to load from the local node storage, and if not found, it loads data from remotes.
+func (s *Service) getEphemeralStreamMbHash(
+	ctx context.Context,
+	streamId StreamId,
+	num int64,
+	remotes []common.Address,
+	isLocal bool,
+) ([]byte, error) {
+	if isLocal {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		var hash []byte
+		err := s.storage.ReadMiniblocksByIds(ctx, streamId, []int64{num}, true, func(data []byte, seqNum int64, _ []byte) error {
+			var mb Miniblock
+			if err := proto.Unmarshal(data, &mb); err != nil {
+				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			}
+			hash = mb.GetHeader().GetHash()
+			return nil
+		})
+		if err != nil {
+			logging.FromCtx(ctx).Errorw("Failed to read genesis miniblock from store to re-create ephemeral stream creation cookie", "streamId", streamId, "error", err)
+		} else if len(hash) > 0 {
+			return hash, nil
+		}
+	}
+
+	for _, addr := range remotes {
+		client, err := s.nodeRegistry.GetNodeToNodeClientForAddress(addr)
+		if err != nil {
+			logging.FromCtx(ctx).Errorw("Failed to get node client for address", "address", addr, "streamId", streamId, "error", err)
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		resp, err := client.GetMiniblocksByIds(ctx, connect.NewRequest(&GetMiniblocksByIdsRequest{
+			StreamId:      streamId[:],
+			MiniblockIds:  []int64{num},
+			OmitSnapshots: true,
+		}))
+		if err != nil {
+			cancel()
+			logging.FromCtx(ctx).Errorw("Failed to get genesis miniblock from remote to re-create ephemeral stream creation cookie", "address", addr, "streamId", streamId, "error", err)
+			continue
+		}
+
+		for resp.Receive() {
+			msg := resp.Msg()
+			_ = resp.Close()
+			cancel()
+			if msg == nil || msg.GetMiniblock() == nil {
+				break
+			} else {
+				return msg.GetMiniblock().GetHeader().GetHash(), nil
+			}
+		}
+		_ = resp.Close()
+		cancel()
+	}
+
+	return nil, RiverError(Err_NOT_FOUND, "genesis miniblock not found for ephemeral stream").Tag("streamId", streamId)
 }

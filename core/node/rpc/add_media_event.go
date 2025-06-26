@@ -69,7 +69,7 @@ func (s *Service) localAddMediaEvent(
 	log.Debugw("localAddMediaEvent", "parsedEvent", parsedEvent, "creationCookie", creationCookie)
 
 	mbHash, err := s.replicatedAddMediaEvent(ctx, parsedEvent, creationCookie, req.Msg.GetLast())
-	if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+	if err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
 		return nil, AsRiverError(err).Func("localAddMediaEvent")
 	}
 
