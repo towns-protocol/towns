@@ -260,7 +260,10 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
     })
 
-    it('SHOULD NOT receive dm messages', { fails: true }, async () => {
+    // TODO: re-enable the following two tests when the app registry contract behavior is verified
+    // and it is deployed on all environments, so we can re-enable the app registry contract check
+    // on GDM/DM creation.
+    it.skip('SHOULD NOT receive dm messages', { fails: true }, async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
         bot.onMessage((_h, e) => {
@@ -278,7 +281,7 @@ describe('Bot', { sequential: true }, () => {
         expect(event?.message).toBe(TEST_MESSAGE)
     })
 
-    it('SHOULD NOT receive gdm messages', { fails: true }, async () => {
+    it.skip('SHOULD NOT receive gdm messages', { fails: true }, async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
         bot.onMessage((_h, e) => {
