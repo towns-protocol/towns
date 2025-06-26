@@ -31,6 +31,7 @@ contract RewardsDistributionV2 is
     Nonces,
     Facet
 {
+    using CustomRevert for bytes4;
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeTransferLib for address;
     using StakingRewards for StakingRewards.Layout;
@@ -228,13 +229,12 @@ contract RewardsDistributionV2 is
         _revertIfNotDepositOwner(owner);
 
         if (owner == address(this)) {
-            CustomRevert.revertWith(RewardsDistribution__CannotWithdrawFromSelf.selector);
+            RewardsDistribution__CannotWithdrawFromSelf.selector.revertWith();
         }
 
         amount = deposit.pendingWithdrawal;
-        if (amount == 0) {
-            CustomRevert.revertWith(RewardsDistribution__NoPendingWithdrawal.selector);
-        } else {
+        if (amount == 0) RewardsDistribution__NoPendingWithdrawal.selector.revertWith();
+        else {
             deposit.pendingWithdrawal = 0;
             address proxy = ds.proxyById[depositId];
             ds.staking.stakeToken.safeTransferFrom(proxy, owner, amount);
@@ -257,11 +257,9 @@ contract RewardsDistributionV2 is
             _revertIfNotOperatorClaimer(operator);
         }
         // If the beneficiary is an operator, only the claimer can claim the reward
-        else if (_isOperator(beneficiary)) {
-            _revertIfNotOperatorClaimer(beneficiary);
-        } else {
-            CustomRevert.revertWith(RewardsDistribution__NotBeneficiary.selector);
-        }
+        else if (_isOperator(beneficiary)) _revertIfNotOperatorClaimer(beneficiary);
+        else RewardsDistribution__NotBeneficiary.selector.revertWith();
+
         reward = ds.staking.claimReward(beneficiary);
         if (reward != 0) {
             ds.staking.rewardToken.safeTransfer(recipient, reward);
@@ -274,7 +272,7 @@ contract RewardsDistributionV2 is
     function notifyRewardAmount(uint256 reward) external {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         if (!ds.isRewardNotifier[msg.sender]) {
-            CustomRevert.revertWith(RewardsDistribution__NotRewardNotifier.selector);
+            RewardsDistribution__NotRewardNotifier.selector.revertWith();
         }
 
         ds.staking.notifyRewardAmount(reward);

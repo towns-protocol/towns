@@ -21,6 +21,7 @@ import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 import {DelegationProxy} from "./DelegationProxy.sol";
 
 abstract contract RewardsDistributionBase is IRewardsDistributionBase {
+    using CustomRevert for bytes4;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeTransferLib for address;
@@ -196,7 +197,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     function _getValidOperatorOrRevert(address space) internal view returns (address operator) {
         operator = _getOperatorBySpace(space);
         if (!_isValidOperator(operator)) {
-            CustomRevert.revertWith(RewardsDistribution__NotActiveOperator.selector);
+            RewardsDistribution__NotActiveOperator.selector.revertWith();
         }
     }
 
@@ -231,30 +232,24 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     function _revertIfNotOperatorOrSpace(address delegatee) internal view {
         if (_isSpace(delegatee)) return;
         if (!_isValidOperator(delegatee)) {
-            CustomRevert.revertWith(RewardsDistribution__NotOperatorOrSpace.selector);
+            RewardsDistribution__NotOperatorOrSpace.selector.revertWith();
         }
     }
 
     /// @dev Reverts if the caller is not the owner of the deposit
     function _revertIfNotDepositOwner(address owner) internal view {
-        if (msg.sender != owner) {
-            CustomRevert.revertWith(RewardsDistribution__NotDepositOwner.selector);
-        }
+        if (msg.sender != owner) RewardsDistribution__NotDepositOwner.selector.revertWith();
     }
 
     /// @dev Checks if the caller is the claimer of the operator
     function _revertIfNotOperatorClaimer(address operator) internal view {
         NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
         address claimer = nos.claimerByOperator[operator];
-        if (msg.sender != claimer) {
-            CustomRevert.revertWith(RewardsDistribution__NotClaimer.selector);
-        }
+        if (msg.sender != claimer) RewardsDistribution__NotClaimer.selector.revertWith();
     }
 
     function _revertIfPastDeadline(uint256 deadline) internal view {
-        if (block.timestamp > deadline) {
-            CustomRevert.revertWith(RewardsDistribution__ExpiredDeadline.selector);
-        }
+        if (block.timestamp > deadline) RewardsDistribution__ExpiredDeadline.selector.revertWith();
     }
 
     function _revertIfSignatureIsNotValidNow(
@@ -263,7 +258,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         bytes calldata signature
     ) internal view {
         if (!SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature)) {
-            CustomRevert.revertWith(RewardsDistribution__InvalidSignature.selector);
+            RewardsDistribution__InvalidSignature.selector.revertWith();
         }
     }
 }
