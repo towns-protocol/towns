@@ -535,7 +535,7 @@ describe('Bot', { sequential: true }, () => {
         })
         const TEST_MESSAGE = 'wont be received'
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
-        await waitFor(() => receivedMentionedEvents.length > 0)
+        await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
     })
 })
