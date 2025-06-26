@@ -3751,6 +3751,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hono/node-server@npm:^1.14.0":
+  version: 1.14.4
+  resolution: "@hono/node-server@npm:1.14.4"
+  peerDependencies:
+    hono: ^4
+  checksum: 1eed16a0d10e923179c2adeefe8517c799dbd7b5b03a6cce4c43555daa024920fc59bcf7c484d106c16366b0c09739d031f4c3c3be037f87df18828a96f9595d
+  languageName: node
+  linkType: hard
+
 "@hookform/resolvers@npm:^3.6.0":
   version: 3.6.0
   resolution: "@hookform/resolvers@npm:3.6.0"
@@ -8460,7 +8469,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/bot@workspace:packages/bot":
+"@towns-protocol/bot@workspace:^, @towns-protocol/bot@workspace:packages/bot":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/bot@workspace:packages/bot"
   dependencies:
@@ -8484,7 +8493,6 @@ __metadata:
     fake-indexeddb: ^4.0.1
     hono: ^4.7.11
     jsonwebtoken: ^9.0.2
-    openai: ^4.95.1
     typed-emitter: ^2.1.0
     typescript: ^5.8.2
     viem: ^2.29.3
@@ -8589,6 +8597,61 @@ __metadata:
 "@towns-protocol/eslint-config@workspace:^, @towns-protocol/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/eslint-config@workspace:packages/eslint-config"
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-ask-poll@workspace:packages/examples/bot-ask-poll":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-ask-poll@workspace:packages/examples/bot-ask-poll"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    tsx: ^4.7.1
+    typescript: ^5.8.2
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    tsx: ^4.7.1
+    typescript: ^5.8.2
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-thread-ai@workspace:packages/examples/bot-thread-ai":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-thread-ai@workspace:packages/examples/bot-thread-ai"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    openai: ^5.7.0
+    tsx: ^4.7.1
+    typescript: ^5.8.2
   languageName: unknown
   linkType: soft
 
@@ -9383,16 +9446,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node-fetch@npm:^2.6.4":
-  version: 2.6.12
-  resolution: "@types/node-fetch@npm:2.6.12"
-  dependencies:
-    "@types/node": "*"
-    form-data: ^4.0.0
-  checksum: 9647e68f9a125a090220c38d77b3c8e669c488658ae7506f1b4f9568214beba087624b1705bba1dc76649a65281ce3fd5b400e15266cbef8088027fb88777557
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:*":
   version: 20.11.24
   resolution: "@types/node@npm:20.11.24"
@@ -9417,15 +9470,6 @@ __metadata:
   dependencies:
     undici-types: ~6.19.2
   checksum: 1f788966ff7df07add0af3481fb68c7fe5091cc72a265c671432abb443788ddacca4ca6378af64fe100c20f857c4d80170d358e66c070171fcea0d4adb1b45b1
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^18.11.18":
-  version: 18.19.100
-  resolution: "@types/node@npm:18.19.100"
-  dependencies:
-    undici-types: ~5.26.4
-  checksum: b84c705cd723526aa10f08dce2f7df69d824f6702e728efd73a2819c0c618a4e0be4eedbca40454827625b00c0f5e1fd5ac4aedc81cb8b9222643f7d78dae473
   languageName: node
   linkType: hard
 
@@ -16747,13 +16791,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data-encoder@npm:1.7.2":
-  version: 1.7.2
-  resolution: "form-data-encoder@npm:1.7.2"
-  checksum: aeebd87a1cb009e13cbb5e4e4008e6202ed5f6551eb6d9582ba8a062005178907b90f4887899d3c993de879159b6c0c940af8196725b428b4248cec5af3acf5f
-  languageName: node
-  linkType: hard
-
 "form-data-encoder@npm:^2.1.2":
   version: 2.1.4
   resolution: "form-data-encoder@npm:2.1.4"
@@ -16776,16 +16813,6 @@ __metadata:
   version: 0.2.2
   resolution: "format@npm:0.2.2"
   checksum: 646a60e1336250d802509cf24fb801e43bd4a70a07510c816fa133aa42cdbc9c21e66e9cc0801bb183c5b031c9d68be62e7fbb6877756e52357850f92aa28799
-  languageName: node
-  linkType: hard
-
-"formdata-node@npm:^4.3.2":
-  version: 4.4.1
-  resolution: "formdata-node@npm:4.4.1"
-  dependencies:
-    node-domexception: 1.0.0
-    web-streams-polyfill: 4.0.0-beta.3
-  checksum: d91d4f667cfed74827fc281594102c0dabddd03c9f8b426fc97123eedbf73f5060ee43205d89284d6854e2fc5827e030cd352ef68b93beda8decc2d72128c576
   languageName: node
   linkType: hard
 
@@ -22977,13 +23004,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-domexception@npm:1.0.0":
-  version: 1.0.0
-  resolution: "node-domexception@npm:1.0.0"
-  checksum: ee1d37dd2a4eb26a8a92cd6b64dfc29caec72bff5e1ed9aba80c294f57a31ba4895a60fd48347cf17dd6e766da0ae87d75657dfd1f384ebfa60462c2283f5c7f
-  languageName: node
-  linkType: hard
-
 "node-emoji@npm:^1.10.0":
   version: 1.11.0
   resolution: "node-emoji@npm:1.11.0"
@@ -23764,17 +23784,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^4.95.1":
-  version: 4.97.0
-  resolution: "openai@npm:4.97.0"
-  dependencies:
-    "@types/node": ^18.11.18
-    "@types/node-fetch": ^2.6.4
-    abort-controller: ^3.0.0
-    agentkeepalive: ^4.2.1
-    form-data-encoder: 1.7.2
-    formdata-node: ^4.3.2
-    node-fetch: ^2.6.7
+"openai@npm:^5.7.0":
+  version: 5.7.0
+  resolution: "openai@npm:5.7.0"
   peerDependencies:
     ws: ^8.18.0
     zod: ^3.23.8
@@ -23785,7 +23797,7 @@ __metadata:
       optional: true
   bin:
     openai: bin/cli
-  checksum: 25d7d92cafa69faf2224d298af590e4eb471b661522fe4947c5fd69130387cbab701cf02a329368b07fc8568a31ac9c8d09b59ed88f937a166a77b42229c54e9
+  checksum: 3f175ce520cc277fe14f9b0c6cd523e91e972b309db6d8457fb1d5d4b992c309312367eaacf0ab3ade4fbeeb97c39cdcdea3d7689f8c8f888ca57cef0c9fe547
   languageName: node
   linkType: hard
 
@@ -31163,13 +31175,6 @@ __metadata:
   version: 2.0.1
   resolution: "web-namespaces@npm:2.0.1"
   checksum: b6d9f02f1a43d0ef0848a812d89c83801d5bbad57d8bb61f02eb6d7eb794c3736f6cc2e1191664bb26136594c8218ac609f4069722c6f56d9fc2d808fa9271c6
-  languageName: node
-  linkType: hard
-
-"web-streams-polyfill@npm:4.0.0-beta.3":
-  version: 4.0.0-beta.3
-  resolution: "web-streams-polyfill@npm:4.0.0-beta.3"
-  checksum: dfec1fbf52b9140e4183a941e380487b6c3d5d3838dd1259be81506c1c9f2abfcf5aeb670aeeecfd9dff4271a6d8fef931b193c7bedfb42542a3b05ff36c0d16
   languageName: node
   linkType: hard
 

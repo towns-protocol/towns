@@ -32,7 +32,6 @@
         "fake-indexeddb": "^4.0.1",
         "hono": "^4.7.11",
         "jsonwebtoken": "^9.0.2",
-        "openai": "^4.95.1",
         "typed-emitter": "^2.1.0",
         "viem": "^2.29.3"
     },
