@@ -168,6 +168,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 	if err != nil {
 		return nil, err
 	}
+	mbHash := header.Hash
 
 	ephemeralMb := &Miniblock{
 		Events: []*Envelope{event.Envelope},
@@ -211,7 +212,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
-		}); err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+		}); err != nil {
 			return err
 		}
 
@@ -249,7 +250,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 					Miniblock: ephemeralMb,
 				},
 			),
-		); err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+		); err != nil {
 			return err
 		}
 
@@ -282,12 +283,19 @@ func (s *Service) replicatedAddMediaEventImpl(
 	})
 
 	if err = quorum.Wait(); err != nil {
-		logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "error", err)
-		return nil, err
+		if !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "error", err)
+			return nil, err
+		}
+
+		mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !seal {
-		return ephemeralMb.Header.Hash, nil
+		return mbHash, nil
 	}
 
 	quorumCheckMu.Lock()
@@ -313,5 +321,5 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 	}
 
-	return ephemeralMb.Header.Hash, nil
+	return mbHash, nil
 }

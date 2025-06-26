@@ -39,6 +39,7 @@ import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
 import { dlogger } from '@towns-protocol/dlog'
+import { IAppAccountShim } from './IAppAccountShim'
 const log = dlogger('csb:Space')
 
 interface AddressToEntitlement {
@@ -65,6 +66,7 @@ export class Space {
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
     private readonly treasury: ITreasuryShim
+    private readonly appAccount: IAppAccountShim
 
     constructor(
         address: string,
@@ -93,6 +95,7 @@ export class Space {
         this.tipping = new ITippingShim(address, provider)
         this.review = new IReviewShim(address, provider)
         this.treasury = new ITreasuryShim(address, provider)
+        this.appAccount = new IAppAccountShim(address, provider)
     }
 
     private getAllShims() {
@@ -111,6 +114,7 @@ export class Space {
             this.erc721A,
             this.tipping,
             this.treasury,
+            this.appAccount,
         ] as const
     }
 
@@ -180,6 +184,10 @@ export class Space {
 
     public get Treasury(): ITreasuryShim {
         return this.treasury
+    }
+
+    public get AppAccount(): IAppAccountShim {
+        return this.appAccount
     }
 
     public async totalTips({ currency }: { currency: string }): Promise<{

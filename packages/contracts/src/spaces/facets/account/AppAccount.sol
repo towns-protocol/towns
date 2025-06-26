@@ -68,6 +68,11 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
+    function isAppInstalled(address app) external view returns (bool) {
+        return _isAppInstalled(app);
+    }
+
+    /// @inheritdoc IAppAccount
     function getAppId(address app) external view returns (bytes32) {
         return _getInstalledAppId(app);
     }

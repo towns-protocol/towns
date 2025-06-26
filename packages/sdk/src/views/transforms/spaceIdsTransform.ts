@@ -1,6 +1,6 @@
 import { Membership } from '../../sync-agent/timeline/models/timeline-types'
 import { isSpaceStreamId } from '../../id'
-import isEqual from 'lodash/isEqual'
+import { isEqual } from 'lodash-es'
 
 export function spaceIdsTransform(
     memberships: Record<string, Membership>,

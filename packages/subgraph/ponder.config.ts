@@ -81,7 +81,7 @@ export default createConfig({
             abi: mergeAbis([rewardsDistributionV2Abi]),
             address: riverAirdrop,
             startBlock,
-            network: 'anvil',
+            chain: 'anvil',
         },
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),

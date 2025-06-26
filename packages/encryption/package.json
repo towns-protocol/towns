@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/encryption",
-    "version": "0.0.257",
+    "version": "0.0.258",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -34,7 +34,6 @@
         "typed-emitter": "^2.1.0"
     },
     "devDependencies": {
-        "@types/lodash": "^4.14.186",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
