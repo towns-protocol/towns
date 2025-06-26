@@ -814,7 +814,7 @@ export class StreamStateView {
             case 'channelContent':
             case 'spaceContent':
             case 'gdmChannelContent':
-                return this.getMembers().joinedParticipants()
+                return this.getMembers().joinedOrPendingJoinedParticipants()
             case 'dmChannelContent':
                 return this.getMembers().participants() // send keys to all participants
             default:

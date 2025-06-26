@@ -164,7 +164,7 @@ export class StressClient {
         }
         const stream = streamsClient.stream(streamId)
         const streamStateView = stream?.view ?? (await streamsClient.getStream(streamId))
-        return streamStateView.userIsEntitledToKeyExchange(this.userId)
+        return streamStateView.membershipContent.joinedParticipants().has(this.userId)
     }
 
     async createSpace(spaceName: string) {
