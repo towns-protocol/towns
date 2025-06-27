@@ -4,9 +4,7 @@ pragma solidity ^0.8.23;
 // utils
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
-// interfacets
-import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
-import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+// interfaces
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -18,9 +16,6 @@ import {SignerFacet} from "src/spaces/facets/account/SignerFacet.sol";
 // Mocks
 import {MockModule} from "test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-
-// debuggging
-import {console} from "forge-std/console.sol";
 
 contract SignerFacetTest is BaseSetup {
     SignerFacet internal signerFacet;
