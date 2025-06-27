@@ -1,4 +1,4 @@
-import { Membership } from '../../sync-agent/timeline/models/timeline-types'
+import { Membership } from '../models/timelineTypes'
 import { isSpaceStreamId } from '../../id'
 import { isEqual } from 'lodash-es'
 

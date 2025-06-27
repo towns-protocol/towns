@@ -13,7 +13,7 @@ import {
 import { waitForValue } from '../testUtils'
 import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 const base_log = dlog('csb:test:transaction_SpaceReview')
 

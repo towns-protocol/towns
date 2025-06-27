@@ -83,10 +83,7 @@ import {
     getFixedPricingModule,
     getDynamicPricingModule,
 } from '@towns-protocol/web3'
-import {
-    RiverTimelineEvent,
-    type TimelineEvent,
-} from '../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, type TimelineEvent } from '../views/models/timelineTypes'
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'

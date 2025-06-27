@@ -8,7 +8,7 @@ import {
     MessageTips,
     ThreadStatsData,
     TimelineEvent,
-} from '../../sync-agent/timeline/models/timeline-types'
+} from '../../views/models/timelineTypes'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
 
 function describeEvent(event: TimelineEvent) {

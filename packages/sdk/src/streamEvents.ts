@@ -21,7 +21,7 @@ import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
 import { SpaceReviewEventObject } from '@towns-protocol/web3'
-import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
+import { TimelineEvent } from './views/models/timelineTypes'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
