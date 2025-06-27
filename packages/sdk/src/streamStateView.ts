@@ -738,13 +738,13 @@ export class StreamStateView {
         log('updateLocalEvent', { localId, parsedEventHash, status })
         // we update local events multiple times, so we need to check both the localId and the parsedEventHash
         const timelineEvent =
-            this.minipoolEvents.get(localId) || this.minipoolEvents.get(parsedEventHash)
+            this.minipoolEvents.get(localId) ?? this.minipoolEvents.get(parsedEventHash)
         check(isDefined(timelineEvent), `Local event not found ${localId}`)
         check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)
         const previousId = timelineEvent.hashStr
         timelineEvent.hashStr = parsedEventHash
         timelineEvent.localEvent.status = status
-        this.minipoolEvents.delete(localId)
+        this.minipoolEvents.delete(previousId)
         this.minipoolEvents.set(parsedEventHash, timelineEvent)
 
         this.streamsView.timelinesView.streamLocalEventUpdated(
