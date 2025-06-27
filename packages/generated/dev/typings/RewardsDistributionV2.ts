@@ -117,8 +117,8 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
     "isRewardNotifier(address)": FunctionFragment;
     "lastTimeRewardDistributed()": FunctionFragment;
     "notifyRewardAmount(uint256)": FunctionFragment;
-    "permitAndIncreaseStake(uint256,uint96,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "permitAndStake(uint96,address,address,uint256,uint8,bytes32,bytes32)": FunctionFragment;
+    "permitAndIncreaseStake(uint256,uint96,uint256,uint256,bytes)": FunctionFragment;
+    "permitAndStake(uint96,address,address,uint256,uint256,bytes)": FunctionFragment;
     "redelegate(uint256,address)": FunctionFragment;
     "setPeriodRewardAmount(uint256)": FunctionFragment;
     "setRewardNotifier(address,bool)": FunctionFragment;
@@ -238,7 +238,6 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>
     ]
   ): string;
@@ -250,7 +249,6 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>
     ]
   ): string;
@@ -848,10 +846,9 @@ export interface RewardsDistributionV2 extends BaseContract {
     permitAndIncreaseStake(
       depositId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -859,10 +856,9 @@ export interface RewardsDistributionV2 extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       delegatee: PromiseOrValue<string>,
       beneficiary: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1011,10 +1007,9 @@ export interface RewardsDistributionV2 extends BaseContract {
   permitAndIncreaseStake(
     depositId: PromiseOrValue<BigNumberish>,
     amount: PromiseOrValue<BigNumberish>,
+    nonce: PromiseOrValue<BigNumberish>,
     deadline: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
+    signature: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1022,10 +1017,9 @@ export interface RewardsDistributionV2 extends BaseContract {
     amount: PromiseOrValue<BigNumberish>,
     delegatee: PromiseOrValue<string>,
     beneficiary: PromiseOrValue<string>,
+    nonce: PromiseOrValue<BigNumberish>,
     deadline: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
+    signature: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1166,10 +1160,9 @@ export interface RewardsDistributionV2 extends BaseContract {
     permitAndIncreaseStake(
       depositId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1177,10 +1170,9 @@ export interface RewardsDistributionV2 extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       delegatee: PromiseOrValue<string>,
       beneficiary: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1530,10 +1522,9 @@ export interface RewardsDistributionV2 extends BaseContract {
     permitAndIncreaseStake(
       depositId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1541,10 +1532,9 @@ export interface RewardsDistributionV2 extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       delegatee: PromiseOrValue<string>,
       beneficiary: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1688,10 +1678,9 @@ export interface RewardsDistributionV2 extends BaseContract {
     permitAndIncreaseStake(
       depositId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1699,10 +1688,9 @@ export interface RewardsDistributionV2 extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       delegatee: PromiseOrValue<string>,
       beneficiary: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
+      signature: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
