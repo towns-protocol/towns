@@ -1658,7 +1658,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 // the membership is changing, but bot users require an additional check that their memberships can only
 // be changed by either:
 // - the owner of a space where the bot is experiencing a membership change, OR
-// - by a node, specifically in the case of membership loss detected by scrubbing.
+// - by a node, specifically in the case of membership loss due to scrubbing.
 // Thus, for the very specific case when users are bot users, and the membership change is not a node-initiated
 // bounce, we want to verify that the initiator of the membership change has space ownership permissions.
 // NOTE that at this time, bots cannot be members of DMs or GDMs, so there will always be a space involved
@@ -1667,9 +1667,6 @@ func (ru *aeUserMembershipRules) chainAuthForUserMembership() (*auth.ChainAuthAr
 	isApp, _ := ru.params.streamView.IsAppUser()
 	isNodeInitiator := ru.params.isValidNode(ru.userMembership.Inviter)
 	isNodeBoot := ru.userMembership.Op == MembershipOp_SO_LEAVE && isNodeInitiator
-	// Adding bots to spaces and channels requires ownership, but removals can also be initiated
-	// by nodes when streams are scrubbed. Thus we require space owner permissions only for app
-	// payloads that are not node-initiated leave events.
 	if isApp && !isNodeBoot {
 		return ru.ownerChainAuthForInviter()
 	}
