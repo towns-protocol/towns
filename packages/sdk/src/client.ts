@@ -2860,7 +2860,10 @@ export class Client
             try {
                 const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    // if you only have one device this is a valid state
+                    if (userId !== this.userId) {
+                        this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    }
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
