@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { SecretInformationBanner } from '@/components/ui/secret-information-banner'
 import { CopyButton } from '@/components/copy-button'
+import { cn } from '@/utils'
 
 interface BotCredentialsData {
     botAddress: string
@@ -26,64 +27,57 @@ export const BotCredentialsDialog = ({ open, onOpenChange, data }: BotCredential
         return null
     }
 
+    const envContent = `APP_PRIVATE_DATA_BASE64=${data.appPrivateDataBase64}
+JWT_SECRET=${data.jwtSecretBase64}`
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Bot Created Successfully</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                        Bot Created Successfully
+                    </DialogTitle>
                     <DialogDescription>
-                        Your bot has been created and deployed. Store this information securely.
+                        Your bot has been minted. The private credentials below are critical for your bot's operation.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                     <SecretInformationBanner>
-                        Store this information in a secure location. You won't be able to access it
-                        again.
+                        These private keys and secrets are shown only once and cannot be recovered. 
                     </SecretInformationBanner>
 
                     <div className="flex flex-col gap-2 text-sm">
                         <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground">Bot Address:</p>
-                            <CopyButton text={data.botAddress} />
+                            <p className="text-muted-foreground">Environment Variables</p>
+                            <CopyButton text={envContent} />
                         </div>
-                        <pre className="overflow-auto whitespace-pre-wrap rounded bg-muted p-2 text-xs">
-                            {data.botAddress}
-                        </pre>
+                        <textarea
+                            readOnly
+                            value={envContent}
+                            className={cn(
+                                "min-h-[200px] w-full rounded-md border font-mono text-xs shadow-sm resize-none",
+                                "bg-muted text-foreground",
+                                "px-4 py-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                                "disabled:cursor-not-allowed disabled:opacity-50"
+                            )}
+                            placeholder="Environment variables will appear here..."
+                        />
                     </div>
 
-                    <div className="flex flex-col gap-2 text-sm">
-                        <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground">App Private Data</p>
-                            <div className="flex items-center gap-2">
-                                <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-                                    BASE64
-                                </span>
-                                <CopyButton text={data.appPrivateDataBase64} />
-                            </div>
+                    <div className="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
+                        <div className="text-sm">
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Next Steps:</h4>
+                            <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
+                                <li>Copy and securely store the App Private Data and JWT Secret</li>
+                                <li>Use these credentials to authenticate your bot application</li>
+                                <li>Never share these secrets publicly or commit them to version control</li>
+                            </ul>
                         </div>
-                        <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 text-xs">
-                            {data.appPrivateDataBase64}
-                        </pre>
-                    </div>
-
-                    <div className="flex flex-col gap-2 text-sm">
-                        <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground">JWT Secret</p>
-                            <div className="flex items-center gap-2">
-                                <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-                                    BASE64
-                                </span>
-                                <CopyButton text={data.jwtSecretBase64} />
-                            </div>
-                        </div>
-                        <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 text-xs">
-                            {data.jwtSecretBase64}
-                        </pre>
                     </div>
 
                     <div className="flex justify-end pt-4">
-                        <Button onClick={() => onOpenChange(false)}>Close</Button>
+                        <Button onClick={() => onOpenChange(false)}>I've Saved My Credentials</Button>
                     </div>
                 </div>
             </DialogContent>

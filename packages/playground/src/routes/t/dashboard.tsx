@@ -33,8 +33,8 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { CreateDm } from '@/components/form/dm/create'
 import { CreateBotDialog } from '@/components/dialog/create-bot'
 import { useAllBots } from '@/hooks/useAllBots'
-import { BotSettingsDialog } from '@/components/dialog/bot-settings'
 import { BotInstallDialog } from '@/components/dialog/bot-install'
+import { BotSettingsDialog } from '@/components/dialog/bot-settings'
 
 export const DashboardRoute = () => {
     const navigate = useNavigate()

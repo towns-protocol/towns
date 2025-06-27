@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -24,19 +24,52 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { getAllBotsQueryKey } from '@/hooks/useAllBots'
-import { BotFormData } from './types'
 import { InfoStep, infoSchema } from './steps/info'
 import { TypeStep } from './steps/type'
 import { ReviewStep } from './steps/review'
-import { WizardFooter } from './wizard-footer'
 import { BotCredentialsDialog } from './bot-credentials-dialog'
+import type { BotFormData } from './types'
+import { WizardFooter } from './wizard-footer'
 
 const steps = [InfoStep, TypeStep, ReviewStep]
+
+const typeStepSchema = z.object({
+    botKind: z.enum(['simple', 'contract']),
+    contractAddress: z.string().optional(),
+}).refine(
+    (data) => {
+        if (data.botKind === 'contract') {
+            return data.contractAddress && data.contractAddress.trim() !== ''
+        }
+        return true
+    },
+    {
+        message: 'Contract address is required for contract bots',
+        path: ['contractAddress'],
+    }
+)
 
 const formSchema = infoSchema.extend({
     botKind: z.enum(['simple', 'contract']),
     contractAddress: z.string().optional(),
-})
+}).refine(
+    (data) => {
+        if (data.botKind === 'contract') {
+            return data.contractAddress && data.contractAddress.trim() !== ''
+        }
+        return true
+    },
+    {
+        message: 'Contract address is required for contract bots',
+        path: ['contractAddress'],
+    }
+)
+
+const stepSchemas = [
+    infoSchema,
+    typeStepSchema,
+    formSchema, // Final step validates everything
+]
 
 const ONE_YEAR_IN_SECONDS = 31536000
 
@@ -80,6 +113,43 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
         }
     }, [open, form])
 
+    const watchedValues = form.watch()
+    
+    const isStepValid = useMemo(() => {
+        const stepSchema = stepSchemas[step]
+        try {
+            let stepValues: unknown
+            
+            switch (step) {
+                case 0: // Info step
+                    stepValues = {
+                        name: watchedValues.name,
+                        description: watchedValues.description,
+                        installPrice: watchedValues.installPrice,
+                        membershipDuration: watchedValues.membershipDuration,
+                        permissions: watchedValues.permissions,
+                    }
+                    break
+                case 1: // Type step
+                    stepValues = {
+                        botKind: watchedValues.botKind,
+                        contractAddress: watchedValues.contractAddress,
+                    }
+                    break
+                case 2: // Review step (validate everything)
+                    stepValues = watchedValues
+                    break
+                default:
+                    return false
+            }
+            
+            stepSchema.parse(stepValues)
+            return true
+        } catch  {
+            return false
+        }
+    }, [step, watchedValues])
+
     const next = () => {
         if (step < steps.length - 1) {
             setStep(step + 1)
@@ -99,7 +169,6 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
         mutationFn: async (formData: BotFormData) => {
             const {
                 name,
-                description,
                 installPrice,
                 membershipDuration,
                 permissions,
@@ -127,6 +196,9 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                     BigInt(membershipDuration),
                 )
                 const receipt = await tx.wait()
+                if (!receipt) {
+                    throw new Error('Transaction failed')
+                }
                 const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
                 appAddress = foundAppAddress
             } else if (botKind === 'contract' && contractAddress) {
@@ -136,6 +208,10 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                     botWallet.address as Address,
                 )
                 const receipt = await tx.wait()
+                if (!receipt) {
+                    throw new Error('Transaction failed')
+                }
+                
                 const { app: foundAppAddress } = appRegistryDapp.getRegisterAppEvent(receipt)
                 appAddress = foundAppAddress
             } else {
@@ -186,7 +262,6 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             }
         },
         onSuccess: (data) => {
-            onOpenChange?.(false)
             setCredentialsData(data)
             setShowCredentials(true)
             if (user.id) {
@@ -211,13 +286,17 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 <FormProvider {...form}>
                     <form
                         className="space-y-6"
-                        onSubmit={form.handleSubmit((data) => mutate(data))}
+                        onSubmit={form.handleSubmit((data) => {
+                            if (step === steps.length - 1) {
+                                mutate(data)
+                            }
+                        })}
                     >
                         <CurrentStep />
                         <WizardFooter
                             step={step}
                             totalSteps={steps.length}
-                            isNextDisabled={!form.formState.isValid}
+                            isNextDisabled={!isStepValid}
                             isMinting={isPending}
                             onBack={back}
                             onNext={next}
@@ -228,7 +307,13 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             <BotCredentialsDialog
                 open={showCredentials}
                 data={credentialsData}
-                onOpenChange={setShowCredentials}
+                onOpenChange={(open) => {
+                    setShowCredentials(open)
+                    if (!open) {
+                        // Close the main create-bot dialog when credentials dialog is closed
+                        onOpenChange?.(false)
+                    }
+                }}
             />
         </>
     )

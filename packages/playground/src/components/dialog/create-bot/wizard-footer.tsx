@@ -28,9 +28,12 @@ export const WizardFooter = ({
             <Button
                 type={isLast ? 'submit' : 'button'}
                 disabled={isNextDisabled || isMinting}
-                onClick={onNext}
+                onClick={isLast ? undefined : (e) => {
+                    e.preventDefault()
+                    onNext()
+                }}
             >
-                {isLast ? (isMinting ? 'Minting...' : 'Finish') : 'Next'}
+                {isLast ? (isMinting ? 'Minting...' : 'Mint') : 'Next'}
             </Button>
         </div>
     )

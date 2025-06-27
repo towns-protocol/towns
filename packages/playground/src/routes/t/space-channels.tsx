@@ -1,7 +1,7 @@
 import { useChannel, useSpace } from '@towns-protocol/react-sdk'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useCallback, useState } from 'react'
-import { ArrowLeftIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
+import { ArrowLeftIcon, PlusIcon } from '@radix-ui/react-icons'
 import { BotIcon } from 'lucide-react'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { SpaceProvider } from '@/hooks/current-space'
@@ -16,7 +16,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Tooltip } from '@/components/ui/tooltip'
-import { MintBotDialog } from '@/components/dialog/mint-bot'
 
 export const SelectChannelRoute = () => {
     const navigate = useNavigate()
