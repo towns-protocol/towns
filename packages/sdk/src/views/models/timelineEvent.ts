@@ -54,7 +54,11 @@ import {
     TickerAttachment,
     EncryptedChannelPropertiesEvent,
     Membership,
-} from '../../sync-agent/timeline/models/timeline-types'
+    getIsMentioned,
+    getReactionParentId,
+    getReplyParentId,
+    getThreadParentId,
+} from './timelineTypes'
 import { checkNever, isDefined, logNever } from '../../check'
 import {
     isLocalEvent,
@@ -64,12 +68,6 @@ import {
     StreamTimelineEvent,
 } from '../../types'
 import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
-import {
-    getIsMentioned,
-    getReactionParentId,
-    getReplyParentId,
-    getThreadParentId,
-} from './timelinesModel'
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../../encryptedContentTypes'

@@ -2,7 +2,7 @@ import { Permission } from '@towns-protocol/web3'
 import { findMessageByText, waitFor } from '../../testUtils'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { makeDefaultMembershipInfo } from '../../../sync-agent/utils/spaceUtils'
-import { RiverTimelineEvent } from '../../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent } from '../../../views/models/timelineTypes'
 import { dlog } from '@towns-protocol/dlog'
 
 const log = dlog('test:timeline.test.ts')
