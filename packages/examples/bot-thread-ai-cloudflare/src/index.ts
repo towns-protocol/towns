@@ -2,12 +2,16 @@ import { makeTownsBot } from '@towns-protocol/bot'
 import OpenAI from 'openai'
 import { ThreadState, type ThreadContext } from './durable-object'
 import { Hono } from 'hono'
+import { logger } from 'hono/logger'
+// eslint-disable-next-line import-x/no-unresolved
 import { env } from 'cloudflare:workers'
 
 const shortId = (id: string) => id.slice(0, 4) + '..' + id.slice(-4)
 
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace Cloudflare {
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         interface Env extends Bindings {}
     }
 }
@@ -64,17 +68,17 @@ async function getThreadDurableObject(
 }
 
 const app = new Hono<Env>()
-const bot = await makeTownsBot<Env>(env.APP_PRIVATE_DATA_BASE64, env.JWT_SECRET, env.RIVER_ENV)
-const { handler, jwtMiddleware } = await bot.start()
-app.use(jwtMiddleware)
-
-const openai = new OpenAI({
-    apiKey: env.OPENAI_API_KEY,
-})
-
 app.post('/webhook', async (c) => {
+    const env = c.env
+    const bot = await makeTownsBot<Env>(env.APP_PRIVATE_DATA_BASE64, env.JWT_SECRET, env.RIVER_ENV)
     try {
-        const env = c.env
+        const { handler, jwtMiddleware } = await bot.start()
+        app.use(jwtMiddleware)
+        app.use(logger())
+        const openai = new OpenAI({
+            apiKey: env.OPENAI_API_KEY,
+        })
+        console.log('got here')
 
         bot.onChannelJoin(async (h, { channelId, userId }) => {
             console.log(`🧵 user ${shortId(userId)} joined channel ${shortId(channelId)}`)
