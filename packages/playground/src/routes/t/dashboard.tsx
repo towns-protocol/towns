@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from 'react-router-dom'
-import { Suspense, useCallback, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import {
     useDm,
     useGdm,
@@ -14,7 +14,8 @@ import {
 } from '@towns-protocol/react-sdk'
 import { suspend } from 'suspend-react'
 import { Myself } from '@towns-protocol/sdk'
-import { DoorOpenIcon, PlusIcon } from 'lucide-react'
+import { DoorOpenIcon, DownloadIcon, PlusIcon, SettingsIcon } from 'lucide-react'
+import type { BotInfo } from '@towns-protocol/web3'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { Button } from '@/components/ui/button'
 import { CreateSpace } from '@/components/form/space/create'
@@ -30,15 +31,25 @@ import {
 } from '@/components/ui/dialog'
 import { Tooltip } from '@/components/ui/tooltip'
 import { CreateDm } from '@/components/form/dm/create'
+import { CreateBotDialog } from '@/components/dialog/create-bot'
+import { useAllBots } from '@/hooks/useAllBots'
+import { BotInstallDialog } from '@/components/dialog/bot-install'
+import { BotSettingsDialog } from '@/components/dialog/bot-settings'
 
 export const DashboardRoute = () => {
     const navigate = useNavigate()
     const { spaceIds } = useUserSpaces()
     const { streamIds: gdmStreamIds } = useUserGdms()
     const { streamIds: dmStreamIds } = useUserDms()
+    const { data: bots, isLoading: botsLoading } = useAllBots()
+
+    useEffect(() => {
+        console.log('bots', bots)
+    }, [bots])
     const [joinSpaceDialogOpen, setJoinSpaceDialogOpen] = useState(false)
     const [createSpaceDialogOpen, setCreateSpaceDialogOpen] = useState(false)
     const [createDmDialogOpen, setCreateDmDialogOpen] = useState(false)
+    const [createAppDialogOpen, setCreateAppDialogOpen] = useState(false)
 
     const navigateToSpace = useCallback(
         (spaceId: string) => {
@@ -148,6 +159,45 @@ export const DashboardRoute = () => {
                             You're not in any group chats yet.
                         </p>
                     )}
+
+                    <hr className="my-2" />
+
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs">Your apps</span>
+                        <div className="flex items-center gap-2">
+                            <Dialog
+                                open={createAppDialogOpen}
+                                onOpenChange={setCreateAppDialogOpen}
+                            >
+                                <Tooltip title="Create an app">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setCreateAppDialogOpen(true)}
+                                    >
+                                        <PlusIcon className="h-4 w-4" />
+                                    </Button>
+                                </Tooltip>
+                                <CreateBotDialog
+                                    open={createAppDialogOpen}
+                                    onOpenChange={setCreateAppDialogOpen}
+                                />
+                            </Dialog>
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        {botsLoading ? (
+                            <p className="pt-4 text-center text-sm text-secondary-foreground">
+                                Loading your apps...
+                            </p>
+                        ) : bots && bots.length > 0 ? (
+                            bots.map((bot) => <BotCard key={bot.appId} bot={bot} />)
+                        ) : (
+                            <p className="pt-4 text-center text-sm text-secondary-foreground">
+                                You don't have any apps yet.
+                            </p>
+                        )}
+                    </div>
 
                     <hr className="my-2" />
 
@@ -299,5 +349,36 @@ const NoSuspenseDmInfo = ({
                 {userId === sync.userId ? 'You' : displayName || username || shortenAddress(userId)}
             </p>
         </button>
+    )
+}
+
+const BotCard = ({ bot }: { bot: BotInfo }) => {
+    const [settingsOpen, setSettingsOpen] = useState(false)
+    const [installOpen, setInstallOpen] = useState(false)
+
+    return (
+        <div className="flex items-center justify-between gap-3">
+            <p className="font-mono text-sm font-medium">{shortenAddress(bot.app.client)}</p>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
+                    <SettingsIcon className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => setInstallOpen(true)}>
+                    <DownloadIcon className="h-4 w-4" />
+                </Button>
+            </div>
+
+            <BotSettingsDialog
+                appClientId={bot.app.client}
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+            />
+            <BotInstallDialog
+                appAddress={bot.app.module}
+                appClientId={bot.app.client}
+                open={installOpen}
+                onOpenChange={setInstallOpen}
+            />
+        </div>
     )
 }
