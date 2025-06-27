@@ -307,28 +307,31 @@ func (s *Service) initBaseChain() error {
 			return err
 		}
 
-		chainAuth, err := auth.NewChainAuth(
-			ctx,
-			s.baseChain,
-			s.entitlementEvaluator,
-			&cfg.ArchitectContract,
-			&cfg.AppRegistryContract,
-			cfg.BaseChain.LinkedWalletsLimit,
-			cfg.BaseChain.ContractCallsTimeoutMs,
-			s.metrics,
-		)
-		if err != nil {
-			return err
+		// Only construct a chainAuth if we're not in app registry mode.
+		// The app registry service will construct its own specific contracts.
+		if s.mode != ServerModeAppRegistry {
+			chainAuth, err := auth.NewChainAuth(
+				ctx,
+				s.baseChain,
+				s.entitlementEvaluator,
+				&cfg.ArchitectContract,
+				&cfg.AppRegistryContract,
+				cfg.BaseChain.LinkedWalletsLimit,
+				cfg.BaseChain.ContractCallsTimeoutMs,
+				s.metrics,
+			)
+			if err != nil {
+				return err
+			}
+			s.chainAuth = chainAuth
 		}
-		s.chainAuth = chainAuth
-		return nil
 	} else {
 		if !s.config.Log.Simplify {
 			s.defaultLogger.Warnw("Using fake auth for testing")
 		}
 		s.chainAuth = auth.NewFakeChainAuth()
-		return nil
 	}
+	return nil
 }
 
 func (s *Service) initRiverChain() error {
