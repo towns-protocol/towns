@@ -1,5 +1,5 @@
 import { ChannelProperties } from '@towns-protocol/proto'
-import { Membership } from '../../sync-agent/timeline/models/timeline-types'
+import { Membership } from '../models/timelineTypes'
 import { DmStreamModel } from '../streams/dmStreams'
 import { GdmStreamModel } from '../streams/gdmStreams'
 import { isDefined } from '../../check'

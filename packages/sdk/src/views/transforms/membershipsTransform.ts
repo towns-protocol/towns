@@ -1,7 +1,7 @@
 import { UserPayload_UserMembership } from '@towns-protocol/proto'
-import { Membership } from '../../sync-agent/timeline/models/timeline-types'
+import { Membership } from '../models/timelineTypes'
 import { UserStreamModel } from '../streams/userStreamsView'
-import { toMembership } from '../streams/timelineEvents'
+import { toMembership } from '../models/timelineEvent'
 import { isEqual } from 'lodash-es'
 
 export function membershipsTransform(
