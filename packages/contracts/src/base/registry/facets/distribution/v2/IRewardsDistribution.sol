@@ -171,24 +171,22 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         address beneficiary
     ) external returns (uint256 depositId);
 
-    /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and stakes the
+    /// @notice Approves the contract to spend the stakeToken with Permit2 and stakes the
     /// stakeToken for rewards
     /// @param amount The amount of stakeToken to stake
     /// @param delegatee The address of the delegatee
     /// @param beneficiary The address of the beneficiary who is receiving the rewards
+    /// @param nonce The nonce for the permit
     /// @param deadline The deadline for the permit
-    /// @param v The recovery byte of the permit
-    /// @param r The R signature of the permit
-    /// @param s The S signature of the permit
+    /// @param signature The signature for the permit
     /// @return depositId The ID of the deposit
     function permitAndStake(
         uint96 amount,
         address delegatee,
         address beneficiary,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external returns (uint256 depositId);
 
     /// @notice Stakes on behalf of a user with an EIP-712 signature
@@ -214,22 +212,20 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @param amount The amount of stakeToken to stake
     function increaseStake(uint256 depositId, uint96 amount) external;
 
-    /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and increases
+    /// @notice Approves the contract to spend the stakeToken with Permit2 and increases
     /// the stake of an existing deposit
     /// @dev The caller must be the owner of the deposit
     /// @param depositId The ID of the deposit
     /// @param amount The amount of stakeToken to stake
+    /// @param nonce The nonce for the permit
     /// @param deadline The deadline for the permit
-    /// @param v The recovery byte of the permit
-    /// @param r The R signature of the permit
-    /// @param s The S signature of the permit
+    /// @param signature The signature for the permit
     function permitAndIncreaseStake(
         uint256 depositId,
         uint96 amount,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external;
 
     /// @notice Redelegates an existing deposit to a new delegatee or reactivates a pending
