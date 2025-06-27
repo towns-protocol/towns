@@ -1,7 +1,8 @@
 import { useChannel, useSpace } from '@towns-protocol/react-sdk'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useCallback, useState } from 'react'
-import { ArrowLeftIcon, PlusIcon } from '@radix-ui/react-icons'
+import { ArrowLeftIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
+import { BotIcon } from 'lucide-react'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { SpaceProvider } from '@/hooks/current-space'
 import { CreateChannel } from '@/components/form/channel/create'
@@ -15,6 +16,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Tooltip } from '@/components/ui/tooltip'
+import { MintBotDialog } from '@/components/dialog/mint-bot'
 
 export const SelectChannelRoute = () => {
     const navigate = useNavigate()
@@ -43,6 +45,12 @@ export const SelectChannelRoute = () => {
                         <div className="flex items-center justify-between gap-2">
                             <h2 className="text-xs">Select a channel to start messaging</h2>
                             <div className="flex items-center gap-2">
+                                <Tooltip title="Mint a new bot">
+                                    <Button variant="outline" size="icon">
+                                        <BotIcon className="h-4 w-4" />
+                                    </Button>
+                                </Tooltip>
+
                                 <Dialog
                                     open={createChannelDialogOpen}
                                     onOpenChange={setCreateChannelDialogOpen}
