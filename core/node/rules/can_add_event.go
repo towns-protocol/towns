@@ -325,22 +325,13 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 			params:         params,
 			userMembership: content.UserMembership,
 		}
-		builder := aeBuilder().
+		return aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsValidNode).
 			check(ru.validUserMembershipTransition).
 			check(ru.validUserMembershipStream).
-			requireParentEvent(ru.parentEventForUserMembership)
+			requireParentEvent(ru.parentEventForUserMembership).
+			requireChainAuth(ru.chainAuthForUserMembership)
 
-		isApp, _ := params.streamView.IsAppUser()
-		isNodeInitiator := params.isValidNode(content.UserMembership.Inviter)
-		isNodeBoot := content.UserMembership.Op == MembershipOp_SO_LEAVE && isNodeInitiator
-		// Adding bots to spaces and channels requires ownership, but removals can also be initiated
-		// by nodes when streams are scrubbed. Thus we require space owner permissions only for app
-		// payloads that are not node-initiated leave events.
-		if isApp && !isNodeBoot {
-			builder = builder.requireChainAuth(ru.ownerChainAuthForInviter)
-		}
-		return builder
 	case *UserPayload_UserMembershipAction_:
 		ru := &aeUserMembershipActionRules{
 			params: params,
@@ -1660,6 +1651,29 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 		),
 		StreamId: toStreamId,
 	}, nil
+}
+
+// chainAuthForUserMembership computes the optional authorization necessary to change a user's membership.
+// Membership authorization is typically computed on the membership event inserted into the stream where
+// the membership is changing, but bot users require an additional check that their memberships can only
+// be changed by either:
+// - the owner of a space where the bot is experiencing a membership change, OR
+// - by a node, specifically in the case of membership loss detected by scrubbing.
+// Thus, for the very specific case when users are bot users, and the membership change is not a node-initiated
+// bounce, we want to verify that the initiator of the membership change has space ownership permissions.
+// NOTE that at this time, bots cannot be members of DMs or GDMs, so there will always be a space involved
+// in bot membership events.
+func (ru *aeUserMembershipRules) chainAuthForUserMembership() (*auth.ChainAuthArgs, error) {
+	isApp, _ := ru.params.streamView.IsAppUser()
+	isNodeInitiator := ru.params.isValidNode(ru.userMembership.Inviter)
+	isNodeBoot := ru.userMembership.Op == MembershipOp_SO_LEAVE && isNodeInitiator
+	// Adding bots to spaces and channels requires ownership, but removals can also be initiated
+	// by nodes when streams are scrubbed. Thus we require space owner permissions only for app
+	// payloads that are not node-initiated leave events.
+	if isApp && !isNodeBoot {
+		return ru.ownerChainAuthForInviter()
+	}
+	return nil, nil
 }
 
 // / user actions perform user membership events on other user's streams
