@@ -191,6 +191,8 @@ import {
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
+import { NotificationsClient, INotificationStore } from './notificationsClient'
+import { RpcOptions } from './rpcCommon'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -202,6 +204,11 @@ export type ClientOptions = {
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
     streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
+    notifications?: {
+        url: string
+        store?: INotificationStore
+        rpcOptions?: RpcOptions
+    }
 }
 
 type SendChannelMessageOptions = {
@@ -224,6 +231,7 @@ export class Client
     readonly streams: SyncedStreams
     readonly streamsView: StreamsView
     readonly logId: string
+    readonly notifications?: NotificationsClient
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -336,6 +344,16 @@ export class Client
             this.persistenceStore,
             this.logId,
         )
+
+        // Initialize notifications client if options are provided
+        if (opts?.notifications) {
+            this.notifications = new NotificationsClient(
+                signerContext,
+                opts.notifications.url,
+                opts.notifications.store,
+                opts.notifications.rpcOptions,
+            )
+        }
 
         this.logCall('new Client')
     }
