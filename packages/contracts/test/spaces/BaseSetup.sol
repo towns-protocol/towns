@@ -59,6 +59,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address[] internal nodes;
 
     address internal deployer;
+
+    uint256 internal founderPrivateKey;
     address internal founder;
     address internal space;
     address internal everyoneSpace;
@@ -177,7 +179,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         vm.stopPrank();
 
         // create a new space
-        founder = _randomAddress();
+        founderPrivateKey = boundPrivateKey(_randomUint256());
+        founder = vm.addr(founderPrivateKey);
 
         // Create the arguments necessary for creating a space
         IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo("BaseSetupSpace");
