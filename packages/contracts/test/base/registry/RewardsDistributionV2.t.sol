@@ -747,7 +747,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         );
 
         // Step 2: Verify earnings are accumulating before the initiation of withdrawal
-        vm.warp(block.timestamp + rewardDuration / 2);
+        skip(rewardDuration / 2);
 
         vm.prank(depositor);
         uint256 initialRewards = rewardsDistributionFacet.claimReward(depositor, depositor);
@@ -758,7 +758,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         rewardsDistributionFacet.initiateWithdraw(depositId);
 
         // Step 4: Verify that no new rewards are accumulating after the withdrawal is initiated
-        vm.warp(block.timestamp + rewardDuration / 2);
+        skip(rewardDuration / 2);
         uint256 postWithdrawRewards = rewardsDistributionFacet.currentReward(depositor);
         assertEq(postWithdrawRewards, 0);
     }
@@ -1078,7 +1078,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         StakingState memory state = rewardsDistributionFacet.stakingState();
         uint256 rewardRate = state.rewardRate;
 
-        vm.warp(block.timestamp + rewardDuration);
+        skip(rewardDuration);
 
         assertApproxEqRel(
             rewardsDistributionFacet.currentSpaceDelegationReward(OPERATOR),

@@ -219,7 +219,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         rewardsDistributionFacet.stake(amount, space, address(this));
 
         timeLapse = bound(timeLapse, 1, rewardDuration);
-        vm.warp(block.timestamp + timeLapse);
+        skip(timeLapse);
 
         vm.expectEmit(true, true, true, false, address(spaceDelegationFacet));
         emit SpaceRewardsSwept(space, operators[0], 0);
@@ -257,7 +257,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.removeSpaceDelegation(space);
 
         timeLapse = bound(timeLapse, 1, rewardDuration);
-        vm.warp(block.timestamp + timeLapse);
+        skip(timeLapse);
 
         assertGe(rewardsDistributionFacet.currentReward(space), 0);
 
@@ -320,7 +320,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         rewardsDistributionFacet.stake(amount, space, address(this));
 
         timeLapse = bound(timeLapse, 1, rewardDuration);
-        vm.warp(block.timestamp + timeLapse);
+        skip(timeLapse);
 
         vm.expectEmit(true, true, true, false, address(spaceDelegationFacet));
         emit SpaceRewardsSwept(space, operator, 0);
