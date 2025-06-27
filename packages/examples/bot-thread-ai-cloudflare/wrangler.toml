@@ -1,0 +1,23 @@
+name = "bot-thread-ai-cloudflare"
+main = "src/index.ts"
+compatibility_date = "2025-06-18"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+RIVER_ENV = "alpha"
+
+# Add to .dev.vars or .prod.vars:
+# OPENAI_API_KEY = "your-openai-api-key"
+# APP_PRIVATE_DATA_BASE64 = "your-app-private-data"
+# JWT_SECRET = "your-jwt-secret"
+
+[env.alpha]
+vars = { RIVER_ENV = "alpha" }
+
+[[durable_objects.bindings]]
+name = "THREAD_STATE"
+class_name = "ThreadState"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ThreadState"] 
