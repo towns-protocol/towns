@@ -33,37 +33,41 @@ import { WizardFooter } from './wizard-footer'
 
 const steps = [InfoStep, TypeStep, ReviewStep]
 
-const typeStepSchema = z.object({
-    botKind: z.enum(['simple', 'contract']),
-    contractAddress: z.string().optional(),
-}).refine(
-    (data) => {
-        if (data.botKind === 'contract') {
-            return data.contractAddress && data.contractAddress.trim() !== ''
-        }
-        return true
-    },
-    {
-        message: 'Contract address is required for contract bots',
-        path: ['contractAddress'],
-    }
-)
+const typeStepSchema = z
+    .object({
+        botKind: z.enum(['simple', 'contract']),
+        contractAddress: z.string().optional(),
+    })
+    .refine(
+        (data) => {
+            if (data.botKind === 'contract') {
+                return data.contractAddress && data.contractAddress.trim() !== ''
+            }
+            return true
+        },
+        {
+            message: 'Contract address is required for contract bots',
+            path: ['contractAddress'],
+        },
+    )
 
-const formSchema = infoSchema.extend({
-    botKind: z.enum(['simple', 'contract']),
-    contractAddress: z.string().optional(),
-}).refine(
-    (data) => {
-        if (data.botKind === 'contract') {
-            return data.contractAddress && data.contractAddress.trim() !== ''
-        }
-        return true
-    },
-    {
-        message: 'Contract address is required for contract bots',
-        path: ['contractAddress'],
-    }
-)
+const formSchema = infoSchema
+    .extend({
+        botKind: z.enum(['simple', 'contract']),
+        contractAddress: z.string().optional(),
+    })
+    .refine(
+        (data) => {
+            if (data.botKind === 'contract') {
+                return data.contractAddress && data.contractAddress.trim() !== ''
+            }
+            return true
+        },
+        {
+            message: 'Contract address is required for contract bots',
+            path: ['contractAddress'],
+        },
+    )
 
 const stepSchemas = [
     infoSchema,
@@ -114,12 +118,12 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
     }, [open, form])
 
     const watchedValues = form.watch()
-    
+
     const isStepValid = useMemo(() => {
         const stepSchema = stepSchemas[step]
         try {
             let stepValues: unknown
-            
+
             switch (step) {
                 case 0: // Info step
                     stepValues = {
@@ -142,10 +146,10 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 default:
                     return false
             }
-            
+
             stepSchema.parse(stepValues)
             return true
-        } catch  {
+        } catch {
             return false
         }
     }, [step, watchedValues])
@@ -211,7 +215,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 if (!receipt) {
                     throw new Error('Transaction failed')
                 }
-                
+
                 const { app: foundAppAddress } = appRegistryDapp.getRegisterAppEvent(receipt)
                 appAddress = foundAppAddress
             } else {

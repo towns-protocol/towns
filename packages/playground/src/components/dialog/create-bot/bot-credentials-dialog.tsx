@@ -38,13 +38,14 @@ JWT_SECRET=${data.jwtSecretBase64}`
                         Bot Created Successfully
                     </DialogTitle>
                     <DialogDescription>
-                        Your bot has been minted. The private credentials below are critical for your bot's operation.
+                        Your bot has been minted. The private credentials below are critical for
+                        your bot's operation.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                     <SecretInformationBanner>
-                        These private keys and secrets are shown only once and cannot be recovered. 
+                        These private keys and secrets are shown only once and cannot be recovered.
                     </SecretInformationBanner>
 
                     <div className="flex flex-col gap-2 text-sm">
@@ -56,10 +57,10 @@ JWT_SECRET=${data.jwtSecretBase64}`
                             readOnly
                             value={envContent}
                             className={cn(
-                                "min-h-[200px] w-full rounded-md border font-mono text-xs shadow-sm resize-none",
-                                "bg-muted text-foreground",
-                                "px-4 py-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                                "disabled:cursor-not-allowed disabled:opacity-50"
+                                'min-h-[200px] w-full resize-none rounded-md border font-mono text-xs shadow-sm',
+                                'bg-muted text-foreground',
+                                'px-4 py-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                                'disabled:cursor-not-allowed disabled:opacity-50',
                             )}
                             placeholder="Environment variables will appear here..."
                         />
@@ -67,17 +68,24 @@ JWT_SECRET=${data.jwtSecretBase64}`
 
                     <div className="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
                         <div className="text-sm">
-                            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Next Steps:</h4>
-                            <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
+                            <h4 className="mb-2 font-medium text-blue-900 dark:text-blue-100">
+                                Next Steps:
+                            </h4>
+                            <ul className="list-inside list-disc space-y-1 text-blue-800 dark:text-blue-200">
                                 <li>Copy and securely store the App Private Data and JWT Secret</li>
                                 <li>Use these credentials to authenticate your bot application</li>
-                                <li>Never share these secrets publicly or commit them to version control</li>
+                                <li>
+                                    Never share these secrets publicly or commit them to version
+                                    control
+                                </li>
                             </ul>
                         </div>
                     </div>
 
                     <div className="flex justify-end pt-4">
-                        <Button onClick={() => onOpenChange(false)}>I've Saved My Credentials</Button>
+                        <Button onClick={() => onOpenChange(false)}>
+                            I've Saved My Credentials
+                        </Button>
                     </div>
                 </div>
             </DialogContent>
