@@ -157,7 +157,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// create the stream
 	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
-	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
+	if err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
 		return nil, nil, err
 	}
 

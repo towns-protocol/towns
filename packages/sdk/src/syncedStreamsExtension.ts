@@ -227,14 +227,18 @@ export class SyncedStreamsExtension {
         persistedData: LoadedStream | undefined,
     ) {
         const allowGetStream = this.highPriorityIds.has(streamId)
-        try {
-            await this.delegate.initStream(streamId, allowGetStream, persistedData)
-            this.loadedStreamCount++
-            this.numStreamsLoadedFromCache++
-            this.streamIds.delete(streamId)
-        } catch (err) {
+        if (persistedData === undefined && !allowGetStream) {
             this.streamCountRequiringNetworkAccess++
-            this.logError('Error initializing stream from persistence', streamId, err)
+        } else {
+            try {
+                await this.delegate.initStream(streamId, allowGetStream, persistedData)
+                this.loadedStreamCount++
+                this.numStreamsLoadedFromCache++
+                this.streamIds.delete(streamId)
+            } catch (err) {
+                this.streamCountRequiringNetworkAccess++
+                this.logError('Error initializing stream from persistence', streamId, err)
+            }
         }
         this.emitClientStatus()
     }

@@ -219,10 +219,10 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployPlatformRequirements.makeInitData(
                 deployer, // feeRecipient
                 500, // membershipBps 5%
-                0.001 ether, // membershipFee
+                0.0005 ether, // membershipFee
                 1000, // membershipFreeAllocation
                 365 days, // membershipDuration
-                0.005 ether // membershipMinPrice
+                0.001 ether // membershipMinPrice
             )
         );
 

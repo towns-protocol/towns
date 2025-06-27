@@ -52,7 +52,7 @@ import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './strea
 import { DecryptionSessionError } from './decryptionExtensions'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './views/streamsView'
-import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
+import { TimelineEvent } from './views/models/timelineTypes'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
 

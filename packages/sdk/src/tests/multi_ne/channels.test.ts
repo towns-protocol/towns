@@ -11,7 +11,7 @@ import {
 import { Client } from '../../client'
 
 import { makeUniqueChannelStreamId } from '../../id'
-import { RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 describe('channelsTests', () => {
     let bobsClient: Client

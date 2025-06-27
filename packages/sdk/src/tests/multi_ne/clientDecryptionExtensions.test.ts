@@ -10,7 +10,7 @@ import { Stream } from '../../stream'
 import { DecryptionSessionError } from '../../decryptionExtensions'
 import { makeUniqueChannelStreamId } from '../../id'
 import { SyncState } from '../../syncedStreamsLoop'
-import { RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test:decryptionExtensions')
 

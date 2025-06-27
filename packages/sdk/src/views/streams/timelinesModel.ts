@@ -9,10 +9,11 @@ import {
     ChannelMessageEvent,
     TimelineEvent,
     TimelineEventConfirmation,
-    TimelineEvent_OneOf,
-} from '../../sync-agent/timeline/models/timeline-types'
+    getRedactsId,
+    getEditsId,
+} from '../models/timelineTypes'
 import { dlogger } from '@towns-protocol/dlog'
-import { getFallbackContent } from './timelineEvents'
+import { getFallbackContent } from '../models/timelineEvent'
 
 const logger = dlogger('csb:timelineInterface')
 
@@ -920,42 +921,4 @@ function getMessageSenderId(event: TimelineEvent): string | undefined {
         return event.sender.id
     }
     return undefined
-}
-
-export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
-}
-
-export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.RedactionActionEvent
-        ? content.refEventId
-        : undefined
-}
-
-export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage
-        ? content.threadId
-        : content?.kind === RiverTimelineEvent.TokenTransfer
-          ? content.threadParentId
-          : undefined
-}
-
-export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.replyId : undefined
-}
-
-export function getReactionParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.Reaction ? content.targetEventId : undefined
-}
-
-export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string): boolean {
-    //TODO: comparison below should be changed as soon as this HNT-1576 will be resolved
-    return content?.kind === RiverTimelineEvent.ChannelMessage
-        ? content.mentions.findIndex(
-              (x) =>
-                  (x.userId ?? '')
-                      .toLowerCase()
-                      .localeCompare(userId.toLowerCase(), undefined, { sensitivity: 'base' }) == 0,
-          ) >= 0
-        : false
 }

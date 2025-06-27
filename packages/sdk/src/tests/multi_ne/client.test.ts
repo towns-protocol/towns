@@ -52,7 +52,7 @@ import {
 } from '../../types'
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test')
 

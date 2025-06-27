@@ -255,7 +255,12 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 const syncedStreams = await this.getSyncedStreams(streamIds)
                 const retVal: Record<string, LoadedStream | undefined> = {}
                 for (const streamId of streamIds) {
-                    retVal[streamId] = await this.loadStream(streamId, syncedStreams[streamId])
+                    if (syncedStreams[streamId]) {
+                        const stream = await this.loadStream(streamId, syncedStreams[streamId])
+                        if (stream) {
+                            retVal[streamId] = stream
+                        }
+                    }
                 }
                 return retVal
             },

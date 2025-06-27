@@ -2858,9 +2858,21 @@ export class Client
         const toDevicesEntries = Object.entries(toDevices)
         const promises = toDevicesEntries.map(async ([userId, deviceKeys]) => {
             try {
+                if (deviceKeys.length === 0) {
+                    // means we failed to download the device keys, we should enqueue a retry
+                    this.logInfo(
+                        'encryptAndShareGroupSessions: no device keys to send',
+                        inStreamId,
+                        userId,
+                    )
+                    return
+                }
                 const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    // if you only have one device this is a valid state
+                    if (userId !== this.userId) {
+                        this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    }
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
