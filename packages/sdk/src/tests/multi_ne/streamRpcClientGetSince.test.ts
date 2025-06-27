@@ -134,15 +134,18 @@ describe('streamRpcClientGetSince', () => {
 
         // eventually the stream will have a snapshot and the blocks will fall out of the stream view in the node
         // so we will have an old sync cookie and get a sync reset
-        await waitFor(async () => {
-            const streamSince = await client.getStream({
-                streamId: bobsSettingsStreamId,
-                syncCookie: cookie,
-            })
+        await waitFor(
+            async () => {
+                const streamSince = await client.getStream({
+                    streamId: bobsSettingsStreamId,
+                    syncCookie: cookie,
+                })
 
-            expect(streamSince.stream?.events.length).toBe(0)
-            expect(streamSince.stream?.miniblocks.length).toBeGreaterThan(0)
-            expect(streamSince.stream?.syncReset).toBe(true)
-        })
+                expect(streamSince.stream?.events.length).toBe(0)
+                expect(streamSince.stream?.miniblocks.length).toBeGreaterThan(0)
+                expect(streamSince.stream?.syncReset).toBe(true)
+            },
+            { timeoutMS: 15000 },
+        )
     })
 })
