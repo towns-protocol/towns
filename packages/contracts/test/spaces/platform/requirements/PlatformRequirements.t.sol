@@ -74,7 +74,7 @@ contract PlatformRequirementsTest is BaseSetup, IPlatformRequirementsBase, IOwna
     // Membership Fee
     function test_getMembershipFee() public view {
         uint256 membershipFee = platformReqs.getMembershipFee();
-        assertEq(membershipFee, 0.001 ether);
+        assertEq(membershipFee, 0.0005 ether);
     }
 
     function test_MembershipFee_lessThanMinPrice() public view {

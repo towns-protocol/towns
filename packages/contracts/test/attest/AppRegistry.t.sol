@@ -373,7 +373,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     }
 
     function test_installApp_whenBpsLowerThanMinFee() external givenAppIsRegistered {
-        uint256 price = 0.01 ether;
+        uint256 price = 0.005 ether;
         _setupAppWithPrice(price);
 
         uint256 protocolFee = _getProtocolFee(price);
