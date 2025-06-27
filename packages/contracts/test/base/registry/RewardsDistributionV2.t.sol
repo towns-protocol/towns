@@ -40,7 +40,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         // etch Permit2 to the deterministic address
         new DeployPermit2().run();
         vm.label(PERMIT2, "Permit2");
-        
+
         super.setUp();
     }
 
@@ -447,7 +447,13 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         emit IncreaseStake(depositId, amount);
 
         vm.prank(user);
-        rewardsDistributionFacet.permitAndIncreaseStake(depositId, amount, nonce, deadline, signature);
+        rewardsDistributionFacet.permitAndIncreaseStake(
+            depositId,
+            amount,
+            nonce,
+            deadline,
+            signature
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -1117,7 +1123,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         bytes32 tokenPermissions = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, token, amount)
         );
-        
+
         bytes32 structHash = keccak256(
             abi.encode(
                 PermitHash._PERMIT_TRANSFER_FROM_TYPEHASH,
@@ -1127,7 +1133,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
                 deadline
             )
         );
-        
+
         (uint8 v, bytes32 r, bytes32 s) = signIntent(privateKey, PERMIT2, structHash);
         return bytes.concat(r, s, bytes1(v));
     }
