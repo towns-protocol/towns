@@ -20,6 +20,10 @@ service AppRegistryService {
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+    
+    // App metadata management
+    rpc SetAppMetadata(SetAppMetadataRequest) returns (SetAppMetadataResponse);
+    rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
 }
 
 // ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
@@ -186,6 +190,57 @@ message AppServiceResponse {
         InitializeResponse initialize = 101;
         StatusResponse status = 102;
     }
+}
+
+// AppMetadata matches the GetNftMetadataResponse structure
+message AppMetadata {
+    string contractAddress = 1;
+    optional string name = 3;
+    optional string description = 4;
+    optional string image = 4;
+    repeated Media media = 6;
+    optional Metadata metadata = 7;
+    optional string time_last_updated = 8;
+
+    message Id {
+        string token_id = 1;
+        TokenMetadata token_metadata = 2;
+
+        message TokenMetadata {
+            string token_type = 1;
+        }
+    }
+
+    message Media {
+        optional string thumbnail = 1;
+        string gateway = 2;
+        optional string format = 3;
+        optional int64 bytes = 4;
+        optional string raw = 5;
+    }
+
+    message Metadata {
+        optional string name = 1;
+        optional string description = 2;
+        optional string image = 3;
+    }
+}
+
+// Set app metadata
+message SetAppMetadataRequest {
+    bytes app_id = 1;
+    AppMetadata metadata = 2;
+}
+
+message SetAppMetadataResponse {}
+
+// Get app metadata
+message GetAppMetadataRequest {
+    bytes app_id = 1;
+}
+
+message GetAppMetadataResponse {
+    AppMetadata metadata = 1;
 }
 
 

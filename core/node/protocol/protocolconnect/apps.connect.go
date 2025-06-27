@@ -54,6 +54,12 @@ const (
 	// AppRegistryServiceGetSessionProcedure is the fully-qualified name of the AppRegistryService's
 	// GetSession RPC.
 	AppRegistryServiceGetSessionProcedure = "/river.AppRegistryService/GetSession"
+	// AppRegistryServiceSetAppMetadataProcedure is the fully-qualified name of the AppRegistryService's
+	// SetAppMetadata RPC.
+	AppRegistryServiceSetAppMetadataProcedure = "/river.AppRegistryService/SetAppMetadata"
+	// AppRegistryServiceGetAppMetadataProcedure is the fully-qualified name of the AppRegistryService's
+	// GetAppMetadata RPC.
+	AppRegistryServiceGetAppMetadataProcedure = "/river.AppRegistryService/GetAppMetadata"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -66,6 +72,8 @@ var (
 	appRegistryServiceRotateSecretMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("RotateSecret")
 	appRegistryServiceGetStatusMethodDescriptor       = appRegistryServiceServiceDescriptor.Methods().ByName("GetStatus")
 	appRegistryServiceGetSessionMethodDescriptor      = appRegistryServiceServiceDescriptor.Methods().ByName("GetSession")
+	appRegistryServiceSetAppMetadataMethodDescriptor  = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppMetadata")
+	appRegistryServiceGetAppMetadataMethodDescriptor  = appRegistryServiceServiceDescriptor.Methods().ByName("GetAppMetadata")
 )
 
 // AppRegistryServiceClient is a client for the river.AppRegistryService service.
@@ -77,6 +85,9 @@ type AppRegistryServiceClient interface {
 	RotateSecret(context.Context, *connect.Request[protocol.RotateSecretRequest]) (*connect.Response[protocol.RotateSecretResponse], error)
 	GetStatus(context.Context, *connect.Request[protocol.GetStatusRequest]) (*connect.Response[protocol.GetStatusResponse], error)
 	GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error)
+	// App metadata management
+	SetAppMetadata(context.Context, *connect.Request[protocol.SetAppMetadataRequest]) (*connect.Response[protocol.SetAppMetadataResponse], error)
+	GetAppMetadata(context.Context, *connect.Request[protocol.GetAppMetadataRequest]) (*connect.Response[protocol.GetAppMetadataResponse], error)
 }
 
 // NewAppRegistryServiceClient constructs a client for the river.AppRegistryService service. By
@@ -131,6 +142,18 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(appRegistryServiceGetSessionMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		setAppMetadata: connect.NewClient[protocol.SetAppMetadataRequest, protocol.SetAppMetadataResponse](
+			httpClient,
+			baseURL+AppRegistryServiceSetAppMetadataProcedure,
+			connect.WithSchema(appRegistryServiceSetAppMetadataMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		getAppMetadata: connect.NewClient[protocol.GetAppMetadataRequest, protocol.GetAppMetadataResponse](
+			httpClient,
+			baseURL+AppRegistryServiceGetAppMetadataProcedure,
+			connect.WithSchema(appRegistryServiceGetAppMetadataMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -143,6 +166,8 @@ type appRegistryServiceClient struct {
 	rotateSecret    *connect.Client[protocol.RotateSecretRequest, protocol.RotateSecretResponse]
 	getStatus       *connect.Client[protocol.GetStatusRequest, protocol.GetStatusResponse]
 	getSession      *connect.Client[protocol.GetSessionRequest, protocol.GetSessionResponse]
+	setAppMetadata  *connect.Client[protocol.SetAppMetadataRequest, protocol.SetAppMetadataResponse]
+	getAppMetadata  *connect.Client[protocol.GetAppMetadataRequest, protocol.GetAppMetadataResponse]
 }
 
 // Register calls river.AppRegistryService.Register.
@@ -180,6 +205,16 @@ func (c *appRegistryServiceClient) GetSession(ctx context.Context, req *connect.
 	return c.getSession.CallUnary(ctx, req)
 }
 
+// SetAppMetadata calls river.AppRegistryService.SetAppMetadata.
+func (c *appRegistryServiceClient) SetAppMetadata(ctx context.Context, req *connect.Request[protocol.SetAppMetadataRequest]) (*connect.Response[protocol.SetAppMetadataResponse], error) {
+	return c.setAppMetadata.CallUnary(ctx, req)
+}
+
+// GetAppMetadata calls river.AppRegistryService.GetAppMetadata.
+func (c *appRegistryServiceClient) GetAppMetadata(ctx context.Context, req *connect.Request[protocol.GetAppMetadataRequest]) (*connect.Response[protocol.GetAppMetadataResponse], error) {
+	return c.getAppMetadata.CallUnary(ctx, req)
+}
+
 // AppRegistryServiceHandler is an implementation of the river.AppRegistryService service.
 type AppRegistryServiceHandler interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
@@ -189,6 +224,9 @@ type AppRegistryServiceHandler interface {
 	RotateSecret(context.Context, *connect.Request[protocol.RotateSecretRequest]) (*connect.Response[protocol.RotateSecretResponse], error)
 	GetStatus(context.Context, *connect.Request[protocol.GetStatusRequest]) (*connect.Response[protocol.GetStatusResponse], error)
 	GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error)
+	// App metadata management
+	SetAppMetadata(context.Context, *connect.Request[protocol.SetAppMetadataRequest]) (*connect.Response[protocol.SetAppMetadataResponse], error)
+	GetAppMetadata(context.Context, *connect.Request[protocol.GetAppMetadataRequest]) (*connect.Response[protocol.GetAppMetadataResponse], error)
 }
 
 // NewAppRegistryServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -239,6 +277,18 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 		connect.WithSchema(appRegistryServiceGetSessionMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	appRegistryServiceSetAppMetadataHandler := connect.NewUnaryHandler(
+		AppRegistryServiceSetAppMetadataProcedure,
+		svc.SetAppMetadata,
+		connect.WithSchema(appRegistryServiceSetAppMetadataMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	appRegistryServiceGetAppMetadataHandler := connect.NewUnaryHandler(
+		AppRegistryServiceGetAppMetadataProcedure,
+		svc.GetAppMetadata,
+		connect.WithSchema(appRegistryServiceGetAppMetadataMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/river.AppRegistryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AppRegistryServiceRegisterProcedure:
@@ -255,6 +305,10 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 			appRegistryServiceGetStatusHandler.ServeHTTP(w, r)
 		case AppRegistryServiceGetSessionProcedure:
 			appRegistryServiceGetSessionHandler.ServeHTTP(w, r)
+		case AppRegistryServiceSetAppMetadataProcedure:
+			appRegistryServiceSetAppMetadataHandler.ServeHTTP(w, r)
+		case AppRegistryServiceGetAppMetadataProcedure:
+			appRegistryServiceGetAppMetadataHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -290,4 +344,12 @@ func (UnimplementedAppRegistryServiceHandler) GetStatus(context.Context, *connec
 
 func (UnimplementedAppRegistryServiceHandler) GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.GetSession is not implemented"))
+}
+
+func (UnimplementedAppRegistryServiceHandler) SetAppMetadata(context.Context, *connect.Request[protocol.SetAppMetadataRequest]) (*connect.Response[protocol.SetAppMetadataResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.SetAppMetadata is not implemented"))
+}
+
+func (UnimplementedAppRegistryServiceHandler) GetAppMetadata(context.Context, *connect.Request[protocol.GetAppMetadataRequest]) (*connect.Response[protocol.GetAppMetadataResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.GetAppMetadata is not implemented"))
 }
