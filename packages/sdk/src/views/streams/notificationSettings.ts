@@ -1,5 +1,5 @@
 import { GetSettingsResponse } from '@towns-protocol/proto'
-import { Observable } from '../..'
+import { Observable } from '../../observable/observable'
 
 export interface NotificationSettingsModel {
     fetchedAtMs: number | undefined
