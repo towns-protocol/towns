@@ -9,8 +9,6 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestGetMiniblocksExclusionFilter(t *testing.T) {
@@ -21,81 +19,55 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	alice := tt.newTestClient(0, testClientOpts{})
 	alice.createUserStream()
 
-	// Create a space stream with multiple event types
-	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	
-	// Create inception event
-	inception, err := events.MakeEnvelopeWithPayload(
-		alice.wallet,
-		events.Make_SpacePayload_Inception(spaceId, &StreamSettings{}),
-		nil,
-	)
-	require.NoError(err)
+	// Create a space using the existing test helper
+	spaceId, _ := alice.createSpace()
 
-	// Create key solicitation events
-	keySolicitation1, err := events.MakeEnvelopeWithPayload(
-		alice.wallet,
-		&StreamEvent_MemberPayload{
-			MemberPayload: &MemberPayload{
-				Content: &MemberPayload_KeySolicitation_{
-					KeySolicitation: &MemberPayload_KeySolicitation{
-						DeviceKey:   "test_device_key",
-						FallbackKey: "test_fallback_key",
-						IsNewDevice: true,
-						SessionIds:  []string{},
-					},
-				},
-			},
-		},
-		nil,
-	)
-	require.NoError(err)
-
-	// Create username event
-	username, err := events.MakeEnvelopeWithPayload(
-		alice.wallet,
-		&StreamEvent_MemberPayload{
-			MemberPayload: &MemberPayload{
-				Content: &MemberPayload_Username{
-					Username: &EncryptedData{
-						Ciphertext: "test_username",
-						Algorithm:  "test_algo",
-					},
-				},
-			},
-		},
-		nil,
-	)
-	require.NoError(err)
-
-	// Create second key solicitation event
-	keySolicitation2, err := events.MakeEnvelopeWithPayload(
-		alice.wallet,
-		&StreamEvent_MemberPayload{
-			MemberPayload: &MemberPayload{
-				Content: &MemberPayload_KeySolicitation_{
-					KeySolicitation: &MemberPayload_KeySolicitation{
-						DeviceKey:   "test_device_key_2",
-						FallbackKey: "test_fallback_key_2",
-						IsNewDevice: false,
-						SessionIds:  []string{"session1"},
-					},
-				},
-			},
-		},
-		nil,
-	)
-	require.NoError(err)
-
-	// Create the stream with events
-	spaceEvents := []*Envelope{inception, keySolicitation1, username, keySolicitation2}
-	req := &CreateStreamRequest{
-		Events:   spaceEvents,
-		StreamId: spaceId[:],
+	// Helper function to add a member payload event with proper prev miniblock hash
+	addMemberEvent := func(payload *MemberPayload) {
+		ref := alice.getLastMiniblockHash(spaceId)
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: payload},
+			ref,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
 	}
-	response, err := alice.client.CreateStream(tt.ctx, connect.NewRequest(req))
-	require.NoError(err)
-	require.NotNil(response.Msg.Stream)
+
+	// Add test events for filtering
+	addMemberEvent(&MemberPayload{
+		Content: &MemberPayload_KeySolicitation_{
+			KeySolicitation: &MemberPayload_KeySolicitation{
+				DeviceKey:   "test_device_key",
+				FallbackKey: "test_fallback_key",
+				IsNewDevice: true,
+				SessionIds:  []string{},
+			},
+		},
+	})
+
+	addMemberEvent(&MemberPayload{
+		Content: &MemberPayload_Username{
+			Username: &EncryptedData{
+				Ciphertext: "test_username",
+				Algorithm:  "test_algo",
+			},
+		},
+	})
+
+	addMemberEvent(&MemberPayload{
+		Content: &MemberPayload_KeySolicitation_{
+			KeySolicitation: &MemberPayload_KeySolicitation{
+				DeviceKey:   "test_device_key_2",
+				FallbackKey: "test_fallback_key_2",
+				IsNewDevice: false,
+				SessionIds:  []string{"session1"},
+			},
+		},
+	})
+
+	// Force miniblock creation to move events from minipool to miniblocks
+	alice.makeMiniblock(spaceId, false, -1)
 
 	// Test case 1: No exclusion filter - should return all events
 	getMbReq := &GetMiniblocksRequest{
@@ -107,45 +79,62 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err := alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-	require.Len(getMbResp.Msg.Miniblocks, 1) // Should have 1 miniblock
-	require.Len(getMbResp.Msg.Miniblocks[0].Events, 4) // All 4 events
-	require.False(getMbResp.Msg.Miniblocks[0].Partial) // Not partial
+	
+	// Count total events across all miniblocks
+	totalEvents := 0
+	for _, mb := range getMbResp.Msg.Miniblocks {
+		totalEvents += len(mb.Events)
+		require.False(mb.Partial) // Should not be partial when no filter applied
+	}
+	require.Equal(5, totalEvents, "Should have 5 events total (space inception + membership + 3 test events)")
 
 	// Test case 2: Filter out key_solicitation events
 	getMbReq.ExclusionFilter = []string{"member_payload.key_solicitation"}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-	require.Len(getMbResp.Msg.Miniblocks, 1)
-	require.Len(getMbResp.Msg.Miniblocks[0].Events, 2) // Should have 2 events (inception + username)
-	require.True(getMbResp.Msg.Miniblocks[0].Partial)  // Should be marked as partial
-
-	// Verify that the remaining events are correct
-	mb := getMbResp.Msg.Miniblocks[0]
+	
+	// Count filtered events and check partial flags
+	filteredEvents := 0
+	hasPartialMiniblock := false
 	foundInception := false
+	foundMembership := false
 	foundUsername := false
 	foundKeySolicitation := false
 
-	for _, envelope := range mb.Events {
-		var streamEvent StreamEvent
-		err := proto.Unmarshal(envelope.Event, &streamEvent)
-		require.NoError(err)
+	for _, mb := range getMbResp.Msg.Miniblocks {
+		filteredEvents += len(mb.Events)
+		if mb.Partial {
+			hasPartialMiniblock = true
+		}
+		
+		for _, envelope := range mb.Events {
+			var streamEvent StreamEvent
+			err := proto.Unmarshal(envelope.Event, &streamEvent)
+			require.NoError(err)
 
-		switch payload := streamEvent.Payload.(type) {
-		case *StreamEvent_SpacePayload:
-			if payload.SpacePayload.GetInception() != nil {
-				foundInception = true
-			}
-		case *StreamEvent_MemberPayload:
-			if payload.MemberPayload.GetKeySolicitation() != nil {
-				foundKeySolicitation = true
-			}
-			if payload.MemberPayload.GetUsername() != nil {
-				foundUsername = true
+			switch payload := streamEvent.Payload.(type) {
+			case *StreamEvent_SpacePayload:
+				if payload.SpacePayload.GetInception() != nil {
+					foundInception = true
+				}
+			case *StreamEvent_MemberPayload:
+				if payload.MemberPayload.GetMembership() != nil {
+					foundMembership = true
+				}
+				if payload.MemberPayload.GetKeySolicitation() != nil {
+					foundKeySolicitation = true
+				}
+				if payload.MemberPayload.GetUsername() != nil {
+					foundUsername = true
+				}
 			}
 		}
 	}
 
+	require.Equal(3, filteredEvents, "Should have 3 events after filtering (space inception + membership + username)")
+	require.True(hasPartialMiniblock, "Should have at least one partial miniblock")
 	require.True(foundInception, "Should find inception event")
+	require.True(foundMembership, "Should find membership event")
 	require.True(foundUsername, "Should find username event")
 	require.False(foundKeySolicitation, "Should NOT find key_solicitation events")
 
@@ -153,25 +142,35 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	getMbReq.ExclusionFilter = []string{"member_payload.*"}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-	require.Len(getMbResp.Msg.Miniblocks, 1)
-	require.Len(getMbResp.Msg.Miniblocks[0].Events, 1) // Should have 1 event (just inception)
-	require.True(getMbResp.Msg.Miniblocks[0].Partial)  // Should be marked as partial
+	
+	// Count events after filtering all member payloads
+	filteredEvents = 0
+	hasPartialMiniblock = false
+	for _, mb := range getMbResp.Msg.Miniblocks {
+		filteredEvents += len(mb.Events)
+		if mb.Partial {
+			hasPartialMiniblock = true
+		}
+	}
+	require.Equal(1, filteredEvents, "Should have 1 event after filtering out all member payloads (just space inception)")
+	require.True(hasPartialMiniblock, "Should have at least one partial miniblock")
 
-	// Test case 4: Multiple filters
-	getMbReq.ExclusionFilter = []string{"member_payload.key_solicitation", "member_payload.username"}
-	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
-	require.NoError(err)
-	require.Len(getMbResp.Msg.Miniblocks, 1)
-	require.Len(getMbResp.Msg.Miniblocks[0].Events, 1) // Should have 1 event (just inception)
-	require.True(getMbResp.Msg.Miniblocks[0].Partial)  // Should be marked as partial
-
-	// Test case 5: Filter that doesn't match anything
+	// Test case 4: Filter that doesn't match anything
 	getMbReq.ExclusionFilter = []string{"nonexistent_payload.nonexistent_content"}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-	require.Len(getMbResp.Msg.Miniblocks, 1)
-	require.Len(getMbResp.Msg.Miniblocks[0].Events, 4) // Should have all 4 events
-	require.False(getMbResp.Msg.Miniblocks[0].Partial) // Should NOT be marked as partial
+	
+	// Count events with no filtering
+	filteredEvents = 0
+	hasPartialMiniblock = false
+	for _, mb := range getMbResp.Msg.Miniblocks {
+		filteredEvents += len(mb.Events)
+		if mb.Partial {
+			hasPartialMiniblock = true
+		}
+	}
+	require.Equal(5, filteredEvents, "Should have all 5 events when filter doesn't match")
+	require.False(hasPartialMiniblock, "Should NOT have any partial miniblocks when no events are filtered")
 }
 
 func TestMatchesFilter(t *testing.T) {

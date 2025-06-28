@@ -83,12 +83,8 @@ func (s *Service) localGetMiniblocks(
 // applyExclusionFilter applies exclusion filters to a miniblock, returning a new MiniblockInfo
 // with filtered events and partial flag set if any events were excluded
 func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []string) (*MiniblockInfo, error) {
-	// Parse the miniblock data into proto
-	var miniblock Miniblock
-	if err := proto.Unmarshal(info.Proto.Events[0].Event, &miniblock); err != nil {
-		// Try parsing the full miniblock proto instead
-		miniblock = *info.Proto
-	}
+	// Use the existing miniblock proto directly (no need to unmarshal)
+	miniblock := info.Proto
 
 	// Track if any events were filtered
 	originalEventCount := len(miniblock.Events)
@@ -143,216 +139,50 @@ func (s *Service) shouldExcludeEvent(envelope *Envelope, exclusionFilter []strin
 	return false
 }
 
-// extractEventTypeInfo extracts payload type and content type from a StreamEvent
+// extractEventTypeInfo extracts payload type and content type from a StreamEvent using protobuf reflection
 func (s *Service) extractEventTypeInfo(event *StreamEvent) (string, string) {
-	switch payload := event.Payload.(type) {
-	case *StreamEvent_MemberPayload:
-		return "member_payload", s.getMemberPayloadContentType(payload.MemberPayload)
-	case *StreamEvent_SpacePayload:
-		return "space_payload", s.getSpacePayloadContentType(payload.SpacePayload)
-	case *StreamEvent_ChannelPayload:
-		return "channel_payload", s.getChannelPayloadContentType(payload.ChannelPayload)
-	case *StreamEvent_UserPayload:
-		return "user_payload", s.getUserPayloadContentType(payload.UserPayload)
-	case *StreamEvent_UserSettingsPayload:
-		return "user_settings_payload", s.getUserSettingsPayloadContentType(payload.UserSettingsPayload)
-	case *StreamEvent_UserMetadataPayload:
-		return "user_metadata_payload", s.getUserMetadataPayloadContentType(payload.UserMetadataPayload)
-	case *StreamEvent_UserInboxPayload:
-		return "user_inbox_payload", s.getUserInboxPayloadContentType(payload.UserInboxPayload)
-	case *StreamEvent_MediaPayload:
-		return "media_payload", s.getMediaPayloadContentType(payload.MediaPayload)
-	case *StreamEvent_DmChannelPayload:
-		return "dm_channel_payload", s.getDmChannelPayloadContentType(payload.DmChannelPayload)
-	case *StreamEvent_GdmChannelPayload:
-		return "gdm_channel_payload", s.getGdmChannelPayloadContentType(payload.GdmChannelPayload)
-	case *StreamEvent_MetadataPayload:
-		return "metadata_payload", s.getMetadataPayloadContentType(payload.MetadataPayload)
-	case *StreamEvent_MiniblockHeader:
-		return "miniblock_header", "none"
-	default:
+	msg := event.ProtoReflect()
+	
+	// Get the payload oneof field descriptor
+	payloadOneofDesc := msg.Descriptor().Oneofs().ByName("payload")
+	if payloadOneofDesc == nil {
 		return "unknown", "unknown"
 	}
-}
-
-// Helper methods to extract content types for each payload type
-func (s *Service) getMemberPayloadContentType(payload *MemberPayload) string {
-	if payload.GetMembership() != nil {
-		return "membership"
+	
+	// Check which payload field is currently set
+	whichPayload := msg.WhichOneof(payloadOneofDesc)
+	if whichPayload == nil {
+		return "unknown", "unknown"
 	}
-	if payload.GetKeySolicitation() != nil {
-		return "key_solicitation"
+	
+	// Get payload type name (protobuf field names are already in snake_case)
+	payloadTypeName := string(whichPayload.Name()) // e.g., "member_payload"
+	
+	// Get the payload message
+	payloadValue := msg.Get(whichPayload)
+	if !payloadValue.IsValid() {
+		return payloadTypeName, "unknown"
 	}
-	if payload.GetKeyFulfillment() != nil {
-		return "key_fulfillment"
+	
+	payloadMsg := payloadValue.Message()
+	
+	// Find the content oneof in the payload
+	contentOneofDesc := payloadMsg.Descriptor().Oneofs().ByName("content")
+	if contentOneofDesc == nil {
+		// Some payloads might not have content oneof (like miniblock_header)
+		return payloadTypeName, "none"
 	}
-	if payload.GetUsername() != nil {
-		return "username"
+	
+	// Check which content field is currently set
+	whichContent := payloadMsg.WhichOneof(contentOneofDesc)
+	if whichContent == nil {
+		return payloadTypeName, "unknown"
 	}
-	if payload.GetDisplayName() != nil {
-		return "display_name"
-	}
-	if payload.GetEnsAddress() != nil {
-		return "ens_address"
-	}
-	if payload.GetNft() != nil {
-		return "nft"
-	}
-	if payload.GetPin() != nil {
-		return "pin"
-	}
-	if payload.GetUnpin() != nil {
-		return "unpin"
-	}
-	if payload.GetMemberBlockchainTransaction() != nil {
-		return "member_blockchain_transaction"
-	}
-	if payload.GetEncryptionAlgorithm() != nil {
-		return "encryption_algorithm"
-	}
-	return "unknown"
-}
-
-func (s *Service) getSpacePayloadContentType(payload *SpacePayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetChannel() != nil {
-		return "channel"
-	}
-	if payload.GetSpaceImage() != nil {
-		return "space_image"
-	}
-	if payload.GetUpdateChannelAutojoin() != nil {
-		return "update_channel_autojoin"
-	}
-	if payload.GetUpdateChannelHideUserJoinLeaveEvents() != nil {
-		return "update_channel_hide_user_join_leave_events"
-	}
-	return "unknown"
-}
-
-func (s *Service) getChannelPayloadContentType(payload *ChannelPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetMessage() != nil {
-		return "message"
-	}
-	if payload.GetRedaction() != nil {
-		return "redaction"
-	}
-	return "unknown"
-}
-
-func (s *Service) getUserPayloadContentType(payload *UserPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetUserMembership() != nil {
-		return "user_membership"
-	}
-	if payload.GetUserMembershipAction() != nil {
-		return "user_membership_action"
-	}
-	if payload.GetBlockchainTransaction() != nil {
-		return "blockchain_transaction"
-	}
-	if payload.GetReceivedBlockchainTransaction() != nil {
-		return "received_blockchain_transaction"
-	}
-	return "unknown"
-}
-
-func (s *Service) getUserSettingsPayloadContentType(payload *UserSettingsPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetFullyReadMarkers() != nil {
-		return "fully_read_markers"
-	}
-	if payload.GetUserBlock() != nil {
-		return "user_block"
-	}
-	return "unknown"
-}
-
-func (s *Service) getUserMetadataPayloadContentType(payload *UserMetadataPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetEncryptionDevice() != nil {
-		return "encryption_device"
-	}
-	if payload.GetProfileImage() != nil {
-		return "profile_image"
-	}
-	if payload.GetBio() != nil {
-		return "bio"
-	}
-	return "unknown"
-}
-
-func (s *Service) getUserInboxPayloadContentType(payload *UserInboxPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetAck() != nil {
-		return "ack"
-	}
-	if payload.GetGroupEncryptionSessions() != nil {
-		return "group_encryption_sessions"
-	}
-	return "unknown"
-}
-
-func (s *Service) getMediaPayloadContentType(payload *MediaPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetChunk() != nil {
-		return "chunk"
-	}
-	return "unknown"
-}
-
-func (s *Service) getDmChannelPayloadContentType(payload *DmChannelPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetMessage() != nil {
-		return "message"
-	}
-	return "unknown"
-}
-
-func (s *Service) getGdmChannelPayloadContentType(payload *GdmChannelPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetMessage() != nil {
-		return "message"
-	}
-	if payload.GetChannelProperties() != nil {
-		return "channel_properties"
-	}
-	return "unknown"
-}
-
-func (s *Service) getMetadataPayloadContentType(payload *MetadataPayload) string {
-	if payload.GetInception() != nil {
-		return "inception"
-	}
-	if payload.GetNewStream() != nil {
-		return "new_stream"
-	}
-	if payload.GetLastMiniblockUpdate() != nil {
-		return "last_miniblock_update"
-	}
-	if payload.GetPlacementUpdate() != nil {
-		return "placement_update"
-	}
-	return "unknown"
+	
+	// Get content type name (protobuf field names are already in snake_case)
+	contentTypeName := string(whichContent.Name()) // e.g., "key_solicitation"
+	
+	return payloadTypeName, contentTypeName
 }
 
 // matchesFilter checks if the payload/content types match the filter pattern
