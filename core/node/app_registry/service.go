@@ -393,12 +393,12 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), encrypted); err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
-	}
-
 	if err := s.validateAppContractAddress(ctx, app); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error validating app contract address in user stream")
+	}
+
+	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), encrypted); err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
 	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app)); err != nil {
