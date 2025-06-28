@@ -69,13 +69,47 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	// Force miniblock creation to move events from minipool to miniblocks
 	alice.makeMiniblock(spaceId, false, -1)
 
+	// Add more events for the second miniblock
+	addMemberEvent(&MemberPayload{
+		Content: &MemberPayload_DisplayName{
+			DisplayName: &EncryptedData{
+				Ciphertext: "test_display_name",
+				Algorithm:  "test_algo",
+			},
+		},
+	})
+
+	addMemberEvent(&MemberPayload{
+		Content: &MemberPayload_KeySolicitation_{
+			KeySolicitation: &MemberPayload_KeySolicitation{
+				DeviceKey:   "test_device_key_3",
+				FallbackKey: "test_fallback_key_3",
+				IsNewDevice: true,
+				SessionIds:  []string{"session2", "session3"},
+			},
+		},
+	})
+
+	// Create a second miniblock with the current events
+	alice.makeMiniblock(spaceId, false, -1)
+
+	// Add more events for the second miniblock  
+	addMemberEvent(&MemberPayload{
+		Content: &MemberPayload_EnsAddress{
+			EnsAddress: make([]byte, 20), // Valid Ethereum address length (20 bytes)
+		},
+	})
+
+	// Create the final miniblock
+	alice.makeMiniblock(spaceId, false, -1)
+
 	// Test case 1: No exclusion filter - should return all events
 	getMbReq := &GetMiniblocksRequest{
 		StreamId:        spaceId[:],
 		FromInclusive:   0,
 		ToExclusive:     10,
 		OmitSnapshots:   true,
-		ExclusionFilter: []string{},
+		ExclusionFilter: []*EventFilter{},
 	}
 	getMbResp, err := alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
@@ -86,10 +120,15 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 		totalEvents += len(mb.Events)
 		require.False(mb.Partial) // Should not be partial when no filter applied
 	}
-	require.Equal(5, totalEvents, "Should have 5 events total (space inception + membership + 3 test events)")
+	require.Equal(8, totalEvents, "Should have 8 events total (space inception + membership + 6 test events across 2 miniblocks)")
 
 	// Test case 2: Filter out key_solicitation events
-	getMbReq.ExclusionFilter = []string{"member_payload.key_solicitation"}
+	getMbReq.ExclusionFilter = []*EventFilter{
+		{
+			Payload: "member_payload",
+			Content: "key_solicitation",
+		},
+	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
 	
@@ -131,7 +170,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 		}
 	}
 
-	require.Equal(3, filteredEvents, "Should have 3 events after filtering (space inception + membership + username)")
+	require.Equal(5, filteredEvents, "Should have 5 events after filtering out key_solicitation (space inception + membership + username + display_name + ens_address)")
 	require.True(hasPartialMiniblock, "Should have at least one partial miniblock")
 	require.True(foundInception, "Should find inception event")
 	require.True(foundMembership, "Should find membership event")
@@ -139,7 +178,12 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	require.False(foundKeySolicitation, "Should NOT find key_solicitation events")
 
 	// Test case 3: Filter out all member_payload events
-	getMbReq.ExclusionFilter = []string{"member_payload.*"}
+	getMbReq.ExclusionFilter = []*EventFilter{
+		{
+			Payload: "member_payload",
+			Content: "*",
+		},
+	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
 	
@@ -156,7 +200,12 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	require.True(hasPartialMiniblock, "Should have at least one partial miniblock")
 
 	// Test case 4: Filter that doesn't match anything
-	getMbReq.ExclusionFilter = []string{"nonexistent_payload.nonexistent_content"}
+	getMbReq.ExclusionFilter = []*EventFilter{
+		{
+			Payload: "nonexistent_payload",
+			Content: "nonexistent_content",
+		},
+	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
 	
@@ -169,30 +218,150 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 			hasPartialMiniblock = true
 		}
 	}
-	require.Equal(5, filteredEvents, "Should have all 5 events when filter doesn't match")
+	require.Equal(8, filteredEvents, "Should have all 8 events when filter doesn't match")
 	require.False(hasPartialMiniblock, "Should NOT have any partial miniblocks when no events are filtered")
+
+	// Test case 5: Verify filtering across multiple miniblocks
+	getMbReq.ExclusionFilter = []*EventFilter{
+		{
+			Payload: "member_payload",
+			Content: "ens_address",
+		},
+	}
+	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	
+	// Count events and verify both miniblocks are present
+	filteredEvents = 0
+	miniblockCount := 0
+	partialMiniblockCount := 0
+	foundDisplayName := false
+	foundEnsAddress := false
+	
+	for _, mb := range getMbResp.Msg.Miniblocks {
+		miniblockCount++
+		filteredEvents += len(mb.Events)
+		if mb.Partial {
+			partialMiniblockCount++
+		}
+		
+		for _, envelope := range mb.Events {
+			var streamEvent StreamEvent
+			err := proto.Unmarshal(envelope.Event, &streamEvent)
+			require.NoError(err)
+
+			if payload, ok := streamEvent.Payload.(*StreamEvent_MemberPayload); ok {
+				if payload.MemberPayload.GetDisplayName() != nil {
+					foundDisplayName = true
+				}
+				if payload.MemberPayload.GetEnsAddress() != nil {
+					foundEnsAddress = true
+				}
+			}
+		}
+	}
+	
+	require.GreaterOrEqual(miniblockCount, 2, "Should have at least 2 miniblocks")
+	require.Equal(7, filteredEvents, "Should have 7 events after filtering out ens_address events")
+	require.Equal(1, partialMiniblockCount, "Should have 1 partial miniblock (the one containing the ens_address event)")
+	require.True(foundDisplayName, "Should find display_name event")
+	require.False(foundEnsAddress, "Should NOT find ens_address events")
+
+	// Test case 6: Multiple filters - filter out both key_solicitation AND display_name events
+	getMbReq.ExclusionFilter = []*EventFilter{
+		{
+			Payload: "member_payload",
+			Content: "key_solicitation",
+		},
+		{
+			Payload: "member_payload",
+			Content: "display_name",
+		},
+	}
+	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	
+	// Count events and verify multiple filters work together
+	filteredEvents = 0
+	hasPartialMiniblock = false
+	foundInception = false
+	foundMembership = false
+	foundUsername = false
+	foundDisplayName = false
+	foundKeySolicitation = false
+	foundEnsAddress = false
+	
+	for _, mb := range getMbResp.Msg.Miniblocks {
+		filteredEvents += len(mb.Events)
+		if mb.Partial {
+			hasPartialMiniblock = true
+		}
+		
+		for _, envelope := range mb.Events {
+			var streamEvent StreamEvent
+			err := proto.Unmarshal(envelope.Event, &streamEvent)
+			require.NoError(err)
+
+			switch payload := streamEvent.Payload.(type) {
+			case *StreamEvent_SpacePayload:
+				if payload.SpacePayload.GetInception() != nil {
+					foundInception = true
+				}
+			case *StreamEvent_MemberPayload:
+				if payload.MemberPayload.GetMembership() != nil {
+					foundMembership = true
+				}
+				if payload.MemberPayload.GetKeySolicitation() != nil {
+					foundKeySolicitation = true
+				}
+				if payload.MemberPayload.GetUsername() != nil {
+					foundUsername = true
+				}
+				if payload.MemberPayload.GetDisplayName() != nil {
+					foundDisplayName = true
+				}
+				if payload.MemberPayload.GetEnsAddress() != nil {
+					foundEnsAddress = true
+				}
+			}
+		}
+	}
+	
+	require.Equal(4, filteredEvents, "Should have 4 events after filtering out key_solicitation AND display_name (space inception + membership + username + ens_address)")
+	require.True(hasPartialMiniblock, "Should have at least one partial miniblock when multiple filters are applied")
+	require.True(foundInception, "Should find inception event")
+	require.True(foundMembership, "Should find membership event")
+	require.True(foundUsername, "Should find username event")
+	require.True(foundEnsAddress, "Should find ens_address event")
+	require.False(foundDisplayName, "Should NOT find display_name events (filtered out)")
+	require.False(foundKeySolicitation, "Should NOT find key_solicitation events (filtered out)")
 }
 
-func TestMatchesFilter(t *testing.T) {
+func TestMatchesEventFilter(t *testing.T) {
 	service := &Service{}
 
 	// Test exact matches
-	require.True(t, service.matchesFilter("member_payload", "key_solicitation", "member_payload.key_solicitation"))
-	require.False(t, service.matchesFilter("member_payload", "username", "member_payload.key_solicitation"))
+	filter := &EventFilter{Payload: "member_payload", Content: "key_solicitation"}
+	require.True(t, service.matchesEventFilter("member_payload", "key_solicitation", filter))
+	require.False(t, service.matchesEventFilter("member_payload", "username", filter))
 
 	// Test wildcard content type
-	require.True(t, service.matchesFilter("member_payload", "key_solicitation", "member_payload.*"))
-	require.True(t, service.matchesFilter("member_payload", "username", "member_payload.*"))
-	require.False(t, service.matchesFilter("space_payload", "inception", "member_payload.*"))
+	filter = &EventFilter{Payload: "member_payload", Content: "*"}
+	require.True(t, service.matchesEventFilter("member_payload", "key_solicitation", filter))
+	require.True(t, service.matchesEventFilter("member_payload", "username", filter))
+	require.False(t, service.matchesEventFilter("space_payload", "inception", filter))
 
 	// Test wildcard payload type
-	require.True(t, service.matchesFilter("member_payload", "key_solicitation", "*.key_solicitation"))
-	require.True(t, service.matchesFilter("space_payload", "key_solicitation", "*.key_solicitation"))
-	require.False(t, service.matchesFilter("member_payload", "username", "*.key_solicitation"))
+	filter = &EventFilter{Payload: "*", Content: "key_solicitation"}
+	require.True(t, service.matchesEventFilter("member_payload", "key_solicitation", filter))
+	require.True(t, service.matchesEventFilter("space_payload", "key_solicitation", filter))
+	require.False(t, service.matchesEventFilter("member_payload", "username", filter))
 
-	// Test invalid filter formats
-	require.False(t, service.matchesFilter("member_payload", "key_solicitation", "invalid_filter"))
-	require.False(t, service.matchesFilter("member_payload", "key_solicitation", "too.many.parts.here"))
+	// Test both wildcards
+	filter = &EventFilter{Payload: "*", Content: "*"}
+	require.True(t, service.matchesEventFilter("member_payload", "key_solicitation", filter))
+	require.True(t, service.matchesEventFilter("space_payload", "inception", filter))
+	require.True(t, service.matchesEventFilter("any_payload", "any_content", filter))
 }
 
 func TestExtractEventTypeInfo(t *testing.T) {

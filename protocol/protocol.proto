@@ -973,17 +973,33 @@ message GetStreamResponse {
     StreamAndCookie stream = 1;
 }
 
+/**
+ * EventFilter defines a filter for events based on payload and content type.
+ */
+message EventFilter {
+    /**
+     * payload specifies the payload type to filter (e.g., "member_payload", "space_payload").
+     * Use "*" to match any payload type.
+     */
+    string payload = 1;
+    
+    /**
+     * content specifies the content type within the payload (e.g., "key_solicitation", "inception").
+     * Use "*" to match any content type.
+     */
+    string content = 2;
+}
+
 message GetMiniblocksRequest {
     bytes stream_id = 1;
     int64 from_inclusive = 2;
     int64 to_exclusive = 3;
     bool omit_snapshots = 4;
     /**
-     * exclusion_filter contains event filter patterns to exclude from returned miniblocks.
-     * Format: "payload_type.content_type" (e.g., "member_payload.key_solicitation")
+     * exclusion_filter contains event filters to exclude from returned miniblocks.
      * If any events are excluded, the Miniblock.partial field will be set to true.
      */
-    repeated string exclusion_filter = 5;
+    repeated EventFilter exclusion_filter = 5;
 }
 
 message GetMiniblocksResponse {

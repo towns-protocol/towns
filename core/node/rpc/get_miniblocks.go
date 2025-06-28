@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"strings"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
@@ -82,7 +81,7 @@ func (s *Service) localGetMiniblocks(
 
 // applyExclusionFilter applies exclusion filters to a miniblock, returning a new MiniblockInfo
 // with filtered events and partial flag set if any events were excluded
-func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []string) (*MiniblockInfo, error) {
+func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*EventFilter) (*MiniblockInfo, error) {
 	// Use the existing miniblock proto directly (no need to unmarshal)
 	miniblock := info.Proto
 
@@ -118,7 +117,7 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []st
 }
 
 // shouldExcludeEvent determines if an event should be excluded based on exclusion filters
-func (s *Service) shouldExcludeEvent(envelope *Envelope, exclusionFilter []string) bool {
+func (s *Service) shouldExcludeEvent(envelope *Envelope, exclusionFilter []*EventFilter) bool {
 	// Parse the event to get the payload
 	var streamEvent StreamEvent
 	if err := proto.Unmarshal(envelope.Event, &streamEvent); err != nil {
@@ -131,7 +130,7 @@ func (s *Service) shouldExcludeEvent(envelope *Envelope, exclusionFilter []strin
 	
 	// Check if any filter matches this event
 	for _, filter := range exclusionFilter {
-		if s.matchesFilter(payloadType, contentType, filter) {
+		if s.matchesEventFilter(payloadType, contentType, filter) {
 			return true
 		}
 	}
@@ -185,26 +184,17 @@ func (s *Service) extractEventTypeInfo(event *StreamEvent) (string, string) {
 	return payloadTypeName, contentTypeName
 }
 
-// matchesFilter checks if the payload/content types match the filter pattern
-func (s *Service) matchesFilter(payloadType, contentType, filter string) bool {
-	// Filter format: "payload_type.content_type" or "payload_type.*"
-	parts := strings.Split(filter, ".")
-	if len(parts) != 2 {
-		return false
-	}
-
-	filterPayloadType := parts[0]
-	filterContentType := parts[1]
-
+// matchesEventFilter checks if the payload/content types match the EventFilter
+func (s *Service) matchesEventFilter(payloadType, contentType string, filter *EventFilter) bool {
 	// Check payload type match
-	if filterPayloadType != "*" && filterPayloadType != payloadType {
+	if filter.Payload != "*" && filter.Payload != payloadType {
 		return false
 	}
 
 	// Check content type match (wildcard or exact match)
-	if filterContentType == "*" {
+	if filter.Content == "*" {
 		return true
 	}
 
-	return filterContentType == contentType
+	return filter.Content == contentType
 }
