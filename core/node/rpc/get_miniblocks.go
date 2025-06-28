@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -34,15 +33,12 @@ func (s *Service) localGetMiniblocks(
 
 	// Apply exclusion filtering if filters are provided
 	if len(req.Msg.GetExclusionFilter()) > 0 {
-		filteredMbsInfo := make([]*MiniblockInfo, 0, len(mbsInfo))
-		for _, info := range mbsInfo {
-			filteredInfo, err := s.applyExclusionFilter(info, req.Msg.GetExclusionFilter())
+		for i := range mbsInfo {
+			mbsInfo[i], err = s.applyExclusionFilter(mbsInfo[i], req.Msg.GetExclusionFilter())
 			if err != nil {
 				return nil, err
 			}
-			filteredMbsInfo = append(filteredMbsInfo, filteredInfo)
 		}
-		mbsInfo = filteredMbsInfo
 	}
 
 	miniblocks := make([]*Miniblock, len(mbsInfo))
@@ -55,13 +51,8 @@ func (s *Service) localGetMiniblocks(
 	}
 
 	fromInclusive := req.Msg.FromInclusive
-	if len(miniblocks) > 0 {
-		header, err := ParseEvent(miniblocks[0].GetHeader())
-		if err != nil {
-			return nil, err
-		}
-
-		fromInclusive = header.Event.GetMiniblockHeader().GetMiniblockNum()
+	if len(mbsInfo) > 0 {
+		fromInclusive = mbsInfo[0].Ref.Num
 	}
 
 	resp := &GetMiniblocksResponse{
@@ -90,9 +81,9 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*E
 	filteredEvents := make([]*Envelope, 0, len(miniblock.Events))
 
 	// Filter events based on exclusion patterns
-	for _, envelope := range miniblock.Events {
-		if !s.shouldExcludeEvent(envelope, exclusionFilter) {
-			filteredEvents = append(filteredEvents, envelope)
+	for _, event := range info.Events() {
+		if !s.shouldExcludeEvent(event, exclusionFilter) {
+			filteredEvents = append(filteredEvents, event.Envelope)
 		}
 	}
 
@@ -117,17 +108,10 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*E
 }
 
 // shouldExcludeEvent determines if an event should be excluded based on exclusion filters
-func (s *Service) shouldExcludeEvent(envelope *Envelope, exclusionFilter []*EventFilter) bool {
-	// Parse the event to get the payload
-	var streamEvent StreamEvent
-	if err := proto.Unmarshal(envelope.Event, &streamEvent); err != nil {
-		// If we can't parse the event, don't exclude it
-		return false
-	}
-
+func (s *Service) shouldExcludeEvent(event *ParsedEvent, exclusionFilter []*EventFilter) bool {
 	// Extract payload type and content type
-	payloadType, contentType := s.extractEventTypeInfo(&streamEvent)
-	
+	payloadType, contentType := s.extractEventTypeInfo(event.Event)
+
 	// Check if any filter matches this event
 	for _, filter := range exclusionFilter {
 		if s.matchesEventFilter(payloadType, contentType, filter) {
@@ -141,46 +125,46 @@ func (s *Service) shouldExcludeEvent(envelope *Envelope, exclusionFilter []*Even
 // extractEventTypeInfo extracts payload type and content type from a StreamEvent using protobuf reflection
 func (s *Service) extractEventTypeInfo(event *StreamEvent) (string, string) {
 	msg := event.ProtoReflect()
-	
+
 	// Get the payload oneof field descriptor
 	payloadOneofDesc := msg.Descriptor().Oneofs().ByName("payload")
 	if payloadOneofDesc == nil {
 		return "unknown", "unknown"
 	}
-	
+
 	// Check which payload field is currently set
 	whichPayload := msg.WhichOneof(payloadOneofDesc)
 	if whichPayload == nil {
 		return "unknown", "unknown"
 	}
-	
+
 	// Get payload type name (protobuf field names are already in snake_case)
 	payloadTypeName := string(whichPayload.Name()) // e.g., "member_payload"
-	
+
 	// Get the payload message
 	payloadValue := msg.Get(whichPayload)
 	if !payloadValue.IsValid() {
 		return payloadTypeName, "unknown"
 	}
-	
+
 	payloadMsg := payloadValue.Message()
-	
+
 	// Find the content oneof in the payload
 	contentOneofDesc := payloadMsg.Descriptor().Oneofs().ByName("content")
 	if contentOneofDesc == nil {
 		// Some payloads might not have content oneof (like miniblock_header)
 		return payloadTypeName, "none"
 	}
-	
+
 	// Check which content field is currently set
 	whichContent := payloadMsg.WhichOneof(contentOneofDesc)
 	if whichContent == nil {
 		return payloadTypeName, "unknown"
 	}
-	
+
 	// Get content type name (protobuf field names are already in snake_case)
 	contentTypeName := string(whichContent.Name()) // e.g., "key_solicitation"
-	
+
 	return payloadTypeName, contentTypeName
 }
 
