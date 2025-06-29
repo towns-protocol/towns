@@ -776,7 +776,7 @@ contract StreamRegistryTest is
             replicationFactor: replFactor,
             checksum: checksum
         });
-        
+
         vm.prank(makeAddr("nonParticipatingNode"));
         vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
 
@@ -807,14 +807,14 @@ contract StreamRegistryTest is
         });
 
         bytes32 checksum = keccak256(
-                abi.encode(
-                    stream.lastMiniblockHash,
-                    stream.lastMiniblockNum,
-                    stream.reserved0,
-                    stream.flags+1, // ensure invalid checksum
-                    stream.nodes
-                )
-            );
+            abi.encode(
+                stream.lastMiniblockHash,
+                stream.lastMiniblockNum,
+                stream.reserved0,
+                stream.flags + 1, // ensure invalid checksum
+                stream.nodes
+            )
+        );
 
         UpdateStream[] memory requests = new UpdateStream[](1);
         requests[0] = UpdateStream({
@@ -823,7 +823,7 @@ contract StreamRegistryTest is
             replicationFactor: replFactor,
             checksum: checksum
         });
-        
+
         vm.prank(stream.nodes[0]);
         vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
 
