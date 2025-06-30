@@ -34,7 +34,7 @@
     },
     {
       "name": "Github",
-      "url": "https://github.com/river-build"
+      "url": "https://github.com/towns-protocol"
     }
   ],
   "tabs": [],
@@ -160,6 +160,15 @@
       ]
     },
     {
+      "group": "Development & Testing",
+      "pages": [
+        "development/testing-strategy",
+        "development/ci-pipeline",
+        "development/multi-node-testing",
+        "development/local-development"
+      ]
+    },
+    {
       "group": "React SDK",
       "pages": [
         "sdk/react-sdk/getting-started",
@@ -210,7 +219,7 @@
   ],
   "footerSocials": {
     "twitter": "https://x.com/TownsProtocol",
-    "github": "https://github.com/river-build",
+    "github": "https://github.com/towns-protocol/towns",
     "website": "https://towns.com"
   }
 }

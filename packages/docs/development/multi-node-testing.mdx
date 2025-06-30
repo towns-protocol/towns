@@ -1,0 +1,412 @@
+---
+title: Multi-Node Testing Architecture
+description: "Deep dive into Towns Protocol's sophisticated multi-node testing environment"
+---
+
+## Multi-Node Testing Architecture
+
+Multi-node testing represents the most sophisticated aspect of Towns Protocol's testing infrastructure. These tests create distributed environments that mirror production deployments, validating cross-node communication, stream synchronization, and entitlement propagation in realistic scenarios.
+
+### Architecture Overview
+
+#### Distributed Testing Philosophy
+Towns Protocol's multi-node tests simulate **real-world distributed deployments** with:
+
+- **Multiple River Nodes**: Independent node instances running simultaneously
+- **High-Performance PostgreSQL**: Optimized database configurations for concurrent access
+- **Cross-Node Communication**: Realistic network topologies and message routing
+- **Production-like Scenarios**: Full integration testing under realistic loads
+
+#### Testing Environment Variants
+
+| Environment | Entitlements | Performance | Use Case | Test Scope |
+|------------|-------------|-------------|----------|------------|
+| **Multi-Node** | ❌ Disabled | Fast | Core messaging | Stream sync, basic operations |
+| **Multi-Node Ent** | ✅ Enabled | Slower | Full system | Permission validation, cross-chain |
+| **Multi-Node Ent Legacy** | ✅ Legacy | Medium | Compatibility | Backward compatibility testing |
+
+### Infrastructure Setup
+
+#### PostgreSQL Performance Optimization
+
+Multi-node tests require high-performance database configurations to handle concurrent connections from multiple nodes:
+
+```sql
+-- CI Environment PostgreSQL Configuration
+max_connections = 1000           -- Support many concurrent nodes
+shared_buffers = 2GB            -- Large buffer pool for performance
+effective_cache_size = 4GB       -- Assume 4GB available for caching
+work_mem = 256MB                 -- Memory per operation
+maintenance_work_mem = 512MB     -- Memory for maintenance operations
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+random_page_cost = 1.1          -- Optimized for SSD storage
+```
+
+#### Container Architecture
+```yaml
+services:
+  postgres-core:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    options: >-
+      --health-cmd pg_isready
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+      --name river_postgres_container
+```
+
+#### Certificate Authority Setup
+Multi-node testing requires proper TLS configuration for secure inter-node communication:
+
+```bash
+# Certificate Authority initialization
+./core/scripts/register-ca.sh
+
+# Generate node-specific certificates
+generate-certs.sh --multi-node
+```
+
+### Multi-Node Test Execution
+
+#### Environment Initialization
+
+**Step 1: Database Preparation**
+```bash
+# Start PostgreSQL with optimized configuration
+docker run -d --name river_postgres_container \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5433:5432 postgres:latest
+
+# Apply performance tuning
+docker exec river_postgres_container bash -c "
+  echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+  echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+"
+docker restart river_postgres_container
+```
+
+**Step 2: Node Configuration**
+```bash
+# Multi-node environment setup
+RUN_ENV=multi just config-and-start
+
+# Alternative: Multi-node without entitlements
+RUN_ENV=multi_ne just config-and-start
+```
+
+**Step 3: Test Execution**
+```bash
+# Run multi-node test suite
+just test-multinode
+
+# Debug mode with verbose logging
+RUN_ENV=multi just t-debug
+```
+
+### Test Scenarios
+
+#### 1. Core Multi-Node Tests (No Entitlements)
+
+**Stream Synchronization**
+```go
+func TestMultiNodeStreamSync(t *testing.T) {
+    // Setup multiple nodes
+    nodes := setupTestNodes(t, 3)
+    defer teardownNodes(t, nodes)
+    
+    // Create stream on node 1
+    stream := createTestStream(t, nodes[0])
+    
+    // Verify stream propagates to all nodes
+    waitForStreamSync(t, nodes, stream.ID)
+    
+    // Test cross-node message delivery
+    testCrossNodeMessaging(t, nodes, stream.ID)
+}
+```
+
+**Performance Testing**
+- **Concurrent Operations**: Multiple nodes performing simultaneous operations
+- **Load Testing**: High-throughput message processing
+- **Latency Measurement**: Cross-node communication timing
+- **Resource Utilization**: Memory and CPU usage under load
+
+#### 2. Entitlement-Enabled Tests
+
+**Cross-Chain Permission Validation**
+```go
+func TestCrossChainEntitlements(t *testing.T) {
+    // Setup multi-node environment with entitlements
+    nodes := setupEntitlementNodes(t, 3)
+    defer teardownNodes(t, nodes)
+    
+    // Create space with token-gated access
+    space := createTokenGatedSpace(t, nodes[0])
+    
+    // Test permission propagation across nodes
+    testPermissionPropagation(t, nodes, space.ID)
+    
+    // Validate cross-chain authorization
+    testCrossChainAuth(t, nodes, space.ID)
+}
+```
+
+**Entitlement Scenarios:**
+- **ERC-20 Token Gates**: Balance-based access control
+- **ERC-721 NFT Permissions**: Specific token ownership requirements
+- **Custom Rules**: Complex logical entitlement conditions
+- **Permission Caching**: Efficient entitlement validation
+- **Cross-Chain Sync**: Base ↔ Towns Chain permission consistency
+
+#### 3. Legacy Compatibility Tests
+
+**Backward Compatibility Validation**
+```go
+func TestLegacyEntitlementMigration(t *testing.T) {
+    // Setup nodes with legacy entitlement data
+    nodes := setupLegacyNodes(t, 2)
+    defer teardownNodes(t, nodes)
+    
+    // Test legacy entitlement rule processing
+    testLegacyRuleProcessing(t, nodes)
+    
+    // Validate migration to new entitlement system
+    testEntitlementMigration(t, nodes)
+}
+```
+
+### Node Management
+
+#### Node Lifecycle Management
+```bash
+# Start multi-node environment
+RUN_ENV=multi just config-and-start
+
+# Monitor node status
+RUN_ENV=multi just status
+
+# View aggregated logs
+RUN_ENV=multi just tail-logs
+
+# Stop all nodes gracefully
+RUN_ENV=multi just stop
+
+# Force cleanup
+RUN_ENV=multi just clean
+```
+
+#### Node Configuration Variants
+```yaml
+# Multi-node configuration (core/env/multi/config.yaml)
+nodes:
+  - name: "node1"
+    port: 8080
+    database_host: "localhost:5433"
+    entitlements_enabled: true
+  - name: "node2" 
+    port: 8081
+    database_host: "localhost:5433"
+    entitlements_enabled: true
+  - name: "node3"
+    port: 8082
+    database_host: "localhost:5433"
+    entitlements_enabled: true
+```
+
+### Performance Optimization
+
+#### Database Connection Pooling
+```go
+// Connection pool configuration for multi-node testing
+type PoolConfig struct {
+    MaxConnections    int    // 100 per node
+    MaxIdleConns     int    // 10 per node
+    ConnMaxLifetime  time.Duration  // 1 hour
+    ConnMaxIdleTime  time.Duration  // 30 minutes
+}
+```
+
+#### Memory Management
+- **Garbage Collection Tuning**: Optimized GC for multi-node scenarios
+- **Buffer Pool Sizing**: Efficient memory allocation across nodes
+- **Cache Coordination**: Shared cache invalidation strategies
+
+#### Network Optimization
+- **Connection Reuse**: HTTP/2 and gRPC connection pooling
+- **Compression**: Message compression for cross-node communication
+- **Batching**: Efficient batch processing of cross-node operations
+
+### Debugging Multi-Node Tests
+
+#### Log Aggregation
+```bash
+# View logs from all nodes simultaneously
+RUN_ENV=multi just tail-logs
+
+# Filter logs by node
+RUN_ENV=multi just tail-logs node1
+
+# Search across all node logs
+RUN_ENV=multi just grep-logs "error pattern"
+```
+
+#### Performance Monitoring
+```bash
+# Monitor resource usage
+docker stats river_postgres_container
+
+# Database performance metrics
+psql -h localhost -p 5433 -U postgres -c "
+  SELECT 
+    datname,
+    numbackends,
+    xact_commit,
+    xact_rollback,
+    blks_read,
+    blks_hit
+  FROM pg_stat_database 
+  WHERE datname NOT IN ('template0', 'template1', 'postgres');
+"
+
+# Connection monitoring
+psql -h localhost -p 5433 -U postgres -c "
+  SELECT count(*) as active_connections 
+  FROM pg_stat_activity 
+  WHERE state = 'active';
+"
+```
+
+#### Failure Analysis
+```bash
+# Check node health endpoints
+curl http://localhost:8080/health
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+
+# Database connectivity per node
+for port in 8080 8081 8082; do
+  curl http://localhost:$port/debug/db-status
+done
+
+# Cross-node communication test
+curl http://localhost:8080/debug/peer-status
+```
+
+### Common Multi-Node Test Patterns
+
+#### Stream Consistency Validation
+```go
+func validateStreamConsistency(t *testing.T, nodes []*TestNode, streamID string) {
+    var streamStates []StreamState
+    
+    for _, node := range nodes {
+        state := getStreamState(t, node, streamID)
+        streamStates = append(streamStates, state)
+    }
+    
+    // Verify all nodes have consistent view
+    for i := 1; i < len(streamStates); i++ {
+        assert.Equal(t, streamStates[0], streamStates[i])
+    }
+}
+```
+
+#### Cross-Node Message Delivery
+```go
+func testCrossNodeDelivery(t *testing.T, sender, receiver *TestNode, streamID string) {
+    // Send message from sender node
+    msgID := sendMessage(t, sender, streamID, "test message")
+    
+    // Wait for message to propagate to receiver
+    waitForMessage(t, receiver, streamID, msgID, 30*time.Second)
+    
+    // Verify message content and ordering
+    validateMessageDelivery(t, receiver, streamID, msgID)
+}
+```
+
+#### Entitlement Propagation Testing
+```go
+func testEntitlementPropagation(t *testing.T, nodes []*TestNode, spaceID string) {
+    // Update entitlement on first node
+    updateEntitlement(t, nodes[0], spaceID, newRule)
+    
+    // Wait for propagation to all nodes
+    for _, node := range nodes[1:] {
+        waitForEntitlementUpdate(t, node, spaceID, newRule, 60*time.Second)
+    }
+    
+    // Verify consistent entitlement state
+    validateEntitlementConsistency(t, nodes, spaceID)
+}
+```
+
+### CI Integration
+
+#### Automated Multi-Node Execution
+Multi-node tests integrate seamlessly with the CI pipeline:
+
+```yaml
+# CI job configuration
+jobs:
+  Multinode:
+    runs-on: ubuntu-latest-8-cores
+    timeout-minutes: 30
+    services:
+      postgres-core:
+        image: postgres:latest
+        # ... configuration
+    steps:
+      - name: Setup multi-node environment
+        run: RUN_ENV=multi just config-and-start
+      - name: Run multi-node tests
+        run: just test-multinode
+      - name: Cleanup
+        run: RUN_ENV=multi just stop
+```
+
+#### Parallel Test Execution
+- **Test Isolation**: Each test suite uses independent node instances
+- **Resource Management**: Optimal resource allocation across parallel tests
+- **Failure Isolation**: Individual test failures don't affect other tests
+
+### Local Development with Multi-Node
+
+#### Quick Start
+```bash
+# Clone and setup
+git clone https://github.com/towns-protocol/towns.git
+cd towns
+
+# Install dependencies
+yarn install && yarn prepare
+
+# Setup certificates
+./core/scripts/register-ca.sh
+
+# Start multi-node environment
+cd core
+RUN_ENV=multi just config-and-start
+
+# Run multi-node tests
+just test-multinode
+```
+
+#### Development Workflow
+1. **Environment Setup**: Start multi-node environment
+2. **Test Development**: Write and run multi-node tests
+3. **Debugging**: Use log aggregation and debugging tools
+4. **Cleanup**: Stop environment when done
+
+### Next Steps
+
+- **Local Development Setup**: See [Local Development](/development/local-development)
+- **CI Pipeline Details**: See [CI Pipeline](/development/ci-pipeline)
+- **Testing Strategy**: See [Testing Strategy](/development/testing-strategy) 
