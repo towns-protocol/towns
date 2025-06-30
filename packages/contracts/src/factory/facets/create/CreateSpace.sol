@@ -36,8 +36,23 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
     function createSpace(
         SpaceInfo memory spaceInfo
     ) external nonReentrant whenNotPaused returns (address) {
+        // Convert SpaceInfo to CreateSpace format (no prepay)
+        CreateSpace memory createSpaceInfo = CreateSpace({
+            metadata: Metadata({
+                name: spaceInfo.name,
+                uri: spaceInfo.uri,
+                shortDescription: spaceInfo.shortDescription,
+                longDescription: spaceInfo.longDescription
+            }),
+            membership: spaceInfo.membership,
+            channel: spaceInfo.channel,
+            prepay: Prepay({supply: 0}) // No prepay for basic createSpace
+        });
+        
         SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-        return CreateSpaceLib.createSpace(spaceInfo, spaceOptions);
+        
+        // Route through unified createSpaceV2 entry point
+        return createSpaceV2(createSpaceInfo, spaceOptions);
     }
 
     /// @inheritdoc ICreateSpace
@@ -45,13 +60,16 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
         CreateSpace memory spaceInfo
     ) external payable nonReentrant whenNotPaused returns (address) {
         SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-        return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, spaceOptions);
+        
+        // Route through unified createSpaceV2 entry point
+        return createSpaceV2(spaceInfo, spaceOptions);
     }
 
     /// @inheritdoc ICreateSpace
     function createSpaceWithPrepay(
         CreateSpaceOld memory spaceInfo
     ) external payable nonReentrant whenNotPaused returns (address) {
+        // Convert legacy CreateSpaceOld to new CreateSpace format
         MembershipRequirements memory requirements = MembershipRequirements({
             everyone: spaceInfo.membership.requirements.everyone,
             users: spaceInfo.membership.requirements.users,
@@ -69,7 +87,10 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
             channel: spaceInfo.channel,
             prepay: spaceInfo.prepay
         });
+        
         SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-        return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
+        
+        // Route through unified createSpaceV2 entry point
+        return createSpaceV2(newSpaceInfo, spaceOptions);
     }
 }
