@@ -23,6 +23,8 @@ import { SignerContext } from './signerContext'
 import { RpcOptions } from './rpcCommon'
 import { NotificationService } from './notificationService'
 import { spaceIdFromChannelId, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
+import { StreamsView } from './views/streamsView'
+import { NotificationSettingsModel } from './views/streams/notificationSettings'
 
 const logger = dlogger('csb:notifications')
 
@@ -42,14 +44,10 @@ class InMemoryNotificationStore implements INotificationStore {
     }
 }
 
-export interface NotificationSettingsModel {
-    fetchedAtMs: number | undefined
-    settings: GetSettingsResponse | undefined
-    error: Error | undefined
-}
-
 export class NotificationsClient {
-    public data: Observable<NotificationSettingsModel>
+    get notificationSettings(): NotificationSettingsModel {
+        return this.streamsView.notificationSettings.value
+    }
     private _client?: NotificationRpcClient
     private startResponseKey: string
     private finishResponseKey: string
@@ -62,15 +60,12 @@ export class NotificationsClient {
         private readonly url: string,
         private readonly store: INotificationStore = new InMemoryNotificationStore(),
         private readonly opts: RpcOptions | undefined = undefined,
+        readonly streamsView: StreamsView,
     ) {
         this.startResponseKey = `startResponse`
         this.finishResponseKey = `finishResponse`
         this.settingsKey = `settings`
-        this.data = new Observable<NotificationSettingsModel>({
-            fetchedAtMs: undefined,
-            settings: this.getLocalSettings(),
-            error: undefined,
-        })
+        this.streamsView.notificationSettings.initializeSettings(this.getLocalSettings())
     }
 
     get userId(): string {
@@ -106,13 +101,13 @@ export class NotificationsClient {
     }
 
     private updateLocalSettings(fn: (current: GetSettingsResponse) => void) {
-        if (!this.data.value.settings) {
+        if (!this.streamsView.notificationSettings.value.settings) {
             throw new Error('TNS PUSH: settings has not been fetched')
         }
-        const newSettings = cloneDeep(this.data.value.settings)
+        const newSettings = cloneDeep(this.streamsView.notificationSettings.value.settings)
         fn(newSettings)
         this.setLocalSettings(newSettings)
-        this.data.setValue({ ...this.data.value, settings: newSettings })
+        this.streamsView.notificationSettings.updateSettings(newSettings)
     }
 
     private async getClient(): Promise<NotificationRpcClient | undefined> {
@@ -125,7 +120,7 @@ export class NotificationsClient {
             this.getClientPromise = undefined
             return result
         } catch (error) {
-            this.data.setValue({ ...this.data.value, error: error as Error })
+            this.streamsView.notificationSettings.updateError(error as Error)
             this.getClientPromise = undefined
             return undefined
         }
@@ -182,7 +177,7 @@ export class NotificationsClient {
             try {
                 return await fn(client)
             } catch (error) {
-                this.data.setValue({ ...this.data.value, error: error as Error })
+                this.streamsView.notificationSettings.updateError(error as Error)
                 throw error
             }
         }
@@ -203,11 +198,7 @@ export class NotificationsClient {
             try {
                 const response = await client.getSettings({})
                 this.setLocalSettings(response)
-                this.data.setValue({
-                    fetchedAtMs: Date.now(),
-                    settings: response,
-                    error: undefined,
-                })
+                this.streamsView.notificationSettings.updateSettings(response, Date.now())
                 logger.log(
                     'TNS PUSH: fetched settings',
                     toJson(GetSettingsResponseSchema, response),
@@ -215,10 +206,7 @@ export class NotificationsClient {
                 this.getSettingsPromise = undefined
                 return response
             } catch (error) {
-                this.data.setValue({
-                    ...this.data.value,
-                    error: error as Error,
-                })
+                this.streamsView.notificationSettings.updateError(error as Error)
                 throw error
             }
         })
@@ -243,7 +231,8 @@ export class NotificationsClient {
             await client.setDmGdmSettings({
                 dmGlobal: value,
                 gdmGlobal:
-                    this.data.value.settings?.gdmGlobal ?? GdmChannelSettingValue.GDM_UNSPECIFIED,
+                    this.notificationSettings.settings?.gdmGlobal ??
+                    GdmChannelSettingValue.GDM_UNSPECIFIED,
             })
             this.updateLocalSettings((settings) => {
                 settings.dmGlobal = value
@@ -255,7 +244,8 @@ export class NotificationsClient {
         return this.withClient(async (client) => {
             await client.setDmGdmSettings({
                 dmGlobal:
-                    this.data.value.settings?.dmGlobal ?? DmChannelSettingValue.DM_UNSPECIFIED,
+                    this.notificationSettings.settings?.dmGlobal ??
+                    DmChannelSettingValue.DM_UNSPECIFIED,
                 gdmGlobal: value,
             })
 

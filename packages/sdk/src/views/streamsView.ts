@@ -25,6 +25,7 @@ import { DmAndGdmModel, dmsAndGdmsTransform } from './transforms/dmsAndGdmsTrans
 import { StreamMemberIdsView } from './streams/streamMemberIds'
 import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTransform'
 import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
+import { NotificationSettings } from './streams/notificationSettings'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -35,6 +36,7 @@ class Consts {
 
 // a view of all the streams
 export class StreamsView {
+    readonly notificationSettings: NotificationSettings
     readonly streamStatus: StreamStatus
     readonly streamMemberIds: StreamMemberIdsView
     readonly spaceStreams: SpaceStreamsView
@@ -68,6 +70,7 @@ export class StreamsView {
         const userMetadataStreamId = userId !== '' ? makeUserMetadataStreamId(userId) : ''
         const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
 
+        this.notificationSettings = new NotificationSettings()
         this.streamStatus = new StreamStatus()
         this.streamMemberIds = new StreamMemberIdsView()
         this.userSettingsStreams = new UserSettingsStreamsView()
