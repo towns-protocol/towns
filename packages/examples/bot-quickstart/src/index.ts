@@ -1,6 +1,8 @@
 import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
 import { createServer } from 'node:http2'
+import { Hono } from 'hono'
+import { logger } from 'hono/logger'
 
 const bot = await makeTownsBot(
     process.env.APP_PRIVATE_DATA_BASE64!,
@@ -51,6 +53,15 @@ bot.onReaction(async (handler, { reaction, channelId, userId }) => {
     }
 })
 
-const { fetch } = await bot.start()
-serve({ fetch, port: parseInt(process.env.PORT!), createServer })
+const { jwtMiddleware, handler } = await bot.start()
+
+const app = new Hono()
+app.use(logger())
+app.post('/webhook', jwtMiddleware, handler)
+
+serve({
+    fetch: app.fetch,
+    port: parseInt(process.env.PORT!),
+    createServer,
+})
 console.log(`✅ Quickstart Bot is running on https://localhost:${process.env.PORT}`)
