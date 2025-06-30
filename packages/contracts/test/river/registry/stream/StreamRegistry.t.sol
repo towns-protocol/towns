@@ -12,7 +12,7 @@ import {IRiverConfigBase} from "src/river/registry/facets/config/IRiverConfig.so
 import {IStreamRegistryBase} from "src/river/registry/facets/stream/IStreamRegistry.sol";
 import {StreamFlags} from "src/river/registry/facets/stream/StreamRegistry.sol";
 import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.sol";
-import {SetMiniblock, SetStreamReplicationFactor, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
+import {SetMiniblock, SetStreamReplicationFactor, UpdateStream, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
 
 import {LogUtils} from "test/utils/LogUtils.sol";
 
@@ -688,6 +688,146 @@ contract StreamRegistryTest is
             abi.decode(streamUpdatedLog.data, (bytes)),
             abi.encode(SAMPLE_STREAM.streamId, expectedStream)
         );
+    }
+
+    function test_updateStream(
+        address configManager
+    ) public givenConfigurationManagerIsApproved(configManager) {
+        // Add a valid stream first
+        test_allocateStream();
+
+        Stream memory stream = streamRegistry.getStream(SAMPLE_STREAM.streamId);
+
+        address[] memory newNodes = new address[](3);
+        newNodes[0] = stream.nodes[0]; // keep stream existing node
+        newNodes[1] = makeAddr("replNode1");
+        newNodes[2] = makeAddr("replNode2");
+
+        uint8 replFactor = 1; // node 0 remains the only leader for this stream until other nodes
+        // are
+        // synced
+
+        Stream memory expectedStream = Stream({
+            lastMiniblockHash: stream.lastMiniblockHash,
+            lastMiniblockNum: stream.lastMiniblockNum,
+            reserved0: replFactor,
+            flags: stream.flags,
+            nodes: newNodes
+        });
+
+        bytes32 checksum = keccak256(abi.encode(stream));
+
+        vm.recordLogs();
+        vm.prank(stream.nodes[0]);
+        UpdateStream[] memory requests = new UpdateStream[](1);
+        requests[0] = UpdateStream({
+            streamId: SAMPLE_STREAM.streamId,
+            nodes: newNodes,
+            replicationFactor: replFactor,
+            checksum: checksum
+        });
+        streamRegistry.updateStreams(requests);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        // Verify StreamUpdated event
+        Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(logs, StreamUpdated.selector);
+
+        assertEq(
+            uint8(uint256(streamUpdatedLog.topics[1])),
+            uint8(StreamEventType.PlacementUpdated)
+        );
+
+        assertEq(
+            abi.decode(streamUpdatedLog.data, (bytes)),
+            abi.encode(SAMPLE_STREAM.streamId, expectedStream)
+        );
+    }
+
+    function test_updateStreamWithNonParticipatingNode() public {
+        // Add a valid stream first
+        test_allocateStream();
+
+        Stream memory stream = streamRegistry.getStream(SAMPLE_STREAM.streamId);
+
+        address[] memory newNodes = new address[](3);
+        newNodes[0] = stream.nodes[0]; // keep stream existing node
+        newNodes[1] = makeAddr("replNode1");
+        newNodes[2] = makeAddr("replNode2");
+
+        uint8 replFactor = 1; // node 0 remains the only leader for this stream until other nodes
+        // are
+        // synced
+
+        Stream memory expectedStream = Stream({
+            lastMiniblockHash: stream.lastMiniblockHash,
+            lastMiniblockNum: stream.lastMiniblockNum,
+            reserved0: replFactor,
+            flags: stream.flags,
+            nodes: newNodes
+        });
+
+        bytes32 checksum = keccak256(abi.encode(stream));
+
+        UpdateStream[] memory requests = new UpdateStream[](1);
+        requests[0] = UpdateStream({
+            streamId: SAMPLE_STREAM.streamId,
+            nodes: newNodes,
+            replicationFactor: replFactor,
+            checksum: checksum
+        });
+
+        vm.prank(makeAddr("nonParticipatingNode"));
+        vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
+
+        streamRegistry.updateStreams(requests);
+    }
+
+    function test_updateStreamWithInvalidChecksum() public {
+        // Add a valid stream first
+        test_allocateStream();
+
+        Stream memory stream = streamRegistry.getStream(SAMPLE_STREAM.streamId);
+
+        address[] memory newNodes = new address[](3);
+        newNodes[0] = stream.nodes[0]; // keep stream existing node
+        newNodes[1] = makeAddr("replNode1");
+        newNodes[2] = makeAddr("replNode2");
+
+        uint8 replFactor = 1; // node 0 remains the only leader for this stream until other nodes
+        // are
+        // synced
+
+        Stream memory expectedStream = Stream({
+            lastMiniblockHash: stream.lastMiniblockHash,
+            lastMiniblockNum: stream.lastMiniblockNum,
+            reserved0: replFactor,
+            flags: stream.flags,
+            nodes: newNodes
+        });
+
+        bytes32 checksum = keccak256(
+            abi.encode(
+                stream.lastMiniblockHash,
+                stream.lastMiniblockNum,
+                stream.reserved0,
+                stream.flags + 1, // ensure invalid checksum
+                stream.nodes
+            )
+        );
+
+        UpdateStream[] memory requests = new UpdateStream[](1);
+        requests[0] = UpdateStream({
+            streamId: SAMPLE_STREAM.streamId,
+            nodes: newNodes,
+            replicationFactor: replFactor,
+            checksum: checksum
+        });
+
+        vm.prank(stream.nodes[0]);
+        vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
+
+        streamRegistry.updateStreams(requests);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

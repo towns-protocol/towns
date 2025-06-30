@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IStreamRegistry} from "./IStreamRegistry.sol";
-import {SetMiniblock, SetStreamReplicationFactor, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
+import {SetMiniblock, SetStreamReplicationFactor, UpdateStream, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -229,25 +229,50 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         for (uint256 i; i < requestsCount; ++i) {
             SetStreamReplicationFactor calldata req = requests[i];
 
-            if (req.replicationFactor == 0 || req.replicationFactor > req.nodes.length) {
-                RiverRegistryErrors.BAD_ARG.revertWith();
-            }
+            _verifyStreamIdExists(req.streamId);
+
+            _updateStream(
+                ds.streamById[req.streamId],
+                req.streamId,
+                req.nodes,
+                req.replicationFactor
+            );
+        }
+    }
+
+    /// @inheritdoc IStreamRegistry
+    function updateStreams(UpdateStream[] calldata requests) external {
+        uint256 requestsCount = requests.length;
+
+        if (requestsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+
+        for (uint256 i; i < requestsCount; ++i) {
+            UpdateStream calldata req = requests[i];
 
             _verifyStreamIdExists(req.streamId);
             Stream storage stream = ds.streamById[req.streamId];
 
-            // remove the stream from the existing set of nodes
-            _removeStreamIdFromNodes(req.streamId, stream.nodes);
+            // ensure that the update is for the current version of the stream record
+            if (req.checksum != _streamChecksum(stream)) RiverRegistryErrors.BAD_ARG.revertWith();
 
-            // place stream on the new set of nodes
-            _addStreamIdToNodes(req.streamId, req.nodes);
+            // ensure that sender has the stream assigned to it
+            bool participating = false;
+            uint256 nodeCount = req.nodes.length;
+            for (uint256 j; j < nodeCount; ++j) {
+                if (req.nodes[j] == msg.sender) {
+                    participating = true;
+                    break;
+                }
+            }
 
-            (stream.nodes, stream.reserved0) = (
+            if (!participating) RiverRegistryErrors.BAD_AUTH.revertWith();
+
+            _updateStream(
+                ds.streamById[req.streamId],
+                req.streamId,
                 req.nodes,
-                _calculateStreamReserved0(stream.reserved0, req.replicationFactor)
+                req.replicationFactor
             );
-
-            _emitStreamUpdated(StreamEventType.PlacementUpdated, abi.encode(req.streamId, stream));
         }
     }
 
@@ -344,6 +369,36 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Updates the stream with the given nodes and replication factor
+    function _updateStream(
+        Stream storage stream,
+        bytes32 streamId,
+        address[] calldata nodes,
+        uint8 replicationFactor
+    ) internal {
+        if (replicationFactor == 0 || replicationFactor > nodes.length) {
+            RiverRegistryErrors.BAD_ARG.revertWith();
+        }
+
+        // remove the stream from the existing set of nodes
+        _removeStreamIdFromNodes(streamId, stream.nodes);
+
+        // place stream on the new set of nodes
+        _addStreamIdToNodes(streamId, nodes);
+
+        (stream.nodes, stream.reserved0) = (
+            nodes,
+            _calculateStreamReserved0(stream.reserved0, replicationFactor)
+        );
+
+        _emitStreamUpdated(StreamEventType.PlacementUpdated, abi.encode(streamId, stream));
+    }
+
+    /// @dev Calculates a checksum for the given stream
+    function _streamChecksum(Stream storage stream) internal pure returns (bytes32) {
+        return keccak256(abi.encode(stream));
+    }
 
     /// @dev Adds a stream id to the nodes
     function _addStreamIdToNodes(bytes32 streamId, address[] storage nodes) internal {

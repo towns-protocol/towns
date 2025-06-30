@@ -34,6 +34,13 @@ struct SetStreamReplicationFactor {
     uint8 replicationFactor;
 }
 
+struct UpdateStream {
+    bytes32 streamId; // unique stream identifier
+    address[] nodes; // list of nodes that the stream is placed on
+    uint8 replicationFactor; // number of address in nodes that are marked as quorum nodes
+    bytes32 checksum; // checksum of the stream record to update
+}
+
 enum NodeStatus {
     NotInitialized, // Initial entry, node is not contacted in any way
     RemoteOnly, // Node proxies data, does not store any data

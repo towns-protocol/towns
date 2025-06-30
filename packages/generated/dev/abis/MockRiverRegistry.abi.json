@@ -963,6 +963,41 @@
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "updateStreams",
+    "inputs": [
+      {
+        "name": "requests",
+        "type": "tuple[]",
+        "internalType": "struct UpdateStream[]",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "checksum",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "type": "event",
     "name": "ConfigurationChanged",
     "inputs": [
