@@ -5,19 +5,18 @@ pragma solidity ^0.8.19;
 import {DeployBase} from "scripts/common/DeployBase.s.sol";
 import {DeployStreamRegistry} from "scripts/deployments/facets/DeployStreamRegistry.s.sol";
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IStreamRegistry} from "src/river/registry/facets/stream/IStreamRegistry.sol";
 
-//libraries
+// libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SetMiniblock, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
 
-//contracts
-
+// contracts
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {StreamRegistry} from "src/river/registry/facets/stream/StreamRegistry.sol";
 
@@ -59,10 +58,7 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
             assertEq(streamRegistry.getStreamCountOnNode(_ghostNodes[i]), 0);
         }
 
-        vm.startSnapshotGas("syncNodesOnStreams");
-        // sync nodes
         streamRegistry.syncNodesOnStreams(0, stop);
-        vm.stopSnapshotGas();
 
         // `getPaginatedStreamsOnNode` should return all streams after syncing
         for (uint256 i; i < _ghostNodes.length; ++i) {
@@ -86,13 +82,13 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
         address impl = IDiamondLoupe(riverRegistry).facetAddress(
             IStreamRegistry.allocateStream.selector
         );
-        bytes4[] memory functionSelectors = new bytes4[](2);
-        functionSelectors[0] = StreamRegistry.getPaginatedStreamsOnNode.selector;
-        functionSelectors[1] = StreamRegistry.syncNodesOnStreams.selector;
+        bytes4[] memory functionSelectors = IDiamondLoupe(riverRegistry).facetFunctionSelectors(
+            impl
+        );
         FacetCut[] memory facetCuts = new FacetCut[](1);
         facetCuts[0] = FacetCut({
             facetAddress: impl,
-            action: FacetCutAction.Add,
+            action: FacetCutAction.Remove,
             functionSelectors: functionSelectors
         });
 
@@ -101,7 +97,7 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
         IDiamondCut(riverRegistry).diamondCut(facetCuts, address(0), "");
 
         impl = address(new StreamRegistry());
-        facetCuts[0] = DeployStreamRegistry.makeCut(impl, FacetCutAction.Replace);
+        facetCuts[0] = DeployStreamRegistry.makeCut(impl, FacetCutAction.Add);
         vm.prank(owner);
         IDiamondCut(riverRegistry).diamondCut(facetCuts, address(0), "");
     }
