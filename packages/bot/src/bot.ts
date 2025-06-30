@@ -31,7 +31,9 @@ import {
     make_UserMetadataPayload_ProfileImage,
     spaceIdFromChannelId,
 } from '@towns-protocol/sdk'
-import { Hono, type Context } from 'hono'
+import { type Context, type Env, type Next } from 'hono'
+import { createMiddleware } from 'hono/factory'
+import { default as jwt } from 'jsonwebtoken'
 import EventEmitter from 'node:events'
 import TypedEmitter from 'typed-emitter'
 import {
@@ -84,10 +86,8 @@ import {
     type WriteContractParameters,
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
-
-// Import the jsonwebtoken library and necessary dlog utilities
-import { default as jwt } from 'jsonwebtoken'
 import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
+import type { BlankEnv } from 'hono/types'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -120,6 +120,7 @@ export type UserData = {
     /** URL that points to the profile picture of the user */
     profilePictureUrl: string
 }
+
 export type BotEvents = {
     message: (
         handler: BotActions,
@@ -218,8 +219,9 @@ type BasePayload = {
     eventId: string
 }
 
-export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
-    private readonly server: Hono
+export class Bot<
+    HonoEnv extends Env = BlankEnv,
+> extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
@@ -233,45 +235,47 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         this.viemClient = viemClient
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
-        this.server = new Hono()
-        this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
 
     async start() {
         await this.client.uploadDeviceKeys()
-        return { fetch: this.server.fetch }
+        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+
+        return {
+            jwtMiddleware,
+            handler: this.webhookHandler.bind(this),
+        }
     }
 
-    private async webhookResponseHandler(c: Context) {
+    private async jwtMiddleware(c: Context<HonoEnv>, next: Next): Promise<Response | void> {
         const authHeader = c.req.header('Authorization')
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return c.text('Unauthorized: Missing or malformed token', 401)
-        } else {
-            const tokenString = authHeader.substring(7)
-            try {
-                // Convert botId (Ethereum address string, e.g., "0xABC") to raw bytes,
-                // then to a lowercase hex string for the audience check.
-                // This must match how the Go service creates the 'aud' claim.
-                const botAddressBytes = bin_fromHexString(this.botId)
-                // Assumes lowercase hex output without "0x"
-                const expectedAudience = bin_toHexString(botAddressBytes)
-
-                jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
-                    algorithms: ['HS256'],
-                    audience: expectedAudience,
-                })
-            } catch (err) {
-                let errorMessage = 'Unauthorized: Token verification failed'
-                if (err instanceof jwt.TokenExpiredError) {
-                    errorMessage = 'Unauthorized: Token expired'
-                } else if (err instanceof jwt.JsonWebTokenError) {
-                    errorMessage = `Unauthorized: Invalid token (${err.message})`
-                }
-                return c.text(errorMessage, 401)
-            }
         }
 
+        const tokenString = authHeader.substring(7)
+        try {
+            const botAddressBytes = bin_fromHexString(this.botId)
+            const expectedAudience = bin_toHexString(botAddressBytes)
+            jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
+                algorithms: ['HS256'],
+                audience: expectedAudience,
+            })
+        } catch (err) {
+            let errorMessage = 'Unauthorized: Token verification failed'
+            if (err instanceof jwt.TokenExpiredError) {
+                errorMessage = 'Unauthorized: Token expired'
+            } else if (err instanceof jwt.JsonWebTokenError) {
+                errorMessage = `Unauthorized: Invalid token (${err.message})`
+            }
+            return c.text(errorMessage, 401)
+        }
+
+        await next()
+    }
+
+    private async webhookHandler(c: Context<HonoEnv>) {
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
@@ -667,7 +671,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     // }
 }
 
-export const makeTownsBot = async (
+export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
     appPrivateDataBase64: string,
     jwtSecretBase64: string,
     env: Parameters<typeof makeRiverConfig>[0],
@@ -692,7 +696,7 @@ export const makeTownsBot = async (
             fromExportedDevice: encryptionDevice,
         },
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
-    return new Bot(client, viemClient, jwtSecretBase64)
+    return new Bot<HonoEnv>(client, viemClient, jwtSecretBase64)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
