@@ -32,7 +32,9 @@ describe('datastore tests', () => {
             cc: 'id',
         })
 
-        const result = await db.table<AAA, string>('aa').put({ id: '1', name: 'foo1' })
+        const result = await db
+            .table<AAA, string>('aa')
+            .put({ id: '1', name: 'foo1' })
         expect(result).toBe('1')
         const result2 = await db
             .table<BBB, string>('bb')

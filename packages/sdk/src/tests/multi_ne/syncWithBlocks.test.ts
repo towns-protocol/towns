@@ -187,7 +187,9 @@ describe('syncWithBlocks', () => {
                 } else {
                     const miniblockHeader = getMiniblockHeader(p)
                     expect(miniblockHeader).toBeDefined()
-                    expect(miniblockHeader?.miniblockNum).toEqual(BigInt(blocksSeen + 1))
+                    expect(miniblockHeader?.miniblockNum).toEqual(
+                        BigInt(blocksSeen + 1),
+                    )
                     expect(miniblockHeader?.eventHashes).toHaveLength(1)
                     expect(miniblockHeader?.eventHashes[0]).toEqual(nextHash)
 

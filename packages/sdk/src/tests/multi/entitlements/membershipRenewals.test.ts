@@ -24,13 +24,20 @@ const WAIT_TIME = SHORT_MEMBERSHIP_DURATION * 1_000 + 500
 
 describe('membershipRenewals', () => {
     test.concurrent('expired membership is not allowed to join', async () => {
-        const { spaceId, channelId, alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet } =
-            await createTownWithRequirements({
-                everyone: true,
-                users: [],
-                ruleData: NoopRuleData,
-                duration: SHORT_MEMBERSHIP_DURATION,
-            })
+        const {
+            spaceId,
+            channelId,
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+        } = await createTownWithRequirements({
+            everyone: true,
+            users: [],
+            ruleData: NoopRuleData,
+            duration: SHORT_MEMBERSHIP_DURATION,
+        })
 
         await expectUserCanJoin(
             spaceId,
@@ -46,18 +53,26 @@ describe('membershipRenewals', () => {
         await new Promise((resolve) => setTimeout(resolve, WAIT_TIME))
         await alice.leaveStream(spaceId)
 
-        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
-        const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
+        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(
+            alicesWallet.address,
+        )
+        const membershipStatus = await aliceSpaceDapp.getMembershipStatus(
+            spaceId,
+            aliceWallets,
+        )
         expect(membershipStatus.isMember).toBe(true)
         expect(membershipStatus.isExpired).toBe(true)
-        const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-            spaceId,
-            alicesWallet.address,
-            getXchainConfigForTesting(),
-        )
+        const entitledWallet =
+            await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                alicesWallet.address,
+                getXchainConfigForTesting(),
+            )
         expect(entitledWallet).toBeUndefined()
 
-        await expect(alice.joinStream(spaceId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+        await expect(alice.joinStream(spaceId)).rejects.toThrow(
+            /7:PERMISSION_DENIED/,
+        )
         // Clean up
         await alice.stopSync()
         await bob.stopSync()
@@ -94,7 +109,12 @@ describe('membershipRenewals', () => {
                 aliceProvider.wallet,
             )
 
-            await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId)
+            await expectUserCanJoinChannel(
+                alice,
+                aliceSpaceDapp,
+                spaceId,
+                channelId,
+            )
             // Wait for membership to expire (and for channel to be eligible for scrubbing)
             await new Promise((f) => setTimeout(f, WAIT_TIME))
 
@@ -110,8 +130,11 @@ describe('membershipRenewals', () => {
             // When carol's join event is added to the stream, it should trigger a scrub, and Alice
             // should be booted from the stream since her membership has expired
             await expect(carol.joinStream(channelId)).resolves.not.toThrow()
-            const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
-            const membership = userStreamView.userContent.getMembership(channelId)
+            const userStreamView = (
+                await alice.waitForStream(makeUserStreamId(alice.userId))
+            ).view
+            const membership =
+                userStreamView.userContent.getMembership(channelId)
 
             // Wait for alice's user stream to have the leave event
             await waitFor(async () => {
@@ -160,32 +183,51 @@ describe('membershipRenewals', () => {
             await linkWallets(aliceSpaceDapp, aliceProvider.wallet, eoaWallet)
 
             // have alice join the channel
-            await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId)
+            await expectUserCanJoinChannel(
+                alice,
+                aliceSpaceDapp,
+                spaceId,
+                channelId,
+            )
 
             // Wait for membership to expire (and for channel to be eligible for scrubbing)
             await new Promise((f) => setTimeout(f, WAIT_TIME))
 
             // make sure this membership has expired
             const space = aliceSpaceDapp.getSpace(spaceId)
-            const tokenId = await aliceSpaceDapp.getTokenIdOfOwner(spaceId, alicesWallet.address)
+            const tokenId = await aliceSpaceDapp.getTokenIdOfOwner(
+                spaceId,
+                alicesWallet.address,
+            )
             const expiresAt = await space?.Membership.read.expiresAt(tokenId!)
             const expiresAtTimestamp = expiresAt?.toNumber() || 0
             const now = new Date()
-            const timeUntilExpiration = (expiresAtTimestamp * 1000 - now.getTime()) / 1000
+            const timeUntilExpiration =
+                (expiresAtTimestamp * 1000 - now.getTime()) / 1000
             expect(timeUntilExpiration).toBeLessThan(0)
 
             // now mint a membership for the eoa wallet, which is linked to alice - mint only, not joining stream
-            await aliceSpaceDapp.joinSpace(spaceId, eoaWallet.address, aliceProvider.wallet)
+            await aliceSpaceDapp.joinSpace(
+                spaceId,
+                eoaWallet.address,
+                aliceProvider.wallet,
+            )
 
-            const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
-            const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
+            const aliceWallets = await aliceSpaceDapp.getLinkedWallets(
+                alicesWallet.address,
+            )
+            const membershipStatus = await aliceSpaceDapp.getMembershipStatus(
+                spaceId,
+                aliceWallets,
+            )
             expect(membershipStatus.isMember).toBe(true)
             expect(membershipStatus.isExpired).toBe(false)
-            const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-                spaceId,
-                alicesWallet.address,
-                getXchainConfigForTesting(),
-            )
+            const entitledWallet =
+                await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                    spaceId,
+                    alicesWallet.address,
+                    getXchainConfigForTesting(),
+                )
             expect(entitledWallet).toBeDefined()
 
             await expectUserCanJoin(
@@ -200,12 +242,17 @@ describe('membershipRenewals', () => {
             // When carol's join event is added to the stream, it should trigger a scrub, and Alice
             // should not be booted from the stream since her she has an additional token that is not expired
             await expect(carol.joinStream(channelId)).resolves.not.toThrow()
-            const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
+            const userStreamView = (
+                await alice.waitForStream(makeUserStreamId(alice.userId))
+            ).view
 
             // Wait for alice's user stream to have the join event
             await waitFor(async () => {
                 return expect(
-                    userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+                    userStreamView.userContent.isMember(
+                        channelId,
+                        MembershipOp.SO_JOIN,
+                    ),
                 ).toBe(true)
             })
 
@@ -227,11 +274,12 @@ describe('membershipRenewals', () => {
 
         // Check that the local evaluation of the user's entitlements for joining the space
         // passes.
-        const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-            spaceId,
-            alicesWallet.address,
-            getXchainConfigForTesting(),
-        )
+        const entitledWallet =
+            await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                alicesWallet.address,
+                getXchainConfigForTesting(),
+            )
         expect(entitledWallet).toBeDefined()
 
         const { issued } = await aliceSpaceDapp.joinSpace(
@@ -242,17 +290,25 @@ describe('membershipRenewals', () => {
         expect(issued).toBe(true)
 
         // wait for membership to expire
-        await new Promise((resolve) => setTimeout(resolve, _MEMBERSHIP_DURATION * 1_000 + 500))
+        await new Promise((resolve) =>
+            setTimeout(resolve, _MEMBERSHIP_DURATION * 1_000 + 500),
+        )
 
-        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
-        const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
+        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(
+            alicesWallet.address,
+        )
+        const membershipStatus = await aliceSpaceDapp.getMembershipStatus(
+            spaceId,
+            aliceWallets,
+        )
         expect(membershipStatus.isMember).toBe(true)
         expect(membershipStatus.isExpired).toBe(true)
-        const entitledWalletAfterExpiry = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-            spaceId,
-            alicesWallet.address,
-            getXchainConfigForTesting(),
-        )
+        const entitledWalletAfterExpiry =
+            await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                alicesWallet.address,
+                getXchainConfigForTesting(),
+            )
         expect(entitledWalletAfterExpiry).toBeUndefined()
 
         const space = aliceSpaceDapp.getSpace(spaceId)
@@ -271,18 +327,20 @@ describe('membershipRenewals', () => {
         const receipt = await tx.wait()
         expect(receipt.status).toBe(1)
 
-        const membershipStatusAfterRenewal = await space.getMembershipStatus(aliceWallets)
+        const membershipStatusAfterRenewal =
+            await space.getMembershipStatus(aliceWallets)
         expect(membershipStatusAfterRenewal.isMember).toBe(true)
         expect(membershipStatusAfterRenewal.isExpired).toBe(false)
 
         // wait for caches to be invalidated
         await new Promise((resolve) => setTimeout(resolve, 5_000))
 
-        const entitledWalletAfterRenewal = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-            spaceId,
-            alicesWallet.address,
-            getXchainConfigForTesting(),
-        )
+        const entitledWalletAfterRenewal =
+            await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                alicesWallet.address,
+                getXchainConfigForTesting(),
+            )
         expect(entitledWalletAfterRenewal).toBeDefined()
     })
 })

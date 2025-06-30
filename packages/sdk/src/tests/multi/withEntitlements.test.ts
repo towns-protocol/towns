@@ -41,7 +41,10 @@ describe('withEntitlements', () => {
         const baseConfig = makeBaseChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
-        const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
+        const bobProvider = new LocalhostWeb3Provider(
+            baseConfig.rpcUrl,
+            bobsWallet,
+        )
         await bobProvider.fundWallet()
         const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
@@ -90,7 +93,10 @@ describe('withEntitlements', () => {
         const receipt = await transaction.wait()
         log('transaction receipt', receipt)
         expect(receipt.status).toEqual(1)
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt, bobProvider.wallet.address)
+        const spaceAddress = spaceDapp.getSpaceAddress(
+            receipt,
+            bobProvider.wallet.address,
+        )
         expect(spaceAddress).toBeDefined()
         const spaceId = makeSpaceStreamId(spaceAddress!)
         expect(isValidStreamId(spaceId)).toBe(true)
@@ -105,9 +111,12 @@ describe('withEntitlements', () => {
         const bobUserStreamView = bob.stream(bobsUserStreamId)!.view
         expect(bobUserStreamView).toBeDefined()
         await waitFor(() =>
-            expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(
-                true,
-            ),
+            expect(
+                bobUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true),
         )
 
         const waitForStreamPromise = makeDonePromise()
@@ -132,9 +141,12 @@ describe('withEntitlements', () => {
         // Now there must be "joined channel" event in the user stream.
         expect(bobUserStreamView).toBeDefined()
         await waitFor(() =>
-            expect(bobUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
-                true,
-            ),
+            expect(
+                bobUserStreamView.userContent.isMember(
+                    channelId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true),
         )
 
         // todo  getDevicesInRoom is randomly failing in ci renable https://linear.app/hnt-labs/issue/HNT-3439/getdevicesinroom-is-randomly-failing-in-ci
@@ -143,22 +155,32 @@ describe('withEntitlements', () => {
         // join alice
         const alicesWallet = ethers.Wallet.createRandom()
         const alicesContext = await makeUserContextFromWallet(alicesWallet)
-        const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
+        const aliceProvider = new LocalhostWeb3Provider(
+            baseConfig.rpcUrl,
+            alicesWallet,
+        )
         await aliceProvider.fundWallet()
         const alice_test = await makeTestClient({
             context: alicesContext,
         })
         // verify that alice is blocked from initializing user until she joins the space
-        await expect(alice_test.initializeUser()).rejects.toThrow('BAD_STREAM_CREATION_PARAMS')
+        await expect(alice_test.initializeUser()).rejects.toThrow(
+            'BAD_STREAM_CREATION_PARAMS',
+        )
         // make a client
         const alice = await makeTestClient({
             context: alicesContext,
         })
 
-        log('Alice created user, about to join space', { alicesUserId: alice.userId })
+        log('Alice created user, about to join space', {
+            alicesUserId: alice.userId,
+        })
 
         // first join the space on chain
-        const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
+        const aliceSpaceDapp = createSpaceDapp(
+            aliceProvider,
+            baseConfig.chainConfig,
+        )
         log('transaction start Alice joining space')
         const { issued, tokenId } = await aliceSpaceDapp.joinSpace(
             spaceId,

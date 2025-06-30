@@ -14,7 +14,10 @@ import { bin_fromHexString } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
 
 import { TestERC20 } from '@towns-protocol/web3'
-import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@towns-protocol/proto'
+import {
+    BlockchainTransaction_TokenTransfer,
+    PlainMessage,
+} from '@towns-protocol/proto'
 
 describe('Trading', () => {
     const tokenName = 'Erc20 token test'
@@ -63,7 +66,10 @@ describe('Trading', () => {
         await charlieClient.joinStream(spaceId)
         await charlieClient.joinStream(channelId)
 
-        const result = await bobClient.sendMessage(channelId, 'try out this token: $yo!')
+        const result = await bobClient.sendMessage(
+            channelId,
+            'try out this token: $yo!',
+        )
         threadParentId = result.eventId
 
         /* Time to perform an on-chain transaction! We utilize the fact that transfers emit 
@@ -72,16 +78,23 @@ describe('Trading', () => {
         here we go, Bob transfers an amount of tokens to Alice.
         */
         tokenAddress = await TestERC20.getContractAddress(tokenName)
-        await TestERC20.publicMint(tokenName, bobClient.userId as `0x${string}`, 100)
-        const { transactionHash: sellTransactionHash } = await TestERC20.transfer(
+        await TestERC20.publicMint(
             tokenName,
-            aliceClient.userId as `0x${string}`,
-            bobWallet.privateKey as `0x${string}`,
-            amountToTransfer,
+            bobClient.userId as `0x${string}`,
+            100,
         )
+        const { transactionHash: sellTransactionHash } =
+            await TestERC20.transfer(
+                tokenName,
+                aliceClient.userId as `0x${string}`,
+                bobWallet.privateKey as `0x${string}`,
+                amountToTransfer,
+            )
 
-        const sellTransaction = await provider.getTransaction(sellTransactionHash)
-        const sellTransactionReceipt = await provider.getTransactionReceipt(sellTransactionHash)
+        const sellTransaction =
+            await provider.getTransaction(sellTransactionHash)
+        const sellTransactionReceipt =
+            await provider.getTransactionReceipt(sellTransactionHash)
 
         sellReceipt = {
             from: sellTransaction.from,
@@ -91,15 +104,17 @@ describe('Trading', () => {
             logs: sellTransactionReceipt.logs,
         }
 
-        const { transactionHash: buyTransactionHash } = await TestERC20.transfer(
-            tokenName,
-            aliceClient.userId as `0x${string}`,
-            bobWallet.privateKey as `0x${string}`,
-            amountToTransfer,
-        )
+        const { transactionHash: buyTransactionHash } =
+            await TestERC20.transfer(
+                tokenName,
+                aliceClient.userId as `0x${string}`,
+                bobWallet.privateKey as `0x${string}`,
+                amountToTransfer,
+            )
 
         const buyTransaction = await provider.getTransaction(buyTransactionHash)
-        const buyTransactionReceipt = await provider.getTransactionReceipt(buyTransactionHash)
+        const buyTransactionReceipt =
+            await provider.getTransactionReceipt(buyTransactionHash)
 
         buyReceipt = {
             from: buyTransaction.from,
@@ -129,48 +144,59 @@ describe('Trading', () => {
 
     test('should reject token transfers where the amount doesnt match the transferred amount', async () => {
         // this is a transfer event with an amount that doesn't match the amount transferred
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 9n.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(bobClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 9n.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(bobClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(31337, sellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                31337,
+                sellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('matching transfer event not found in receipt logs')
     })
 
     test('should reject token transfers where the user is neither the sender nor the recipient', async () => {
         // this is a transfer event from charlie, he's barely a member of the channel
         // and he's not the sender nor the recipient
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(charlieClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(charlieClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true,
+            }
 
         await expect(
-            charlieClient.addTransaction_Transfer(31337, buyReceipt, transferEvent),
+            charlieClient.addTransaction_Transfer(
+                31337,
+                buyReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('matching transfer event not found in receipt logs')
     })
 
     test('should reject token transfers where the user claims to be the buyer but is the seller', async () => {
         // this is a transfer event from charlie, he's barely a member of the channel
         // and he's not the sender nor the recipient
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(bobClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(bobClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true,
+            }
 
         await expect(
             bobClient.addTransaction_Transfer(31337, buyReceipt, transferEvent),
@@ -180,44 +206,55 @@ describe('Trading', () => {
     test('should reject token transfers where the user claims to be the seller but is the seller', async () => {
         // this is a transfer event from charlie, he's barely a member of the channel
         // and he's not the sender nor the recipient
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(aliceClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(aliceClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         await expect(
-            aliceClient.addTransaction_Transfer(31337, sellReceipt, transferEvent),
+            aliceClient.addTransaction_Transfer(
+                31337,
+                sellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('matching transfer event not found in receipt logs')
     })
 
     test('should reject token transfers where the token address doesnt match', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress).toReversed(), // mess up the token address
-            sender: bin_fromHexString(bobClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress).toReversed(), // mess up the token address
+                sender: bin_fromHexString(bobClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
         await expect(
-            aliceClient.addTransaction_Transfer(31337, sellReceipt, transferEvent),
+            aliceClient.addTransaction_Transfer(
+                31337,
+                sellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('matching transfer event not found in receipt logs')
     })
 
     test('should accept token transfers where the user == from and isBuy == false', async () => {
         // this is a transfer event from bob, he's the sender (from)
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(bobClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(bobClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         const { eventId } = await bobClient.addTransaction_Transfer(
             31337,
@@ -227,20 +264,24 @@ describe('Trading', () => {
         expect(eventId).toBeDefined()
 
         await waitFor(() =>
-            expect(extractMemberBlockchainTransactions(bobClient, channelId).length).toBe(1),
+            expect(
+                extractMemberBlockchainTransactions(bobClient, channelId)
+                    .length,
+            ).toBe(1),
         )
     })
 
     test('should accept token transfers where the user == to and isBuy == true', async () => {
         // this is a transfer event to alice, she's the recipient (to)
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(aliceClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(aliceClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true,
+            }
 
         const { eventId } = await aliceClient.addTransaction_Transfer(
             31337,
@@ -250,7 +291,10 @@ describe('Trading', () => {
         expect(eventId).toBeDefined()
 
         await waitFor(() =>
-            expect(extractMemberBlockchainTransactions(aliceClient, channelId).length).toBe(2),
+            expect(
+                extractMemberBlockchainTransactions(aliceClient, channelId)
+                    .length,
+            ).toBe(2),
         )
     })
 
@@ -272,17 +316,22 @@ describe('Trading', () => {
 
     test('should reject duplicate transfers', async () => {
         // alice can't add the same transfer event twice
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: amountToTransfer.toString(),
-            address: bin_fromHexString(tokenAddress),
-            sender: bin_fromHexString(aliceClient.userId),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: amountToTransfer.toString(),
+                address: bin_fromHexString(tokenAddress),
+                sender: bin_fromHexString(aliceClient.userId),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true,
+            }
 
         await expect(
-            aliceClient.addTransaction_Transfer(31337, buyReceipt, transferEvent),
+            aliceClient.addTransaction_Transfer(
+                31337,
+                buyReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('duplicate transaction')
     })
 
@@ -309,13 +358,18 @@ describe('Trading', () => {
             expect(transferEvents.length).toBe(1)
             const event0 = transferEvents[0]
             expect(BigInt(event0.amount)).toBe(amountToTransfer)
-            expect(new Uint8Array(event0.sender)).toEqual(bin_fromHexString(bobClient.userId))
+            expect(new Uint8Array(event0.sender)).toEqual(
+                bin_fromHexString(bobClient.userId),
+            )
         })
     })
 
     test('bob sees both transfer events in the channel stream', async () => {
         await waitFor(() => {
-            const transferEvents = extractMemberBlockchainTransactions(aliceClient, channelId)
+            const transferEvents = extractMemberBlockchainTransactions(
+                aliceClient,
+                channelId,
+            )
             expect(transferEvents.length).toBe(2)
             const [event0, event1] = [transferEvents[0], transferEvents[1]]
             expect(BigInt(event0.amount)).toBe(amountToTransfer)

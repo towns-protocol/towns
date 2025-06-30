@@ -1,6 +1,11 @@
 // Crypto Store uses IndexedDB, so we need to import fake-indexeddb/auto
 import 'fake-indexeddb/auto'
-import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
+import {
+    create,
+    fromBinary,
+    fromJsonString,
+    toBinary,
+} from '@bufbuild/protobuf'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -87,7 +92,11 @@ import { base, baseSepolia } from 'viem/chains'
 
 // Import the jsonwebtoken library and necessary dlog utilities
 import { default as jwt } from 'jsonwebtoken'
-import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
+import {
+    deriveKeyAndIV,
+    encryptAESGCM,
+    uint8ArrayToBase64,
+} from '@towns-protocol/sdk-crypto'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -190,8 +199,14 @@ export type BotEvents = {
             currency: `0x${string}`
         },
     ) => Promise<void> | void
-    channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
-    channelLeave: (handler: BotActions, event: BasePayload) => Promise<void> | void
+    channelJoin: (
+        handler: BotActions,
+        event: BasePayload,
+    ) => Promise<void> | void
+    channelLeave: (
+        handler: BotActions,
+        event: BasePayload,
+    ) => Promise<void> | void
     streamEvent: (
         handler: BotActions,
         event: BasePayload & { event: ParsedEvent },
@@ -226,7 +241,11 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
 
-    constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
+    constructor(
+        clientV2: ClientV2<BotActions>,
+        viemClient: ViemClient,
+        jwtSecretBase64: string,
+    ) {
         super()
         this.client = clientV2
         this.botId = clientV2.userId
@@ -274,7 +293,10 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
 
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
-        const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
+        const request = fromBinary(
+            AppServiceRequestSchema,
+            new Uint8Array(body),
+        )
 
         const statusResponse = create(AppServiceResponseSchema, {
             payload: {
@@ -316,20 +338,27 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
 
         if (appEvent.payload.case === 'messages') {
             const groupEncryptionSessionsMessages = await this.client
-                .unpackEnvelopes(appEvent.payload.value.groupEncryptionSessionsMessages)
+                .unpackEnvelopes(
+                    appEvent.payload.value.groupEncryptionSessionsMessages,
+                )
                 .then((x) =>
                     x.flatMap((e) => {
                         if (
                             e.event.payload.case === 'userInboxPayload' &&
-                            e.event.payload.value.content.case === 'groupEncryptionSessions'
+                            e.event.payload.value.content.case ===
+                                'groupEncryptionSessions'
                         ) {
                             return e.event.payload.value.content.value
                         }
                         return []
                     }),
                 )
-            const events = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
-            const zip = events.map((m, i) => [m, groupEncryptionSessionsMessages[i]] as const)
+            const events = await this.client.unpackEnvelopes(
+                appEvent.payload.value.messages,
+            )
+            const zip = events.map(
+                (m, i) => [m, groupEncryptionSessionsMessages[i]] as const,
+            )
             for (const [parsed, groupEncryptionSession] of zip) {
                 if (parsed.creatorUserId === this.client.userId) {
                     continue
@@ -350,16 +379,24 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                     case 'dmChannelPayload':
                     case 'gdmChannelPayload': {
                         if (!parsed.event.payload.value.content.case) return
-                        if (parsed.event.payload.value.content.case === 'message') {
-                            const decryptedSessions = await this.client.decryptSessions(
+                        if (
+                            parsed.event.payload.value.content.case ===
+                            'message'
+                        ) {
+                            const decryptedSessions =
+                                await this.client.decryptSessions(
+                                    streamId,
+                                    groupEncryptionSession,
+                                )
+                            await this.client.crypto.importSessionKeys(
                                 streamId,
-                                groupEncryptionSession,
+                                decryptedSessions,
                             )
-                            await this.client.crypto.importSessionKeys(streamId, decryptedSessions)
-                            const eventCleartext = await this.client.crypto.decryptGroupEvent(
-                                streamId,
-                                parsed.event.payload.value.content.value,
-                            )
+                            const eventCleartext =
+                                await this.client.crypto.decryptGroupEvent(
+                                    streamId,
+                                    parsed.event.payload.value.content.value,
+                                )
                             let channelMessage: ChannelMessage
                             if (typeof eventCleartext === 'string') {
                                 channelMessage = fromJsonString(
@@ -367,24 +404,41 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                                     eventCleartext,
                                 )
                             } else {
-                                channelMessage = fromBinary(ChannelMessageSchema, eventCleartext)
+                                channelMessage = fromBinary(
+                                    ChannelMessageSchema,
+                                    eventCleartext,
+                                )
                             }
-                            await this.handleChannelMessage(streamId, parsed, channelMessage)
-                        } else if (parsed.event.payload.value.content.case === 'redaction') {
+                            await this.handleChannelMessage(
+                                streamId,
+                                parsed,
+                                channelMessage,
+                            )
+                        } else if (
+                            parsed.event.payload.value.content.case ===
+                            'redaction'
+                        ) {
                             this.emit('eventRevoke', this.client, {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
+                                userId: userIdFromAddress(
+                                    parsed.event.creatorAddress,
+                                ),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
                                 refEventId: bin_toHexString(
-                                    parsed.event.payload.value.content.value.eventId,
+                                    parsed.event.payload.value.content.value
+                                        .eventId,
                                 ),
                                 eventId: parsed.hashStr,
                             })
                         } else if (
-                            parsed.event.payload.value.content.case === 'channelProperties'
+                            parsed.event.payload.value.content.case ===
+                            'channelProperties'
                         ) {
                             // TODO: currently, no support for channel properties (update name, topic)
-                        } else if (parsed.event.payload.value.content.case === 'inception') {
+                        } else if (
+                            parsed.event.payload.value.content.case ===
+                            'inception'
+                        ) {
                             // TODO: is there any use case for this?
                         } else {
                             logNever(parsed.event.payload.value.content)
@@ -392,14 +446,20 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                         break
                     }
                     case 'memberPayload': {
-                        if (parsed.event.payload.value.content.case === 'membership') {
-                            const membership = parsed.event.payload.value.content.value
+                        if (
+                            parsed.event.payload.value.content.case ===
+                            'membership'
+                        ) {
+                            const membership =
+                                parsed.event.payload.value.content.value
                             const isChannel = isChannelStreamId(streamId)
                             // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
                             if (!isChannel) continue
                             if (membership.op === MembershipOp.SO_JOIN) {
                                 this.emit('channelJoin', this.client, {
-                                    userId: userIdFromAddress(membership.userAddress),
+                                    userId: userIdFromAddress(
+                                        membership.userAddress,
+                                    ),
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
                                     eventId: parsed.hashStr,
@@ -407,7 +467,9 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             }
                             if (membership.op === MembershipOp.SO_LEAVE) {
                                 this.emit('channelLeave', this.client, {
-                                    userId: userIdFromAddress(membership.userAddress),
+                                    userId: userIdFromAddress(
+                                        membership.userAddress,
+                                    ),
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
                                     eventId: parsed.hashStr,
@@ -427,7 +489,11 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         }
     }
 
-    async handleChannelMessage(streamId: string, parsed: ParsedEvent, { payload }: ChannelMessage) {
+    async handleChannelMessage(
+        streamId: string,
+        parsed: ParsedEvent,
+        { payload }: ChannelMessage,
+    ) {
         if (!payload.case) {
             return
         }
@@ -435,10 +501,13 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
-                    const hasBotMention = payload.value.content.value.mentions.some(
-                        (m) => m.userId === this.botId,
+                    const hasBotMention =
+                        payload.value.content.value.mentions.some(
+                            (m) => m.userId === this.botId,
+                        )
+                    const userId = userIdFromAddress(
+                        parsed.event.creatorAddress,
                     )
-                    const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
                     const forwardPayload: BotPayload<'message'> = {
@@ -544,7 +613,11 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * @param refEventId - The eventId of the event to remove
      */
     async removeEvent(streamId: string, refEventId: string) {
-        const result = await this.client.removeEvent(streamId, refEventId, this.currentMessageTags)
+        const result = await this.client.removeEvent(
+            streamId,
+            refEventId,
+            this.currentMessageTags,
+        )
         this.currentMessageTags = undefined
         return result
     }
@@ -570,17 +643,37 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         chain extends Chain | undefined,
         account extends Account | undefined,
         const abi extends Abi | readonly unknown[],
-        functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-        args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
+        functionName extends ContractFunctionName<
+            abi,
+            'nonpayable' | 'payable'
+        >,
+        args extends ContractFunctionArgs<
+            abi,
+            'nonpayable' | 'payable',
+            functionName
+        >,
         chainOverride extends Chain | undefined,
-    >(tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>) {
+    >(
+        tx: WriteContractParameters<
+            abi,
+            functionName,
+            args,
+            chain,
+            account,
+            chainOverride
+        >,
+    ) {
         return writeContract(this.viemClient, tx as WriteContractParameters)
     }
 
     readContract<
         const abi extends Abi | readonly unknown[],
         functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
-        const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
+        const args extends ContractFunctionArgs<
+            abi,
+            'pure' | 'view',
+            functionName
+        >,
     >(parameters: ReadContractParameters<abi, functionName, args>) {
         return readContract(this.viemClient, parameters)
     }
@@ -691,7 +784,9 @@ export const makeTownsBot = async (
         encryptionDevice: {
             fromExportedDevice: encryptionDevice,
         },
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
+    }).then((x) =>
+        x.extend((townsClient) => buildBotActions(townsClient, viemClient)),
+    )
     return new Bot(client, viemClient, jwtSecretBase64)
 }
 
@@ -715,7 +810,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             participatingUserAddresses: tags?.participatingUserAddresses || [],
             threadId: tags?.threadId || undefined,
         }
-        const encryptionAlgorithm = stream.snapshot.members?.encryptionAlgorithm?.algorithm
+        const encryptionAlgorithm =
+            stream.snapshot.members?.encryptionAlgorithm?.algorithm
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,
@@ -765,13 +861,19 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }
     }
 
-    const sendKeySolicitation = async (streamId: string, sessionIds: string[]) => {
+    const sendKeySolicitation = async (
+        streamId: string,
+        sessionIds: string[],
+    ) => {
         const encryptionDevice = client.crypto.getUserDevice()
 
-        const missingSessionIds = sessionIds.filter((sessionId) => sessionId !== '')
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
+        const missingSessionIds = sessionIds.filter(
+            (sessionId) => sessionId !== '',
+        )
+        const { hash: prevMiniblockHash } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
         const event = await makeEvent(
             client.signer,
             make_MemberPayload_KeySolicitation({
@@ -791,10 +893,13 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
     }
 
     const uploadDeviceKeys = async () => {
-        const streamId = streamIdAsBytes(makeUserMetadataStreamId(client.userId))
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId,
-        })
+        const streamId = streamIdAsBytes(
+            makeUserMetadataStreamId(client.userId),
+        )
+        const { hash: prevMiniblockHash } =
+            await client.rpc.getLastMiniblockHash({
+                streamId,
+            })
         const encryptionDevice = client.crypto.getUserDevice()
         const event = await makeEvent(
             client.signer,
@@ -879,12 +984,19 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         tags?: PlainMessage<Tags>,
     ) => {
         const payload = create(ChannelMessageSchema, {
-            payload: { case: 'reaction', value: { refEventId: messageId, reaction } },
+            payload: {
+                case: 'reaction',
+                value: { refEventId: messageId, reaction },
+            },
         })
         return sendMessageEvent({ streamId, payload, tags })
     }
 
-    const removeEvent = async (streamId: string, messageId: string, tags?: PlainMessage<Tags>) => {
+    const removeEvent = async (
+        streamId: string,
+        messageId: string,
+        tags?: PlainMessage<Tags>,
+    ) => {
         const payload = create(ChannelMessageSchema, {
             payload: { case: 'redaction', value: { refEventId: messageId } },
         })
@@ -898,9 +1010,10 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             client.defaultGroupEncryptionAlgorithm,
         )
         encryptedData.checksum = usernameChecksum(username, streamId)
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
+        const { hash: prevMiniblockHash } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
         const event = await makeEvent(
             client.signer,
             make_MemberPayload_Username(encryptedData),
@@ -920,9 +1033,10 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             new TextEncoder().encode(displayName),
             client.defaultGroupEncryptionAlgorithm,
         )
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
+        const { hash: prevMiniblockHash } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
         const event = await makeEvent(
             client.signer,
             make_MemberPayload_DisplayName(encryptedData),
@@ -936,11 +1050,16 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         return { eventId, error }
     }
 
-    const setUserProfileImage = async (chunkedMediaInfo: PlainMessage<ChunkedMedia>) => {
+    const setUserProfileImage = async (
+        chunkedMediaInfo: PlainMessage<ChunkedMedia>,
+    ) => {
         const streamId = makeUserMetadataStreamId(client.userId)
         const { key, iv } = await deriveKeyAndIV(client.userId)
         const { ciphertext } = await encryptAESGCM(
-            toBinary(ChunkedMediaSchema, create(ChunkedMediaSchema, chunkedMediaInfo)),
+            toBinary(
+                ChunkedMediaSchema,
+                create(ChunkedMediaSchema, chunkedMediaInfo),
+            ),
             key,
             iv,
         )
@@ -948,9 +1067,10 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             ciphertext: uint8ArrayToBase64(ciphertext),
             algorithm: AES_GCM_DERIVED_ALGORITHM,
         }) satisfies PlainMessage<EncryptedData>
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
+        const { hash: prevMiniblockHash } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
         const event = await makeEvent(
             client.signer,
             make_UserMetadataPayload_ProfileImage(encryptedData),
@@ -982,9 +1102,15 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }
         const algorithm = parsed.value
         // decrypt the session keys
-        const cleartext = await client.crypto.decryptWithDeviceKey(ciphertext, sessions.senderKey)
+        const cleartext = await client.crypto.decryptWithDeviceKey(
+            ciphertext,
+            sessions.senderKey,
+        )
         const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
-        check(sessionKeys.keys.length === sessions.sessionIds.length, 'bad sessionKeys')
+        check(
+            sessionKeys.keys.length === sessions.sessionIds.length,
+            'bad sessionKeys',
+        )
         // make group sessions that can be used to decrypt events
         return sessions.sessionIds.map((sessionId, i) => ({
             streamId: streamId,
@@ -1006,27 +1132,40 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
      * @param streamId - The ID of the channel or space stream.
      * @param userId -  The ID of the member whose data is being requested.
      */
-    const getUserData = async (streamId: string, userId: string): Promise<UserData | null> => {
+    const getUserData = async (
+        streamId: string,
+        userId: string,
+    ): Promise<UserData | null> => {
         try {
             const stream = await client.getStream(streamId)
             const members = stream.snapshot.members?.joined
             if (!members) {
                 return null
             }
-            const member = members.find((m) => userIdFromAddress(m.userAddress) === userId)
+            const member = members.find(
+                (m) => userIdFromAddress(m.userAddress) === userId,
+            )
             if (!member) {
                 return null
             }
             let displayName: string | null = null
             let username: string | null = null
-            const [usernameDecrypted, displayNameDecrypted] = await Promise.all([
-                member.username?.data
-                    ? client.crypto.decryptGroupEvent(streamId, member.username.data)
-                    : null,
-                member.displayName?.data
-                    ? client.crypto.decryptGroupEvent(streamId, member.displayName.data)
-                    : null,
-            ])
+            const [usernameDecrypted, displayNameDecrypted] = await Promise.all(
+                [
+                    member.username?.data
+                        ? client.crypto.decryptGroupEvent(
+                              streamId,
+                              member.username.data,
+                          )
+                        : null,
+                    member.displayName?.data
+                        ? client.crypto.decryptGroupEvent(
+                              streamId,
+                              member.displayName.data,
+                          )
+                        : null,
+                ],
+            )
             if (usernameDecrypted) {
                 username =
                     typeof usernameDecrypted === 'string'
@@ -1051,7 +1190,9 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                     chainId: member.nft.chainId,
                 }
             }
-            const bio = await fetch(`${getStreamMetadataUrl(client.env)}/user/${userId}/bio`)
+            const bio = await fetch(
+                `${getStreamMetadataUrl(client.env)}/user/${userId}/bio`,
+            )
                 .then((res) => res.json())
                 .then((data: { bio: string }) => data.bio)
                 .catch(() => null)
@@ -1077,16 +1218,34 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             chain extends Chain | undefined,
             account extends Account | undefined,
             const abi extends Abi | readonly unknown[],
-            functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-            args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
+            functionName extends ContractFunctionName<
+                abi,
+                'nonpayable' | 'payable'
+            >,
+            args extends ContractFunctionArgs<
+                abi,
+                'nonpayable' | 'payable',
+                functionName
+            >,
             chainOverride extends Chain | undefined,
         >(
-            tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>,
+            tx: WriteContractParameters<
+                abi,
+                functionName,
+                args,
+                chain,
+                account,
+                chainOverride
+            >,
         ) => writeContract(viemClient, tx as WriteContractParameters),
         readContract: <
             const abi extends Abi | readonly unknown[],
             functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
-            const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
+            const args extends ContractFunctionArgs<
+                abi,
+                'pure' | 'view',
+                functionName
+            >,
         >(
             parameters: ReadContractParameters<abi, functionName, args>,
         ) => readContract(viemClient, parameters),

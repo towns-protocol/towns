@@ -3,9 +3,16 @@
  */
 
 import { Client } from '../../client'
-import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
+import {
+    makeDonePromise,
+    makeTestClient,
+    makeUniqueSpaceStreamId,
+} from '../testUtils'
 import { dlog } from '@towns-protocol/dlog'
-import { GroupEncryptionAlgorithmId, UserDeviceCollection } from '@towns-protocol/encryption'
+import {
+    GroupEncryptionAlgorithmId,
+    UserDeviceCollection,
+} from '@towns-protocol/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { makeUniqueChannelStreamId, streamIdAsString } from '../../id'
 
@@ -39,7 +46,9 @@ describe('inboxMessageTest', () => {
             log('aliceUserStreamId', aliceUserStreamId)
             alicesClient.startSync()
 
-            const fakeStreamId = makeUniqueChannelStreamId(makeUniqueSpaceStreamId())
+            const fakeStreamId = makeUniqueChannelStreamId(
+                makeUniqueSpaceStreamId(),
+            )
             const aliceSelfInbox = makeDonePromise()
             alicesClient.once(
                 'newGroupSessions',
@@ -50,10 +59,14 @@ describe('inboxMessageTest', () => {
                     log('inboxMessage for Alice', sessions, senderUserId)
                     aliceSelfInbox.runAndDone(() => {
                         expect(senderUserId).toEqual(bobsClient.userId)
-                        expect(streamIdAsString(sessions.streamId)).toEqual(fakeStreamId)
+                        expect(streamIdAsString(sessions.streamId)).toEqual(
+                            fakeStreamId,
+                        )
                         expect(sessions.sessionIds).toEqual(['300'])
                         expect(
-                            sessions.ciphertexts[alicesClient.userDeviceKey().deviceKey],
+                            sessions.ciphertexts[
+                                alicesClient.userDeviceKey().deviceKey
+                            ],
                         ).toBeDefined()
                     })
                 },

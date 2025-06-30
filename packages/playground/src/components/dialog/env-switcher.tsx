@@ -36,7 +36,9 @@ const environments = getWeb3Deployments().map((id) => ({
 }))
 
 const privateNetworks =
-    import.meta.env.VITE_ENABLE_PRIVATE_NETWORKS === 'true' ? [] : ['alpha', 'delta']
+    import.meta.env.VITE_ENABLE_PRIVATE_NETWORKS === 'true'
+        ? []
+        : ['alpha', 'delta']
 
 export type Env = (typeof environments)[number]
 
@@ -48,10 +50,15 @@ export const RiverEnvSwitcher = () => {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" onClick={() => setOpen(true)}>
-                    {isAgentConnected ? 'Switch environment or disconnect' : `Connect to Towns`}
+                    {isAgentConnected
+                        ? 'Switch environment or disconnect'
+                        : `Connect to Towns`}
                 </Button>
             </DialogTrigger>
-            <RiverEnvSwitcherContent allowBearerToken onClose={() => setOpen(false)} />
+            <RiverEnvSwitcherContent
+                allowBearerToken
+                onClose={() => setOpen(false)}
+            />
         </Dialog>
     )
 }
@@ -77,7 +84,9 @@ export const RiverEnvSwitcherContent = (props: {
         <DialogContent className="gap-6">
             <DialogHeader>
                 <DialogTitle>
-                    {isAgentConnected ? 'Switch environment' : 'Connect to Towns'}
+                    {isAgentConnected
+                        ? 'Switch environment'
+                        : 'Connect to Towns'}
                 </DialogTitle>
                 <DialogDescription>
                     {isAgentConnected
@@ -113,24 +122,36 @@ export const RiverEnvSwitcherContent = (props: {
                         </div>
                     )}
                     <div className="flex flex-col gap-2">
-                        <span className="text-sm font-medium">Select an environment</span>
+                        <span className="text-sm font-medium">
+                            Select an environment
+                        </span>
                         {environments
                             .filter(({ id }) => !privateNetworks.includes(id))
                             .map(({ id, name, chainId }) => (
                                 <DialogClose asChild key={id}>
                                     <Button
                                         variant="outline"
-                                        disabled={currentEnv === id && isAgentConnected}
+                                        disabled={
+                                            currentEnv === id &&
+                                            isAgentConnected
+                                        }
                                         onClick={async () => {
-                                            const riverConfig = makeRiverConfig(id)
+                                            const riverConfig =
+                                                makeRiverConfig(id)
                                             if (props.allowBearerToken) {
                                                 if (bearerToken) {
-                                                    await connectUsingBearerToken(bearerToken, {
-                                                        riverConfig,
-                                                    }).then((sync) => {
-                                                        if (sync?.config.context) {
+                                                    await connectUsingBearerToken(
+                                                        bearerToken,
+                                                        {
+                                                            riverConfig,
+                                                        },
+                                                    ).then((sync) => {
+                                                        if (
+                                                            sync?.config.context
+                                                        ) {
                                                             storeAuth(
-                                                                sync?.config.context,
+                                                                sync?.config
+                                                                    .context,
                                                                 riverConfig,
                                                             )
                                                         }
@@ -145,7 +166,11 @@ export const RiverEnvSwitcherContent = (props: {
                                                     riverConfig,
                                                 }).then((sync) => {
                                                     if (sync?.config.context) {
-                                                        storeAuth(sync?.config.context, riverConfig)
+                                                        storeAuth(
+                                                            sync?.config
+                                                                .context,
+                                                            riverConfig,
+                                                        )
                                                     }
                                                 })
                                             }
@@ -154,7 +179,9 @@ export const RiverEnvSwitcherContent = (props: {
                                         }}
                                     >
                                         {name}{' '}
-                                        {isAgentConnected && currentEnv === id && '(connected)'}
+                                        {isAgentConnected &&
+                                            currentEnv === id &&
+                                            '(connected)'}
                                     </Button>
                                 </DialogClose>
                             ))}
@@ -174,8 +201,14 @@ const AnvilAccount = privateKeyToAccount(
 const FundWallet = () => {
     const { address } = useAccount()
 
-    const { sendTransaction, data: hash, isPending: isSendingTx } = useSendTransaction()
-    const { isSuccess, isPending: isTxPending } = useWaitForTransactionReceipt({ hash })
+    const {
+        sendTransaction,
+        data: hash,
+        isPending: isSendingTx,
+    } = useSendTransaction()
+    const { isSuccess, isPending: isTxPending } = useWaitForTransactionReceipt({
+        hash,
+    })
 
     return (
         <>
@@ -191,7 +224,8 @@ const FundWallet = () => {
                     })
                 }
             >
-                Fund Local Wallet {isSuccess && '✅'} {(isSendingTx || isTxPending) && '⏳'}
+                Fund Local Wallet {isSuccess && '✅'}{' '}
+                {(isSendingTx || isTxPending) && '⏳'}
             </Button>
         </>
     )

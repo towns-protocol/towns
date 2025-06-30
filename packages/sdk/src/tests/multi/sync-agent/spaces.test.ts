@@ -16,10 +16,11 @@ describe('spaces.test.ts', () => {
         const syncAgent = await testUser.makeSyncAgent()
         await syncAgent.start()
         expect(syncAgent.spaces.value.status).not.toBe('loading')
-        const { spaceId, defaultChannelId } = await syncAgent.spaces.createSpace(
-            { spaceName: 'BlastOff' },
-            testUser.signer,
-        )
+        const { spaceId, defaultChannelId } =
+            await syncAgent.spaces.createSpace(
+                { spaceName: 'BlastOff' },
+                testUser.signer,
+            )
         expect(syncAgent.spaces.data.spaceIds.length).toBe(1)
         expect(syncAgent.spaces.data.spaceIds[0]).toBe(spaceId)
         expect(syncAgent.spaces.getSpace(spaceId)).toBeDefined()
@@ -32,7 +33,9 @@ describe('spaces.test.ts', () => {
         expect(channel.data.isJoined).toBe(true)
         await channel.sendMessage('hello world')
         expect(channel.timeline.events.value.length).toBeGreaterThan(1)
-        expect(findMessageByText(channel.timeline.events.value, 'hello world')).toBeDefined()
+        expect(
+            findMessageByText(channel.timeline.events.value, 'hello world'),
+        ).toBeDefined()
         await syncAgent.stop()
     })
 })

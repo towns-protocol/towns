@@ -16,7 +16,10 @@ export async function makeRandomSyncAgentConfig(): Promise<SyncAgentConfig> {
     } satisfies SyncAgentConfig
 }
 
-export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp): ClientParams {
+export function makeClientParams(
+    config: SyncAgentConfig,
+    spaceDapp: SpaceDapp,
+): ClientParams {
     const userId = userIdFromAddress(config.context.creatorAddress)
     return {
         signerContext: config.context,
@@ -26,7 +29,10 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
         ),
         entitlementsDelegate: new Entitlements(config.riverConfig, spaceDapp),
         opts: {
-            persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
+            persistenceStoreName: makeTestPersistenceDbName(
+                userId,
+                config.deviceId,
+            ),
             logNamespaceFilter: undefined,
             highPriorityStreamIds: undefined,
             streamOpts: {
@@ -50,7 +56,11 @@ export function makeTestSyncDbName(userId: string, deviceId?: string) {
     return makeTestDbName('s', userId, deviceId)
 }
 
-export function makeTestDbName(prefix: string, userId: string, deviceId?: string) {
+export function makeTestDbName(
+    prefix: string,
+    userId: string,
+    deviceId?: string,
+) {
     const suffix = deviceId ? `-${deviceId}` : ''
     return `${prefix}-${userId}${suffix}`
 }

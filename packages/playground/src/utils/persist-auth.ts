@@ -1,7 +1,10 @@
 import type { RiverConfig, SignerContext } from '@towns-protocol/sdk'
 import superjson from 'superjson'
 
-export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig) => {
+export const storeAuth = (
+    signerContext: SignerContext,
+    riverConfig: RiverConfig,
+) => {
     const fixedContext = {
         ...signerContext,
         signerPrivateKey: signerContext.signerPrivateKey(),
@@ -18,7 +21,8 @@ export const loadAuth = () => {
     if (!signerContextString || !riverConfigString) {
         return
     }
-    const signerContext = superjson.parse<Record<string, string>>(signerContextString)
+    const signerContext =
+        superjson.parse<Record<string, string>>(signerContextString)
     const riverConfig = superjson.parse<RiverConfig>(riverConfigString)
     const fixedContext = {
         ...signerContext,

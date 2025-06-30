@@ -21,11 +21,16 @@ async function main() {
 
     while (
         currentBlock >
-        blockOffset + BigInt(config.blockScanChunkSize + config.transactionValidBlocks)
+        blockOffset +
+            BigInt(config.blockScanChunkSize + config.transactionValidBlocks)
     ) {
-        const results = await scanBlockchainForXchainEvents(blockOffset, config.blockScanChunkSize)
+        const results = await scanBlockchainForXchainEvents(
+            blockOffset,
+            config.blockScanChunkSize,
+        )
         currentBlock = await publicClient.getBlockNumber()
-        const maxScannedBlock = blockOffset + BigInt(config.blockScanChunkSize - 1)
+        const maxScannedBlock =
+            blockOffset + BigInt(config.blockScanChunkSize - 1)
         logger.info(
             {
                 blockOffset,

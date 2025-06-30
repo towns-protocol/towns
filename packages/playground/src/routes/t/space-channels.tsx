@@ -21,7 +21,8 @@ export const SelectChannelRoute = () => {
     const navigate = useNavigate()
     const { spaceId } = useParams<{ spaceId: string }>()
     const { data: space } = useSpace(spaceId!)
-    const [createChannelDialogOpen, setCreateChannelDialogOpen] = useState(false)
+    const [createChannelDialogOpen, setCreateChannelDialogOpen] =
+        useState(false)
     const onChannelChange = useCallback(
         (channelId: string) => {
             navigate(`/t/${spaceId}/${channelId}`)
@@ -42,7 +43,9 @@ export const SelectChannelRoute = () => {
                             <h2 className="text-xl font-bold">{spaceName}</h2>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                            <h2 className="text-xs">Select a channel to start messaging</h2>
+                            <h2 className="text-xs">
+                                Select a channel to start messaging
+                            </h2>
                             <div className="flex items-center gap-2">
                                 <Tooltip title="Mint a new bot">
                                     <Button variant="outline" size="icon">
@@ -58,23 +61,30 @@ export const SelectChannelRoute = () => {
                                         <Button
                                             variant="outline"
                                             size="icon"
-                                            onClick={() => setCreateChannelDialogOpen(true)}
+                                            onClick={() =>
+                                                setCreateChannelDialogOpen(true)
+                                            }
                                         >
                                             <PlusIcon className="h-4 w-4" />
                                         </Button>
                                     </Tooltip>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>Create a channel</DialogTitle>
+                                            <DialogTitle>
+                                                Create a channel
+                                            </DialogTitle>
                                         </DialogHeader>
                                         <DialogDescription>
-                                            Create a channel in the {spaceName} space.
+                                            Create a channel in the {spaceName}{' '}
+                                            space.
                                         </DialogDescription>
                                         <CreateChannel
                                             spaceId={space.id}
                                             onChannelCreated={(channelId) => {
                                                 onChannelChange(channelId)
-                                                setCreateChannelDialogOpen(false)
+                                                setCreateChannelDialogOpen(
+                                                    false,
+                                                )
                                             }}
                                         />
                                     </DialogContent>
@@ -119,8 +129,13 @@ const ChannelInfo = ({
 
     return (
         <div>
-            <Button variant="outline" onClick={() => onChannelChange(channelId)}>
-                {channel.metadata?.name ? `#${channel.metadata.name}` : 'Unnamed Channel'}
+            <Button
+                variant="outline"
+                onClick={() => onChannelChange(channelId)}
+            >
+                {channel.metadata?.name
+                    ? `#${channel.metadata.name}`
+                    : 'Unnamed Channel'}
             </Button>
         </div>
     )

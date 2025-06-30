@@ -2,11 +2,20 @@
  * @group main
  */
 
-import { isEncryptedData, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
+import {
+    isEncryptedData,
+    makeTestClient,
+    makeUniqueSpaceStreamId,
+    waitFor,
+} from '../testUtils'
 import { Client } from '../../client'
 import { dlog } from '@towns-protocol/dlog'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
-import { makeUniqueChannelStreamId, makeUniqueMediaStreamId, streamIdToBytes } from '../../id'
+import {
+    makeUniqueChannelStreamId,
+    makeUniqueMediaStreamId,
+    streamIdToBytes,
+} from '../../id'
 import {
     ChunkedMedia,
     GetStreamResponse,
@@ -54,25 +63,31 @@ describe('spaceTests', () => {
         await expect(alicesClient.joinStream(spaceId)).resolves.not.toThrow()
         await expect(alicesClient.joinStream(channelId)).resolves.not.toThrow()
 
-        const userStreamView = alicesClient.stream(alicesClient.userStreamId!)!.view
+        const userStreamView = alicesClient.stream(
+            alicesClient.userStreamId!,
+        )!.view
         await waitFor(() => {
-            expect(userStreamView.userContent.getMembership(spaceId)?.op).toBe(MembershipOp.SO_JOIN)
-            expect(userStreamView.userContent.getMembership(channelId)?.op).toBe(
+            expect(userStreamView.userContent.getMembership(spaceId)?.op).toBe(
                 MembershipOp.SO_JOIN,
             )
+            expect(
+                userStreamView.userContent.getMembership(channelId)?.op,
+            ).toBe(MembershipOp.SO_JOIN)
         })
 
         // Bob can kick Alice
-        await expect(bobsClient.removeUser(spaceId, alicesClient.userId)).resolves.not.toThrow()
+        await expect(
+            bobsClient.removeUser(spaceId, alicesClient.userId),
+        ).resolves.not.toThrow()
 
         // Alice is no longer a member of the space or channel
         await waitFor(() => {
             expect(userStreamView.userContent.getMembership(spaceId)?.op).toBe(
                 MembershipOp.SO_LEAVE,
             )
-            expect(userStreamView.userContent.getMembership(channelId)?.op).toBe(
-                MembershipOp.SO_LEAVE,
-            )
+            expect(
+                userStreamView.userContent.getMembership(channelId)?.op,
+            ).toBe(MembershipOp.SO_LEAVE)
         })
     })
 
@@ -95,20 +110,26 @@ describe('spaceTests', () => {
 
         // our space channels metadata should reflect the new channel
         await waitFor(() => {
-            expect(spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]).toBeDefined()
             expect(
-                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]?.updatedAtEventNum,
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId],
+            ).toBeDefined()
+            expect(
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]
+                    ?.updatedAtEventNum,
             ).toBeGreaterThan(0)
         })
 
         // wait for the miniblock to be updated
         await waitFor(() => {
-            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(
+                spaceStreamMiniblockNum,
+            )
         })
 
         // save off existing updated at
         const prevUpdatedAt =
-            spaceStream.view.spaceContent.spaceChannelsMetadata[channelId].updatedAtEventNum
+            spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]
+                .updatedAtEventNum
 
         // make a snapshot
         await waitFor(async () => {
@@ -143,7 +164,9 @@ describe('spaceTests', () => {
             snapshot.content.value.channels.length,
             `channelMetadata: ${spaceId} pre-update bobsClient snapshot.channels.length`,
         ).toBe(1)
-        expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
+        expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(
+            prevUpdatedAt,
+        )
 
         spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
         // update the channel metadata
@@ -151,14 +174,19 @@ describe('spaceTests', () => {
 
         // wait for the miniblock to be updated
         await waitFor(() => {
-            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(
+                spaceStreamMiniblockNum,
+            )
         })
 
         // see the metadata update
         await waitFor(() => {
-            expect(spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]).toBeDefined()
             expect(
-                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]?.updatedAtEventNum,
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId],
+            ).toBeDefined()
+            expect(
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]
+                    ?.updatedAtEventNum,
             ).toBeGreaterThan(prevUpdatedAt)
         })
 
@@ -189,9 +217,9 @@ describe('spaceTests', () => {
                 snapshot.content.value.channels.length,
                 'channelMetadata: post-update bobsClient snapshot.channels.length',
             ).toBe(1)
-            expect(snapshot.content.value.channels[0].updatedAtEventNum).toBeGreaterThan(
-                prevUpdatedAt,
-            )
+            expect(
+                snapshot.content.value.channels[0].updatedAtEventNum,
+            ).toBeGreaterThan(prevUpdatedAt)
         })
     })
 
@@ -229,7 +257,9 @@ describe('spaceTests', () => {
 
         // wait for the miniblock to be updated
         await waitFor(() => {
-            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(
+                spaceStreamMiniblockNum,
+            )
         })
 
         // make a snapshot
@@ -316,7 +346,9 @@ describe('spaceTests', () => {
 
         // wait for the miniblock to be updated
         await waitFor(() => {
-            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(
+                spaceStreamMiniblockNum,
+            )
         })
         // make a snapshot
         await waitFor(async () => {

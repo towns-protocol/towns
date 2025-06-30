@@ -11,7 +11,11 @@ import { useSyncAgent } from './useSyncAgent'
  */
 export const useJoinSpace = (config?: ActionConfig<Spaces['joinSpace']>) => {
     const sync = useSyncAgent()
-    const { action: joinSpace, ...rest } = useAction(sync.spaces, 'joinSpace', config)
+    const { action: joinSpace, ...rest } = useAction(
+        sync.spaces,
+        'joinSpace',
+        config,
+    )
 
     return {
         /**

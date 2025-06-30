@@ -1,5 +1,10 @@
 import { makeEvent, unpackStreamEnvelopes } from '../sign'
-import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@towns-protocol/proto'
+import {
+    MembershipOp,
+    SyncStreamsResponse,
+    Envelope,
+    SyncOp,
+} from '@towns-protocol/proto'
 import { DLogger } from '@towns-protocol/dlog'
 import {
     lastEventFiltered,
@@ -130,7 +135,9 @@ export const bobTalksToHimself = async (
 
     let presyncEvent: Envelope | undefined = undefined
     if (presync) {
-        log('adding event before sync, so it should be the first event in the sync stream')
+        log(
+            'adding event before sync, so it should be the first event in the sync stream',
+        )
         presyncEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
@@ -149,26 +156,31 @@ export const bobTalksToHimself = async (
     log('Bob starts sync with sync cookie=', channel.stream?.nextSyncCookie)
 
     let syncCookie = channel.stream!.nextSyncCookie!
-    const bobSyncStreamIterable: AsyncIterable<SyncStreamsResponse> = bob.syncStreams(
-        {
-            syncPos: [syncCookie],
-        },
-        {
-            timeoutMs: -1,
-            headers: { 'X-Use-Shared-Sync': 'true' },
-        },
-    )
+    const bobSyncStreamIterable: AsyncIterable<SyncStreamsResponse> =
+        bob.syncStreams(
+            {
+                syncPos: [syncCookie],
+            },
+            {
+                timeoutMs: -1,
+                headers: { 'X-Use-Shared-Sync': 'true' },
+            },
+        )
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
     await expect(
         waitForSyncStreams(
             bobSyncStreamIterable,
-            async (res) => res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined,
+            async (res) =>
+                res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined,
         ),
     ).resolves.not.toThrow()
 
     if (flush || presync) {
         log('Flush or presync, wait for sync to return initial events')
-        const syncResult = await waitForSyncStreamsMessage(bobSyncStreamIterable, 'presync')
+        const syncResult = await waitForSyncStreamsMessage(
+            bobSyncStreamIterable,
+            'presync',
+        )
         expect(syncResult?.stream).toBeDefined()
         const stream = syncResult.stream
         expect(stream).toBeDefined()
@@ -185,7 +197,9 @@ export const bobTalksToHimself = async (
                 presync ? [...channelEvents, presyncEvent] : channelEvents,
             )
         } else {
-            expect(stream?.events).toEqual(expect.arrayContaining([presyncEvent]))
+            expect(stream?.events).toEqual(
+                expect.arrayContaining([presyncEvent]),
+            )
         }
 
         syncCookie = stream.nextSyncCookie!
@@ -210,7 +224,10 @@ export const bobTalksToHimself = async (
     })
 
     log('Bob waits for sync to complete')
-    const syncResult = await waitForSyncStreamsMessage(bobSyncStreamIterable, 'hello')
+    const syncResult = await waitForSyncStreamsMessage(
+        bobSyncStreamIterable,
+        'hello',
+    )
     expect(syncResult?.stream).toBeDefined()
     const stream = syncResult?.stream
     expect(stream).toBeDefined()

@@ -38,8 +38,12 @@ describe('sign', () => {
         '0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56b0',
     )
     const badHashes = [
-        bin_fromHexString('0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56b000'),
-        bin_fromHexString('0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56'),
+        bin_fromHexString(
+            '0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56b000',
+        ),
+        bin_fromHexString(
+            '0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56',
+        ),
     ]
 
     test('i-need-buffer', () => {
@@ -147,7 +151,11 @@ describe('sign', () => {
         const delegate = keys[1]
         const delegateWallet = new ethers.Wallet(delegate.privateKey)
         log('delegate PublicKey', bin_toHexString(delegate.publicKey))
-        const context = await makeSignerContext(primaryWallet, delegateWallet, 0n)
+        const context = await makeSignerContext(
+            primaryWallet,
+            delegateWallet,
+            0n,
+        )
         const delegateSig = context.delegateSig
         expect(delegateSig).toBeDefined()
         log('OLD delegateSig', bin_toHexString(delegateSig!))
@@ -166,7 +174,8 @@ describe('sign', () => {
         const user = keys[0]
         const userWallet = new ethers.Wallet(user.privateKey)
 
-        const { signerContext, delegateWallet } = await makeSignerDelegate(userWallet)
+        const { signerContext, delegateWallet } =
+            await makeSignerDelegate(userWallet)
 
         expect(signerContext.delegateSig).toBeDefined()
         expect(() =>
@@ -192,13 +201,23 @@ describe('sign', () => {
             }
         } else {
             const delegateWallet = new ethers.Wallet(delegatePrivateKey)
-            return await makeSignerContext(userWallet, delegateWallet, { days: 1 })
+            return await makeSignerContext(userWallet, delegateWallet, {
+                days: 1,
+            })
         }
     }
 
-    const testParams: [string, () => Promise<SignerContext>, () => Promise<SignerContext>][] = [
+    const testParams: [
+        string,
+        () => Promise<SignerContext>,
+        () => Promise<SignerContext>,
+    ][] = [
         // direct contexts are not recommended, but they are supported
-        ['direct', () => makeContext(keys[0].privateKey), () => makeContext(keys[1].privateKey)],
+        [
+            'direct',
+            () => makeContext(keys[0].privateKey),
+            () => makeContext(keys[1].privateKey),
+        ],
         [
             'delegate',
             () => makeContext(keys[0].privateKey, keys[1].privateKey),
@@ -266,7 +285,9 @@ describe('sign', () => {
     test.each(testParams)(
         'validate-prev-events-%s',
         async (method: string, c: () => Promise<SignerContext>) => {
-            const userStreamId = makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+            const userStreamId = makeUserStreamId(
+                '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            )
             const context = await c()
             expect(
                 await makeEvent(
@@ -282,7 +303,10 @@ describe('sign', () => {
                 value: {
                     content: {
                         case: 'message',
-                        value: { ...TEST_ENCRYPTED_MESSAGE_PROPS, ciphertext: 'Hello, World!' },
+                        value: {
+                            ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                            ciphertext: 'Hello, World!',
+                        },
                     },
                 },
             }

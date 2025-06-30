@@ -35,7 +35,10 @@ describe('User.test.ts', () => {
         expect(user.deviceKeys.data.initialized).toBe(false)
         expect(user.settings.data.initialized).toBe(false)
 
-        const { spaceId } = await spaces.createSpace({ spaceName: 'bobs-space' }, testUser.signer)
+        const { spaceId } = await spaces.createSpace(
+            { spaceName: 'bobs-space' },
+            testUser.signer,
+        )
         logger.log('created spaceId', spaceId)
 
         expect(riverConnection.data.userExists).toBe(true)

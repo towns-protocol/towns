@@ -9,7 +9,9 @@ import type { ObservableConfig } from './useObservable'
  * @param config - Configuration options for the observable.
  * @returns An object containing the current AuthStatus status and boolean flags for each possible status.
  */
-export const useTownsAuthStatus = (config?: ObservableConfig.FromObservable<AuthStatus>) => {
+export const useTownsAuthStatus = (
+    config?: ObservableConfig.FromObservable<AuthStatus>,
+) => {
     const { data: status } = useTowns((s) => s.riverAuthStatus, config)
     return {
         /** The current AuthStatus of the user connection with the Towns network. */

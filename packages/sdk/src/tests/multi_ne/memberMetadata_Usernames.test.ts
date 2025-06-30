@@ -32,7 +32,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-1', username)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username]]),
+        )
     })
 
     test('clientCannotSetDuplicateUsername', async () => {
@@ -53,7 +55,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-1', username)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username]]),
+        )
 
         usernames.addEncryptedData(
             'eventid-1',
@@ -65,7 +69,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-1', username)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username]]),
+        )
     })
 
     test('duplicateUsernamesAreCaseInsensitive', async () => {
@@ -93,7 +99,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-1', username)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username]]),
+        )
 
         usernames.addEncryptedData(
             'eventid-2',
@@ -105,7 +113,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-2', username2)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username]]),
+        )
     })
 
     test('usernameIsAvailableAfterChange', async () => {
@@ -126,7 +136,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-1', username)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username]]),
+        )
 
         const username2 = 'bob-username2'
         const checksum2 = usernameChecksum(username2, streamId)
@@ -146,7 +158,9 @@ describe('memberMetadata_UsernamesTests', () => {
             undefined,
         )
         usernames.onDecryptedContent('eventid-2', username2)
-        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username2]]))
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([['userid-1', username2]]),
+        )
 
         // userid-2 can now use the old username
         usernames.addEncryptedData(

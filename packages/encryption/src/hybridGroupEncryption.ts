@@ -35,16 +35,19 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
         opts?: { awaitInitialShareSession: boolean },
     ): Promise<HybridGroupSessionKey> {
         try {
-            const sessionKey = await this.device.getHybridGroupSessionKeyForStream(streamId)
+            const sessionKey =
+                await this.device.getHybridGroupSessionKeyForStream(streamId)
             return sessionKey
         } catch (error) {
-            const { miniblockNum, miniblockHash } = await this.client.getMiniblockInfo(streamId)
+            const { miniblockNum, miniblockHash } =
+                await this.client.getMiniblockInfo(streamId)
             // if we don't have a cached session at this point, create a new one
-            const { sessionId, sessionKey } = await this.device.createHybridGroupSession(
-                streamId,
-                miniblockNum,
-                miniblockHash,
-            )
+            const { sessionId, sessionKey } =
+                await this.device.createHybridGroupSession(
+                    streamId,
+                    miniblockNum,
+                    miniblockHash,
+                )
             log(`Started new hybrid group session ${sessionId}`)
             // don't wait for the session to be shared
             const promise = this.shareSession(streamId, sessionId)
@@ -65,9 +68,15 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
         }
     }
 
-    private async shareSession(streamId: string, sessionId: string): Promise<void> {
+    private async shareSession(
+        streamId: string,
+        sessionId: string,
+    ): Promise<void> {
         const devicesInRoom = await this.client.getDevicesInStream(streamId)
-        const session = await this.device.exportHybridGroupSession(streamId, sessionId)
+        const session = await this.device.exportHybridGroupSession(
+            streamId,
+            sessionId,
+        )
 
         if (!session) {
             throw new Error('Session key not found for session ' + sessionId)
@@ -84,8 +93,12 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
     /**
      * @deprecated
      */
-    public async encrypt_deprecated_v0(streamId: string, payload: string): Promise<EncryptedData> {
-        const sessionKey: HybridGroupSessionKey = await this._ensureOutboundSession(streamId)
+    public async encrypt_deprecated_v0(
+        streamId: string,
+        payload: string,
+    ): Promise<EncryptedData> {
+        const sessionKey: HybridGroupSessionKey =
+            await this._ensureOutboundSession(streamId)
         const key = await importAesGsmKeyBytes(sessionKey.key)
         const payloadBytes = new TextEncoder().encode(payload)
         const { ciphertext, iv } = await encryptAesGcm(key, payloadBytes)
@@ -104,9 +117,13 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
      *
      * @returns Promise which resolves to the new event body
      */
-    public async encrypt(streamId: string, payload: Uint8Array): Promise<EncryptedData> {
+    public async encrypt(
+        streamId: string,
+        payload: Uint8Array,
+    ): Promise<EncryptedData> {
         log('Starting to encrypt event')
-        const sessionKey: HybridGroupSessionKey = await this._ensureOutboundSession(streamId)
+        const sessionKey: HybridGroupSessionKey =
+            await this._ensureOutboundSession(streamId)
         const key = await importAesGsmKeyBytes(sessionKey.key)
         const { ciphertext, iv } = await encryptAesGcm(key, payload)
         return create(EncryptedDataSchema, {

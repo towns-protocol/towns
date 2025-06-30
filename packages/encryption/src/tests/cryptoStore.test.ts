@@ -39,7 +39,11 @@ describe('ClientStoreTests', () => {
 
         const fetchedDevices = await store.getUserDevices(userId)
         expect(fetchedDevices.length).toEqual(10)
-        expect(fetchedDevices.sort((a, b) => a.deviceKey.localeCompare(b.deviceKey))).toEqual(
+        expect(
+            fetchedDevices.sort((a, b) =>
+                a.deviceKey.localeCompare(b.deviceKey),
+            ),
+        ).toEqual(
             devices.sort((a, b) => a.deviceKey.localeCompare(b.deviceKey)),
         )
     })

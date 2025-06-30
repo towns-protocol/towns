@@ -43,13 +43,14 @@ describe('channelsWithComplexEntitlements', () => {
             bobSpaceDapp,
         } = await setupWalletsAndContexts()
 
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
-            bobSpaceDapp,
-            bobProvider.wallet,
-            'bob',
-            await everyoneMembershipStruct(bobSpaceDapp, bob),
-        )
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                'bob',
+                await everyoneMembershipStruct(bobSpaceDapp, bob),
+            )
 
         await expectUserCanJoin(
             spaceId,
@@ -112,24 +113,43 @@ describe('channelsWithComplexEntitlements', () => {
         await TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
 
         // Join alice to the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
     })
 
     test('twoNftGateJoinPass', async () => {
         const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
         const testNft2Address = await TestERC721.getContractAddress('TestNFT2')
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
-            await setupChannelWithCustomRole([], twoNftRuleData(testNft1Address, testNft2Address))
+            await setupChannelWithCustomRole(
+                [],
+                twoNftRuleData(testNft1Address, testNft2Address),
+            )
 
-        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
-        const aliceMintTx2 = TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint(
+            'TestNFT1',
+            alicesWallet.address as Address,
+        )
+        const aliceMintTx2 = TestERC721.publicMint(
+            'TestNFT2',
+            alicesWallet.address as Address,
+        )
 
         log('Minting nfts for alice')
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect that alice can join the channel')
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -151,19 +171,39 @@ describe('channelsWithComplexEntitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], twoNftRuleData(testNft1Address, testNft2Address))
+        } = await setupChannelWithCustomRole(
+            [],
+            twoNftRuleData(testNft1Address, testNft2Address),
+        )
 
-        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
-        const carolMintTx2 = TestERC721.publicMint('TestNFT2', carolsWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint(
+            'TestNFT1',
+            alicesWallet.address as Address,
+        )
+        const carolMintTx2 = TestERC721.publicMint(
+            'TestNFT2',
+            carolsWallet.address as Address,
+        )
 
         log('Minting nfts for alice and carol')
         await Promise.all([aliceMintTx1, carolMintTx2])
 
         log("linking carols wallet to alice's wallet")
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
-        log('Alice should be able to join channel with one asset in carol wallet')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        log(
+            'Alice should be able to join channel with one asset in carol wallet',
+        )
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -176,14 +216,22 @@ describe('channelsWithComplexEntitlements', () => {
         const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
         const testNft2Address = await TestERC721.getContractAddress('TestNFT2')
         const { alice, aliceSpaceDapp, bob, alicesWallet, spaceId, channelId } =
-            await setupChannelWithCustomRole([], twoNftRuleData(testNft1Address, testNft2Address))
+            await setupChannelWithCustomRole(
+                [],
+                twoNftRuleData(testNft1Address, testNft2Address),
+            )
 
         // Mint only one of the required NFTs for alice
         log('Minting only one of two required NFTs for alice')
         await TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
 
         log('expect that alice cannot join the channel')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         await bob.stopSync()
@@ -196,14 +244,23 @@ describe('channelsWithComplexEntitlements', () => {
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole(
                 [],
-                twoNftRuleData(testNft1Address, testNft2Address, LogicalOperationType.OR),
+                twoNftRuleData(
+                    testNft1Address,
+                    testNft2Address,
+                    LogicalOperationType.OR,
+                ),
             )
         // join alice
         log('Minting an NFT for alice')
         await TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
 
         log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -257,12 +314,23 @@ describe('channelsWithComplexEntitlements', () => {
             await setupChannelWithCustomRole([], ruleData)
 
         log("Mint Alice's NFTs")
-        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
-        const aliceMintTx2 = TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint(
+            'TestNFT1',
+            alicesWallet.address as Address,
+        )
+        const aliceMintTx2 = TestERC721.publicMint(
+            'TestNFT2',
+            alicesWallet.address as Address,
+        )
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()

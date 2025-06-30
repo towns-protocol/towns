@@ -85,7 +85,11 @@ export const Timeline = ({
     return (
         <div className="grid grid-rows-[auto,1fr,auto] gap-2">
             {!showThreadMessages && (
-                <Button disabled={isPending} variant="outline" onClick={scrollback}>
+                <Button
+                    disabled={isPending}
+                    variant="outline"
+                    onClick={scrollback}
+                >
                     {isPending ? 'Loading more...' : 'Scrollback'}
                 </Button>
             )}
@@ -96,7 +100,10 @@ export const Timeline = ({
             >
                 <StickToBottom.Content className="flex flex-col gap-6 p-4">
                     {events.map((event) => {
-                        if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
+                        if (
+                            event.content?.kind ===
+                            RiverTimelineEvent.ChannelMessage
+                        ) {
                             if (showThreadMessages || !event.threadParentId) {
                                 return (
                                     <Message
@@ -111,7 +118,8 @@ export const Timeline = ({
                             return null
                         }
                         if (
-                            event.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                            event.content?.kind ===
+                                RiverTimelineEvent.ChannelMessageEncrypted ||
                             event.content?.kind ===
                                 RiverTimelineEvent.ChannelMessageEncryptedWithRef
                         ) {
@@ -136,7 +144,11 @@ const formSchema = z.object({
     message: z.string(),
 })
 
-const ReplyIndicatorContainer = ({ children }: { children: React.ReactNode }) => {
+const ReplyIndicatorContainer = ({
+    children,
+}: {
+    children: React.ReactNode
+}) => {
     return (
         <div
             className={cn(
@@ -180,7 +192,8 @@ export const SendMessage = ({
                             'rounded-b-md border border-t-0 border-input bg-background p-2 pt-0 transition-all duration-150',
                     )}
                     onSubmit={form.handleSubmit(async ({ message }) => {
-                        const options: { threadId?: string; replyId?: string } = {}
+                        const options: { threadId?: string; replyId?: string } =
+                            {}
                         if (opts?.kind === 'reply') {
                             options.replyId = opts.eventId
                         } else if (opts?.kind === 'thread') {
@@ -195,8 +208,16 @@ export const SendMessage = ({
                 >
                     {opts?.kind === 'reply' && (
                         <ReplyIndicatorContainer>
-                            <ReplyingTo streamId={streamId} senderId={opts.senderId} />
-                            <Button variant="ghost" size="sm" type="button" onClick={resetOpts}>
+                            <ReplyingTo
+                                streamId={streamId}
+                                senderId={opts.senderId}
+                            />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                type="button"
+                                onClick={resetOpts}
+                            >
                                 ✕
                             </Button>
                         </ReplyIndicatorContainer>
@@ -204,7 +225,12 @@ export const SendMessage = ({
                     {opts?.kind === 'thread' && (
                         <ReplyIndicatorContainer>
                             <span>Replying in thread</span>
-                            <Button variant="ghost" size="sm" type="button" onClick={resetOpts}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                type="button"
+                                onClick={resetOpts}
+                            >
                                 ✕
                             </Button>
                         </ReplyIndicatorContainer>
@@ -215,13 +241,19 @@ export const SendMessage = ({
                         render={({ field }) => (
                             <FormItem>
                                 <FormControl>
-                                    <Input placeholder="Type a message" {...field} />
+                                    <Input
+                                        placeholder="Type a message"
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                    <Button type="submit"> {isPending ? 'Sending...' : 'Send'}</Button>
+                    <Button type="submit">
+                        {' '}
+                        {isPending ? 'Sending...' : 'Send'}
+                    </Button>
                 </form>
             </Form>
         </div>
@@ -237,7 +269,11 @@ const Message = ({
     event: TimelineEvent
     thread: TimelineEvent[] | undefined
     streamId: string
-    setOpts: (opts: { eventId: string; senderId: string; kind: 'reply' | 'thread' }) => void
+    setOpts: (opts: {
+        eventId: string
+        senderId: string
+        kind: 'reply' | 'thread'
+    }) => void
 }) => {
     const sync = useSyncAgent()
     const preferSpaceMember = isChannelStreamId(streamId)
@@ -267,7 +303,9 @@ const Message = ({
                         <span
                             className={cn(
                                 'font-semibold',
-                                isMyMessage ? 'text-sky-500' : 'text-purple-500',
+                                isMyMessage
+                                    ? 'text-sky-500'
+                                    : 'text-purple-500',
                             )}
                         >
                             {prettyDisplayName || event.sender.id}
@@ -279,13 +317,16 @@ const Message = ({
                         </div>
                     ) : null}
                     <span>
-                        {event.content?.kind === RiverTimelineEvent.ChannelMessage
+                        {event.content?.kind ===
+                        RiverTimelineEvent.ChannelMessage
                             ? event.content.body
                             : ''}
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
-                    {reactions && <ReactionRow reactions={reactions} onReact={onReact} />}
+                    {reactions && (
+                        <ReactionRow reactions={reactions} onReact={onReact} />
+                    )}
                     <Button
                         variant="outline"
                         className="aspect-square p-1"
@@ -294,7 +335,10 @@ const Message = ({
                         👍
                     </Button>
                     {isMyMessage && (
-                        <Button variant="ghost" onClick={() => redact(event.eventId)}>
+                        <Button
+                            variant="ghost"
+                            onClick={() => redact(event.eventId)}
+                        >
                             ❌
                         </Button>
                     )}
@@ -333,7 +377,9 @@ const Message = ({
                     {thread && thread.length > 0 && (
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="ghost">+{thread.length} messages</Button>
+                                <Button variant="ghost">
+                                    +{thread.length} messages
+                                </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-full sm:max-w-[calc(100dvw-20%)]">
                                 <DialogTitle>Thread</DialogTitle>
@@ -368,7 +414,8 @@ const ReactionRow = ({
     reactions: MessageReactions
     onReact: (params: OnReactParams) => void
 }) => {
-    const entries = Object.entries<Record<string, { eventId: string }>>(reactions)
+    const entries =
+        Object.entries<Record<string, { eventId: string }>>(reactions)
     return (
         <div className="flex gap-1">
             {entries.length
@@ -396,17 +443,23 @@ const Reaction = ({
 }) => {
     const sync = useSyncAgent()
 
-    const isMyReaction = Object.keys(users).some((userId) => userId === sync.userId)
+    const isMyReaction = Object.keys(users).some(
+        (userId) => userId === sync.userId,
+    )
     return (
         <button
             type="button"
             className={cn(
                 'flex h-8 w-full items-center justify-center gap-2 rounded-sm border border-neutral-200 bg-neutral-100 px-2 dark:border-neutral-800 dark:bg-neutral-900',
-                isMyReaction && 'border-lime-200 bg-lime-100 dark:border-lime-800 dark:bg-lime-900',
+                isMyReaction &&
+                    'border-lime-200 bg-lime-100 dark:border-lime-800 dark:bg-lime-900',
             )}
             onClick={() => {
                 if (isMyReaction) {
-                    onReact({ type: 'remove', refEventId: users[sync.userId].eventId })
+                    onReact({
+                        type: 'remove',
+                        refEventId: users[sync.userId].eventId,
+                    })
                 } else {
                     onReact({ type: 'add', reaction })
                 }
@@ -424,7 +477,13 @@ const EncryptedMessage = () => {
         <div
             className={cn(
                 'flex rounded-sm border border-foreground/10 bg-muted px-4 py-2',
-                random < 0.2 ? 'w-3/4' : random < 0.4 ? 'w-2/4' : random < 0.6 ? 'w-1/4' : 'w-3/4',
+                random < 0.2
+                    ? 'w-3/4'
+                    : random < 0.4
+                      ? 'w-2/4'
+                      : random < 0.6
+                        ? 'w-1/4'
+                        : 'w-3/4',
             )}
         >
             <span className="animate-pulse text-sm text-muted-foreground">
@@ -456,7 +515,13 @@ const NewMessagesIndicator = () => {
     )
 }
 
-const ReplyingTo = ({ streamId, senderId }: { streamId: string; senderId: string }) => {
+const ReplyingTo = ({
+    streamId,
+    senderId,
+}: {
+    streamId: string
+    senderId: string
+}) => {
     const { username, displayName, userId } = useMember({
         streamId,
         userId: senderId,

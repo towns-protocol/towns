@@ -19,7 +19,9 @@ const createSpaceFormSchema = z.object({
     spaceName: z.string().min(1, { message: 'Space name is required' }),
 })
 
-export const CreateSpace = (props: { onCreateSpace: (spaceId: string) => void }) => {
+export const CreateSpace = (props: {
+    onCreateSpace: (spaceId: string) => void
+}) => {
     const { onCreateSpace } = props
     const { createSpace, isPending } = useCreateSpace()
     const signer = useEthersSigner()
@@ -45,10 +47,15 @@ export const CreateSpace = (props: { onCreateSpace: (spaceId: string) => void })
                     name="spaceName"
                     render={({ field }) => (
                         <FormItem>
-                            <FormDescription>This will be the name of your space.</FormDescription>
+                            <FormDescription>
+                                This will be the name of your space.
+                            </FormDescription>
                             <div className="flex gap-2">
                                 <FormControl>
-                                    <Input placeholder="Snowboarding Club" {...field} />
+                                    <Input
+                                        placeholder="Snowboarding Club"
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <Button type="submit">
                                     {isPending ? 'Creating...' : 'Create'}

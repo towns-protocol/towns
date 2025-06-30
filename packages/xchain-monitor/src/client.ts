@@ -18,7 +18,11 @@ export const baseChainWithCustomRpcUrl: Chain = {
     },
 }
 
-export type BlockType = GetBlockReturnType<typeof baseChainWithCustomRpcUrl, true, 'latest'>
+export type BlockType = GetBlockReturnType<
+    typeof baseChainWithCustomRpcUrl,
+    true,
+    'latest'
+>
 export type PublicClientType = PublicClient<
     HttpTransport,
     typeof baseChainWithCustomRpcUrl,

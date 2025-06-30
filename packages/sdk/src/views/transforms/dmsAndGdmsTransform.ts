@@ -49,7 +49,8 @@ export function dmsAndGdmsTransform(
                 userIds: streamMemberIds ?? [],
                 properties: gdmStream.metadata,
                 isDecryptingProperties:
-                    gdmStream.latestMetadataEventId !== gdmStream.metadataEventId,
+                    gdmStream.latestMetadataEventId !==
+                    gdmStream.metadataEventId,
                 lastEventCreatedAtEpochMs: gdmStream.lastEventCreatedAtEpochMs,
                 isGdm: true,
             } satisfies DmAndGdmModel
@@ -86,7 +87,9 @@ export function dmsAndGdmsTransform(
             return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
         }
         // Otherwise, sort by lastEventCreatedAtEpochMs
-        return a.lastEventCreatedAtEpochMs > b.lastEventCreatedAtEpochMs ? -1 : 1
+        return a.lastEventCreatedAtEpochMs > b.lastEventCreatedAtEpochMs
+            ? -1
+            : 1
     })
 
     if (prevResult && isEqual(prevResult, channels)) {

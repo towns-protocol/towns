@@ -32,11 +32,18 @@ import { getRoom } from './utils'
  * @param config - Configuration options for the action.
  * @returns The `redact` action and its loading state.
  */
-export const useAdminRedact = (streamId: string, config?: ActionConfig<Channel['adminRedact']>) => {
+export const useAdminRedact = (
+    streamId: string,
+    config?: ActionConfig<Channel['adminRedact']>,
+) => {
     const sync = useSyncAgent()
     const room = getRoom(sync, streamId)
     assert(!(room instanceof Space), 'Spaces dont have timeline to redact')
-    const { action: adminRedact, ...rest } = useAction(room, 'adminRedact', config)
+    const { action: adminRedact, ...rest } = useAction(
+        room,
+        'adminRedact',
+        config,
+    )
 
     return {
         adminRedact,

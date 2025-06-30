@@ -84,13 +84,21 @@ export default createConfig({
             chain: 'anvil',
         },
         SpaceFactory: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
+            abi: mergeAbis([
+                createSpaceFacetAbi,
+                tokenPausableFacetAbi,
+                swapFacetAbi,
+            ]),
             address: spaceFactory,
             startBlock,
             chain: 'anvil',
         },
         Space: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
+            abi: mergeAbis([
+                createSpaceFacetAbi,
+                tokenPausableFacetAbi,
+                swapFacetAbi,
+            ]),
             address: factory({
                 address: spaceFactory,
                 event: parseAbiItem([

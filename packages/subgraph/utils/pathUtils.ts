@@ -39,7 +39,10 @@ export function checkPath(
  * @param maxLevels - Maximum number of parent directories to check
  * @returns The correct relative path or null if not found
  */
-export function findRelativePath(targetDir: string, maxLevels: number = 5): string | null {
+export function findRelativePath(
+    targetDir: string,
+    maxLevels: number = 5,
+): string | null {
     const workingDir = process.cwd()
     console.log(`Working directory: ${workingDir}`)
     console.log(`Current directory (__dirname): ${__dirname}`)
@@ -50,7 +53,9 @@ export function findRelativePath(targetDir: string, maxLevels: number = 5): stri
         const testPath = path.resolve(__dirname, `${prefix}${targetDir}`)
         const exists = fs.existsSync(testPath)
 
-        console.log(`Testing path: ${testPath} - ${exists ? 'EXISTS' : 'NOT FOUND'}`)
+        console.log(
+            `Testing path: ${testPath} - ${exists ? 'EXISTS' : 'NOT FOUND'}`,
+        )
 
         if (exists) {
             return `${prefix}${targetDir}`

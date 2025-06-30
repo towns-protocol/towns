@@ -9,9 +9,15 @@ import { useSyncAgent } from './useSyncAgent'
  * @param config - Configuration options for the action.
  * @returns The `createSpace` action and its loading state.
  */
-export const useCreateSpace = (config: ActionConfig<Spaces['createSpace']> = {}) => {
+export const useCreateSpace = (
+    config: ActionConfig<Spaces['createSpace']> = {},
+) => {
     const sync = useSyncAgent()
-    const { action: createSpace, ...rest } = useAction(sync.spaces, 'createSpace', config)
+    const { action: createSpace, ...rest } = useAction(
+        sync.spaces,
+        'createSpace',
+        config,
+    )
 
     return {
         /**

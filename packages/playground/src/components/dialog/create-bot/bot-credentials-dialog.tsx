@@ -22,7 +22,11 @@ interface BotCredentialsDialogProps {
     data: BotCredentialsData | null
 }
 
-export const BotCredentialsDialog = ({ open, onOpenChange, data }: BotCredentialsDialogProps) => {
+export const BotCredentialsDialog = ({
+    open,
+    onOpenChange,
+    data,
+}: BotCredentialsDialogProps) => {
     if (!data) {
         return null
     }
@@ -38,19 +42,22 @@ JWT_SECRET=${data.jwtSecretBase64}`
                         Bot Created Successfully
                     </DialogTitle>
                     <DialogDescription>
-                        Your bot has been minted. The private credentials below are critical for
-                        your bot's operation.
+                        Your bot has been minted. The private credentials below
+                        are critical for your bot's operation.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                     <SecretInformationBanner>
-                        These private keys and secrets are shown only once and cannot be recovered.
+                        These private keys and secrets are shown only once and
+                        cannot be recovered.
                     </SecretInformationBanner>
 
                     <div className="flex flex-col gap-2 text-sm">
                         <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground">Environment Variables</p>
+                            <p className="text-muted-foreground">
+                                Environment Variables
+                            </p>
                             <CopyButton text={envContent} />
                         </div>
                         <textarea
@@ -72,11 +79,17 @@ JWT_SECRET=${data.jwtSecretBase64}`
                                 Next Steps:
                             </h4>
                             <ul className="list-inside list-disc space-y-1 text-blue-800 dark:text-blue-200">
-                                <li>Copy and securely store the App Private Data and JWT Secret</li>
-                                <li>Use these credentials to authenticate your bot application</li>
                                 <li>
-                                    Never share these secrets publicly or commit them to version
-                                    control
+                                    Copy and securely store the App Private Data
+                                    and JWT Secret
+                                </li>
+                                <li>
+                                    Use these credentials to authenticate your
+                                    bot application
+                                </li>
+                                <li>
+                                    Never share these secrets publicly or commit
+                                    them to version control
                                 </li>
                             </ul>
                         </div>

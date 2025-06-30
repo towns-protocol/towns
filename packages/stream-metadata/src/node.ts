@@ -29,144 +29,154 @@ process.title = 'stream-metadata'
 const logger = getLogger('server')
 
 logger.info(
-	{
-		instance: config.instance,
-		apm: config.apm,
-		version: config.version,
-		riverEnv: config.riverEnv,
-		chainId: config.web3Config.river.chainId,
-		port: config.port,
-		riverRegistry: config.web3Config.river.addresses.riverRegistry,
-		riverChainRpcUrl: config.riverChainRpcUrl,
-		baseChainRpcUrl: config.baseChainRpcUrl,
-		streamMetadataBaseUrl: config.streamMetadataBaseUrl,
-		cloudfront: config.cloudfront,
-		openSea: config.openSea ? { ...config.openSea, apiKey: '***' } : undefined,
-	},
-	'config',
+    {
+        instance: config.instance,
+        apm: config.apm,
+        version: config.version,
+        riverEnv: config.riverEnv,
+        chainId: config.web3Config.river.chainId,
+        port: config.port,
+        riverRegistry: config.web3Config.river.addresses.riverRegistry,
+        riverChainRpcUrl: config.riverChainRpcUrl,
+        baseChainRpcUrl: config.baseChainRpcUrl,
+        streamMetadataBaseUrl: config.streamMetadataBaseUrl,
+        cloudfront: config.cloudfront,
+        openSea: config.openSea
+            ? { ...config.openSea, apiKey: '***' }
+            : undefined,
+    },
+    'config',
 )
 
 /*
  * Server setup
  */
-export type Server = FastifyInstance<HTTPServer | HTTPSServer, IncomingMessage, ServerResponse>
+export type Server = FastifyInstance<
+    HTTPServer | HTTPSServer,
+    IncomingMessage,
+    ServerResponse
+>
 
 const server = Fastify({
-	logger: false,
-	genReqId: () => uuidv4(),
+    logger: false,
+    genReqId: () => uuidv4(),
 })
 
 server.addHook('onRequest', (request, reply, done) => {
-	request.log = logger.child({
-		req: {
-			id: request.id,
-			url: request.url,
-			query: request.query,
-			params: request.params,
-			routerPath: request.routeOptions.url,
-			method: request.method,
-			ip: request.ip,
-			ips: request.ips,
-		},
-	})
+    request.log = logger.child({
+        req: {
+            id: request.id,
+            url: request.url,
+            query: request.query,
+            params: request.params,
+            routerPath: request.routeOptions.url,
+            method: request.method,
+            ip: request.ip,
+            ips: request.ips,
+        },
+    })
 
-	request.log.info('incoming request')
+    request.log.info('incoming request')
 
-	done()
+    done()
 })
 
 server.addHook('onResponse', (request, reply, done) => {
-	request.log.info(
-		{
-			res: {
-				statusCode: reply.statusCode,
-				elapsedTime: reply.elapsedTime,
-				headers: {
-					'cache-control': reply.getHeader('cache-control'),
-				},
-			},
-		},
-		'request completed',
-	)
+    request.log.info(
+        {
+            res: {
+                statusCode: reply.statusCode,
+                elapsedTime: reply.elapsedTime,
+                headers: {
+                    'cache-control': reply.getHeader('cache-control'),
+                },
+            },
+        },
+        'request completed',
+    )
 
-	done()
+    done()
 })
 
 // for testability, pass server instance as an argument
 export async function registerPlugins(srv: Server) {
-	await srv.register(cors, {
-		origin: '*', // Allow any origin
-		methods: ['GET'], // Allowed HTTP methods
-	})
-	logger.info('CORS registered successfully')
+    await srv.register(cors, {
+        origin: '*', // Allow any origin
+        methods: ['GET'], // Allowed HTTP methods
+    })
+    logger.info('CORS registered successfully')
 }
 
 // for testability, pass server instance as an argument
 export function setupRoutes(srv: Server) {
-	/*
-	 * Routes
-	 */
+    /*
+     * Routes
+     */
 
-	// cached
-	srv.get('/media/:mediaStreamId', fetchMedia)
-	srv.get('/user/:userId/image', fetchUserProfileImage)
-	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
-	srv.get('/space/:spaceAddress/image/:eventId', fetchSpaceImage)
-	srv.get('/space/:spaceAddress', fetchSpaceMetadata)
-	srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata) // for fetching token info (i.e. openSea metadata)
-	srv.get('/user/:userId/bio', fetchUserBio)
-	srv.get('/user/:userId/tips', fetchUserTips)
+    // cached
+    srv.get('/media/:mediaStreamId', fetchMedia)
+    srv.get('/user/:userId/image', fetchUserProfileImage)
+    srv.get('/space/:spaceAddress/image', fetchSpaceImage)
+    srv.get('/space/:spaceAddress/image/:eventId', fetchSpaceImage)
+    srv.get('/space/:spaceAddress', fetchSpaceMetadata)
+    srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata) // for fetching token info (i.e. openSea metadata)
+    srv.get('/user/:userId/bio', fetchUserBio)
+    srv.get('/user/:userId/tips', fetchUserTips)
 
-	// not cached
-	srv.get('/health', checkHealth)
-	srv.get('/refreshStatus/:invalidationId', fetchRefreshStatus)
+    // not cached
+    srv.get('/health', checkHealth)
+    srv.get('/refreshStatus/:invalidationId', fetchRefreshStatus)
 
-	// should be rate-limited, but not yet
-	srv.get('/space/:spaceAddress/refresh', { onResponse: spaceRefreshOnResponse }, spaceRefresh)
-	srv.get('/user/:userId/refresh', userRefresh)
+    // should be rate-limited, but not yet
+    srv.get(
+        '/space/:spaceAddress/refresh',
+        { onResponse: spaceRefreshOnResponse },
+        spaceRefresh,
+    )
+    srv.get('/user/:userId/refresh', userRefresh)
 
-	// Fastify will return 404 for any unmatched routes
+    // Fastify will return 404 for any unmatched routes
 }
 
 // for testability, pass server instance as an argument
 export function getServerUrl(srv: Server) {
-	const addressInfo = srv.server.address()
-	const protocol = srv.server instanceof HTTPSServer ? 'https' : 'http'
-	const serverAddress =
-		typeof addressInfo === 'string'
-			? addressInfo
-			: `${addressInfo?.address}:${addressInfo?.port}`
-	return `${protocol}://${serverAddress}`
+    const addressInfo = srv.server.address()
+    const protocol = srv.server instanceof HTTPSServer ? 'https' : 'http'
+    const serverAddress =
+        typeof addressInfo === 'string'
+            ? addressInfo
+            : `${addressInfo?.address}:${addressInfo?.port}`
+    return `${protocol}://${serverAddress}`
 }
 
 process.on('SIGTERM', async () => {
-	try {
-		logger.warn('Received SIGTERM, shutting down server')
-		await server.close()
-		logger.info('Server closed gracefully')
-		process.exit(0)
-	} catch (error) {
-		logger.error(error, 'Error during server shutdown')
-		process.exit(1)
-	}
+    try {
+        logger.warn('Received SIGTERM, shutting down server')
+        await server.close()
+        logger.info('Server closed gracefully')
+        process.exit(0)
+    } catch (error) {
+        logger.error(error, 'Error during server shutdown')
+        process.exit(1)
+    }
 })
 
 async function main() {
-	try {
-		await registerPlugins(server)
-		setupRoutes(server)
-		addCacheControlCheck(server, {
-			skippedRoutes: ['/refresh', '/health', '/refreshStatus'],
-		})
-		await server.listen({
-			port: config.port,
-			host: config.host,
-		})
-		logger.info('Server started')
-	} catch (error) {
-		logger.error(error, 'Error starting server')
-		process.exit(1)
-	}
+    try {
+        await registerPlugins(server)
+        setupRoutes(server)
+        addCacheControlCheck(server, {
+            skippedRoutes: ['/refresh', '/health', '/refreshStatus'],
+        })
+        await server.listen({
+            port: config.port,
+            host: config.host,
+        })
+        logger.info('Server started')
+    } catch (error) {
+        logger.error(error, 'Error starting server')
+        process.exit(1)
+    }
 }
 
 void main()

@@ -45,13 +45,19 @@ export const UpdateMetadata = (props: {
     const { spaceId, use, channelId } = props
     const streamId = use === 'space' ? spaceId : channelId!
     const { username, displayName, ensAddress, nft } = useMyMember(streamId)
-    const { setUsername, isPending: isPendingUsername } = useSetUsername(streamId)
-    const { setDisplayName, isPending: isPendingDisplayName } = useSetDisplayName(streamId)
-    const { setEnsAddress, isPending: isPendingEnsAddress } = useSetEnsAddress(streamId)
+    const { setUsername, isPending: isPendingUsername } =
+        useSetUsername(streamId)
+    const { setDisplayName, isPending: isPendingDisplayName } =
+        useSetDisplayName(streamId)
+    const { setEnsAddress, isPending: isPendingEnsAddress } =
+        useSetEnsAddress(streamId)
     const { setNft, isPending: isPendingNft } = useSetNft(streamId)
 
     const isPending =
-        isPendingDisplayName || isPendingUsername || isPendingEnsAddress || isPendingNft
+        isPendingDisplayName ||
+        isPendingUsername ||
+        isPendingEnsAddress ||
+        isPendingNft
 
     const form = useForm<z.infer<typeof updateMetadataSchema>>({
         resolver: zodResolver(updateMetadataSchema),
@@ -78,9 +84,16 @@ export const UpdateMetadata = (props: {
                                 promises.push(setDisplayName(displayName))
                             }
                             if (ensAddress) {
-                                promises.push(setEnsAddress(ensAddress as Address))
+                                promises.push(
+                                    setEnsAddress(ensAddress as Address),
+                                )
                             }
-                            if (nft && nft.contractAddress && nft.tokenId && nft.chainId) {
+                            if (
+                                nft &&
+                                nft.contractAddress &&
+                                nft.tokenId &&
+                                nft.chainId
+                            ) {
                                 promises.push(
                                     setNft({
                                         contractAddress: nft.contractAddress,
@@ -177,7 +190,10 @@ export const UpdateMetadata = (props: {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit"> {isPending ? 'Updating...' : 'Update'}</Button>
+                    <Button type="submit">
+                        {' '}
+                        {isPending ? 'Updating...' : 'Update'}
+                    </Button>
                 </form>
             </Form>
         </Block>

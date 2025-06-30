@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { _impl_makeEvent_impl_, publicKeyToAddress, unpackStreamEnvelopes } from '../sign'
+import {
+    _impl_makeEvent_impl_,
+    publicKeyToAddress,
+    unpackStreamEnvelopes,
+} from '../sign'
 
 import {
     EncryptedData,
@@ -83,7 +87,10 @@ import {
     getFixedPricingModule,
     getDynamicPricingModule,
 } from '@towns-protocol/web3'
-import { RiverTimelineEvent, type TimelineEvent } from '../views/models/timelineTypes'
+import {
+    RiverTimelineEvent,
+    type TimelineEvent,
+} from '../views/models/timelineTypes'
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'
@@ -124,9 +131,16 @@ const getNextTestUrl = async (): Promise<{
                     seed
                         .split('')
                         .map((v) => v.charCodeAt(0))
-                        .reduce((a, v) => ((a + ((a << 7) + (a << 3))) ^ v) & 0xffff) %
-                    testUrls.length
-                log('getNextTestUrl, setting based on test name=', seed, ' index=', curTestUrl)
+                        .reduce(
+                            (a, v) =>
+                                ((a + ((a << 7) + (a << 3))) ^ v) & 0xffff,
+                        ) % testUrls.length
+                log(
+                    'getNextTestUrl, setting based on test name=',
+                    seed,
+                    ' index=',
+                    curTestUrl,
+                )
             }
         }
         curTestUrl = (curTestUrl + 1) % testUrls.length
@@ -188,7 +202,10 @@ export async function erc1155CheckOp(
     }
 }
 
-export async function erc20CheckOp(contractName: string, threshold: bigint): Promise<Operation> {
+export async function erc20CheckOp(
+    contractName: string,
+    threshold: bigint,
+): Promise<Operation> {
     const contractAddress = await TestERC20.getContractAddress(contractName)
     return {
         opType: OperationType.CHECK,
@@ -199,8 +216,12 @@ export async function erc20CheckOp(contractName: string, threshold: bigint): Pro
     }
 }
 
-export async function mockCrossChainCheckOp(contractName: string, id: bigint): Promise<Operation> {
-    const contractAddress = await TestCrossChainEntitlement.getContractAddress(contractName)
+export async function mockCrossChainCheckOp(
+    contractName: string,
+    id: bigint,
+): Promise<Operation> {
+    const contractAddress =
+        await TestCrossChainEntitlement.getContractAddress(contractName)
     return {
         opType: OperationType.CHECK,
         checkType: CheckOperationType.ISENTITLED,
@@ -239,14 +260,17 @@ export type SignerContextWithWallet = SignerContext & { wallet: ethers.Wallet }
  * @returns a random user context
  * Done using a worker thread to avoid blocking the main thread
  */
-export const makeRandomUserContext = async (): Promise<SignerContextWithWallet> => {
-    const wallet = ethers.Wallet.createRandom()
-    log('makeRandomUserContext', wallet.address)
-    return await makeUserContextFromWallet(wallet)
-}
+export const makeRandomUserContext =
+    async (): Promise<SignerContextWithWallet> => {
+        const wallet = ethers.Wallet.createRandom()
+        log('makeRandomUserContext', wallet.address)
+        return await makeUserContextFromWallet(wallet)
+    }
 
 export const makeRandomUserAddress = (): Uint8Array => {
-    return publicKeyToAddress(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey(), false))
+    return publicKeyToAddress(
+        secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey(), false),
+    )
 }
 
 export const makeUserContextFromWallet = async (
@@ -254,10 +278,17 @@ export const makeUserContextFromWallet = async (
 ): Promise<SignerContextWithWallet> => {
     const userPrimaryWallet = wallet
     const delegateWallet = ethers.Wallet.createRandom()
-    const creatorAddress = publicKeyToAddress(bin_fromHexString(userPrimaryWallet.publicKey))
+    const creatorAddress = publicKeyToAddress(
+        bin_fromHexString(userPrimaryWallet.publicKey),
+    )
     log('makeRandomUserContext', userIdFromAddress(creatorAddress))
 
-    return { ...(await makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })), wallet }
+    return {
+        ...(await makeSignerContext(userPrimaryWallet, delegateWallet, {
+            days: 1,
+        })),
+        wallet,
+    }
 }
 
 export interface TestClient extends Client {
@@ -272,7 +303,9 @@ export interface TestClientOpts extends ClientOptions {
     deviceId?: string
 }
 
-export const cloneTestClient = async (client: TestClient): Promise<TestClient> => {
+export const cloneTestClient = async (
+    client: TestClient,
+): Promise<TestClient> => {
     return makeTestClient({
         ...client.opts,
         context: {
@@ -283,9 +316,12 @@ export const cloneTestClient = async (client: TestClient): Promise<TestClient> =
     })
 }
 
-export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient> => {
+export const makeTestClient = async (
+    opts?: TestClientOpts,
+): Promise<TestClient> => {
     const context = opts?.context ?? (await makeRandomUserContext())
-    const entitlementsDelegate = opts?.entitlementsDelegate ?? new MockEntitlementsDelegate()
+    const entitlementsDelegate =
+        opts?.entitlementsDelegate ?? new MockEntitlementsDelegate()
     const deviceId = opts?.deviceId ? `-${opts.deviceId}` : `-${genId(5)}`
     const userId = userIdFromAddress(context.creatorAddress)
     const dbName = `database-${userId}${deviceId}`
@@ -294,14 +330,20 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
     const rpcClient = await makeTestRpcClient()
-    const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
-        ...opts,
-        persistenceStoreName: persistenceDbName,
-        streamOpts: {
-            useModifySync: true,
-            useSharedSyncer: true,
+    const client = new Client(
+        context,
+        rpcClient,
+        cryptoStore,
+        entitlementsDelegate,
+        {
+            ...opts,
+            persistenceStoreName: persistenceDbName,
+            streamOpts: {
+                useModifySync: true,
+                useSharedSyncer: true,
+            },
         },
-    }) as TestClient
+    ) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
     return client
@@ -322,9 +364,15 @@ export async function setupWalletsAndContexts() {
         makeUserContextFromWallet(carolsWallet),
     ])
 
-    const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
+    const aliceProvider = new LocalhostWeb3Provider(
+        baseConfig.rpcUrl,
+        alicesWallet,
+    )
     const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
-    const carolProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, carolsWallet)
+    const carolProvider = new LocalhostWeb3Provider(
+        baseConfig.rpcUrl,
+        carolsWallet,
+    )
 
     await Promise.all([
         aliceProvider.fundWallet(),
@@ -333,8 +381,14 @@ export async function setupWalletsAndContexts() {
     ])
 
     const bobSpaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
-    const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
-    const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
+    const aliceSpaceDapp = createSpaceDapp(
+        aliceProvider,
+        baseConfig.chainConfig,
+    )
+    const carolSpaceDapp = createSpaceDapp(
+        carolProvider,
+        baseConfig.chainConfig,
+    )
 
     // create a user
     const riverConfig = makeRiverConfig()
@@ -509,7 +563,9 @@ export async function createSpaceAndDefaultChannel(
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
     await waitFor(() =>
-        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true),
+        expect(
+            userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+        ).toBe(true),
     )
 
     const channelReturnVal = await client.createChannel(
@@ -520,7 +576,12 @@ export async function createSpaceAndDefaultChannel(
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
     await waitFor(() =>
-        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true),
+        expect(
+            userStreamView.userContent.isMember(
+                channelId,
+                MembershipOp.SO_JOIN,
+            ),
+        ).toBe(true),
     )
 
     return {
@@ -560,7 +621,9 @@ export async function createVersionedSpaceFromMembership(
                     users: membership.requirements.users,
                     syncEntitlements: membership.requirements.syncEntitlements,
                     ruleData: convertRuleDataV2ToV1(
-                        decodeRuleDataV2(membership.requirements.ruleData as `0x${string}`),
+                        decodeRuleDataV2(
+                            membership.requirements.ruleData as `0x${string}`,
+                        ),
                     ),
                 },
             } as LegacyMembershipStruct
@@ -586,7 +649,8 @@ export async function createVersionedSpaceFromMembership(
                     syncEntitlements: false,
                     ruleData: encodeRuleDataV2(
                         convertRuleDataV1ToV2(
-                            membership.requirements.ruleData as IRuleEntitlementBase.RuleDataStruct,
+                            membership.requirements
+                                .ruleData as IRuleEntitlementBase.RuleDataStruct,
                         ),
                     ),
                 },
@@ -627,7 +691,8 @@ export async function createVersionedSpace(
                     settings: createSpaceParams.membership.settings,
                     permissions: createSpaceParams.membership.permissions,
                     requirements: {
-                        everyone: createSpaceParams.membership.requirements.everyone,
+                        everyone:
+                            createSpaceParams.membership.requirements.everyone,
                         users: [],
                         syncEntitlements: false,
                         ruleData: encodeRuleDataV2(
@@ -675,7 +740,11 @@ export async function createUserStreamAndSyncClient(
             membership: membershipInfo,
         }
     }
-    const transaction = await createVersionedSpace(spaceDapp, createSpaceParams, wallet)
+    const transaction = await createVersionedSpace(
+        spaceDapp,
+        createSpaceParams,
+        wallet,
+    )
     const receipt = await transaction.wait()
     expect(receipt.status).toEqual(1)
     const spaceAddress = spaceDapp.getSpaceAddress(receipt, wallet.address)
@@ -712,15 +781,24 @@ export async function expectUserCanJoin(
     await client.initializeUser({ spaceId })
     client.startSync()
 
-    await waitFor(() => expect(client.streams.syncState).toBe(SyncState.Syncing))
+    await waitFor(() =>
+        expect(client.streams.syncState).toBe(SyncState.Syncing),
+    )
 
     await expect(client.joinStream(spaceId)).resolves.not.toThrow()
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
 
     const userStreamView = client.stream(client.userStreamId!)!.view
     await waitFor(() => {
-        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
-        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+        expect(
+            userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+        ).toBe(true)
+        expect(
+            userStreamView.userContent.isMember(
+                channelId,
+                MembershipOp.SO_JOIN,
+            ),
+        ).toBe(true)
     })
 }
 
@@ -759,7 +837,8 @@ export async function zeroPriceWithLimitedAllocationMembershipStruct(
     client: Client,
     opts: { freeAllocation: number },
 ): Promise<LegacyMembershipStruct> {
-    const { fixedPricingModuleAddress, price } = await getFreeSpacePricingSetup(spaceDapp)
+    const { fixedPricingModuleAddress, price } =
+        await getFreeSpacePricingSetup(spaceDapp)
     const { freeAllocation } = opts
     const settings = {
         settings: {
@@ -864,7 +943,9 @@ export async function getFreeSpacePricingSetup(spaceDapp: SpaceDapp): Promise<{
 export function twoNftRuleData(
     nft1Address: string,
     nft2Address: string,
-    logOpType: LogicalOperationType.AND | LogicalOperationType.OR = LogicalOperationType.AND,
+    logOpType:
+        | LogicalOperationType.AND
+        | LogicalOperationType.OR = LogicalOperationType.AND,
 ): IRuleEntitlementV2Base.RuleDataV2Struct {
     const leftOperation: Operation = {
         opType: OperationType.CHECK,
@@ -965,7 +1046,10 @@ export function waitForValue<T>(
 ): Promise<T> {
     const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
-        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
+        'waitFor timed out after ' +
+            options.timeoutMS.toString() +
+            'ms\n' +
+            tmpError.stack,
     )
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
@@ -1023,7 +1107,10 @@ export function waitFor<T extends void | boolean>(
 ): Promise<T> {
     const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
-        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
+        'waitFor timed out after ' +
+            options.timeoutMS.toString() +
+            'ms\n' +
+            tmpError.stack,
     )
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
@@ -1108,7 +1195,10 @@ export async function waitForSyncStreamsMessage(
                 for (const e of env) {
                     if (e.event.payload.case === 'channelPayload') {
                         const p = e.event.payload.value.content
-                        if (p.case === 'message' && p.value.ciphertext === message) {
+                        if (
+                            p.case === 'message' &&
+                            p.value.ciphertext === message
+                        ) {
                             return true
                         }
                     }
@@ -1135,11 +1225,18 @@ export function getTimelineMessagePayload(event?: TimelineEvent) {
     return undefined
 }
 
-export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
+export function createEventDecryptedPromise(
+    client: Client,
+    expectedMessageText: string,
+) {
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(
         'eventDecrypted',
-        (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
+        (
+            streamId: string,
+            contentKind: SnapshotCaseType,
+            event: TimelineEvent,
+        ): void => {
             recipientReceivesMessageWithoutError.runAndDone(() => {
                 expect(event.content).toBeDefined()
                 check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
@@ -1155,7 +1252,9 @@ export function isValidEthAddress(address: string): boolean {
     return ethAddressRegex.test(address)
 }
 
-export function getNftRuleData(testNftAddress: Address): IRuleEntitlementV2Base.RuleDataV2Struct {
+export function getNftRuleData(
+    testNftAddress: Address,
+): IRuleEntitlementV2Base.RuleDataV2Struct {
     return createExternalNFTStruct([testNftAddress])
 }
 
@@ -1174,7 +1273,9 @@ export async function createRole(
     roleName: string,
     permissions: Permission[],
     users: string[],
-    ruleData: IRuleEntitlementBase.RuleDataStruct | IRuleEntitlementV2Base.RuleDataV2Struct,
+    ruleData:
+        | IRuleEntitlementBase.RuleDataStruct
+        | IRuleEntitlementV2Base.RuleDataV2Struct,
     signer: ethers.Signer,
 ): Promise<CreateRoleContext> {
     let txn: ethers.ContractTransaction | undefined = undefined
@@ -1215,7 +1316,10 @@ export async function createRole(
         }
     }
 
-    const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(spaceId, txn)
+    const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(
+        spaceId,
+        txn,
+    )
     return { roleId, error: roleError }
 }
 
@@ -1267,7 +1371,14 @@ export async function createChannel(
 
     const channelId = makeUniqueChannelStreamId(spaceId)
     try {
-        txn = await spaceDapp.createChannel(spaceId, channelName, '', channelId, roleIds, signer)
+        txn = await spaceDapp.createChannel(
+            spaceId,
+            channelName,
+            '',
+            channelId,
+            roleIds,
+            signer,
+        )
     } catch (err) {
         error = spaceDapp.parseSpaceError(spaceId, err)
         return { channelId: undefined, error }
@@ -1328,7 +1439,9 @@ export async function createTownWithRequirements(requirements: {
         bob: bobsWallet.address,
         carol: carolsWallet.address,
     }
-    requirements.users = requirements.users.map((user) => userNameToWallet[user])
+    requirements.users = requirements.users.map(
+        (user) => userNameToWallet[user],
+    )
 
     const membershipInfo: MembershipStruct = {
         settings: {
@@ -1405,7 +1518,9 @@ export async function expectUserCannotJoinSpace(
         getXchainConfigForTesting(),
     )
     expect(entitledWallet).toBeUndefined()
-    await expect(client.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
+    await expect(client.joinStream(spaceId)).rejects.toThrow(
+        /PERMISSION_DENIED/,
+    )
 }
 
 // pass in users as 'alice', 'bob', 'carol' - b/c their wallets are created here
@@ -1542,9 +1657,13 @@ export async function expectUserCanJoinChannel(
 
     // Stream node should allow the join
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
-    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))).view
+    const userStreamView = (
+        await client.waitForStream(makeUserStreamId(client.userId))
+    ).view
     // Wait for alice's user stream to have the join
-    await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
+    await waitFor(() =>
+        userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+    )
 }
 
 export async function expectUserCannotJoinChannel(
@@ -1565,7 +1684,9 @@ export async function expectUserCannotJoinChannel(
     ).resolves.toBeFalsy()
 
     // Stream node should not allow the join
-    await expect(client.joinStream(channelId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+    await expect(client.joinStream(channelId)).rejects.toThrow(
+        /7:PERMISSION_DENIED/,
+    )
 }
 
 export const findMessageByText = (
@@ -1586,10 +1707,13 @@ export function extractBlockchainTransactionTransferEvents(
         .map((e) => {
             if (
                 e.remoteEvent?.event.payload.case === 'userPayload' &&
-                e.remoteEvent?.event.payload.value.content.case === 'blockchainTransaction' &&
-                e.remoteEvent?.event.payload.value.content.value.content.case === 'tokenTransfer'
+                e.remoteEvent?.event.payload.value.content.case ===
+                    'blockchainTransaction' &&
+                e.remoteEvent?.event.payload.value.content.value.content
+                    .case === 'tokenTransfer'
             ) {
-                return e.remoteEvent?.event.payload.value.content.value.content.value
+                return e.remoteEvent?.event.payload.value.content.value.content
+                    .value
             }
             return undefined
         })

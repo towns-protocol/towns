@@ -1,6 +1,10 @@
 import { ethers } from 'ethers'
 
-import { Address, EntitlementModuleType, EntitlementStruct } from '../../types/ContractTypes'
+import {
+    Address,
+    EntitlementModuleType,
+    EntitlementStruct,
+} from '../../types/ContractTypes'
 import { IRuleEntitlementBase } from './RuleEntitlementShim'
 import { IRuleEntitlementV2Base } from './RuleEntitlementV2Shim'
 import {
@@ -23,7 +27,10 @@ export function encodeUsers(users: string[] | Address[]) {
 
 export function decodeUsers(encodedData: string): string[] {
     const abiCoder = ethers.utils.defaultAbiCoder
-    const decodedData = abiCoder.decode([UserAddressesEncoding], encodedData) as string[][]
+    const decodedData = abiCoder.decode(
+        [UserAddressesEncoding],
+        encodedData,
+    ) as string[][]
     let u: string[] = []
     if (decodedData.length) {
         // decoded value is in element 0 of the array
@@ -68,11 +75,12 @@ export function createRuleEntitlementV2Struct(
 export function convertRuleDataV1ToV2(
     ruleData: IRuleEntitlementBase.RuleDataStruct,
 ): IRuleEntitlementV2Base.RuleDataV2Struct {
-    const operations: IRuleEntitlementBase.OperationStruct[] = ruleData.operations.map(
-        (op): IRuleEntitlementV2Base.OperationStruct => {
-            return { ...op }
-        },
-    )
+    const operations: IRuleEntitlementBase.OperationStruct[] =
+        ruleData.operations.map(
+            (op): IRuleEntitlementV2Base.OperationStruct => {
+                return { ...op }
+            },
+        )
     const logicalOperations = ruleData.logicalOperations.map(
         (op): IRuleEntitlementV2Base.LogicalOperationStruct => {
             return { ...op }
@@ -85,7 +93,9 @@ export function convertRuleDataV1ToV2(
                 case CheckOperationType.ERC20:
                 case CheckOperationType.ERC721:
                 case CheckOperationType.ETH_BALANCE: {
-                    const threshold = ethers.BigNumber.from(op.threshold).toBigInt()
+                    const threshold = ethers.BigNumber.from(
+                        op.threshold,
+                    ).toBigInt()
                     return {
                         opType: op.opType,
                         chainId: op.chainId,
@@ -119,11 +129,12 @@ export function convertRuleDataV1ToV2(
 export function convertRuleDataV2ToV1(
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
 ): IRuleEntitlementBase.RuleDataStruct {
-    const operations: IRuleEntitlementBase.OperationStruct[] = ruleData.operations.map(
-        (op): IRuleEntitlementV2Base.OperationStruct => {
-            return { ...op }
-        },
-    )
+    const operations: IRuleEntitlementBase.OperationStruct[] =
+        ruleData.operations.map(
+            (op): IRuleEntitlementV2Base.OperationStruct => {
+                return { ...op }
+            },
+        )
     const logicalOperations = ruleData.logicalOperations.map(
         (op): IRuleEntitlementV2Base.LogicalOperationStruct => {
             return { ...op }
@@ -136,7 +147,9 @@ export function convertRuleDataV2ToV1(
                 case CheckOperationType.ERC20:
                 case CheckOperationType.ERC721:
                 case CheckOperationType.ETH_BALANCE: {
-                    const { threshold } = decodeThresholdParams(op.params as Hex)
+                    const { threshold } = decodeThresholdParams(
+                        op.params as Hex,
+                    )
                     return {
                         opType: op.opType,
                         chainId: op.chainId,
@@ -255,10 +268,11 @@ export async function createEntitlementStruct(
     }
 
     if (ruleData.operations.length > 0) {
-        const ruleEntitlement: EntitlementStruct = createRuleEntitlementV2Struct(
-            ruleEntitlementAddress as Address,
-            ruleData,
-        )
+        const ruleEntitlement: EntitlementStruct =
+            createRuleEntitlementV2Struct(
+                ruleEntitlementAddress as Address,
+                ruleData,
+            )
         entitlements.push(ruleEntitlement)
     }
     // return the converted entitlements

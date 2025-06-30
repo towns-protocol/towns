@@ -17,25 +17,27 @@ describe('streamStateView_User', () => {
         await expect(bob.createSpace(spaceId)).resolves.not.toThrow()
         await expect(bob.waitForStream(spaceId)).resolves.not.toThrow()
 
-        await expect(bob.inviteUser(spaceId, alice.userId)).resolves.not.toThrow()
+        await expect(
+            bob.inviteUser(spaceId, alice.userId),
+        ).resolves.not.toThrow()
         const aliceUserStream = await alice.waitForStream(alice.userStreamId!)
         await waitFor(
             () =>
-                aliceUserStream.view.userContent.streamMemberships[spaceId]?.op ===
-                MembershipOp.SO_INVITE,
+                aliceUserStream.view.userContent.streamMemberships[spaceId]
+                    ?.op === MembershipOp.SO_INVITE,
         )
         await expect(alice.joinStream(spaceId)).resolves.not.toThrow()
         await waitFor(
             () =>
-                aliceUserStream.view.userContent.streamMemberships[spaceId]?.op ===
-                MembershipOp.SO_JOIN,
+                aliceUserStream.view.userContent.streamMemberships[spaceId]
+                    ?.op === MembershipOp.SO_JOIN,
         )
 
         await expect(alice.leaveStream(spaceId)).resolves.not.toThrow()
         await waitFor(
             () =>
-                aliceUserStream.view.userContent.streamMemberships[spaceId]?.op ===
-                MembershipOp.SO_LEAVE,
+                aliceUserStream.view.userContent.streamMemberships[spaceId]
+                    ?.op === MembershipOp.SO_LEAVE,
         )
 
         await bob.stop()

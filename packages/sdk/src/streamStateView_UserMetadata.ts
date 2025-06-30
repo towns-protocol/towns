@@ -85,12 +85,17 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userMetadataPayload')
-        const payload: UserMetadataPayload = event.remoteEvent.event.payload.value
+        const payload: UserMetadataPayload =
+            event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
             case 'encryptionDevice':
-                this.addUserDeviceKey(payload.content.value, encryptionEmitter, stateEmitter)
+                this.addUserDeviceKey(
+                    payload.content.value,
+                    encryptionEmitter,
+                    stateEmitter,
+                )
                 break
             case 'profileImage':
                 this.addProfileImage(payload.content.value, stateEmitter)
@@ -114,21 +119,38 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
             deviceKey: value.deviceKey,
             fallbackKey: value.fallbackKey,
         } satisfies UserDevice
-        const existing = this.deviceKeys.findIndex((x) => x.deviceKey === device.deviceKey)
+        const existing = this.deviceKeys.findIndex(
+            (x) => x.deviceKey === device.deviceKey,
+        )
         if (existing >= 0) {
             this.deviceKeys.splice(existing, 1)
         }
         this.deviceKeys.push(device)
-        encryptionEmitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
-        stateEmitter?.emit('userDeviceKeysUpdated', this.streamId, this.deviceKeys)
+        encryptionEmitter?.emit(
+            'userDeviceKeyMessage',
+            this.streamId,
+            this.streamCreatorId,
+            device,
+        )
+        stateEmitter?.emit(
+            'userDeviceKeysUpdated',
+            this.streamId,
+            this.deviceKeys,
+        )
     }
 
-    private addProfileImage(data: EncryptedData, stateEmitter?: TypedEmitter<StreamStateEvents>) {
+    private addProfileImage(
+        data: EncryptedData,
+        stateEmitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         this.encryptedProfileImage = data
         stateEmitter?.emit('userProfileImageUpdated', this.streamId)
     }
 
-    private addBio(data: EncryptedData, stateEmitter?: TypedEmitter<StreamStateEvents>) {
+    private addBio(
+        data: EncryptedData,
+        stateEmitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         this.encryptedBio = data
         stateEmitter?.emit('userBioUpdated', this.streamId)
     }
@@ -143,7 +165,10 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
                 image: this.decrypt(
                     encryptedData,
                     (decrypted) => {
-                        const profileImage = fromBinary(ChunkedMediaSchema, decrypted)
+                        const profileImage = fromBinary(
+                            ChunkedMediaSchema,
+                            decrypted,
+                        )
                         this.profileImage = profileImage
                         return profileImage
                     },
@@ -177,7 +202,10 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
                 bio: this.decrypt(
                     encryptedData,
                     (plaintext) => {
-                        const bioPlaintext = fromBinary(UserBioSchema, plaintext)
+                        const bioPlaintext = fromBinary(
+                            UserBioSchema,
+                            plaintext,
+                        )
                         this.bio = bioPlaintext
                         return bioPlaintext
                     },

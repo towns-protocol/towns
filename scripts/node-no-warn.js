@@ -8,10 +8,16 @@ var path = require('path')
 var os = require('os')
 var fs = require('fs')
 
-if (process.env.NODE_EXTRA_CA_CERTS === undefined || process.env.NODE_EXTRA_CA_CERTS === '') {
+if (
+    process.env.NODE_EXTRA_CA_CERTS === undefined ||
+    process.env.NODE_EXTRA_CA_CERTS === ''
+) {
     console.log('ERROR: NODE_EXTRA_CA_CERTS must be set')
     // Next line only works for node subprocesses, it's too late for the current process.
-    process.env.NODE_EXTRA_CA_CERTS = path.join(os.homedir(), 'river-ca-cert.pem')
+    process.env.NODE_EXTRA_CA_CERTS = path.join(
+        os.homedir(),
+        'river-ca-cert.pem',
+    )
 } else {
     if (!fs.existsSync(process.env.NODE_EXTRA_CA_CERTS)) {
         console.log(

@@ -10,13 +10,16 @@ dotenv.config({
 const IntStringSchema = z.string().regex(/^[0-9]+$/)
 const BoolStringSchema = z.string().regex(/^(true|false)$/)
 
-const NumberFromIntStringSchema = IntStringSchema.transform((str) => parseInt(str, 10))
+const NumberFromIntStringSchema = IntStringSchema.transform((str) =>
+    parseInt(str, 10),
+)
 const BoolFromStringSchema = BoolStringSchema.transform((str) => str === 'true')
 
 const envMainSchema = z.object({
     RIVER_ENV: z.string(),
     INITIAL_BLOCK_NUM: z.string().transform((str) => BigInt(str)),
-    TRANSACTION_VALID_BLOCKS: NumberFromIntStringSchema.optional().default('20'),
+    TRANSACTION_VALID_BLOCKS:
+        NumberFromIntStringSchema.optional().default('20'),
     BASE_PROVIDER_URL: z.string(),
     LOG_LEVEL: z.string().optional().default('info'),
     LOG_PRETTY: BoolFromStringSchema.optional().default('false'),

@@ -11,7 +11,11 @@ import { useSyncAgent } from './useSyncAgent'
  */
 export const useCreateDm = (config?: ActionConfig<Dms['createDM']>) => {
     const sync = useSyncAgent()
-    const { action: createDM, ...rest } = useAction(sync.dms, 'createDM', config)
+    const { action: createDM, ...rest } = useAction(
+        sync.dms,
+        'createDM',
+        config,
+    )
 
     return {
         /**

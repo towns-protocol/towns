@@ -157,11 +157,14 @@ class StreamQueues {
         const counts = Array.from(this.streams.entries()).reduce(
             (acc, [_, stream]) => {
                 acc['encryptedContent'] =
-                    (acc['encryptedContent'] ?? 0) + stream.encryptedContent.length
+                    (acc['encryptedContent'] ?? 0) +
+                    stream.encryptedContent.length
                 acc['streamsMissingKeys'] =
-                    (acc['streamsMissingKeys'] ?? 0) + (stream.isMissingKeys ? 1 : 0)
+                    (acc['streamsMissingKeys'] ?? 0) +
+                    (stream.isMissingKeys ? 1 : 0)
                 acc['keySolicitations'] =
-                    (acc['keySolicitations'] ?? 0) + stream.keySolicitations.length
+                    (acc['keySolicitations'] ?? 0) +
+                    stream.keySolicitations.length
                 return acc
             },
             {} as Record<string, number>,
@@ -202,7 +205,10 @@ export abstract class BaseDecryptionExtensions {
     private upToDateStreams = new Set<string>()
     private highPriorityIds: Set<string> = new Set()
     private recentStreamIds: string[] = []
-    private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
+    private decryptionFailures: Record<
+        string,
+        Record<string, EncryptedContentItem[]>
+    > = {} // streamId: sessionId: EncryptedContentItem[]
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
     private delayMs: number = 1
@@ -243,8 +249,12 @@ export abstract class BaseDecryptionExtensions {
         const shortKey = shortenHexString(userDevice.deviceKey)
         const logId = `${inLogId}:${shortKey}`
         this.log = {
-            debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
-            info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
+            debug: dlog('csb:decryption:debug', {
+                defaultEnabled: false,
+            }).extend(logId),
+            info: dlog('csb:decryption', { defaultEnabled: true }).extend(
+                logId,
+            ),
             error: dlogError('csb:decryption:error').extend(logId),
         }
         this.log.debug('new DecryptionExtensions', { userDevice })
@@ -260,21 +270,35 @@ export abstract class BaseDecryptionExtensions {
         encryptedData: EncryptedData,
     ): Promise<void>
     public abstract downloadNewMessages(): Promise<void>
-    public abstract getKeySolicitations(streamId: string): KeySolicitationContent[]
+    public abstract getKeySolicitations(
+        streamId: string,
+    ): KeySolicitationContent[]
     public abstract hasStream(streamId: string): boolean
     public abstract isUserEntitledToKeyExchange(
         streamId: string,
         userId: string,
         opts?: { skipOnChainValidation: boolean },
     ): Promise<boolean>
-    public abstract isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string }
-    public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
-    public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
-    public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
+    public abstract isValidEvent(item: KeySolicitationItem): {
+        isValid: boolean
+        reason?: string
+    }
+    public abstract isUserInboxStreamUpToDate(
+        upToDateStreams: Set<string>,
+    ): boolean
+    public abstract onDecryptionError(
+        item: EncryptedContentItem,
+        err: DecryptionSessionError,
+    ): void
+    public abstract sendKeySolicitation(
+        args: KeySolicitationData,
+    ): Promise<void>
     public abstract sendKeyFulfillment(
         args: KeyFulfilmentData,
     ): Promise<{ error?: AddEventResponse_Error }>
-    public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
+    public abstract encryptAndShareGroupSessions(
+        args: GroupSessionsData,
+    ): Promise<void>
     public abstract shouldPauseTicking(): boolean
     /**
      * uploadDeviceKeys
@@ -304,7 +328,11 @@ export abstract class BaseDecryptionExtensions {
         encryptedData: EncryptedData,
     ): void {
         // dms, channels, gdms ("we're in the wrong package")
-        if (streamId.startsWith('20') || streamId.startsWith('88') || streamId.startsWith('77')) {
+        if (
+            streamId.startsWith('20') ||
+            streamId.startsWith('88') ||
+            streamId.startsWith('77')
+        ) {
             this.recentStreamIds.push(streamId)
             if (this.recentStreamIds.length > this.numRecentStreamIds) {
                 this.recentStreamIds.shift()
@@ -331,9 +359,10 @@ export abstract class BaseDecryptionExtensions {
     ): void {
         const streamQueue = this.streamQueues.getQueue(streamId)
         streamQueue.keySolicitations = []
-        this.mainQueues.ownKeySolicitations = this.mainQueues.ownKeySolicitations.filter(
-            (x) => x.streamId !== streamId,
-        )
+        this.mainQueues.ownKeySolicitations =
+            this.mainQueues.ownKeySolicitations.filter(
+                (x) => x.streamId !== streamId,
+            )
         for (const member of members) {
             const { userId: fromUserId, userAddress: fromUserAddress } = member
             for (const keySolicitation of member.solicitations) {
@@ -353,7 +382,11 @@ export abstract class BaseDecryptionExtensions {
                     fromUserAddress,
                     solicitation: keySolicitation,
                     respondAfter:
-                        Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                        Date.now() +
+                        this.getRespondDelayMSForKeySolicitation(
+                            streamId,
+                            fromUserId,
+                        ),
                     sigBundle,
                     hashStr: eventHashStr,
                 } satisfies KeySolicitationItem)
@@ -383,12 +416,16 @@ export abstract class BaseDecryptionExtensions {
 
         const index = selectedQueue.findIndex(
             (x) =>
-                x.streamId === streamId && x.solicitation.deviceKey === keySolicitation.deviceKey,
+                x.streamId === streamId &&
+                x.solicitation.deviceKey === keySolicitation.deviceKey,
         )
         if (index > -1) {
             selectedQueue.splice(index, 1)
         }
-        if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
+        if (
+            keySolicitation.sessionIds.length > 0 ||
+            keySolicitation.isNewDevice
+        ) {
             //this.log.debug('new key solicitation', { fromUserId, streamId, keySolicitation })
             streamQueue.keySolicitationsNeedsSort = true
             selectedQueue.push({
@@ -397,7 +434,11 @@ export abstract class BaseDecryptionExtensions {
                 fromUserAddress,
                 solicitation: keySolicitation,
                 respondAfter:
-                    Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    Date.now() +
+                    this.getRespondDelayMSForKeySolicitation(
+                        streamId,
+                        fromUserId,
+                    ),
                 sigBundle,
                 hashStr: eventHashStr,
             } satisfies KeySolicitationItem)
@@ -434,7 +475,10 @@ export abstract class BaseDecryptionExtensions {
     }
 
     public start(): void {
-        check(!this.started, 'start() called twice, please re-instantiate instead')
+        check(
+            !this.started,
+            'start() called twice, please re-instantiate instead',
+        )
         this.log.debug('starting')
         this.started = true
         // let the subclass override and do any custom startup tasks
@@ -485,7 +529,11 @@ export abstract class BaseDecryptionExtensions {
     private compareStreamIds(a: string, b: string): number {
         const recentStreamIds = new Set(this.recentStreamIds)
         return (
-            this.getPriorityForStream(a, this.highPriorityIds, recentStreamIds) -
+            this.getPriorityForStream(
+                a,
+                this.highPriorityIds,
+                recentStreamIds,
+            ) -
             this.getPriorityForStream(b, this.highPriorityIds, recentStreamIds)
         )
     }
@@ -512,7 +560,9 @@ export abstract class BaseDecryptionExtensions {
 
         if (Date.now() - this.lastPrintedAt > 30000) {
             this.log.info(
-                `status: ${this.status} queues: ${Object.entries(this.mainQueues)
+                `status: ${this.status} queues: ${Object.entries(
+                    this.mainQueues,
+                )
                     .map(([key, q]) => `${key}: ${q.length}`)
                     .join(', ')} ${this.streamQueues.toString()}`,
             )
@@ -529,7 +579,9 @@ export abstract class BaseDecryptionExtensions {
                 .slice(0, 4)
                 .join(', ')
             if (first4Priority.length > 0 || first4Blocked.length > 0) {
-                this.log.info(`priorityTasks: ${first4Priority} waitingFor: ${first4Blocked}`)
+                this.log.info(
+                    `priorityTasks: ${first4Priority} waitingFor: ${first4Blocked}`,
+                )
             }
             this.lastPrintedAt = Date.now()
         }
@@ -634,7 +686,9 @@ export abstract class BaseDecryptionExtensions {
      * process new group sessions that were sent to our to device stream inbox
      * re-enqueue any decryption failures with matching session id
      */
-    private async processNewGroupSession(sessionItem: NewGroupSessionItem): Promise<void> {
+    private async processNewGroupSession(
+        sessionItem: NewGroupSessionItem,
+    ): Promise<void> {
         const { streamId, sessions: session } = sessionItem
         // check if this message is to our device
         const ciphertext = session.ciphertexts[this.userDevice.deviceKey]
@@ -658,7 +712,11 @@ export abstract class BaseDecryptionExtensions {
         const neededKeyIndexs = []
         for (let i = 0; i < session.sessionIds.length; i++) {
             const sessionId = session.sessionIds[i]
-            const hasKeys = await this.crypto.hasSessionKey(streamId, sessionId, algorithm)
+            const hasKeys = await this.crypto.hasSessionKey(
+                streamId,
+                sessionId,
+                algorithm,
+            )
             if (!hasKeys) {
                 neededKeyIndexs.push(i)
             }
@@ -668,9 +726,15 @@ export abstract class BaseDecryptionExtensions {
             return
         }
         // decrypt the message
-        const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
+        const cleartext = await this.crypto.decryptWithDeviceKey(
+            ciphertext,
+            session.senderKey,
+        )
         const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
-        check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
+        check(
+            sessionKeys.keys.length === session.sessionIds.length,
+            'bad sessionKeys',
+        )
         // make group sessions
         const sessions = neededKeyIndexs.map(
             (i) =>
@@ -704,7 +768,10 @@ export abstract class BaseDecryptionExtensions {
         } catch (e) {
             // don't re-enqueue to prevent infinite loops if this session is truely corrupted
             // we will keep requesting it on each boot until it goes out of the scroll window
-            this.log.error('failed to import sessions', { sessionItem, error: e })
+            this.log.error('failed to import sessions', {
+                sessionItem,
+                error: e,
+            })
         }
         // if we processed them all, ack the stream
         if (this.mainQueues.newGroupSession.length === 0) {
@@ -716,10 +783,17 @@ export abstract class BaseDecryptionExtensions {
      * processEncryptedContentItem
      * try to decrypt encrytped content
      */
-    private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
+    private async processEncryptedContentItem(
+        item: EncryptedContentItem,
+    ): Promise<void> {
         this.log.debug('processEncryptedContentItem', item)
         try {
-            await this.decryptGroupEvent(item.streamId, item.eventId, item.kind, item.encryptedData)
+            await this.decryptGroupEvent(
+                item.streamId,
+                item.eventId,
+                item.kind,
+                item.encryptedData,
+            )
         } catch (err) {
             const sessionNotFound = isSessionNotFoundError(err)
 
@@ -732,28 +806,39 @@ export abstract class BaseDecryptionExtensions {
             if (sessionNotFound) {
                 const streamId = item.streamId
                 const sessionId =
-                    item.encryptedData.sessionId && item.encryptedData.sessionId.length > 0
+                    item.encryptedData.sessionId &&
+                    item.encryptedData.sessionId.length > 0
                         ? item.encryptedData.sessionId
                         : bin_toHexString(item.encryptedData.sessionIdBytes)
                 if (sessionId.length === 0) {
-                    this.log.error('session id length is 0 for failed decryption', {
-                        err,
-                        streamId: item.streamId,
-                        eventId: item.eventId,
-                    })
+                    this.log.error(
+                        'session id length is 0 for failed decryption',
+                        {
+                            err,
+                            streamId: item.streamId,
+                            eventId: item.eventId,
+                        },
+                    )
                     return
                 }
                 if (!this.decryptionFailures[streamId]) {
                     this.decryptionFailures[streamId] = { [sessionId]: [item] }
                 } else if (!this.decryptionFailures[streamId][sessionId]) {
                     this.decryptionFailures[streamId][sessionId] = [item]
-                } else if (!this.decryptionFailures[streamId][sessionId].includes(item)) {
+                } else if (
+                    !this.decryptionFailures[streamId][sessionId].includes(item)
+                ) {
                     this.decryptionFailures[streamId][sessionId].push(item)
                 }
                 const streamQueue = this.streamQueues.getQueue(streamId)
                 streamQueue.isMissingKeys = true
             } else {
-                this.log.info('failed to decrypt', err, 'streamId', item.streamId)
+                this.log.info(
+                    'failed to decrypt',
+                    err,
+                    'streamId',
+                    item.streamId,
+                )
             }
         }
     }
@@ -770,18 +855,34 @@ export abstract class BaseDecryptionExtensions {
         )
         // limit to 100 keys for now todo revisit https://linear.app/hnt-labs/issue/HNT-3936/revisit-how-we-limit-the-number-of-session-ids-that-we-request
         if (!missingSessionIds.length) {
-            this.log.debug('processing missing keys', streamId, 'no missing keys')
+            this.log.debug(
+                'processing missing keys',
+                streamId,
+                'no missing keys',
+            )
             return
         }
         if (!this.hasStream(streamId)) {
-            this.log.debug('processing missing keys', streamId, 'stream not found')
+            this.log.debug(
+                'processing missing keys',
+                streamId,
+                'stream not found',
+            )
             return
         }
-        const isEntitled = await this.isUserEntitledToKeyExchange(streamId, this.userId, {
-            skipOnChainValidation: true,
-        })
+        const isEntitled = await this.isUserEntitledToKeyExchange(
+            streamId,
+            this.userId,
+            {
+                skipOnChainValidation: true,
+            },
+        )
         if (!isEntitled) {
-            this.log.debug('processing missing keys', streamId, 'user is not member of stream')
+            this.log.debug(
+                'processing missing keys',
+                streamId,
+                'user is not member of stream',
+            )
             return
         }
         const solicitedEvents = this.getKeySolicitations(streamId)
@@ -790,7 +891,10 @@ export abstract class BaseDecryptionExtensions {
         )
         if (
             existingKeyRequest?.isNewDevice ||
-            sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)
+            sortedArraysEqual(
+                existingKeyRequest?.sessionIds ?? [],
+                missingSessionIds,
+            )
         ) {
             this.log.debug(
                 'processing missing keys already requested keys for this session',
@@ -821,7 +925,9 @@ export abstract class BaseDecryptionExtensions {
      * processKeySolicitation
      * process incoming key solicitations and send keys and key fulfillments
      */
-    private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
+    private async processKeySolicitation(
+        item: KeySolicitationItem,
+    ): Promise<void> {
         this.log.debug('processing key solicitation', item.streamId, item)
         const streamId = item.streamId
 
@@ -850,17 +956,18 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
-        const isUserEntitledToKeyExchange = await this.isUserEntitledToKeyExchange(
-            streamId,
-            item.fromUserId,
-        )
+        const isUserEntitledToKeyExchange =
+            await this.isUserEntitledToKeyExchange(streamId, item.fromUserId)
         if (!isUserEntitledToKeyExchange) {
             return
         }
 
         const allSessions: GroupEncryptionSession[] = []
         for (const sessionId of replySessionIds) {
-            const groupSession = await this.crypto.exportGroupSession(streamId, sessionId)
+            const groupSession = await this.crypto.exportGroupSession(
+                streamId,
+                sessionId,
+            )
             if (groupSession) {
                 allSessions.push(groupSession)
             }
@@ -888,7 +995,10 @@ export abstract class BaseDecryptionExtensions {
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
         if (error) {
-            if (!error.msg.includes('DUPLICATE_EVENT') && !error.msg.includes('NOT_FOUND')) {
+            if (
+                !error.msg.includes('DUPLICATE_EVENT') &&
+                !error.msg.includes('NOT_FOUND')
+            ) {
                 // duplicate events are expected, we can ignore them, others are not
                 this.log.error('failed to send key fulfillment', error)
             }
@@ -924,7 +1034,10 @@ export abstract class BaseDecryptionExtensions {
     /**
      * can be overridden to add a delay to the key solicitation response
      */
-    public getRespondDelayMSForKeySolicitation(_streamId: string, _userId: string): number {
+    public getRespondDelayMSForKeySolicitation(
+        _streamId: string,
+        _userId: string,
+    ): number {
         return 0
     }
 
@@ -933,7 +1046,9 @@ export abstract class BaseDecryptionExtensions {
     }
 }
 
-export function makeSessionKeys(sessions: GroupEncryptionSession[]): SessionKeys {
+export function makeSessionKeys(
+    sessions: GroupEncryptionSession[],
+): SessionKeys {
     const sessionKeys = sessions.map((s) => s.sessionKey)
     return create(SessionKeysSchema, {
         keys: sessionKeys,
@@ -954,7 +1069,9 @@ function dequeueUpToDate<T extends { streamId: string }>(
     if (dateFn(items[0]) > now) {
         return undefined
     }
-    const index = items.findIndex((x) => dateFn(x) <= now && upToDateStreams.has(x.streamId))
+    const index = items.findIndex(
+        (x) => dateFn(x) <= now && upToDateStreams.has(x.streamId),
+    )
     if (index === -1) {
         return undefined
     }
@@ -971,7 +1088,9 @@ function takeFirst<T>(count: number, array: T[]): T[] {
 
 function isSessionNotFoundError(err: unknown): boolean {
     if (err !== null && typeof err === 'object' && 'message' in err) {
-        return (err.message as string).toLowerCase().includes('session not found')
+        return (err.message as string)
+            .toLowerCase()
+            .includes('session not found')
     }
     return false
 }

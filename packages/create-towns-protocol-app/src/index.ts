@@ -1,7 +1,11 @@
 import minimist from 'minimist'
 import path from 'node:path'
 import picocolors from 'picocolors'
-import { getPackageManager, type CreateRiverBuildAppConfig, formatTargetDir } from './utils'
+import {
+    getPackageManager,
+    type CreateRiverBuildAppConfig,
+    formatTargetDir,
+} from './utils'
 import { buildRiverReactApp } from './modules/vite-react'
 import { clonePlayground } from './modules/clone-playground'
 
@@ -25,7 +29,7 @@ Options:
   -t, --template NAME        use a specific template
 
 Available templates:
-${picocolors.yellow    ('react-ts       react        playground'  )}
+${picocolors.yellow('react-ts       react        playground')}
 `
 
 type Template = 'react-ts' | 'react' | 'playground'
@@ -38,8 +42,10 @@ const build = {
 
 async function init() {
     const targetDir = formatTargetDir(argv._[0]) || '.'
-    const packageName = targetDir === '.' ? path.basename(process.cwd()) : targetDir
-    const projectDir = targetDir === '.' ? process.cwd() : path.join(process.cwd(), targetDir)
+    const packageName =
+        targetDir === '.' ? path.basename(process.cwd()) : targetDir
+    const projectDir =
+        targetDir === '.' ? process.cwd() : path.join(process.cwd(), targetDir)
     const pkgManager = getPackageManager()
     const template = (argv.template || argv.t) as Template
 
@@ -57,7 +63,11 @@ async function init() {
         viteTemplate: template !== 'playground' ? template : undefined,
     })
     console.log(picocolors.green('\nDone! 🎉'))
-    console.log(picocolors.blue('\nNow run: cd ' + targetDir + ' && ' + pkgManager + ` install`))
+    console.log(
+        picocolors.blue(
+            '\nNow run: cd ' + targetDir + ' && ' + pkgManager + ` install`,
+        ),
+    )
     console.log(picocolors.blue('\nThen run: ' + pkgManager + ' dev'))
 }
 

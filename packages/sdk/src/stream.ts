@@ -1,4 +1,9 @@
-import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@towns-protocol/proto'
+import {
+    ChannelMessage,
+    MembershipOp,
+    Snapshot,
+    SyncCookie,
+} from '@towns-protocol/proto'
 import { DLogger } from '@towns-protocol/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -65,7 +70,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
             .filter(isLocalEvent)
             .filter((e) => e.hashStr.startsWith('~'))
             .sort((a, b) => Number(a.eventNum - b.eventNum))
-        this._view = new StreamStateView(this.userId, this.streamId, this.streamsView)
+        this._view = new StreamStateView(
+            this.userId,
+            this.streamId,
+            this.streamsView,
+        )
         this._view.initialize(
             nextSyncCookie,
             minipoolEvents,
@@ -109,15 +118,30 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this._view.updateDecryptedContent(eventId, content, this)
     }
 
-    updateDecryptedContentError(eventId: string, content: DecryptionSessionError) {
+    updateDecryptedContentError(
+        eventId: string,
+        content: DecryptionSessionError,
+    ) {
         return this._view.updateDecryptedContentError(eventId, content, this)
     }
 
-    updateLocalEvent(localId: string, parsedEventHash: string, status: LocalEventStatus) {
-        return this._view.updateLocalEvent(localId, parsedEventHash, status, this)
+    updateLocalEvent(
+        localId: string,
+        parsedEventHash: string,
+        status: LocalEventStatus,
+    ) {
+        return this._view.updateLocalEvent(
+            localId,
+            parsedEventHash,
+            status,
+            this,
+        )
     }
 
-    emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
+    emit<E extends keyof StreamEvents>(
+        event: E,
+        ...args: Parameters<StreamEvents[E]>
+    ): boolean {
         if (this.stopped) {
             return false
         }
@@ -130,7 +154,10 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      * Memberships are processed on block boundaries, so we need to wait for the next block to be processed
      * passing an undefined userId will wait for the membership to be updated for the current user
      */
-    public async waitForMembership(membership: MembershipOp, inUserId?: string) {
+    public async waitForMembership(
+        membership: MembershipOp,
+        inUserId?: string,
+    ) {
         // check to see if we're already in that state
         const userId = inUserId ?? this.userId
         // wait for a membership updated event, event, check again
@@ -156,7 +183,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
             // Set up the event listener
             const handler = (): void => {
                 if (condition()) {
-                    this.logEmitFromStream('waitFor success', this.streamId, event)
+                    this.logEmitFromStream(
+                        'waitFor success',
+                        this.streamId,
+                        event,
+                    )
                     this.off(event, handler)
                     this.off('streamInitialized', handler)
                     clearTimeout(timeout)
@@ -164,7 +195,9 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 }
             }
 
-            const timeoutError = new Error(`waitFor timeout waiting for ${event}`)
+            const timeoutError = new Error(
+                `waitFor timeout waiting for ${event}`,
+            )
             // Set up the timeout
             const timeout = setTimeout(() => {
                 this.logEmitFromStream('waitFor timeout', this.streamId, event)

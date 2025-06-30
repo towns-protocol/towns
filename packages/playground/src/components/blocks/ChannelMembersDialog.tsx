@@ -1,4 +1,8 @@
-import { useMember, useMemberList, useSyncAgent } from '@towns-protocol/react-sdk'
+import {
+    useMember,
+    useMemberList,
+    useSyncAgent,
+} from '@towns-protocol/react-sdk'
 import {
     Dialog,
     DialogContent,
@@ -16,7 +20,11 @@ interface ChannelMembersDialogProps {
     onClose: () => void
 }
 
-export const ChannelMembersDialog = ({ channelId, isOpen, onClose }: ChannelMembersDialogProps) => {
+export const ChannelMembersDialog = ({
+    channelId,
+    isOpen,
+    onClose,
+}: ChannelMembersDialogProps) => {
     const { data } = useMemberList(channelId)
 
     return (
@@ -32,7 +40,11 @@ export const ChannelMembersDialog = ({ channelId, isOpen, onClose }: ChannelMemb
                     {data?.userIds.length > 0 ? (
                         <ul className="space-y-3">
                             {data.userIds.map((userId) => (
-                                <MemberItem key={userId} userId={userId} channelId={channelId} />
+                                <MemberItem
+                                    key={userId}
+                                    userId={userId}
+                                    channelId={channelId}
+                                />
                             ))}
                         </ul>
                     ) : (
@@ -44,9 +56,20 @@ export const ChannelMembersDialog = ({ channelId, isOpen, onClose }: ChannelMemb
     )
 }
 
-const MemberItem = ({ userId, channelId }: { userId: string; channelId: string }) => {
+const MemberItem = ({
+    userId,
+    channelId,
+}: {
+    userId: string
+    channelId: string
+}) => {
     const sync = useSyncAgent()
-    const { displayName, username, isDisplayNameEncrypted, isUsernameEncrypted } = useMember({
+    const {
+        displayName,
+        username,
+        isDisplayNameEncrypted,
+        isUsernameEncrypted,
+    } = useMember({
         streamId: channelId,
         userId,
     })
@@ -60,12 +83,17 @@ const MemberItem = ({ userId, channelId }: { userId: string; channelId: string }
             <p
                 className="text-sm font-medium data-[state=encrypted]:font-mono"
                 data-state={
-                    !displayName || !username || isDisplayNameEncrypted || isUsernameEncrypted
+                    !displayName ||
+                    !username ||
+                    isDisplayNameEncrypted ||
+                    isUsernameEncrypted
                         ? 'encrypted'
                         : 'plain'
                 }
             >
-                {userId === sync.userId ? 'You' : displayName || username || shortenAddress(userId)}
+                {userId === sync.userId
+                    ? 'You'
+                    : displayName || username || shortenAddress(userId)}
             </p>
         </div>
     )

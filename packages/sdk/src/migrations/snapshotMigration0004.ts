@@ -12,8 +12,14 @@ const LOG_SIZE_REDUCTION = false
  * and log those appearing in get 25% of members, checking if they map to
  * username or display_name encrypted payloads
  */
-export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false): Snapshot {
-    if (!snapshot.members?.joined?.length || (snapshot.members.joined.length < 500 && !force)) {
+export function snapshotMigration0004(
+    snapshot: Snapshot,
+    force: boolean = false,
+): Snapshot {
+    if (
+        !snapshot.members?.joined?.length ||
+        (snapshot.members.joined.length < 500 && !force)
+    ) {
         return snapshot
     }
 
@@ -37,7 +43,10 @@ export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false
             for (const sessionId of solicitation.sessionIds) {
                 if (!processedIds.has(sessionId)) {
                     processedIds.add(sessionId)
-                    sessionIdCounts.set(sessionId, (sessionIdCounts.get(sessionId) || 0) + 1)
+                    sessionIdCounts.set(
+                        sessionId,
+                        (sessionIdCounts.get(sessionId) || 0) + 1,
+                    )
                 }
             }
         }
@@ -50,7 +59,9 @@ export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false
 
     if (lostSessionIds.length) {
         const lostSessionIdsSet = new Set(lostSessionIds)
-        const before = LOG_SIZE_REDUCTION ? toBinary(SnapshotSchema, snapshot).length : undefined
+        const before = LOG_SIZE_REDUCTION
+            ? toBinary(SnapshotSchema, snapshot).length
+            : undefined
 
         let numRemove = 0
         let usernamesCleared = 0
@@ -59,7 +70,10 @@ export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false
             // remove all lost sessionIds from members
             for (const solicitation of member.solicitations) {
                 const before = solicitation.sessionIds.length
-                solicitation.sessionIds = removeCommon(solicitation.sessionIds, lostSessionIds)
+                solicitation.sessionIds = removeCommon(
+                    solicitation.sessionIds,
+                    lostSessionIds,
+                )
                 const after = solicitation.sessionIds.length
                 numRemove += before - after
             }
@@ -74,7 +88,9 @@ export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false
             if (
                 member.displayName?.data?.sessionIdBytes &&
                 member.displayName.data.sessionIdBytes.length > 0 &&
-                lostSessionIdsSet.has(bin_toHexString(member.displayName.data.sessionIdBytes))
+                lostSessionIdsSet.has(
+                    bin_toHexString(member.displayName.data.sessionIdBytes),
+                )
             ) {
                 member.displayName = undefined
                 displayNamesCleared++
@@ -89,7 +105,9 @@ export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false
             if (
                 member.username?.data?.sessionIdBytes &&
                 member.username.data.sessionIdBytes.length > 0 &&
-                lostSessionIdsSet.has(bin_toHexString(member.username.data.sessionIdBytes))
+                lostSessionIdsSet.has(
+                    bin_toHexString(member.username.data.sessionIdBytes),
+                )
             ) {
                 member.username = undefined
                 usernamesCleared++
@@ -98,8 +116,11 @@ export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false
         const streamIdBytes = snapshot.content.value?.inception?.streamId
         const streamId = streamIdBytes ? bin_toHexString(streamIdBytes) : ''
         const spaceAddress = SpaceIdFromSpaceAddress(streamId)
-        const after = LOG_SIZE_REDUCTION ? toBinary(SnapshotSchema, snapshot).length : undefined
-        const mbSaved = before && after ? (before - after) / 1024 / 1024 : undefined
+        const after = LOG_SIZE_REDUCTION
+            ? toBinary(SnapshotSchema, snapshot).length
+            : undefined
+        const mbSaved =
+            before && after ? (before - after) / 1024 / 1024 : undefined
         const sizeLog =
             before && after && mbSaved
                 ? `Snapshot size reduced from ${before} to ${after}, ${mbSaved.toFixed(2)} MB saved`

@@ -2,7 +2,10 @@ import { IRuleEntitlementBase } from '@towns-protocol/generated/dev/typings/IRul
 import { IRuleEntitlementV2__factory } from '@towns-protocol/generated/dev/typings/factories/IRuleEntitlement.sol/IRuleEntitlementV2__factory'
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
-import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
+import {
+    EntitlementModuleType,
+    EntitlementModule,
+} from '../../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -54,7 +57,10 @@ export class RuleEntitlementV2Shim
             }
             return decoded.length > 0 ? decoded[0] : undefined
         } catch (error) {
-            logger.error('RuleEntitlementV2Shim Error decoding RuleDataV2Struct', error)
+            logger.error(
+                'RuleEntitlementV2Shim Error decoding RuleDataV2Struct',
+                error,
+            )
         }
         return
     }

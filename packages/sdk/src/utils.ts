@@ -10,7 +10,9 @@ import {
 } from '@towns-protocol/dlog'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {
-    return prop === '__proto__' || prop === 'prototype' || prop === 'constructor'
+    return (
+        prop === '__proto__' || prop === 'prototype' || prop === 'constructor'
+    )
 }
 
 export function safeSet<O extends Record<any, any>, K extends keyof O>(
@@ -36,14 +38,20 @@ export const isEthereumAddress = (address: string | Uint8Array): boolean => {
     return false
 }
 
-export const ethereumAddressToBytes = (address: string): Uint8Array => bin_fromHexString(address)
+export const ethereumAddressToBytes = (address: string): Uint8Array =>
+    bin_fromHexString(address)
 
-export const ethereumAddressFromBytes = (bytes: Uint8Array): string => bin_toHexString(bytes)
+export const ethereumAddressFromBytes = (bytes: Uint8Array): string =>
+    bin_toHexString(bytes)
 
-export const ethereumAddressAsString = (address: string | Uint8Array): string =>
+export const ethereumAddressAsString = (
+    address: string | Uint8Array,
+): string =>
     typeof address === 'string' ? address : ethereumAddressFromBytes(address)
 
-export const ethereumAddressAsBytes = (address: string | Uint8Array): Uint8Array =>
+export const ethereumAddressAsBytes = (
+    address: string | Uint8Array,
+): Uint8Array =>
     typeof address === 'string' ? ethereumAddressToBytes(address) : address
 
 export function stripUndefinedMetadata(
@@ -83,7 +91,12 @@ export type IConnectError = {
 }
 
 export function isIConnectError(obj: unknown): obj is { code: number } {
-    return obj !== null && typeof obj === 'object' && 'code' in obj && typeof obj.code === 'number'
+    return (
+        obj !== null &&
+        typeof obj === 'object' &&
+        'code' in obj &&
+        typeof obj.code === 'number'
+    )
 }
 
 export class MockEntitlementsDelegate {
@@ -147,7 +160,10 @@ export function isMobileSafari(): boolean {
     return /iPad|iPhone|iPod/.test(navigator.userAgent)
 }
 
-export function isBaseUrlIncluded(baseUrls: string[], fullUrl: string): boolean {
+export function isBaseUrlIncluded(
+    baseUrls: string[],
+    fullUrl: string,
+): boolean {
     const urlObj = new URL(fullUrl)
     const fullUrlBase = `${urlObj.protocol}//${urlObj.host}`
 
@@ -172,4 +188,5 @@ export async function getTime<T>(fn: () => Promise<T>) {
     return { result, time: end - start }
 }
 
-export const randomBytes = (len: number) => crypto.getRandomValues(new Uint8Array(len))
+export const randomBytes = (len: number) =>
+    crypto.getRandomValues(new Uint8Array(len))

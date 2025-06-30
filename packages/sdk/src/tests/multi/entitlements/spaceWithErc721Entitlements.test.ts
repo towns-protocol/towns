@@ -38,10 +38,16 @@ describe('spaceWithErc721Entitlements', () => {
             ruleData: getNftRuleData(testNft1Address as Address),
         })
 
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         // join alice
-        log('Minting an NFT for carols wallet, which is linked to alices wallet')
+        log(
+            'Minting an NFT for carols wallet, which is linked to alices wallet',
+        )
         await TestERC721.publicMint('TestNFT1', carolsWallet.address as Address)
 
         await expectUserCanJoin(
@@ -80,10 +86,16 @@ describe('spaceWithErc721Entitlements', () => {
         })
 
         log("Joining alice's wallet as a linked wallet to carols root wallet")
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+        await linkWallets(
+            carolSpaceDapp,
+            carolProvider.wallet,
+            aliceProvider.wallet,
+        )
 
         // join alice
-        log('Minting an NFT for carols wallet, which is the root to alices wallet')
+        log(
+            'Minting an NFT for carols wallet, which is the root to alices wallet',
+        )
         await TestERC721.publicMint('TestNFT1', carolsWallet.address as Address)
 
         log('expect that alice can join the space')
@@ -105,12 +117,19 @@ describe('spaceWithErc721Entitlements', () => {
     })
 
     test('erc721 gate join pass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: getNftRuleData(testNft1Address as Address),
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: getNftRuleData(testNft1Address as Address),
+        })
 
         // join alice
         log('Minting an NFT for alice')
@@ -134,14 +153,22 @@ describe('spaceWithErc721Entitlements', () => {
     })
 
     test('erc721 gate join fail', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: getNftRuleData(testNft1Address as Address),
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: getNftRuleData(testNft1Address as Address),
+        })
 
-        log('Alice about to attempt to join space', { alicesUserId: alice.userId })
+        log('Alice about to attempt to join space', {
+            alicesUserId: alice.userId,
+        })
         const { issued } = await aliceSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,
@@ -160,7 +187,12 @@ describe('spaceWithErc721Entitlements', () => {
         )
 
         // Alice cannot join the space on the stream node.
-        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
+        await expectUserCannotJoinSpace(
+            spaceId,
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+        )
 
         // kill the clients
         await bob.stopSync()

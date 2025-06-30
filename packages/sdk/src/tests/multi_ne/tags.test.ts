@@ -65,7 +65,10 @@ describe('makeTags', () => {
     })
 
     beforeEach(() => {
-        streamsView = new StreamsView(userIdFromAddress(user1.address), undefined)
+        streamsView = new StreamsView(
+            userIdFromAddress(user1.address),
+            undefined,
+        )
         mockStreamView = new StreamStateView(
             userIdFromAddress(user1.address),
             streamId,
@@ -121,7 +124,10 @@ describe('makeTags', () => {
                                 {
                                     userId: 'atChannel',
                                     displayName: 'atChannel',
-                                    mentionBehavior: { case: 'atChannel', value: {} },
+                                    mentionBehavior: {
+                                        case: 'atChannel',
+                                        value: {},
+                                    },
                                 },
                             ],
                             attachments: [],
@@ -253,7 +259,9 @@ describe('makeTags', () => {
             },
         }
         const reactionTags = makeTags(reactionMessage, mockStreamView)
-        expect(reactionTags.messageInteractionType).toBe(MessageInteractionType.REACTION)
+        expect(reactionTags.messageInteractionType).toBe(
+            MessageInteractionType.REACTION,
+        )
         expect(reactionTags.groupMentionTypes).toEqual([])
         expect(reactionTags.mentionedUserAddresses).toEqual([])
         expect(reactionTags.participatingUserAddresses).toEqual([user4.address])

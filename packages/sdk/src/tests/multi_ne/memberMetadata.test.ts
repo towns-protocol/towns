@@ -2,7 +2,10 @@
  * @group main
  */
 
-import { MemberPayload_Nft, MemberPayload_NftSchema } from '@towns-protocol/proto'
+import {
+    MemberPayload_Nft,
+    MemberPayload_NftSchema,
+} from '@towns-protocol/proto'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, userIdFromAddress } from '../../id'
 import {
@@ -53,11 +56,14 @@ describe('memberMetadataTests', () => {
         })
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamDisplayNameUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
 
         await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
@@ -69,9 +75,10 @@ describe('memberMetadataTests', () => {
         const expected = new Map<string, string>([[bobsClient.userId, 'bob']])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata().displayNames.plaintextDisplayNames).toEqual(
-                expected,
-            )
+            expect(
+                streamView.getMemberMetadata().displayNames
+                    .plaintextDisplayNames,
+            ).toEqual(expected)
         }
     })
 
@@ -81,7 +88,9 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
@@ -92,9 +101,13 @@ describe('memberMetadataTests', () => {
         })
 
         const bobDisplayName = 'bob display name'
-        await expect(bobsClient.setDisplayName(streamId, bobDisplayName)).resolves.not.toThrow()
+        await expect(
+            bobsClient.setDisplayName(streamId, bobDisplayName),
+        ).resolves.not.toThrow()
 
-        const expected = new Map<string, string>([[bobsClient.userId, bobDisplayName]])
+        const expected = new Map<string, string>([
+            [bobsClient.userId, bobDisplayName],
+        ])
 
         const bobPromise = makeDonePromise()
         bobsClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
@@ -104,11 +117,14 @@ describe('memberMetadataTests', () => {
         })
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamDisplayNameUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
 
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
@@ -117,7 +133,8 @@ describe('memberMetadataTests', () => {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
             const clientDisplayNames =
-                streamView!.getMemberMetadata().displayNames.plaintextDisplayNames
+                streamView!.getMemberMetadata().displayNames
+                    .plaintextDisplayNames
             expect(clientDisplayNames).toEqual(expected)
         }
     })
@@ -139,14 +156,22 @@ describe('memberMetadataTests', () => {
         await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
             expect(stream.view.getMembers().joinedUsers).toEqual(
-                new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
+                new Set([
+                    bobsClient.userId,
+                    alicesClient.userId,
+                    evesClient.userId,
+                ]),
             )
         })
 
         const bobDisplayName = 'bob display name'
-        await expect(bobsClient.setDisplayName(streamId, bobDisplayName)).resolves.not.toThrow()
+        await expect(
+            bobsClient.setDisplayName(streamId, bobDisplayName),
+        ).resolves.not.toThrow()
 
-        const expected = new Map<string, string>([[bobsClient.userId, bobDisplayName]])
+        const expected = new Map<string, string>([
+            [bobsClient.userId, bobDisplayName],
+        ])
 
         const bobPromise = makeDonePromise()
         bobsClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
@@ -156,11 +181,14 @@ describe('memberMetadataTests', () => {
         })
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamDisplayNameUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
 
         const evePromise = makeDonePromise()
         evesClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
@@ -177,7 +205,8 @@ describe('memberMetadataTests', () => {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
             const clientDisplayNames =
-                streamView!.getMemberMetadata().displayNames.plaintextDisplayNames
+                streamView!.getMemberMetadata().displayNames
+                    .plaintextDisplayNames
             expect(clientDisplayNames).toEqual(expected)
         }
     })
@@ -196,17 +225,20 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamDisplayNameUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
         await alicePromise.expectToSucceed()
 
         const expected = new Map<string, string>([[bobsClient.userId, 'bob']])
         const alicesClientDisplayNames =
-            alicesClient.streams.get(streamId)?.view.membershipContent.memberMetadata.displayNames
-                .plaintextDisplayNames
+            alicesClient.streams.get(streamId)?.view.membershipContent
+                .memberMetadata.displayNames.plaintextDisplayNames
         expect(alicesClientDisplayNames).toEqual(expected)
     })
 
@@ -236,11 +268,17 @@ describe('memberMetadataTests', () => {
             alicePromise.done()
         })
 
-        const setUsernamePromise = bobsClient.setUsername(streamId, 'bob-username')
-        const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
+        const setUsernamePromise = bobsClient.setUsername(
+            streamId,
+            'bob-username',
+        )
+        const expected = new Map<string, string>([
+            [bobsClient.userId, 'bob-username'],
+        ])
         // expect username to get updated immediately
         expect(
-            bobsClient.streams.get(streamId)!.view.getMemberMetadata().usernames.plaintextUsernames,
+            bobsClient.streams.get(streamId)!.view.getMemberMetadata().usernames
+                .plaintextUsernames,
         ).toEqual(expected)
 
         expect(
@@ -258,9 +296,12 @@ describe('memberMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata().usernames.plaintextUsernames).toEqual(expected)
             expect(
-                streamView.getMemberMetadata().usernames.info(bobsClient.userId).username,
+                streamView.getMemberMetadata().usernames.plaintextUsernames,
+            ).toEqual(expected)
+            expect(
+                streamView.getMemberMetadata().usernames.info(bobsClient.userId)
+                    .username,
             ).toEqual('bob-username')
         }
     })
@@ -271,7 +312,9 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
@@ -301,11 +344,15 @@ describe('memberMetadataTests', () => {
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
 
-        const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
+        const expected = new Map<string, string>([
+            [bobsClient.userId, 'bob-username'],
+        ])
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata()?.usernames.plaintextUsernames).toEqual(expected)
+            expect(
+                streamView.getMemberMetadata()?.usernames.plaintextUsernames,
+            ).toEqual(expected)
         }
     })
 
@@ -331,7 +378,11 @@ describe('memberMetadataTests', () => {
 
         await waitFor(() => {
             expect(stream.view.getMembers().joinedUsers).toEqual(
-                new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
+                new Set([
+                    bobsClient.userId,
+                    alicesClient.userId,
+                    evesClient.userId,
+                ]),
             )
         })
 
@@ -362,11 +413,15 @@ describe('memberMetadataTests', () => {
         await alicePromise.expectToSucceed()
         await evePromise.expectToSucceed()
 
-        const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
+        const expected = new Map<string, string>([
+            [bobsClient.userId, 'bob-username'],
+        ])
 
         for (const client of [bobsClient, alicesClient, evesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata().usernames.plaintextUsernames).toEqual(expected)
+            expect(
+                streamView.getMemberMetadata().usernames.plaintextUsernames,
+            ).toEqual(expected)
         }
     })
 
@@ -391,11 +446,14 @@ describe('memberMetadataTests', () => {
         })
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamEnsAddressUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
 
         const ensAddress = makeRandomUserAddress()
         await bobsClient.setEnsAddress(streamId, ensAddress)
@@ -408,9 +466,10 @@ describe('memberMetadataTests', () => {
         ])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata().ensAddresses.confirmedEnsAddresses).toEqual(
-                expected,
-            )
+            expect(
+                streamView.getMemberMetadata().ensAddresses
+                    .confirmedEnsAddresses,
+            ).toEqual(expected)
         }
     })
 
@@ -420,7 +479,9 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
@@ -438,14 +499,19 @@ describe('memberMetadataTests', () => {
         })
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamEnsAddressUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
 
         const ensAddress = makeRandomUserAddress()
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
+        await expect(
+            bobsClient.setEnsAddress(streamId, ensAddress),
+        ).resolves.not.toThrow()
         const expected = new Map<string, string>([
             [bobsClient.userId, userIdFromAddress(ensAddress)],
         ])
@@ -456,7 +522,9 @@ describe('memberMetadataTests', () => {
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
-            const ensAddresses = streamView!.getMemberMetadata().ensAddresses.confirmedEnsAddresses
+            const ensAddresses =
+                streamView!.getMemberMetadata().ensAddresses
+                    .confirmedEnsAddresses
             expect(ensAddresses).toEqual(expected)
         }
     })
@@ -478,7 +546,11 @@ describe('memberMetadataTests', () => {
         await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
             expect(stream.view.getMembers().joinedUsers).toEqual(
-                new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
+                new Set([
+                    bobsClient.userId,
+                    alicesClient.userId,
+                    evesClient.userId,
+                ]),
             )
         })
 
@@ -490,11 +562,14 @@ describe('memberMetadataTests', () => {
         })
 
         const alicePromise = makeDonePromise()
-        alicesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
-            expect(updatedStreamId).toBe(streamId)
-            expect(userId).toBe(bobsClient.userId)
-            alicePromise.done()
-        })
+        alicesClient.on(
+            'streamEnsAddressUpdated',
+            (updatedStreamId, userId) => {
+                expect(updatedStreamId).toBe(streamId)
+                expect(userId).toBe(bobsClient.userId)
+                alicePromise.done()
+            },
+        )
 
         const evePromise = makeDonePromise()
         evesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
@@ -504,7 +579,9 @@ describe('memberMetadataTests', () => {
         })
 
         const ensAddress = makeRandomUserAddress()
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
+        await expect(
+            bobsClient.setEnsAddress(streamId, ensAddress),
+        ).resolves.not.toThrow()
         const expected = new Map<string, string>([
             [bobsClient.userId, userIdFromAddress(ensAddress)],
         ])
@@ -516,7 +593,9 @@ describe('memberMetadataTests', () => {
         for (const client of [bobsClient, alicesClient, evesClient]) {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
-            const ensAddresses = streamView!.getMemberMetadata().ensAddresses.confirmedEnsAddresses
+            const ensAddresses =
+                streamView!.getMemberMetadata().ensAddresses
+                    .confirmedEnsAddresses
             expect(ensAddresses).toEqual(expected)
         }
     })
@@ -530,9 +609,9 @@ describe('memberMetadataTests', () => {
         await bobsClient.waitForStream(streamId)
 
         const ensAddress = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8])
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).rejects.toThrow(
-            /Invalid ENS address/,
-        )
+        await expect(
+            bobsClient.setEnsAddress(streamId, ensAddress),
+        ).rejects.toThrow(/Invalid ENS address/)
     })
 
     test('clientCanClearEnsAddress', async () => {
@@ -544,7 +623,9 @@ describe('memberMetadataTests', () => {
         await bobsClient.waitForStream(streamId)
 
         const ensAddress = new Uint8Array()
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
+        await expect(
+            bobsClient.setEnsAddress(streamId, ensAddress),
+        ).resolves.not.toThrow()
     })
 
     test('clientCanSetNftInSpace', async () => {
@@ -589,11 +670,17 @@ describe('memberMetadataTests', () => {
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
 
-        const expected = new Map<string, MemberPayload_Nft>([[bobsClient.userId, nft]])
+        const expected = new Map<string, MemberPayload_Nft>([
+            [bobsClient.userId, nft],
+        ])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata().nfts.confirmedNfts).toEqual(expected)
-            const bobInfo = streamView.getMemberMetadata().nfts.info(bobsClient.userId)
+            expect(streamView.getMemberMetadata().nfts.confirmedNfts).toEqual(
+                expected,
+            )
+            const bobInfo = streamView
+                .getMemberMetadata()
+                .nfts.info(bobsClient.userId)
             expect(bobInfo?.tokenId).toEqual('11111111112222222233333333')
         }
     })
@@ -612,7 +699,10 @@ describe('memberMetadataTests', () => {
         })
 
         await expect(
-            bobsClient.makeEventAndAddToStream(streamId, make_MemberPayload_Nft(nft)),
+            bobsClient.makeEventAndAddToStream(
+                streamId,
+                make_MemberPayload_Nft(nft),
+            ),
         ).rejects.toThrow('invalid contract address')
     })
 
@@ -629,7 +719,10 @@ describe('memberMetadataTests', () => {
             contractAddress: makeRandomUserAddress(),
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(streamId, make_MemberPayload_Nft(nft)),
+            bobsClient.makeEventAndAddToStream(
+                streamId,
+                make_MemberPayload_Nft(nft),
+            ),
         ).rejects.toThrow('invalid chain id')
     })
 
@@ -647,7 +740,10 @@ describe('memberMetadataTests', () => {
         })
 
         await expect(
-            bobsClient.makeEventAndAddToStream(streamId, make_MemberPayload_Nft(nft)),
+            bobsClient.makeEventAndAddToStream(
+                streamId,
+                make_MemberPayload_Nft(nft),
+            ),
         ).rejects.toThrow('invalid token id')
     })
 
@@ -658,7 +754,9 @@ describe('memberMetadataTests', () => {
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
 
-        await expect(bobsClient.setNft(streamId, '', 0, '')).resolves.not.toThrow()
+        await expect(
+            bobsClient.setNft(streamId, '', 0, ''),
+        ).resolves.not.toThrow()
     })
 
     test('clientCanSetStreamEncryptionAlgorithm', async () => {
@@ -669,44 +767,58 @@ describe('memberMetadataTests', () => {
         await bobsClient.createSpace(spaceId)
         await bobsClient.waitForStream(spaceId)
 
-        await bobsClient.createChannel(spaceId, 'secret channel', 'messaging like spies', channelId)
+        await bobsClient.createChannel(
+            spaceId,
+            'secret channel',
+            'messaging like spies',
+            channelId,
+        )
         await bobsClient.waitForStream(channelId)
 
         // initial value is "undefined"
-        expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
-            undefined,
-        )
+        expect(
+            bobsClient.stream(channelId)?.view.membershipContent
+                .encryptionAlgorithm,
+        ).toBe(undefined)
 
         const newAlgorithm = 'mega_v1'
         const truePromise = makeDonePromise()
-        bobsClient.once('streamEncryptionAlgorithmUpdated', (updatedStreamId, value) => {
-            expect(updatedStreamId).toBe(channelId)
-            expect(value).toBe(newAlgorithm)
-            truePromise.done()
-        })
+        bobsClient.once(
+            'streamEncryptionAlgorithmUpdated',
+            (updatedStreamId, value) => {
+                expect(updatedStreamId).toBe(channelId)
+                expect(value).toBe(newAlgorithm)
+                truePromise.done()
+            },
+        )
 
         await expect(
             bobsClient.setStreamEncryptionAlgorithm(channelId, newAlgorithm),
         ).resolves.not.toThrow()
         await truePromise.expectToSucceed()
-        expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
-            newAlgorithm,
-        )
+        expect(
+            bobsClient.stream(channelId)?.view.membershipContent
+                .encryptionAlgorithm,
+        ).toBe(newAlgorithm)
 
         // toggle back to to undefined
         const falsePromise = makeDonePromise()
-        bobsClient.once('streamEncryptionAlgorithmUpdated', (updatedStreamId, value) => {
-            expect(updatedStreamId).toBe(channelId)
-            expect(value).toBe(undefined)
-            falsePromise.done()
-        })
+        bobsClient.once(
+            'streamEncryptionAlgorithmUpdated',
+            (updatedStreamId, value) => {
+                expect(updatedStreamId).toBe(channelId)
+                expect(value).toBe(undefined)
+                falsePromise.done()
+            },
+        )
 
         await expect(
             bobsClient.setStreamEncryptionAlgorithm(channelId, undefined),
         ).resolves.not.toThrow()
         await falsePromise.expectToSucceed()
-        expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
-            undefined,
-        )
+        expect(
+            bobsClient.stream(channelId)?.view.membershipContent
+                .encryptionAlgorithm,
+        ).toBe(undefined)
     })
 })

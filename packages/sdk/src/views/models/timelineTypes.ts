@@ -417,7 +417,10 @@ export interface ThreadResult {
 }
 
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }
-export type MessageReactions = Record<string, Record<string, { eventId: string }>>
+export type MessageReactions = Record<
+    string,
+    Record<string, { eventId: string }>
+>
 
 export type MentionResult = {
     type: 'mention'
@@ -433,7 +436,10 @@ export type MediaInfo = Pick<
     'filename' | 'mimetype' | 'sizeBytes' | 'widthPixels' | 'heightPixels'
 >
 
-export type ImageInfo = Pick<ChannelMessage_Post_Content_Image_Info, 'url' | 'width' | 'height'>
+export type ImageInfo = Pick<
+    ChannelMessage_Post_Content_Image_Info,
+    'url' | 'width' | 'height'
+>
 
 export type ImageAttachment = {
     type: 'image'
@@ -498,14 +504,18 @@ export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
 // array of timeline events that all have content of type MemberBlockchainTransactionEvent
 export type MessageTips = MessageTipEvent[]
 
-export function isMessageTipEvent(event: TimelineEvent): event is MessageTipEvent {
+export function isMessageTipEvent(
+    event: TimelineEvent,
+): event is MessageTipEvent {
     return (
         event.content?.kind === RiverTimelineEvent.TipEvent &&
         event.content.transaction?.content.case === 'tip'
     )
 }
 
-export function transformAttachments(attachments?: Attachment[]): ChannelMessage_Post_Attachment[] {
+export function transformAttachments(
+    attachments?: Attachment[],
+): ChannelMessage_Post_Attachment[] {
     if (!attachments) {
         return []
     }
@@ -563,7 +573,9 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             case: 'text' as const,
                             value: {
                                 ...channelMessageEvent,
-                                attachments: transformAttachments(channelMessageEvent.attachments),
+                                attachments: transformAttachments(
+                                    channelMessageEvent.attachments,
+                                ),
                             },
                         },
                     })
@@ -614,17 +626,25 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
         .filter(isDefined)
 }
 
-export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
+export function getEditsId(
+    content: TimelineEvent_OneOf | undefined,
+): string | undefined {
+    return content?.kind === RiverTimelineEvent.ChannelMessage
+        ? content.editsEventId
+        : undefined
 }
 
-export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+export function getRedactsId(
+    content: TimelineEvent_OneOf | undefined,
+): string | undefined {
     return content?.kind === RiverTimelineEvent.RedactionActionEvent
         ? content.refEventId
         : undefined
 }
 
-export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
+export function getThreadParentId(
+    content: TimelineEvent_OneOf | undefined,
+): string | undefined {
     return content?.kind === RiverTimelineEvent.ChannelMessage
         ? content.threadId
         : content?.kind === RiverTimelineEvent.TokenTransfer
@@ -632,22 +652,35 @@ export function getThreadParentId(content: TimelineEvent_OneOf | undefined): str
           : undefined
 }
 
-export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.replyId : undefined
+export function getReplyParentId(
+    content: TimelineEvent_OneOf | undefined,
+): string | undefined {
+    return content?.kind === RiverTimelineEvent.ChannelMessage
+        ? content.replyId
+        : undefined
 }
 
-export function getReactionParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.Reaction ? content.targetEventId : undefined
+export function getReactionParentId(
+    content: TimelineEvent_OneOf | undefined,
+): string | undefined {
+    return content?.kind === RiverTimelineEvent.Reaction
+        ? content.targetEventId
+        : undefined
 }
 
-export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string): boolean {
+export function getIsMentioned(
+    content: TimelineEvent_OneOf | undefined,
+    userId: string,
+): boolean {
     //TODO: comparison below should be changed as soon as this HNT-1576 will be resolved
     return content?.kind === RiverTimelineEvent.ChannelMessage
         ? content.mentions.findIndex(
               (x) =>
                   (x.userId ?? '')
                       .toLowerCase()
-                      .localeCompare(userId.toLowerCase(), undefined, { sensitivity: 'base' }) == 0,
+                      .localeCompare(userId.toLowerCase(), undefined, {
+                          sensitivity: 'base',
+                      }) == 0,
           ) >= 0
         : false
 }

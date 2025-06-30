@@ -48,15 +48,21 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
-        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        await expect(
+            bot.initializeUser({ appAddress: foundAppAddress }),
+        ).resolves.toBeDefined()
         bot.startSync()
 
         // Create a town with channels (everyone can join)
-        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
+        const everyoneMembership = await everyoneMembershipStruct(
+            spaceOwnerSpaceDapp,
+            spaceOwner,
+        )
         const { spaceId } = await createSpaceAndDefaultChannel(
             spaceOwner,
             spaceOwnerSpaceDapp,
@@ -91,14 +97,15 @@ describe('bot entitlements tests', () => {
 
         // Create a custom channel that requires WRITE permission
         // The bot won't have WRITE permission through roles, but should have READ through app entitlements
-        const { channelId: restrictedChannelId, error: channelError } = await createChannel(
-            spaceOwnerSpaceDapp,
-            spaceOwnerProvider,
-            spaceId,
-            'read-only-channel',
-            [1], // Use the write-only role (role ID 1) - bot won't qualify
-            spaceOwnerProvider.wallet,
-        )
+        const { channelId: restrictedChannelId, error: channelError } =
+            await createChannel(
+                spaceOwnerSpaceDapp,
+                spaceOwnerProvider,
+                spaceId,
+                'read-only-channel',
+                [1], // Use the write-only role (role ID 1) - bot won't qualify
+                spaceOwnerProvider.wallet,
+            )
         expect(channelError).toBeUndefined()
         expect(restrictedChannelId).toBeDefined()
 
@@ -112,15 +119,27 @@ describe('bot entitlements tests', () => {
         expect(returnedChannelId).toEqual(restrictedChannelId)
 
         // Have space owner add bot to space and channel
-        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
-        await expect(spaceOwner.joinUser(restrictedChannelId!, bot.userId)).resolves.toBeDefined()
+        await expect(
+            spaceOwner.joinUser(spaceId, bot.userId),
+        ).resolves.toBeDefined()
+        await expect(
+            spaceOwner.joinUser(restrictedChannelId!, bot.userId),
+        ).resolves.toBeDefined()
 
         // Validate bot is a member of both space and channel
         const botUserStreamView = bot.stream(bot.userStreamId!)!.view
         await waitFor(() => {
-            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
             expect(
-                botUserStreamView.userContent.isMember(restrictedChannelId!, MembershipOp.SO_JOIN),
+                botUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true)
+            expect(
+                botUserStreamView.userContent.isMember(
+                    restrictedChannelId!,
+                    MembershipOp.SO_JOIN,
+                ),
             ).toBe(true)
         })
 
@@ -134,7 +153,10 @@ describe('bot entitlements tests', () => {
         })
 
         // This should succeed because the bot has READ permission via app entitlements
-        const { error } = await bot.makeEventAndAddToStream(restrictedChannelId!, payload)
+        const { error } = await bot.makeEventAndAddToStream(
+            restrictedChannelId!,
+            payload,
+        )
         expect(error).toBeUndefined()
 
         // Cleanup
@@ -170,7 +192,8 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: readOnlyBotAddress } = appRegistryDapp.getCreateAppEvent(receipt1)
+        const { app: readOnlyBotAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt1)
         expect(readOnlyBotAddress).toBeDefined()
 
         // Create second bot app contract with both READ and WRITE permissions
@@ -183,7 +206,8 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: readWriteBotAddress } = appRegistryDapp.getCreateAppEvent(receipt2)
+        const { app: readWriteBotAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt2)
         expect(readWriteBotAddress).toBeDefined()
 
         // Create bot user streams for both bots
@@ -197,14 +221,18 @@ describe('bot entitlements tests', () => {
         botWithWrite.startSync()
 
         // Create a town with channels (everyone can join)
-        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            spaceOwner,
+        const everyoneMembership = await everyoneMembershipStruct(
             spaceOwnerSpaceDapp,
-            spaceOwnerProvider.wallet,
-            "space owner's town",
-            everyoneMembership,
+            spaceOwner,
         )
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                spaceOwner,
+                spaceOwnerSpaceDapp,
+                spaceOwnerProvider.wallet,
+                "space owner's town",
+                everyoneMembership,
+            )
 
         // Install both bots to the space (as space owner)
         const installTx1 = await appRegistryDapp.installApp(
@@ -232,11 +260,15 @@ describe('bot entitlements tests', () => {
         expect(installedApps).toContain(readWriteBotAddress)
 
         // Have space owner add both bots to space and default channel
-        await expect(spaceOwner.joinUser(spaceId, botWithoutWrite.userId)).resolves.toBeDefined()
+        await expect(
+            spaceOwner.joinUser(spaceId, botWithoutWrite.userId),
+        ).resolves.toBeDefined()
         await expect(
             spaceOwner.joinUser(defaultChannelId, botWithoutWrite.userId),
         ).resolves.toBeDefined()
-        await expect(spaceOwner.joinUser(spaceId, botWithWrite.userId)).resolves.toBeDefined()
+        await expect(
+            spaceOwner.joinUser(spaceId, botWithWrite.userId),
+        ).resolves.toBeDefined()
         await expect(
             spaceOwner.joinUser(defaultChannelId, botWithWrite.userId),
         ).resolves.toBeDefined()
@@ -245,11 +277,16 @@ describe('bot entitlements tests', () => {
         const botWithoutWriteUserStreamView = botWithoutWrite.stream(
             botWithoutWrite.userStreamId!,
         )!.view
-        const botWithWriteUserStreamView = botWithWrite.stream(botWithWrite.userStreamId!)!.view
+        const botWithWriteUserStreamView = botWithWrite.stream(
+            botWithWrite.userStreamId!,
+        )!.view
 
         await waitFor(() => {
             expect(
-                botWithoutWriteUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+                botWithoutWriteUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
             ).toBe(true)
             expect(
                 botWithoutWriteUserStreamView.userContent.isMember(
@@ -258,7 +295,10 @@ describe('bot entitlements tests', () => {
                 ),
             ).toBe(true)
             expect(
-                botWithWriteUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+                botWithWriteUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
             ).toBe(true)
             expect(
                 botWithWriteUserStreamView.userContent.isMember(
@@ -270,12 +310,18 @@ describe('bot entitlements tests', () => {
 
         // Bot without WRITE permission should NOT be able to post a message
         await expect(
-            botWithoutWrite.sendMessage(defaultChannelId, 'Message from read-only bot'),
+            botWithoutWrite.sendMessage(
+                defaultChannelId,
+                'Message from read-only bot',
+            ),
         ).rejects.toThrow(/PERMISSION_DENIED/)
 
         // Bot with WRITE permission should be able to post a message
         await expect(
-            botWithWrite.sendMessage(defaultChannelId, 'Message from read-write bot'),
+            botWithWrite.sendMessage(
+                defaultChannelId,
+                'Message from read-write bot',
+            ),
         ).resolves.not.toThrow()
 
         // Cleanup
@@ -309,22 +355,29 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
-        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        await expect(
+            bot.initializeUser({ appAddress: foundAppAddress }),
+        ).resolves.toBeDefined()
         bot.startSync()
 
         // Create a town with channels where everyone can join and has write permissions
-        const everyoneMembership = await everyoneMembershipStruct(spaceOwnerSpaceDapp, spaceOwner)
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            spaceOwner,
+        const everyoneMembership = await everyoneMembershipStruct(
             spaceOwnerSpaceDapp,
-            spaceOwnerProvider.wallet,
-            "space owner's town",
-            everyoneMembership,
+            spaceOwner,
         )
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                spaceOwner,
+                spaceOwnerSpaceDapp,
+                spaceOwnerProvider.wallet,
+                "space owner's town",
+                everyoneMembership,
+            )
 
         // Install the bot to the space (as space owner)
         const installTx = await appRegistryDapp.installApp(
@@ -342,15 +395,27 @@ describe('bot entitlements tests', () => {
         expect(installedApps).toContain(foundAppAddress)
 
         // Have space owner add bot to space and default channel
-        await expect(spaceOwner.joinUser(spaceId, bot.userId)).resolves.toBeDefined()
-        await expect(spaceOwner.joinUser(defaultChannelId, bot.userId)).resolves.toBeDefined()
+        await expect(
+            spaceOwner.joinUser(spaceId, bot.userId),
+        ).resolves.toBeDefined()
+        await expect(
+            spaceOwner.joinUser(defaultChannelId, bot.userId),
+        ).resolves.toBeDefined()
 
         // Validate bot is a member of both space and channel
         const botUserStreamView = bot.stream(bot.userStreamId!)!.view
         await waitFor(() => {
-            expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
             expect(
-                botUserStreamView.userContent.isMember(defaultChannelId, MembershipOp.SO_JOIN),
+                botUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true)
+            expect(
+                botUserStreamView.userContent.isMember(
+                    defaultChannelId,
+                    MembershipOp.SO_JOIN,
+                ),
             ).toBe(true)
         })
 

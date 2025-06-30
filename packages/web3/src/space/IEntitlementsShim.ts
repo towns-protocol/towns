@@ -33,7 +33,9 @@ export class IEntitlementsShim extends BaseContractShim<typeof connect> {
         })
     }
 
-    public async getEntitlements(): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]> {
+    public async getEntitlements(): Promise<
+        IEntitlementsManagerBase.EntitlementStructOutput[]
+    > {
         return this.getEntitlementsCache.executeUsingCache(
             new GetEntitlements(this.address),
             async () => this.read.getEntitlements(),

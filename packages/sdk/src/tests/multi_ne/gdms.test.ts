@@ -2,7 +2,12 @@
  * @group main
  */
 
-import { makeTestClient, createEventDecryptedPromise, waitFor, makeDonePromise } from '../testUtils'
+import {
+    makeTestClient,
+    createEventDecryptedPromise,
+    waitFor,
+    makeDonePromise,
+} from '../testUtils'
 import { Client } from '../../client'
 import { MembershipOp } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
@@ -51,19 +56,31 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(bobsClient.sendMessage(streamId, 'hello')).resolves.not.toThrow()
+        await expect(
+            bobsClient.sendMessage(streamId, 'hello'),
+        ).resolves.not.toThrow()
     })
 
     test('clientAreJoinedAutomaticallyAndCanPostToGDM', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(charliesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            charliesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
 
-        await expect(bobsClient.sendMessage(streamId, 'greetings')).resolves.not.toThrow()
-        await expect(alicesClient.sendMessage(streamId, 'hello!')).resolves.not.toThrow()
-        await expect(charliesClient.sendMessage(streamId, 'hi')).resolves.not.toThrow()
+        await expect(
+            bobsClient.sendMessage(streamId, 'greetings'),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello!'),
+        ).resolves.not.toThrow()
+        await expect(
+            charliesClient.sendMessage(streamId, 'hi'),
+        ).resolves.not.toThrow()
     })
 
     test('clientCannotJoinUnlessInvited', async () => {
@@ -77,7 +94,9 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
 
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
         await expect(alicesClient.leaveStream(streamId)).resolves.not.toThrow()
 
         const stream = await bobsClient.waitForStream(streamId)
@@ -86,14 +105,18 @@ describe('gdmsTests', () => {
                 new Set([bobsClient.userId, charliesClient.userId]),
             )
         })
-        await expect(alicesClient.sendMessage(streamId, 'hello!')).rejects.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello!'),
+        ).rejects.toThrow()
     })
 
     test('clientCanLeaveGDM', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
         await expect(alicesClient.leaveStream(streamId)).resolves.not.toThrow()
     })
 
@@ -101,16 +124,24 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(chucksClient.inviteUser(streamId, alicesClient.userId)).rejects.toThrow()
-        await expect(chucksClient.inviteUser(streamId, chucksClient.userId)).rejects.toThrow()
+        await expect(
+            chucksClient.inviteUser(streamId, alicesClient.userId),
+        ).rejects.toThrow()
+        await expect(
+            chucksClient.inviteUser(streamId, chucksClient.userId),
+        ).rejects.toThrow()
     })
 
     test('usersCanInviteOthers', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.inviteUser(streamId, chucksClient.userId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.inviteUser(streamId, chucksClient.userId),
+        ).resolves.not.toThrow()
     })
 
     test('unjoinedUsersCannotJoinOthers', async () => {
@@ -118,22 +149,32 @@ describe('gdmsTests', () => {
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
         // can chuck join himself?
-        await expect(chucksClient.joinUser(streamId, chucksClient.userId)).rejects.toThrow()
+        await expect(
+            chucksClient.joinUser(streamId, chucksClient.userId),
+        ).rejects.toThrow()
         // can chuck join chucks friend?
         const chucksFriend = await makeTestClient()
         await chucksFriend.initializeUser()
-        await expect(chucksClient.joinUser(streamId, chucksFriend.userId)).rejects.toThrow()
+        await expect(
+            chucksClient.joinUser(streamId, chucksFriend.userId),
+        ).rejects.toThrow()
     })
 
     test('usersCanJoinOthers', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.joinUser(streamId, chucksClient.userId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.joinUser(streamId, chucksClient.userId),
+        ).resolves.not.toThrow()
         const stream = await chucksClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(stream.view.getMembers().joinedUsers.has(charliesClient.userId)).toEqual(true)
+            expect(
+                stream.view.getMembers().joinedUsers.has(charliesClient.userId),
+            ).toEqual(true)
         })
     })
 
@@ -144,13 +185,19 @@ describe('gdmsTests', () => {
 
     // Sender is expected to push keys to all members of the channel before sending the message,
     test('usersReceiveKeys', async () => {
-        const userIds = [alicesClient.userId, charliesClient.userId, chucksClient.userId]
+        const userIds = [
+            alicesClient.userId,
+            charliesClient.userId,
+            chucksClient.userId,
+        ]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(chucksClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            chucksClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
 
-        const promises = [alicesClient, charliesClient, chucksClient].map((client) =>
-            createEventDecryptedPromise(client, 'hello'),
+        const promises = [alicesClient, charliesClient, chucksClient].map(
+            (client) => createEventDecryptedPromise(client, 'hello'),
         )
 
         await bobsClient.sendMessage(streamId, 'hello')
@@ -163,17 +210,21 @@ describe('gdmsTests', () => {
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
 
-        const aliceCharliePromises = [alicesClient, charliesClient].map((client) =>
-            createEventDecryptedPromise(client, 'hello'),
+        const aliceCharliePromises = [alicesClient, charliesClient].map(
+            (client) => createEventDecryptedPromise(client, 'hello'),
         )
 
         await bobsClient.sendMessage(streamId, 'hello')
-        log(`urkaiaj 1 waiting for recipients to receive message chuck: ${chucksClient.logId}`)
+        log(
+            `urkaiaj 1 waiting for recipients to receive message chuck: ${chucksClient.logId}`,
+        )
         await Promise.all(aliceCharliePromises)
         log('urkaiaj 2')
         // In this test, Bob invites Chuck _after_ sending the message
         const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
-        await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).resolves.not.toThrow()
+        await expect(
+            bobsClient.inviteUser(streamId, chucksClient.userId),
+        ).resolves.not.toThrow()
         log('urkaiaj 3')
         const stream = await chucksClient.waitForStream(streamId)
         await stream.waitForMembership(MembershipOp.SO_INVITE)
@@ -191,8 +242,8 @@ describe('gdmsTests', () => {
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
 
-        const aliceCharliePromises = [alicesClient, charliesClient].map((client) =>
-            createEventDecryptedPromise(client, 'hello'),
+        const aliceCharliePromises = [alicesClient, charliesClient].map(
+            (client) => createEventDecryptedPromise(client, 'hello'),
         )
 
         await bobsClient.sendMessage(streamId, 'hello')
@@ -201,7 +252,9 @@ describe('gdmsTests', () => {
         await bobsClient.stop()
 
         const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
-        await expect(alicesClient.inviteUser(streamId, chucksClient.userId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.inviteUser(streamId, chucksClient.userId),
+        ).resolves.not.toThrow()
         const stream = await chucksClient.waitForStream(streamId)
         await stream.waitForMembership(MembershipOp.SO_INVITE)
         await expect(chucksClient.joinStream(streamId)).resolves.not.toThrow()
@@ -211,12 +264,16 @@ describe('gdmsTests', () => {
     // Users should eventually receive keys — even if they have not JOINED the channel yet.
     // for GDMS, an INVITE is enough
     test('usersReceiveKeysWithoutJoin', async () => {
-        const userIds = [alicesClient.userId, charliesClient.userId, chucksClient.userId]
+        const userIds = [
+            alicesClient.userId,
+            charliesClient.userId,
+            chucksClient.userId,
+        ]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
 
-        const promises = [alicesClient, charliesClient, chucksClient].map((client) =>
-            createEventDecryptedPromise(client, 'hello'),
+        const promises = [alicesClient, charliesClient, chucksClient].map(
+            (client) => createEventDecryptedPromise(client, 'hello'),
         )
 
         await bobsClient.sendMessage(streamId, 'hello')
@@ -225,37 +282,55 @@ describe('gdmsTests', () => {
     })
 
     test('usersCanSetChannelProperties', async () => {
-        const userIds = [alicesClient.userId, charliesClient.userId, chucksClient.userId]
+        const userIds = [
+            alicesClient.userId,
+            charliesClient.userId,
+            chucksClient.userId,
+        ]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(charliesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(chucksClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            charliesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            chucksClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
 
         const name = "Bob's GDM"
         const topic = "Bob's GDM description"
 
         function createChannelPropertiesPromise(client: Client) {
             const donePromise = makeDonePromise()
-            client.on('streamChannelPropertiesUpdated', (updatedStreamId: string): void => {
-                donePromise.runAndDone(() => {
-                    expect(updatedStreamId).toEqual(streamId)
-                    const stream = client.streams.get(streamId)
+            client.on(
+                'streamChannelPropertiesUpdated',
+                (updatedStreamId: string): void => {
+                    donePromise.runAndDone(() => {
+                        expect(updatedStreamId).toEqual(streamId)
+                        const stream = client.streams.get(streamId)
 
-                    const channelMetadata = stream?.view.gdmChannelContent.channelMetadata
-                    const channelProperties = channelMetadata?.channelProperties
-                    expect(channelProperties).toBeDefined()
+                        const channelMetadata =
+                            stream?.view.gdmChannelContent.channelMetadata
+                        const channelProperties =
+                            channelMetadata?.channelProperties
+                        expect(channelProperties).toBeDefined()
 
-                    expect(channelProperties?.name).toEqual(name)
-                    expect(channelProperties?.topic).toEqual(topic)
-                })
-            })
+                        expect(channelProperties?.name).toEqual(name)
+                        expect(channelProperties?.topic).toEqual(topic)
+                    })
+                },
+            )
             return donePromise.promise
         }
 
-        const promises = [bobsClient, alicesClient, charliesClient, chucksClient].map(
-            createChannelPropertiesPromise,
-        )
+        const promises = [
+            bobsClient,
+            alicesClient,
+            charliesClient,
+            chucksClient,
+        ].map(createChannelPropertiesPromise)
 
         await expect(
             bobsClient.updateGDMChannelProperties(streamId, name, topic),
@@ -268,27 +343,38 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(charliesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            charliesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
         await expect(
             alicesClient.removeUser(streamId, charliesClient.userId),
         ).resolves.not.toThrow()
         const stream = await alicesClient.waitForStream(streamId)
-        await stream.waitForMembership(MembershipOp.SO_LEAVE, charliesClient.userId)
+        await stream.waitForMembership(
+            MembershipOp.SO_LEAVE,
+            charliesClient.userId,
+        )
     })
 
     test('nonMembersCannotRemoveMembers', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(charliesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            charliesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
 
         // @ts-ignore
         await expect(chucksClient.initStream(streamId)).resolves.not.toThrow()
-        await expect(chucksClient.removeUser(streamId, charliesClient.userId)).rejects.toThrow(
-            'initiator of leave is not a member of GDM',
-        )
+        await expect(
+            chucksClient.removeUser(streamId, charliesClient.userId),
+        ).rejects.toThrow('initiator of leave is not a member of GDM')
     })
 
     test('membershipLimitCanBeEqualedOnInception', async () => {
@@ -326,7 +412,9 @@ describe('gdmsTests', () => {
         for (let i = 0; i < 3; i++) {
             const client = await makeTestClient()
             await client.initializeUser()
-            await expect(bobsClient.joinUser(streamId, client.userId)).resolves.not.toThrow()
+            await expect(
+                bobsClient.joinUser(streamId, client.userId),
+            ).resolves.not.toThrow()
         }
 
         // total memberships are now 6, joining another user should fail
@@ -338,9 +426,9 @@ describe('gdmsTests', () => {
             expect(stream?.view.getMembers().joinedUsers.size).toEqual(6)
         })
         // try to join the 7th user
-        await expect(bobsClient.joinUser(streamId, chucksClient.userId)).rejects.toThrow(
-            /membership limit reached[\s]+membershipLimit = 6/,
-        )
+        await expect(
+            bobsClient.joinUser(streamId, chucksClient.userId),
+        ).rejects.toThrow(/membership limit reached[\s]+membershipLimit = 6/)
     })
 
     test('membershipLimitCannotBeExceededByInvites', async () => {
@@ -351,7 +439,9 @@ describe('gdmsTests', () => {
         for (let i = 0; i < 3; i++) {
             const client = await makeTestClient()
             await client.initializeUser()
-            await expect(bobsClient.joinUser(streamId, client.userId)).resolves.not.toThrow()
+            await expect(
+                bobsClient.joinUser(streamId, client.userId),
+            ).resolves.not.toThrow()
         }
         // wait for 6 confirmed memberships, should only equal 6 after miniblock confirmation
         // miniblocks should be properly replicated to all nodes
@@ -361,8 +451,8 @@ describe('gdmsTests', () => {
         })
         // total memberships are now 6, inviting another user should fail
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).rejects.toThrow(
-            /membership limit reached[\s]+membershipLimit = 6/,
-        )
+        await expect(
+            bobsClient.inviteUser(streamId, chucksClient.userId),
+        ).rejects.toThrow(/membership limit reached[\s]+membershipLimit = 6/)
     })
 })

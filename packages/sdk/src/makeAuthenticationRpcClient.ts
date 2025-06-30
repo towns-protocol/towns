@@ -1,8 +1,16 @@
-import { Client, createClient, ConnectTransportOptions } from '@towns-protocol/rpc-connector/common'
+import {
+    Client,
+    createClient,
+    ConnectTransportOptions,
+} from '@towns-protocol/rpc-connector/common'
 import { AuthenticationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
-import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
+import {
+    DEFAULT_RETRY_PARAMS,
+    loggingInterceptor,
+    retryInterceptor,
+} from './rpcInterceptors'
 import { RpcOptions } from './rpcCommon'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 
@@ -10,7 +18,9 @@ const logInfo = dlog('csb:auto-rpc:info')
 
 let nextRpcClientNum = 0
 
-export type AuthenticationRpcClient = Client<typeof AuthenticationService> & { url: string }
+export type AuthenticationRpcClient = Client<typeof AuthenticationService> & {
+    url: string
+}
 
 export function makeAuthenticationRpcClient(
     dest: string,
@@ -39,7 +49,9 @@ export function makeAuthenticationRpcClient(
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true
     } else {
-        logInfo('makeAuthenticationRpcClient: running in debug mode, using JSON format')
+        logInfo(
+            'makeAuthenticationRpcClient: running in debug mode, using JSON format',
+        )
         options.useBinaryFormat = false
         options.jsonOptions = {
             alwaysEmitImplicit: true,
@@ -47,7 +59,10 @@ export function makeAuthenticationRpcClient(
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client = createClient(AuthenticationService, transport) as AuthenticationRpcClient
+    const client = createClient(
+        AuthenticationService,
+        transport,
+    ) as AuthenticationRpcClient
     client.url = url
     return client
 }

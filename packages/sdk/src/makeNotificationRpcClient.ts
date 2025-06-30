@@ -1,4 +1,8 @@
-import { Client, createClient, ConnectTransportOptions } from '@towns-protocol/rpc-connector/common'
+import {
+    Client,
+    createClient,
+    ConnectTransportOptions,
+} from '@towns-protocol/rpc-connector/common'
 import { NotificationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
@@ -15,7 +19,9 @@ const logInfo = dlog('csb:rpc:info')
 
 let nextRpcClientNum = 0
 
-export type NotificationRpcClient = Client<typeof NotificationService> & { url: string }
+export type NotificationRpcClient = Client<typeof NotificationService> & {
+    url: string
+}
 
 export function makeNotificationRpcClient(
     dest: string,
@@ -46,7 +52,9 @@ export function makeNotificationRpcClient(
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true
     } else {
-        logInfo('makeNotificationRpcClient: running in debug mode, using JSON format')
+        logInfo(
+            'makeNotificationRpcClient: running in debug mode, using JSON format',
+        )
         options.useBinaryFormat = false
         options.jsonOptions = {
             alwaysEmitImplicit: true,
@@ -54,7 +62,10 @@ export function makeNotificationRpcClient(
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client = createClient(NotificationService, transport) as NotificationRpcClient
+    const client = createClient(
+        NotificationService,
+        transport,
+    ) as NotificationRpcClient
     client.url = url
     return client
 }

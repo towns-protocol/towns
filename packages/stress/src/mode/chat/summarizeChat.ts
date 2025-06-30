@@ -14,7 +14,9 @@ export async function summarizeChat(
     const processLeadClient = localClients[0]
     const logger = processLeadClient.logger.child({ name: 'summarizeChat' })
     logger.debug('summarizeChat')
-    const defaultChannel = processLeadClient.streamsClient.stream(cfg.announceChannelId)
+    const defaultChannel = processLeadClient.streamsClient.stream(
+        cfg.announceChannelId,
+    )
     check(isDefined(defaultChannel), 'defaultChannel not found')
     // find the message in the default channel that contains the session id, this should already be there decrypted
     const message = defaultChannel.view.timeline.find(
@@ -40,15 +42,19 @@ export async function summarizeChat(
     for (const client of localClients) {
         for (const channelId of cfg.channelIds) {
             // for each channel, count the number of joinChat checkins we got (look for sessionId)
-            const messages = client.streamsClient.stream(channelId)?.view.timeline
+            const messages =
+                client.streamsClient.stream(channelId)?.view.timeline
 
             const checkInMesssages =
                 messages?.filter(
-                    channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
+                    channelMessagePostWhere((value) =>
+                        value.body.includes(cfg.sessionId),
+                    ),
                 ) ?? []
 
             const key = shortenHexString(channelId)
-            const count = checkinCounts[key]?.[checkInMesssages.length.toString()] ?? 0
+            const count =
+                checkinCounts[key]?.[checkInMesssages.length.toString()] ?? 0
             checkinCounts[key] = {
                 ...checkinCounts[key],
                 [checkInMesssages.length.toString()]: count + 1,
@@ -64,9 +70,13 @@ export async function summarizeChat(
         errors,
     }
 
-    await processLeadClient.sendMessage(cfg.announceChannelId, `Done ${makeCodeBlock(summary)}`, {
-        threadId: message.eventId,
-    })
+    await processLeadClient.sendMessage(
+        cfg.announceChannelId,
+        `Done ${makeCodeBlock(summary)}`,
+        {
+            threadId: message.eventId,
+        },
+    )
 
     return summary
 }

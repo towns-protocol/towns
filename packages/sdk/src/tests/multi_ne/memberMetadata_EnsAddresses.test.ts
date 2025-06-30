@@ -15,7 +15,13 @@ describe('memberMetadata_EnsAddressesTests', () => {
 
     test('clientCanSetEnsAddress', async () => {
         const ensAddress = makeRandomUserAddress()
-        ensAddresses.addEnsAddressEvent('event-id-1', ensAddress, 'userid-1', true, undefined)
+        ensAddresses.addEnsAddressEvent(
+            'event-id-1',
+            ensAddress,
+            'userid-1',
+            true,
+            undefined,
+        )
 
         // the plaintext map is empty until the event is no longer pending
         expect(ensAddresses.confirmedEnsAddresses).toEqual(new Map([]))
@@ -28,7 +34,13 @@ describe('memberMetadata_EnsAddressesTests', () => {
 
     test('clientCanClearEnsAddress', async () => {
         const ensAddress = makeRandomUserAddress()
-        ensAddresses.addEnsAddressEvent('event-id-1', ensAddress, 'userid-1', true, undefined)
+        ensAddresses.addEnsAddressEvent(
+            'event-id-1',
+            ensAddress,
+            'userid-1',
+            true,
+            undefined,
+        )
 
         // the plaintext map is empty until the event is no longer pending
         expect(ensAddresses.confirmedEnsAddresses).toEqual(new Map([]))
@@ -39,7 +51,13 @@ describe('memberMetadata_EnsAddressesTests', () => {
         )
 
         const clearAddress = new Uint8Array()
-        ensAddresses.addEnsAddressEvent('event-id-2', clearAddress, 'userid-1', true, undefined)
+        ensAddresses.addEnsAddressEvent(
+            'event-id-2',
+            clearAddress,
+            'userid-1',
+            true,
+            undefined,
+        )
         ensAddresses.onConfirmEvent('event-id-2')
         // clear event confirmed, map should be empty
         expect(ensAddresses.confirmedEnsAddresses).toEqual(new Map([]))

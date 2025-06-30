@@ -41,7 +41,11 @@ describe('disableSpace', () => {
         )
 
         // Disable the channel
-        const txn = await bobSpaceDapp.setSpaceAccess(spaceId, true, bobProvider.wallet)
+        const txn = await bobSpaceDapp.setSpaceAccess(
+            spaceId,
+            true,
+            bobProvider.wallet,
+        )
         await bobProvider.waitForTransaction(txn.hash)
         const spaceInfo = await bobSpaceDapp.getSpaceInfo(spaceId)
         expect(spaceInfo).toBeDefined()
@@ -69,6 +73,8 @@ describe('disableSpace', () => {
         //     carolSpaceDapp,
         //     carolsWallet.address
         // )
-        await expect(carol.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
+        await expect(carol.joinStream(spaceId)).rejects.toThrow(
+            /PERMISSION_DENIED/,
+        )
     })
 })

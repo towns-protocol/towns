@@ -16,7 +16,11 @@ import {
 
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
 import { isDefined } from './check'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
+import {
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+} from './id'
 import { fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const MAX_CACHED_SCROLLBACK_COUNT = 3
@@ -43,7 +47,10 @@ async function fnReadRetryer<T>(
     while (retryCounter > 0) {
         try {
             if (retryCounter < retries) {
-                logWarn('retrying...', `${retryCounter}/${retries} retries left`)
+                logWarn(
+                    'retrying...',
+                    `${retryCounter}/${retries} retries left`,
+                )
                 retryCounter--
                 // wait a bit before retrying
                 await new Promise((resolve) => setTimeout(resolve, 100))
@@ -84,36 +91,62 @@ async function fnReadRetryer<T>(
 }
 
 export interface IPersistenceStore {
-    saveCleartext(eventId: string, cleartext: Uint8Array | string): Promise<void>
+    saveCleartext(
+        eventId: string,
+        cleartext: Uint8Array | string,
+    ): Promise<void>
     getCleartext(eventId: string): Promise<Uint8Array | string | undefined>
-    getCleartexts(eventIds: string[]): Promise<Record<string, Uint8Array | string> | undefined>
-    getSyncedStream(streamId: string): Promise<ParsedPersistedSyncedStream | undefined>
-    saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream): Promise<void>
+    getCleartexts(
+        eventIds: string[],
+    ): Promise<Record<string, Uint8Array | string> | undefined>
+    getSyncedStream(
+        streamId: string,
+    ): Promise<ParsedPersistedSyncedStream | undefined>
+    saveSyncedStream(
+        streamId: string,
+        syncedStream: PersistedSyncedStream,
+    ): Promise<void>
     loadStream(
         streamId: string,
         inPersistedSyncedStream?: ParsedPersistedSyncedStream,
     ): Promise<LoadedStream | undefined>
-    loadStreams(streamIds: string[]): Promise<Record<string, LoadedStream | undefined>>
+    loadStreams(
+        streamIds: string[],
+    ): Promise<Record<string, LoadedStream | undefined>>
     saveMiniblock(streamId: string, miniblock: ParsedMiniblock): Promise<void>
     saveMiniblocks(
         streamId: string,
         miniblocks: ParsedMiniblock[],
         direction: 'forward' | 'backward',
     ): Promise<void>
-    getMiniblock(streamId: string, miniblockNum: bigint): Promise<ParsedMiniblock | undefined>
+    getMiniblock(
+        streamId: string,
+        miniblockNum: bigint,
+    ): Promise<ParsedMiniblock | undefined>
     getMiniblocks(
         streamId: string,
         rangeStart: bigint,
         randeEnd: bigint,
     ): Promise<ParsedMiniblock[]>
-    saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void>
+    saveSnapshot(
+        streamId: string,
+        miniblockNum: bigint,
+        snapshot: Snapshot,
+    ): Promise<void>
 }
 
 export class PersistenceStore extends Dexie implements IPersistenceStore {
     cleartexts!: Table<{ cleartext: Uint8Array | string; eventId: string }>
     syncedStreams!: Table<{ streamId: string; data: Uint8Array }>
-    miniblocks!: Table<{ streamId: string; miniblockNum: string; data: Uint8Array }>
-    snapshots!: Table<{ streamId: string; data: { miniblockNum: bigint; snapshot: Uint8Array } }>
+    miniblocks!: Table<{
+        streamId: string
+        miniblockNum: string
+        data: Uint8Array
+    }>
+    snapshots!: Table<{
+        streamId: string
+        data: { miniblockNum: bigint; snapshot: Uint8Array }
+    }>
 
     constructor(databaseName: string) {
         super(databaseName)
@@ -169,8 +202,14 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         if (!record) {
             return undefined
         }
-        const cachedSyncedStream = fromBinary(PersistedSyncedStreamSchema, record.data)
-        const psstpss = persistedSyncedStreamToParsedSyncedStream(streamId, cachedSyncedStream)
+        const cachedSyncedStream = fromBinary(
+            PersistedSyncedStreamSchema,
+            record.data,
+        )
+        const psstpss = persistedSyncedStreamToParsedSyncedStream(
+            streamId,
+            cachedSyncedStream,
+        )
         return psstpss
     }
 
@@ -203,7 +242,10 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return undefined
         }
 
-        if (snapshot.miniblockNum !== persistedSyncedStream.lastSnapshotMiniblockNum) {
+        if (
+            snapshot.miniblockNum !==
+            persistedSyncedStream.lastSnapshotMiniblockNum
+        ) {
             logError(
                 'Persisted Snapshot miniblock num mismatch',
                 streamId,
@@ -228,7 +270,9 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             : []
 
         const snapshotEventIds = eventIdsFromSnapshot(snapshot.snapshot)
-        const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
+        const eventIds = miniblocks.flatMap((mb) =>
+            mb.events.map((e) => e.hashStr),
+        )
         const prependedEventIds = prependedMiniblocks.flatMap((mb) =>
             mb.events.map((e) => e.hashStr),
         )
@@ -243,20 +287,29 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             cleartexts,
             snapshot: snapshot.snapshot,
             prependedMiniblocks,
-            prevSnapshotMiniblockNum: miniblocks[0].header.prevSnapshotMiniblockNum,
+            prevSnapshotMiniblockNum:
+                miniblocks[0].header.prevSnapshotMiniblockNum,
         }
     }
 
     async loadStreams(streamIds: string[]) {
         const result = await this.transaction(
             'r',
-            [this.syncedStreams, this.cleartexts, this.miniblocks, this.snapshots],
+            [
+                this.syncedStreams,
+                this.cleartexts,
+                this.miniblocks,
+                this.snapshots,
+            ],
             async () => {
                 const syncedStreams = await this.getSyncedStreams(streamIds)
                 const retVal: Record<string, LoadedStream | undefined> = {}
                 for (const streamId of streamIds) {
                     if (syncedStreams[streamId]) {
-                        const stream = await this.loadStream(streamId, syncedStreams[streamId])
+                        const stream = await this.loadStream(
+                            streamId,
+                            syncedStreams[streamId],
+                        )
                         if (stream) {
                             retVal[streamId] = stream
                         }
@@ -272,13 +325,19 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         const records = await this.syncedStreams.bulkGet(streamIds)
         const cachedSyncedStreams = records.map((x) =>
             x
-                ? { streamId: x.streamId, data: fromBinary(PersistedSyncedStreamSchema, x.data) }
+                ? {
+                      streamId: x.streamId,
+                      data: fromBinary(PersistedSyncedStreamSchema, x.data),
+                  }
                 : undefined,
         )
         const psstpss = cachedSyncedStreams.reduce(
             (acc, x) => {
                 if (x) {
-                    acc[x.streamId] = persistedSyncedStreamToParsedSyncedStream(x.streamId, x.data)
+                    acc[x.streamId] = persistedSyncedStreamToParsedSyncedStream(
+                        x.streamId,
+                        x.data,
+                    )
                 }
                 return acc
             },
@@ -287,7 +346,10 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         return psstpss
     }
 
-    async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
+    async saveSyncedStream(
+        streamId: string,
+        syncedStream: PersistedSyncedStream,
+    ) {
         log('saving synced stream', streamId)
         await this.syncedStreams.put({
             streamId,
@@ -297,7 +359,10 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
 
     async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
         log('saving miniblock', streamId)
-        const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock, 'forward')
+        const cachedMiniblock = parsedMiniblockToPersistedMiniblock(
+            miniblock,
+            'forward',
+        )
         await this.miniblocks.put({
             streamId: streamId,
             miniblockNum: miniblock.header.miniblockNum.toString(),
@@ -328,11 +393,17 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         streamId: string,
         miniblockNum: bigint,
     ): Promise<ParsedMiniblock | undefined> {
-        const record = await this.miniblocks.get([streamId, miniblockNum.toString()])
+        const record = await this.miniblocks.get([
+            streamId,
+            miniblockNum.toString(),
+        ])
         if (!record) {
             return undefined
         }
-        const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
+        const cachedMiniblock = fromBinary(
+            PersistedMiniblockSchema,
+            record.data,
+        )
         return persistedMiniblockToParsedMiniblock(cachedMiniblock)
     }
 
@@ -352,14 +423,21 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 if (!record) {
                     return undefined
                 }
-                const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
+                const cachedMiniblock = fromBinary(
+                    PersistedMiniblockSchema,
+                    record.data,
+                )
                 return persistedMiniblockToParsedMiniblock(cachedMiniblock)
             })
             .filter(isDefined)
         return miniblocks.length === ids.length ? miniblocks : []
     }
 
-    async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
+    async saveSnapshot(
+        streamId: string,
+        miniblockNum: bigint,
+        snapshot: Snapshot,
+    ): Promise<void> {
         const record = await this.snapshots.get(streamId)
         if (record && record.data.miniblockNum >= miniblockNum) {
             return
@@ -388,7 +466,11 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     private requestPersistentStorage() {
-        if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+        if (
+            typeof navigator !== 'undefined' &&
+            navigator.storage &&
+            navigator.storage.persist
+        ) {
             navigator.storage
                 .persist()
                 .then((persisted) => {
@@ -403,12 +485,20 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     private logPersistenceStats() {
-        if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+        if (
+            typeof navigator !== 'undefined' &&
+            navigator.storage &&
+            navigator.storage.estimate
+        ) {
             navigator.storage
                 .estimate()
                 .then((estimate) => {
-                    const usage = ((estimate.usage ?? 0) / 1024 / 1024).toFixed(1)
-                    const quota = ((estimate.quota ?? 0) / 1024 / 1024).toFixed(1)
+                    const usage = ((estimate.usage ?? 0) / 1024 / 1024).toFixed(
+                        1,
+                    )
+                    const quota = ((estimate.quota ?? 0) / 1024 / 1024).toFixed(
+                        1,
+                    )
                     log(`Using ${usage} out of ${quota} MB.`)
                 })
                 .catch((e) => {
@@ -436,7 +526,11 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             if (toExclusive <= 0n) {
                 break
             }
-            const result = await this.getMiniblocks(streamId, fromInclusive, toExclusive - 1n)
+            const result = await this.getMiniblocks(
+                streamId,
+                fromInclusive,
+                toExclusive - 1n,
+            )
             if (result.length > 0) {
                 miniblocks = [...result, ...miniblocks]
                 fromInclusive = result[0].header.prevSnapshotMiniblockNum
@@ -461,7 +555,9 @@ function hasTopLevelRenderableEvent(miniblocks: ParsedMiniblock[]): boolean {
     return false
 }
 
-function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean {
+function topLevelRenderableEventInMiniblock(
+    miniblock: ParsedMiniblock,
+): boolean {
     for (const e of miniblock.events) {
         switch (e.event.payload.case) {
             case 'channelPayload':
@@ -490,11 +586,20 @@ export function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
 
     switch (snapshot.content.case) {
         case 'gdmChannelContent': {
-            const channelPropertiesEventIds = snapshot.content.value.channelProperties
-                ? [bin_toHexString(snapshot.content.value.channelProperties.eventHash)]
+            const channelPropertiesEventIds = snapshot.content.value
+                .channelProperties
+                ? [
+                      bin_toHexString(
+                          snapshot.content.value.channelProperties.eventHash,
+                      ),
+                  ]
                 : []
 
-            return [...usernameEventIds, ...displayNameEventIds, ...channelPropertiesEventIds]
+            return [
+                ...usernameEventIds,
+                ...displayNameEventIds,
+                ...channelPropertiesEventIds,
+            ]
         }
         default:
             return [...usernameEventIds, ...displayNameEventIds]
@@ -520,7 +625,10 @@ export class StubPersistenceStore implements IPersistenceStore {
         return Promise.resolve(undefined)
     }
 
-    async loadStream(streamId: string, inPersistedSyncedStream?: ParsedPersistedSyncedStream) {
+    async loadStream(
+        streamId: string,
+        inPersistedSyncedStream?: ParsedPersistedSyncedStream,
+    ) {
         return Promise.resolve(undefined)
     }
 
@@ -528,7 +636,10 @@ export class StubPersistenceStore implements IPersistenceStore {
         return Promise.resolve({})
     }
 
-    async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
+    async saveSyncedStream(
+        streamId: string,
+        syncedStream: PersistedSyncedStream,
+    ) {
         return Promise.resolve()
     }
 
@@ -559,7 +670,11 @@ export class StubPersistenceStore implements IPersistenceStore {
         return Promise.resolve([])
     }
 
-    async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
+    async saveSnapshot(
+        streamId: string,
+        miniblockNum: bigint,
+        snapshot: Snapshot,
+    ): Promise<void> {
         return Promise.resolve()
     }
     /* eslint-enable @typescript-eslint/no-unused-vars */

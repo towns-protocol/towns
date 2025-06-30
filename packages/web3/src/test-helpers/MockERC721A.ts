@@ -1136,7 +1136,8 @@ export const MockERC721a = {
                             'Gives permission to `to` to transfer `tokenId` token to another account. See {ERC721A-_approve}. Requirements: - The caller must own the token or be an approved operator.',
                     },
                     'balanceOf(address)': {
-                        details: "Returns the number of tokens in `owner`'s account.",
+                        details:
+                            "Returns the number of tokens in `owner`'s account.",
                     },
                     'getApproved(uint256)': {
                         details:
@@ -1154,7 +1155,8 @@ export const MockERC721a = {
                             'Returns the owner of the `tokenId` token. Requirements: - `tokenId` must exist.',
                     },
                     'safeTransferFrom(address,address,uint256)': {
-                        details: "Equivalent to `safeTransferFrom(from, to, tokenId, '')`.",
+                        details:
+                            "Equivalent to `safeTransferFrom(from, to, tokenId, '')`.",
                     },
                     'safeTransferFrom(address,address,uint256,bytes)': {
                         details:
@@ -1221,7 +1223,8 @@ export const MockERC721a = {
         },
         sources: {
             'contracts/src/diamond/facets/Facet.sol': {
-                keccak256: '0x8213b85d1271bc3c2aa9842979c8ad825066c4c9addc55296d53b6747e5198ba',
+                keccak256:
+                    '0x8213b85d1271bc3c2aa9842979c8ad825066c4c9addc55296d53b6747e5198ba',
                 urls: [
                     'bzz-raw://b4e88e869c99e65f0caeb9d03938e78c578a869783b9f20c05f4ba52e7ca493d',
                     'dweb:/ipfs/QmRqPmg8BYD1V6Cd8kfihCQ7nn2DAsgRjGW2MJvc7Evnjt',
@@ -1229,47 +1232,56 @@ export const MockERC721a = {
                 license: 'Apache-2.0',
             },
             'contracts/src/diamond/facets/initializable/Initializable.sol': {
-                keccak256: '0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096',
+                keccak256:
+                    '0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096',
                 urls: [
                     'bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367',
                     'dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd',
                 ],
                 license: 'MIT',
             },
-            'contracts/src/diamond/facets/initializable/InitializableStorage.sol': {
-                keccak256: '0x99dfe047dbb8df48a7490f63939420dd990fb5fd3b3a03c42d0cb9c6f4f9eefa',
-                urls: [
-                    'bzz-raw://5e8f6d4bff257324e4544cacadd9fee42bada459f457fb707fef90bcfe0e895a',
-                    'dweb:/ipfs/QmYWEam5VcMt5ViNMKRkaxoD84MK2MewS5iWwSES589Vma',
-                ],
-                license: 'Apache-2.0',
-            },
+            'contracts/src/diamond/facets/initializable/InitializableStorage.sol':
+                {
+                    keccak256:
+                        '0x99dfe047dbb8df48a7490f63939420dd990fb5fd3b3a03c42d0cb9c6f4f9eefa',
+                    urls: [
+                        'bzz-raw://5e8f6d4bff257324e4544cacadd9fee42bada459f457fb707fef90bcfe0e895a',
+                        'dweb:/ipfs/QmYWEam5VcMt5ViNMKRkaxoD84MK2MewS5iWwSES589Vma',
+                    ],
+                    license: 'Apache-2.0',
+                },
             'contracts/src/diamond/facets/introspection/IERC165.sol': {
-                keccak256: '0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816',
+                keccak256:
+                    '0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816',
                 urls: [
                     'bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2',
                     'dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV',
                 ],
                 license: 'Apache-2.0',
             },
-            'contracts/src/diamond/facets/introspection/IntrospectionBase.sol': {
-                keccak256: '0xbdc803a2179838316625692285c4b720cdbae1c78e5f9a68560719c909253d00',
-                urls: [
-                    'bzz-raw://776a4490b22b01b554770d71afde7bed4c32ea639a08c84a194076eddf5517be',
-                    'dweb:/ipfs/QmcPVR9T7vXccCg7RXQ4wXtHaBG6ugrEXk8qnhRpsYMVd6',
-                ],
-                license: 'Apache-2.0',
-            },
-            'contracts/src/diamond/facets/introspection/IntrospectionStorage.sol': {
-                keccak256: '0xd2ec3bbe4d15f9232006b41e0a80a5127006243ee596754af77bd3926045782a',
-                urls: [
-                    'bzz-raw://8c47e18bfd34a687ce9ec75dc1f1fa5bca088e97e59aad2ac3fdb0989d06d7e6',
-                    'dweb:/ipfs/QmdktQXV7PKABzh43SZqemdTG25RxMaMsgpXTTUvZUxmfU',
-                ],
-                license: 'Apache-2.0',
-            },
+            'contracts/src/diamond/facets/introspection/IntrospectionBase.sol':
+                {
+                    keccak256:
+                        '0xbdc803a2179838316625692285c4b720cdbae1c78e5f9a68560719c909253d00',
+                    urls: [
+                        'bzz-raw://776a4490b22b01b554770d71afde7bed4c32ea639a08c84a194076eddf5517be',
+                        'dweb:/ipfs/QmcPVR9T7vXccCg7RXQ4wXtHaBG6ugrEXk8qnhRpsYMVd6',
+                    ],
+                    license: 'Apache-2.0',
+                },
+            'contracts/src/diamond/facets/introspection/IntrospectionStorage.sol':
+                {
+                    keccak256:
+                        '0xd2ec3bbe4d15f9232006b41e0a80a5127006243ee596754af77bd3926045782a',
+                    urls: [
+                        'bzz-raw://8c47e18bfd34a687ce9ec75dc1f1fa5bca088e97e59aad2ac3fdb0989d06d7e6',
+                        'dweb:/ipfs/QmdktQXV7PKABzh43SZqemdTG25RxMaMsgpXTTUvZUxmfU',
+                    ],
+                    license: 'Apache-2.0',
+                },
             'contracts/src/diamond/facets/token/ERC721A/ERC721A.sol': {
-                keccak256: '0x321ea4cd6a2617d12cdf6bcd84095072de32ecfddfa95df83e58711c4684e325',
+                keccak256:
+                    '0x321ea4cd6a2617d12cdf6bcd84095072de32ecfddfa95df83e58711c4684e325',
                 urls: [
                     'bzz-raw://95b09721ac18cc7d34859486008989238dfc9ff9bbafb300ce7a3b2ecfb201a1',
                     'dweb:/ipfs/Qmcdzd3hLsafxVkDTYs2japBR5UpmeJ7VYWrNFbSf1kboX',
@@ -1277,7 +1289,8 @@ export const MockERC721a = {
                 license: 'Apache-2.0',
             },
             'contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol': {
-                keccak256: '0x1e0f21db21117ca705182e671aca5f24d157ca9003268450582d3f49eb2b8ece',
+                keccak256:
+                    '0x1e0f21db21117ca705182e671aca5f24d157ca9003268450582d3f49eb2b8ece',
                 urls: [
                     'bzz-raw://4348c9408175707af61dd9d5d0eda909066c14eb35e1fc88604b9d58eed0d667',
                     'dweb:/ipfs/QmUk514VMTYx1skNfooNs5q53x7SoxonHuEYpsDSwvoyEG',
@@ -1285,7 +1298,8 @@ export const MockERC721a = {
                 license: 'Apache-2.0',
             },
             'contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol': {
-                keccak256: '0xd6940108c888555331b972b7ea5d4842ddeb7c222feab4565c166c12f85900ba',
+                keccak256:
+                    '0xd6940108c888555331b972b7ea5d4842ddeb7c222feab4565c166c12f85900ba',
                 urls: [
                     'bzz-raw://ecbc54202867c7b11e57ca2cbcbe33aa5701ea1593a70bfa82a0ccc358682767',
                     'dweb:/ipfs/QmScG3JBtGEoDgxipmP8EbAgZxZF9F8aWaZ9gYBqqBweNH',
@@ -1293,7 +1307,8 @@ export const MockERC721a = {
                 license: 'Apache-2.0',
             },
             'contracts/src/diamond/facets/token/ERC721A/IERC721A.sol': {
-                keccak256: '0x1473085ffec67f1e059e56baa36be6d3379f7b876147cd62b9854cea8f52cce9',
+                keccak256:
+                    '0x1473085ffec67f1e059e56baa36be6d3379f7b876147cd62b9854cea8f52cce9',
                 urls: [
                     'bzz-raw://6b3bd85f29ed8e16ad5622e40966c92b58baf988880da4a676142957462ded06',
                     'dweb:/ipfs/QmSkGb7ByX4DTvNPh6egoSAs71b7w1NHoYfPUPT9LdtJY9',
@@ -1301,7 +1316,8 @@ export const MockERC721a = {
                 license: 'Apache-2.0',
             },
             'contracts/test/mocks/MockERC721A.sol': {
-                keccak256: '0x187cb0c2de1fe600b579a26a4abc6bd43dfa4bfd1e60e2294ebdd6583c2c57ce',
+                keccak256:
+                    '0x187cb0c2de1fe600b579a26a4abc6bd43dfa4bfd1e60e2294ebdd6583c2c57ce',
                 urls: [
                     'bzz-raw://0558aa9bc5372b89a348a6946a6df919d6eeacfe518831314a0cca2a0ab9d85c',
                     'dweb:/ipfs/QmWZYXqMcES3otNBZdsB6kDJwucNSsQBFgJKDoDNJGqaxh',
@@ -1309,7 +1325,8 @@ export const MockERC721a = {
                 license: 'Apache-2.0',
             },
             'lib/@openzeppelin/contracts/utils/Address.sol': {
-                keccak256: '0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1',
+                keccak256:
+                    '0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1',
                 urls: [
                     'bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269',
                     'dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj',
@@ -1317,7 +1334,8 @@ export const MockERC721a = {
                 license: 'MIT',
             },
             'lib/@openzeppelin/contracts/utils/introspection/IERC165.sol': {
-                keccak256: '0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1',
+                keccak256:
+                    '0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1',
                 urls: [
                     'bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f',
                     'dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy',
@@ -1349,7 +1367,8 @@ export const MockERC721a = {
                 nodeType: 'ImportDirective',
                 src: '107:79:261',
                 nodes: [],
-                absolutePath: 'contracts/src/diamond/facets/token/ERC721A/ERC721A.sol',
+                absolutePath:
+                    'contracts/src/diamond/facets/token/ERC721A/ERC721A.sol',
                 file: 'contracts/src/diamond/facets/token/ERC721A/ERC721A.sol',
                 nameLocation: '-1:-1:-1',
                 scope: 44954,
@@ -1476,7 +1495,8 @@ export const MockERC721a = {
                                                 nodeType: 'Literal',
                                                 src: '333:1:261',
                                                 typeDescriptions: {
-                                                    typeIdentifier: 't_rational_1_by_1',
+                                                    typeIdentifier:
+                                                        't_rational_1_by_1',
                                                     typeString: 'int_const 1',
                                                 },
                                                 value: '1',
@@ -1489,7 +1509,8 @@ export const MockERC721a = {
                                                     typeString: 'address',
                                                 },
                                                 {
-                                                    typeIdentifier: 't_rational_1_by_1',
+                                                    typeIdentifier:
+                                                        't_rational_1_by_1',
                                                     typeString: 'int_const 1',
                                                 },
                                             ],
@@ -1502,7 +1523,8 @@ export const MockERC721a = {
                                             typeDescriptions: {
                                                 typeIdentifier:
                                                     't_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$',
-                                                typeString: 'function (address,uint256)',
+                                                typeString:
+                                                    'function (address,uint256)',
                                             },
                                         },
                                         id: 44926,
@@ -1666,7 +1688,8 @@ export const MockERC721a = {
                                             typeDescriptions: {
                                                 typeIdentifier:
                                                     't_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$',
-                                                typeString: 'function (address,uint256)',
+                                                typeString:
+                                                    'function (address,uint256)',
                                             },
                                         },
                                         id: 44939,
@@ -1807,13 +1830,16 @@ export const MockERC721a = {
                                             id: 44947,
                                             name: '_burn',
                                             nodeType: 'Identifier',
-                                            overloadedDeclarations: [14390, 14564],
+                                            overloadedDeclarations: [
+                                                14390, 14564,
+                                            ],
                                             referencedDeclaration: 14390,
                                             src: '471:5:261',
                                             typeDescriptions: {
                                                 typeIdentifier:
                                                     't_function_internal_nonpayable$_t_uint256_$returns$__$',
-                                                typeString: 'function (uint256)',
+                                                typeString:
+                                                    'function (uint256)',
                                             },
                                         },
                                         id: 44949,
@@ -1911,14 +1937,16 @@ export const MockERC721a = {
                 contractKind: 'contract',
                 fullyImplemented: true,
                 linearizedBaseContracts: [
-                    44953, 13245, 7509, 10861, 10751, 10709, 14682, 14951, 14839,
+                    44953, 13245, 7509, 10861, 10751, 10709, 14682, 14951,
+                    14839,
                 ],
                 name: 'MockERC721A',
                 nameLocation: '197:11:261',
                 scope: 44954,
                 usedErrors: [
-                    10489, 10491, 10738, 10740, 14764, 14767, 14770, 14773, 14776, 14779, 14782,
-                    14785, 14788, 14791, 14794, 14797, 14800,
+                    10489, 10491, 10738, 10740, 14764, 14767, 14770, 14773,
+                    14776, 14779, 14782, 14785, 14788, 14791, 14794, 14797,
+                    14800,
                 ],
                 usedEvents: [10495, 10745, 10750, 14809, 14818, 14827, 14838],
             },

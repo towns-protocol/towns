@@ -2,12 +2,17 @@
  * @group with-entitlements
  */
 
-import { MembershipStruct, convertRuleDataV1ToV2, encodeRuleDataV2 } from '@towns-protocol/web3'
+import {
+    MembershipStruct,
+    convertRuleDataV1ToV2,
+    encodeRuleDataV2,
+} from '@towns-protocol/web3'
 import { setupWalletsAndContexts, everyoneMembershipStruct } from '../testUtils'
 
 describe('Legacy Space Detection', () => {
     test('Detect Legacy Space', async () => {
-        const { alice, aliceSpaceDapp, aliceProvider } = await setupWalletsAndContexts()
+        const { alice, aliceSpaceDapp, aliceProvider } =
+            await setupWalletsAndContexts()
         const membership = await everyoneMembershipStruct(aliceSpaceDapp, alice)
 
         const transaction = await aliceSpaceDapp.createLegacySpace(
@@ -21,15 +26,24 @@ describe('Legacy Space Detection', () => {
         )
         const receipt = await transaction.wait()
         expect(receipt.status).toEqual(1)
-        const spaceAddress = aliceSpaceDapp.getSpaceAddress(receipt, aliceProvider.wallet.address)
+        const spaceAddress = aliceSpaceDapp.getSpaceAddress(
+            receipt,
+            aliceProvider.wallet.address,
+        )
         expect(spaceAddress).toBeDefined()
 
-        await expect(aliceSpaceDapp.isLegacySpace(spaceAddress!)).resolves.toBeTruthy()
+        await expect(
+            aliceSpaceDapp.isLegacySpace(spaceAddress!),
+        ).resolves.toBeTruthy()
     })
 
     test('Detect V2 space', async () => {
-        const { alice, aliceSpaceDapp, aliceProvider } = await setupWalletsAndContexts()
-        const legacyMembership = await everyoneMembershipStruct(aliceSpaceDapp, alice)
+        const { alice, aliceSpaceDapp, aliceProvider } =
+            await setupWalletsAndContexts()
+        const legacyMembership = await everyoneMembershipStruct(
+            aliceSpaceDapp,
+            alice,
+        )
         const membership: MembershipStruct = {
             settings: legacyMembership.settings,
             permissions: legacyMembership.permissions,
@@ -38,7 +52,9 @@ describe('Legacy Space Detection', () => {
                 syncEntitlements: false,
                 users: [],
                 ruleData: encodeRuleDataV2(
-                    convertRuleDataV1ToV2(legacyMembership.requirements.ruleData),
+                    convertRuleDataV1ToV2(
+                        legacyMembership.requirements.ruleData,
+                    ),
                 ),
             },
         }
@@ -53,9 +69,14 @@ describe('Legacy Space Detection', () => {
         )
         const receipt = await transaction.wait()
         expect(receipt.status).toEqual(1)
-        const spaceAddress = aliceSpaceDapp.getSpaceAddress(receipt, aliceProvider.wallet.address)
+        const spaceAddress = aliceSpaceDapp.getSpaceAddress(
+            receipt,
+            aliceProvider.wallet.address,
+        )
         expect(spaceAddress).toBeDefined()
 
-        await expect(aliceSpaceDapp.isLegacySpace(spaceAddress!)).resolves.toBeFalsy()
+        await expect(
+            aliceSpaceDapp.isLegacySpace(spaceAddress!),
+        ).resolves.toBeFalsy()
     })
 })

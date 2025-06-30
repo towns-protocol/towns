@@ -46,7 +46,10 @@ export const Permission = {
 
 export type Permission = (typeof Permission)[keyof typeof Permission]
 
-export type EntitlementShim = UserEntitlementShimV3 | RuleEntitlementShim | RuleEntitlementV2Shim
+export type EntitlementShim =
+    | UserEntitlementShimV3
+    | RuleEntitlementShim
+    | RuleEntitlementV2Shim
 
 export type EntitlementStruct = IRolesBaseV3.CreateEntitlementStruct
 
@@ -60,9 +63,11 @@ export type MembershipStruct = ISpaceArchitectBaseV3.MembershipStruct
 
 export type LegacyMembershipStruct = ILegacyArchitectBase.MembershipStruct
 
-export type MembershipRequirementsStruct = ISpaceArchitectBaseV3.MembershipRequirementsStruct
+export type MembershipRequirementsStruct =
+    ISpaceArchitectBaseV3.MembershipRequirementsStruct
 
-export type LegacyMembershipRequirementsStruct = ILegacyArchitectBase.MembershipRequirementsStruct
+export type LegacyMembershipRequirementsStruct =
+    ILegacyArchitectBase.MembershipRequirementsStruct
 
 export type SpaceInfoStruct = ISpaceArchitectBaseV3.SpaceInfoStruct
 
@@ -88,13 +93,20 @@ export function isLegacyMembershipType(
 export function isCreateLegacySpaceParams(
     object: CreateSpaceParams | CreateLegacySpaceParams,
 ): object is CreateLegacySpaceParams {
-    return typeof object.membership.requirements.ruleData === typeof NoopRuleData
+    return (
+        typeof object.membership.requirements.ruleData === typeof NoopRuleData
+    )
 }
 
 export function isRuleDataV1(
-    ruleData: IRuleEntitlementBase.RuleDataStruct | IRuleEntitlementV2Base.RuleDataV2Struct,
+    ruleData:
+        | IRuleEntitlementBase.RuleDataStruct
+        | IRuleEntitlementV2Base.RuleDataV2Struct,
 ): ruleData is IRuleEntitlementBase.RuleDataStruct {
-    return ruleData.checkOperations.length === 0 || 'threshold' in ruleData.checkOperations[0]
+    return (
+        ruleData.checkOperations.length === 0 ||
+        'threshold' in ruleData.checkOperations[0]
+    )
 }
 
 /**
@@ -207,7 +219,11 @@ export const isUpdateChannelStatusParams = (
 ): params is UpdateChannelAccessParams => {
     return (
         'disabled' in params &&
-        !('roleIds' in params || 'channelName' in params || 'channelDescription' in params)
+        !(
+            'roleIds' in params ||
+            'channelName' in params ||
+            'channelDescription' in params
+        )
     )
 }
 
@@ -215,12 +231,21 @@ export function isStringArray(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args: any,
 ): args is string[] {
-    return Array.isArray(args) && args.length > 0 && args.every((arg) => typeof arg === 'string')
+    return (
+        Array.isArray(args) &&
+        args.length > 0 &&
+        args.every((arg) => typeof arg === 'string')
+    )
 }
 
 export type MembershipInfo = Pick<
     MembershipInfoStruct,
-    'maxSupply' | 'currency' | 'feeRecipient' | 'price' | 'duration' | 'pricingModule'
+    | 'maxSupply'
+    | 'currency'
+    | 'feeRecipient'
+    | 'price'
+    | 'duration'
+    | 'pricingModule'
 > &
     TotalSupplyInfo & {
         prepaidSupply: number
@@ -267,7 +292,9 @@ export interface UpdateChannelAccessParams {
     disabled: boolean
 }
 
-export type UpdateChannelParams = UpdateChannelMetadataParams | UpdateChannelAccessParams
+export type UpdateChannelParams =
+    | UpdateChannelMetadataParams
+    | UpdateChannelAccessParams
 
 export interface RemoveChannelParams {
     spaceId: string

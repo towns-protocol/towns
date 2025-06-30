@@ -28,11 +28,16 @@ export const Tooltip = ({
     title,
     children,
     ...props
-}: { title: string; children: React.ReactNode } & TooltipPrimitive.TooltipProviderProps) => {
+}: {
+    title: string
+    children: React.ReactNode
+} & TooltipPrimitive.TooltipProviderProps) => {
     return (
         <TooltipPrimitive.Provider {...props}>
             <TooltipPrimitive.Root>
-                <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+                <TooltipPrimitive.Trigger asChild>
+                    {children}
+                </TooltipPrimitive.Trigger>
                 <TooltipContent>{title}</TooltipContent>
             </TooltipPrimitive.Root>
         </TooltipPrimitive.Provider>

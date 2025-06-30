@@ -3,7 +3,11 @@
  */
 
 import { makeEvent } from '../../sign'
-import { MembershipOp, SyncStreamsResponse, SyncOp } from '@towns-protocol/proto'
+import {
+    MembershipOp,
+    SyncStreamsResponse,
+    SyncOp,
+} from '@towns-protocol/proto'
 import {
     makeRandomUserContext,
     makeTestRpcClient,
@@ -117,19 +121,22 @@ describe('streamRpcClient using v2 sync', () => {
         let syncId: string | undefined = undefined
         const syncCookie = alicesStream.stream!.nextSyncCookie!
 
-        const aliceStreamIterable: AsyncIterable<SyncStreamsResponse> = alice.syncStreams(
-            {
-                syncPos: [syncCookie],
-            },
-            {
-                timeoutMs: -1,
-                headers: { 'X-Use-Shared-Sync': 'true' },
-            },
-        )
+        const aliceStreamIterable: AsyncIterable<SyncStreamsResponse> =
+            alice.syncStreams(
+                {
+                    syncPos: [syncCookie],
+                },
+                {
+                    timeoutMs: -1,
+                    headers: { 'X-Use-Shared-Sync': 'true' },
+                },
+            )
         await expect(
             waitForSyncStreams(aliceStreamIterable, async (res) => {
                 syncId = res.syncId
-                return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+                return (
+                    res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+                )
             }),
         ).resolves.not.toThrow()
 
@@ -219,15 +226,16 @@ describe('streamRpcClient using v2 sync', () => {
 
         /** Act */
         // bob calls syncStreams, and waits for the syncId in the response stream
-        const bobSyncStreams: AsyncIterable<SyncStreamsResponse> = bob.syncStreams(
-            {
-                syncPos: [],
-            },
-            {
-                timeoutMs: -1,
-                headers: { 'X-Use-Shared-Sync': 'true' },
-            },
-        )
+        const bobSyncStreams: AsyncIterable<SyncStreamsResponse> =
+            bob.syncStreams(
+                {
+                    syncPos: [],
+                },
+                {
+                    timeoutMs: -1,
+                    headers: { 'X-Use-Shared-Sync': 'true' },
+                },
+            )
         // bob reads the syncId from the response stream
         let syncId: string | undefined = undefined
         for await (const resp of bobSyncStreams) {
@@ -251,7 +259,10 @@ describe('streamRpcClient using v2 sync', () => {
             event,
         })
         // bob adds alice's channel to his syncStreams
-        const bobsChannelStream = await bob.getStream({ streamId: channelId }, { timeoutMs: -1 })
+        const bobsChannelStream = await bob.getStream(
+            { streamId: channelId },
+            { timeoutMs: -1 },
+        )
         await bob.addStreamToSync({
             syncId: syncId!,
             syncPos: bobsChannelStream.stream!.nextSyncCookie!,
@@ -275,11 +286,14 @@ describe('streamRpcClient using v2 sync', () => {
         // first time is from addEventImpl called by AddEvent.
         // second time is from the MakeMiniBlock triggered by miniblockTick
         let messagesReceived = 0
-        await readSyncStreams(bobSyncStreams, function (_: SyncStreamsResponse) {
-            //log('bobSyncStreams', `resp #${++messagesReceived}`, resp)
-            ++messagesReceived
-            return messagesReceived === 2
-        })
+        await readSyncStreams(
+            bobSyncStreams,
+            function (_: SyncStreamsResponse) {
+                //log('bobSyncStreams', `resp #${++messagesReceived}`, resp)
+                ++messagesReceived
+                return messagesReceived === 2
+            },
+        )
 
         /** Assert */
         expect(syncId).toBeTruthy()

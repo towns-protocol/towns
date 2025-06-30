@@ -2,7 +2,11 @@
  * @group main
  */
 
-import { makeTestClient, makeUniqueSpaceStreamId, TestClient } from '../testUtils'
+import {
+    makeTestClient,
+    makeUniqueSpaceStreamId,
+    TestClient,
+} from '../testUtils'
 
 import { genShortId, makeUniqueChannelStreamId } from '../../id'
 import { ChannelMessageSchema } from '@towns-protocol/proto'
@@ -36,9 +40,16 @@ describe('outboundSessionTests', () => {
 
             const channelId = makeUniqueChannelStreamId(spaceId)
             await expect(
-                bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId),
+                bobsClient.createChannel(
+                    spaceId,
+                    'Channel',
+                    'Topic',
+                    channelId,
+                ),
             ).resolves.not.toThrow()
-            await expect(bobsClient.waitForStream(channelId)).resolves.not.toThrow()
+            await expect(
+                bobsClient.waitForStream(channelId),
+            ).resolves.not.toThrow()
 
             const channelMessage = create(ChannelMessageSchema, {
                 payload: {
@@ -57,11 +68,21 @@ describe('outboundSessionTests', () => {
                 context: bobsClient.signerContext,
                 deviceId: bobsDeviceId,
             })
-            await expect(bobsOtherClient.initializeUser()).resolves.not.toThrow()
+            await expect(
+                bobsOtherClient.initializeUser(),
+            ).resolves.not.toThrow()
             bobsOtherClient.startSync()
 
-            const encrypted1 = await bobsClient.encryptGroupEvent(buffer, channelId, algorithm)
-            const encrypted2 = await bobsOtherClient.encryptGroupEvent(buffer, channelId, algorithm)
+            const encrypted1 = await bobsClient.encryptGroupEvent(
+                buffer,
+                channelId,
+                algorithm,
+            )
+            const encrypted2 = await bobsOtherClient.encryptGroupEvent(
+                buffer,
+                channelId,
+                algorithm,
+            )
 
             expect(encrypted1?.sessionId).toBeDefined()
             expect(encrypted1.sessionId).toEqual(encrypted2.sessionId)
@@ -85,13 +106,17 @@ describe('outboundSessionTests', () => {
             await expect(
                 bobsClient.createChannel(spaceId, '', '', channelId1),
             ).resolves.not.toThrow()
-            await expect(bobsClient.waitForStream(channelId1)).resolves.not.toThrow()
+            await expect(
+                bobsClient.waitForStream(channelId1),
+            ).resolves.not.toThrow()
 
             const channelId2 = makeUniqueChannelStreamId(spaceId)
             await expect(
                 bobsClient.createChannel(spaceId, '', '', channelId2),
             ).resolves.not.toThrow()
-            await expect(bobsClient.waitForStream(channelId2)).resolves.not.toThrow()
+            await expect(
+                bobsClient.waitForStream(channelId2),
+            ).resolves.not.toThrow()
 
             const channelMessage = create(ChannelMessageSchema, {
                 payload: {
@@ -128,14 +153,22 @@ describe('outboundSessionTests', () => {
                     expect(encryptedChannel1_1?.sessionId).not.toEqual('')
                     expect(encryptedChannel1_2?.sessionId).toBeDefined()
                     expect(encryptedChannel1_2?.sessionId).not.toEqual('')
-                    expect(encryptedChannel1_1.sessionId).toEqual(encryptedChannel1_2.sessionId)
-                    expect(encryptedChannel1_1.sessionId).not.toEqual(encryptedChannel2_1.sessionId)
+                    expect(encryptedChannel1_1.sessionId).toEqual(
+                        encryptedChannel1_2.sessionId,
+                    )
+                    expect(encryptedChannel1_1.sessionId).not.toEqual(
+                        encryptedChannel2_1.sessionId,
+                    )
                     break
                 case GroupEncryptionAlgorithmId.HybridGroupEncryption:
                     expect(encryptedChannel1_1?.sessionIdBytes).toBeDefined()
-                    expect(encryptedChannel1_1?.sessionIdBytes).not.toEqual(new Uint8Array())
+                    expect(encryptedChannel1_1?.sessionIdBytes).not.toEqual(
+                        new Uint8Array(),
+                    )
                     expect(encryptedChannel1_2?.sessionIdBytes).toBeDefined()
-                    expect(encryptedChannel1_2?.sessionIdBytes).not.toEqual(new Uint8Array())
+                    expect(encryptedChannel1_2?.sessionIdBytes).not.toEqual(
+                        new Uint8Array(),
+                    )
                     expect(encryptedChannel1_1.sessionIdBytes).toEqual(
                         encryptedChannel1_2.sessionIdBytes,
                     )

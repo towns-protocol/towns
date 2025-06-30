@@ -31,9 +31,11 @@ import { Observable } from './observable'
  * ```
  *
  */
-export const combine = <T extends Record<string, any>>(observables: {
-    [K in keyof T]: Observable<T[K]>
-}) => {
+export const combine = <T extends Record<string, any>>(
+    observables: {
+        [K in keyof T]: Observable<T[K]>
+    },
+) => {
     return new Combine(observables)
 }
 

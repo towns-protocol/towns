@@ -8,7 +8,11 @@ import { describe, it, expect } from 'vitest'
 
 describe('utils.test.ts', () => {
     it('channelMetadataJson', async () => {
-        expect(parseChannelMetadataJSON('{"name":"name","description":"description"}')).toEqual({
+        expect(
+            parseChannelMetadataJSON(
+                '{"name":"name","description":"description"}',
+            ),
+        ).toEqual({
             name: 'name',
             description: 'description',
         })
@@ -24,7 +28,11 @@ describe('utils.test.ts', () => {
 
     describe('SpaceAddressFromSpaceId', () => {
         it('should convert space id to space address', () => {
-            expect(SpaceIdFromSpaceAddress('0xd645e5b484b4cf6c7aad2e74f58166c28781a6c9')).toEqual(
+            expect(
+                SpaceIdFromSpaceAddress(
+                    '0xd645e5b484b4cf6c7aad2e74f58166c28781a6c9',
+                ),
+            ).toEqual(
                 '10d645e5b484b4cf6c7aad2e74f58166c28781a6c90000000000000000000000',
             )
 
@@ -38,7 +46,9 @@ describe('utils.test.ts', () => {
 
     describe('NoEntitledWalletError', () => {
         it('instanceof', () => {
-            expect(new NoEntitledWalletError()).toBeInstanceOf(NoEntitledWalletError)
+            expect(new NoEntitledWalletError()).toBeInstanceOf(
+                NoEntitledWalletError,
+            )
         })
 
         it('mix of no entitled wallet and other errors should throw', async () => {

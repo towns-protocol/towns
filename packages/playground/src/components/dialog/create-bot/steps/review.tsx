@@ -17,7 +17,9 @@ export const ReviewStep = () => {
     lines.push(`${pad('Install Price')}: ${v.installPrice} ETH`)
     lines.push(`${pad('Membership Duration')}: ${v.membershipDuration} sec`)
     lines.push(`${pad('Permissions')}: ${v.permissions.join(', ')}`)
-    lines.push(`${pad('Bot Type')}: ${v.botKind === 'simple' ? 'Simple' : 'Contract'}`)
+    lines.push(
+        `${pad('Bot Type')}: ${v.botKind === 'simple' ? 'Simple' : 'Contract'}`,
+    )
     if (v.botKind === 'contract') {
         lines.push(`${pad('Contract Address')}: ${v.contractAddress}`)
     }

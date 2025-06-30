@@ -1,5 +1,9 @@
 import TypedEmitter from 'typed-emitter'
-import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@towns-protocol/proto'
+import {
+    DmChannelPayload_Snapshot,
+    Snapshot,
+    DmChannelPayload,
+} from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import {
     ConfirmedTimelineEvent,
@@ -131,7 +135,10 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         event: StreamTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.dmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, event.createdAtEpochMs)
+        this.dmStreamsView.setLastEventCreatedAtEpochMs(
+            this.streamId,
+            event.createdAtEpochMs,
+        )
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
@@ -141,7 +148,10 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     ) {
         const createdAtEpochMs = event.event.createdAtEpochMs
         if (createdAtEpochMs > this.lastEventCreatedAtEpochMs) {
-            this.dmStreamsView.setLastEventCreatedAtEpochMs(this.streamId, createdAtEpochMs)
+            this.dmStreamsView.setLastEventCreatedAtEpochMs(
+                this.streamId,
+                createdAtEpochMs,
+            )
             stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
         }
     }

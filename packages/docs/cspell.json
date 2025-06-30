@@ -60,7 +60,5 @@
         "unstake"
     ],
     "allowCompoundWords": true,
-    "ignoreRegExpList": [
-        "0x[a-fA-F0-9.]+"
-    ]
+    "ignoreRegExpList": ["0x[a-fA-F0-9.]+"]
 }

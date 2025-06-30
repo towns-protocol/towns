@@ -16,24 +16,32 @@ import { Permission, NoopRuleData } from '@towns-protocol/web3'
 
 describe('channelSpaceSettingsTests', () => {
     test('channel creation with default settings', async () => {
-        const { bob, bobProvider, bobSpaceDapp } = await setupWalletsAndContexts()
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
+        const { bob, bobProvider, bobSpaceDapp } =
+            await setupWalletsAndContexts()
+        const everyoneMembership = await everyoneMembershipStruct(
+            bobSpaceDapp,
+            bob,
+        )
 
         // Track autojoin state of channels via emitted client events
         const updatedChannelAutojoinState = new Map<string, boolean>()
-        bob.on('spaceChannelAutojoinUpdated', (_spaceId, channelId, autojoin) => {
-            updatedChannelAutojoinState.set(channelId, autojoin)
-        })
+        bob.on(
+            'spaceChannelAutojoinUpdated',
+            (_spaceId, channelId, autojoin) => {
+                updatedChannelAutojoinState.set(channelId, autojoin)
+            },
+        )
 
         // The default channel is created without channel settings here. It should
         // be autojoin=true and hideUserJoinLeaveEvents=false.
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
-            bobSpaceDapp,
-            bobProvider.wallet,
-            "bob's town",
-            everyoneMembership,
-        )
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                "bob's town",
+                everyoneMembership,
+            )
 
         // Create another channel. This channel should be autojoin=false, hideUserJoinLeaveEvents=false.
         // Create channel on contract.
@@ -65,15 +73,24 @@ describe('channelSpaceSettingsTests', () => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
             check(Object.keys(channelMetadata).length === 2)
             check(channelMetadata[defaultChannelId]?.isAutojoin === true)
-            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === false)
+            check(
+                channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents ===
+                    false,
+            )
             check(channelMetadata[channel1Id!]?.isAutojoin === false)
-            check(channelMetadata[channel1Id!]?.hideUserJoinLeaveEvents === false)
+            check(
+                channelMetadata[channel1Id!]?.hideUserJoinLeaveEvents === false,
+            )
         })
     })
 
     test('create announcement channel (autojoin, hide user join/leave events)', async () => {
-        const { bob, bobProvider, bobSpaceDapp } = await setupWalletsAndContexts()
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
+        const { bob, bobProvider, bobSpaceDapp } =
+            await setupWalletsAndContexts()
+        const everyoneMembership = await everyoneMembershipStruct(
+            bobSpaceDapp,
+            bob,
+        )
 
         const { spaceId } = await createSpaceAndDefaultChannel(
             bob,
@@ -115,27 +132,38 @@ describe('channelSpaceSettingsTests', () => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
             check(Object.keys(channelMetadata).length === 2)
             check(channelMetadata[announcementStreamId]?.isAutojoin === true)
-            check(channelMetadata[announcementStreamId]?.hideUserJoinLeaveEvents === true)
+            check(
+                channelMetadata[announcementStreamId]
+                    ?.hideUserJoinLeaveEvents === true,
+            )
         })
     })
 
     test('set autojoin for channel', async () => {
-        const { bob, bobProvider, bobSpaceDapp } = await setupWalletsAndContexts()
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
+        const { bob, bobProvider, bobSpaceDapp } =
+            await setupWalletsAndContexts()
+        const everyoneMembership = await everyoneMembershipStruct(
+            bobSpaceDapp,
+            bob,
+        )
 
         // Track autojoin state of channels via emitted client events
         const updatedChannelAutojoinState = new Map<string, boolean>()
-        bob.on('spaceChannelAutojoinUpdated', (_spaceId, channelId, autojoin) => {
-            updatedChannelAutojoinState.set(channelId, autojoin)
-        })
-
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
-            bobSpaceDapp,
-            bobProvider.wallet,
-            "bob's town",
-            everyoneMembership,
+        bob.on(
+            'spaceChannelAutojoinUpdated',
+            (_spaceId, channelId, autojoin) => {
+                updatedChannelAutojoinState.set(channelId, autojoin)
+            },
         )
+
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                "bob's town",
+                everyoneMembership,
+            )
 
         // Create channel on contract
         const { channelId: channel1Id, error } = await createChannel(
@@ -205,15 +233,19 @@ describe('channelSpaceSettingsTests', () => {
             carolProvider,
             carolSpaceDapp,
         } = await setupWalletsAndContexts()
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
-
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
+        const everyoneMembership = await everyoneMembershipStruct(
             bobSpaceDapp,
-            bobProvider.wallet,
-            "bob's town",
-            everyoneMembership,
+            bob,
         )
+
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                "bob's town",
+                everyoneMembership,
+            )
 
         // Validate current autojoin state for default channel is true
         const spaceStream = bob.streams.get(spaceId)
@@ -239,9 +271,9 @@ describe('channelSpaceSettingsTests', () => {
         )
 
         // Alice's update should fail
-        await expect(alice.updateChannelAutojoin(spaceId, defaultChannelId, false)).rejects.toThrow(
-            /7:PERMISSION_DENIED/,
-        )
+        await expect(
+            alice.updateChannelAutojoin(spaceId, defaultChannelId, false),
+        ).rejects.toThrow(/7:PERMISSION_DENIED/)
 
         // Add Carol to a role that gives her AddRemoveChannels permission so she can update autojoin
         const { error: roleError } = await createRole(
@@ -281,25 +313,36 @@ describe('channelSpaceSettingsTests', () => {
     })
 
     test('set hideUserJoinLeaveEvents on channels', async () => {
-        const { bob, bobProvider, bobSpaceDapp } = await setupWalletsAndContexts()
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
+        const { bob, bobProvider, bobSpaceDapp } =
+            await setupWalletsAndContexts()
+        const everyoneMembership = await everyoneMembershipStruct(
+            bobSpaceDapp,
+            bob,
+        )
 
         // Track hideJoinLeaveEvent state of channels via emitted client events
-        const updatedChannelHideJoinLeaveEventsState = new Map<string, boolean>()
+        const updatedChannelHideJoinLeaveEventsState = new Map<
+            string,
+            boolean
+        >()
         bob.on(
             'spaceChannelHideUserJoinLeaveEventsUpdated',
             (_spaceId, channelId, hideJoinLeaveEvents) => {
-                updatedChannelHideJoinLeaveEventsState.set(channelId, hideJoinLeaveEvents)
+                updatedChannelHideJoinLeaveEventsState.set(
+                    channelId,
+                    hideJoinLeaveEvents,
+                )
             },
         )
 
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
-            bobSpaceDapp,
-            bobProvider.wallet,
-            "bob's town",
-            everyoneMembership,
-        )
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                "bob's town",
+                everyoneMembership,
+            )
 
         const spaceStream = bob.streams.get(spaceId)
         expect(spaceStream).toBeDefined()
@@ -310,28 +353,37 @@ describe('channelSpaceSettingsTests', () => {
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
             check(Object.keys(channelMetadata).length === 1)
-            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === false)
+            check(
+                channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents ===
+                    false,
+            )
         })
 
         // Set channel1 to hideUserJoinLeaveEvents=true
-        const { eventId, error: error2 } = await bob.updateChannelHideUserJoinLeaveEvents(
-            spaceId,
-            defaultChannelId,
-            true,
-        )
+        const { eventId, error: error2 } =
+            await bob.updateChannelHideUserJoinLeaveEvents(
+                spaceId,
+                defaultChannelId,
+                true,
+            )
         expect(error2).toBeUndefined()
         expect(eventId).toBeDefined()
 
         // Validate updateHideUserJoinLeaveEvent event was emitted for channel1
         await waitFor(() => {
             expect(updatedChannelHideJoinLeaveEventsState.size).toBe(1)
-            expect(updatedChannelHideJoinLeaveEventsState.get(defaultChannelId)).toBe(true)
+            expect(
+                updatedChannelHideJoinLeaveEventsState.get(defaultChannelId),
+            ).toBe(true)
         })
 
         // Expect hideUserJoinLeaveEvents change to sync to space stream view
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === true)
+            check(
+                channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents ===
+                    true,
+            )
         })
     })
 
@@ -348,15 +400,19 @@ describe('channelSpaceSettingsTests', () => {
             carolSpaceDapp,
             carolProvider,
         } = await setupWalletsAndContexts()
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
-
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
+        const everyoneMembership = await everyoneMembershipStruct(
             bobSpaceDapp,
-            bobProvider.wallet,
-            "bob's town",
-            everyoneMembership,
+            bob,
         )
+
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                "bob's town",
+                everyoneMembership,
+            )
 
         // Validate local synced client state for channel setting is false
         const spaceStream = bob.streams.get(spaceId)
@@ -366,7 +422,10 @@ describe('channelSpaceSettingsTests', () => {
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
             check(Object.keys(channelMetadata).length === 1)
-            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === false)
+            check(
+                channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents ===
+                    false,
+            )
         })
 
         // Unpermitted user alice should not be able to update hideUserJoinLeaveEvents.
@@ -382,7 +441,11 @@ describe('channelSpaceSettingsTests', () => {
         )
 
         await expect(
-            alice.updateChannelHideUserJoinLeaveEvents(spaceId, defaultChannelId, true),
+            alice.updateChannelHideUserJoinLeaveEvents(
+                spaceId,
+                defaultChannelId,
+                true,
+            ),
         ).rejects.toThrow(/7:PERMISSION_DENIED/)
 
         // Add Carol to a role that gives her AddRemoveChannels permission so she can update
@@ -412,14 +475,21 @@ describe('channelSpaceSettingsTests', () => {
 
         // Carol's update should succeed
         await expect(
-            carol.updateChannelHideUserJoinLeaveEvents(spaceId, defaultChannelId, true),
+            carol.updateChannelHideUserJoinLeaveEvents(
+                spaceId,
+                defaultChannelId,
+                true,
+            ),
         ).resolves.not.toThrow()
 
         // Validate updateHideUserJoinLeaveEvents event was applied on client
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
             check(Object.keys(channelMetadata).length === 1)
-            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === true)
+            check(
+                channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents ===
+                    true,
+            )
         })
     })
 })

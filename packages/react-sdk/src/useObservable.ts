@@ -9,8 +9,11 @@ export namespace ObservableConfig {
      * Configuration options for an observable.
      * It can be used to configure the behavior of the `useObservable` hook.
      */
-    export type FromObservable<Observable_> =
-        Observable_ extends Observable<infer Data> ? FromData<Data> : never
+    export type FromObservable<Observable_> = Observable_ extends Observable<
+        infer Data
+    >
+        ? FromData<Data>
+        : never
 
     // TODO: Some util props:
     // - select: select a subset of the data, or transform it
@@ -19,32 +22,33 @@ export namespace ObservableConfig {
      * Create configuration options for an observable from the data type.
      * It can be used to configure the behavior of the `useObservable` hook.
      */
-    export type FromData<Data> =
-        Data extends PersistedModel<infer UnwrappedData>
-            ? {
-                  /**
-                   * Trigger the update immediately, without waiting for the first update.
-                   * @defaultValue true
-                   */
-                  fireImmediately?: boolean
-                  /** Callback function to be called when the data is updated. */
-                  onUpdate?: (data: UnwrappedData) => void
-                  // TODO: when an error occurs? store errors? RPC error?
-                  /** Callback function to be called when an error occurs. */
-                  onError?: (error: Error) => void
-              }
-            : {
-                  /**
-                   * Trigger the update immediately, without waiting for the first update.
-                   * @defaultValue true
-                   */
-                  fireImmediately?: boolean
-                  /** Callback function to be called when the data is updated. */
-                  onUpdate?: (data: Data) => void
-                  // TODO: when an error occurs? store errors? RPC error?
-                  /** Callback function to be called when an error occurs. */
-                  onError?: (error: Error) => void
-              }
+    export type FromData<Data> = Data extends PersistedModel<
+        infer UnwrappedData
+    >
+        ? {
+              /**
+               * Trigger the update immediately, without waiting for the first update.
+               * @defaultValue true
+               */
+              fireImmediately?: boolean
+              /** Callback function to be called when the data is updated. */
+              onUpdate?: (data: UnwrappedData) => void
+              // TODO: when an error occurs? store errors? RPC error?
+              /** Callback function to be called when an error occurs. */
+              onError?: (error: Error) => void
+          }
+        : {
+              /**
+               * Trigger the update immediately, without waiting for the first update.
+               * @defaultValue true
+               */
+              fireImmediately?: boolean
+              /** Callback function to be called when the data is updated. */
+              onUpdate?: (data: Data) => void
+              // TODO: when an error occurs? store errors? RPC error?
+              /** Callback function to be called when an error occurs. */
+              onError?: (error: Error) => void
+          }
 }
 
 /**
@@ -74,8 +78,13 @@ export type ObservableValue<T> = {
  */
 export function useObservable<
     Model,
-    Data = Model extends PersistedModel<infer UnwrappedData> ? UnwrappedData : Model,
->(observable: Observable<Model>, config?: ObservableConfig.FromData<Model>): ObservableValue<Data> {
+    Data = Model extends PersistedModel<infer UnwrappedData>
+        ? UnwrappedData
+        : Model,
+>(
+    observable: Observable<Model>,
+    config?: ObservableConfig.FromData<Model>,
+): ObservableValue<Data> {
     const opts = useMemo(() => ({ fireImmediately: true, ...config }), [config])
 
     const subscribeFn = useCallback(

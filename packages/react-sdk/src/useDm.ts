@@ -10,7 +10,10 @@ import { type ObservableConfig, useObservable } from './useObservable'
  * @param config - Configuration options for the observable.
  * @returns The DmModel of the DM.
  */
-export const useDm = (streamId: string, config?: ObservableConfig.FromData<DmModel>) => {
+export const useDm = (
+    streamId: string,
+    config?: ObservableConfig.FromData<DmModel>,
+) => {
     const sync = useSyncAgent()
     const dm = useMemo(() => sync.dms.getDm(streamId), [streamId, sync])
     return useObservable(dm, config)

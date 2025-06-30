@@ -1,4 +1,4 @@
 export interface MediaContent {
-	data: ArrayBuffer
-	mimeType: string
+    data: ArrayBuffer
+    mimeType: string
 }

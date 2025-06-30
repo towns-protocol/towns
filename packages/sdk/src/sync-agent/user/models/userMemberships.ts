@@ -1,10 +1,17 @@
 import { MembershipOp, UserPayload_UserMembership } from '@towns-protocol/proto'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../../store/store'
 import { check, dlogger } from '@towns-protocol/dlog'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Client } from '../../../client'
-import { makeUserStreamId, streamIdFromBytes, userIdFromAddress } from '../../../id'
+import {
+    makeUserStreamId,
+    streamIdFromBytes,
+    userIdFromAddress,
+} from '../../../id'
 import { StreamStateView } from '../../../streamStateView'
 import { isDefined } from '../../../check'
 
@@ -30,7 +37,12 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
 
     constructor(id: string, store: Store, riverConnection: RiverConnection) {
         super(
-            { id, streamId: makeUserStreamId(id), initialized: false, memberships: {} },
+            {
+                id,
+                streamId: makeUserStreamId(id),
+                initialized: false,
+                memberships: {},
+            },
             store,
             LoadPriority.high,
         )
@@ -43,14 +55,22 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
 
     private onClientStarted = (client: Client) => {
         logger.log('onClientStarted')
-        const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+        const streamView = this.riverConnection.client?.stream(
+            this.data.streamId,
+        )?.view
         if (streamView) {
             this.initialize(streamView)
         }
-        client.addListener('userStreamMembershipChanged', this.onUserStreamMembershipChanged)
+        client.addListener(
+            'userStreamMembershipChanged',
+            this.onUserStreamMembershipChanged,
+        )
         client.addListener('streamInitialized', this.onStreamInitialized)
         return () => {
-            client.removeListener('userStreamMembershipChanged', this.onUserStreamMembershipChanged)
+            client.removeListener(
+                'userStreamMembershipChanged',
+                this.onUserStreamMembershipChanged,
+            )
             client.removeListener('streamInitialized', this.onStreamInitialized)
         }
     }
@@ -68,7 +88,9 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
     }
 
     private initialize = (streamView: StreamStateView) => {
-        const memberships = Object.entries(streamView.userContent.streamMemberships).reduce(
+        const memberships = Object.entries(
+            streamView.userContent.streamMemberships,
+        ).reduce(
             (acc, [streamId, payload]) => {
                 if (payload) {
                     acc[streamId] = toUserMembership(payload)
@@ -82,7 +104,9 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
 
     private onStreamInitialized = (streamId: string) => {
         if (streamId === this.data.streamId) {
-            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+            const streamView = this.riverConnection.client?.stream(
+                this.data.streamId,
+            )?.view
             check(isDefined(streamView), 'streamView is not defined')
             this.initialize(streamView)
         }
@@ -107,7 +131,9 @@ function toUserMembership(payload: UserPayload_UserMembership): UserMembership {
     return {
         streamId,
         op,
-        inviter: payload.inviter ? userIdFromAddress(payload.inviter) : undefined,
+        inviter: payload.inviter
+            ? userIdFromAddress(payload.inviter)
+            : undefined,
         streamParentId: payload.streamParentId
             ? streamIdFromBytes(payload.streamParentId)
             : undefined,

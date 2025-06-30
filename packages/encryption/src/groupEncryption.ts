@@ -1,4 +1,8 @@
-import { EncryptedData, EncryptedDataSchema, EncryptedDataVersion } from '@towns-protocol/proto'
+import {
+    EncryptedData,
+    EncryptedDataSchema,
+    EncryptedDataVersion,
+} from '@towns-protocol/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
 import { bin_toBase64, dlog } from '@towns-protocol/dlog'
@@ -36,7 +40,8 @@ export class GroupEncryption extends EncryptionAlgorithm {
             return
         } catch (error) {
             // if we don't have a cached session at this point, create a new one
-            const sessionId = await this.device.createOutboundGroupSession(streamId)
+            const sessionId =
+                await this.device.createOutboundGroupSession(streamId)
             log(`Started new megolm session ${sessionId}`)
             // don't wait for the session to be shared
             const promise = this.shareSession(streamId, sessionId)
@@ -56,9 +61,15 @@ export class GroupEncryption extends EncryptionAlgorithm {
         }
     }
 
-    private async shareSession(streamId: string, sessionId: string): Promise<void> {
+    private async shareSession(
+        streamId: string,
+        sessionId: string,
+    ): Promise<void> {
         const devicesInRoom = await this.client.getDevicesInStream(streamId)
-        const session = await this.device.exportInboundGroupSession(streamId, sessionId)
+        const session = await this.device.exportInboundGroupSession(
+            streamId,
+            sessionId,
+        )
 
         if (!session) {
             throw new Error('Session key not found for session ' + sessionId)
@@ -75,7 +86,10 @@ export class GroupEncryption extends EncryptionAlgorithm {
     /**
      * @deprecated
      */
-    public async encrypt_deprecated_v0(streamId: string, payload: string): Promise<EncryptedData> {
+    public async encrypt_deprecated_v0(
+        streamId: string,
+        payload: string,
+    ): Promise<EncryptedData> {
         await this.ensureOutboundSession(streamId)
         const result = await this.device.encryptGroupMessage(payload, streamId)
         return create(EncryptedDataSchema, {
@@ -92,10 +106,16 @@ export class GroupEncryption extends EncryptionAlgorithm {
      *
      * @returns Promise which resolves to the new event body
      */
-    public async encrypt(streamId: string, payload: Uint8Array): Promise<EncryptedData> {
+    public async encrypt(
+        streamId: string,
+        payload: Uint8Array,
+    ): Promise<EncryptedData> {
         log('Starting to encrypt event')
         await this.ensureOutboundSession(streamId)
-        const result = await this.device.encryptGroupMessage(bin_toBase64(payload), streamId)
+        const result = await this.device.encryptGroupMessage(
+            bin_toBase64(payload),
+            streamId,
+        )
         return create(EncryptedDataSchema, {
             algorithm: this.algorithm,
             senderKey: this.device.deviceCurve25519Key!,

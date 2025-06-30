@@ -27,10 +27,14 @@ export const SpaceProvider = ({
 export const useCurrentSpaceId = () => {
     const space = useContext(SpaceContext)
     if (!space) {
-        throw new Error('No space set, use <SpaceProvider spaceId={spaceId} /> to set one')
+        throw new Error(
+            'No space set, use <SpaceProvider spaceId={spaceId} /> to set one',
+        )
     }
     if (!space.spaceId) {
-        throw new Error('spaceId is undefined, please check your <SpaceProvider /> usage')
+        throw new Error(
+            'spaceId is undefined, please check your <SpaceProvider /> usage',
+        )
     }
 
     return space.spaceId

@@ -2,7 +2,11 @@ import { SnapshotSchema } from '@towns-protocol/proto'
 import { snapshotMigration0001 } from '../../migrations/snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
-import { addressFromUserId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
+import {
+    addressFromUserId,
+    makeUniqueChannelStreamId,
+    streamIdAsBytes,
+} from '../../id'
 import { check } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 
@@ -19,7 +23,10 @@ describe('snapshotMigration0001', () => {
         // members
         const badMemberSnap = create(SnapshotSchema, {
             members: {
-                joined: [{ userAddress: userAddress }, { userAddress: userAddress }],
+                joined: [
+                    { userAddress: userAddress },
+                    { userAddress: userAddress },
+                ],
             },
         })
         const result = snapshotMigration0001(badMemberSnap)
@@ -30,7 +37,10 @@ describe('snapshotMigration0001', () => {
             content: {
                 case: 'spaceContent',
                 value: {
-                    channels: [{ channelId: channelId }, { channelId: channelId }],
+                    channels: [
+                        { channelId: channelId },
+                        { channelId: channelId },
+                    ],
                 },
             },
         })
@@ -56,7 +66,10 @@ describe('snapshotMigration0001', () => {
             content: {
                 case: 'userSettingsContent',
                 value: {
-                    fullyReadMarkers: [{ streamId: spaceId }, { streamId: spaceId }],
+                    fullyReadMarkers: [
+                        { streamId: spaceId },
+                        { streamId: spaceId },
+                    ],
                 },
             },
         })

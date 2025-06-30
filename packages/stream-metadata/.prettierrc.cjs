@@ -3,5 +3,5 @@
  * @type {import("prettier").Config}
  */
 module.exports = {
-	...require("@towns-protocol/prettier-config"),
-};
+    ...require('@towns-protocol/prettier-config'),
+}

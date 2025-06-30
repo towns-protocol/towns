@@ -55,11 +55,15 @@ describe.concurrent('EncrytionDelegate', () => {
         const encrypted = bobToAlice.encrypt('bob to alice 1')
         const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted.body)
-        expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
+        expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual(
+            'bob to alice 1',
+        )
 
         const aliceToBob2 = delegate.createSession()
         aliceToBob2.create_inbound(alice, encrypted.body)
-        expect(aliceToBob2.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
+        expect(aliceToBob2.decrypt(encrypted.type, encrypted.body)).toEqual(
+            'bob to alice 1',
+        )
     })
 
     it('decrypt same message twice throws', async () => {
@@ -72,8 +76,12 @@ describe.concurrent('EncrytionDelegate', () => {
         const encrypted = bobToAlice.encrypt('bob to alice 1')
         const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted.body)
-        expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
-        expect(() => aliceToBob.decrypt(encrypted.type, encrypted.body)).toThrow()
+        expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual(
+            'bob to alice 1',
+        )
+        expect(() =>
+            aliceToBob.decrypt(encrypted.type, encrypted.body),
+        ).toThrow()
     })
 
     it('decrypt same messages out of order', async () => {
@@ -88,7 +96,11 @@ describe.concurrent('EncrytionDelegate', () => {
 
         const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted2.body)
-        expect(aliceToBob.decrypt(encrypted2.type, encrypted2.body)).toEqual('bob to alice 2')
-        expect(aliceToBob.decrypt(encrypted1.type, encrypted1.body)).toEqual('bob to alice 1')
+        expect(aliceToBob.decrypt(encrypted2.type, encrypted2.body)).toEqual(
+            'bob to alice 2',
+        )
+        expect(aliceToBob.decrypt(encrypted1.type, encrypted1.body)).toEqual(
+            'bob to alice 1',
+        )
     })
 })

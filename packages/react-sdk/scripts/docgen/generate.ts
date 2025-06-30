@@ -23,7 +23,10 @@ const filePath = resolve(import.meta.dirname, fileName)
 const apiPackage = new model.ApiModel().loadPackage(filePath)
 const dataLookup = createDataLookup(apiPackage)
 
-fs.writeFileSync(resolve(import.meta.dirname, './lookup.json'), JSON.stringify(dataLookup, null, 2))
+fs.writeFileSync(
+    resolve(import.meta.dirname, './lookup.json'),
+    JSON.stringify(dataLookup, null, 2),
+)
 
 ////////////////////////////////////////////////////////////
 /// Get API entrypoint and namespaces
@@ -71,7 +74,10 @@ for (const module of apiEntryPoint.members) {
         // Resolve overloads for function
         const overloads = module.getMergedSiblings().map(getId)
         // Skip overloads without TSDoc attached
-        if (overloads.length > 1 && overloads.find((x) => dataLookup[x]?.comment?.summary) !== id) {
+        if (
+            overloads.length > 1 &&
+            overloads.find((x) => dataLookup[x]?.comment?.summary) !== id
+        ) {
             continue
         }
         const link = `${baseLink}`
@@ -122,7 +128,9 @@ type MintJson = {
 }
 
 // Find React SDK navigation group
-const reactSdk = mintJson.navigation.find((group) => group.group === 'React SDK')
+const reactSdk = mintJson.navigation.find(
+    (group) => group.group === 'React SDK',
+)
 if (!reactSdk) {
     throw new Error('Could not find React SDK navigation group')
 }
@@ -135,14 +143,16 @@ const existingApiFiles = fs
     .map((file) => `sdk/react-sdk/api/${file.replace('.mdx', '')}`)
 
 // Get current API pages from mint.json
-const apiGroup = reactSdk.pages.find((page) => typeof page !== 'string' && page.group === 'API') as
-    | { group: string; pages: string[] }
-    | undefined
+const apiGroup = reactSdk.pages.find(
+    (page) => typeof page !== 'string' && page.group === 'API',
+) as { group: string; pages: string[] } | undefined
 
 const currentApiPages = apiGroup?.pages || []
 
 // Find files that exist in folder but not in mint.json - these should be purged
-const filesToDelete = existingApiFiles.filter((file) => !currentApiPages.includes(file))
+const filesToDelete = existingApiFiles.filter(
+    (file) => !currentApiPages.includes(file),
+)
 
 // Delete the files
 for (const file of filesToDelete) {
@@ -153,10 +163,14 @@ for (const file of filesToDelete) {
 
 reactSdk.pages = [
     ...reactSdk.pages.filter((page) => typeof page === 'string'), // add any other pages that arent groups
-    ...reactSdk.pages.filter((page) => typeof page !== 'string' && page.group !== 'API'), // add any other groups
+    ...reactSdk.pages.filter(
+        (page) => typeof page !== 'string' && page.group !== 'API',
+    ), // add any other groups
     {
         group: 'API',
-        pages: Array.from(functionsMap.keys()).map((name) => `sdk/react-sdk/api/${name}`),
+        pages: Array.from(functionsMap.keys()).map(
+            (name) => `sdk/react-sdk/api/${name}`,
+        ),
     },
 ]
 

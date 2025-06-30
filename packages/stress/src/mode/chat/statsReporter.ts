@@ -28,7 +28,10 @@ export function statsReporter(chatConfig: ChatConfig) {
                     return
                 }
                 void (async () => {
-                    if (chatConfig.kickoffMessageEventId && chatConfig.countClientsMessageEventId) {
+                    if (
+                        chatConfig.kickoffMessageEventId &&
+                        chatConfig.countClientsMessageEventId
+                    ) {
                         const reactionCount = countReactions(
                             rootClient,
                             chatConfig.announceChannelId,
@@ -90,7 +93,9 @@ export const countReactions = (
     if (!channel) {
         return 0
     }
-    const message = channel.view.timeline.find((event) => event.eventId === rootMessageId)
+    const message = channel.view.timeline.find(
+        (event) => event.eventId === rootMessageId,
+    )
     if (!message) {
         return 0
     }

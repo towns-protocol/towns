@@ -4,7 +4,10 @@ import {
     PersistedObservable,
     persistedObservable,
 } from '../../observable/persistedObservable'
-import { UserMemberships, UserMembershipsModel } from '../user/models/userMemberships'
+import {
+    UserMemberships,
+    UserMembershipsModel,
+} from '../user/models/userMemberships'
 import { MembershipOp } from '@towns-protocol/proto'
 import { isGDMChannelStreamId } from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
@@ -41,30 +44,46 @@ export class Gdms extends PersistedObservable<GdmsModel> {
     getGdm(streamId: string): Gdm {
         check(isGDMChannelStreamId(streamId), 'Invalid streamId')
         if (!this.gdms[streamId]) {
-            this.gdms[streamId] = new Gdm(streamId, this.riverConnection, this.store)
+            this.gdms[streamId] = new Gdm(
+                streamId,
+                this.riverConnection,
+                this.store,
+            )
         }
         return this.gdms[streamId]
     }
 
-    private onUserMembershipsChanged(value: PersistedModel<UserMembershipsModel>) {
+    private onUserMembershipsChanged(
+        value: PersistedModel<UserMembershipsModel>,
+    ) {
         if (value.status === 'loading') {
             return
         }
 
         const streamIds = Object.values(value.data.memberships)
-            .filter((m) => isGDMChannelStreamId(m.streamId) && m.op === MembershipOp.SO_JOIN)
+            .filter(
+                (m) =>
+                    isGDMChannelStreamId(m.streamId) &&
+                    m.op === MembershipOp.SO_JOIN,
+            )
             .map((m) => m.streamId)
 
         this.setData({ streamIds })
 
         for (const streamId of streamIds) {
             if (!this.gdms[streamId]) {
-                this.gdms[streamId] = new Gdm(streamId, this.riverConnection, this.store)
+                this.gdms[streamId] = new Gdm(
+                    streamId,
+                    this.riverConnection,
+                    this.store,
+                )
             }
         }
     }
 
     async createGDM(...args: Parameters<Client['createGDMChannel']>) {
-        return this.riverConnection.call((client) => client.createGDMChannel(...args))
+        return this.riverConnection.call((client) =>
+            client.createGDMChannel(...args),
+        )
     }
 }

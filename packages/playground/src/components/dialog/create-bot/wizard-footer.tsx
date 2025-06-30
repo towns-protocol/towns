@@ -19,9 +19,18 @@ export const WizardFooter = ({
     const isLast = step === totalSteps - 1
 
     return (
-        <div className={cn('mt-6 flex justify-between', step === 0 && 'justify-end')}>
+        <div
+            className={cn(
+                'mt-6 flex justify-between',
+                step === 0 && 'justify-end',
+            )}
+        >
             {step !== 0 && (
-                <Button variant="outline" disabled={step === 0} onClick={onBack}>
+                <Button
+                    variant="outline"
+                    disabled={step === 0}
+                    onClick={onBack}
+                >
                     Back
                 </Button>
             )}

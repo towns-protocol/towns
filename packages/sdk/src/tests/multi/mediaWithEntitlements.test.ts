@@ -92,7 +92,10 @@ describe('mediaWithEntitlements', () => {
 
         const receipt = await transaction.wait()
         log('transaction receipt', receipt)
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt, provider.wallet.address)
+        const spaceAddress = spaceDapp.getSpaceAddress(
+            receipt,
+            provider.wallet.address,
+        )
         expect(spaceAddress).toBeDefined()
         const spaceStreamId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
@@ -101,7 +104,12 @@ describe('mediaWithEntitlements', () => {
         await bobClient.initializeUser({ spaceId: spaceStreamId })
         bobClient.startSync()
         await bobClient.createSpace(spaceStreamId)
-        await bobClient.createChannel(spaceStreamId, 'Channel', 'Topic', channelId)
+        await bobClient.createChannel(
+            spaceStreamId,
+            'Channel',
+            'Topic',
+            channelId,
+        )
 
         // create a second space and join alice so she can start up a client
         const transaction2 = await createVersionedSpace(
@@ -116,7 +124,10 @@ describe('mediaWithEntitlements', () => {
         )
         const receipt2 = await transaction2.wait()
         log('transaction2 receipt', receipt2)
-        const space2Address = spaceDapp.getSpaceAddress(receipt, provider.wallet.address)
+        const space2Address = spaceDapp.getSpaceAddress(
+            receipt,
+            provider.wallet.address,
+        )
         expect(space2Address).toBeDefined()
         const space2Id = makeSpaceStreamId(space2Address!)
         await spaceDapp.joinSpace(space2Id, aliceClient.userId, provider.wallet)
@@ -135,7 +146,12 @@ describe('mediaWithEntitlements', () => {
 
         // Alice is NOT a member of the channel is prevented from creating a media stream
         await expect(
-            aliceClient.createMediaStream(channelId, spaceStreamId, undefined, 5),
+            aliceClient.createMediaStream(
+                channelId,
+                spaceStreamId,
+                undefined,
+                5,
+            ),
         ).rejects.toThrow()
         await aliceClient.stop()
     })
@@ -190,7 +206,10 @@ describe('mediaWithEntitlements', () => {
 
         const receipt = await transaction.wait()
         log('transaction receipt', receipt)
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt, provider.wallet.address)
+        const spaceAddress = spaceDapp.getSpaceAddress(
+            receipt,
+            provider.wallet.address,
+        )
         expect(spaceAddress).toBeDefined()
         const spaceStreamId = makeSpaceStreamId(spaceAddress!)
         await bobClient.initializeUser({ spaceId: spaceStreamId })
@@ -201,7 +220,12 @@ describe('mediaWithEntitlements', () => {
          * Bob creates a user media stream
          */
         await expect(
-            bobClient.createMediaStream(undefined, undefined, bobClient.userId, 5),
+            bobClient.createMediaStream(
+                undefined,
+                undefined,
+                bobClient.userId,
+                5,
+            ),
         ).resolves.not.toThrow()
         await bobClient.stop()
     })

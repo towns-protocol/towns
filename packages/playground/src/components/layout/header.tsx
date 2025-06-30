@@ -6,7 +6,13 @@ import {
 } from '@towns-protocol/react-sdk'
 import { useLocation, useParams } from 'react-router-dom'
 import { useState } from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet'
 import { TownsMinimal } from '@/components/towns-minimal'
 import { RiverEnvSwitcher } from '../dialog/env-switcher'
 import { Button } from '../ui/button'
@@ -36,15 +42,23 @@ const Profile = () => {
     const { status } = useTownsAuthStatus()
     const { data: user } = useTowns((s) => s.user)
     const sync = useSyncAgent()
-    const { spaceId, channelId } = useParams<{ spaceId: string; channelId: string }>()
-    const [using, setUsing] = useState<'space' | 'channel'>(channelId ? 'channel' : 'space')
+    const { spaceId, channelId } = useParams<{
+        spaceId: string
+        channelId: string
+    }>()
+    const [using, setUsing] = useState<'space' | 'channel'>(
+        channelId ? 'channel' : 'space',
+    )
 
     return (
         <Sheet>
             <SheetTrigger>
                 <Avatar userId={user.id} className="h-8 w-8" />
             </SheetTrigger>
-            <SheetContent side="right" className="flex flex-col justify-between">
+            <SheetContent
+                side="right"
+                className="flex flex-col justify-between"
+            >
                 <div className="flex flex-col gap-2">
                     <SheetHeader>
                         <SheetTitle>User</SheetTitle>
@@ -53,7 +67,9 @@ const Profile = () => {
                         <span className="text-sm font-medium">userId:</span>
                         <pre className="text-sm">{user.id}</pre>
                     </div>
-                    <pre className="overflow-auto whitespace-pre-wrap text-sm">{status}</pre>
+                    <pre className="overflow-auto whitespace-pre-wrap text-sm">
+                        {status}
+                    </pre>
                     <pre className="overflow-auto whitespace-pre-wrap text-sm">
                         {sync.riverConnection.client?.rpcClient.url}
                     </pre>
@@ -62,14 +78,20 @@ const Profile = () => {
                     <div className="flex flex-col gap-2">
                         <div className="flex justify-center gap-2">
                             <Button
-                                variant={using === 'space' ? 'default' : 'outline'}
+                                variant={
+                                    using === 'space' ? 'default' : 'outline'
+                                }
                                 onClick={() => setUsing('space')}
                             >
                                 Use Space
                             </Button>
                             {channelId && (
                                 <Button
-                                    variant={using === 'channel' ? 'default' : 'outline'}
+                                    variant={
+                                        using === 'channel'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
                                     onClick={() => setUsing('channel')}
                                 >
                                     Use Channel

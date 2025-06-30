@@ -3,7 +3,9 @@ import { EncryptedData, Err } from '@towns-protocol/proto'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 
 export function uint8ArrayToBase64(uint8Array: Uint8Array): string {
-    const binary = Array.from(uint8Array, (byte) => String.fromCharCode(byte)).join('')
+    const binary = Array.from(uint8Array, (byte) =>
+        String.fromCharCode(byte),
+    ).join('')
     return btoa(binary)
 }
 
@@ -12,11 +14,18 @@ export function base64ToUint8Array(base64: string): Uint8Array {
     return new Uint8Array(Array.from(binary, (char) => char.charCodeAt(0)))
 }
 
-async function getExtendedKeyMaterial(seedBuffer: Uint8Array, length: number): Promise<Uint8Array> {
-    let keyMaterial = new Uint8Array(await crypto.subtle.digest('SHA-256', seedBuffer))
+async function getExtendedKeyMaterial(
+    seedBuffer: Uint8Array,
+    length: number,
+): Promise<Uint8Array> {
+    let keyMaterial = new Uint8Array(
+        await crypto.subtle.digest('SHA-256', seedBuffer),
+    )
 
     while (keyMaterial.length < length) {
-        const newHash = new Uint8Array(await crypto.subtle.digest('SHA-256', keyMaterial))
+        const newHash = new Uint8Array(
+            await crypto.subtle.digest('SHA-256', keyMaterial),
+        )
         const combined = new Uint8Array(keyMaterial.length + newHash.length)
         combined.set(keyMaterial)
         combined.set(newHash, keyMaterial.length)
@@ -59,7 +68,9 @@ export async function encryptAESGCM(
         key = new Uint8Array(32)
         crypto.getRandomValues(key)
     } else if (key.length !== 32) {
-        throw new Error('Invalid key length. AES-256-GCM requires a 32-byte key.')
+        throw new Error(
+            'Invalid key length. AES-256-GCM requires a 32-byte key.',
+        )
     }
 
     if (!iv) {
@@ -69,9 +80,13 @@ export async function encryptAESGCM(
         throw new Error('Invalid IV length. AES-256-GCM requires a 12-byte IV.')
     }
 
-    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, [
-        'encrypt',
-    ])
+    const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        key,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt'],
+    )
 
     const encryptedBuffer = await crypto.subtle.encrypt(
         {
@@ -93,7 +108,9 @@ export async function decryptAESGCM(
     iv: Uint8Array,
 ): Promise<Uint8Array> {
     if (key.length !== 32) {
-        throw new Error('Invalid key length. AES-256-GCM requires a 32-byte key.')
+        throw new Error(
+            'Invalid key length. AES-256-GCM requires a 32-byte key.',
+        )
     }
 
     if (iv.length !== 12) {
@@ -107,9 +124,13 @@ export async function decryptAESGCM(
         dataBuffer = data
     }
 
-    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, [
-        'decrypt',
-    ])
+    const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        key,
+        { name: 'AES-GCM' },
+        false,
+        ['decrypt'],
+    )
 
     const decryptedBuffer = await crypto.subtle.decrypt(
         {
@@ -128,7 +149,10 @@ export async function decryptDerivedAESGCM(
     encryptedData: EncryptedData,
 ): Promise<Uint8Array> {
     if (encryptedData.algorithm !== AES_GCM_DERIVED_ALGORITHM) {
-        throwWithCode(`${encryptedData.algorithm}" algorithm not implemented`, Err.UNIMPLEMENTED)
+        throwWithCode(
+            `${encryptedData.algorithm}" algorithm not implemented`,
+            Err.UNIMPLEMENTED,
+        )
     }
     const { key, iv } = await deriveKeyAndIV(keyPhrase)
     const ciphertext = base64ToUint8Array(encryptedData.ciphertext)

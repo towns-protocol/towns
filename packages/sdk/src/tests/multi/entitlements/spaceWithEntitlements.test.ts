@@ -57,11 +57,12 @@ describe('spaceWithEntitlements', () => {
         await new Promise((f) => setTimeout(f, 2000))
 
         // Alice no longer satisfies space entitlements
-        const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-            spaceId,
-            alicesWallet.address,
-            getXchainConfigForTesting(),
-        )
+        const entitledWallet =
+            await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                alicesWallet.address,
+                getXchainConfigForTesting(),
+            )
         expect(entitledWallet).toBeUndefined()
 
         // unban alice
@@ -76,11 +77,12 @@ describe('spaceWithEntitlements', () => {
         await new Promise((f) => setTimeout(f, 5000))
 
         // Alice is entitled to join the space again
-        const entitledWallet2 = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
-            spaceId,
-            alicesWallet.address,
-            getXchainConfigForTesting(),
-        )
+        const entitledWallet2 =
+            await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                alicesWallet.address,
+                getXchainConfigForTesting(),
+            )
         expect(entitledWallet2).toBeDefined()
 
         const doneStart = Date.now()
@@ -121,30 +123,48 @@ describe('spaceWithEntitlements', () => {
 
         // Alice cannot kick Bob
         log('Alice cannot kick bob')
-        await expect(alice.removeUser(spaceId, bob.userId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+        await expect(alice.removeUser(spaceId, bob.userId)).rejects.toThrow(
+            /7:PERMISSION_DENIED/,
+        )
 
         // Bob is still a a member — Alice can't kick him because he's the owner
         await waitFor(() => {
-            expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
-            expect(bobUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
-                true,
-            )
+            expect(
+                bobUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true)
+            expect(
+                bobUserStreamView.userContent.isMember(
+                    channelId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true)
         })
 
         // Bob kicks Alice!
         log('Bob kicks Alice')
-        await expect(bob.removeUser(spaceId, alice.userId)).resolves.not.toThrow()
+        await expect(
+            bob.removeUser(spaceId, alice.userId),
+        ).resolves.not.toThrow()
 
         // Alice is no longer a member of the space or channel
         log('Alice is no longer a member of the space or channel')
         const aliceUserStreamView = alice.stream(alice.userStreamId!)!.view
         await waitFor(() => {
-            expect(aliceUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(
-                false,
-            )
-            expect(aliceUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
-                false,
-            )
+            expect(
+                aliceUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(false)
+            expect(
+                aliceUserStreamView.userContent.isMember(
+                    channelId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(false)
         })
 
         // kill the clients
@@ -169,15 +189,19 @@ describe('spaceWithEntitlements', () => {
             carolSpaceDapp,
         } = await setupWalletsAndContexts()
 
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
-
-        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
-            bob,
+        const everyoneMembership = await everyoneMembershipStruct(
             bobSpaceDapp,
-            bobProvider.wallet,
-            "bob's town",
-            everyoneMembership,
+            bob,
         )
+
+        const { spaceId, defaultChannelId: channelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                "bob's town",
+                everyoneMembership,
+            )
 
         log('Alice should be able to join space')
         await expectUserCanJoin(
@@ -201,17 +225,25 @@ describe('spaceWithEntitlements', () => {
 
         // Alice cannot kick Carol yet
         log('Alice cannot kick Carol')
-        await expect(alice.removeUser(spaceId, carol.userId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+        await expect(alice.removeUser(spaceId, carol.userId)).rejects.toThrow(
+            /7:PERMISSION_DENIED/,
+        )
 
         let carolUserStreamView = carol.stream(carol.userStreamId!)!.view
         // Carol is still a member
         await waitFor(() => {
-            expect(carolUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(
-                true,
-            )
-            expect(carolUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
-                true,
-            )
+            expect(
+                carolUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true)
+            expect(
+                carolUserStreamView.userContent.isMember(
+                    channelId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(true)
         })
 
         // Create an admin role for Alice that has permission to modify banning
@@ -230,17 +262,25 @@ describe('spaceWithEntitlements', () => {
         await new Promise((f) => setTimeout(f, 2000))
 
         log('Alice kicks Carol')
-        await expect(alice.removeUser(spaceId, carol.userId)).resolves.not.toThrow()
+        await expect(
+            alice.removeUser(spaceId, carol.userId),
+        ).resolves.not.toThrow()
 
         log('Carol is no longer a member of the space or channel')
         carolUserStreamView = carol.stream(carol.userStreamId!)!.view
         await waitFor(() => {
-            expect(carolUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(
-                false,
-            )
-            expect(carolUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
-                false,
-            )
+            expect(
+                carolUserStreamView.userContent.isMember(
+                    spaceId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(false)
+            expect(
+                carolUserStreamView.userContent.isMember(
+                    channelId,
+                    MembershipOp.SO_JOIN,
+                ),
+            ).toBe(false)
         })
 
         // kill the clients

@@ -3,7 +3,12 @@
  */
 
 import { makeEvent, makeEvents, unpackStreamEnvelopes } from '../../sign'
-import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@towns-protocol/proto'
+import {
+    MembershipOp,
+    SyncStreamsResponse,
+    SyncCookie,
+    SyncOp,
+} from '@towns-protocol/proto'
 import { bin_equal, dlog } from '@towns-protocol/dlog'
 import {
     makeEvent_test,
@@ -81,7 +86,9 @@ describe('streamRpcClient', () => {
         log('error', err)
         expect(err).toBeDefined()
         log('error', err!.toString())
-        expect(err!.toString()).toContain('Error requested through Info request')
+        expect(err!.toString()).toContain(
+            'Error requested through Info request',
+        )
     })
 
     test('error_untyped', async () => {
@@ -98,7 +105,9 @@ describe('streamRpcClient', () => {
         log('error_untyped', err)
         expect(err).toBeDefined()
         log('error_untyped', err!.toString())
-        expect(err!.toString()).toContain('[unknown] error requested through Info request')
+        expect(err!.toString()).toContain(
+            '[unknown] error requested through Info request',
+        )
     })
 
     test('charlieUsesRegularOldWallet', async () => {
@@ -141,7 +150,10 @@ describe('streamRpcClient', () => {
         const userStream = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userStream).toBeDefined()
         expect(
-            bin_equal(userStream.stream?.nextSyncCookie?.streamId, bobsUserStreamId),
+            bin_equal(
+                userStream.stream?.nextSyncCookie?.streamId,
+                bobsUserStreamId,
+            ),
         ).toBeTruthy()
 
         // try to send a channel message
@@ -282,7 +294,8 @@ describe('streamRpcClient', () => {
                         ...TEST_ENCRYPTED_MESSAGE_PROPS,
                         ciphertext: 'hello',
                     }),
-                    createChannelResponse.stream?.miniblocks.at(-1)?.header?.hash,
+                    createChannelResponse.stream?.miniblocks.at(-1)?.header
+                        ?.hash,
                 ),
             }),
         ).rejects.toThrow(
@@ -313,7 +326,9 @@ describe('streamRpcClient', () => {
         await expect(
             waitForSyncStreams(aliceSyncStreams, async (res) => {
                 syncId = res.syncId
-                return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+                return (
+                    res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+                )
             }),
         ).resolves.not.toThrow()
 
@@ -335,44 +350,59 @@ describe('streamRpcClient', () => {
         })
 
         log("Alice waits for Bob's invite event")
-        aliceSyncCookie = await waitForEvent(aliceSyncStreams, alicesUserStreamIdStr, (e) => {
-            if (
-                e.event.payload?.case === 'userPayload' &&
-                e.event.payload?.value.content.case === 'userMembership'
-            ) {
-                log("Alice's received over sync:", {
-                    op: e.event.payload?.value.content.value.op,
-                    streamId: streamIdAsString(e.event.payload?.value.content.value.streamId),
-                    inviter: e.event.payload?.value.content.value.inviter,
-                    inviterId: e.event.payload?.value.content.value.inviter
-                        ? userIdFromAddress(e.event.payload?.value.content.value.inviter)
-                        : undefined,
-                    bob: bobsUserId,
-                    bobAddress: addressFromUserId(bobsUserId),
-                    bobAddress2: bobsContext.creatorAddress,
-                    bobAddress3: userIdFromAddress(bobsContext.creatorAddress),
-                    inviterEquals: bin_equal(
-                        e.event.payload?.value.content.value.inviter,
-                        bobsContext.creatorAddress,
-                    ),
-                    channelIdEquals: bin_equal(
-                        e.event.payload?.value.content.value.streamId,
-                        channelId,
-                    ),
-                    inviteEquals:
-                        e.event.payload?.value.content.value.op === MembershipOp.SO_INVITE,
-                })
-                return (
-                    e.event.payload?.value.content.value.op === MembershipOp.SO_INVITE &&
-                    bin_equal(e.event.payload?.value.content.value.streamId, channelId) &&
-                    bin_equal(
-                        e.event.payload?.value.content.value.inviter,
-                        bobsContext.creatorAddress,
+        aliceSyncCookie = await waitForEvent(
+            aliceSyncStreams,
+            alicesUserStreamIdStr,
+            (e) => {
+                if (
+                    e.event.payload?.case === 'userPayload' &&
+                    e.event.payload?.value.content.case === 'userMembership'
+                ) {
+                    log("Alice's received over sync:", {
+                        op: e.event.payload?.value.content.value.op,
+                        streamId: streamIdAsString(
+                            e.event.payload?.value.content.value.streamId,
+                        ),
+                        inviter: e.event.payload?.value.content.value.inviter,
+                        inviterId: e.event.payload?.value.content.value.inviter
+                            ? userIdFromAddress(
+                                  e.event.payload?.value.content.value.inviter,
+                              )
+                            : undefined,
+                        bob: bobsUserId,
+                        bobAddress: addressFromUserId(bobsUserId),
+                        bobAddress2: bobsContext.creatorAddress,
+                        bobAddress3: userIdFromAddress(
+                            bobsContext.creatorAddress,
+                        ),
+                        inviterEquals: bin_equal(
+                            e.event.payload?.value.content.value.inviter,
+                            bobsContext.creatorAddress,
+                        ),
+                        channelIdEquals: bin_equal(
+                            e.event.payload?.value.content.value.streamId,
+                            channelId,
+                        ),
+                        inviteEquals:
+                            e.event.payload?.value.content.value.op ===
+                            MembershipOp.SO_INVITE,
+                    })
+                    return (
+                        e.event.payload?.value.content.value.op ===
+                            MembershipOp.SO_INVITE &&
+                        bin_equal(
+                            e.event.payload?.value.content.value.streamId,
+                            channelId,
+                        ) &&
+                        bin_equal(
+                            e.event.payload?.value.content.value.inviter,
+                            bobsContext.creatorAddress,
+                        )
                     )
-                )
-            }
-            return false
-        })
+                }
+                return false
+            },
+        )
 
         // Alice joins the channel
         event = await makeEvent(
@@ -397,8 +427,12 @@ describe('streamRpcClient', () => {
             (e) =>
                 e.event.payload?.case === 'userPayload' &&
                 e.event.payload?.value.content.case === 'userMembership' &&
-                e.event.payload?.value.content.value.op === MembershipOp.SO_JOIN &&
-                bin_equal(e.event.payload?.value.content.value.streamId, channelId),
+                e.event.payload?.value.content.value.op ===
+                    MembershipOp.SO_JOIN &&
+                bin_equal(
+                    e.event.payload?.value.content.value.streamId,
+                    channelId,
+                ),
         )
 
         // Alice reads previouse messages from the channel
@@ -408,7 +442,10 @@ describe('streamRpcClient', () => {
         const envelopes = await unpackStreamEnvelopes(channel.stream, undefined)
         envelopes.forEach((e) => {
             const p = e.event.payload
-            if (p?.case === 'channelPayload' && p.value.content.case === 'message') {
+            if (
+                p?.case === 'channelPayload' &&
+                p.value.content.case === 'message'
+            ) {
                 messageCount++
                 expect(p.value.content.value.ciphertext).toEqual('hello')
             }
@@ -443,7 +480,8 @@ describe('streamRpcClient', () => {
                 (e) =>
                     e.event.payload?.case === 'channelPayload' &&
                     e.event.payload?.value.content.case === 'message' &&
-                    e.event.payload?.value.content.value.ciphertext === 'Hello, Alice!',
+                    e.event.payload?.value.content.value.ciphertext ===
+                        'Hello, Alice!',
             ),
         ).resolves.not.toThrow()
 
@@ -453,91 +491,113 @@ describe('streamRpcClient', () => {
     test.each([
         [0n, 'never'],
         [{ days: 2 }, 'in two days'],
-    ])('cantAddOrCreateWithExpiredDelegateSig expiry: %o expires %s', async (goodExpiry, desc) => {
-        log('testing with good expiry of', goodExpiry, 'which expires', desc)
-        const jimmy = await makeTestRpcClient()
-
-        const jimmysWallet = ethers.Wallet.createRandom()
-        const jimmysDelegateWallet = ethers.Wallet.createRandom()
-
-        const jimmysGoodContext = await makeSignerContext(
-            jimmysWallet,
-            jimmysDelegateWallet,
-            goodExpiry,
-        )
-        const jimmysExpiredContext = await makeSignerContext(jimmysWallet, jimmysDelegateWallet, {
-            days: -2,
-        })
-
-        const jimmysUserId = userIdFromAddress(jimmysGoodContext.creatorAddress)
-        const jimmysUserStreamId = streamIdToBytes(makeUserStreamId(jimmysUserId))
-
-        const makeUserStreamWith = async (context: SignerContext) => {
-            return jimmy.createStream({
-                events: [
-                    await makeEvent(
-                        context,
-                        make_UserPayload_Inception({
-                            streamId: jimmysUserStreamId,
-                        }),
-                    ),
-                ],
-                streamId: jimmysUserStreamId,
-            })
-        }
-
-        // test create stream
-        await expect(makeUserStreamWith(jimmysExpiredContext)).rejects.toThrow(
-            expect.objectContaining({
-                message: expect.stringContaining('7:PERMISSION_DENIED'),
-            }),
-        )
-        await expect(makeUserStreamWith(jimmysGoodContext)).resolves.not.toThrow()
-
-        // create a space
-        const spacedStreamId = streamIdToBytes(makeUniqueSpaceStreamId())
-        const spaceEvents = await makeEvents(jimmysGoodContext, [
-            make_SpacePayload_Inception({
-                streamId: spacedStreamId,
-            }),
-            make_MemberPayload_Membership2({
-                userId: jimmysUserId,
-                op: MembershipOp.SO_JOIN,
-                initiatorId: jimmysUserId,
-            }),
-        ])
-        await jimmy.createStream({
-            events: spaceEvents,
-            streamId: spacedStreamId,
-        })
-
-        // try to leave, first with expired context, then with good context
-        const addEventWith = async (context: SignerContext) => {
-            const lastMiniblockHash = (
-                await jimmy.getLastMiniblockHash({ streamId: jimmysUserStreamId })
-            ).hash
-            const messageEvent = await makeEvent(
-                context,
-                make_UserPayload_UserMembership({
-                    streamId: spacedStreamId,
-                    op: MembershipOp.SO_LEAVE,
-                }),
-                lastMiniblockHash,
+    ])(
+        'cantAddOrCreateWithExpiredDelegateSig expiry: %o expires %s',
+        async (goodExpiry, desc) => {
+            log(
+                'testing with good expiry of',
+                goodExpiry,
+                'which expires',
+                desc,
             )
-            return jimmy.addEvent({
-                streamId: jimmysUserStreamId,
-                event: messageEvent,
-            })
-        }
+            const jimmy = await makeTestRpcClient()
 
-        // test add event
-        await expect(addEventWith(jimmysExpiredContext)).rejects.toThrow(
-            expect.objectContaining({
-                message: expect.stringContaining('7:PERMISSION_DENIED'),
-            }),
-        )
-        await expect(addEventWith(jimmysGoodContext)).resolves.not.toThrow()
-    })
+            const jimmysWallet = ethers.Wallet.createRandom()
+            const jimmysDelegateWallet = ethers.Wallet.createRandom()
+
+            const jimmysGoodContext = await makeSignerContext(
+                jimmysWallet,
+                jimmysDelegateWallet,
+                goodExpiry,
+            )
+            const jimmysExpiredContext = await makeSignerContext(
+                jimmysWallet,
+                jimmysDelegateWallet,
+                {
+                    days: -2,
+                },
+            )
+
+            const jimmysUserId = userIdFromAddress(
+                jimmysGoodContext.creatorAddress,
+            )
+            const jimmysUserStreamId = streamIdToBytes(
+                makeUserStreamId(jimmysUserId),
+            )
+
+            const makeUserStreamWith = async (context: SignerContext) => {
+                return jimmy.createStream({
+                    events: [
+                        await makeEvent(
+                            context,
+                            make_UserPayload_Inception({
+                                streamId: jimmysUserStreamId,
+                            }),
+                        ),
+                    ],
+                    streamId: jimmysUserStreamId,
+                })
+            }
+
+            // test create stream
+            await expect(
+                makeUserStreamWith(jimmysExpiredContext),
+            ).rejects.toThrow(
+                expect.objectContaining({
+                    message: expect.stringContaining('7:PERMISSION_DENIED'),
+                }),
+            )
+            await expect(
+                makeUserStreamWith(jimmysGoodContext),
+            ).resolves.not.toThrow()
+
+            // create a space
+            const spacedStreamId = streamIdToBytes(makeUniqueSpaceStreamId())
+            const spaceEvents = await makeEvents(jimmysGoodContext, [
+                make_SpacePayload_Inception({
+                    streamId: spacedStreamId,
+                }),
+                make_MemberPayload_Membership2({
+                    userId: jimmysUserId,
+                    op: MembershipOp.SO_JOIN,
+                    initiatorId: jimmysUserId,
+                }),
+            ])
+            await jimmy.createStream({
+                events: spaceEvents,
+                streamId: spacedStreamId,
+            })
+
+            // try to leave, first with expired context, then with good context
+            const addEventWith = async (context: SignerContext) => {
+                const lastMiniblockHash = (
+                    await jimmy.getLastMiniblockHash({
+                        streamId: jimmysUserStreamId,
+                    })
+                ).hash
+                const messageEvent = await makeEvent(
+                    context,
+                    make_UserPayload_UserMembership({
+                        streamId: spacedStreamId,
+                        op: MembershipOp.SO_LEAVE,
+                    }),
+                    lastMiniblockHash,
+                )
+                return jimmy.addEvent({
+                    streamId: jimmysUserStreamId,
+                    event: messageEvent,
+                })
+            }
+
+            // test add event
+            await expect(addEventWith(jimmysExpiredContext)).rejects.toThrow(
+                expect.objectContaining({
+                    message: expect.stringContaining('7:PERMISSION_DENIED'),
+                }),
+            )
+            await expect(addEventWith(jimmysGoodContext)).resolves.not.toThrow()
+        },
+    )
 
     test('cantAddWithBadHash', async () => {
         const bob = await makeTestRpcClient()
@@ -599,7 +659,9 @@ describe('streamRpcClient', () => {
         })
         log('Bob created channel')
 
-        log('Bob fails to create channel with badly chained initial events, hash empty')
+        log(
+            'Bob fails to create channel with badly chained initial events, hash empty',
+        )
         const channelId2Str = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId2 = streamIdToBytes(channelId2Str)
         const channelEvent2_0 = await makeEvent(
@@ -610,7 +672,9 @@ describe('streamRpcClient', () => {
             }),
         )
 
-        log('Bob fails to create channel with badly chained initial events, wrong hash value')
+        log(
+            'Bob fails to create channel with badly chained initial events, wrong hash value',
+        )
         const channelEvent2_2 = await makeEvent(
             bobsContext,
             make_MemberPayload_Membership2({
@@ -628,12 +692,16 @@ describe('streamRpcClient', () => {
             }),
         ).rejects.toThrow(
             expect.objectContaining({
-                message: expect.stringContaining('19:BAD_STREAM_CREATION_PARAMS'),
+                message: expect.stringContaining(
+                    '19:BAD_STREAM_CREATION_PARAMS',
+                ),
             }),
         )
 
         log('Bob adds event with correct hash')
-        const lastMiniblockHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
+        const lastMiniblockHash = (
+            await bob.getLastMiniblockHash({ streamId: channelId })
+        ).hash
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
@@ -729,7 +797,9 @@ describe('streamRpcClient', () => {
         log('Bob created channel')
 
         log('Bob adds event with correct signature')
-        const lastMiniblockHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
+        const lastMiniblockHash = (
+            await bob.getLastMiniblockHash({ streamId: channelId })
+        ).hash
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({

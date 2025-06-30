@@ -131,14 +131,19 @@ export class SyncedStreams {
         const stream = this.streams.get(streamId)
         if (!stream) {
             // perhaps we called stopSync while loading a stream from persistence
-            this.logError('streamId not in this.streams, not adding to sync', streamId)
+            this.logError(
+                'streamId not in this.streams, not adding to sync',
+                streamId,
+            )
             return
         }
         this.syncedStreamsLoop.addStreamToSync(streamId, syncCookie, stream)
     }
 
     // remove stream from the sync subsbscription
-    public async removeStreamFromSync(inStreamId: string | Uint8Array): Promise<void> {
+    public async removeStreamFromSync(
+        inStreamId: string | Uint8Array,
+    ): Promise<void> {
         const streamId = streamIdAsString(inStreamId)
         const stream = this.streams.get(streamId)
         if (!stream) {

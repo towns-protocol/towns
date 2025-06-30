@@ -12,7 +12,14 @@ const emojis = Object.entries(emojisRaw.emojis).reduce(
         }
         return emojis
     },
-    {} as { [key: string]: { default: string; skins: string[]; keywords: string[]; name: string } },
+    {} as {
+        [key: string]: {
+            default: string
+            skins: string[]
+            keywords: string[]
+            name: string
+        }
+    },
 )
 
 export const getNativeEmojiFromName = (name: string, skinIndex = 0) => {

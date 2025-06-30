@@ -42,9 +42,9 @@ export type PlainMessage<T> =
         ? // 1) If it has Message properties ($typeName and optionally $unknown), remove those and recurse
           HasMessageProperties<T> extends true
             ? {
-                  [K in keyof T as K extends '$typeName' | '$unknown' ? never : K]: PlainMessage<
-                      T[K]
-                  >
+                  [K in keyof T as K extends '$typeName' | '$unknown'
+                      ? never
+                      : K]: PlainMessage<T[K]>
               }
             : // 2) If it's an array, recurse on the element type
               T extends (infer U)[]
@@ -53,7 +53,9 @@ export type PlainMessage<T> =
                 T extends { case: unknown; value: unknown }
                 ? {
                       // Keep `case` as is, but recurse on `value` and any other fields
-                      [K in keyof T]: K extends 'value' ? PlainMessage<T[K]> : T[K]
+                      [K in keyof T]: K extends 'value'
+                          ? PlainMessage<T[K]>
+                          : T[K]
                   }
                 : // 4) If it's a built-in object type we don't want to transform, leave it as is
                   IsBuiltInObjectType<T> extends true

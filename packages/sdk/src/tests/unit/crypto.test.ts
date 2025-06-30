@@ -6,7 +6,12 @@ import { bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { randomBytes } from '@noble/hashes/utils'
 import { readFileSync, writeFileSync } from 'fs'
-import { riverHash, riverRecoverPubKey, riverSign, riverVerifySignature } from '../../sign'
+import {
+    riverHash,
+    riverRecoverPubKey,
+    riverSign,
+    riverVerifySignature,
+} from '../../sign'
 
 const log = dlog('test:encryption')
 
@@ -59,7 +64,9 @@ describe('crypto', () => {
         }
 
         // Write CSV of data to DATA_FILE
-        const csvData = data.map((d) => d.map((x) => bin_toHexString(x)).join(',')).join('\n')
+        const csvData = data
+            .map((d) => d.map((x) => bin_toHexString(x)).join(','))
+            .join('\n')
         writeFileSync(DATA_FILE, csvData, 'utf8')
     }
 
@@ -108,7 +115,9 @@ describe('crypto', () => {
                 for (let i = shard; i < data.length; i += SHARDS) {
                     const line = data[i]
                     log_shard('Checking line %d', i)
-                    const [d, h, ...sigs] = line.split(',').map(bin_fromHexString)
+                    const [d, h, ...sigs] = line
+                        .split(',')
+                        .map(bin_fromHexString)
                     const hash = riverHash(d)
                     expect(h).toEqual(hash)
                     for (let i = 0; i < keys.length; ++i) {
@@ -119,9 +128,15 @@ describe('crypto', () => {
                         expect(riverRecoverPubKey(hash, sig)).toEqual(pu)
                         expect(riverRecoverPubKey(badHash, sig)).not.toEqual(pu)
                         expect(riverRecoverPubKey(hash, badSig)).not.toEqual(pu)
-                        expect(riverVerifySignature(hash, sig, pu)).toEqual(true)
-                        expect(riverVerifySignature(badHash, sig, pu)).toEqual(false)
-                        expect(riverVerifySignature(hash, badSig, pu)).toEqual(false)
+                        expect(riverVerifySignature(hash, sig, pu)).toEqual(
+                            true,
+                        )
+                        expect(riverVerifySignature(badHash, sig, pu)).toEqual(
+                            false,
+                        )
+                        expect(riverVerifySignature(hash, badSig, pu)).toEqual(
+                            false,
+                        )
                         badSig = sig
                     }
                     badHash = hash

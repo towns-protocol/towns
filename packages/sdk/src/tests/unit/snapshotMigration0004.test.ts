@@ -46,7 +46,9 @@ describe('snapshotMigration0004', () => {
                         },
                     },
                     {
-                        solicitations: [{ sessionIds: [commonSessionId, 'unique2'] }],
+                        solicitations: [
+                            { sessionIds: [commonSessionId, 'unique2'] },
+                        ],
                         username: {
                             data: {
                                 sessionIdBytes: commonSessionIdBytes,
@@ -55,7 +57,9 @@ describe('snapshotMigration0004', () => {
                         },
                     },
                     {
-                        solicitations: [{ sessionIds: [commonSessionId, 'unique3'] }],
+                        solicitations: [
+                            { sessionIds: [commonSessionId, 'unique3'] },
+                        ],
                     },
                     {
                         solicitations: [{ sessionIds: ['unique4'] }],
@@ -76,18 +80,20 @@ describe('snapshotMigration0004', () => {
             if (member.username?.data) {
                 expect(member.username.data.sessionId).not.toBe(commonSessionId)
                 if (member.username.data.sessionIdBytes?.length) {
-                    expect(bin_toHexString(member.username.data.sessionIdBytes)).not.toBe(
-                        commonSessionId,
-                    )
+                    expect(
+                        bin_toHexString(member.username.data.sessionIdBytes),
+                    ).not.toBe(commonSessionId)
                 }
             }
 
             if (member.displayName?.data) {
-                expect(member.displayName.data.sessionId).not.toBe(commonSessionId)
+                expect(member.displayName.data.sessionId).not.toBe(
+                    commonSessionId,
+                )
                 if (member.displayName.data.sessionIdBytes?.length) {
-                    expect(bin_toHexString(member.displayName.data.sessionIdBytes)).not.toBe(
-                        commonSessionId,
-                    )
+                    expect(
+                        bin_toHexString(member.displayName.data.sessionIdBytes),
+                    ).not.toBe(commonSessionId)
                 }
             }
         }

@@ -1,4 +1,10 @@
-import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
+import {
+    BigNumber,
+    BigNumberish,
+    ContractTransaction,
+    ethers,
+    Signer,
+} from 'ethers'
 import {
     ChannelDetails,
     ChannelMetadata,
@@ -28,8 +34,14 @@ import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'
-import { RuleEntitlementShim, IRuleEntitlementBase } from './entitlements/RuleEntitlementShim'
-import { RuleEntitlementV2Shim, IRuleEntitlementV2Base } from './entitlements/RuleEntitlementV2Shim'
+import {
+    RuleEntitlementShim,
+    IRuleEntitlementBase,
+} from './entitlements/RuleEntitlementShim'
+import {
+    RuleEntitlementV2Shim,
+    IRuleEntitlementV2Base,
+} from './entitlements/RuleEntitlementV2Shim'
 import { IBanningShim } from './IBanningShim'
 import { ITippingShim } from './ITippingShim'
 import { IERC721AQueryableShim } from '../erc-721/IERC721AQueryableShim'
@@ -89,7 +101,10 @@ export class Space {
         this.membership = new IMembershipShim(address, provider)
         this.banning = new IBanningShim(address, provider)
         this.erc721AQueryable = new IERC721AQueryableShim(address, provider)
-        this.entitlementDataQueryable = new IEntitlementDataQueryableShim(address, provider)
+        this.entitlementDataQueryable = new IEntitlementDataQueryableShim(
+            address,
+            provider,
+        )
         this.prepay = new IPrepayShim(address, provider)
         this.erc721A = new IERC721AShim(address, provider)
         this.tipping = new ITippingShim(address, provider)
@@ -226,7 +241,9 @@ export class Space {
         }
     }
 
-    public async getChannel(channelNetworkId: string): Promise<ChannelDetails | null> {
+    public async getChannel(
+        channelNetworkId: string,
+    ): Promise<ChannelDetails | null> {
         // get most of the channel details except the roles which
         // require a separate call to get each role's details
         const channelId = channelNetworkId.startsWith('0x')
@@ -245,7 +262,9 @@ export class Space {
         }
     }
 
-    public async getChannelMetadata(channelNetworkId: string): Promise<ChannelMetadata | null> {
+    public async getChannelMetadata(
+        channelNetworkId: string,
+    ): Promise<ChannelMetadata | null> {
         const channelId = channelNetworkId.startsWith('0x')
             ? channelNetworkId
             : `0x${channelNetworkId}`
@@ -274,7 +293,9 @@ export class Space {
         return channels
     }
 
-    public async getChannelRoles(channelNetworkId: string): Promise<IRolesBase.RoleStructOutput[]> {
+    public async getChannelRoles(
+        channelNetworkId: string,
+    ): Promise<IRolesBase.RoleStructOutput[]> {
         const channelId = channelNetworkId.startsWith('0x')
             ? channelNetworkId
             : `0x${channelNetworkId}`
@@ -296,7 +317,9 @@ export class Space {
         const entitlementShims = await this.getEntitlementShims()
         const getRoleEntitlementsAsync: Promise<RoleEntitlements | null>[] = []
         for (const roleId of channelInfo.roleIds) {
-            getRoleEntitlementsAsync.push(this.getRoleEntitlements(entitlementShims, roleId))
+            getRoleEntitlementsAsync.push(
+                this.getRoleEntitlements(entitlementShims, roleId),
+            )
         }
         // get all the role info
         const allRoleEntitlements = await Promise.all(getRoleEntitlementsAsync)
@@ -344,27 +367,24 @@ export class Space {
         throw new Error('Failed to parse log: ' + JSON.stringify(log))
     }
 
-    private async getEntitlementByAddress(address: string): Promise<EntitlementShim> {
+    private async getEntitlementByAddress(
+        address: string,
+    ): Promise<EntitlementShim> {
         if (!this.addressToEntitlement[address]) {
-            const entitlement = await this.entitlements.read.getEntitlement(address)
+            const entitlement =
+                await this.entitlements.read.getEntitlement(address)
             switch (entitlement.moduleType as EntitlementModuleType) {
                 case EntitlementModuleType.UserEntitlement:
-                    this.addressToEntitlement[address] = new UserEntitlementShim(
-                        address,
-                        this.provider,
-                    )
+                    this.addressToEntitlement[address] =
+                        new UserEntitlementShim(address, this.provider)
                     break
                 case EntitlementModuleType.RuleEntitlement:
-                    this.addressToEntitlement[address] = new RuleEntitlementShim(
-                        address,
-                        this.provider,
-                    )
+                    this.addressToEntitlement[address] =
+                        new RuleEntitlementShim(address, this.provider)
                     break
                 case EntitlementModuleType.RuleEntitlementV2:
-                    this.addressToEntitlement[address] = new RuleEntitlementV2Shim(
-                        address,
-                        this.provider,
-                    )
+                    this.addressToEntitlement[address] =
+                        new RuleEntitlementV2Shim(address, this.provider)
                     break
                 default:
                     throw new Error(
@@ -375,7 +395,9 @@ export class Space {
         return this.addressToEntitlement[address]
     }
 
-    private async getRoleInfo(roleId: BigNumberish): Promise<IRolesBase.RoleStructOutput | null> {
+    private async getRoleInfo(
+        roleId: BigNumberish,
+    ): Promise<IRolesBase.RoleStructOutput | null> {
         try {
             return await this.roles.read.getRoleById(roleId)
         } catch (e) {
@@ -391,7 +413,9 @@ export class Space {
         const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
-            getEntitlementShims.push(this.getEntitlementByAddress(info.moduleAddress))
+            getEntitlementShims.push(
+                this.getEntitlementByAddress(info.moduleAddress),
+            )
         }
         return Promise.all(getEntitlementShims)
     }
@@ -401,8 +425,10 @@ export class Space {
         roleId: BigNumberish,
     ): Promise<EntitlementDetails> {
         let users: string[] = []
-        let ruleData: IRuleEntitlementBase.RuleDataStruct | undefined = undefined
-        let ruleDataV2: IRuleEntitlementV2Base.RuleDataV2Struct | undefined = undefined
+        let ruleData: IRuleEntitlementBase.RuleDataStruct | undefined =
+            undefined
+        let ruleDataV2: IRuleEntitlementV2Base.RuleDataV2Struct | undefined =
+            undefined
         let useRuleDataV1 = false
 
         // with the shims, get the role details for each entitlement
@@ -411,10 +437,14 @@ export class Space {
                 if (isUserEntitlement(entitlement)) {
                     users = (await entitlement.getRoleEntitlement(roleId)) ?? []
                 } else if (isRuleEntitlement(entitlement)) {
-                    ruleData = (await entitlement.getRoleEntitlement(roleId)) ?? undefined
+                    ruleData =
+                        (await entitlement.getRoleEntitlement(roleId)) ??
+                        undefined
                     useRuleDataV1 = true
                 } else if (isRuleEntitlementV2(entitlement)) {
-                    ruleDataV2 = (await entitlement.getRoleEntitlement(roleId)) ?? undefined
+                    ruleDataV2 =
+                        (await entitlement.getRoleEntitlement(roleId)) ??
+                        undefined
                 }
             }),
         )
@@ -436,14 +466,19 @@ export class Space {
             }
         }
     }
-    private async getChannelsWithRole(roleId: BigNumberish): Promise<ChannelMetadata[]> {
+    private async getChannelsWithRole(
+        roleId: BigNumberish,
+    ): Promise<ChannelMetadata[]> {
         const channelMetadatas = new Map<string, ChannelMetadata>()
         // get all the channels from the space
         const allChannels = await this.channel.read.getChannels()
         // for each channel, check with each entitlement if the role is in the channel
         // add the channel to the list if it is not already added
         for (const c of allChannels) {
-            if (!channelMetadatas.has(c.id) && isRoleIdInArray(c.roleIds, roleId)) {
+            if (
+                !channelMetadatas.has(c.id) &&
+                isRoleIdInArray(c.roleIds, roleId)
+            ) {
                 const metadata = parseChannelMetadataJSON(c.metadata)
                 channelMetadatas.set(c.id, {
                     channelNetworkId: c.id.replace('0x', ''),
@@ -456,7 +491,9 @@ export class Space {
         return Array.from(channelMetadatas.values())
     }
 
-    private async getRolesInfo(roleIds: BigNumber[]): Promise<IRolesBase.RoleStructOutput[]> {
+    private async getRolesInfo(
+        roleIds: BigNumber[],
+    ): Promise<IRolesBase.RoleStructOutput[]> {
         // use a Set to ensure that we only get roles once
         const roles = new Set<string>()
         const getRoleStructsAsync: Promise<IRolesBase.RoleStructOutput>[] = []
@@ -495,7 +532,9 @@ export class Space {
         const results = await this.multicall.makeCalls({
             encoder: () =>
                 wallets.map((wallet) =>
-                    this.erc721AQueryable.encodeFunctionData('tokensOfOwner', [wallet]),
+                    this.erc721AQueryable.encodeFunctionData('tokensOfOwner', [
+                        wallet,
+                    ]),
                 ),
             decoder: (result) => {
                 return this.erc721AQueryable
@@ -527,9 +566,13 @@ export class Space {
         try {
             expirations = await this.multicall.makeCalls({
                 encoder: () =>
-                    tokenIds.map((id) => this.membership.encodeFunctionData('expiresAt', [id])),
+                    tokenIds.map((id) =>
+                        this.membership.encodeFunctionData('expiresAt', [id]),
+                    ),
                 decoder: (result) => {
-                    return this.membership.decodeFunctionResult('expiresAt', result)[0].toBigInt()
+                    return this.membership
+                        .decodeFunctionResult('expiresAt', result)[0]
+                        .toBigInt()
                 },
             })
         } catch (error) {
@@ -623,7 +666,9 @@ export class Space {
      * @param untilTokenId - The token id to stop at, if not provided, will get all members
      * @returns An array of member addresses
      */
-    public async __expensivelyGetMembers(untilTokenId?: BigNumberish): Promise<string[]> {
+    public async __expensivelyGetMembers(
+        untilTokenId?: BigNumberish,
+    ): Promise<string[]> {
         if (untilTokenId === undefined) {
             untilTokenId = await this.erc721A.read.totalSupply()
         }
@@ -631,7 +676,9 @@ export class Space {
         untilTokenId = Number(untilTokenId)
 
         const tokenIds = Array.from({ length: untilTokenId }, (_, i) => i)
-        const promises = tokenIds.map((tokenId) => this.erc721A.read.ownerOf(tokenId))
+        const promises = tokenIds.map((tokenId) =>
+            this.erc721A.read.ownerOf(tokenId),
+        )
         return Promise.all(promises)
     }
 }

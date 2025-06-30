@@ -8,7 +8,10 @@ import path from 'path'
 // The encryption WASM module is imported dynamically.
 // Since it's common for developers to use a linked copy of @towns-protocol/vodozemac (which could reside anywhere on their file system),
 // Vite needs to be told to recognize it as a legitimate file access.
-const allow = [searchForWorkspaceRoot(process.cwd()), 'node_modules/@towns-protocol/olm']
+const allow = [
+    searchForWorkspaceRoot(process.cwd()),
+    'node_modules/@towns-protocol/olm',
+]
 
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {

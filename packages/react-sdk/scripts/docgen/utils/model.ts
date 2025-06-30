@@ -89,7 +89,9 @@ export function createDataLookup(apiItem: model.ApiItem) {
                         token.canonicalReference &&
                         // prevent duplicates
                         apiItem.excerpt.tokens.findIndex(
-                            (other) => other.canonicalReference === token.canonicalReference,
+                            (other) =>
+                                other.canonicalReference ===
+                                token.canonicalReference,
                         ) === index,
                 )
                 .map((token) => ({
@@ -105,12 +107,17 @@ export function createDataLookup(apiItem: model.ApiItem) {
     return dataLookup
 }
 
-export function createResolveDeclarationReference(contextApiItem: model.ApiItem) {
+export function createResolveDeclarationReference(
+    contextApiItem: model.ApiItem,
+) {
     const hierarchy = contextApiItem.getHierarchy()
     const apiModel = hierarchy[0] as model.ApiModel
 
     return (declarationReference: DocDeclarationReference) => {
-        const result = apiModel.resolveDeclarationReference(declarationReference, apiModel)
+        const result = apiModel.resolveDeclarationReference(
+            declarationReference,
+            apiModel,
+        )
 
         if (result.errorMessage) {
             throw new Error(
@@ -126,7 +133,9 @@ export function createResolveDeclarationReference(contextApiItem: model.ApiItem)
         if (item) {
             const url = getLinkForApiItem(item)
             const namespaceName = item.parent?.displayName
-            const text = namespaceName ? `${namespaceName}.${item.displayName}` : item.displayName
+            const text = namespaceName
+                ? `${namespaceName}.${item.displayName}`
+                : item.displayName
             return { url, text }
         }
 
@@ -134,7 +143,9 @@ export function createResolveDeclarationReference(contextApiItem: model.ApiItem)
     }
 }
 
-export type ResolveDeclarationReference = ReturnType<typeof createResolveDeclarationReference>
+export type ResolveDeclarationReference = ReturnType<
+    typeof createResolveDeclarationReference
+>
 
 function getLinkForApiItem(item: model.ApiItem) {
     const parent = item.parent
@@ -191,10 +202,16 @@ function extractChildren(item: model.ApiItem) {
         if (extracted.maybeIncompleteResult) {
             return {
                 children: Array.from(
-                    new Set(extracted.items.map(getId).concat(item.members.map(getId))).values(),
+                    new Set(
+                        extracted.items
+                            .map(getId)
+                            .concat(item.members.map(getId)),
+                    ).values(),
                 ),
                 childrenIncomplete: true,
-                childrenIncompleteDetails: extracted.messages.map((m) => m.text).join('\n'),
+                childrenIncompleteDetails: extracted.messages
+                    .map((m) => m.text)
+                    .join('\n'),
             }
         }
 
@@ -241,7 +258,10 @@ function extraData(item: model.ApiItem): ExtraData {
     const ret: ExtraData = {}
     if (model.ApiParameterListMixin.isBaseClassOf(item)) {
         ret.parameters = item.parameters.map((p) => ({
-            ...extractPrimaryReference(formatType(p.parameterTypeExcerpt.text), item),
+            ...extractPrimaryReference(
+                formatType(p.parameterTypeExcerpt.text),
+                item,
+            ),
             name: p.name,
             optional: p.isOptional,
             comment: renderDocNode(
@@ -280,7 +300,10 @@ function extraData(item: model.ApiItem): ExtraData {
         ret.protected = item.isProtected
     }
     if (model.ApiReturnTypeMixin.isBaseClassOf(item)) {
-        ret.returnType = extractPrimaryReference(item.returnTypeExcerpt.text, item)
+        ret.returnType = extractPrimaryReference(
+            item.returnTypeExcerpt.text,
+            item,
+        )
     }
 
     return Object.assign(
@@ -295,7 +318,9 @@ function extraData(item: model.ApiItem): ExtraData {
                 }
               : item instanceof model.ApiClass
                 ? {
-                      implements: item.implementsTypes.map((p) => p.excerpt.text),
+                      implements: item.implementsTypes.map(
+                          (p) => p.excerpt.text,
+                      ),
                   }
                 : {},
     )
@@ -313,11 +338,14 @@ function extractPrimaryReference(type: string, item: model.ApiItem) {
 
     const primaryReference = skipToPrimaryType(ast)
     const referencedTypeName = primaryReference?.name?.value
-    const referencedType = item.excerptTokens?.find((r) => r.text === referencedTypeName)
+    const referencedType = item.excerptTokens?.find(
+        (r) => r.text === referencedTypeName,
+    )
 
     return {
         type: formatType(type),
-        primaryCanonicalReference: referencedType?.canonicalReference?.toString(),
+        primaryCanonicalReference:
+            referencedType?.canonicalReference?.toString(),
         primaryGenericArguments: primaryReference?.generics?.map(
             (g: { unparsed: boolean }) => g.unparsed,
         ),
@@ -336,7 +364,10 @@ function getRegexParser(
     type: string,
     valueFromMatch = (match: RegExpMatchArray) => match[0],
 ) {
-    return function regexParser(code: string, index_: number): AstNode | null | undefined {
+    return function regexParser(
+        code: string,
+        index_: number,
+    ): AstNode | null | undefined {
         let index = index_
         while (code[index] === ' ') {
             index++
@@ -389,7 +420,8 @@ function lookahead(code: string, index_: number, left: AstNode): AstNode {
         }
     } else if ((found = peekFixedString(code, index, 'extends'))) {
         const constraint = parseExpression(code, found)
-        const question = constraint && peekFixedString(code, constraint.end, '?')
+        const question =
+            constraint && peekFixedString(code, constraint.end, '?')
         const trueCase = question && parseExpression(code, question)
         const colon = trueCase && peekFixedString(code, trueCase.end, ':')
         const falseCase = colon && parseExpression(code, colon)
@@ -422,10 +454,10 @@ function parseExpression(code: string, index_: number): AstNode {
         parseArrowFunction(code, index) ||
         parseParenthesis(code, index) ||
         parseInterfaceDefinition(code, index) ||
-        getRegexParser(/^(true|false|void|undefined|object|string|number|boolean)/, 'Keyword')(
-            code,
-            index,
-        ) ||
+        getRegexParser(
+            /^(true|false|void|undefined|object|string|number|boolean)/,
+            'Keyword',
+        )(code, index) ||
         parsePropertyAccess(code, index) ||
         parseTypeExpression(code, index) ||
         getRegexParser(/^\d+(\.\d+)?/, 'Number')(code, index) ||
@@ -435,7 +467,9 @@ function parseExpression(code: string, index_: number): AstNode {
         parseTuple(code, index)
 
     if (!node) {
-        throw new Error(`could not parse expression at \`${code.slice(index)}\``)
+        throw new Error(
+            `could not parse expression at \`${code.slice(index)}\``,
+        )
     }
 
     node = { unparsed: code.slice(node.start, node.end), ...node }
@@ -447,7 +481,10 @@ function parseExpression(code: string, index_: number): AstNode {
 }
 
 // TODO: Make sure this doesn't capture too much
-function parseTemplateString(code: string, index: number): AstNode | null | undefined {
+function parseTemplateString(
+    code: string,
+    index: number,
+): AstNode | null | undefined {
     const delim = code[index]
     if (delim === '`') {
         const skipped = skipBetweenDelimiters(code, index)
@@ -481,7 +518,10 @@ function parseTuple(code: string, index: number): AstNode | null | undefined {
     return
 }
 
-function parseTypeExpression(code: string, index: number): AstNode | null | undefined {
+function parseTypeExpression(
+    code: string,
+    index: number,
+): AstNode | null | undefined {
     const identifier = getRegexParser(/^[a-zA-Z]\w*/, 'Identifier')(code, index)
     if (!identifier) {
         return null
@@ -533,7 +573,10 @@ function parseTypeExpression(code: string, index: number): AstNode | null | unde
     return
 }
 
-function parseArrowFunction(code: string, index: number): AstNode | null | undefined {
+function parseArrowFunction(
+    code: string,
+    index: number,
+): AstNode | null | undefined {
     const parameters =
         code[index] === '('
             ? skipBetweenDelimiters(code, index)
@@ -553,7 +596,10 @@ function parseArrowFunction(code: string, index: number): AstNode | null | undef
     }
 }
 
-function parseParenthesis(code: string, index: number): AstNode | null | undefined {
+function parseParenthesis(
+    code: string,
+    index: number,
+): AstNode | null | undefined {
     if (code[index] === '(') {
         const expression = parseExpression(code, index + 1)
         const finalIndex = peekFixedString(code, expression.end, ')')
@@ -564,11 +610,17 @@ function parseParenthesis(code: string, index: number): AstNode | null | undefin
     return
 }
 
-function parsePropertyAccess(code: string, index: number): AstNode | null | undefined {
+function parsePropertyAccess(
+    code: string,
+    index: number,
+): AstNode | null | undefined {
     const parent = getRegexParser(/^[a-zA-Z]\w*/, 'Identifier')(code, index)
     const dotAccessStart = parent && peekFixedString(code, parent.end, '.')
     if (dotAccessStart) {
-        const property = getRegexParser(/^[a-zA-Z]\w*/, 'Identifier')(code, dotAccessStart)
+        const property = getRegexParser(/^[a-zA-Z]\w*/, 'Identifier')(
+            code,
+            dotAccessStart,
+        )
         return (
             property && {
                 type: 'PropertyAccess',
@@ -603,7 +655,10 @@ function parsePropertyAccess(code: string, index: number): AstNode | null | unde
     return
 }
 
-function parseInterfaceDefinition(code: string, index_: number): AstNode | null | undefined {
+function parseInterfaceDefinition(
+    code: string,
+    index_: number,
+): AstNode | null | undefined {
     let index = index_
     index = peekFixedString(code, index, 'export') || index
     const typeEnd = peekFixedString(code, index, 'interface')
@@ -620,7 +675,10 @@ function parseInterfaceDefinition(code: string, index_: number): AstNode | null 
     }
 }
 
-function skipBetweenDelimiters(code: string, index: number): AstNode | null | undefined {
+function skipBetweenDelimiters(
+    code: string,
+    index: number,
+): AstNode | null | undefined {
     const validDelimiters = ['"', "'", '`', '{', '[', '(']
     const oppositeDelimiters = ['"', "'", '`', '}', ']', ')']
 
@@ -651,7 +709,11 @@ function skipBetweenDelimiters(code: string, index: number): AstNode | null | un
     return
 }
 
-function peekFixedString(code: string, index_: number, string: string): number | undefined {
+function peekFixedString(
+    code: string,
+    index_: number,
+    string: string,
+): number | undefined {
     if (string === '') {
         throw new Error('string must not be empty')
     }
@@ -673,7 +735,12 @@ function parseAst(code: string) {
          * This might leave single parts of the API documentation without the right "primary reference type",
          * but it won't make the docs unusable in any way, so we only log it and don't fail.
          */
-        console.warn('Encountered error while parsing expression %s. ', code, ':', e)
+        console.warn(
+            'Encountered error while parsing expression %s. ',
+            code,
+            ':',
+            e,
+        )
         return null
     }
 }
@@ -694,7 +761,9 @@ function skipToPrimaryType(ast: AstNode): AstNode | null {
     }
     if (ast.type === 'TypeExpression' && ast.name.value in skipToGeneric) {
         return skipToPrimaryType(
-            ast.generics[skipToGeneric[ast.name.value as keyof typeof skipToGeneric]],
+            ast.generics[
+                skipToGeneric[ast.name.value as keyof typeof skipToGeneric]
+            ],
         )
     }
 

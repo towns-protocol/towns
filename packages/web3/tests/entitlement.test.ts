@@ -50,14 +50,20 @@ const log = debug('test')
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
 
-    if ((depth > 5 && depth < 10 && rand < 1 / 3) || (depth < 10 && rand < 1 / 2)) {
+    if (
+        (depth > 5 && depth < 10 && rand < 1 / 3) ||
+        (depth < 10 && rand < 1 / 2)
+    ) {
         return {
             opType: OperationType.LOGICAL,
             logicalType: LogicalOperationType.AND,
             leftOperation: makeRandomOperation(depth + 1),
             rightOperation: makeRandomOperation(depth + 1),
         }
-    } else if ((depth > 5 && depth < 10 && rand < 2 / 3) || (depth < 10 && rand > 1 / 2)) {
+    } else if (
+        (depth > 5 && depth < 10 && rand < 2 / 3) ||
+        (depth < 10 && rand > 1 / 2)
+    ) {
         return {
             opType: OperationType.LOGICAL,
             logicalType: LogicalOperationType.OR,
@@ -70,7 +76,9 @@ function makeRandomOperation(depth: number): Operation {
             checkType: CheckOperationType.MOCK,
             chainId: rand > 0.5 ? 1n : 0n,
             contractAddress: generateRandomEthAddress(),
-            params: encodeThresholdParams({ threshold: rand > 0.5 ? 500n : 10n }),
+            params: encodeThresholdParams({
+                threshold: rand > 0.5 ? 500n : 10n,
+            }),
         }
     }
 }
@@ -87,7 +95,9 @@ function generateRandomEthAddress(): Address {
     let address: Address = '0x'
     const characters = '0123456789abcdef'
     for (let i = 0; i < 40; i++) {
-        address += characters.charAt(Math.floor(Math.random() * characters.length))
+        address += characters.charAt(
+            Math.floor(Math.random() * characters.length),
+        )
     }
     return address
 }
@@ -132,10 +142,14 @@ const slowTrueCheck: CheckOperationV2 = {
 // reproduce the same unit tests here to ensure parity between evaluation in xchain and the
 // client.
 // Contract addresses for the test NFT contracts.
-const SepoliaTestNftContract: Address = '0xb088b3f2b35511A611bF2aaC13fE605d491D6C19'
-const SepoliaTestNftWallet_1Token: Address = '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
-const SepoliaTestNftWallet_3Tokens: Address = '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
-const SepoliaTestNftWallet_2Tokens: Address = '0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d'
+const SepoliaTestNftContract: Address =
+    '0xb088b3f2b35511A611bF2aaC13fE605d491D6C19'
+const SepoliaTestNftWallet_1Token: Address =
+    '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
+const SepoliaTestNftWallet_3Tokens: Address =
+    '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
+const SepoliaTestNftWallet_2Tokens: Address =
+    '0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d'
 
 const ethereumSepoliaChainId = 11155111n
 const baseSepoliaChainId = 84532n
@@ -191,18 +205,23 @@ const nftMultiCheckHighThresholdBaseSepolia: CheckOperationV2 = {
 const xchainConfig: XchainConfig = {
     supportedRpcUrls: {
         [Number(ethereumSepoliaChainId)]:
-            process.env.ETH_SEPOLIA_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+            process.env.ETH_SEPOLIA_RPC_URL ??
+            'https://ethereum-sepolia-rpc.publicnode.com',
         [Number(baseSepoliaChainId)]:
             process.env.BASE_SEPOLIA_RPC_URL ?? 'https://sepolia.base.org',
     },
-    etherNativeNetworkIds: [Number(ethereumSepoliaChainId), Number(baseSepoliaChainId)],
+    etherNativeNetworkIds: [
+        Number(ethereumSepoliaChainId),
+        Number(baseSepoliaChainId),
+    ],
     ethereumNetworkIds: [Number(ethereumSepoliaChainId)],
 }
 
 const minimalEtherChainsConfig: XchainConfig = {
     supportedRpcUrls: {
         [Number(ethereumSepoliaChainId)]:
-            process.env.ETH_SEPOLIA_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+            process.env.ETH_SEPOLIA_RPC_URL ??
+            'https://ethereum-sepolia-rpc.publicnode.com',
         [Number(baseSepoliaChainId)]:
             process.env.BASE_SEPOLIA_RPC_URL ?? 'https://sepolia.base.org',
     },
@@ -304,15 +323,21 @@ it.skip.concurrent.each(nftCases)('erc721Check - $desc', async (props) => {
 })
 
 // These are the addresses of the chain link test contract on base sepolia and ethereum sepolia.
-const baseSepoliaChainLinkContract: Address = '0xE4aB69C077896252FAFBD49EFD26B5D171A32410'
-const ethSepoliaChainLinkContract: Address = '0x779877A7B0D9E8603169DdbD7836e478b4624789'
+const baseSepoliaChainLinkContract: Address =
+    '0xE4aB69C077896252FAFBD49EFD26B5D171A32410'
+const ethSepoliaChainLinkContract: Address =
+    '0x779877A7B0D9E8603169DdbD7836e478b4624789'
 
 // The following are the addresses of the wallets that hold the chain link tokens for testing.
 // Some wallet addresses are duplicated for the sake of self-documenting variable names.
-const sepoliaChainLinkWallet_50Link: Address = '0x4BCfC6962Ab0297aF801da21216014F53B46E991'
-const sepoliaChainLinkWallet_25Link: Address = '0xa4D440AeA5F555feEB5AEa0ddcED6e1B9FaD6A9C'
-const baseSepoliaChainLinkWallet_25Link2: Address = '0x4BCfC6962Ab0297aF801da21216014F53B46E991'
-const baseSepoliaChainLinkWallet_25Link: Address = '0xa4D440AeA5F555feEB5AEa0ddcED6e1B9FaD6A9C'
+const sepoliaChainLinkWallet_50Link: Address =
+    '0x4BCfC6962Ab0297aF801da21216014F53B46E991'
+const sepoliaChainLinkWallet_25Link: Address =
+    '0xa4D440AeA5F555feEB5AEa0ddcED6e1B9FaD6A9C'
+const baseSepoliaChainLinkWallet_25Link2: Address =
+    '0x4BCfC6962Ab0297aF801da21216014F53B46E991'
+const baseSepoliaChainLinkWallet_25Link: Address =
+    '0xa4D440AeA5F555feEB5AEa0ddcED6e1B9FaD6A9C'
 const testEmptyAccount: Address = '0xb227905F186095083869928BAb49cA9CE9546817'
 
 // This wallet has .4ETH on Sepolia, and .1ETH on Base Sepolia
@@ -324,10 +349,14 @@ const chainlinkExp = BigInt(10) ** BigInt(18)
 
 // ERC1155 test contracts and wallets
 const baseSepoliaErc1155Contract = '0x60327B4F2936E02B910e8A236d46D0B7C1986DCB'
-const baseSepoliaErc1155Wallet_TokenId0_700Tokens = '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
-const baseSepoliaErc1155Wallet_TokenId0_300Tokens = '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
-const baseSepoliaErc1155Wallet_TokenId1_100Tokens = '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
-const baseSepoliaErc1155Wallet_TokenId1_50Tokens = '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
+const baseSepoliaErc1155Wallet_TokenId0_700Tokens =
+    '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
+const baseSepoliaErc1155Wallet_TokenId0_300Tokens =
+    '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
+const baseSepoliaErc1155Wallet_TokenId1_100Tokens =
+    '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
+const baseSepoliaErc1155Wallet_TokenId1_50Tokens =
+    '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
 
 const ethBalance_gt_0_7: CheckOperationV2 = {
     opType: OperationType.CHECK,
@@ -509,16 +538,24 @@ const erc1155Cases = [
     },
 ]
 
-it.skip.concurrent.each(erc1155Cases)('ERC1155 Check - $desc', async (props) => {
-    const { check, wallets, expectedResult } = props
-    const controller = new AbortController()
-    const result = await evaluateTree(controller, wallets, xchainConfig, check)
-    if (expectedResult) {
-        expect(result).not.toEqual(zeroAddress)
-    } else {
-        expect(result).toEqual(zeroAddress)
-    }
-})
+it.skip.concurrent.each(erc1155Cases)(
+    'ERC1155 Check - $desc',
+    async (props) => {
+        const { check, wallets, expectedResult } = props
+        const controller = new AbortController()
+        const result = await evaluateTree(
+            controller,
+            wallets,
+            xchainConfig,
+            check,
+        )
+        if (expectedResult) {
+            expect(result).not.toEqual(zeroAddress)
+        } else {
+            expect(result).toEqual(zeroAddress)
+        }
+    },
+)
 
 const ethBalanceCases = [
     {
@@ -553,17 +590,25 @@ const ethBalanceCases = [
     },
 ]
 
-it.skip.concurrent.each(ethBalanceCases)('Eth Balance Check - $desc', async (props) => {
-    const { check, wallets, expectedResult } = props
-    const controller = new AbortController()
-    const result = await evaluateTree(controller, wallets, xchainConfig, check)
-    if (expectedResult) {
-        expect(result as Address).toBeTruthy()
-        expect(result).not.toEqual(zeroAddress)
-    } else {
-        expect(result).toEqual(zeroAddress)
-    }
-})
+it.skip.concurrent.each(ethBalanceCases)(
+    'Eth Balance Check - $desc',
+    async (props) => {
+        const { check, wallets, expectedResult } = props
+        const controller = new AbortController()
+        const result = await evaluateTree(
+            controller,
+            wallets,
+            xchainConfig,
+            check,
+        )
+        if (expectedResult) {
+            expect(result as Address).toBeTruthy()
+            expect(result).not.toEqual(zeroAddress)
+        } else {
+            expect(result).toEqual(zeroAddress)
+        }
+    },
+)
 
 const ethBalanceCasesMinimalEtherChains = [
     {
@@ -585,7 +630,12 @@ it.skip.concurrent.each(ethBalanceCasesMinimalEtherChains)(
     async (props) => {
         const { check, wallets, expectedResult } = props
         const controller = new AbortController()
-        const result = await evaluateTree(controller, wallets, minimalEtherChainsConfig, check)
+        const result = await evaluateTree(
+            controller,
+            wallets,
+            minimalEtherChainsConfig,
+            check,
+        )
         if (expectedResult) {
             expect(result as Address).toBeTruthy()
             expect(result).not.toEqual(zeroAddress)
@@ -629,19 +679,28 @@ const erc20Cases = [
     {
         desc: 'base sepolia (two nonempty wallets, true)',
         check: erc20ChainLinkCheckBaseSepolia_30Tokens,
-        wallets: [baseSepoliaChainLinkWallet_25Link, baseSepoliaChainLinkWallet_25Link2],
+        wallets: [
+            baseSepoliaChainLinkWallet_25Link,
+            baseSepoliaChainLinkWallet_25Link2,
+        ],
         expectedResult: true,
     },
     {
         desc: 'base sepolia (two nonempty wallets, exact balance - true)',
         check: erc20ChainLinkCheckBaseSepolia_50Tokens,
-        wallets: [baseSepoliaChainLinkWallet_25Link, baseSepoliaChainLinkWallet_25Link2],
+        wallets: [
+            baseSepoliaChainLinkWallet_25Link,
+            baseSepoliaChainLinkWallet_25Link2,
+        ],
         expectedResult: true,
     },
     {
         desc: 'base sepolia (two nonempty wallets, false)',
         check: erc20ChainLinkCheckBaseSepolia_90Tokens,
-        wallets: [baseSepoliaChainLinkWallet_25Link, baseSepoliaChainLinkWallet_25Link2],
+        wallets: [
+            baseSepoliaChainLinkWallet_25Link,
+            baseSepoliaChainLinkWallet_25Link2,
+        ],
         expectedResult: false,
     },
     {
@@ -839,10 +898,26 @@ it.skip.concurrent.each(errorTests)('error - $desc', async (props) => {
 })
 
 const orCases = [
-    { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
-    { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: MOCK_ADDRESS },
-    { leftCheck: falseCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
-    { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
+    {
+        leftCheck: trueCheck,
+        rightCheck: trueCheck,
+        expectedResult: MOCK_ADDRESS,
+    },
+    {
+        leftCheck: trueCheck,
+        rightCheck: falseCheck,
+        expectedResult: MOCK_ADDRESS,
+    },
+    {
+        leftCheck: falseCheck,
+        rightCheck: trueCheck,
+        expectedResult: MOCK_ADDRESS,
+    },
+    {
+        leftCheck: falseCheck,
+        rightCheck: falseCheck,
+        expectedResult: ethers.constants.AddressZero,
+    },
 ]
 
 it.concurrent.each(orCases)('orOperation', async (props) => {
@@ -904,10 +979,26 @@ it.concurrent.each(slowOrCases)('slowOrOperation', async (props) => {
 })
 
 const andCases = [
-    { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
-    { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
-    { leftCheck: falseCheck, rightCheck: trueCheck, expectedResult: ethers.constants.AddressZero },
-    { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
+    {
+        leftCheck: trueCheck,
+        rightCheck: trueCheck,
+        expectedResult: MOCK_ADDRESS,
+    },
+    {
+        leftCheck: trueCheck,
+        rightCheck: falseCheck,
+        expectedResult: ethers.constants.AddressZero,
+    },
+    {
+        leftCheck: falseCheck,
+        rightCheck: trueCheck,
+        expectedResult: ethers.constants.AddressZero,
+    },
+    {
+        leftCheck: falseCheck,
+        rightCheck: falseCheck,
+        expectedResult: ethers.constants.AddressZero,
+    },
 ]
 
 it.concurrent.each(andCases)('andOperation', async (props) => {
@@ -977,35 +1068,55 @@ const coldWallet2 = '0x32e52d188600F27d12A65120160aA28b1108C050'
 const coldWallet3 = '0xBda05058243FEf202FB4925b3877373396A08768'
 
 describe('computeDelegatorsForProvider', () => {
-    it.skip.concurrent('single hot wallet maps to single cold wallet', async () => {
-        const providers = await findEthereumProviders(xchainConfig)
-        expect(providers.length).toBe(1)
+    it.skip.concurrent(
+        'single hot wallet maps to single cold wallet',
+        async () => {
+            const providers = await findEthereumProviders(xchainConfig)
+            expect(providers.length).toBe(1)
 
-        const provider = providers[0]
-        const delegated = await computeDelegatorsForProvider(provider, [hotWallet])
-        expect(delegated).toHaveLength(1)
-        expect(delegated).toEqual(expect.arrayContaining([coldWallet]))
-    })
+            const provider = providers[0]
+            const delegated = await computeDelegatorsForProvider(provider, [
+                hotWallet,
+            ])
+            expect(delegated).toHaveLength(1)
+            expect(delegated).toEqual(expect.arrayContaining([coldWallet]))
+        },
+    )
 
-    it.skip.concurrent('single hot wallet maps to multiple cold wallets', async () => {
-        const providers = await findEthereumProviders(xchainConfig)
-        expect(providers.length).toBe(1)
+    it.skip.concurrent(
+        'single hot wallet maps to multiple cold wallets',
+        async () => {
+            const providers = await findEthereumProviders(xchainConfig)
+            expect(providers.length).toBe(1)
 
-        const provider = providers[0]
-        const delegated = await computeDelegatorsForProvider(provider, [hotWallet2])
-        expect(delegated).toHaveLength(2)
-        expect(delegated).toEqual(expect.arrayContaining([coldWallet2, coldWallet3]))
-    })
+            const provider = providers[0]
+            const delegated = await computeDelegatorsForProvider(provider, [
+                hotWallet2,
+            ])
+            expect(delegated).toHaveLength(2)
+            expect(delegated).toEqual(
+                expect.arrayContaining([coldWallet2, coldWallet3]),
+            )
+        },
+    )
 
-    it.skip.concurrent('multiple hot wallets map to multiple cold wallets', async () => {
-        const providers = await findEthereumProviders(xchainConfig)
-        expect(providers.length).toBe(1)
+    it.skip.concurrent(
+        'multiple hot wallets map to multiple cold wallets',
+        async () => {
+            const providers = await findEthereumProviders(xchainConfig)
+            expect(providers.length).toBe(1)
 
-        const provider = providers[0]
-        const delegated = await computeDelegatorsForProvider(provider, [hotWallet, hotWallet2])
-        expect(delegated).toHaveLength(3)
-        expect(delegated).toEqual(expect.arrayContaining([coldWallet, coldWallet2, coldWallet3]))
-    })
+            const provider = providers[0]
+            const delegated = await computeDelegatorsForProvider(provider, [
+                hotWallet,
+                hotWallet2,
+            ])
+            expect(delegated).toHaveLength(3)
+            expect(delegated).toEqual(
+                expect.arrayContaining([coldWallet, coldWallet2, coldWallet3]),
+            )
+        },
+    )
 })
 
 it('empty', async () => {
@@ -1043,7 +1154,9 @@ it('encode/decode rule data v2', async () => {
 })
 
 it('decode empty ruledata v2 to NoopRuleData v1', async () => {
-    const converted = convertRuleDataV2ToV1(decodeRuleDataV2(EncodedNoopRuleData))
+    const converted = convertRuleDataV2ToV1(
+        decodeRuleDataV2(EncodedNoopRuleData),
+    )
     expect(converted.operations).toHaveLength(0)
     expect(converted.checkOperations).toHaveLength(0)
     expect(converted.logicalOperations).toHaveLength(0)
@@ -1067,7 +1180,9 @@ it('encode/decode rule data', async () => {
     }
 
     for (let i = 0; i < v1.logicalOperations.length; i++) {
-        expect(v1.logicalOperations[i].logOpType).toBe(decodedDag.logicalOperations[i].logOpType)
+        expect(v1.logicalOperations[i].logOpType).toBe(
+            decodedDag.logicalOperations[i].logOpType,
+        )
         expect(v1.logicalOperations[i].leftOperationIndex).toBe(
             decodedDag.logicalOperations[i].leftOperationIndex,
         )
@@ -1077,15 +1192,21 @@ it('encode/decode rule data', async () => {
     }
 
     for (let i = 0; i < v1.checkOperations.length; i++) {
-        expect(v1.checkOperations[i].opType).toBe(decodedDag.checkOperations[i].opType)
-        expect(v1.checkOperations[i].chainId).toBe(decodedDag.checkOperations[i].chainId)
+        expect(v1.checkOperations[i].opType).toBe(
+            decodedDag.checkOperations[i].opType,
+        )
+        expect(v1.checkOperations[i].chainId).toBe(
+            decodedDag.checkOperations[i].chainId,
+        )
         expect(
             addressesEqual(
                 v1.checkOperations[i].contractAddress as string,
                 decodedDag.checkOperations[i].contractAddress as string,
             ),
         ).toBeTruthy()
-        expect(v1.checkOperations[i].threshold).toBe(decodedDag.checkOperations[i].threshold)
+        expect(v1.checkOperations[i].threshold).toBe(
+            decodedDag.checkOperations[i].threshold,
+        )
     }
 })
 
@@ -1105,21 +1226,33 @@ describe.concurrent('threshold params', () => {
 
 describe.concurrent('erc1155 params', () => {
     it('encode invalid params', () => {
-        expect(() => encodeERC1155Params({ threshold: BigInt(-1), tokenId: BigInt(100) })).toThrow(
-            'Invalid threshold -1: must be greater than or equal to 0',
-        )
+        expect(() =>
+            encodeERC1155Params({
+                threshold: BigInt(-1),
+                tokenId: BigInt(100),
+            }),
+        ).toThrow('Invalid threshold -1: must be greater than or equal to 0')
     })
 
     it('encode invalid token id', () => {
-        expect(() => encodeERC1155Params({ threshold: BigInt(100), tokenId: BigInt(-1) })).toThrow(
-            'Invalid tokenId -1: must be greater than or equal to 0',
-        )
+        expect(() =>
+            encodeERC1155Params({
+                threshold: BigInt(100),
+                tokenId: BigInt(-1),
+            }),
+        ).toThrow('Invalid tokenId -1: must be greater than or equal to 0')
     })
 
     it('encode/decode', () => {
-        const encodedParams = encodeERC1155Params({ threshold: BigInt(200), tokenId: BigInt(100) })
+        const encodedParams = encodeERC1155Params({
+            threshold: BigInt(200),
+            tokenId: BigInt(100),
+        })
         const decodedParams = decodeERC1155Params(encodedParams)
-        expect(decodedParams).toEqual({ threshold: BigInt(200), tokenId: BigInt(100) })
+        expect(decodedParams).toEqual({
+            threshold: BigInt(200),
+            tokenId: BigInt(100),
+        })
     })
 })
 
@@ -1134,8 +1267,12 @@ function assertRuleDatasEqual(
     }
     expect(expected.checkOperations.length).toBe(actual.checkOperations.length)
     for (let i = 0; i < expected.checkOperations.length; i++) {
-        expect(expected.checkOperations[i].opType).toBe(actual.checkOperations[i].opType)
-        expect(expected.checkOperations[i].chainId).toBe(actual.checkOperations[i].chainId)
+        expect(expected.checkOperations[i].opType).toBe(
+            actual.checkOperations[i].opType,
+        )
+        expect(expected.checkOperations[i].chainId).toBe(
+            actual.checkOperations[i].chainId,
+        )
         expect(expected.checkOperations[i].contractAddress).toBe(
             actual.checkOperations[i].contractAddress,
         )
@@ -1143,9 +1280,13 @@ function assertRuleDatasEqual(
             actual.checkOperations[i].params as string,
         )
     }
-    expect(expected.logicalOperations.length).toBe(actual.logicalOperations.length)
+    expect(expected.logicalOperations.length).toBe(
+        actual.logicalOperations.length,
+    )
     for (let i = 0; i < expected.logicalOperations.length; i++) {
-        expect(expected.logicalOperations[i].logOpType).toBe(actual.logicalOperations[i].logOpType)
+        expect(expected.logicalOperations[i].logOpType).toBe(
+            actual.logicalOperations[i].logOpType,
+        )
         expect(expected.logicalOperations[i].leftOperationIndex).toBe(
             actual.logicalOperations[i].leftOperationIndex,
         )
@@ -1168,8 +1309,14 @@ function assertOperationEqual(actual: Operation, expected: Operation) {
         // This check involves some redundance since these element have been visited already,
         // but it ensures that embedded operations in the tree are equal since the
         // operations tree does not use indices, but builds a tree directly.
-        assertOperationEqual(actualLogical.leftOperation, expectedLogical.leftOperation)
-        assertOperationEqual(actualLogical.rightOperation, expectedLogical.rightOperation)
+        assertOperationEqual(
+            actualLogical.leftOperation,
+            expectedLogical.leftOperation,
+        )
+        assertOperationEqual(
+            actualLogical.rightOperation,
+            expectedLogical.rightOperation,
+        )
     } else if (expected.opType === OperationType.NONE) {
         expect(actual.opType).toBe(expected.opType)
     }
@@ -1479,7 +1626,13 @@ describe.concurrent('createOperationsTree', () => {
             rightOperation: check3,
         }
 
-        assertOperationsEqual(operations, [check1, check2, logical1, check3, logical2])
+        assertOperationsEqual(operations, [
+            check1,
+            check2,
+            logical1,
+            check3,
+            logical2,
+        ])
     })
 
     it('five checks', () => {
@@ -1719,53 +1872,56 @@ describe.concurrent('createOperationsTree', () => {
 })
 
 describe.concurrent('evaluateOperationsForEntitledWallet', () => {
-    it.concurrent('4 checks - evaluateOperationsForEntitledWallet', async () => {
-        const checkOp: DecodedCheckOperation[] = [
-            // pass
-            {
-                type: CheckOperationType.ERC1155,
-                chainId: baseSepoliaChainId,
-                address: baseSepoliaErc1155Contract,
-                threshold: BigInt(700),
-                tokenId: 0n,
-            },
-            // fail
-            {
-                type: CheckOperationType.ISENTITLED,
-                chainId: 1n,
-                address: MOCK_ADDRESS,
-                byteEncodedParams: `0xabcdef`,
-            },
-            // fail
-            {
-                type: CheckOperationType.ERC1155,
-                chainId: baseSepoliaChainId,
-                address: baseSepoliaErc1155Contract,
-                threshold: BigInt(900),
-                tokenId: 0n,
-            },
-            // fail
-            {
-                type: CheckOperationType.ERC1155,
-                chainId: baseSepoliaChainId,
-                address: baseSepoliaErc1155Contract,
-                threshold: BigInt(10_000),
-                tokenId: 1n,
-            },
-        ]
+    it.concurrent(
+        '4 checks - evaluateOperationsForEntitledWallet',
+        async () => {
+            const checkOp: DecodedCheckOperation[] = [
+                // pass
+                {
+                    type: CheckOperationType.ERC1155,
+                    chainId: baseSepoliaChainId,
+                    address: baseSepoliaErc1155Contract,
+                    threshold: BigInt(700),
+                    tokenId: 0n,
+                },
+                // fail
+                {
+                    type: CheckOperationType.ISENTITLED,
+                    chainId: 1n,
+                    address: MOCK_ADDRESS,
+                    byteEncodedParams: `0xabcdef`,
+                },
+                // fail
+                {
+                    type: CheckOperationType.ERC1155,
+                    chainId: baseSepoliaChainId,
+                    address: baseSepoliaErc1155Contract,
+                    threshold: BigInt(900),
+                    tokenId: 0n,
+                },
+                // fail
+                {
+                    type: CheckOperationType.ERC1155,
+                    chainId: baseSepoliaChainId,
+                    address: baseSepoliaErc1155Contract,
+                    threshold: BigInt(10_000),
+                    tokenId: 1n,
+                },
+            ]
 
-        const tree = createOperationsTree(checkOp)
-        const operations = ruleDataToOperations(tree)
+            const tree = createOperationsTree(checkOp)
+            const operations = ruleDataToOperations(tree)
 
-        // if evaluateOperationsForEntitledWallet does not internally create a postOrderArrayToTree,
-        // this will fail past a threshold of 4 Check operations
-        const result = await evaluateOperationsForEntitledWallet(
-            operations,
-            [baseSepoliaErc1155Wallet_TokenId0_700Tokens],
-            xchainConfig,
-        )
-        expect(result).not.toEqual(zeroAddress)
-    })
+            // if evaluateOperationsForEntitledWallet does not internally create a postOrderArrayToTree,
+            // this will fail past a threshold of 4 Check operations
+            const result = await evaluateOperationsForEntitledWallet(
+                operations,
+                [baseSepoliaErc1155Wallet_TokenId0_700Tokens],
+                xchainConfig,
+            )
+            expect(result).not.toEqual(zeroAddress)
+        },
+    )
 })
 
 describe.concurrent('DecodedCheckOpBuilder', () => {
@@ -1914,8 +2070,12 @@ describe.concurrent('DecodedCheckOpBuilder', () => {
 
     it('ETH_BALANCE', () => {
         expect(() => {
-            new DecodedCheckOperationBuilder().setType(CheckOperationType.ETH_BALANCE).build()
-        }).toThrow('DecodedCheckOperation of type ETH_BALANCE requires a threshold')
+            new DecodedCheckOperationBuilder()
+                .setType(CheckOperationType.ETH_BALANCE)
+                .build()
+        }).toThrow(
+            'DecodedCheckOperation of type ETH_BALANCE requires a threshold',
+        )
 
         // Valid example
         const decoded = new DecodedCheckOperationBuilder()
@@ -1936,7 +2096,9 @@ describe.concurrent('DecodedCheckOpBuilder', () => {
                 .setAddress(zeroAddress)
                 .setByteEncodedParams('0xabcdef1234')
                 .build()
-        }).toThrow('DecodedCheckOperation of type ISENTITLED requires a chainId')
+        }).toThrow(
+            'DecodedCheckOperation of type ISENTITLED requires a chainId',
+        )
 
         expect(() => {
             new DecodedCheckOperationBuilder()
@@ -1944,7 +2106,9 @@ describe.concurrent('DecodedCheckOpBuilder', () => {
                 .setChainId(1n)
                 .setByteEncodedParams('0xabcdef1234')
                 .build()
-        }).toThrow('DecodedCheckOperation of type ISENTITLED requires an address')
+        }).toThrow(
+            'DecodedCheckOperation of type ISENTITLED requires an address',
+        )
 
         expect(() => {
             new DecodedCheckOperationBuilder()
@@ -1952,7 +2116,9 @@ describe.concurrent('DecodedCheckOpBuilder', () => {
                 .setChainId(1n)
                 .setAddress(zeroAddress)
                 .build()
-        }).toThrow('DecodedCheckOperation of type ISENTITLED requires byteEncodedParams')
+        }).toThrow(
+            'DecodedCheckOperation of type ISENTITLED requires byteEncodedParams',
+        )
 
         // Valid example
         const decoded = new DecodedCheckOperationBuilder()

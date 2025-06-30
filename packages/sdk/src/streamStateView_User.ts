@@ -7,13 +7,20 @@ import {
     UserPayload_Snapshot,
     UserPayload_UserMembership,
 } from '@towns-protocol/proto'
-import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
+import {
+    StreamEncryptionEvents,
+    StreamEvents,
+    StreamStateEvents,
+} from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { bin_toHexString, check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { streamIdFromBytes } from './id'
 import { utils } from 'ethers'
-import { UserStreamModel, UserStreamsView } from './views/streams/userStreamsView'
+import {
+    UserStreamModel,
+    UserStreamsView,
+} from './views/streams/userStreamsView'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -117,7 +124,10 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'userMembership':
-                this.addUserPayload_userMembership(payload.content.value, stateEmitter)
+                this.addUserPayload_userMembership(
+                    payload.content.value,
+                    stateEmitter,
+                )
                 break
             case 'userMembershipAction':
                 break
@@ -131,9 +141,20 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         if (!event) {
                             return
                         }
-                        const currency = utils.getAddress(bin_toHexString(event.currency))
-                        this.userStreamsView.appendTipSent(this.streamId, currency, event.amount)
-                        stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
+                        const currency = utils.getAddress(
+                            bin_toHexString(event.currency),
+                        )
+                        this.userStreamsView.appendTipSent(
+                            this.streamId,
+                            currency,
+                            event.amount,
+                        )
+                        stateEmitter?.emit(
+                            'userTipSent',
+                            this.streamId,
+                            currency,
+                            event.amount,
+                        )
                         break
                     }
                     case 'tokenTransfer':
@@ -153,7 +174,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                 break
             }
             case 'receivedBlockchainTransaction': {
-                const transactionContent = payload.content.value.transaction?.content
+                const transactionContent =
+                    payload.content.value.transaction?.content
                 switch (transactionContent?.case) {
                     case undefined:
                         break
@@ -162,13 +184,20 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         if (!event) {
                             return
                         }
-                        const currency = utils.getAddress(bin_toHexString(event.currency))
+                        const currency = utils.getAddress(
+                            bin_toHexString(event.currency),
+                        )
                         this.userStreamsView.appendTipReceived(
                             this.streamId,
                             currency,
                             event.amount,
                         )
-                        stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
+                        stateEmitter?.emit(
+                            'userTipReceived',
+                            this.streamId,
+                            currency,
+                            event.amount,
+                        )
                         break
                     }
                     case 'tokenTransfer':
@@ -196,8 +225,10 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     ): void {
         const { op, streamId: inStreamId } = payload
         const streamId = streamIdFromBytes(inStreamId)
-        const wasInvited = this.streamMemberships[streamId]?.op === MembershipOp.SO_INVITE
-        const wasJoined = this.streamMemberships[streamId]?.op === MembershipOp.SO_JOIN
+        const wasInvited =
+            this.streamMemberships[streamId]?.op === MembershipOp.SO_INVITE
+        const wasJoined =
+            this.streamMemberships[streamId]?.op === MembershipOp.SO_JOIN
         this.userStreamsView.setMembership(this.streamId, streamId, payload)
         switch (op) {
             case MembershipOp.SO_INVITE:
@@ -211,7 +242,11 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             case MembershipOp.SO_LEAVE:
                 if (wasInvited || wasJoined) {
                     emitter?.emit('userLeftStream', streamId)
-                    emitter?.emit('userStreamMembershipChanged', streamId, payload)
+                    emitter?.emit(
+                        'userStreamMembershipChanged',
+                        streamId,
+                        payload,
+                    )
                 }
                 break
             case MembershipOp.SO_UNSPECIFIED:

@@ -7,7 +7,11 @@ import {
     TimelinesViewModel,
 } from './timelinesModel'
 import { StreamChange } from '../../streamEvents'
-import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from '../models/timelineEvent'
+import {
+    toDecryptedContentErrorEvent,
+    toDecryptedEvent,
+    toEvent,
+} from '../models/timelineEvent'
 import { DecryptedContent } from '../../encryptedContentTypes'
 import { DecryptionSessionError } from '../../decryptionExtensions'
 import { isEqual } from 'lodash-es'
@@ -51,7 +55,12 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         const timelineEvents = messages
             .map((event) => toEvent(event, this.userId))
             .filter((event) => this.filterFn(streamId, event))
-        this.setState.appendEvents(timelineEvents, this.userId, streamId, 'initializeStream')
+        this.setState.appendEvents(
+            timelineEvents,
+            this.userId,
+            streamId,
+            'initializeStream',
+        )
     }
 
     streamUpdated(streamId: string, change: StreamChange) {
@@ -90,11 +99,22 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         decryptedContent: DecryptedContent,
     ): TimelineEvent | undefined {
-        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
+        const prevEvent = this.value.timelines[streamId].find(
+            (event) => event.eventId === eventId,
+        )
         if (prevEvent) {
-            const newEvent = toDecryptedEvent(prevEvent, decryptedContent, this.userId)
+            const newEvent = toDecryptedEvent(
+                prevEvent,
+                decryptedContent,
+                this.userId,
+            )
             if (!isEqual(newEvent, prevEvent)) {
-                this.setState.updateEvent(newEvent, this.userId, streamId, eventId)
+                this.setState.updateEvent(
+                    newEvent,
+                    this.userId,
+                    streamId,
+                    eventId,
+                )
             }
             return newEvent
         }
@@ -106,11 +126,18 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         error: DecryptionSessionError,
     ) {
-        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
+        const prevEvent = this.value.timelines[streamId].find(
+            (event) => event.eventId === eventId,
+        )
         if (prevEvent) {
             const newEvent = toDecryptedContentErrorEvent(prevEvent, error)
             if (newEvent !== prevEvent) {
-                this.setState.updateEvent(newEvent, this.userId, streamId, eventId)
+                this.setState.updateEvent(
+                    newEvent,
+                    this.userId,
+                    streamId,
+                    eventId,
+                )
             }
         }
     }
@@ -123,7 +150,12 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         this.streamIds.add(streamId)
         const event = toEvent(localEvent, this.userId)
         if (this.filterFn(streamId, event)) {
-            this.setState.updateEvent(event, this.userId, streamId, localEventId)
+            this.setState.updateEvent(
+                event,
+                this.userId,
+                streamId,
+                localEventId,
+            )
         }
     }
 
@@ -135,7 +167,9 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
             return false
         }
         return (
-            !this.eventFilter || !event.content?.kind || !this.eventFilter.has(event.content.kind)
+            !this.eventFilter ||
+            !event.content?.kind ||
+            !this.eventFilter.has(event.content.kind)
         )
     }
 }

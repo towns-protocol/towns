@@ -35,8 +35,17 @@ describe('deviceKeyMessageTest', () => {
         log('listening for userDeviceKeyMessage')
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, userDevice: UserDevice): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
+            (
+                streamId: string,
+                userId: string,
+                userDevice: UserDevice,
+            ): void => {
+                log(
+                    'userDeviceKeyMessage for Bob',
+                    streamId,
+                    userId,
+                    userDevice,
+                )
                 bobSelfDeviceKeyDone.runAndDone(() => {
                     expect(streamId).toBe(bobUserMetadataStreamId)
                     expect(userId).toBe(bobsUserId)
@@ -58,8 +67,17 @@ describe('deviceKeyMessageTest', () => {
         const bobSelfDeviceKeyDone = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, userDevice: UserDevice): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
+            (
+                streamId: string,
+                userId: string,
+                userDevice: UserDevice,
+            ): void => {
+                log(
+                    'userDeviceKeyMessage for Bob',
+                    streamId,
+                    userId,
+                    userDevice,
+                )
                 bobSelfDeviceKeyDone.runAndDone(() => {
                     expect(streamId).toBe(bobUserMetadataStreamId)
                     expect(userId).toBe(bobsUserId)
@@ -84,8 +102,17 @@ describe('deviceKeyMessageTest', () => {
         const alicesSelfDeviceKeyDone = makeDonePromise()
         alicesClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, userDevice: UserDevice): void => {
-                log('userDeviceKeyMessage for Alice', streamId, userId, userDevice)
+            (
+                streamId: string,
+                userId: string,
+                userDevice: UserDevice,
+            ): void => {
+                log(
+                    'userDeviceKeyMessage for Alice',
+                    streamId,
+                    userId,
+                    userDevice,
+                )
                 alicesSelfDeviceKeyDone.runAndDone(() => {
                     expect(streamId).toBe(aliceUserMetadataStreamId)
                     expect(userId).toBe(alicesUserId)
@@ -94,7 +121,9 @@ describe('deviceKeyMessageTest', () => {
             },
         )
         const aliceUserMetadataStreamId = alicesClient.userMetadataStreamId
-        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId])
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+        ])
         expect(deviceKeys[alicesUserId]).toBeDefined()
     })
 
@@ -111,10 +140,17 @@ describe('deviceKeyMessageTest', () => {
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, userDevice: UserDevice): void => {
+            (
+                streamId: string,
+                userId: string,
+                userDevice: UserDevice,
+            ): void => {
                 log('userDeviceKeyMessage', streamId, userId, userDevice)
                 bobSelfDeviceKeyDone.runAndDone(() => {
-                    expect([bobUserMetadataStreamId, aliceUserMetadataStreamId]).toContain(streamId)
+                    expect([
+                        bobUserMetadataStreamId,
+                        aliceUserMetadataStreamId,
+                    ]).toContain(streamId)
                     expect([bobsUserId, alicesUserId]).toContain(userId)
                     expect(userDevice.deviceKey).toBeDefined()
                 })
@@ -123,7 +159,10 @@ describe('deviceKeyMessageTest', () => {
         const aliceUserMetadataStreamId = alicesClient.userMetadataStreamId
         const bobUserMetadataStreamId = bobsClient.userMetadataStreamId
         // give the state sync a chance to run for both deviceKeys
-        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+            bobsUserId,
+        ])
         expect(Object.keys(deviceKeys).length).toEqual(2)
         expect(deviceKeys[alicesUserId]).toBeDefined()
         expect(deviceKeys[bobsUserId]).toBeDefined()
@@ -154,10 +193,17 @@ describe('deviceKeyMessageTest', () => {
         // bobs client should sync userDeviceKeyMessages
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, userDevice: UserDevice): void => {
+            (
+                streamId: string,
+                userId: string,
+                userDevice: UserDevice,
+            ): void => {
                 log('userDeviceKeyMessage', streamId, userId, userDevice)
                 bobSelfDeviceKeyDone.runAndDone(() => {
-                    expect([bobUserMetadataStreamId, aliceUserMetadataStreamId]).toContain(streamId)
+                    expect([
+                        bobUserMetadataStreamId,
+                        aliceUserMetadataStreamId,
+                    ]).toContain(streamId)
                     expect([bobsUserId, alicesUserId]).toContain(userId)
                     expect(userDevice.deviceKey).toBeDefined()
                 })
@@ -166,7 +212,10 @@ describe('deviceKeyMessageTest', () => {
         const aliceUserMetadataStreamId = alicesClient.userMetadataStreamId
         const bobUserMetadataStreamId = bobsClient.userMetadataStreamId
         // give the state sync a chance to run for both deviceKeys
-        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+            bobsUserId,
+        ])
         const aliceDevices = deviceKeys[alicesUserId]
         const aliceDeviceKeys = aliceDevices.map((device) => device.deviceKey)
 
@@ -175,7 +224,9 @@ describe('deviceKeyMessageTest', () => {
         // eleventhDeviceKey out of 20 should be downloaded as part of downloadKeysForUsers
         expect(aliceDeviceKeys).toContain(eleventhDeviceKey)
         // latest key should be downloaded
-        expect(aliceDeviceKeys).toContain(alicesClient.userDeviceKey().deviceKey)
+        expect(aliceDeviceKeys).toContain(
+            alicesClient.userDeviceKey().deviceKey,
+        )
         // any key uploaded earlier than the lookback window (i.e. 10) should not be downloaded
         expect(aliceDeviceKeys).not.toContain(tenthDeviceKey)
         expect(deviceKeys[bobsUserId]).toBeDefined()

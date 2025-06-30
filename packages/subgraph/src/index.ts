@@ -13,7 +13,10 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
         where: eq(schema.space.id, event.args.space),
     })
     if (existingSpace) {
-        console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
+        console.warn(
+            `Space already exists for SpaceFactory:SpaceCreated`,
+            event.args.space,
+        )
         return
     }
 
@@ -62,7 +65,10 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
         where: eq(schema.space.id, event.args.space),
     })
     if (!space) {
-        console.warn(`Space not found for SpaceOwner:SpaceOwner__UpdateSpace`, event.args.space)
+        console.warn(
+            `Space not found for SpaceOwner:SpaceOwner__UpdateSpace`,
+            event.args.space,
+        )
         return
     }
 
@@ -175,7 +181,10 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             })
         }
     } catch (error) {
-        console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
+        console.error(
+            `Error processing Space:Swap at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
 ponder.on('SwapRouter:Swap', async ({ event, context }) => {
@@ -204,7 +213,10 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
             })
         }
     } catch (error) {
-        console.error(`Error processing SwapRouter:Swap at blockNumber ${blockNumber}:`, error)
+        console.error(
+            `Error processing SwapRouter:Swap at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
 
@@ -281,7 +293,10 @@ ponder.on('BaseRegistry:Stake', async ({ event, context }) => {
             })
         }
     } catch (error) {
-        console.error(`Error processing StakingRewards:Stake at blockNumber ${blockNumber}:`, error)
+        console.error(
+            `Error processing StakingRewards:Stake at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
 
@@ -304,7 +319,10 @@ ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
             })
         }
     } catch (error) {
-        console.error(`Error processing RiverAirdrop:Stake at blockNumber ${blockNumber}:`, error)
+        console.error(
+            `Error processing RiverAirdrop:Stake at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
 

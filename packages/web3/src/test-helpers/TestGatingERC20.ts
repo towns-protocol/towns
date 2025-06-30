@@ -1,4 +1,10 @@
-import { createTestClient, http, publicActions, walletActions, parseEther } from 'viem'
+import {
+    createTestClient,
+    http,
+    publicActions,
+    walletActions,
+    parseEther,
+} from 'viem'
 import { foundry } from 'viem/chains'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { MockERC20 } from './MockERC20'
@@ -36,7 +42,11 @@ async function getContractAddress(tokenName: string): Promise<Address> {
     return erc20Contracts.get(tokenName)!
 }
 
-async function publicMint(tokenName: string, toAddress: Address, amount: number): Promise<void> {
+async function publicMint(
+    tokenName: string,
+    toAddress: Address,
+    amount: number,
+): Promise<void> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -115,7 +125,10 @@ async function totalSupply(contractName: string): Promise<number> {
     return Number(totalSupply)
 }
 
-async function balanceOf(contractName: string, address: Address): Promise<number> {
+async function balanceOf(
+    contractName: string,
+    address: Address,
+): Promise<number> {
     const contractAddress = await getContractAddress(contractName)
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
@@ -167,7 +180,9 @@ async function transfer(
         args: [to, amount],
     })
 
-    const { transactionHash } = await client.waitForTransactionReceipt({ hash: tx })
+    const { transactionHash } = await client.waitForTransactionReceipt({
+        hash: tx,
+    })
     return { transactionHash }
 }
 

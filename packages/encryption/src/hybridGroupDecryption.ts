@@ -1,6 +1,10 @@
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@towns-protocol/proto'
+import {
+    EncryptedData,
+    EncryptedDataVersion,
+    HybridGroupSessionKey,
+} from '@towns-protocol/proto'
 import { bin_toHexString, dlogError } from '@towns-protocol/dlog'
 import { decryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
 import { LRUCache } from 'lru-cache'
@@ -17,7 +21,9 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
     private lruCache: LRUCache<string, HybridGroupSessionKey>
     public constructor(params: IDecryptionParams) {
         super(params)
-        this.lruCache = new LRUCache<string, HybridGroupSessionKey>({ max: 1000 })
+        this.lruCache = new LRUCache<string, HybridGroupSessionKey>({
+            max: 1000,
+        })
     }
 
     /**
@@ -26,7 +32,10 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
      * decrypting, or rejects with an `algorithms.DecryptionError` if there is a
      * problem decrypting the event.
      */
-    public async decrypt(streamId: string, content: EncryptedData): Promise<Uint8Array | string> {
+    public async decrypt(
+        streamId: string,
+        content: EncryptedData,
+    ): Promise<Uint8Array | string> {
         if (
             !content.senderKey ||
             !content.sessionIdBytes ||
@@ -46,7 +55,10 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
 
         // If not in cache, fetch from device
         if (!session) {
-            session = await this.device.getHybridGroupSessionKey(streamId, sessionId)
+            session = await this.device.getHybridGroupSessionKey(
+                streamId,
+                sessionId,
+            )
             if (!session) {
                 throw new DecryptionError(
                     'HYBRID_GROUP_DECRYPTION_MISSING_SESSION',
@@ -57,7 +69,11 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
         }
 
         const key = await importAesGsmKeyBytes(session.key)
-        const result = await decryptAesGcm(key, content.ciphertextBytes, content.ivBytes)
+        const result = await decryptAesGcm(
+            key,
+            content.ciphertextBytes,
+            content.ivBytes,
+        )
 
         switch (content.version) {
             case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0:
@@ -65,7 +81,10 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
             case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1:
                 return result
             default:
-                throw new DecryptionError('GROUP_DECRYPTION_INVALID_VERSION', 'Unsupported version')
+                throw new DecryptionError(
+                    'GROUP_DECRYPTION_INVALID_VERSION',
+                    'Unsupported version',
+                )
         }
     }
 
@@ -73,9 +92,16 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
      * @param streamId - the stream id of the session
      * @param session- the group session object
      */
-    public async importStreamKey(streamId: string, session: GroupEncryptionSession): Promise<void> {
+    public async importStreamKey(
+        streamId: string,
+        session: GroupEncryptionSession,
+    ): Promise<void> {
         try {
-            await this.device.addHybridGroupSession(streamId, session.sessionId, session.sessionKey)
+            await this.device.addHybridGroupSession(
+                streamId,
+                session.sessionId,
+                session.sessionKey,
+            )
         } catch (e) {
             logError(`Error handling room key import: ${(<Error>e).message}`)
             throw e
@@ -100,7 +126,10 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
         return this.device.getHybridGroupSessionIds(streamId)
     }
 
-    public async hasSessionKey(streamId: string, sessionId: string): Promise<boolean> {
+    public async hasSessionKey(
+        streamId: string,
+        sessionId: string,
+    ): Promise<boolean> {
         return this.device.hasHybridGroupSessionKey(streamId, sessionId)
     }
 }

@@ -17,7 +17,10 @@ import {
     EncryptedData,
     UserInboxPayload_GroupEncryptionSessions,
 } from '@towns-protocol/proto'
-import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
+import {
+    make_MemberPayload_KeyFulfillment,
+    make_MemberPayload_KeySolicitation,
+} from './types'
 
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
@@ -40,7 +43,10 @@ import { checkEventSignature } from './sign'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
-    private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
+    private validatedEvents: Record<
+        string,
+        { isValid: boolean; reason?: string }
+    > = {}
     private unpackEnvelopeOpts?: { disableSignatureValidation?: boolean }
 
     constructor(
@@ -49,7 +55,9 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         delegate: EntitlementsDelegate,
         userId: string,
         userDevice: UserDevice,
-        unpackEnvelopeOpts: { disableSignatureValidation?: boolean } | undefined,
+        unpackEnvelopeOpts:
+            | { disableSignatureValidation?: boolean }
+            | undefined,
         logId: string,
     ) {
         const upToDateStreams = new Set<string>()
@@ -59,7 +67,15 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         })
 
-        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId)
+        super(
+            client,
+            crypto,
+            delegate,
+            userDevice,
+            userId,
+            upToDateStreams,
+            logId,
+        )
 
         this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
@@ -68,7 +84,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         }
 
-        const onStreamUpToDate = (streamId: string) => this.setStreamUpToDate(streamId)
+        const onStreamUpToDate = (streamId: string) =>
+            this.setStreamUpToDate(streamId)
 
         const onNewGroupSessions = (
             sessions: UserInboxPayload_GroupEncryptionSessions,
@@ -79,7 +96,13 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             streamId: string,
             eventId: string,
             content: EncryptedContent,
-        ) => this.enqueueNewEncryptedContent(streamId, eventId, content.kind, content.content)
+        ) =>
+            this.enqueueNewEncryptedContent(
+                streamId,
+                eventId,
+                content.kind,
+                content.content,
+            )
 
         const onKeySolicitation = (
             streamId: string,
@@ -107,7 +130,13 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 solicitations: KeySolicitationContent[]
             }[],
             sigBundle: EventSignatureBundle,
-        ) => this.enqueueInitKeySolicitations(streamId, eventHashStr, members, sigBundle)
+        ) =>
+            this.enqueueInitKeySolicitations(
+                streamId,
+                eventHashStr,
+                members,
+                sigBundle,
+            )
 
         const onStreamInitialized = (streamId: string) => {
             if (isUserInboxStreamId(streamId)) {
@@ -168,7 +197,12 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         kind: string, // kind of data
         encryptedData: EncryptedData,
     ): Promise<void> {
-        return this.client.decryptGroupEvent(streamId, eventId, kind, encryptedData)
+        return this.client.decryptGroupEvent(
+            streamId,
+            eventId,
+            kind,
+            encryptedData,
+        )
     }
 
     public downloadNewMessages(): Promise<void> {
@@ -178,14 +212,20 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public getKeySolicitations(streamId: string): KeySolicitationContent[] {
         const stream = this.client.stream(streamId)
-        return stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        return (
+            stream?.view.getMembers().joined.get(this.userId)?.solicitations ??
+            []
+        )
     }
 
     /**
      * Override the default implementation to use the number of members in the stream
      * to determine the delay time.
      */
-    public getRespondDelayMSForKeySolicitation(streamId: string, userId: string): number {
+    public getRespondDelayMSForKeySolicitation(
+        streamId: string,
+        userId: string,
+    ): number {
         const multiplier = userId === this.userId ? 0.5 : 1
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -228,7 +268,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         return true
     }
 
-    public isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string } {
+    public isValidEvent(item: KeySolicitationItem): {
+        isValid: boolean
+        reason?: string
+    } {
         if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
             return { isValid: true }
         }
@@ -238,13 +281,20 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             return { isValid: false, reason: 'event not found' }
         }
         if (!sigBundle.signature) {
-            return { isValid: false, reason: 'remote event signature not found' }
+            return {
+                isValid: false,
+                reason: 'remote event signature not found',
+            }
         }
         if (this.validatedEvents[eventId]) {
             return this.validatedEvents[eventId]
         }
         try {
-            checkEventSignature(sigBundle.event, sigBundle.hash, sigBundle.signature)
+            checkEventSignature(
+                sigBundle.event,
+                sigBundle.hash,
+                sigBundle.signature,
+            )
             const result = { isValid: true }
             this.validatedEvents[eventId] = result
             return result
@@ -256,13 +306,18 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         }
     }
 
-    public onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void {
-        this.client.stream(item.streamId)?.updateDecryptedContentError(item.eventId, {
-            missingSession: err.missingSession,
-            kind: err.kind,
-            encryptedData: item.encryptedData,
-            error: err,
-        })
+    public onDecryptionError(
+        item: EncryptedContentItem,
+        err: DecryptionSessionError,
+    ): void {
+        this.client
+            .stream(item.streamId)
+            ?.updateDecryptedContentError(item.eventId, {
+                missingSession: err.missingSession,
+                kind: err.kind,
+                encryptedData: item.encryptedData,
+                error: err,
+            })
     }
 
     public async ackNewGroupSession(
@@ -321,9 +376,13 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             sessionIds: sessionIds,
         })
 
-        const { error } = await this.client.makeEventAndAddToStream(streamId, fulfillment, {
-            optional: true,
-        })
+        const { error } = await this.client.makeEventAndAddToStream(
+            streamId,
+            fulfillment,
+            {
+                optional: true,
+            },
+        )
         return { error }
     }
 
@@ -333,19 +392,28 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public onStart(): void {
         if (isMobileSafari()) {
-            document.addEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
+            document.addEventListener(
+                'visibilitychange',
+                this.mobileSafariPageVisibilityChanged,
+            )
         }
     }
 
     public onStop(): Promise<void> {
         if (isMobileSafari()) {
-            document.removeEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
+            document.removeEventListener(
+                'visibilitychange',
+                this.mobileSafariPageVisibilityChanged,
+            )
         }
         return Promise.resolve()
     }
 
     private mobileSafariPageVisibilityChanged = () => {
-        this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
+        this.log.debug(
+            'onMobileSafariBackgrounded',
+            this.isMobileSafariBackgrounded,
+        )
         this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
         if (!this.isMobileSafariBackgrounded) {
             this.checkStartTicking()
@@ -367,7 +435,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         }
         // channel or dm we're currently viewing
         const isChannel = isChannelStreamId(streamId)
-        const isDmOrGdm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+        const isDmOrGdm =
+            isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
         if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
             return 1
         }

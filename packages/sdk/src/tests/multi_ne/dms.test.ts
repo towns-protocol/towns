@@ -2,11 +2,18 @@
  * @group main
  */
 
-import { makeTestClient, createEventDecryptedPromise, waitFor } from '../testUtils'
+import {
+    makeTestClient,
+    createEventDecryptedPromise,
+    waitFor,
+} from '../testUtils'
 import { Client } from '../../client'
 import { addressFromUserId, makeDMStreamId, streamIdAsBytes } from '../../id'
 import { makeEvent } from '../../sign'
-import { make_DMChannelPayload_Inception, make_MemberPayload_Membership2 } from '../../types'
+import {
+    make_DMChannelPayload_Inception,
+    make_MemberPayload_Membership2,
+} from '../../types'
 import { MembershipOp } from '@towns-protocol/proto'
 
 describe('dmsTests', () => {
@@ -31,7 +38,9 @@ describe('dmsTests', () => {
     test('clientCanCreateDM', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         expect(stream.view.getMembers().joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
@@ -41,7 +50,9 @@ describe('dmsTests', () => {
     test('clientsAreJoinedAutomaticallyAndCanLeaveDM', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
             expect(stream.view.getMembers().joinedUsers).toEqual(
@@ -52,7 +63,9 @@ describe('dmsTests', () => {
         await expect(alicesClient.leaveStream(streamId)).resolves.not.toThrow()
         await waitFor(
             () => {
-                expect(stream.view.getMembers().joinedUsers).toEqual(new Set([bobsClient.userId]))
+                expect(stream.view.getMembers().joinedUsers).toEqual(
+                    new Set([bobsClient.userId]),
+                )
             },
             { timeoutMS: 15000 },
         )
@@ -61,21 +74,33 @@ describe('dmsTests', () => {
     test('clientsCanSendMessages', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(bobsClient.sendMessage(streamId, 'hello')).resolves.not.toThrow()
+        await expect(
+            bobsClient.sendMessage(streamId, 'hello'),
+        ).resolves.not.toThrow()
 
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.sendMessage(streamId, 'hello')).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello'),
+        ).resolves.not.toThrow()
     })
 
     test('otherUsersCantJoinDM', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
         const charliesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         await expect(
-            charliesClient.joinStream(streamId, { skipWaitForMiniblockConfirmation: true }),
+            charliesClient.joinStream(streamId, {
+                skipWaitForMiniblockConfirmation: true,
+            }),
         ).rejects.toThrow()
     })
 
@@ -83,38 +108,56 @@ describe('dmsTests', () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
         const charliesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         await expect(
-            charliesClient.joinStream(streamId, { skipWaitForMiniblockConfirmation: true }),
+            charliesClient.joinStream(streamId, {
+                skipWaitForMiniblockConfirmation: true,
+            }),
         ).rejects.toThrow()
-        await expect(charliesClient.sendMessage(streamId, 'hello')).rejects.toThrow()
+        await expect(
+            charliesClient.sendMessage(streamId, 'hello'),
+        ).rejects.toThrow()
     })
 
     test('usersCantInviteOtherUsers', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
         const charliesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
-        await expect(bobsClient.inviteUser(streamId, charliesClient.userId)).rejects.toThrow()
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
+        await expect(
+            bobsClient.inviteUser(streamId, charliesClient.userId),
+        ).rejects.toThrow()
     })
 
     test('creatingDMChannelTwiceReturnsStreamId', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
         // stop syncing and remove stream from cache
         await bobsClient.streams.removeStreamFromSync(streamId)
-        const { streamId: streamId2 } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId: streamId2 } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         expect(streamId).toEqual(streamId2)
     })
 
     test('usersReceiveKeys', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
 
         const aliceEventDecryptedPromise = createEventDecryptedPromise(
             alicesClient,
@@ -125,7 +168,9 @@ describe('dmsTests', () => {
             'hello bob, this is alice',
         )
 
-        await expect(bobsClient.sendMessage(streamId, 'hello this is bob')).resolves.not.toThrow()
+        await expect(
+            bobsClient.sendMessage(streamId, 'hello this is bob'),
+        ).resolves.not.toThrow()
         await expect(
             alicesClient.sendMessage(streamId, 'hello bob, this is alice'),
         ).resolves.not.toThrow()
@@ -139,14 +184,19 @@ describe('dmsTests', () => {
         const bobsClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(bobsClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMembers().joinedUsers).toEqual(new Set([bobsClient.userId]))
+        expect(stream.view.getMembers().joinedUsers).toEqual(
+            new Set([bobsClient.userId]),
+        )
     })
 
     // Alice should not be allowed to create a 1:1 DM between Bob and himself.
     test('clientCannotCreateSingleParticipantDMForOtherUser', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const channelIdStr = makeDMStreamId(bobsClient.userId, bobsClient.userId)
+        const channelIdStr = makeDMStreamId(
+            bobsClient.userId,
+            bobsClient.userId,
+        )
         const channelId = streamIdAsBytes(channelIdStr)
         const inceptionEvent = await makeEvent(
             alicesClient.signerContext,
@@ -180,6 +230,8 @@ describe('dmsTests', () => {
                 events: [inceptionEvent, joinEvent, inviteEvent],
                 streamId: channelId,
             }),
-        ).rejects.toThrow(new RegExp('creator must be first party for dm channel'))
+        ).rejects.toThrow(
+            new RegExp('creator must be first party for dm channel'),
+        )
     })
 })

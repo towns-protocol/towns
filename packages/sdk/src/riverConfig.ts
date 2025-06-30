@@ -71,14 +71,38 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
     }
     // Fallback to env vars
     check(isDefined(process.env.BASE_CHAIN_ID), 'BASE_CHAIN_ID is not defined')
-    check(isDefined(process.env.BASE_CHAIN_RPC_URL), 'BASE_CHAIN_RPC_URL is not defined')
-    check(isDefined(process.env.BASE_REGISTRY_ADDRESS), 'BASE_REGISTRY_ADDRESS is not defined')
-    check(isDefined(process.env.SPACE_FACTORY_ADDRESS), 'SPACE_FACTORY_ADDRESS is not defined')
-    check(isDefined(process.env.SPACE_OWNER_ADDRESS), 'SPACE_OWNER_ADDRESS is not defined')
-    check(isDefined(process.env.RIVER_CHAIN_ID), 'RIVER_CHAIN_ID is not defined')
-    check(isDefined(process.env.RIVER_CHAIN_RPC_URL), 'RIVER_CHAIN_RPC_URL is not defined')
-    check(isDefined(process.env.RIVER_REGISTRY_ADDRESS), 'RIVER_REGISTRY_ADDRESS is not defined')
-    check(isDefined(process.env.APP_REGISTRY_ADDRESS), 'APP_REGISTRY_ADDRESS is not defined')
+    check(
+        isDefined(process.env.BASE_CHAIN_RPC_URL),
+        'BASE_CHAIN_RPC_URL is not defined',
+    )
+    check(
+        isDefined(process.env.BASE_REGISTRY_ADDRESS),
+        'BASE_REGISTRY_ADDRESS is not defined',
+    )
+    check(
+        isDefined(process.env.SPACE_FACTORY_ADDRESS),
+        'SPACE_FACTORY_ADDRESS is not defined',
+    )
+    check(
+        isDefined(process.env.SPACE_OWNER_ADDRESS),
+        'SPACE_OWNER_ADDRESS is not defined',
+    )
+    check(
+        isDefined(process.env.RIVER_CHAIN_ID),
+        'RIVER_CHAIN_ID is not defined',
+    )
+    check(
+        isDefined(process.env.RIVER_CHAIN_RPC_URL),
+        'RIVER_CHAIN_RPC_URL is not defined',
+    )
+    check(
+        isDefined(process.env.RIVER_REGISTRY_ADDRESS),
+        'RIVER_REGISTRY_ADDRESS is not defined',
+    )
+    check(
+        isDefined(process.env.APP_REGISTRY_ADDRESS),
+        'APP_REGISTRY_ADDRESS is not defined',
+    )
 
     return {
         base: {
@@ -88,7 +112,9 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
                 spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
                 utils: {
-                    mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+                    mockNFT: process.env.MOCK_NFT_ADDRESS as
+                        | Address
+                        | undefined,
                     member: process.env.MEMBER_ADDRESS as Address | undefined,
                     towns: process.env.TOWNS_ADDRESS as Address,
                 },
@@ -146,7 +172,9 @@ export const getStreamMetadataUrl = (environmentId: string) => {
         case 'local_multi_ne':
             return 'http://localhost:3003'
         default:
-            throw new Error(`No stream metadata url for environmentId ${environmentId}`)
+            throw new Error(
+                `No stream metadata url for environmentId ${environmentId}`,
+            )
     }
 }
 
@@ -162,6 +190,8 @@ export const getAppRegistryUrl = (environmentId: string) => {
         case 'omega':
         case 'delta':
         default:
-            throw new Error(`No app registry url for environmentId ${environmentId}`)
+            throw new Error(
+                `No app registry url for environmentId ${environmentId}`,
+            )
     }
 }

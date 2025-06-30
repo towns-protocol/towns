@@ -5,7 +5,12 @@ import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock } from './types'
-import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
+import {
+    streamIdAsString,
+    streamIdAsBytes,
+    userIdFromAddress,
+    makeUserStreamId,
+} from './id'
 import { StreamsView } from './views/streamsView'
 
 const SCROLLBACK_MULTIPLIER = 4n
@@ -18,7 +23,10 @@ export class UnauthenticatedClient {
     private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts
 
     private readonly userId = 'unauthenticatedClientUser'
-    private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
+    private getScrollbackRequests: Map<
+        string,
+        ReturnType<typeof this.scrollback>
+    > = new Map()
 
     constructor(
         rpcClient: StreamRpcClient,
@@ -71,16 +79,17 @@ export class UnauthenticatedClient {
     ): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
-            const response = await this.rpcClient.getStream({ streamId: streamIdAsBytes(streamId) })
+            const response = await this.rpcClient.getStream({
+                streamId: streamIdAsBytes(streamId),
+            })
             this.logCall('getStream', response.stream)
             check(
-                isDefined(response.stream) && hasElements(response.stream.miniblocks),
+                isDefined(response.stream) &&
+                    hasElements(response.stream.miniblocks),
                 'got bad stream',
             )
-            const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } = await unpackStream(
-                response.stream,
-                this.unpackEnvelopeOpts,
-            )
+            const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } =
+                await unpackStream(response.stream, this.unpackEnvelopeOpts)
             const streamView = new StreamStateView(
                 this.userId,
                 streamIdAsString(streamId),
@@ -108,7 +117,9 @@ export class UnauthenticatedClient {
     async scrollback(
         streamView: StreamStateView,
     ): Promise<{ terminus: boolean; fromInclusiveMiniblockNum: bigint }> {
-        const currentRequest = this.getScrollbackRequests.get(streamView.streamId)
+        const currentRequest = this.getScrollbackRequests.get(
+            streamView.streamId,
+        )
         if (currentRequest) {
             return currentRequest
         }
@@ -122,13 +133,20 @@ export class UnauthenticatedClient {
                 `stream not initialized: ${streamView.streamId}`,
             )
             if (streamView.miniblockInfo.terminusReached) {
-                this.logCall('scrollback', streamView.streamId, 'terminus reached')
+                this.logCall(
+                    'scrollback',
+                    streamView.streamId,
+                    'terminus reached',
+                )
                 return {
                     terminus: true,
                     fromInclusiveMiniblockNum: streamView.miniblockInfo.min,
                 }
             }
-            check(streamView.miniblockInfo.min >= streamView.prevSnapshotMiniblockNum)
+            check(
+                streamView.miniblockInfo.min >=
+                    streamView.prevSnapshotMiniblockNum,
+            )
             this.logCall('scrollback', {
                 streamId: streamView.streamId,
                 miniblockInfo: streamView.miniblockInfo,

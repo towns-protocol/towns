@@ -11,7 +11,11 @@ const setupTest = async () => {
     const bobUser = new Bot()
     const aliceUser = new Bot()
     const charlieUser = new Bot()
-    await Promise.all([bobUser.fundWallet(), aliceUser.fundWallet(), charlieUser.fundWallet()])
+    await Promise.all([
+        bobUser.fundWallet(),
+        aliceUser.fundWallet(),
+        charlieUser.fundWallet(),
+    ])
     const [bob, alice, charlie] = await Promise.all([
         bobUser.makeSyncAgent(),
         aliceUser.makeSyncAgent(),
@@ -24,7 +28,10 @@ describe('timeline.test.ts', () => {
     test.concurrent('send and receive a mention', async () => {
         const { bob, alice, bobUser, aliceUser } = await setupTest()
         await Promise.all([bob.start(), alice.start()])
-        const { spaceId } = await bob.spaces.createSpace({ spaceName: 'BlastOff' }, bobUser.signer)
+        const { spaceId } = await bob.spaces.createSpace(
+            { spaceName: 'BlastOff' },
+            bobUser.signer,
+        )
         expect(bob.user.memberships.isJoined(spaceId)).toBe(true)
         await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
         const aliceChannel = alice.spaces.getSpace(spaceId).getDefaultChannel()
@@ -42,7 +49,10 @@ describe('timeline.test.ts', () => {
 
         // bob should receive the message
         await waitFor(async () => {
-            const e = findMessageByText(bobChannel.timeline.events.value, 'Hi @bob')
+            const e = findMessageByText(
+                bobChannel.timeline.events.value,
+                'Hi @bob',
+            )
             expect(
                 e?.content?.kind === RiverTimelineEvent.ChannelMessage &&
                     e?.content?.body === 'Hi @bob' &&
@@ -70,29 +80,35 @@ describe('timeline.test.ts', () => {
             await bobChannel.sendMessage(`message ${i}`)
             // force miniblocks, if we're going fast it's possible that the miniblock is not created
             if ((i % NUM_MESSAGES) / 4 == 0) {
-                await bob.riverConnection.client?.debugForceMakeMiniblock(bobChannel.data.id, {
-                    forceSnapshot: true,
-                })
+                await bob.riverConnection.client?.debugForceMakeMiniblock(
+                    bobChannel.data.id,
+                    {
+                        forceSnapshot: true,
+                    },
+                )
             }
         }
         // alice joins the room
         await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
         const aliceChannel = alice.spaces.getSpace(spaceId).getDefaultChannel()
         // alice shouldnt receive all the messages, only a few
-        expect(aliceChannel.timeline.events.value.length).toBeLessThan(NUM_MESSAGES)
+        expect(aliceChannel.timeline.events.value.length).toBeLessThan(
+            NUM_MESSAGES,
+        )
         const aliceChannelLength = aliceChannel.timeline.events.value.length
         // call scrollback
         await aliceChannel.timeline.scrollback()
         // did we get more events?
         await waitFor(() =>
-            expect(aliceChannel.timeline.events.value.length).toBeGreaterThanOrEqual(
-                aliceChannelLength,
-            ),
+            expect(
+                aliceChannel.timeline.events.value.length,
+            ).toBeGreaterThanOrEqual(aliceChannelLength),
         )
     })
 
     test.concurrent('three users in a room', async () => {
-        const { bob, alice, charlie, bobUser, aliceUser, charlieUser } = await setupTest()
+        const { bob, alice, charlie, bobUser, aliceUser, charlieUser } =
+            await setupTest()
         await Promise.all([bob.start(), alice.start(), charlie.start()])
         // bob creates a space
         const { spaceId } = await bob.spaces.createSpace(
@@ -110,7 +126,9 @@ describe('timeline.test.ts', () => {
         ])
         // TODO: join channel by id
         const aliceChannel = alice.spaces.getSpace(spaceId).getDefaultChannel()
-        const charlieChannel = charlie.spaces.getSpace(spaceId).getDefaultChannel()
+        const charlieChannel = charlie.spaces
+            .getSpace(spaceId)
+            .getDefaultChannel()
         const bobChannel = bobSpace.getDefaultChannel()
 
         // Confirm that the members are in
@@ -125,14 +143,23 @@ describe('timeline.test.ts', () => {
         // everyone should receive the message
         await Promise.all([
             waitFor(() => {
-                log('aliceChannel.timeline.events.value', aliceChannel.timeline.events.value)
+                log(
+                    'aliceChannel.timeline.events.value',
+                    aliceChannel.timeline.events.value,
+                )
                 expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'hey everyone!'),
+                    findMessageByText(
+                        aliceChannel.timeline.events.value,
+                        'hey everyone!',
+                    ),
                 ).toBeTruthy()
             }),
             waitFor(() =>
                 expect(
-                    findMessageByText(charlieChannel.timeline.events.value, 'hey everyone!'),
+                    findMessageByText(
+                        charlieChannel.timeline.events.value,
+                        'hey everyone!',
+                    ),
                 ).toBeTruthy(),
             ),
         ])
@@ -146,76 +173,96 @@ describe('timeline.test.ts', () => {
         // bob should receive the messages
         await waitFor(() => {
             expect(
-                findMessageByText(bobChannel.timeline.events.value, 'Hello Bob from Alice!'),
+                findMessageByText(
+                    bobChannel.timeline.events.value,
+                    'Hello Bob from Alice!',
+                ),
             ).toBeTruthy()
             expect(
-                findMessageByText(bobChannel.timeline.events.value, 'Hello Bob from Charlie!'),
+                findMessageByText(
+                    bobChannel.timeline.events.value,
+                    'Hello Bob from Charlie!',
+                ),
             ).toBeTruthy()
         })
     })
 
-    test.concurrent('create room, send message, send a reaction and redact', async () => {
-        const { bob, alice, bobUser, aliceUser } = await setupTest()
-        await Promise.all([bob.start(), alice.start()])
-        const defaultMembership = await makeDefaultMembershipInfo(
-            bob.riverConnection.spaceDapp,
-            bob.userId,
-        )
-        const { spaceId } = await bob.spaces.createSpace(
-            {
-                spaceName: 'ReActers 🤠',
-                membership: {
-                    ...defaultMembership,
-                    permissions: [
-                        Permission.Read,
-                        Permission.Write,
-                        Permission.Redact,
-                        Permission.React,
-                    ],
+    test.concurrent(
+        'create room, send message, send a reaction and redact',
+        async () => {
+            const { bob, alice, bobUser, aliceUser } = await setupTest()
+            await Promise.all([bob.start(), alice.start()])
+            const defaultMembership = await makeDefaultMembershipInfo(
+                bob.riverConnection.spaceDapp,
+                bob.userId,
+            )
+            const { spaceId } = await bob.spaces.createSpace(
+                {
+                    spaceName: 'ReActers 🤠',
+                    membership: {
+                        ...defaultMembership,
+                        permissions: [
+                            Permission.Read,
+                            Permission.Write,
+                            Permission.Redact,
+                            Permission.React,
+                        ],
+                    },
                 },
-            },
-            bobUser.signer,
-        )
-        const bobChannel = bob.spaces.getSpace(spaceId).getDefaultChannel()
-        await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
-        const aliceChannel = alice.spaces.getSpace(spaceId).getDefaultChannel()
-        // bob sends a message to the room
-        await bobChannel.sendMessage('hey!')
-        // wait for alice to receive the message
-        await waitFor(
-            async () => {
-                const event = findMessageByText(aliceChannel.timeline.events.value, 'hey!')
-                expect(
-                    event?.content?.kind === RiverTimelineEvent.ChannelMessage &&
-                        event?.content?.body === 'hey!',
-                    `find hey message: ${aliceChannel.data.id}`,
-                ).toEqual(true)
-            },
-            { timeoutMS: 20000 },
-        )
-        // alice grabs the message
-        const messageEvent = findMessageByText(aliceChannel.timeline.events.value, 'hey!')
-        expect(messageEvent).toBeTruthy()
-        // alice sends a reaction
-        const { eventId: reactionEventId } = await aliceChannel.sendReaction(
-            messageEvent!.eventId,
-            '👍',
-        )
-        // wait for bob to receive the reaction
-        await waitFor(async () => {
-            const reaction = bobChannel.timeline.reactions.value[messageEvent!.eventId]
-            expect(reaction).toBeTruthy()
-            expect(reaction?.['👍']).toBeTruthy()
-            expect(reaction?.['👍'][alice.userId].eventId).toEqual(reactionEventId)
-        })
-        // alice deletes the reaction
-        await aliceChannel.redact(reactionEventId)
-        // wait for bob to no longer see the reaction
-        await waitFor(() => {
-            const reaction = bobChannel.timeline.reactions.value[messageEvent!.eventId]
-            expect(reaction).toStrictEqual({})
-        })
-    })
+                bobUser.signer,
+            )
+            const bobChannel = bob.spaces.getSpace(spaceId).getDefaultChannel()
+            await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
+            const aliceChannel = alice.spaces
+                .getSpace(spaceId)
+                .getDefaultChannel()
+            // bob sends a message to the room
+            await bobChannel.sendMessage('hey!')
+            // wait for alice to receive the message
+            await waitFor(
+                async () => {
+                    const event = findMessageByText(
+                        aliceChannel.timeline.events.value,
+                        'hey!',
+                    )
+                    expect(
+                        event?.content?.kind ===
+                            RiverTimelineEvent.ChannelMessage &&
+                            event?.content?.body === 'hey!',
+                        `find hey message: ${aliceChannel.data.id}`,
+                    ).toEqual(true)
+                },
+                { timeoutMS: 20000 },
+            )
+            // alice grabs the message
+            const messageEvent = findMessageByText(
+                aliceChannel.timeline.events.value,
+                'hey!',
+            )
+            expect(messageEvent).toBeTruthy()
+            // alice sends a reaction
+            const { eventId: reactionEventId } =
+                await aliceChannel.sendReaction(messageEvent!.eventId, '👍')
+            // wait for bob to receive the reaction
+            await waitFor(async () => {
+                const reaction =
+                    bobChannel.timeline.reactions.value[messageEvent!.eventId]
+                expect(reaction).toBeTruthy()
+                expect(reaction?.['👍']).toBeTruthy()
+                expect(reaction?.['👍'][alice.userId].eventId).toEqual(
+                    reactionEventId,
+                )
+            })
+            // alice deletes the reaction
+            await aliceChannel.redact(reactionEventId)
+            // wait for bob to no longer see the reaction
+            await waitFor(() => {
+                const reaction =
+                    bobChannel.timeline.reactions.value[messageEvent!.eventId]
+                expect(reaction).toStrictEqual({})
+            })
+        },
+    )
 
     test.concurrent(
         'create room, invite user, accept invite, and send threadded message',
@@ -243,20 +290,28 @@ describe('timeline.test.ts', () => {
             )
             const bobChannel = bob.spaces.getSpace(spaceId).getDefaultChannel()
             await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
-            const aliceChannel = alice.spaces.getSpace(spaceId).getDefaultChannel()
+            const aliceChannel = alice.spaces
+                .getSpace(spaceId)
+                .getDefaultChannel()
             // bob sends a message to the room
             await bobChannel.sendMessage('hey alice, ready to sew?')
             // wait for alice to receive the message
             await waitFor(
                 async () => {
-                    const events = aliceChannel.timeline.events.value.map((e) => ({
-                        kind: e.content?.kind,
-                        body:
-                            e.content?.kind === RiverTimelineEvent.ChannelMessage
-                                ? e.content?.body
-                                : undefined,
-                    }))
-                    expect(events, `find ready to sew: ${aliceChannel.data.id}`).toContainEqual({
+                    const events = aliceChannel.timeline.events.value.map(
+                        (e) => ({
+                            kind: e.content?.kind,
+                            body:
+                                e.content?.kind ===
+                                RiverTimelineEvent.ChannelMessage
+                                    ? e.content?.body
+                                    : undefined,
+                        }),
+                    )
+                    expect(
+                        events,
+                        `find ready to sew: ${aliceChannel.data.id}`,
+                    ).toContainEqual({
                         kind: RiverTimelineEvent.ChannelMessage,
                         body: 'hey alice, ready to sew?',
                     })
@@ -264,7 +319,8 @@ describe('timeline.test.ts', () => {
                 { timeoutMS: 20000 },
             )
             const event = aliceChannel.timeline.events.value.find(
-                (event) => event.content?.kind === RiverTimelineEvent.ChannelMessage,
+                (event) =>
+                    event.content?.kind === RiverTimelineEvent.ChannelMessage,
             )!
             // a non threaded message should not have a thread parent id
             expect(event?.threadParentId).toBeUndefined()
@@ -272,21 +328,24 @@ describe('timeline.test.ts', () => {
             const firstReply = await aliceChannel.sendMessage('yey lesgo!', {
                 threadId: event.eventId,
             })
-            const secondReply = await aliceChannel.sendMessage('i was planning to make a hat', {
-                threadId: event.eventId,
-            })
+            const secondReply = await aliceChannel.sendMessage(
+                'i was planning to make a hat',
+                {
+                    threadId: event.eventId,
+                },
+            )
             // bob should receive the message in the thread and the thread id should be set to parent event id
             await waitFor(() => {
                 const thread = bobChannel.timeline.threads.value[event.eventId]
                 expect(thread).toBeTruthy()
                 expect(
-                    thread?.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.ChannelMessage,
+                    thread?.find((e) => e.eventId === firstReply.eventId)
+                        ?.content?.kind === RiverTimelineEvent.ChannelMessage,
                     `find first reply ${bobChannel.data.id}`,
                 ).toBeTruthy()
                 expect(
-                    thread?.find((e) => e.eventId === secondReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.ChannelMessage,
+                    thread?.find((e) => e.eventId === secondReply.eventId)
+                        ?.content?.kind === RiverTimelineEvent.ChannelMessage,
                     `find second reply ${bobChannel.data.id}`,
                 ).toBeTruthy()
             })
@@ -296,13 +355,13 @@ describe('timeline.test.ts', () => {
             await waitFor(() => {
                 const thread = bobChannel.timeline.threads.value[event.eventId]
                 expect(
-                    thread.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.RedactedEvent,
+                    thread.find((e) => e.eventId === firstReply.eventId)
+                        ?.content?.kind === RiverTimelineEvent.RedactedEvent,
                     `find first reply redacted ${bobChannel.data.id}`,
                 ).toBeTruthy()
                 expect(
-                    thread.find((e) => e.eventId === secondReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.ChannelMessage,
+                    thread.find((e) => e.eventId === secondReply.eventId)
+                        ?.content?.kind === RiverTimelineEvent.ChannelMessage,
                     `find second reply not redacted ${bobChannel.data.id}`,
                 ).toBeTruthy()
             })

@@ -6,7 +6,12 @@ import {
     PersistedSyncedStreamSchema,
 } from '@towns-protocol/proto'
 import { Stream } from './stream'
-import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse, ParsedSnapshot } from './types'
+import {
+    ParsedMiniblock,
+    ParsedEvent,
+    ParsedStreamResponse,
+    ParsedSnapshot,
+} from './types'
 import { DLogger, bin_equal, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
@@ -33,15 +38,24 @@ export class SyncedStream extends Stream implements ISyncedStream {
         persistenceStore: IPersistenceStore,
     ) {
         super(userId, streamId, streamsView, clientEmitter, logEmitFromStream)
-        this.log = dlog('csb:syncedStream', { defaultEnabled: false }).extend(userId)
+        this.log = dlog('csb:syncedStream', { defaultEnabled: false }).extend(
+            userId,
+        )
         this.persistenceStore = persistenceStore
     }
 
-    async initializeFromPersistence(persistedData?: LoadedStream): Promise<boolean> {
+    async initializeFromPersistence(
+        persistedData?: LoadedStream,
+    ): Promise<boolean> {
         const loadedStream =
-            persistedData ?? (await this.persistenceStore.loadStream(this.streamId))
+            persistedData ??
+            (await this.persistenceStore.loadStream(this.streamId))
         if (!loadedStream) {
-            this.log('No persisted data found for stream', this.streamId, persistedData)
+            this.log(
+                'No persisted data found for stream',
+                this.streamId,
+                persistedData,
+            )
             return false
         }
         try {
@@ -86,10 +100,18 @@ export class SyncedStream extends Stream implements ISyncedStream {
             syncCookie: nextSyncCookie,
             lastSnapshotMiniblockNum: miniblocks[0].header.miniblockNum,
             minipoolEvents: events,
-            lastMiniblockNum: miniblocks[miniblocks.length - 1].header.miniblockNum,
+            lastMiniblockNum:
+                miniblocks[miniblocks.length - 1].header.miniblockNum,
         })
-        await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
-        await this.persistenceStore.saveMiniblocks(this.streamId, miniblocks, 'forward')
+        await this.persistenceStore.saveSyncedStream(
+            this.streamId,
+            cachedSyncedStream,
+        )
+        await this.persistenceStore.saveMiniblocks(
+            this.streamId,
+            miniblocks,
+            'forward',
+        )
         await this.persistenceStore.saveSnapshot(
             this.streamId,
             miniblocks[0].header.miniblockNum,
@@ -100,7 +122,9 @@ export class SyncedStream extends Stream implements ISyncedStream {
 
     async initializeFromResponse(response: ParsedStreamResponse) {
         this.log('initializing from response', this.streamId)
-        const cleartexts = await this.persistenceStore.getCleartexts(response.eventIds)
+        const cleartexts = await this.persistenceStore.getCleartexts(
+            response.eventIds,
+        )
         await this.initialize(
             response.streamAndCookie.nextSyncCookie,
             response.streamAndCookie.events,
@@ -160,7 +184,9 @@ export class SyncedStream extends Stream implements ISyncedStream {
         )
 
         const eventHashes = miniblockHeader.eventHashes.map(bin_toHexString)
-        const events = eventHashes.map((hash) => viewMinipoolEvents.get(hash)).filter(isDefined)
+        const events = eventHashes
+            .map((hash) => viewMinipoolEvents.get(hash))
+            .filter(isDefined)
 
         if (events.length !== eventHashes.length) {
             throw new Error(
@@ -175,7 +201,10 @@ export class SyncedStream extends Stream implements ISyncedStream {
             header: miniblockHeader,
             events: [...events, miniblockEvent],
         }
-        if (snapshot && bin_equal(snapshot.hash, miniblockHeader.snapshotHash)) {
+        if (
+            snapshot &&
+            bin_equal(snapshot.hash, miniblockHeader.snapshotHash)
+        ) {
             await this.persistenceStore.saveSnapshot(
                 this.streamId,
                 miniblock.header.miniblockNum,
@@ -198,7 +227,8 @@ export class SyncedStream extends Stream implements ISyncedStream {
         const minipoolEvents = Array.from(this.view.minipoolEvents.values())
 
         const lastSnapshotMiniblockNum =
-            miniblock.header.snapshot !== undefined || miniblock.header.snapshotHash !== undefined
+            miniblock.header.snapshot !== undefined ||
+            miniblock.header.snapshotHash !== undefined
                 ? miniblock.header.miniblockNum
                 : miniblock.header.prevSnapshotMiniblockNum
 
@@ -208,7 +238,10 @@ export class SyncedStream extends Stream implements ISyncedStream {
             minipoolEvents: minipoolEvents,
             lastMiniblockNum: miniblock.header.miniblockNum,
         })
-        await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
+        await this.persistenceStore.saveSyncedStream(
+            this.streamId,
+            cachedSyncedStream,
+        )
     }
 
     private markUpToDate(): void {

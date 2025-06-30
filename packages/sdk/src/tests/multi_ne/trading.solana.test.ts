@@ -7,14 +7,22 @@ import {
     waitFor,
 } from '../testUtils'
 import { makeUniqueChannelStreamId } from '../../id'
-import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@towns-protocol/proto'
+import {
+    BlockchainTransaction_TokenTransfer,
+    PlainMessage,
+} from '@towns-protocol/proto'
 import { SolanaTransactionReceipt } from '../../types'
-import { bin_fromHexString, bin_fromString, bin_toString } from '@towns-protocol/dlog'
+import {
+    bin_fromHexString,
+    bin_fromString,
+    bin_toString,
+} from '@towns-protocol/dlog'
 
 describe('Trading Solana', () => {
     let bobClient: Client
     const mintAddress = '2HQXvda5sUjGLRKLG6LEqSctARYJboufSfG2Qciqmoon'
-    const bobSolanaWalletAddress = '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P'
+    const bobSolanaWalletAddress =
+        '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P'
     let spaceId!: string
     let channelId!: string
     let threadParentId!: string
@@ -99,7 +107,10 @@ describe('Trading Solana', () => {
         channelId = makeUniqueChannelStreamId(spaceId)
         await bobClient.createChannel(spaceId, 'Channel', 'Topic', channelId)
 
-        const result = await bobClient.sendMessage(channelId, 'try out this token: $yo!')
+        const result = await bobClient.sendMessage(
+            channelId,
+            'try out this token: $yo!',
+        )
         threadParentId = result.eventId
 
         bobClient.once('streamTokenTransfer', (streamId, data) => {
@@ -114,134 +125,175 @@ describe('Trading Solana', () => {
     })
 
     test('Solana transactions are rejected if the amount is invalid', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 5804294168682n.toString(), // invalid amount
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 5804294168682n.toString(), // invalid amount
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validSellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('transaction amount not equal to balance diff')
     })
 
     test('Token amounts for buy transactions need to be increasing', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true, // wrong: this is not a buy, this is a sell
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true, // wrong: this is not a buy, this is a sell
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validSellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('transfer transaction is buy but balance decreased')
     })
 
     test('Token amounts for sell transactions needs to be decreasing', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false, // wrong: this is not a sell, this is a buy
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false, // wrong: this is not a sell, this is a buy
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validBuyReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validBuyReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('transfer transaction is sell but balance increased')
     })
 
     test('Solana transactions are rejected if the mint doesnt match the address', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress).toReversed(), // invalid address
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress).toReversed(), // invalid address
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validSellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('transaction mint not found')
     })
 
     test('Solana transactions are rejected if the sender is invalid', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress).toReversed(), // invalid sender
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress).toReversed(), // invalid sender
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validSellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow('solana transfer transaction mint not found')
     })
 
     test('Solana transactions are accepted if the amount, mint and owner are valid (sell)', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validSellReceipt,
+                transferEvent,
+            ),
         ).resolves.not.toThrow()
     })
 
     test('Duplicate solana transactions are not accepted', async () => {
         // this tx is the same as the one above
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: false,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: false,
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validSellReceipt,
+                transferEvent,
+            ),
         ).rejects.toThrow()
     })
 
     test('Solana transactions are accepted if the amount, mint and owner are valid (buy)', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 4804294168682n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 4804294168682n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true,
+            }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validBuyReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(
+                1151111081099710,
+                validBuyReceipt,
+                transferEvent,
+            ),
         ).resolves.not.toThrow()
     })
 
     test('Solana transactions are accepted if the amount, mint and owner are valid (buy) and there is no pre token balance', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
-            amount: 1234567890n.toString(),
-            address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAddress),
-            messageId: bin_fromHexString(threadParentId),
-            channelId: bin_fromHexString(channelId),
-            isBuy: true,
-        }
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> =
+            {
+                amount: 1234567890n.toString(),
+                address: bin_fromString(mintAddress),
+                sender: bin_fromString(bobSolanaWalletAddress),
+                messageId: bin_fromHexString(threadParentId),
+                channelId: bin_fromHexString(channelId),
+                isBuy: true,
+            }
 
         await expect(
             bobClient.addTransaction_Transfer(
@@ -270,7 +322,10 @@ describe('Trading Solana', () => {
 
     test('bob sees the transfer event in the channel stream', async () => {
         await waitFor(() => {
-            const transferEvents = extractMemberBlockchainTransactions(bobClient, channelId)
+            const transferEvents = extractMemberBlockchainTransactions(
+                bobClient,
+                channelId,
+            )
             expect(transferEvents.length).toBe(3)
             const [event0, event1, event2] = transferEvents
             expect(BigInt(event0.amount)).toBe(4804294168682n)

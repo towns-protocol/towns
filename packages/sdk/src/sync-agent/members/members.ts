@@ -1,6 +1,9 @@
 import { check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../observable/persistedObservable'
 import type { Store } from '../../store/store'
 import type { RiverConnection } from '../river-connection/riverConnection'
 import { Member } from './models/member'
@@ -43,20 +46,38 @@ export class Members extends PersistedObservable<MembersModel> {
             client.on('streamNewUserInvited', this.onMemberInvite)
             client.on('streamUserLeft', this.onMemberLeave)
             client.on('streamUsernameUpdated', this.onStreamUsernameUpdated)
-            client.on('streamPendingUsernameUpdated', this.onStreamUsernameUpdated)
+            client.on(
+                'streamPendingUsernameUpdated',
+                this.onStreamUsernameUpdated,
+            )
             client.on('streamNftUpdated', this.onStreamNftUpdated)
             client.on('streamEnsAddressUpdated', this.onStreamEnsAddressUpdated)
-            client.on('streamDisplayNameUpdated', this.onStreamDisplayNameUpdated)
+            client.on(
+                'streamDisplayNameUpdated',
+                this.onStreamDisplayNameUpdated,
+            )
             return () => {
                 client.off('streamInitialized', this.onStreamInitialized)
                 client.off('streamNewUserJoined', this.onMemberJoin)
                 client.off('streamNewUserInvited', this.onMemberInvite)
                 client.off('streamUserLeft', this.onMemberLeave)
-                client.off('streamUsernameUpdated', this.onStreamUsernameUpdated)
-                client.off('streamPendingUsernameUpdated', this.onStreamUsernameUpdated)
+                client.off(
+                    'streamUsernameUpdated',
+                    this.onStreamUsernameUpdated,
+                )
+                client.off(
+                    'streamPendingUsernameUpdated',
+                    this.onStreamUsernameUpdated,
+                )
                 client.off('streamNftUpdated', this.onStreamNftUpdated)
-                client.off('streamEnsAddressUpdated', this.onStreamEnsAddressUpdated)
-                client.off('streamDisplayNameUpdated', this.onStreamDisplayNameUpdated)
+                client.off(
+                    'streamEnsAddressUpdated',
+                    this.onStreamEnsAddressUpdated,
+                )
+                client.off(
+                    'streamDisplayNameUpdated',
+                    this.onStreamDisplayNameUpdated,
+                )
             }
         })
     }
@@ -91,16 +112,18 @@ export class Members extends PersistedObservable<MembersModel> {
         const streamId = this.data.id
         const streamView = this.riverConnection.client?.stream(streamId)?.view
         check(isDefined(streamView), 'stream not found')
-        return streamView.getMemberMetadata().usernames.cleartextUsernameAvailable(username)
+        return streamView
+            .getMemberMetadata()
+            .usernames.cleartextUsernameAvailable(username)
     }
 
     private onStreamInitialized = (streamId: string): void => {
         if (streamId !== this.data.id) return
         const stream = this.riverConnection.client?.stream(streamId)
         check(isDefined(stream), 'stream is not defined')
-        const userIds = Array.from(stream.view.getMembers().joined.values()).map(
-            (member) => member.userId,
-        )
+        const userIds = Array.from(
+            stream.view.getMembers().joined.values(),
+        ).map((member) => member.userId)
         for (const userId of userIds) {
             // prefetch the member
             this.get(userId)
@@ -114,9 +137,15 @@ export class Members extends PersistedObservable<MembersModel> {
         // so that we can still access the member's properties.
         // In the next sync, the member map will be reinitialized, cleaning up the map.
         // We remove the member from the userIds array, so that we don't try to access it later.
-        this.setData({ userIds: this.data.userIds.filter((id) => id !== userId) })
+        this.setData({
+            userIds: this.data.userIds.filter((id) => id !== userId),
+        })
         if (this.members[userId]) {
-            this.members[userId].onStreamMembershipUpdated(streamId, userId, MembershipOp.SO_LEAVE)
+            this.members[userId].onStreamMembershipUpdated(
+                streamId,
+                userId,
+                MembershipOp.SO_LEAVE,
+            )
         }
     }
 
@@ -131,16 +160,26 @@ export class Members extends PersistedObservable<MembersModel> {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
         const member = this.get(userId)
-        member.onStreamMembershipUpdated(streamId, userId, MembershipOp.SO_INVITE)
+        member.onStreamMembershipUpdated(
+            streamId,
+            userId,
+            MembershipOp.SO_INVITE,
+        )
     }
 
-    private onStreamUsernameUpdated = (streamId: string, userId: string): void => {
+    private onStreamUsernameUpdated = (
+        streamId: string,
+        userId: string,
+    ): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
         member.onStreamUsernameUpdated(streamId, userId)
     }
 
-    private onStreamDisplayNameUpdated = (streamId: string, userId: string): void => {
+    private onStreamDisplayNameUpdated = (
+        streamId: string,
+        userId: string,
+    ): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
         member.onStreamDisplayNameUpdated(streamId, userId)
@@ -151,7 +190,10 @@ export class Members extends PersistedObservable<MembersModel> {
         member.onStreamNftUpdated(streamId, userId)
     }
 
-    private onStreamEnsAddressUpdated = (streamId: string, userId: string): void => {
+    private onStreamEnsAddressUpdated = (
+        streamId: string,
+        userId: string,
+    ): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
         member.onStreamEnsAddressUpdated(streamId, userId)

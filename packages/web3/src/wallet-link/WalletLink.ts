@@ -1,6 +1,9 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { Address } from '../types/ContractTypes'
-import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../types/error-types'
+import {
+    WalletAlreadyLinkedError,
+    WalletNotLinkedError,
+} from '../types/error-types'
 
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { IWalletLinkShim } from './WalletLinkShim'
@@ -15,7 +18,10 @@ export class WalletLink {
     public address: Address
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
-        this.walletLinkShim = new IWalletLinkShim(config.addresses.spaceFactory, provider)
+        this.walletLinkShim = new IWalletLinkShim(
+            config.addresses.spaceFactory,
+            provider,
+        )
         this.address = config.addresses.spaceFactory
         this.eip712Domain = {
             name: 'SpaceFactory',
@@ -26,13 +32,15 @@ export class WalletLink {
     }
 
     public async isLinked(walletAddress: string): Promise<boolean> {
-        const rootKeyAddress = await this.walletLinkShim.read.getRootKeyForWallet(walletAddress)
+        const rootKeyAddress =
+            await this.walletLinkShim.read.getRootKeyForWallet(walletAddress)
 
         return rootKeyAddress !== INVALID_ADDRESS
     }
 
     private async assertNotLinked(wallet: ethers.Signer | Address) {
-        const walletAddress = typeof wallet === 'string' ? wallet : await wallet.getAddress()
+        const walletAddress =
+            typeof wallet === 'string' ? wallet : await wallet.getAddress()
 
         if (await this.isLinked(walletAddress)) {
             throw new WalletAlreadyLinkedError()
@@ -110,12 +118,16 @@ export class WalletLink {
         const { walletAddress } = await this.assertNotLinked(wallet)
         const rootKeyAddress = await rootKey.getAddress()
 
-        const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
-        const rootKeySignature = await this.generateRootKeySignatureForCallerData({
-            rootKey,
-            walletAddress: walletAddress as Address,
-            rootKeyNonce: nonce,
-        })
+        const nonce =
+            await this.walletLinkShim.read.getLatestNonceForRootKey(
+                rootKeyAddress,
+            )
+        const rootKeySignature =
+            await this.generateRootKeySignatureForCallerData({
+                rootKey,
+                walletAddress: walletAddress as Address,
+                rootKeyNonce: nonce,
+            })
 
         const rootKeyData = {
             addr: rootKeyAddress,
@@ -134,7 +146,10 @@ export class WalletLink {
         const { walletAddress } = await this.assertNotLinked(wallet)
         const rootKeyAddress = await rootKey.getAddress()
 
-        const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
+        const nonce =
+            await this.walletLinkShim.read.getLatestNonceForRootKey(
+                rootKeyAddress,
+            )
 
         // sign root key with new wallet address
         const rootKeySignature = await this.generateRootKeySignatureForWallet({
@@ -181,7 +196,9 @@ export class WalletLink {
         )
 
         // msg.sender = new wallet
-        return this.walletLinkShim.write(wallet).linkCallerToRootKey(rootKeyData, nonce)
+        return this.walletLinkShim
+            .write(wallet)
+            .linkCallerToRootKey(rootKeyData, nonce)
     }
 
     /**
@@ -195,11 +212,12 @@ export class WalletLink {
         rootKey: ethers.Signer,
         wallet: ethers.Signer,
     ): Promise<ContractTransaction> {
-        const { walletData, rootKeyData, nonce } = await this.generateLinkWalletData(
-            this.LINKED_WALLET_MESSAGE,
-            rootKey,
-            wallet,
-        )
+        const { walletData, rootKeyData, nonce } =
+            await this.generateLinkWalletData(
+                this.LINKED_WALLET_MESSAGE,
+                rootKey,
+                wallet,
+            )
         // msg.sender = root key
         return this.walletLinkShim
             .write(rootKey)
@@ -216,27 +234,27 @@ export class WalletLink {
             wallet,
         )
 
-        return this.walletLinkShim.interface.encodeFunctionData('linkCallerToRootKey', [
-            rootKeyData,
-            nonce,
-        ])
+        return this.walletLinkShim.interface.encodeFunctionData(
+            'linkCallerToRootKey',
+            [rootKeyData, nonce],
+        )
     }
 
     public async encodeLinkWalletToRootKey(
         rootKey: ethers.Signer,
         wallet: ethers.Signer,
     ): Promise<string> {
-        const { walletData, rootKeyData, nonce } = await this.generateLinkWalletData(
-            this.LINKED_WALLET_MESSAGE,
-            rootKey,
-            wallet,
-        )
+        const { walletData, rootKeyData, nonce } =
+            await this.generateLinkWalletData(
+                this.LINKED_WALLET_MESSAGE,
+                rootKey,
+                wallet,
+            )
 
-        return this.walletLinkShim.interface.encodeFunctionData('linkWalletToRootKey', [
-            walletData,
-            rootKeyData,
-            nonce,
-        ])
+        return this.walletLinkShim.interface.encodeFunctionData(
+            'linkWalletToRootKey',
+            [walletData, rootKeyData, nonce],
+        )
     }
 
     public parseError(error: any): Error {
@@ -247,7 +265,9 @@ export class WalletLink {
         return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
     }
 
-    public async getLinkedWalletsWithDelegations(rootKey: string): Promise<string[]> {
+    public async getLinkedWalletsWithDelegations(
+        rootKey: string,
+    ): Promise<string[]> {
         return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
     }
 
@@ -255,22 +275,36 @@ export class WalletLink {
         return this.walletLinkShim.read.getRootKeyForWallet(wallet)
     }
 
-    public async checkIfLinked(rootKey: ethers.Signer, wallet: string): Promise<boolean> {
+    public async checkIfLinked(
+        rootKey: ethers.Signer,
+        wallet: string,
+    ): Promise<boolean> {
         const rootKeyAddress = await rootKey.getAddress()
         return this.walletLinkShim.read.checkIfLinked(rootKeyAddress, wallet)
     }
 
-    private async generateRemoveLinkData(rootKey: ethers.Signer, walletAddress: string) {
+    private async generateRemoveLinkData(
+        rootKey: ethers.Signer,
+        walletAddress: string,
+    ) {
         await this.assertLinked(walletAddress)
         const rootKeyAddress = await rootKey.getAddress()
-        const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
+        const nonce =
+            await this.walletLinkShim.read.getLatestNonceForRootKey(
+                rootKeyAddress,
+            )
         const { domain, types, value } = createEip712LinkedWalletdData({
             domain: this.eip712Domain,
             message: this.LINKED_WALLET_MESSAGE,
             nonce,
             userID: walletAddress as Address,
         })
-        const rootKeySignature = await this.signTypedData(rootKey, domain, types, value)
+        const rootKeySignature = await this.signTypedData(
+            rootKey,
+            domain,
+            types,
+            value,
+        )
         return { rootKeyAddress, rootKeySignature, nonce }
     }
 
@@ -278,10 +312,8 @@ export class WalletLink {
         rootKey: ethers.Signer,
         walletAddress: string,
     ): Promise<ContractTransaction> {
-        const { rootKeyAddress, rootKeySignature, nonce } = await this.generateRemoveLinkData(
-            rootKey,
-            walletAddress,
-        )
+        const { rootKeyAddress, rootKeySignature, nonce } =
+            await this.generateRemoveLinkData(rootKey, walletAddress)
 
         return await this.walletLinkShim.write(rootKey).removeLink(
             walletAddress,
@@ -301,11 +333,12 @@ export class WalletLink {
         return this.walletLinkShim.write(caller).removeCallerLink()
     }
 
-    public async encodeRemoveLink(rootKey: ethers.Signer, walletAddress: string) {
-        const { rootKeyAddress, rootKeySignature, nonce } = await this.generateRemoveLinkData(
-            rootKey,
-            walletAddress,
-        )
+    public async encodeRemoveLink(
+        rootKey: ethers.Signer,
+        walletAddress: string,
+    ) {
+        const { rootKeyAddress, rootKeySignature, nonce } =
+            await this.generateRemoveLinkData(rootKey, walletAddress)
 
         return this.walletLinkShim.interface.encodeFunctionData('removeLink', [
             walletAddress,
@@ -324,11 +357,16 @@ export class WalletLink {
         types: any,
         value: any,
     ): Promise<string> {
-        if ('_signTypedData' in signer && typeof signer._signTypedData === 'function') {
+        if (
+            '_signTypedData' in signer &&
+            typeof signer._signTypedData === 'function'
+        ) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             return (await signer._signTypedData(domain, types, value)) as string
         } else {
-            throw new Error('wallet does not have the function to sign typed data')
+            throw new Error(
+                'wallet does not have the function to sign typed data',
+            )
         }
     }
 

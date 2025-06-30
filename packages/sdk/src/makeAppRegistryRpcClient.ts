@@ -16,7 +16,9 @@ const logInfo = dlog('csb:rpc:info')
 
 let nextRpcClientNum = 0
 
-export type AppRegistryRpcClient = Client<typeof AppRegistryService> & { url: string }
+export type AppRegistryRpcClient = Client<typeof AppRegistryService> & {
+    url: string
+}
 
 export function makeAppRegistryRpcClient(
     dest: string,
@@ -47,7 +49,9 @@ export function makeAppRegistryRpcClient(
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true
     } else {
-        logInfo('makeAppRegistryRpcClient: running in debug mode, using JSON format')
+        logInfo(
+            'makeAppRegistryRpcClient: running in debug mode, using JSON format',
+        )
         options.useBinaryFormat = false
         options.jsonOptions = {
             alwaysEmitImplicit: true,

@@ -14,31 +14,62 @@ import {
     SpaceSettingSchema,
     SpaceChannelSettingSchema,
 } from '@towns-protocol/proto'
-import { create, DescMessage, fromBinary, MessageShape, toBinary, toJson } from '@bufbuild/protobuf'
+import {
+    create,
+    DescMessage,
+    fromBinary,
+    MessageShape,
+    toBinary,
+    toJson,
+} from '@bufbuild/protobuf'
 import { bin_fromBase64, bin_toBase64, dlogger } from '@towns-protocol/dlog'
 import { cloneDeep } from 'lodash-es'
 import { Observable } from './observable/observable'
-import { makeNotificationRpcClient, NotificationRpcClient } from './makeNotificationRpcClient'
+import {
+    makeNotificationRpcClient,
+    NotificationRpcClient,
+} from './makeNotificationRpcClient'
 import { SignerContext } from './signerContext'
 import { RpcOptions } from './rpcCommon'
 import { NotificationService } from './notificationService'
-import { spaceIdFromChannelId, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
+import {
+    spaceIdFromChannelId,
+    streamIdAsBytes,
+    streamIdAsString,
+    userIdFromAddress,
+} from './id'
 
 const logger = dlogger('csb:notifications')
 
 export interface INotificationStore {
-    getItem<Desc extends DescMessage>(schema: Desc, key: string): MessageShape<Desc> | undefined
-    setItem<Desc extends DescMessage>(schema: Desc, key: string, value: MessageShape<Desc>): void
+    getItem<Desc extends DescMessage>(
+        schema: Desc,
+        key: string,
+    ): MessageShape<Desc> | undefined
+    setItem<Desc extends DescMessage>(
+        schema: Desc,
+        key: string,
+        value: MessageShape<Desc>,
+    ): void
 }
 
 class InMemoryNotificationStore implements INotificationStore {
     private store: Record<string, string> = {}
-    getItem<Desc extends DescMessage>(schema: Desc, key: string): MessageShape<Desc> | undefined {
+    getItem<Desc extends DescMessage>(
+        schema: Desc,
+        key: string,
+    ): MessageShape<Desc> | undefined {
         const data = this.store[`${schema.typeName}-${key}`]
         return data ? fromBinary(schema, bin_fromBase64(data)) : undefined
     }
-    setItem<Desc extends DescMessage>(schema: Desc, key: string, value: MessageShape<Desc>): void {
-        this.store[`${schema.typeName}-${key}`] = bin_toBase64(toBinary(schema, value))
+    setItem<Desc extends DescMessage>(
+        schema: Desc,
+        key: string,
+        value: MessageShape<Desc>,
+    ): void {
+        this.store[`${schema.typeName}-${key}`] = bin_toBase64(
+            toBinary(schema, value),
+        )
     }
 }
 
@@ -54,8 +85,12 @@ export class NotificationsClient {
     private startResponseKey: string
     private finishResponseKey: string
     private settingsKey: string
-    private getClientPromise: Promise<NotificationRpcClient | undefined> | undefined
-    private getSettingsPromise: Promise<GetSettingsResponse | undefined> | undefined
+    private getClientPromise:
+        | Promise<NotificationRpcClient | undefined>
+        | undefined
+    private getSettingsPromise:
+        | Promise<GetSettingsResponse | undefined>
+        | undefined
 
     constructor(
         private readonly signerContext: SignerContext,
@@ -80,21 +115,35 @@ export class NotificationsClient {
     private getLocalStartResponse():
         | MessageShape<typeof StartAuthenticationResponseSchema>
         | undefined {
-        return this.store.getItem(StartAuthenticationResponseSchema, this.startResponseKey)
+        return this.store.getItem(
+            StartAuthenticationResponseSchema,
+            this.startResponseKey,
+        )
     }
 
     private setLocalStartResponse(
         response: MessageShape<typeof StartAuthenticationResponseSchema>,
     ) {
-        this.store.setItem(StartAuthenticationResponseSchema, this.startResponseKey, response)
+        this.store.setItem(
+            StartAuthenticationResponseSchema,
+            this.startResponseKey,
+            response,
+        )
     }
 
     private getLocalFinishResponse(): FinishAuthenticationResponse | undefined {
-        return this.store.getItem(FinishAuthenticationResponseSchema, this.finishResponseKey)
+        return this.store.getItem(
+            FinishAuthenticationResponseSchema,
+            this.finishResponseKey,
+        )
     }
 
     private setLocalFinishResponse(response: FinishAuthenticationResponse) {
-        this.store.setItem(FinishAuthenticationResponseSchema, this.finishResponseKey, response)
+        this.store.setItem(
+            FinishAuthenticationResponseSchema,
+            this.finishResponseKey,
+            response,
+        )
     }
 
     private getLocalSettings(): GetSettingsResponse | undefined {
@@ -102,7 +151,11 @@ export class NotificationsClient {
     }
 
     private setLocalSettings(settings: GetSettingsResponse) {
-        this.store.setItem(GetSettingsResponseSchema, this.settingsKey, settings)
+        this.store.setItem(
+            GetSettingsResponseSchema,
+            this.settingsKey,
+            settings,
+        )
     }
 
     private updateLocalSettings(fn: (current: GetSettingsResponse) => void) {
@@ -182,7 +235,10 @@ export class NotificationsClient {
             try {
                 return await fn(client)
             } catch (error) {
-                this.data.setValue({ ...this.data.value, error: error as Error })
+                this.data.setValue({
+                    ...this.data.value,
+                    error: error as Error,
+                })
                 throw error
             }
         }
@@ -224,14 +280,18 @@ export class NotificationsClient {
         })
     }
 
-    async subscribeWebPush(subscription: PlainMessage<WebPushSubscriptionObject>) {
+    async subscribeWebPush(
+        subscription: PlainMessage<WebPushSubscriptionObject>,
+    ) {
         return this.withClient(async (client) => {
             logger.log('TNS PUSH: subscribing to web push')
             return client.subscribeWebPush({ subscription })
         })
     }
 
-    async unsubscribeWebPush(subscription: PlainMessage<WebPushSubscriptionObject>) {
+    async unsubscribeWebPush(
+        subscription: PlainMessage<WebPushSubscriptionObject>,
+    ) {
         return this.withClient(async (client) => {
             logger.log('TNS PUSH: unsubscribing to web push')
             return client.unsubscribeWebPush({ subscription })
@@ -243,7 +303,8 @@ export class NotificationsClient {
             await client.setDmGdmSettings({
                 dmGlobal: value,
                 gdmGlobal:
-                    this.data.value.settings?.gdmGlobal ?? GdmChannelSettingValue.GDM_UNSPECIFIED,
+                    this.data.value.settings?.gdmGlobal ??
+                    GdmChannelSettingValue.GDM_UNSPECIFIED,
             })
             this.updateLocalSettings((settings) => {
                 settings.dmGlobal = value
@@ -255,7 +316,8 @@ export class NotificationsClient {
         return this.withClient(async (client) => {
             await client.setDmGdmSettings({
                 dmGlobal:
-                    this.data.value.settings?.dmGlobal ?? DmChannelSettingValue.DM_UNSPECIFIED,
+                    this.data.value.settings?.dmGlobal ??
+                    DmChannelSettingValue.DM_UNSPECIFIED,
                 gdmGlobal: value,
             })
 
@@ -285,7 +347,10 @@ export class NotificationsClient {
         })
     }
 
-    async setGdmChannelSetting(channelId: string, value: GdmChannelSettingValue) {
+    async setGdmChannelSetting(
+        channelId: string,
+        value: GdmChannelSettingValue,
+    ) {
         return this.withClient(async (client) => {
             await client.setGdmChannelSetting({
                 gdmChannelId: streamIdAsBytes(channelId),
@@ -307,7 +372,10 @@ export class NotificationsClient {
 
     async setSpaceSetting(spaceId: string, value: SpaceChannelSettingValue) {
         return this.withClient(async (client) => {
-            await client.setSpaceSettings({ spaceId: streamIdAsBytes(spaceId), value })
+            await client.setSpaceSettings({
+                spaceId: streamIdAsBytes(spaceId),
+                value,
+            })
             this.updateLocalSettings((settings) => {
                 const spaceIndex = settings.space.findIndex(
                     (s) => streamIdAsString(s.spaceId) === spaceId,
@@ -327,7 +395,10 @@ export class NotificationsClient {
         })
     }
 
-    async setChannelSetting(channelId: string, value: SpaceChannelSettingValue) {
+    async setChannelSetting(
+        channelId: string,
+        value: SpaceChannelSettingValue,
+    ) {
         const spaceId = spaceIdFromChannelId(channelId)
         return this.withClient(async (client) => {
             await client.setSpaceChannelSettings({
@@ -349,7 +420,9 @@ export class NotificationsClient {
                         }),
                     )
                 }
-                const channelIndex = settings.space[spaceIndex].channels.findIndex(
+                const channelIndex = settings.space[
+                    spaceIndex
+                ].channels.findIndex(
                     (c) => streamIdAsString(c.channelId) === channelId,
                 )
                 if (channelIndex == -1) {
@@ -360,14 +433,17 @@ export class NotificationsClient {
                         }),
                     )
                 } else {
-                    settings.space[spaceIndex].channels[channelIndex].value = value
+                    settings.space[spaceIndex].channels[channelIndex].value =
+                        value
                 }
             })
         })
     }
 }
 
-export function getMutedChannelIds(settings?: PlainMessage<GetSettingsResponse>) {
+export function getMutedChannelIds(
+    settings?: PlainMessage<GetSettingsResponse>,
+) {
     if (!settings) {
         return undefined
     }
@@ -394,7 +470,9 @@ export function getMutedChannelIds(settings?: PlainMessage<GetSettingsResponse>)
         }
     }
     for (const gdmSetting of settings.gdmChannels) {
-        if (gdmSetting.value === GdmChannelSettingValue.GDM_MESSAGES_NO_AND_MUTE) {
+        if (
+            gdmSetting.value === GdmChannelSettingValue.GDM_MESSAGES_NO_AND_MUTE
+        ) {
             ids.add(streamIdAsString(gdmSetting.channelId))
         }
     }

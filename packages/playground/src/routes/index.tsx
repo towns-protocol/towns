@@ -34,7 +34,9 @@ export const router = createBrowserRouter([
             {
                 path: '/t/:spaceId',
                 lazy: async () => {
-                    const { SelectChannelRoute } = await import('./t/space-channels')
+                    const { SelectChannelRoute } = await import(
+                        './t/space-channels'
+                    )
                     return {
                         Component: SelectChannelRoute,
                     }
@@ -43,7 +45,9 @@ export const router = createBrowserRouter([
                     {
                         path: '/t/:spaceId/:channelId',
                         lazy: async () => {
-                            const { ChannelTimelineRoute } = await import('./t/channel-timeline')
+                            const { ChannelTimelineRoute } = await import(
+                                './t/channel-timeline'
+                            )
                             return {
                                 Component: ChannelTimelineRoute,
                             }
@@ -63,7 +67,9 @@ export const router = createBrowserRouter([
                     {
                         path: '/m/gdm/:gdmStreamId',
                         lazy: async () => {
-                            const { GdmTimelineRoute } = await import('./m/gdm-timeline')
+                            const { GdmTimelineRoute } = await import(
+                                './m/gdm-timeline'
+                            )
                             return {
                                 Component: GdmTimelineRoute,
                             }
@@ -72,7 +78,9 @@ export const router = createBrowserRouter([
                     {
                         path: '/m/dm/:dmStreamId',
                         lazy: async () => {
-                            const { DmTimelineRoute } = await import('./m/dm-timeline')
+                            const { DmTimelineRoute } = await import(
+                                './m/dm-timeline'
+                            )
                             return {
                                 Component: DmTimelineRoute,
                             }

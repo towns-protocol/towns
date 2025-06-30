@@ -10,7 +10,10 @@ export async function slowChat(client: StressClient, chatConfig: ChatConfig) {
     const end = start + chatConfig.duration * 1000
     // process leaders:
     const processLeaders = Array.from(
-        { length: chatConfig.processesPerContainer * chatConfig.containerCount },
+        {
+            length:
+                chatConfig.processesPerContainer * chatConfig.containerCount,
+        },
         (_, i) => i,
     ).map((i) => i * chatConfig.clientsPerProcess)
     if (client.clientIndex === 0) {
@@ -84,7 +87,10 @@ export async function slowChat(client: StressClient, chatConfig: ChatConfig) {
         await new Promise((resolve) => setTimeout(resolve, 5000))
     }
 
-    logger.info({ clientIndex: client.clientIndex, sentMessages, seenMessages }, 'result')
+    logger.info(
+        { clientIndex: client.clientIndex, sentMessages, seenMessages },
+        'result',
+    )
 }
 
 const checkTextInMessageEvent = (event: TimelineEvent, message: string) =>

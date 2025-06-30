@@ -19,7 +19,9 @@ export async function waitFor<T>(
         }
         if (!result) {
             if (Date.now() - start > timeoutMs) {
-                throw new Error(`${opts?.logId ?? ''} timeout after ${timeoutMs}ms`)
+                throw new Error(
+                    `${opts?.logId ?? ''} timeout after ${timeoutMs}ms`,
+                )
             } else {
                 await new Promise((resolve) => setTimeout(resolve, interval))
             }

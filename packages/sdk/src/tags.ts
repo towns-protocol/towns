@@ -18,7 +18,9 @@ import { RiverTimelineEvent } from './views/models/timelineTypes'
  * Unsafe way to create tags. Possibly used in scenarios where we dont have access to the stream view.
  * Usages of this function may create messages with the wrong tags.
  */
-export function unsafe_makeTags(message: PlainMessage<ChannelMessage>): PlainMessage<Tags> {
+export function unsafe_makeTags(
+    message: PlainMessage<ChannelMessage>,
+): PlainMessage<Tags> {
     return {
         messageInteractionType: getMessageInteractionType(message),
         groupMentionTypes: getGroupMentionTypes(message),
@@ -41,7 +43,10 @@ export function makeTags(
         messageInteractionType: getMessageInteractionType(message),
         groupMentionTypes: getGroupMentionTypes(message),
         mentionedUserAddresses: getMentionedUserAddresses(message),
-        participatingUserAddresses: getParticipatingUserAddresses(message, streamView),
+        participatingUserAddresses: getParticipatingUserAddresses(
+            message,
+            streamView,
+        ),
         threadId: getThreadId(message, streamView),
     } satisfies PlainMessage<Tags>
 }
@@ -89,18 +94,29 @@ function getThreadId(
             }
             break
         case 'reaction':
-            return getParentThreadId(message.payload.value.refEventId, streamView)
+            return getParentThreadId(
+                message.payload.value.refEventId,
+                streamView,
+            )
         case 'edit':
-            return getParentThreadId(message.payload.value.refEventId, streamView)
+            return getParentThreadId(
+                message.payload.value.refEventId,
+                streamView,
+            )
         case 'redaction':
-            return getParentThreadId(message.payload.value.refEventId, streamView)
+            return getParentThreadId(
+                message.payload.value.refEventId,
+                streamView,
+            )
         default:
             break
     }
     return undefined
 }
 
-function getMessageInteractionType(message: PlainMessage<ChannelMessage>): MessageInteractionType {
+function getMessageInteractionType(
+    message: PlainMessage<ChannelMessage>,
+): MessageInteractionType {
     switch (message.payload.case) {
         case 'reaction':
             return MessageInteractionType.REACTION
@@ -121,7 +137,9 @@ function getMessageInteractionType(message: PlainMessage<ChannelMessage>): Messa
     }
 }
 
-function getGroupMentionTypes(message: PlainMessage<ChannelMessage>): GroupMentionType[] {
+function getGroupMentionTypes(
+    message: PlainMessage<ChannelMessage>,
+): GroupMentionType[] {
     const types: GroupMentionType[] = []
     if (
         message.payload.case === 'post' &&
@@ -135,10 +153,18 @@ function getGroupMentionTypes(message: PlainMessage<ChannelMessage>): GroupMenti
     return types
 }
 
-function getMentionedUserAddresses(message: PlainMessage<ChannelMessage>): Uint8Array[] {
-    if (message.payload.case === 'post' && message.payload.value.content.case === 'text') {
+function getMentionedUserAddresses(
+    message: PlainMessage<ChannelMessage>,
+): Uint8Array[] {
+    if (
+        message.payload.case === 'post' &&
+        message.payload.value.content.case === 'text'
+    ) {
         return message.payload.value.content.value.mentions
-            .filter((m) => m.mentionBehavior.case === undefined && m.userId.length > 0)
+            .filter(
+                (m) =>
+                    m.mentionBehavior.case === undefined && m.userId.length > 0,
+            )
             .map((m) => addressFromUserId(m.userId))
     }
     return []
@@ -151,14 +177,17 @@ function getParticipatingUserAddresses(
     switch (message.payload.case) {
         case 'reaction': {
             const refEventId = message.payload.value.refEventId
-            const event = streamView.timeline.find((x) => x.eventId === refEventId)
+            const event = streamView.timeline.find(
+                (x) => x.eventId === refEventId,
+            )
             if (event) {
                 return [addressFromUserId(event.sender.id)]
             }
             return []
         }
         case 'post': {
-            const parentId = message.payload.value.threadId || message.payload.value.replyId
+            const parentId =
+                message.payload.value.threadId || message.payload.value.replyId
             if (parentId) {
                 return participantsFromParentEventId(parentId, streamView)
             }

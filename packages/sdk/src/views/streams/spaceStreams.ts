@@ -14,7 +14,10 @@ export interface SpaceStreamModel {
 
 // entries in the map should never be undefined, but Records don't differentiate between
 // undefined and missing keys, so we need to use a Record with undefined values
-export class SpaceStreamsView extends ObservableRecord<string, SpaceStreamModel> {
+export class SpaceStreamsView extends ObservableRecord<
+    string,
+    SpaceStreamModel
+> {
     constructor() {
         super({
             makeDefault: (spaceStreamId: string): SpaceStreamModel => ({
@@ -26,7 +29,9 @@ export class SpaceStreamsView extends ObservableRecord<string, SpaceStreamModel>
 
     delete(spaceStreamId: string, channelId: string): boolean {
         return this.set((prev) => {
-            if (prev[spaceStreamId]?.channelsMetadata[channelId] === undefined) {
+            if (
+                prev[spaceStreamId]?.channelsMetadata[channelId] === undefined
+            ) {
                 return prev
             }
             const channelsMetadata = { ...prev[spaceStreamId].channelsMetadata }
@@ -47,7 +52,8 @@ export class SpaceStreamsView extends ObservableRecord<string, SpaceStreamModel>
         properties: Partial<ParsedChannelProperties>,
     ) {
         this.set((prev) => {
-            const prevSpace = prev[spaceStreamId] ?? this.makeDefault(spaceStreamId)
+            const prevSpace =
+                prev[spaceStreamId] ?? this.makeDefault(spaceStreamId)
             const prevChannel = prevSpace.channelsMetadata[channelId] ?? {
                 isDefault: false,
                 updatedAtEventNum: BigInt(0),

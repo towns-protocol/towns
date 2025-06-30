@@ -14,14 +14,24 @@ describe('riverAirdropDappTests', () => {
         log('riverAirdropDapp:start1')
         const wallet = ethers.Wallet.createRandom()
         const config = makeRiverConfig()
-        const baseProvider = new LocalhostWeb3Provider(config.base.rpcUrl, wallet)
+        const baseProvider = new LocalhostWeb3Provider(
+            config.base.rpcUrl,
+            wallet,
+        )
         await baseProvider.fundWallet()
-        const riverAirdropDapp = new RiverAirdropDapp(config.base.chainConfig, baseProvider)
-        const currentStreak = await riverAirdropDapp.getCurrentStreak(wallet.address)
+        const riverAirdropDapp = new RiverAirdropDapp(
+            config.base.chainConfig,
+            baseProvider,
+        )
+        const currentStreak = await riverAirdropDapp.getCurrentStreak(
+            wallet.address,
+        )
         log('currentStreak', currentStreak.toString())
         expect(currentStreak.eq(0)).toBe(true)
 
-        const lastCheckIn = await riverAirdropDapp.getLastCheckIn(wallet.address)
+        const lastCheckIn = await riverAirdropDapp.getLastCheckIn(
+            wallet.address,
+        )
         log('lastCheckIn', lastCheckIn.toString())
         expect(lastCheckIn.eq(0)).toBe(true)
 
@@ -36,11 +46,15 @@ describe('riverAirdropDappTests', () => {
         const receipt = await tx.wait()
         log('receipt', receipt)
 
-        const newCurrentStreak = await riverAirdropDapp.getCurrentStreak(wallet.address)
+        const newCurrentStreak = await riverAirdropDapp.getCurrentStreak(
+            wallet.address,
+        )
         log('newCurrentStreak', newCurrentStreak.toString())
         expect(newCurrentStreak.eq(1)).toBe(true)
 
-        const newLastCheckIn = await riverAirdropDapp.getLastCheckIn(wallet.address)
+        const newLastCheckIn = await riverAirdropDapp.getLastCheckIn(
+            wallet.address,
+        )
         log('newLastCheckIn', newLastCheckIn.toString())
         expect(newLastCheckIn.gt(0)).toBe(true)
 

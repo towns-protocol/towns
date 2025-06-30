@@ -58,17 +58,20 @@ describe('transactions', () => {
         ])
 
         // before they can do anything on river, they need to be in a space
-        const { spaceId: sid, defaultChannelId: cid } = await bob.spaces.createSpace(
-            { spaceName: 'BlastOff' },
-            bobIdentity.signer,
-        )
+        const { spaceId: sid, defaultChannelId: cid } =
+            await bob.spaces.createSpace(
+                { spaceName: 'BlastOff' },
+                bobIdentity.signer,
+            )
         spaceId = sid
         defaultChannelId = cid
 
         await alice.spaces.joinSpace(spaceId, aliceIdentity.signer)
         log('bob and alice joined space', spaceId, defaultChannelId)
 
-        const transaction = await bobIdentity.web3Provider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobIdentity.web3Provider.mintMockNFT(
+            riverConfig.base.chainConfig,
+        )
         dummyReceipt = await transaction.wait(2)
         dummyReceiptCopy = deepCopy(dummyReceipt)
         expect(dummyReceiptCopy).toEqual(dummyReceipt)
@@ -89,7 +92,9 @@ describe('transactions', () => {
         // is from their account or one of their linked accounts and
         // is valid on chain
         // add the transaction to the river chain
-        const transaction = await bobIdentity.web3Provider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobIdentity.web3Provider.mintMockNFT(
+            riverConfig.base.chainConfig,
+        )
         const receipt = await transaction.wait(2)
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, receipt),
@@ -97,15 +102,17 @@ describe('transactions', () => {
     })
 
     test('cantAddEventTwice', async () => {
-        const transaction = await bobIdentity.web3Provider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobIdentity.web3Provider.mintMockNFT(
+            riverConfig.base.chainConfig,
+        )
         const receipt = await transaction.wait(2)
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, receipt),
         ).resolves.not.toThrow()
         // can't add the same transaction twice
-        await expect(bob.riverConnection.client!.addTransaction(chainId, receipt)).rejects.toThrow(
-            'duplicate transaction',
-        )
+        await expect(
+            bob.riverConnection.client!.addTransaction(chainId, receipt),
+        ).rejects.toThrow('duplicate transaction')
     })
 
     test('cantAddEventFromOtherUser', async () => {
@@ -120,7 +127,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt) // deepCopy is imutable
         modifiedReceipt.from = await aliceIdentity.signer.getAddress()
         await expect(
-            alice.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            alice.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('From address mismatch')
     })
 
@@ -129,7 +139,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.to = await aliceIdentity.signer.getAddress()
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('To address mismatch')
     })
 
@@ -138,7 +151,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.blockNumber -= 1
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('Block number mismatch')
     })
 
@@ -147,7 +163,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.logs.push(modifiedReceipt.logs[0])
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('Log count mismatch')
     })
 
@@ -156,7 +175,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.logs[0].data = bin_toHexString(randomBytes(32))
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('Log data mismatch')
     })
 
@@ -165,7 +187,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.logs[0].address = bin_toHexString(randomBytes(32))
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('Log address mismatch')
     })
 
@@ -174,7 +199,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.logs[0].topics[0] = bin_toHexString(randomBytes(32))
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('Log topic mismatch')
     })
 
@@ -182,7 +210,10 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.logs[0].topics.push(bin_toHexString(randomBytes(32)))
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow('Log topics count mismatch')
     })
 
@@ -191,14 +222,19 @@ describe('transactions', () => {
         const modifiedReceipt = cloneDeep(dummyReceipt)
         modifiedReceipt.transactionHash = bin_toHexString(randomBytes(32))
         await expect(
-            bob.riverConnection.client!.addTransaction(chainId, modifiedReceipt),
+            bob.riverConnection.client!.addTransaction(
+                chainId,
+                modifiedReceipt,
+            ),
         ).rejects.toThrow()
     })
 
     test('addEventFromLinkedWallet', async () => {
         // a user should be able to upload a transaction that
         // is from one of their linked accounts and is valid on chain
-        const transaction = await bobsOtherWalletProvider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobsOtherWalletProvider.mintMockNFT(
+            riverConfig.base.chainConfig,
+        )
         const receipt = await transaction.wait()
 
         // add the transaction to the river
@@ -210,7 +246,9 @@ describe('transactions', () => {
     test('cantAddEventFromUnlinkedLinkedWallet', async () => {
         // a user should not be able to upload a transaction that
         // is from one of their linked accounts and is valid on chain
-        const transaction = await bobsOtherWalletProvider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobsOtherWalletProvider.mintMockNFT(
+            riverConfig.base.chainConfig,
+        )
         const receipt = await transaction.wait()
 
         // add the transaction to the river

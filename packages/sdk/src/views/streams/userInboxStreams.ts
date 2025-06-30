@@ -4,7 +4,10 @@ export interface UserInboxStreamModel {
     streamId: string
 }
 
-export class UserInboxStreamsView extends ObservableRecord<string, UserInboxStreamModel> {
+export class UserInboxStreamsView extends ObservableRecord<
+    string,
+    UserInboxStreamModel
+> {
     constructor() {
         super({
             makeDefault: (userInboxStreamId: string): UserInboxStreamModel => ({

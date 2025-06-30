@@ -6,7 +6,10 @@ const fetchMocker = createFetchMock(vi)
 import { readFile } from 'fs/promises'
 import { resolve } from 'path'
 
-const olmWasmPath = resolve(__dirname, '../../node_modules/@matrix-org/olm/olm.wasm')
+const olmWasmPath = resolve(
+    __dirname,
+    '../../node_modules/@matrix-org/olm/olm.wasm',
+)
 
 // Return olm.wasm from olm package
 fetchMocker.mockIf(/olm\.wasm$/, async (_req: Request) => {

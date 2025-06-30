@@ -32,7 +32,9 @@ describe('util.test', () => {
             })
         } catch (err: any) {
             const errorMsg = stripAnsiColors(String(err))
-            expect(errorMsg).toContain('AssertionError: expected +0 to deeply equal 4')
+            expect(errorMsg).toContain(
+                'AssertionError: expected +0 to deeply equal 4',
+            )
         }
     })
     /// test that you can wait for a result with an expect(...) and return a value
@@ -56,7 +58,9 @@ describe('util.test', () => {
             })
         } catch (err: any) {
             const errorMsg = stripAnsiColors(String(err))
-            expect(errorMsg).toContain('AssertionError: expected +0 to deeply equal 4')
+            expect(errorMsg).toContain(
+                'AssertionError: expected +0 to deeply equal 4',
+            )
         }
         expect(r).toBeUndefined()
     })

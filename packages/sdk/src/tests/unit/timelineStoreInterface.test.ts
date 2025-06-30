@@ -32,7 +32,9 @@ function describeThreads(threads?: Record<string, TimelineEvent[]>) {
     )
 }
 
-function describeTips(tipsMap?: Record<string, MessageTips>): Record<string, string[]> | undefined {
+function describeTips(
+    tipsMap?: Record<string, MessageTips>,
+): Record<string, string[]> | undefined {
     if (!tipsMap) {
         return undefined
     }
@@ -74,10 +76,14 @@ function execute(
             tips: tipsAppended,
         } = timelinesView.value
         // assert the timeline events are in the correct order
-        expect(describeEvents(timelinesAppended[channelId])).toEqual(expected.timeline)
+        expect(describeEvents(timelinesAppended[channelId])).toEqual(
+            expected.timeline,
+        )
         // check threads
         if (expected.threads) {
-            expect(describeThreads(threadsAppended[channelId])).toEqual(expected.threads)
+            expect(describeThreads(threadsAppended[channelId])).toEqual(
+                expected.threads,
+            )
         }
         // thread stats
         if (expected.threadStats) {
@@ -102,18 +108,26 @@ function execute(
             tips: tipsPrepended,
         } = timelinesView.value
         // assert the timeline events are in the correct order
-        expect(describeEvents(timelinesPrepended[channelId])).toEqual(expected.timeline)
+        expect(describeEvents(timelinesPrepended[channelId])).toEqual(
+            expected.timeline,
+        )
         // check threads
         if (expected.threads) {
-            expect(describeThreads(threadsPrepended[channelId])).toEqual(expected.threads)
+            expect(describeThreads(threadsPrepended[channelId])).toEqual(
+                expected.threads,
+            )
         }
         // thread stats
         if (expected.threadStats) {
-            expect(threadStatsPrepended[channelId]).toEqual(expected.threadStats)
+            expect(threadStatsPrepended[channelId]).toEqual(
+                expected.threadStats,
+            )
         }
         // check tips
         if (expected.tips) {
-            expect(describeTips(tipsPrepended[channelId])).toEqual(expected.tips)
+            expect(describeTips(tipsPrepended[channelId])).toEqual(
+                expected.tips,
+            )
         }
     }
 }
@@ -138,7 +152,9 @@ describe('UseTimelinesView', () => {
             .sendMessage({ from: 'alice', body: 'hi bob!' })
             .getEvents()
         // results
-        execute(timelinesView, 'alice', events, { timeline: ['event0 alice: hi bob!'] })
+        execute(timelinesView, 'alice', events, {
+            timeline: ['event0 alice: hi bob!'],
+        })
     })
     test('test send and edit', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -147,16 +163,24 @@ describe('UseTimelinesView', () => {
             .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
             .getEvents()
         // results
-        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited)'] })
+        execute(timelinesView, 'alice', events, {
+            timeline: ['MSG_0 alice: hi bob! (edited)'],
+        })
     })
     test('test send and edit with different sender', () => {
         // events (use a custom id for the fist message so we can edit it)
         const events = new ConversationBuilder()
             .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-            .editMessage({ edits: 'MSG_0', newBody: 'alice sucks! (edited)', senderId: 'bob' })
+            .editMessage({
+                edits: 'MSG_0',
+                newBody: 'alice sucks! (edited)',
+                senderId: 'bob',
+            })
             .getEvents()
         // results
-        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob!'] })
+        execute(timelinesView, 'alice', events, {
+            timeline: ['MSG_0 alice: hi bob!'],
+        })
     })
     test('test send and multiple edits', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -166,7 +190,9 @@ describe('UseTimelinesView', () => {
             .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
             .getEvents()
         // results
-        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+        execute(timelinesView, 'alice', events, {
+            timeline: ['MSG_0 alice: hi bob! (edited2)'],
+        })
     })
     test('test send and multiple edits out of order', () => {
         // events (use a custom id for the fist message so we can edit it)
@@ -179,14 +205,20 @@ describe('UseTimelinesView', () => {
         const ex = events[events.length - 1]
         events[events.length - 1] = events[events.length - 2]
         events[events.length - 2] = ex
-        execute(timelinesView, 'alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+        execute(timelinesView, 'alice', events, {
+            timeline: ['MSG_0 alice: hi bob! (edited2)'],
+        })
     })
     test('test threads and thread stats', () => {
         // events
         const events = new ConversationBuilder()
             .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
             .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
-            .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'Hows it going?' })
+            .sendMessage({
+                threadId: 'MSG_0',
+                from: 'bob',
+                body: 'Hows it going?',
+            })
             .getEvents()
         // results
         execute(timelinesView, 'alice', events, {
@@ -205,7 +237,8 @@ describe('UseTimelinesView', () => {
                     latestTs: events[2].createdAtEpochMs,
                     parentId: events[0].eventId,
                     parentEvent: events[0],
-                    parentMessageContent: events[0].content as ChannelMessageEvent,
+                    parentMessageContent: events[0]
+                        .content as ChannelMessageEvent,
                     isParticipating: true,
                 },
             },
@@ -222,9 +255,27 @@ describe('UseTimelinesView', () => {
         const events = new ConversationBuilder()
             .sendMessage({ id: msgId_0, from: 'alice', body: 'hi bob!' })
             .sendMessage({ id: msgId_1, from: 'bob', body: 'hi alice!' })
-            .sendTip({ tip: 10, ref: msgId_1, id: tipId_a, from: 'bob', to: 'alice' })
-            .sendTip({ tip: 10, ref: msgId_0, id: tipId_b, from: 'alice', to: 'bob' })
-            .sendTip({ tip: 10, ref: msgId_0, id: tipId_c, from: 'alice', to: 'bob' })
+            .sendTip({
+                tip: 10,
+                ref: msgId_1,
+                id: tipId_a,
+                from: 'bob',
+                to: 'alice',
+            })
+            .sendTip({
+                tip: 10,
+                ref: msgId_0,
+                id: tipId_b,
+                from: 'alice',
+                to: 'bob',
+            })
+            .sendTip({
+                tip: 10,
+                ref: msgId_0,
+                id: tipId_c,
+                from: 'alice',
+                to: 'bob',
+            })
             .getEvents()
         // results
         execute(timelinesView, 'alice', events, {
@@ -248,12 +299,20 @@ describe('UseTimelinesView', () => {
         // events
         const events = new ConversationBuilder()
             .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-            .sendMessage({ id: 'THREAD_0', threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
+            .sendMessage({
+                id: 'THREAD_0',
+                threadId: 'MSG_0',
+                from: 'bob',
+                body: 'hi alice!',
+            })
             .editMessage({ edits: 'THREAD_0', newBody: 'hi alice! (edited)' })
             .getEvents()
         // results
         execute(timelinesView, 'alice', events, {
-            timeline: ['MSG_0 alice: hi bob!', 'THREAD_0 bob: hi alice! (edited)'],
+            timeline: [
+                'MSG_0 alice: hi bob!',
+                'THREAD_0 bob: hi alice! (edited)',
+            ],
             threads: {
                 MSG_0: ['THREAD_0 bob: hi alice! (edited)'],
             },
@@ -264,7 +323,8 @@ describe('UseTimelinesView', () => {
                     latestTs: events[1].createdAtEpochMs,
                     parentId: events[0].eventId,
                     parentEvent: events[0],
-                    parentMessageContent: events[0].content as ChannelMessageEvent,
+                    parentMessageContent: events[0]
+                        .content as ChannelMessageEvent,
                     isParticipating: true,
                 },
             },
@@ -274,7 +334,12 @@ describe('UseTimelinesView', () => {
         // events
         const events = new ConversationBuilder()
             .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-            .sendMessage({ id: 'THREAD_0', threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
+            .sendMessage({
+                id: 'THREAD_0',
+                threadId: 'MSG_0',
+                from: 'bob',
+                body: 'hi alice!',
+            })
             .redactMessage({ redacts: 'THREAD_0' })
             .getEvents()
         // results
@@ -294,7 +359,8 @@ describe('UseTimelinesView', () => {
                     latestTs: events[1].createdAtEpochMs,
                     parentId: events[0].eventId,
                     parentEvent: events[0],
-                    parentMessageContent: events[0].content as ChannelMessageEvent,
+                    parentMessageContent: events[0]
+                        .content as ChannelMessageEvent,
                     isParticipating: false,
                 },
             },

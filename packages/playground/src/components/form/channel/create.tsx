@@ -53,7 +53,10 @@ export const CreateChannel = (props: {
                             <div className="flex items-center gap-2">
                                 <FormControl>
                                     {/* TODO: input mask so it start with # but gets stripped */}
-                                    <Input placeholder="#cool-photos" {...field} />
+                                    <Input
+                                        placeholder="#cool-photos"
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <Button type="submit">
                                     {isPending ? 'Creating...' : 'Create'}

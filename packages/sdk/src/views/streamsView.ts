@@ -8,20 +8,38 @@ import {
     makeUserSettingsStreamId,
     makeUserStreamId,
 } from '../id'
-import { UserSettingsStreamModel, UserSettingsStreamsView } from './streams/userSettingsStreams'
-import { UnreadMarkersModel, unreadMarkersTransform } from './streams/unreadMarkersTransform'
-import { MentionsModel, spaceMentionsTransform } from './streams/spaceMentionsTransform'
+import {
+    UserSettingsStreamModel,
+    UserSettingsStreamsView,
+} from './streams/userSettingsStreams'
+import {
+    UnreadMarkersModel,
+    unreadMarkersTransform,
+} from './streams/unreadMarkersTransform'
+import {
+    MentionsModel,
+    spaceMentionsTransform,
+} from './streams/spaceMentionsTransform'
 import { SpaceStreamsView } from './streams/spaceStreams'
 import { UserStreamModel, UserStreamsView } from './streams/userStreamsView'
-import { UserMetadataStreamModel, UserMetadataStreamsView } from './streams/userMetadataStreams'
-import { UserInboxStreamModel, UserInboxStreamsView } from './streams/userInboxStreams'
+import {
+    UserMetadataStreamModel,
+    UserMetadataStreamsView,
+} from './streams/userMetadataStreams'
+import {
+    UserInboxStreamModel,
+    UserInboxStreamsView,
+} from './streams/userInboxStreams'
 import { ChannelStreamsView } from './streams/channelStreams'
 import { DmStreamsView } from './streams/dmStreams'
 import { GdmStreamsView } from './streams/gdmStreams'
 import { membershipsTransform } from './transforms/membershipsTransform'
 import { Membership } from './models/timelineTypes'
 import { spaceIdsTransform } from './transforms/spaceIdsTransform'
-import { DmAndGdmModel, dmsAndGdmsTransform } from './transforms/dmsAndGdmsTransform'
+import {
+    DmAndGdmModel,
+    dmsAndGdmsTransform,
+} from './transforms/dmsAndGdmsTransform'
 import { StreamMemberIdsView } from './streams/streamMemberIds'
 import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTransform'
 import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
@@ -64,9 +82,12 @@ export class StreamsView {
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
         const myUserId = new Observable(userId)
         const userStreamId = userId !== '' ? makeUserStreamId(userId) : ''
-        const userInboxStreamId = userId !== '' ? makeUserInboxStreamId(userId) : ''
-        const userMetadataStreamId = userId !== '' ? makeUserMetadataStreamId(userId) : ''
-        const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
+        const userInboxStreamId =
+            userId !== '' ? makeUserInboxStreamId(userId) : ''
+        const userMetadataStreamId =
+            userId !== '' ? makeUserMetadataStreamId(userId) : ''
+        const userSettingsStreamId =
+            userId !== '' ? makeUserSettingsStreamId(userId) : ''
 
         this.streamStatus = new StreamStatus()
         this.streamMemberIds = new StreamMemberIdsView()
@@ -85,9 +106,15 @@ export class StreamsView {
 
         // map my streams
         const myUserStream = this.userStreams.map((x) => x[userStreamId])
-        const myUserInboxStream = this.userInboxStreams.map((x) => x[userInboxStreamId])
-        const myUserMetadataStream = this.userMetadataStreams.map((x) => x[userMetadataStreamId])
-        const myUserSettingsStream = this.userSettingsStreams.map((x) => x[userSettingsStreamId])
+        const myUserInboxStream = this.userInboxStreams.map(
+            (x) => x[userInboxStreamId],
+        )
+        const myUserMetadataStream = this.userMetadataStreams.map(
+            (x) => x[userMetadataStreamId],
+        )
+        const myUserSettingsStream = this.userSettingsStreams.map(
+            (x) => x[userSettingsStreamId],
+        )
 
         // grab the remote fully read markers
         const myRemoteFullyReadMarkers = myUserSettingsStream

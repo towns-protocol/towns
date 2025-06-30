@@ -2,7 +2,12 @@
  * @group with-entitlements
  */
 
-import { Address, AppRegistryDapp, Permission, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
+import {
+    Address,
+    AppRegistryDapp,
+    Permission,
+    SpaceAddressFromSpaceId,
+} from '@towns-protocol/web3'
 import {
     createSpaceAndDefaultChannel,
     everyoneMembershipStruct,
@@ -40,7 +45,8 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: bot1AppAddress } = appRegistryDapp.getCreateAppEvent(receipt1)
+        const { app: bot1AppAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt1)
         expect(bot1AppAddress).toBeDefined()
 
         // Create second bot app contract
@@ -53,26 +59,30 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: bot2AppAddress } = appRegistryDapp.getCreateAppEvent(receipt2)
+        const { app: bot2AppAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt2)
         expect(bot2AppAddress).toBeDefined()
 
         // Attempt to create user streams for bot1 using bot2's app address (should fail)
-        await expect(bot1.initializeUser({ appAddress: bot2AppAddress })).rejects.toThrow(
-            /7:PERMISSION_DENIED/,
-        )
+        await expect(
+            bot1.initializeUser({ appAddress: bot2AppAddress }),
+        ).rejects.toThrow(/7:PERMISSION_DENIED/)
 
         // Create user streams for bot2 using its own app address (should succeed)
-        expect(await bot2.initializeUser({ appAddress: bot2AppAddress })).toBeDefined()
+        expect(
+            await bot2.initializeUser({ appAddress: bot2AppAddress }),
+        ).toBeDefined()
     })
 
     test('unregistered bots cannot create app user streams', async () => {
-        const { alicesWallet: wallet, bob: bot } = await setupWalletsAndContexts()
+        const { alicesWallet: wallet, bob: bot } =
+            await setupWalletsAndContexts()
 
         // Let's use the public key of the wallet as the bot's contract address for
         // convenience here.
-        await expect(bot.initializeUser({ appAddress: wallet.address })).rejects.toThrow(
-            /7:PERMISSION_DENIED/,
-        )
+        await expect(
+            bot.initializeUser({ appAddress: wallet.address }),
+        ).rejects.toThrow(/7:PERMISSION_DENIED/)
     })
 
     // TODO: re-enable this test when the app registry contract is validated and deployed to all
@@ -107,13 +117,19 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } =
+            appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
 
-        expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
+        expect(
+            await bot.initializeUser({ appAddress: foundAppAddress }),
+        ).toBeDefined()
 
         // Have Carol create a space on the spaceDapp
-        const everyoneMembership = await everyoneMembershipStruct(carolSpaceDapp, carol)
+        const everyoneMembership = await everyoneMembershipStruct(
+            carolSpaceDapp,
+            carol,
+        )
         const { spaceId } = await createSpaceAndDefaultChannel(
             carol,
             carolSpaceDapp,
@@ -134,12 +150,14 @@ describe('bot stream creation tests', () => {
         )
 
         // GDMs with bot creators are disallowed.
-        await expect(bot.createGDMChannel([carol.userId, alice.userId])).rejects.toThrow(
-            /PERMISSION_DENIED/,
-        )
+        await expect(
+            bot.createGDMChannel([carol.userId, alice.userId]),
+        ).rejects.toThrow(/PERMISSION_DENIED/)
 
         // DMs with bot creators are disallowed.
-        await expect(bot.createDMChannel(alice.userId)).rejects.toThrow(/PERMISSION_DENIED/)
+        await expect(bot.createDMChannel(alice.userId)).rejects.toThrow(
+            /PERMISSION_DENIED/,
+        )
 
         // Cleanup
         await carol.stopSync()

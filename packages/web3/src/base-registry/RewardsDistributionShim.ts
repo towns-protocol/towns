@@ -4,7 +4,9 @@ import { RewardsDistributionV2__factory } from '@towns-protocol/generated/dev/ty
 
 const { abi, connect } = RewardsDistributionV2__factory
 
-export class RewardsDistributionV2Shim extends BaseContractShim<typeof connect> {
+export class RewardsDistributionV2Shim extends BaseContractShim<
+    typeof connect
+> {
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
     }

@@ -41,7 +41,11 @@ export class Myself {
             isUsernameConfirmed: this.member.data.isUsernameConfirmed,
             isUsernameEncrypted: this.member.data.isUsernameEncrypted,
         }
-        this.member.setData({ username, isUsernameConfirmed: true, isUsernameEncrypted: false })
+        this.member.setData({
+            username,
+            isUsernameConfirmed: true,
+            isUsernameEncrypted: false,
+        })
         return this.riverConnection
             .withStream(streamId)
             .call((client) => client.setUsername(streamId, username))
@@ -99,7 +103,12 @@ export class Myself {
         return this.riverConnection
             .withStream(streamId)
             .call((client) =>
-                client.setNft(streamId, nft.tokenId, nft.chainId, nft.contractAddress),
+                client.setNft(
+                    streamId,
+                    nft.tokenId,
+                    nft.chainId,
+                    nft.contractAddress,
+                ),
             )
             .catch((e) => {
                 this.member.setData(oldData)

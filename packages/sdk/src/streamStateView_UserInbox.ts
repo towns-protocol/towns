@@ -1,5 +1,9 @@
 import TypedEmitter from 'typed-emitter'
-import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
+import {
+    ConfirmedTimelineEvent,
+    ParsedEvent,
+    RemoteTimelineEvent,
+} from './types'
 import {
     Snapshot,
     UserInboxPayload,
@@ -12,7 +16,10 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { UserInboxStreamModel, UserInboxStreamsView } from './views/streams/userInboxStreams'
+import {
+    UserInboxStreamModel,
+    UserInboxStreamsView,
+} from './views/streams/userInboxStreams'
 
 export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -60,7 +67,11 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'groupEncryptionSessions':
-                this.addGroupSessions(event.creatorUserId, payload.content.value, encryptionEmitter)
+                this.addGroupSessions(
+                    event.creatorUserId,
+                    payload.content.value,
+                    encryptionEmitter,
+                )
                 break
             case 'ack':
                 break
@@ -83,10 +94,18 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'groupEncryptionSessions':
-                this.addGroupSessions(event.creatorUserId, payload.content.value, encryptionEmitter)
+                this.addGroupSessions(
+                    event.creatorUserId,
+                    payload.content.value,
+                    encryptionEmitter,
+                )
                 break
             case 'ack':
-                this.updateDeviceSummary(event.remoteEvent, payload.content.value, stateEmitter)
+                this.updateDeviceSummary(
+                    event.remoteEvent,
+                    payload.content.value,
+                    stateEmitter,
+                )
                 break
             case undefined:
                 break

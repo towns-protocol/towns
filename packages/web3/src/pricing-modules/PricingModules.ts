@@ -7,7 +7,10 @@ export class PricingModules {
     private readonly pricingShim: IPricingShim
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
-        this.pricingShim = new IPricingShim(config.addresses.spaceFactory, provider)
+        this.pricingShim = new IPricingShim(
+            config.addresses.spaceFactory,
+            provider,
+        )
     }
 
     public parseError(error: unknown): Error {
@@ -18,11 +21,17 @@ export class PricingModules {
         return this.pricingShim.read.listPricingModules()
     }
 
-    public async addPricingModule(moduleAddress: string, signer: ethers.Signer): Promise<void> {
+    public async addPricingModule(
+        moduleAddress: string,
+        signer: ethers.Signer,
+    ): Promise<void> {
         await this.pricingShim.write(signer).addPricingModule(moduleAddress)
     }
 
-    public async removePricingModule(moduleAddress: string, signer: ethers.Signer): Promise<void> {
+    public async removePricingModule(
+        moduleAddress: string,
+        signer: ethers.Signer,
+    ): Promise<void> {
         await this.pricingShim.write(signer).removePricingModule(moduleAddress)
     }
 

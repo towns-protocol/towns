@@ -103,7 +103,12 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
                 return await next(clonedReq)
             } catch (e) {
                 const elapsed = Date.now() - loopStart
-                const retryDelay = getRetryDelay(e, signal.aborted, attempt, retryParams)
+                const retryDelay = getRetryDelay(
+                    e,
+                    signal.aborted,
+                    attempt,
+                    retryParams,
+                )
                 // if the request was aborted, or we've run out of retries, throw the error
                 if (orignalAbortSignal.aborted || retryDelay <= 0) {
                     throw e
@@ -111,9 +116,14 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
                 if (retryParams.refreshNodeUrl) {
                     // re-materialize view and check if client is still operational according to network
                     const urls = await retryParams.refreshNodeUrl()
-                    const isStillNodeUrl = isBaseUrlIncluded(urls.split(','), req.url)
+                    const isStillNodeUrl = isBaseUrlIncluded(
+                        urls.split(','),
+                        req.url,
+                    )
                     if (!isStillNodeUrl) {
-                        throw new Error(`Node url ${req.url} no longer operationl in registry`)
+                        throw new Error(
+                            `Node url ${req.url} no longer operationl in registry`,
+                        )
                     }
                 }
                 logError(
@@ -135,19 +145,27 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
                 await new Promise((resolve) => setTimeout(resolve, retryDelay))
             } finally {
                 clearTimeout(requestTimeoutId)
-                orignalAbortSignal?.removeEventListener('abort', originalAbortHandler)
+                orignalAbortSignal?.removeEventListener(
+                    'abort',
+                    originalAbortHandler,
+                )
             }
         }
     }
 }
 
-export const expiryInterceptor = (opts: { onTokenExpired?: () => void }): Interceptor => {
+export const expiryInterceptor = (opts: {
+    onTokenExpired?: () => void
+}): Interceptor => {
     return (next) => async (req) => {
         try {
             const res = await next(req)
             return res
         } catch (e) {
-            if (e instanceof Error && e.message.includes('event delegate has expired')) {
+            if (
+                e instanceof Error &&
+                e.message.includes('event delegate has expired')
+            ) {
                 opts.onTokenExpired?.()
             }
             throw e
@@ -155,9 +173,9 @@ export const expiryInterceptor = (opts: { onTokenExpired?: () => void }): Interc
     }
 }
 
-export const setHeaderInterceptor: (headers: Record<string, string>) => Interceptor = (
+export const setHeaderInterceptor: (
     headers: Record<string, string>,
-) => {
+) => Interceptor = (headers: Record<string, string>) => {
     return (next) => (req) => {
         for (const [key, value] of Object.entries(headers)) {
             req.header.set(key, value)
@@ -166,15 +184,22 @@ export const setHeaderInterceptor: (headers: Record<string, string>) => Intercep
     }
 }
 
-export const loggingInterceptor: (transportId: number, serviceName?: string) => Interceptor = (
+export const loggingInterceptor: (
     transportId: number,
     serviceName?: string,
-) => {
+) => Interceptor = (transportId: number, serviceName?: string) => {
     // Histogram data structure
-    const callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}
+    const callHistogram: Record<
+        string,
+        { interval: number; total: number; error?: number }
+    > = {}
 
     // Function to update histogram
-    const updateHistogram = (methodName: string, suffix?: string, error?: boolean) => {
+    const updateHistogram = (
+        methodName: string,
+        suffix?: string,
+        error?: boolean,
+    ) => {
         const name = suffix ? `${methodName} ${suffix}` : methodName
         let e = callHistogram[name]
         if (!e) {
@@ -240,7 +265,9 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
         } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const streamIdBytes = (req.message as any)['streamId'] as Uint8Array
-            streamId = streamIdBytes ? streamIdAsString(streamIdBytes) : undefined
+            streamId = streamIdBytes
+                ? streamIdAsString(streamIdBytes)
+                : undefined
             if (streamId !== undefined) {
                 logCalls(req.method.name, streamId, id)
             } else {
@@ -279,7 +306,11 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
             throw e
         }
     }
-    async function* logEachRequest(name: string, id: string, stream: AsyncIterable<any>) {
+    async function* logEachRequest(
+        name: string,
+        id: string,
+        stream: AsyncIterable<any>,
+    ) {
         try {
             for await (const m of stream) {
                 try {
@@ -316,12 +347,17 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
         logProtos(name, 'STREAMING REQUEST DONE', id)
     }
 
-    async function* logEachResponse(name: string, id: string, stream: AsyncIterable<any>) {
+    async function* logEachResponse(
+        name: string,
+        id: string,
+        stream: AsyncIterable<any>,
+    ) {
         try {
             for await (const m of stream) {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    const streamId: string | undefined = m.stream?.nextSyncCookie?.streamId
+                    const streamId: string | undefined =
+                        m.stream?.nextSyncCookie?.streamId
                     if (streamId !== undefined) {
                         logCalls(name, 'RECV', streamId, id)
                     } else {
@@ -343,7 +379,10 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
                 logCalls(name, 'SHUTDOWN', id)
                 updateHistogram(`${name} SHUTDOWN`)
             } else {
-                const stack = err instanceof Error && 'stack' in err ? (err.stack ?? '') : ''
+                const stack =
+                    err instanceof Error && 'stack' in err
+                        ? (err.stack ?? '')
+                        : ''
                 logError(name, 'ERROR STREAMING RESPONSE', id, err, stack)
                 updateHistogram(`${name} RECV`, undefined, true)
             }
@@ -365,7 +404,10 @@ export function errorContains(err: unknown, error: Err): boolean {
 }
 
 /// not great way to pull info out of the error message
-export function getRpcErrorProperty(err: unknown, prop: string): string | undefined {
+export function getRpcErrorProperty(
+    err: unknown,
+    prop: string,
+): string | undefined {
     if (err !== null && typeof err === 'object' && 'message' in err) {
         const expected = `${prop} = `
         const parts = (err.message as string).split(expected)
@@ -384,7 +426,10 @@ export function errorContainsMessage(err: unknown, message: string): boolean {
     return false
 }
 
-export function getRetryDelayMs(attempts: number, retryParams: RetryParams): number {
+export function getRetryDelayMs(
+    attempts: number,
+    retryParams: RetryParams,
+): number {
     return Math.min(
         retryParams.maxRetryDelay,
         retryParams.initialRetryDelay * Math.pow(2, attempts),
@@ -412,11 +457,17 @@ function getRetryDelay(
     if (error !== null && typeof error === 'object') {
         if ('message' in error) {
             // this happens in the tests when the server is totally down
-            if ((error.message as string).toLowerCase().includes('fetch failed')) {
+            if (
+                (error.message as string).toLowerCase().includes('fetch failed')
+            ) {
                 return retryDelay
             }
             // this happens in the browser when the server is totally down
-            if ((error.message as string).toLowerCase().includes('failed to fetch')) {
+            if (
+                (error.message as string)
+                    .toLowerCase()
+                    .includes('failed to fetch')
+            ) {
                 return retryDelay
             }
         }

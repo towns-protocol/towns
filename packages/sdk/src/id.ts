@@ -70,7 +70,10 @@ const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.Metadata]: 16,
 }
 
-export const makeStreamId = (prefix: StreamPrefix, identity: string): string => {
+export const makeStreamId = (
+    prefix: StreamPrefix,
+    identity: string,
+): string => {
     identity = identity.toLowerCase()
     if (identity.startsWith('0x')) {
         identity = identity.slice(2)
@@ -90,7 +93,9 @@ export const makeUserStreamId = (userId: string | Uint8Array): string => {
     )
 }
 
-export const makeUserSettingsStreamId = (userId: string | Uint8Array): string => {
+export const makeUserSettingsStreamId = (
+    userId: string | Uint8Array,
+): string => {
     check(isUserId(userId), 'Invalid user id: ' + userId.toString())
     return makeStreamId(
         StreamPrefix.UserSettings,
@@ -98,7 +103,9 @@ export const makeUserSettingsStreamId = (userId: string | Uint8Array): string =>
     )
 }
 
-export const makeUserMetadataStreamId = (userId: string | Uint8Array): string => {
+export const makeUserMetadataStreamId = (
+    userId: string | Uint8Array,
+): string => {
     check(isUserId(userId), 'Invalid user id: ' + userId.toString())
     return makeStreamId(
         StreamPrefix.UserMetadata,
@@ -124,17 +131,25 @@ export const makeUniqueChannelStreamId = (spaceId: string): string => {
     return makeStreamId(StreamPrefix.Channel, spaceId.slice(2, 42) + genId(22))
 }
 
-export const makeDefaultChannelStreamId = (spaceContractAddressOrId: string): string => {
+export const makeDefaultChannelStreamId = (
+    spaceContractAddressOrId: string,
+): string => {
     if (spaceContractAddressOrId.startsWith(StreamPrefix.Space)) {
         return StreamPrefix.Channel + spaceContractAddressOrId.slice(2)
     }
     // matches code in the smart contract
-    return makeStreamId(StreamPrefix.Channel, spaceContractAddressOrId + '0'.repeat(22))
+    return makeStreamId(
+        StreamPrefix.Channel,
+        spaceContractAddressOrId + '0'.repeat(22),
+    )
 }
 
 export const spaceIdFromChannelId = (channelId: string): string => {
     check(isChannelStreamId(channelId), 'Invalid channel id: ' + channelId)
-    return makeStreamId(StreamPrefix.Space, channelId.slice(2, 42) + '0'.repeat(22))
+    return makeStreamId(
+        StreamPrefix.Space,
+        channelId.slice(2, 42) + '0'.repeat(22),
+    )
 }
 
 export const isDefaultChannelId = (streamId: string): boolean => {
@@ -145,8 +160,10 @@ export const isDefaultChannelId = (streamId: string): boolean => {
     return streamId.endsWith('0'.repeat(22))
 }
 
-export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
-export const makeUniqueMediaStreamId = (): string => makeStreamId(StreamPrefix.Media, genId())
+export const makeUniqueGDMChannelStreamId = (): string =>
+    makeStreamId(StreamPrefix.GDM, genId())
+export const makeUniqueMediaStreamId = (): string =>
+    makeStreamId(StreamPrefix.Media, genId())
 export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
     const concatenated = [userIdA, userIdB]
         .map((id) => id.toLowerCase())
@@ -166,8 +183,9 @@ export const isDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.DM)
 export const isUserDeviceStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.UserMetadata)
-export const isUserSettingsStreamId = (streamId: string | Uint8Array): boolean =>
-    streamIdAsString(streamId).startsWith(StreamPrefix.UserSettings)
+export const isUserSettingsStreamId = (
+    streamId: string | Uint8Array,
+): boolean => streamIdAsString(streamId).startsWith(StreamPrefix.UserSettings)
 export const isMediaStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.Media)
 export const isGDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
@@ -187,7 +205,10 @@ export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     ) {
         throw new Error('Invalid stream id: ' + streamId)
     }
-    if (streamId.length != STREAM_ID_STRING_LENGTH || !isLowercaseHex(streamId)) {
+    if (
+        streamId.length != STREAM_ID_STRING_LENGTH ||
+        !isLowercaseHex(streamId)
+    ) {
         throw new Error('Invalid stream id format: ' + streamId)
     }
     const addressPart = streamId.slice(2, 42)
@@ -202,7 +223,10 @@ export const getUserIdFromStreamId = (streamId: string): string => {
     return userIdFromAddress(getUserAddressFromStreamId(streamId))
 }
 
-const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean => {
+const areValidStreamIdParts = (
+    prefix: StreamPrefix,
+    identity: string,
+): boolean => {
     if (!allowedStreamPrefixesVar.includes(prefix)) {
         return false
     }
@@ -214,7 +238,11 @@ const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean 
         if (identity.length != 62) {
             return false
         }
-        for (let i = expectedIdentityLenByPrefix[prefix]; i < identity.length; i++) {
+        for (
+            let i = expectedIdentityLenByPrefix[prefix];
+            i < identity.length;
+            i++
+        ) {
             if (identity[i] !== '0') {
                 return false
             }
@@ -225,7 +253,10 @@ const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean 
 }
 
 export const isValidStreamId = (streamId: string): boolean => {
-    return areValidStreamIdParts(streamId.slice(0, 2) as StreamPrefix, streamId.slice(2))
+    return areValidStreamIdParts(
+        streamId.slice(0, 2) as StreamPrefix,
+        streamId.slice(2),
+    )
 }
 
 export const checkStreamId = (streamId: string): void => {
@@ -248,4 +279,5 @@ export const genLocalId = (): string => {
 
 export const genIdBlob = (): Uint8Array => bin_fromHexString(hexNanoId(32))
 
-export const isLowercaseHex = (input: string): boolean => /^[0-9a-f]*$/.test(input)
+export const isLowercaseHex = (input: string): boolean =>
+    /^[0-9a-f]*$/.test(input)

@@ -14,7 +14,10 @@ export class Bot {
         this.riverConfig = riverConfig || makeRiverConfig()
         this.rootWallet = rootWallet || ethers.Wallet.createRandom()
         this.delegateWallet = ethers.Wallet.createRandom()
-        this.web3Provider = new LocalhostWeb3Provider(this.riverConfig.base.rpcUrl, this.rootWallet)
+        this.web3Provider = new LocalhostWeb3Provider(
+            this.riverConfig.base.rpcUrl,
+            this.rootWallet,
+        )
     }
 
     get userId() {
@@ -30,9 +33,13 @@ export class Bot {
     }
 
     async makeSyncAgent(opts?: Partial<SyncAgentConfig>) {
-        const signerContext = await makeSignerContext(this.rootWallet, this.delegateWallet, {
-            days: 1,
-        })
+        const signerContext = await makeSignerContext(
+            this.rootWallet,
+            this.delegateWallet,
+            {
+                days: 1,
+            },
+        )
         const syncAgent = new SyncAgent({
             context: signerContext,
             riverConfig: this.riverConfig,

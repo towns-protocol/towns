@@ -16,10 +16,18 @@ export class AppRegistryService {
         getSignature: (hash: Uint8Array) => Promise<Uint8Array>,
         extraFinishAuthParams: Record<string, any>,
     ) {
-        const authenticationRpcClient = makeAuthenticationRpcClient(serviceUrl, opts)
+        const authenticationRpcClient = makeAuthenticationRpcClient(
+            serviceUrl,
+            opts,
+        )
 
-        const startResponse = await authenticationRpcClient.startAuthentication({ userId })
-        check(startResponse.challenge.length >= 16, 'challenge must be 16 bytes')
+        const startResponse = await authenticationRpcClient.startAuthentication(
+            { userId },
+        )
+        check(
+            startResponse.challenge.length >= 16,
+            'challenge must be 16 bytes',
+        )
         check(isDefined(startResponse.expiration), 'expiration must be defined')
 
         const hash = appRegistryHash(
@@ -29,12 +37,13 @@ export class AppRegistryService {
         )
 
         const signature = await getSignature(hash)
-        const finishResponse = await authenticationRpcClient.finishAuthentication({
-            userId,
-            challenge: startResponse.challenge,
-            signature,
-            ...extraFinishAuthParams,
-        })
+        const finishResponse =
+            await authenticationRpcClient.finishAuthentication({
+                userId,
+                challenge: startResponse.challenge,
+                signature,
+                ...extraFinishAuthParams,
+            })
         const appRegistryRpcClient = makeAppRegistryRpcClient(
             serviceUrl,
             finishResponse.sessionToken,
@@ -47,7 +56,11 @@ export class AppRegistryService {
         }
     }
 
-    static async authenticate(signerContext: SignerContext, serviceUrl: string, opts?: RpcOptions) {
+    static async authenticate(
+        signerContext: SignerContext,
+        serviceUrl: string,
+        opts?: RpcOptions,
+    ) {
         const userId = signerContext.creatorAddress
 
         return this._authenticateCommon(

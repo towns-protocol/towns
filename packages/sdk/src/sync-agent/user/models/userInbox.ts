@@ -1,7 +1,10 @@
 import { check, dlogger } from '@towns-protocol/dlog'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { UserInboxPayload_Snapshot_DeviceSummary } from '@towns-protocol/proto'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { makeUserInboxStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Client } from '../../../client'
@@ -39,26 +42,38 @@ export class UserInbox extends PersistedObservable<UserInboxModel> {
     private onClientStarted = (client: Client) => {
         logger.log('onClientStarted')
         if (this.riverConnection.client?.cryptoInitialized) {
-            const deviceId = this.riverConnection.client.userDeviceKey().deviceKey
-            const streamView = this.riverConnection.client.stream(this.data.streamId)?.view
+            const deviceId =
+                this.riverConnection.client.userDeviceKey().deviceKey
+            const streamView = this.riverConnection.client.stream(
+                this.data.streamId,
+            )?.view
             if (streamView && deviceId) {
                 this.initialize(deviceId, streamView)
             } else if (deviceId) {
                 this.setData({ deviceId })
             }
         }
-        client.addListener('userInboxDeviceSummaryUpdated', this.onDeviceSummaryUpdated)
+        client.addListener(
+            'userInboxDeviceSummaryUpdated',
+            this.onDeviceSummaryUpdated,
+        )
         client.addListener('streamInitialized', this.onStreamInitialized)
         return () => {
-            client.removeListener('userInboxDeviceSummaryUpdated', this.onDeviceSummaryUpdated)
+            client.removeListener(
+                'userInboxDeviceSummaryUpdated',
+                this.onDeviceSummaryUpdated,
+            )
             client.removeListener('streamInitialized', this.onStreamInitialized)
         }
     }
 
     private onStreamInitialized = (streamId: string) => {
         if (streamId === this.data.streamId) {
-            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
-            const deviceId = this.riverConnection.client?.userDeviceKey().deviceKey
+            const streamView = this.riverConnection.client?.stream(
+                this.data.streamId,
+            )?.view
+            const deviceId =
+                this.riverConnection.client?.userDeviceKey().deviceKey
             check(isDefined(deviceId), 'deviceId is not defined')
             check(isDefined(streamView), 'streamView is not defined')
             this.initialize(deviceId, streamView)
@@ -71,7 +86,11 @@ export class UserInbox extends PersistedObservable<UserInboxModel> {
         deviceSummary: UserInboxPayload_Snapshot_DeviceSummary,
     ) => {
         if (streamId === this.data.streamId) {
-            logger.log('onUserInboxDeviceSummaryUpdated', deviceId, deviceSummary)
+            logger.log(
+                'onUserInboxDeviceSummaryUpdated',
+                deviceId,
+                deviceSummary,
+            )
             this.setData({ deviceId, deviceSummary })
         }
     }

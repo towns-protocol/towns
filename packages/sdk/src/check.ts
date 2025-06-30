@@ -11,7 +11,12 @@ const log = dlogError('csb:error')
  * @param code - JSON RPC error code
  * @param data - Optional data to include in the error
  */
-export function checkNever(value: never, message?: string, code?: Err, data?: any): never {
+export function checkNever(
+    value: never,
+    message?: string,
+    code?: Err,
+    data?: any,
+): never {
     throwWithCode(
         message ?? `Unhandled switch value ${value}`,
         code ?? Err.INTERNAL_ERROR_SWITCH,
@@ -44,7 +49,9 @@ interface Lengthwise {
     length: number
 }
 
-export function hasElements<T extends Lengthwise>(value: T | undefined | null): value is T {
+export function hasElements<T extends Lengthwise>(
+    value: T | undefined | null,
+): value is T {
     return isDefined(value) && value.length > 0
 }
 

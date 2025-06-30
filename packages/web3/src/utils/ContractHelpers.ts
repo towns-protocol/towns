@@ -2,7 +2,10 @@ import { BigNumber, BigNumberish, ethers } from 'ethers'
 
 import { BasicRoleInfo, Permission } from '../types/ContractTypes'
 import { SpaceDapp } from '../space-dapp/SpaceDapp'
-import { IArchitectBase, IMembershipBase } from '../space-registrar/ICreateSpaceShim'
+import {
+    IArchitectBase,
+    IMembershipBase,
+} from '../space-registrar/ICreateSpaceShim'
 
 export async function getFilteredRolesFromSpace(
     spaceDapp: SpaceDapp,

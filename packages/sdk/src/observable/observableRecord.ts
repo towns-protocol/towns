@@ -15,12 +15,17 @@ export class ObservableRecord<
     VALUE extends object,
 > extends Observable<Record<KEY, VALUE | undefined>> {
     // weak reference cache of default values
-    private defaultSource: { makeDefault: (key: KEY) => VALUE } | { defaultValue: VALUE }
+    private defaultSource:
+        | { makeDefault: (key: KEY) => VALUE }
+        | { defaultValue: VALUE }
     private defaultValues = new Map<KEY, WeakRef<VALUE>>()
 
     constructor(
         params:
-            | { makeDefault: (key: KEY) => VALUE; initialValue?: Record<KEY, VALUE> }
+            | {
+                  makeDefault: (key: KEY) => VALUE
+                  initialValue?: Record<KEY, VALUE>
+              }
             | { defaultValue: VALUE; initialValue?: Record<KEY, VALUE> },
     ) {
         super(params.initialValue ?? ({} as Record<KEY, VALUE>))

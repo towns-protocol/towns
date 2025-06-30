@@ -28,8 +28,9 @@ export class OwnableFacetShim extends BaseContractShim<typeof connect> {
     }
 
     public async getOwner(): Promise<string> {
-        return this.ownerCache.executeUsingCache(new OwnerRequest(this.address), async () =>
-            this.read.owner(),
+        return this.ownerCache.executeUsingCache(
+            new OwnerRequest(this.address),
+            async () => this.read.owner(),
         )
     }
 }

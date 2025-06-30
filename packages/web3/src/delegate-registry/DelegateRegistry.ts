@@ -53,10 +53,16 @@ const delegateRegistryJsonAbi = `
   }
 ]`
 
-function newDelegateContract(provider: ethers.providers.BaseProvider): ethers.Contract {
+function newDelegateContract(
+    provider: ethers.providers.BaseProvider,
+): ethers.Contract {
     const iface = new utils.Interface(delegateRegistryJsonAbi)
     const humanReadableAbi = iface.format(utils.FormatTypes.full)
-    return new ethers.Contract(v1RegistryContractAddress, humanReadableAbi, provider)
+    return new ethers.Contract(
+        v1RegistryContractAddress,
+        humanReadableAbi,
+        provider,
+    )
 }
 
 interface DelegationInfo {

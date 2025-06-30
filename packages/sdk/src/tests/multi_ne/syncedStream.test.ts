@@ -46,13 +46,18 @@ describe('syncedStream', () => {
         // Force the creation of N snapshots, which will make the sync cookie invalid
         for (let i = 0; i < 10; i++) {
             await alice.sendMessage(streamId, `'hello ${i}`)
-            await alice.debugForceMakeMiniblock(streamId, { forceSnapshot: true })
+            await alice.debugForceMakeMiniblock(streamId, {
+                forceSnapshot: true,
+            })
         }
 
         logTimeline('alice', aliceStream.view)
 
         // later, Bob returns
-        const bob2 = await makeTestClient({ context: bob.signerContext, deviceId: bobDeviceId })
+        const bob2 = await makeTestClient({
+            context: bob.signerContext,
+            deviceId: bobDeviceId,
+        })
         await bob2.initializeUser()
         bob2.startSync()
 
@@ -73,7 +78,9 @@ describe('syncedStream', () => {
 
         // wait for new stream to trigger bad_sync_cookie and get a fresh view sent back
         await waitFor(
-            () => bobStreamFresh.view.miniblockInfo!.max > bobStreamCached.view.miniblockInfo!.max,
+            () =>
+                bobStreamFresh.view.miniblockInfo!.max >
+                bobStreamCached.view.miniblockInfo!.max,
         )
 
         // Backfill the entire stream
@@ -85,7 +92,9 @@ describe('syncedStream', () => {
 
         // Once Bob's stream is fully backfilled, the sync cookie should match Alice's
         await waitFor(
-            () => aliceStream.view.miniblockInfo!.max === bobStreamFresh.view.miniblockInfo!.max,
+            () =>
+                aliceStream.view.miniblockInfo!.max ===
+                bobStreamFresh.view.miniblockInfo!.max,
         )
 
         // check that the events are the same
@@ -114,7 +123,9 @@ describe('syncedStream', () => {
         }
 
         // Wait for Bob to sync the new messages to verify that sync still works
-        await waitFor(() => bobStreamFresh.view.timeline.length === bobEventCount + 5)
+        await waitFor(
+            () => bobStreamFresh.view.timeline.length === bobEventCount + 5,
+        )
 
         await bob2.stopSync()
         await alice.stopSync()

@@ -27,12 +27,18 @@ export class SpaceRegistrar {
         })
         this.config = config
         this.provider = provider
-        this.spaceArchitect = new ISpaceArchitectShim(config.addresses.spaceFactory, provider)
+        this.spaceArchitect = new ISpaceArchitectShim(
+            config.addresses.spaceFactory,
+            provider,
+        )
         this.legacySpaceArchitect = new ILegacySpaceArchitectShim(
             config.addresses.spaceFactory,
             provider,
         )
-        this.createSpace = new ICreateSpaceShim(config.addresses.spaceFactory, provider)
+        this.createSpace = new ICreateSpaceShim(
+            config.addresses.spaceFactory,
+            provider,
+        )
     }
 
     public get CreateSpace(): ICreateSpaceShim {
@@ -54,10 +60,18 @@ export class SpaceRegistrar {
         const space = this.spaces.get(spaceId)
         if (!space) {
             const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-            if (!spaceAddress || spaceAddress === ethers.constants.AddressZero) {
+            if (
+                !spaceAddress ||
+                spaceAddress === ethers.constants.AddressZero
+            ) {
                 return undefined
             }
-            const space = new Space(spaceAddress, spaceId, this.config, this.provider)
+            const space = new Space(
+                spaceAddress,
+                spaceId,
+                this.config,
+                this.provider,
+            )
             this.spaces.set(spaceId, space)
             return space
         }

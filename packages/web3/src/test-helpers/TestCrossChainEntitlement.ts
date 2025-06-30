@@ -88,7 +88,9 @@ async function isEntitled(
     userAddresses: Address[],
     id: bigint,
 ): Promise<boolean> {
-    const contractAddress = await getContractAddress(customEntitlementContractName)
+    const contractAddress = await getContractAddress(
+        customEntitlementContractName,
+    )
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({

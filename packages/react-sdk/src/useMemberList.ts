@@ -16,6 +16,9 @@ export const useMemberList = (
     config?: ObservableConfig.FromData<MembersModel>,
 ) => {
     const sync = useSyncAgent()
-    const members = useMemo(() => getRoom(sync, streamId).members, [sync, streamId])
+    const members = useMemo(
+        () => getRoom(sync, streamId).members,
+        [sync, streamId],
+    )
     return useObservable(members, config)
 }

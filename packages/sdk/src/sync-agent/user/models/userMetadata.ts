@@ -1,7 +1,10 @@
 import { check, dlogger } from '@towns-protocol/dlog'
 import { LoadPriority, Store } from '../../../store/store'
 import { UserDevice } from '@towns-protocol/encryption'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { makeUserMetadataStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { StreamStateView } from '../../../streamStateView'
@@ -26,7 +29,12 @@ export class UserMetadata extends PersistedObservable<UserMetadataModel> {
         private riverConnection: RiverConnection,
     ) {
         super(
-            { id, streamId: makeUserMetadataStreamId(id), initialized: false, deviceKeys: [] },
+            {
+                id,
+                streamId: makeUserMetadataStreamId(id),
+                initialized: false,
+                deviceKeys: [],
+            },
             store,
             LoadPriority.high,
         )
@@ -39,8 +47,11 @@ export class UserMetadata extends PersistedObservable<UserMetadataModel> {
     private onClientStarted = (client: Client) => {
         logger.log('onClientStarted')
         if (this.riverConnection.client?.cryptoInitialized) {
-            const deviceId = this.riverConnection.client.userDeviceKey().deviceKey
-            const streamView = this.riverConnection.client.stream(this.data.streamId)?.view
+            const deviceId =
+                this.riverConnection.client.userDeviceKey().deviceKey
+            const streamView = this.riverConnection.client.stream(
+                this.data.streamId,
+            )?.view
             if (streamView && deviceId) {
                 this.initialize(deviceId, streamView)
             } else if (deviceId) {
@@ -50,22 +61,31 @@ export class UserMetadata extends PersistedObservable<UserMetadataModel> {
         client.addListener('userDeviceKeysUpdated', this.onUserMetadataUpdated)
         client.addListener('streamInitialized', this.onStreamInitialized)
         return () => {
-            client.removeListener('userDeviceKeysUpdated', this.onUserMetadataUpdated)
+            client.removeListener(
+                'userDeviceKeysUpdated',
+                this.onUserMetadataUpdated,
+            )
             client.removeListener('streamInitialized', this.onStreamInitialized)
         }
     }
 
     private onStreamInitialized = (streamId: string) => {
         if (streamId === this.data.streamId) {
-            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
-            const deviceId = this.riverConnection.client?.userDeviceKey().deviceKey
+            const streamView = this.riverConnection.client?.stream(
+                this.data.streamId,
+            )?.view
+            const deviceId =
+                this.riverConnection.client?.userDeviceKey().deviceKey
             check(isDefined(deviceId), 'deviceId is not defined')
             check(isDefined(streamView), 'streamView is not defined')
             this.initialize(deviceId, streamView)
         }
     }
 
-    private onUserMetadataUpdated = (streamId: string, deviceKeys: UserDevice[]) => {
+    private onUserMetadataUpdated = (
+        streamId: string,
+        deviceKeys: UserDevice[],
+    ) => {
         if (streamId === this.data.streamId) {
             logger.log('updated', streamId, deviceKeys)
             this.setData({ deviceKeys })

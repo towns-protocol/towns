@@ -25,7 +25,8 @@ export interface UserDeviceRecord {
     expirationTimestamp: number
 }
 
-export interface ExtendedInboundGroupSessionData extends InboundGroupSessionData {
+export interface ExtendedInboundGroupSessionData
+    extends InboundGroupSessionData {
     streamId: string
     sessionId: string
 }

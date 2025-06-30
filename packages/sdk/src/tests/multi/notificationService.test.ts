@@ -26,10 +26,16 @@ describe('notificationServicetest', () => {
         const userId = wallet.address
 
         const { startResponse, finishResponse, notificationRpcClient } =
-            await NotificationService.authenticateWithSigner(userId, signer, notificationServiceUrl)
+            await NotificationService.authenticateWithSigner(
+                userId,
+                signer,
+                notificationServiceUrl,
+            )
         logger.info('authenticated', { startResponse, finishResponse })
 
-        const settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema))
+        const settings = await notificationRpcClient.getSettings(
+            create(GetSettingsRequestSchema),
+        )
         logger.info('settings', settings)
 
         const newSettings = await notificationRpcClient.setDmGdmSettings(
@@ -51,13 +57,20 @@ describe('notificationServicetest', () => {
 
         const wallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
-        const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
+        const signerContext = await makeSignerContext(wallet, delegateWallet, {
+            days: 1,
+        })
 
         const { startResponse, finishResponse, notificationRpcClient } =
-            await NotificationService.authenticate(signerContext, notificationServiceUrl)
+            await NotificationService.authenticate(
+                signerContext,
+                notificationServiceUrl,
+            )
         logger.info('authenticated', { startResponse, finishResponse })
 
-        const settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema))
+        const settings = await notificationRpcClient.getSettings(
+            create(GetSettingsRequestSchema),
+        )
         logger.info('settings', settings)
 
         const newSettings = await notificationRpcClient.setDmGdmSettings(

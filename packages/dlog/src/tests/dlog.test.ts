@@ -8,7 +8,9 @@ import { bin_fromHexString } from '../binary'
 
 describe.concurrent('dlogTest', () => {
     it('basic', () => {
-        const longHex = bin_fromHexString('0102030405060708090a0b0c0d0e0f101112131415161718191a')
+        const longHex = bin_fromHexString(
+            '0102030405060708090a0b0c0d0e0f101112131415161718191a',
+        )
         const obj = {
             a: 1,
             b: 'b',
@@ -51,8 +53,13 @@ describe.concurrent('dlogTest', () => {
 
         log('longHex =', longHex)
         log('\n\n\n')
-        log('shortenedHexKey =', { '0x0102030405060708090a0b0c0d0e0f101112131415161718191a': true })
-        log('shortenedHexValue =', '0x0102030405060708090a0b0c0d0e0f101112131415161718191a')
+        log('shortenedHexKey =', {
+            '0x0102030405060708090a0b0c0d0e0f101112131415161718191a': true,
+        })
+        log(
+            'shortenedHexValue =',
+            '0x0102030405060708090a0b0c0d0e0f101112131415161718191a',
+        )
         log('shortenedHexValue =', {
             key: '0x0102030405060708090a0b0c0d0e0f101112131415161718191a',
         })

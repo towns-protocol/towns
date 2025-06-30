@@ -16,7 +16,10 @@ module.exports = {
         'import-x/no-named-as-default-member': 'off',
         'react/display-name': 'off',
         'react/jsx-boolean-value': ['warn', 'never'],
-        'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'ignore' }],
+        'react/jsx-curly-brace-presence': [
+            'error',
+            { props: 'never', children: 'ignore' },
+        ],
         'react/jsx-wrap-multilines': 'error',
         'react/no-array-index-key': 'error',
         'react/no-multi-comp': 'off',

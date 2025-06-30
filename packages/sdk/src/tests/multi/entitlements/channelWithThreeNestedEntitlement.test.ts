@@ -9,7 +9,11 @@ import {
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
 } from '../../testUtils'
-import { Address, TestERC721, createExternalNFTStruct } from '@towns-protocol/web3'
+import {
+    Address,
+    TestERC721,
+    createExternalNFTStruct,
+} from '@towns-protocol/web3'
 
 describe('channelsWithThreeNestedEntitlements', () => {
     // This test takes almost one minute to run in CI and therefore gets its own file.
@@ -21,7 +25,11 @@ describe('channelsWithThreeNestedEntitlements', () => {
         const testNftAddress2 = await TestERC721.getContractAddress(testNft2)
         const testNftAddress3 = await TestERC721.getContractAddress(testNft3)
 
-        const ruleData = createExternalNFTStruct([testNftAddress, testNftAddress2, testNftAddress3])
+        const ruleData = createExternalNFTStruct([
+            testNftAddress,
+            testNftAddress2,
+            testNftAddress3,
+        ])
         const {
             alice,
             alicesWallet,
@@ -54,7 +62,12 @@ describe('channelsWithThreeNestedEntitlements', () => {
         )
 
         // Alice initially cannot join because she has no nft
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Alice, Carol and Dave will each have one of the three NFTs, all should be able to join.
         // Mint an nft for alice - she should be able to join now
@@ -64,13 +77,23 @@ describe('channelsWithThreeNestedEntitlements', () => {
         await new Promise((f) => setTimeout(f, 2000))
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Mint an nft for carol - she should be able to join now
         await TestERC721.publicMint(testNft2, carolsWallet.address as Address)
 
         // Validate carol can join the channel
-        await expectUserCanJoinChannel(carol, carolSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            carol,
+            carolSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Mint an nft for dave - he should be able to join now
         await TestERC721.publicMint(testNft3, davesWallet.address as Address)

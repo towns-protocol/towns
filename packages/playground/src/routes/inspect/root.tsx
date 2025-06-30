@@ -44,7 +44,9 @@ export const InspectRoute = () => {
 
     const checks = useMemo(() => checkId(id), [id])
     const isStreamId = checks.some(({ isStreamId }) => isStreamId)
-    const isSpaceStreamId = checks.some(({ name, result }) => name === 'isSpaceStreamId' && result)
+    const isSpaceStreamId = checks.some(
+        ({ name, result }) => name === 'isSpaceStreamId' && result,
+    )
 
     return (
         <GridSidePanel
@@ -60,10 +62,17 @@ export const InspectRoute = () => {
                     </div>
                     <div className="space-y-2">
                         {checks.map(({ name, result, resultIfStrip0x }) => (
-                            <div key={name} className="flex items-center gap-2 font-mono">
+                            <div
+                                key={name}
+                                className="flex items-center gap-2 font-mono"
+                            >
                                 <span>{name}: </span>
                                 <span>
-                                    {result ? '✅' : resultIfStrip0x ? '✅ (strip 0x)' : '❌'}
+                                    {result
+                                        ? '✅'
+                                        : resultIfStrip0x
+                                          ? '✅ (strip 0x)'
+                                          : '❌'}
                                 </span>
                             </div>
                         ))}
@@ -88,7 +97,8 @@ const StreamInfo = ({ streamId }: { streamId: string }) => {
         error,
     } = useQuery({
         queryKey: ['stream', streamId],
-        queryFn: () => sync.riverConnection.call((client) => client.getStream(streamId)),
+        queryFn: () =>
+            sync.riverConnection.call((client) => client.getStream(streamId)),
         enabled: !!streamId,
         refetchOnWindowFocus: false,
     })
@@ -138,9 +148,9 @@ const SpaceInfo = ({ spaceId }: { spaceId: string }) => {
                 return
             }
             const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-            return fetch(`${getStreamMetadataUrl(env)}/space/${spaceAddress}`).then((res) =>
-                res.json(),
-            )
+            return fetch(
+                `${getStreamMetadataUrl(env)}/space/${spaceAddress}`,
+            ).then((res) => res.json())
         },
         enabled: !!spaceId,
         refetchOnWindowFocus: false,
@@ -153,13 +163,17 @@ const SpaceInfo = ({ spaceId }: { spaceId: string }) => {
             {isLoading && <p>Space Loading...</p>}
             {errorFromSpaceOwner && (
                 <div>
-                    <p className="text-red-500">Error fetching space info from space owner</p>
+                    <p className="text-red-500">
+                        Error fetching space info from space owner
+                    </p>
                     <pre>{errorFromSpaceOwner?.message}</pre>
                 </div>
             )}
             {errorFromStreamMetadata && (
                 <div>
-                    <p className="text-red-500">Error fetching from stream metadata</p>
+                    <p className="text-red-500">
+                        Error fetching from stream metadata
+                    </p>
                     <pre>{errorFromStreamMetadata?.message}</pre>
                 </div>
             )}

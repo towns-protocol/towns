@@ -1,5 +1,8 @@
 import { RiverRegistry } from '@towns-protocol/web3'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../../store/store'
 import { dlogger, ExtendedLogger } from '@towns-protocol/dlog'
 import { makeUserStreamId, streamIdAsBytes } from '../../../id'
@@ -34,7 +37,11 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
     ) {
         // pass a default value to the parent class, this is what will be used if the data is not loaded
         // set the load priority to high, this will load first
-        super({ id: '0', urls: { value: '' }, streamExists: {} }, store, LoadPriority.high)
+        super(
+            { id: '0', urls: { value: '' }, streamExists: {} },
+            store,
+            LoadPriority.high,
+        )
         this.log = dlogger(`csb:agent:riverChain:${logId}`)
     }
 
@@ -42,7 +49,9 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
     protected override onLoaded() {
         this.log.info('riverChain onLoaded')
         this.withInfiniteRetries(() => this.fetchUrls())
-        this.withInfiniteRetries(() => this.fetchStreamExists(makeUserStreamId(this.userId)))
+        this.withInfiniteRetries(() =>
+            this.fetchStreamExists(makeUserStreamId(this.userId)),
+        )
     }
 
     stop() {
@@ -53,7 +62,9 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
         // urls is returning the cached data if it exists, otherwise waiting for the data to be fetched
         // if the cached data returns a stale node url, the startup will fail
         // nodes almost never exit the network, so this is a very rare case
-        await this.when((x) => x.data.urls.fetchedAtMs !== undefined, { timeoutMs: 15000 })
+        await this.when((x) => x.data.urls.fetchedAtMs !== undefined, {
+            timeoutMs: 15000,
+        })
         return this.data.urls.value
     }
 
@@ -63,7 +74,10 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
         const streamId = makeUserStreamId(this.userId)
         await this.when((x) => {
             const entry = x.data.streamExists[streamId]
-            return entry && (entry.exists || entry.fetchedAtMs >= this.sessionStartMs)
+            return (
+                entry &&
+                (entry.exists || entry.fetchedAtMs >= this.sessionStartMs)
+            )
         })
         return this.data.streamExists[streamId]?.exists
     }
@@ -91,7 +105,10 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
         return exists
     }
 
-    private withInfiniteRetries<T>(fn: () => Promise<T>, delayMs: number = 5000) {
+    private withInfiniteRetries<T>(
+        fn: () => Promise<T>,
+        delayMs: number = 5000,
+    ) {
         if (this.stopped) {
             return
         }

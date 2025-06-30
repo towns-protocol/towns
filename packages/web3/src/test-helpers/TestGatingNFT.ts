@@ -1,4 +1,10 @@
-import { createTestClient, http, publicActions, walletActions, parseEther } from 'viem'
+import {
+    createTestClient,
+    http,
+    publicActions,
+    walletActions,
+    parseEther,
+} from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
 
@@ -52,7 +58,10 @@ export async function getTestGatingNFTContractAddress(): Promise<Address> {
     return await getContractAddress('TestGatingNFT')
 }
 
-async function publicMint(nftName: string, toAddress: Address): Promise<number> {
+async function publicMint(
+    nftName: string,
+    toAddress: Address,
+): Promise<number> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({

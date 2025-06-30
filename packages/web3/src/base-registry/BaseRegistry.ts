@@ -26,12 +26,18 @@ export class BaseRegistry {
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.nodeOperator = new INodeOperatorShim(config.addresses.baseRegistry, provider)
+        this.nodeOperator = new INodeOperatorShim(
+            config.addresses.baseRegistry,
+            provider,
+        )
         this.entitlementChecker = new IEntitlementCheckerShim(
             config.addresses.baseRegistry,
             provider,
         )
-        this.spaceDelegation = new ISpaceDelegationShim(config.addresses.baseRegistry, provider)
+        this.spaceDelegation = new ISpaceDelegationShim(
+            config.addresses.baseRegistry,
+            provider,
+        )
         this.rewardsDistributionV2 = new RewardsDistributionV2Shim(
             config.addresses.baseRegistry,
             provider,
@@ -46,8 +52,8 @@ export class BaseRegistry {
 
     async getOperators(): Promise<BaseOperator[]> {
         const operatorAddresses = await this.nodeOperator.read.getOperators()
-        const operatorStatusPromises = operatorAddresses.map((operatorAddress) =>
-            this.getOperatorStatus(operatorAddress),
+        const operatorStatusPromises = operatorAddresses.map(
+            (operatorAddress) => this.getOperatorStatus(operatorAddress),
         )
         const operatorsStatus = await Promise.all(operatorStatusPromises)
         const operators = operatorAddresses.map((operatorAddress, index) => ({
@@ -70,7 +76,9 @@ export class BaseRegistry {
         const nodeCountBigInt = await this.getNodeCount()
         const nodeCount = Number(nodeCountBigInt)
         const zeroToNodeCount = Array.from(Array(nodeCount).keys())
-        const nodeAtIndexPromises = zeroToNodeCount.map((index) => this.getNodeAtIndex(index))
+        const nodeAtIndexPromises = zeroToNodeCount.map((index) =>
+            this.getNodeAtIndex(index),
+        )
         const nodes = await Promise.all(nodeAtIndexPromises)
 
         return nodes
@@ -79,7 +87,9 @@ export class BaseRegistry {
     public async getNodesWithOperators(): Promise<BaseNodeWithOperator[]> {
         const operators = await this.getOperators()
         const nodesByOperatorPromises = operators.map((operator) =>
-            this.entitlementChecker.read.getNodesByOperator(operator.operatorAddress),
+            this.entitlementChecker.read.getNodesByOperator(
+                operator.operatorAddress,
+            ),
         )
         const nodesByOperator = await Promise.all(nodesByOperatorPromises)
         const operatorsWithNodes = operators.map((operator, index) => ({

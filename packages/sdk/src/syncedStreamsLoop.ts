@@ -48,7 +48,11 @@ export enum SyncState {
  */
 export const stateConstraints: Record<SyncState, Set<SyncState>> = {
     [SyncState.NotSyncing]: new Set([SyncState.Starting]),
-    [SyncState.Starting]: new Set([SyncState.Syncing, SyncState.Retrying, SyncState.Canceling]),
+    [SyncState.Starting]: new Set([
+        SyncState.Syncing,
+        SyncState.Retrying,
+        SyncState.Canceling,
+    ]),
     [SyncState.Syncing]: new Set([SyncState.Canceling, SyncState.Retrying]),
     [SyncState.Retrying]: new Set([
         SyncState.Starting,
@@ -91,7 +95,10 @@ export interface PingInfo {
 }
 export class SyncedStreamsLoop {
     // mapping of stream id to stream
-    private readonly streams: Map<string, { syncCookie: SyncCookie; stream: ISyncedStream }>
+    private readonly streams: Map<
+        string,
+        { syncCookie: SyncCookie; stream: ISyncedStream }
+    >
     // loggers
     private readonly logSync: DLogger
     private readonly logDebug: DLogger
@@ -150,7 +157,9 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
+        private streamOpts:
+            | { useModifySync?: boolean; useSharedSyncer?: boolean }
+            | undefined,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -161,7 +170,9 @@ export class SyncedStreamsLoop {
             ]),
         )
         this.logDebug = dlog('csb:cl:sync:debug').extend(logNamespace)
-        this.logSync = dlog('csb:cl:sync', { defaultEnabled: true }).extend(logNamespace)
+        this.logSync = dlog('csb:cl:sync', { defaultEnabled: true }).extend(
+            logNamespace,
+        )
         this.logError = dlogError('csb:cl:sync:stream').extend(logNamespace)
     }
 
@@ -184,7 +195,10 @@ export class SyncedStreamsLoop {
 
     public start() {
         if (isMobileSafari()) {
-            document.addEventListener('visibilitychange', this.onMobileSafariBackgrounded)
+            document.addEventListener(
+                'visibilitychange',
+                this.onMobileSafariBackgrounded,
+            )
         }
 
         this.createSyncLoop()
@@ -213,7 +227,9 @@ export class SyncedStreamsLoop {
                 this.log('stopSync syncLoop', syncLoop)
                 this.log('stopSync syncId', syncId)
                 const result = await Promise.allSettled([
-                    syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
+                    syncId
+                        ? await this.rpcClient.cancelSync({ syncId })
+                        : undefined,
                     syncLoop,
                 ])
                 this.log('syncLoop awaited', syncId, result)
@@ -223,15 +239,24 @@ export class SyncedStreamsLoop {
             }
             this.log('sync STOP DONE', syncId)
         } else {
-            this.log(`WARN: stopSync called from invalid state ${this.syncState}`)
+            this.log(
+                `WARN: stopSync called from invalid state ${this.syncState}`,
+            )
         }
         if (isMobileSafari()) {
-            document.removeEventListener('visibilitychange', this.onMobileSafariBackgrounded)
+            document.removeEventListener(
+                'visibilitychange',
+                this.onMobileSafariBackgrounded,
+            )
         }
     }
 
     // adds stream to the sync subscription
-    public addStreamToSync(streamId: string, syncCookie: SyncCookie, stream: ISyncedStream) {
+    public addStreamToSync(
+        streamId: string,
+        syncCookie: SyncCookie,
+        stream: ISyncedStream,
+    ) {
         this.logDebug('addStreamToSync', streamId)
         if (this.streams.has(streamId)) {
             this.log('stream already in sync', streamId)
@@ -250,7 +275,9 @@ export class SyncedStreamsLoop {
     }
 
     // remove stream from the sync subsbscription
-    public async removeStreamFromSync(inStreamId: string | Uint8Array): Promise<void> {
+    public async removeStreamFromSync(
+        inStreamId: string | Uint8Array,
+    ): Promise<void> {
         const streamId = streamIdAsString(inStreamId)
         const streamRecord = this.streams.get(streamId)
         if (!streamRecord) {
@@ -270,7 +297,10 @@ export class SyncedStreamsLoop {
             this.log('stream already in pending delete', streamId)
             return
         }
-        if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
+        if (
+            this.syncState === SyncState.Starting ||
+            this.syncState === SyncState.Retrying
+        ) {
             await this.waitForSyncingState()
         }
         if (this.syncState === SyncState.Syncing) {
@@ -294,7 +324,9 @@ export class SyncedStreamsLoop {
 
     public onNetworkStatusChanged(isOnline: boolean) {
         if (isOnline) {
-            this.log('back online, release retry wait', { syncState: this.syncState })
+            this.log('back online, release retry wait', {
+                syncState: this.syncState,
+            })
             this.releaseRetryWait?.()
         }
     }
@@ -334,7 +366,9 @@ export class SyncedStreamsLoop {
                     this.pendingStreamsToDelete = []
                     const syncCookies: SyncCookie[] = []
                     if (this.streamOpts?.useModifySync == true) {
-                        this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
+                        this.pendingSyncCookies.push(
+                            ...Array.from(this.streams.keys()),
+                        )
                     } else {
                         syncCookies.push(
                             ...Array.from(this.streams.entries())
@@ -350,7 +384,9 @@ export class SyncedStreamsLoop {
                                     return aPriority - bPriority
                                 })
                                 .map((streamRecord) => {
-                                    this.inFlightSyncCookies.add(streamRecord[0])
+                                    this.inFlightSyncCookies.add(
+                                        streamRecord[0],
+                                    )
                                     return streamRecord[1].syncCookie
                                 }),
                         )
@@ -392,17 +428,19 @@ export class SyncedStreamsLoop {
                             this.syncState === SyncState.Syncing ||
                             this.syncState === SyncState.Starting
                         ) {
-                            const interruptSyncPromise = new Promise<void>((resolve, reject) => {
-                                this.forceStopSyncStreams = () => {
-                                    this.log('forceStopSyncStreams called')
-                                    resolve()
-                                }
-                                this.interruptSync = (e: unknown) => {
-                                    this.logError('sync interrupted', e)
-                                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                                    reject(e)
-                                }
-                            })
+                            const interruptSyncPromise = new Promise<void>(
+                                (resolve, reject) => {
+                                    this.forceStopSyncStreams = () => {
+                                        this.log('forceStopSyncStreams called')
+                                        resolve()
+                                    }
+                                    this.interruptSync = (e: unknown) => {
+                                        this.logError('sync interrupted', e)
+                                        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                                        reject(e)
+                                    }
+                                },
+                            )
                             const { value, done } = await Promise.race([
                                 iterator.next(),
                                 interruptSyncPromise.then(() => ({
@@ -443,12 +481,18 @@ export class SyncedStreamsLoop {
                                     this.checkStartTicking()
                                     break
                                 case SyncOp.SYNC_PONG:
-                                    pingStats = this.pingInfo.nonces[value.pongNonce]
+                                    pingStats =
+                                        this.pingInfo.nonces[value.pongNonce]
                                     if (pingStats) {
                                         pingStats.receivedAt = performance.now()
-                                        pingStats.duration = pingStats.receivedAt - pingStats.pingAt
+                                        pingStats.duration =
+                                            pingStats.receivedAt -
+                                            pingStats.pingAt
                                     } else {
-                                        this.logError('pong nonce not found', value.pongNonce)
+                                        this.logError(
+                                            'pong nonce not found',
+                                            value.pongNonce,
+                                        )
                                         this.printNonces()
                                     }
                                     break
@@ -475,7 +519,9 @@ export class SyncedStreamsLoop {
                 })
                 this.stopPing()
                 clearTimeout(this.streamSyncStalled)
-                if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
+                if (
+                    stateConstraints[this.syncState].has(SyncState.NotSyncing)
+                ) {
                     this.setSyncState(SyncState.NotSyncing)
                     this.streams.forEach((streamRecord) => {
                         streamRecord.stream.stop()
@@ -503,7 +549,9 @@ export class SyncedStreamsLoop {
         this.log('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
         if (!this.isMobileSafariBackgrounded) {
             // if foregrounded, attempt to retry
-            this.log('foregrounded, release retry wait', { syncState: this.syncState })
+            this.log('foregrounded, release retry wait', {
+                syncState: this.syncState,
+            })
             this.releaseRetryWait?.()
             this.checkStartTicking()
         }
@@ -529,10 +577,12 @@ export class SyncedStreamsLoop {
         const tick = this.tick()
         this.inProgressTick = tick
         queueMicrotask(() => {
-            tick.catch((e) => this.logError('ProcessTick Error', e)).finally(() => {
-                this.inProgressTick = undefined
-                setTimeout(() => this.checkStartTicking())
-            })
+            tick.catch((e) => this.logError('ProcessTick Error', e)).finally(
+                () => {
+                    this.inProgressTick = undefined
+                    setTimeout(() => this.checkStartTicking())
+                },
+            )
         })
     }
 
@@ -548,11 +598,20 @@ export class SyncedStreamsLoop {
             ) {
                 const syncId = this.syncId
                 this.pendingSyncCookies.sort((a, b) => {
-                    const aPriority = priorityFromStreamId(a, this.highPriorityIds)
-                    const bPriority = priorityFromStreamId(b, this.highPriorityIds)
+                    const aPriority = priorityFromStreamId(
+                        a,
+                        this.highPriorityIds,
+                    )
+                    const bPriority = priorityFromStreamId(
+                        b,
+                        this.highPriorityIds,
+                    )
                     return aPriority - bPriority
                 })
-                const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
+                const streamsToAdd = this.pendingSyncCookies.splice(
+                    0,
+                    this.MAX_IN_FLIGHT_COOKIES,
+                )
                 const streamsToDelete = pendingStreamsToDelete.splice(
                     0,
                     this.MAX_IN_FLIGHT_STREAMS_TO_DELETE,
@@ -567,7 +626,9 @@ export class SyncedStreamsLoop {
                     inFlight: this.inFlightSyncCookies.size,
                 })
                 streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
-                const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
+                const syncPos = streamsToAdd.map(
+                    (x) => this.streams.get(x)?.syncCookie,
+                )
                 try {
                     const resp = await this.rpcClient.modifySync({
                         syncId,
@@ -575,14 +636,20 @@ export class SyncedStreamsLoop {
                         removeStreams: streamsToDelete.map(streamIdAsBytes),
                     })
                     if (resp.removals.length > 0) {
-                        this.logError('modifySync removal errors', resp.removals)
+                        this.logError(
+                            'modifySync removal errors',
+                            resp.removals,
+                        )
                     }
                     if (resp.adds.length > 0) {
                         this.logError('modifySync addition errors', resp.adds)
                     }
                 } catch (err) {
                     this.logError('modifySync error', err)
-                    if (this.syncId === syncId && this.syncState === SyncState.Syncing) {
+                    if (
+                        this.syncId === syncId &&
+                        this.syncState === SyncState.Syncing
+                    ) {
                         streamsToAdd.forEach((x) => {
                             if (this.inFlightSyncCookies.delete(x)) {
                                 this.pendingSyncCookies.push(x)
@@ -608,15 +675,23 @@ export class SyncedStreamsLoop {
             // listen for streamSyncStateChange event from client emitter
             return new Promise<void>((resolve) => {
                 const onStreamSyncStateChange = (syncState: SyncState) => {
-                    if (!stateConstraints[this.syncState].has(SyncState.Syncing)) {
+                    if (
+                        !stateConstraints[this.syncState].has(SyncState.Syncing)
+                    ) {
                         this.log('waitForSyncing complete', syncState)
-                        this.clientEmitter.off('streamSyncStateChange', onStreamSyncStateChange)
+                        this.clientEmitter.off(
+                            'streamSyncStateChange',
+                            onStreamSyncStateChange,
+                        )
                         resolve()
                     } else {
                         this.log('waitForSyncing continues', syncState)
                     }
                 }
-                this.clientEmitter.on('streamSyncStateChange', onStreamSyncStateChange)
+                this.clientEmitter.on(
+                    'streamSyncStateChange',
+                    onStreamSyncStateChange,
+                )
             })
         }
     }
@@ -686,13 +761,19 @@ export class SyncedStreamsLoop {
                 }
             })
         } else {
-            this.logError('attemptRetry: invalid state transition', this.syncState)
+            this.logError(
+                'attemptRetry: invalid state transition',
+                this.syncState,
+            )
             // throw new Error('attemptRetry from invalid state')
         }
     }
 
     private syncStarted(syncId: string): void {
-        if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
+        if (
+            !this.syncId &&
+            stateConstraints[this.syncState].has(SyncState.Syncing)
+        ) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
             // On sucessful sync, reset retryCount
@@ -738,7 +819,10 @@ export class SyncedStreamsLoop {
         }
         const cookie = stream.syncCookie
         if (!cookie) {
-            this.logError('syncDown: syncCookie not found', streamIdAsString(streamId))
+            this.logError(
+                'syncDown: syncCookie not found',
+                streamIdAsString(streamId),
+            )
             return
         }
         const syncId = this.syncId
@@ -749,7 +833,10 @@ export class SyncedStreamsLoop {
                 syncPos: cookie,
             })
             .catch((err) => {
-                const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
+                const retryDelay = Math.min(
+                    1000 * Math.pow(2, retryCount),
+                    60000,
+                )
                 this.logError(
                     'syncDown: addStreamToSync error',
                     err,
@@ -772,14 +859,20 @@ export class SyncedStreamsLoop {
         if (this.syncState === SyncState.Canceling) {
             this.log('server acknowledged our close attempt', this.syncId)
         } else {
-            this.log('server cancelled unepexectedly, go through the retry loop', this.syncId)
+            this.log(
+                'server cancelled unepexectedly, go through the retry loop',
+                this.syncId,
+            )
             this.setSyncState(SyncState.Retrying)
         }
     }
 
     private async onUpdate(res: SyncStreamsResponse): Promise<void> {
         // Until we've completed canceling, accept responses
-        if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
+        if (
+            this.syncState === SyncState.Syncing ||
+            this.syncState === SyncState.Canceling
+        ) {
             if (this.syncId != res.syncId) {
                 throw new Error(
                     `syncId mismatch; has:'${this.syncId}', got:${res.syncId}'. Throw away update.`,
@@ -800,7 +893,9 @@ export class SyncedStreamsLoop {
                         streamAndCookie.startSyncCookie,
                     )
                     */
-                    const streamIdBytes = syncStream.nextSyncCookie?.streamId ?? Uint8Array.from([])
+                    const streamIdBytes =
+                        syncStream.nextSyncCookie?.streamId ??
+                        Uint8Array.from([])
                     const streamId = streamIdAsString(streamIdBytes)
                     if (this.inFlightSyncCookies.has(streamId)) {
                         this.inFlightSyncCookies.delete(streamId)
@@ -814,12 +909,16 @@ export class SyncedStreamsLoop {
                                 this.inFlightSyncCookies.size === 0 &&
                                 this.syncStartedAt !== undefined
                             ) {
-                                const duration = performance.now() - this.syncStartedAt
+                                const duration =
+                                    performance.now() - this.syncStartedAt
                                 this.log('sync completed in', duration, 'ms')
-                                this.clientEmitter.emit('streamSyncBatchCompleted', {
-                                    duration,
-                                    count: this.processedStreamCount,
-                                })
+                                this.clientEmitter.emit(
+                                    'streamSyncBatchCompleted',
+                                    {
+                                        duration,
+                                        count: this.processedStreamCount,
+                                    },
+                                )
                                 this.syncStartedAt = undefined
                                 this.processedStreamCount = 0
                                 clearTimeout(this.streamSyncStalled)
@@ -831,11 +930,18 @@ export class SyncedStreamsLoop {
                                 clearTimeout(this.streamSyncStalled)
                                 this.streamSyncStalled = setTimeout(() => {
                                     if (this.syncStartedAt) {
-                                        const duration = performance.now() - this.syncStartedAt
-                                        this.logError(`sync timed out after ${duration}ms`)
-                                        this.clientEmitter.emit('streamSyncTimedOut', {
-                                            duration,
-                                        })
+                                        const duration =
+                                            performance.now() -
+                                            this.syncStartedAt
+                                        this.logError(
+                                            `sync timed out after ${duration}ms`,
+                                        )
+                                        this.clientEmitter.emit(
+                                            'streamSyncTimedOut',
+                                            {
+                                                duration,
+                                            },
+                                        )
                                     }
                                     this.streamSyncStalled = undefined
                                 }, 10_000)
@@ -847,10 +953,20 @@ export class SyncedStreamsLoop {
                     if (streamRecord === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')
                     } else if (syncStream.syncReset) {
-                        this.logDebug('initStream from sync reset', streamId, 'RESET')
-                        const response = await unpackStream(syncStream, this.unpackEnvelopeOpts)
-                        streamRecord.syncCookie = response.streamAndCookie.nextSyncCookie
-                        await streamRecord.stream.initializeFromResponse(response)
+                        this.logDebug(
+                            'initStream from sync reset',
+                            streamId,
+                            'RESET',
+                        )
+                        const response = await unpackStream(
+                            syncStream,
+                            this.unpackEnvelopeOpts,
+                        )
+                        streamRecord.syncCookie =
+                            response.streamAndCookie.nextSyncCookie
+                        await streamRecord.stream.initializeFromResponse(
+                            response,
+                        )
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,
@@ -958,9 +1074,14 @@ export class SyncedStreamsLoop {
         }
     }
 
-    private logInvalidStateAndReturnError(currentState: SyncState, newState: SyncState): Error {
+    private logInvalidStateAndReturnError(
+        currentState: SyncState,
+        newState: SyncState,
+    ): Error {
         this.log(`invalid state transition ${currentState} -> ${newState}`)
-        return new Error(`invalid state transition ${currentState} -> ${newState}`)
+        return new Error(
+            `invalid state transition ${currentState} -> ${newState}`,
+        )
     }
 
     private log(...args: unknown[]): void {
@@ -996,7 +1117,10 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
     if (highPriorityIds.size > 0) {
         const firstHPI = Array.from(highPriorityIds.values())[0]
         if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
-            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+            if (
+                isDMChannelStreamId(streamId) ||
+                isGDMChannelStreamId(streamId)
+            ) {
                 return 4
             }
         }

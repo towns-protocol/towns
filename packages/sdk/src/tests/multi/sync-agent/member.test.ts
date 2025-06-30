@@ -35,7 +35,9 @@ describe('member.test.ts', () => {
     test('update ensAddress', async () => {
         expect(bob.ensAddress).toBe(undefined)
         await bob.setEnsAddress('0xbB29f0d47678BBc844f3B87F527aBBbab258F051')
-        expect(bob.ensAddress).toBe('0xbB29f0d47678BBc844f3B87F527aBBbab258F051')
+        expect(bob.ensAddress).toBe(
+            '0xbB29f0d47678BBc844f3B87F527aBBbab258F051',
+        )
     })
     test('update nft', async () => {
         expect(bob.nft).toBe(undefined)

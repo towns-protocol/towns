@@ -17,12 +17,19 @@ const log = dlog('csb:test:spaceWithUserEntitlements')
 
 describe('spaceWithUserEntitlements', () => {
     test('user entitlement pass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: ['alice'],
-                ruleData: NoopRuleData,
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: ['alice'],
+            ruleData: NoopRuleData,
+        })
 
         await expectUserCanJoin(
             spaceId,
@@ -42,12 +49,18 @@ describe('spaceWithUserEntitlements', () => {
     })
 
     test('user entitlement fail', async () => {
-        const { alice, bob, aliceSpaceDapp, alicesWallet, aliceProvider, spaceId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: ['carol'], // not alice!
-                ruleData: NoopRuleData,
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            alicesWallet,
+            aliceProvider,
+            spaceId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: ['carol'], // not alice!
+            ruleData: NoopRuleData,
+        })
 
         // Alice cannot join the space in the contract.
         const { issued } = await aliceSpaceDapp.joinSpace(
@@ -68,7 +81,12 @@ describe('spaceWithUserEntitlements', () => {
         )
 
         // Alice cannot join the space on the stream node.
-        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
+        await expectUserCannotJoinSpace(
+            spaceId,
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+        )
 
         // Kill the clients
         const doneStart = Date.now()
@@ -94,7 +112,11 @@ describe('spaceWithUserEntitlements', () => {
             users: ['carol'], // not alice!
             ruleData: NoopRuleData,
         })
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         // Alice should be able to join the space on the stream node.
         log('Alice should be able to join space', spaceId)
@@ -134,7 +156,11 @@ describe('spaceWithUserEntitlements', () => {
             ruleData: NoopRuleData,
         })
 
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+        await linkWallets(
+            carolSpaceDapp,
+            carolProvider.wallet,
+            aliceProvider.wallet,
+        )
 
         // Alice should be able to join the space on the stream node.
         log('Alice should be able to join space', spaceId)

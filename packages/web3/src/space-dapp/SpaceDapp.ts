@@ -23,9 +23,19 @@ import {
 import { SpaceInfo } from '../types/types'
 
 import { computeDelegatorsForProvider } from '../delegate-registry/DelegateRegistry'
-import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import {
+    BigNumber,
+    BytesLike,
+    ContractReceipt,
+    ContractTransaction,
+    ethers,
+} from 'ethers'
 import { LOCALHOST_CHAIN_ID } from '../utils/Web3Constants'
-import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils/ut'
+import {
+    EVERYONE_ADDRESS,
+    stringifyChannelMetadataJSON,
+    NoEntitledWalletError,
+} from '../utils/ut'
 import { IRolesBase } from '../space/IRolesShim'
 import { Space } from '../space/Space'
 import { SpaceRegistrar } from '../space-registrar/SpaceRegistrar'
@@ -132,7 +142,10 @@ function newChannelEntitlementEvaluationRequest(
     return new EntitlementRequest(spaceId, channelId, userId, permission)
 }
 
-function newSpaceEntitlementRequest(spaceId: string, permission: Permission): EntitlementRequest {
+function newSpaceEntitlementRequest(
+    spaceId: string,
+    permission: Permission,
+): EntitlementRequest {
     return new EntitlementRequest(spaceId, '', '', permission)
 }
 
@@ -168,10 +181,22 @@ export class SpaceDapp {
     public readonly spaceOwner: SpaceOwner
     public readonly townsToken?: TownsToken
 
-    public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
-    public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
-    public readonly entitlementEvaluationCache: EntitlementCache<EntitlementRequest, boolean>
-    public readonly bannedTokenIdsCache: SimpleCache<BannedTokenIdsRequest, ethers.BigNumber[]>
+    public readonly entitlementCache: EntitlementCache<
+        EntitlementRequest,
+        EntitlementData[]
+    >
+    public readonly entitledWalletCache: EntitlementCache<
+        EntitlementRequest,
+        EntitledWallet
+    >
+    public readonly entitlementEvaluationCache: EntitlementCache<
+        EntitlementRequest,
+        boolean
+    >
+    public readonly bannedTokenIdsCache: SimpleCache<
+        BannedTokenIdsRequest,
+        ethers.BigNumber[]
+    >
     public readonly ownerOfTokenCache: SimpleCache<OwnerOfTokenRequest, string>
     public readonly isBannedTokenCache: SimpleCache<IsTokenBanned, boolean>
 
@@ -189,14 +214,20 @@ export class SpaceDapp {
         )
         this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
         if (config.addresses.utils.towns) {
-            this.townsToken = new TownsToken(config.addresses.utils.towns, provider)
+            this.townsToken = new TownsToken(
+                config.addresses.utils.towns,
+                provider,
+            )
         }
         this.airdrop = new RiverAirdropDapp(config, provider)
 
         // For RPC providers that pool for events, we need to set the polling interval to a lower value
         // so that we don't miss events that may be emitted in between polling intervals. The Ethers
         // default is 4000ms, which is based on the assumption of 12s mainnet blocktimes.
-        if ('pollingInterval' in provider && typeof provider.pollingInterval === 'number') {
+        if (
+            'pollingInterval' in provider &&
+            typeof provider.pollingInterval === 'number'
+        ) {
             provider.pollingInterval = 250
         }
 
@@ -215,7 +246,9 @@ export class SpaceDapp {
             negativeCacheTTLSeconds: 2,
         })
         this.entitledWalletCache = new EntitlementCache(entitlementCacheOpts)
-        this.entitlementEvaluationCache = new EntitlementCache(entitlementCacheOpts)
+        this.entitlementEvaluationCache = new EntitlementCache(
+            entitlementCacheOpts,
+        )
         this.bannedTokenIdsCache = new SimpleCache(bannedCacheOpts)
         this.ownerOfTokenCache = new SimpleCache(bannedCacheOpts)
         this.isBannedTokenCache = new SimpleCache(bannedCacheOpts)
@@ -233,7 +266,9 @@ export class SpaceDapp {
         }
 
         // Legacy spaces do not have RuleEntitlementV2
-        const maybeShim = await space.findEntitlementByType(EntitlementModuleType.RuleEntitlementV2)
+        const maybeShim = await space.findEntitlementByType(
+            EntitlementModuleType.RuleEntitlementV2,
+        )
         const isLegacy = maybeShim === null
         this.isLegacySpaceCache.set(spaceId, isLegacy)
         return isLegacy
@@ -252,7 +287,11 @@ export class SpaceDapp {
         }
         const channelId = ensureHexPrefix(channelNetworkId)
         return wrapTransaction(
-            () => space.Channels.write(signer).addRoleToChannel(channelId, roleId),
+            () =>
+                space.Channels.write(signer).addRoleToChannel(
+                    channelId,
+                    roleId,
+                ),
             txnOpts,
         )
     }
@@ -267,9 +306,14 @@ export class SpaceDapp {
         }
 
         const parsedLogs = await this.parseSpaceLogs(spaceId, receipt.logs)
-        const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
+        const roleCreatedEvent = parsedLogs.find(
+            (log) => log?.name === 'RoleCreated',
+        )
         if (!roleCreatedEvent) {
-            return { roleId: undefined, error: new Error('RoleCreated event not found') }
+            return {
+                roleId: undefined,
+                error: new Error('RoleCreated event not found'),
+            }
         }
         const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
         return { roleId, error: undefined }
@@ -290,7 +334,10 @@ export class SpaceDapp {
             .then((tokens) => tokens[0])
 
         // Call ban
-        const tx = await wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
+        const tx = await wrapTransaction(
+            () => space.Banning.write(signer).ban(token),
+            txnOpts,
+        )
         this.updateCacheAfterBanOrUnBan(spaceId, token)
         return tx
     }
@@ -310,18 +357,27 @@ export class SpaceDapp {
             .then((tokens) => tokens[0])
 
         // Call unban
-        const tx = await wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
+        const tx = await wrapTransaction(
+            () => space.Banning.write(signer).unban(token),
+            txnOpts,
+        )
         this.updateCacheAfterBanOrUnBan(spaceId, token)
         return tx
     }
 
-    public updateCacheAfterBanOrUnBan(spaceId: string, tokenId: ethers.BigNumber) {
+    public updateCacheAfterBanOrUnBan(
+        spaceId: string,
+        tokenId: ethers.BigNumber,
+    ) {
         this.bannedTokenIdsCache.remove(new BannedTokenIdsRequest(spaceId))
         this.ownerOfTokenCache.remove(new OwnerOfTokenRequest(spaceId, tokenId))
         this.isBannedTokenCache.remove(new IsTokenBanned(spaceId, tokenId))
     }
 
-    public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
+    public async walletAddressIsBanned(
+        spaceId: string,
+        walletAddress: string,
+    ): Promise<boolean> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -376,20 +432,24 @@ export class SpaceDapp {
         // Fetch non-cached owners
         if (tokenIdsToFetch.length > 0 && space) {
             const calls = tokenIdsToFetch.map((tokenId) =>
-                space.ERC721A.interface.encodeFunctionData('ownerOf', [tokenId]),
+                space.ERC721A.interface.encodeFunctionData('ownerOf', [
+                    tokenId,
+                ]),
             )
 
             try {
-                const results = await space.Multicall.read.callStatic.multicall(calls)
+                const results =
+                    await space.Multicall.read.callStatic.multicall(calls)
                 results.forEach((resultData, index) => {
                     const tokenId = tokenIdsToFetch[index]
                     // Attempt to decode each result
                     try {
                         if (resultData && resultData !== '0x') {
-                            const ownerAddress = space.ERC721A.interface.decodeFunctionResult(
-                                'ownerOf',
-                                resultData,
-                            )[0] as string
+                            const ownerAddress =
+                                space.ERC721A.interface.decodeFunctionResult(
+                                    'ownerOf',
+                                    resultData,
+                                )[0] as string
 
                             if (ethers.utils.isAddress(ownerAddress)) {
                                 ownerMap.set(tokenId.toString(), ownerAddress)
@@ -446,7 +506,10 @@ export class SpaceDapp {
             longDescription: params.longDescription ?? '',
         }
         return wrapTransaction(
-            () => this.spaceRegistrar.LegacySpaceArchitect.write(signer).createSpace(spaceInfo),
+            () =>
+                this.spaceRegistrar.LegacySpaceArchitect.write(
+                    signer,
+                ).createSpace(spaceInfo),
             txnOpts,
         )
     }
@@ -457,7 +520,9 @@ export class SpaceDapp {
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         return wrapTransaction(() => {
-            const createSpaceFunction = this.spaceRegistrar.CreateSpace.write(signer)[
+            const createSpaceFunction = this.spaceRegistrar.CreateSpace.write(
+                signer,
+            )[
                 'createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))'
             ] as (arg: any) => Promise<ContractTransaction>
 
@@ -525,7 +590,9 @@ export class SpaceDapp {
 
         return wrapTransaction(
             () =>
-                space.Channels.write(signer).createChannelWithOverridePermissions(
+                space.Channels.write(
+                    signer,
+                ).createChannelWithOverridePermissions(
                     channelId,
                     stringifyChannelMetadataJSON({
                         name: channelName,
@@ -550,9 +617,18 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const entitlements = await createLegacyEntitlementStruct(space, users, ruleData)
+        const entitlements = await createLegacyEntitlementStruct(
+            space,
+            users,
+            ruleData,
+        )
         return wrapTransaction(
-            () => space.Roles.write(signer).createRole(roleName, permissions, entitlements),
+            () =>
+                space.Roles.write(signer).createRole(
+                    roleName,
+                    permissions,
+                    entitlements,
+                ),
             txnOpts,
         )
     }
@@ -570,9 +646,18 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const entitlements = await createEntitlementStruct(space, users, ruleData)
+        const entitlements = await createEntitlementStruct(
+            space,
+            users,
+            ruleData,
+        )
         return wrapTransaction(
-            () => space.Roles.write(signer).createRole(roleName, permissions, entitlements),
+            () =>
+                space.Roles.write(signer).createRole(
+                    roleName,
+                    permissions,
+                    entitlements,
+                ),
             txnOpts,
         )
     }
@@ -587,7 +672,10 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return wrapTransaction(() => space.Roles.write(signer).removeRole(roleId), txnOpts)
+        return wrapTransaction(
+            () => space.Roles.write(signer).removeRole(roleId),
+            txnOpts,
+        )
     }
 
     public async getChannels(spaceId: string): Promise<ChannelMetadata[]> {
@@ -628,7 +716,10 @@ export class SpaceDapp {
         return space.getChannel(channelId)
     }
 
-    public async getPermissionsByRoleId(spaceId: string, roleId: number): Promise<Permission[]> {
+    public async getPermissionsByRoleId(
+        spaceId: string,
+        roleId: number,
+    ): Promise<Permission[]> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -636,7 +727,10 @@ export class SpaceDapp {
         return space.getPermissionsByRoleId(roleId)
     }
 
-    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
+    public async getRole(
+        spaceId: string,
+        roleId: number,
+    ): Promise<RoleDetails | null> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -649,7 +743,8 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const roles: IRolesBase.RoleStructOutput[] = await space.Roles.read.getRoles()
+        const roles: IRolesBase.RoleStructOutput[] =
+            await space.Roles.read.getRoles()
         return roles.map((role) => ({
             roleId: role.id.toNumber(),
             name: role.name,
@@ -691,16 +786,21 @@ export class SpaceDapp {
             userEntitlement: undefined,
         }))
 
-        const [userEntitlementShim, ruleEntitlementShim, ruleEntitlementV2Shim] =
-            (await Promise.all([
-                space.findEntitlementByType(EntitlementModuleType.UserEntitlement),
-                space.findEntitlementByType(EntitlementModuleType.RuleEntitlement),
-                space.findEntitlementByType(EntitlementModuleType.RuleEntitlementV2),
-            ])) as [
-                UserEntitlementShim | null,
-                RuleEntitlementShim | null,
-                RuleEntitlementV2Shim | null,
-            ]
+        const [
+            userEntitlementShim,
+            ruleEntitlementShim,
+            ruleEntitlementV2Shim,
+        ] = (await Promise.all([
+            space.findEntitlementByType(EntitlementModuleType.UserEntitlement),
+            space.findEntitlementByType(EntitlementModuleType.RuleEntitlement),
+            space.findEntitlementByType(
+                EntitlementModuleType.RuleEntitlementV2,
+            ),
+        ])) as [
+            UserEntitlementShim | null,
+            RuleEntitlementShim | null,
+            RuleEntitlementV2Shim | null,
+        ]
         for (let i = 0; i < entitlementData.length; i++) {
             const entitlement = entitlementData[i]
             if (
@@ -708,7 +808,8 @@ export class SpaceDapp {
                 EntitlementModuleType.RuleEntitlement
             ) {
                 if (ruleEntitlementShim)
-                    entitlements[i].entitlementType = EntitlementModuleType.RuleEntitlement
+                    entitlements[i].entitlementType =
+                        EntitlementModuleType.RuleEntitlement
                 const decodedData = ruleEntitlementShim?.decodeGetRuleData(
                     entitlement.entitlementData,
                 )
@@ -722,7 +823,8 @@ export class SpaceDapp {
                 (entitlement.entitlementType as EntitlementModuleType) ===
                 EntitlementModuleType.RuleEntitlementV2
             ) {
-                entitlements[i].entitlementType = EntitlementModuleType.RuleEntitlementV2
+                entitlements[i].entitlementType =
+                    EntitlementModuleType.RuleEntitlementV2
                 const decodedData = ruleEntitlementV2Shim?.decodeGetRuleData(
                     entitlement.entitlementData,
                 )
@@ -736,7 +838,8 @@ export class SpaceDapp {
                 (entitlement.entitlementType as EntitlementModuleType) ===
                 EntitlementModuleType.UserEntitlement
             ) {
-                entitlements[i].entitlementType = EntitlementModuleType.UserEntitlement
+                entitlements[i].entitlementType =
+                    EntitlementModuleType.UserEntitlement
                 const decodedData = userEntitlementShim?.decodeGetAddresses(
                     entitlement.entitlementData,
                 )
@@ -758,10 +861,11 @@ export class SpaceDapp {
         const { value } = await this.entitlementCache.executeUsingCache(
             newSpaceEntitlementRequest(spaceId, permission),
             async (request) => {
-                const entitlementData = await this.getEntitlementsForPermissionUncached(
-                    request.spaceId,
-                    request.permission,
-                )
+                const entitlementData =
+                    await this.getEntitlementsForPermissionUncached(
+                        request.spaceId,
+                        request.permission,
+                    )
                 return new EntitlementDataCacheResult(entitlementData)
             },
         )
@@ -778,7 +882,9 @@ export class SpaceDapp {
         }
 
         const entitlementData =
-            await space.EntitlementDataQueryable.read.getEntitlementDataByPermission(permission)
+            await space.EntitlementDataQueryable.read.getEntitlementDataByPermission(
+                permission,
+            )
 
         return await this.decodeEntitlementData(space, entitlementData)
     }
@@ -791,11 +897,12 @@ export class SpaceDapp {
         const { value } = await this.entitlementCache.executeUsingCache(
             newChannelEntitlementRequest(spaceId, channelId, permission),
             async (request) => {
-                const entitlementData = await this.getChannelEntitlementsForPermissionUncached(
-                    request.spaceId,
-                    request.channelId,
-                    request.permission,
-                )
+                const entitlementData =
+                    await this.getChannelEntitlementsForPermissionUncached(
+                        request.spaceId,
+                        request.channelId,
+                        request.permission,
+                    )
                 return new EntitlementDataCacheResult(entitlementData)
             },
         )
@@ -824,9 +931,11 @@ export class SpaceDapp {
         let linkedWallets = await this.walletLink.getLinkedWallets(wallet)
         // If there are no linked wallets, consider that the wallet may be linked to another root key.
         if (linkedWallets.length === 0) {
-            const possibleRoot = await this.walletLink.getRootKeyForWallet(wallet)
+            const possibleRoot =
+                await this.walletLink.getRootKeyForWallet(wallet)
             if (possibleRoot !== INVALID_ADDRESS) {
-                linkedWallets = await this.walletLink.getLinkedWallets(possibleRoot)
+                linkedWallets =
+                    await this.walletLink.getLinkedWallets(possibleRoot)
                 return [possibleRoot, ...linkedWallets]
             }
         }
@@ -841,7 +950,10 @@ export class SpaceDapp {
         const ethProviders = await findEthereumProviders(config)
 
         for (const provider of ethProviders) {
-            const delegators = await computeDelegatorsForProvider(provider, linkedWallets)
+            const delegators = await computeDelegatorsForProvider(
+                provider,
+                linkedWallets,
+            )
             for (const delegator of delegators) {
                 delegatorSet.add(delegator)
             }
@@ -855,7 +967,10 @@ export class SpaceDapp {
     ): Promise<string[]> {
         const linkedWallets = await this.getLinkedWallets(wallet)
         const allWallets = new Set(linkedWallets)
-        const delegators = await this.getMainnetDelegationsForLinkedWallets(linkedWallets, config)
+        const delegators = await this.getMainnetDelegationsForLinkedWallets(
+            linkedWallets,
+            config,
+        )
         return [...new Set([...allWallets, ...delegators])]
     }
 
@@ -894,12 +1009,14 @@ export class SpaceDapp {
         const ruleEntitlements = entitlements
             .filter(
                 (x) =>
-                    x.entitlementType === EntitlementModuleType.RuleEntitlement &&
+                    x.entitlementType ===
+                        EntitlementModuleType.RuleEntitlement &&
                     x.ruleEntitlement?.kind == 'v1',
             )
             .map((x) =>
                 convertRuleDataV1ToV2(
-                    x.ruleEntitlement!.rules as IRuleEntitlementBase.RuleDataStruct,
+                    x.ruleEntitlement!
+                        .rules as IRuleEntitlementBase.RuleDataStruct,
                 ),
             )
 
@@ -908,10 +1025,15 @@ export class SpaceDapp {
             ...entitlements
                 .filter(
                     (x) =>
-                        x.entitlementType === EntitlementModuleType.RuleEntitlementV2 &&
+                        x.entitlementType ===
+                            EntitlementModuleType.RuleEntitlementV2 &&
                         x.ruleEntitlement?.kind == 'v2',
                 )
-                .map((x) => x.ruleEntitlement!.rules as IRuleEntitlementV2Base.RuleDataV2Struct),
+                .map(
+                    (x) =>
+                        x.ruleEntitlement!
+                            .rules as IRuleEntitlementV2Base.RuleDataV2Struct,
+                ),
         )
 
         return await Promise.any(
@@ -945,18 +1067,26 @@ export class SpaceDapp {
         xchainConfig: XchainConfig,
         invalidateCache: boolean = false,
     ): Promise<EntitledWallet> {
-        const key = newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace)
+        const key = newSpaceEntitlementEvaluationRequest(
+            spaceId,
+            rootKey,
+            Permission.JoinSpace,
+        )
         if (invalidateCache) {
             this.entitlementEvaluationCache.invalidate(key)
         }
-        const { value } = await this.entitledWalletCache.executeUsingCache(key, async (request) => {
-            const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
-                request.spaceId,
-                request.userId,
-                xchainConfig,
-            )
-            return new EntitledWalletCacheResult(entitledWallet)
-        })
+        const { value } = await this.entitledWalletCache.executeUsingCache(
+            key,
+            async (request) => {
+                const entitledWallet =
+                    await this.getEntitledWalletForJoiningSpaceUncached(
+                        request.spaceId,
+                        request.userId,
+                        xchainConfig,
+                    )
+                return new EntitledWalletCacheResult(entitledWallet)
+            },
+        )
         return value
     }
 
@@ -965,7 +1095,10 @@ export class SpaceDapp {
         rootKey: string,
         xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
-        const allWallets = await this.getLinkedWalletsWithDelegations(rootKey, xchainConfig)
+        const allWallets = await this.getLinkedWalletsWithDelegations(
+            rootKey,
+            xchainConfig,
+        )
 
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -981,7 +1114,9 @@ export class SpaceDapp {
 
         const promises = allWallets.map(async (wallet) =>
             this.walletAddressIsBanned(spaceId, wallet).then((r) =>
-                r === true ? true : Promise.reject(new Error('Wallet is not banned')),
+                r === true
+                    ? true
+                    : Promise.reject(new Error('Wallet is not banned')),
             ),
         )
 
@@ -993,7 +1128,10 @@ export class SpaceDapp {
             // all promises rejected, meaning no wallets are banned
         }
 
-        const entitlements = await this.getEntitlementsForPermission(spaceId, Permission.JoinSpace)
+        const entitlements = await this.getEntitlementsForPermission(
+            spaceId,
+            Permission.JoinSpace,
+        )
         return await this.evaluateEntitledWallet(
             space,
             rootKey,
@@ -1009,21 +1147,26 @@ export class SpaceDapp {
         permission: Permission,
         invalidateCache: boolean = false,
     ): Promise<boolean> {
-        const key = newSpaceEntitlementEvaluationRequest(spaceId, user, permission)
+        const key = newSpaceEntitlementEvaluationRequest(
+            spaceId,
+            user,
+            permission,
+        )
         if (invalidateCache) {
             this.entitlementEvaluationCache.invalidate(key)
         }
-        const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            key,
-            async (request) => {
-                const isEntitled = await this.isEntitledToSpaceUncached(
-                    request.spaceId,
-                    request.userId,
-                    request.permission,
-                )
-                return new BooleanCacheResult(isEntitled)
-            },
-        )
+        const { value } =
+            await this.entitlementEvaluationCache.executeUsingCache(
+                key,
+                async (request) => {
+                    const isEntitled = await this.isEntitledToSpaceUncached(
+                        request.spaceId,
+                        request.userId,
+                        request.permission,
+                    )
+                    return new BooleanCacheResult(isEntitled)
+                },
+            )
         return value
     }
 
@@ -1037,7 +1180,9 @@ export class SpaceDapp {
             return false
         }
         if (permission === Permission.JoinSpace) {
-            throw new Error('use getEntitledWalletForJoiningSpace instead of isEntitledToSpace')
+            throw new Error(
+                'use getEntitledWalletForJoiningSpace instead of isEntitledToSpace',
+            )
         }
 
         return space.Entitlements.read.isEntitledToSpace(user, permission)
@@ -1060,19 +1205,20 @@ export class SpaceDapp {
         if (invalidateCache) {
             this.entitlementEvaluationCache.invalidate(key)
         }
-        const { value } = await this.entitlementEvaluationCache.executeUsingCache(
-            key,
-            async (request) => {
-                const isEntitled = await this.isEntitledToChannelUncached(
-                    request.spaceId,
-                    request.channelId,
-                    request.userId,
-                    request.permission,
-                    xchainConfig,
-                )
-                return new BooleanCacheResult(isEntitled)
-            },
-        )
+        const { value } =
+            await this.entitlementEvaluationCache.executeUsingCache(
+                key,
+                async (request) => {
+                    const isEntitled = await this.isEntitledToChannelUncached(
+                        request.spaceId,
+                        request.channelId,
+                        request.userId,
+                        request.permission,
+                        xchainConfig,
+                    )
+                    return new BooleanCacheResult(isEntitled)
+                },
+            )
         return value
     }
 
@@ -1090,7 +1236,10 @@ export class SpaceDapp {
 
         const channelId = ensureHexPrefix(channelNetworkId)
 
-        const linkedWallets = await this.getLinkedWalletsWithDelegations(user, xchainConfig)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(
+            user,
+            xchainConfig,
+        )
 
         const owner = await space.Ownable.getOwner()
 
@@ -1101,7 +1250,9 @@ export class SpaceDapp {
 
         const promises = linkedWallets.map(async (wallet) =>
             this.walletAddressIsBanned(spaceId, wallet).then((r) =>
-                r === true ? true : Promise.reject(new Error('Wallet is not banned')),
+                r === true
+                    ? true
+                    : Promise.reject(new Error('Wallet is not banned')),
             ),
         )
 
@@ -1153,7 +1304,10 @@ export class SpaceDapp {
      * @param args
      * @returns
      */
-    public parseAllContractErrors(args: { spaceId?: string; error: unknown }): Error {
+    public parseAllContractErrors(args: {
+        spaceId?: string
+        error: unknown
+    }): Error {
         let err: Error | undefined
         if (args.spaceId) {
             err = this.parseSpaceError(args.spaceId, args.error)
@@ -1165,7 +1319,11 @@ export class SpaceDapp {
         if (err?.name !== UNKNOWN_ERROR) {
             return err
         }
-        const nonSpaceContracts = [this.airdrop.riverPoints, this.pricingModules, this.walletLink]
+        const nonSpaceContracts = [
+            this.airdrop.riverPoints,
+            this.pricingModules,
+            this.walletLink,
+        ]
         for (const contract of nonSpaceContracts) {
             if (!contract) {
                 continue
@@ -1203,23 +1361,35 @@ export class SpaceDapp {
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceId)
         if (!space) {
-            throw new Error(`Space with spaceId "${params.spaceId}" is not found.`)
+            throw new Error(
+                `Space with spaceId "${params.spaceId}" is not found.`,
+            )
         }
-        const encodedCallData = await this.encodedUpdateChannelData(space, params)
+        const encodedCallData = await this.encodedUpdateChannelData(
+            space,
+            params,
+        )
         return wrapTransaction(
             () => space.Multicall.write(signer).multicall(encodedCallData),
             txnOpts,
         )
     }
 
-    public async encodedUpdateChannelData(space: Space, params: UpdateChannelParams) {
+    public async encodedUpdateChannelData(
+        space: Space,
+        params: UpdateChannelParams,
+    ) {
         const channelId = ensureHexPrefix(params.channelId)
 
         if (isUpdateChannelStatusParams(params)) {
             // When enabling or disabling channels, passing names and roles is not required.
             // To ensure the contract accepts this exception, the metadata argument should be left empty.
             return [
-                space.Channels.interface.encodeFunctionData('updateChannel', [channelId, '', true]),
+                space.Channels.interface.encodeFunctionData('updateChannel', [
+                    channelId,
+                    '',
+                    true,
+                ]),
             ]
         }
 
@@ -1256,7 +1426,9 @@ export class SpaceDapp {
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceId)
         if (!space) {
-            throw new Error(`Space with spaceId "${params.spaceId}" is not found.`)
+            throw new Error(
+                `Space with spaceId "${params.spaceId}" is not found.`,
+            )
         }
         return wrapTransaction(
             () => space.Channels.write(signer).removeChannel(params.channelId),
@@ -1271,9 +1443,14 @@ export class SpaceDapp {
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceNetworkId)
         if (!space) {
-            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+            throw new Error(
+                `Space with spaceId "${params.spaceNetworkId}" is not found.`,
+            )
         }
-        const updatedEntitlemets = await this.createLegacyUpdatedEntitlements(space, params)
+        const updatedEntitlemets = await this.createLegacyUpdatedEntitlements(
+            space,
+            params,
+        )
         return wrapTransaction(
             () =>
                 space.Roles.write(signer).updateRole(
@@ -1293,9 +1470,14 @@ export class SpaceDapp {
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceNetworkId)
         if (!space) {
-            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+            throw new Error(
+                `Space with spaceId "${params.spaceNetworkId}" is not found.`,
+            )
         }
-        const updatedEntitlemets = await this.createUpdatedEntitlements(space, params)
+        const updatedEntitlemets = await this.createUpdatedEntitlements(
+            space,
+            params,
+        )
         return wrapTransaction(
             () =>
                 space.Roles.write(signer).updateRole(
@@ -1319,9 +1501,12 @@ export class SpaceDapp {
         }
 
         const channelId = ensureHexPrefix(channelNetworkId)
-        return (await space.Roles.read.getChannelPermissionOverrides(roleId, channelId)).filter(
-            isPermission,
-        )
+        return (
+            await space.Roles.read.getChannelPermissionOverrides(
+                roleId,
+                channelId,
+            )
+        ).filter(isPermission)
     }
 
     public async setChannelPermissionOverrides(
@@ -1331,7 +1516,9 @@ export class SpaceDapp {
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceNetworkId)
         if (!space) {
-            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+            throw new Error(
+                `Space with spaceId "${params.spaceNetworkId}" is not found.`,
+            )
         }
         const channelId = ensureHexPrefix(params.channelId)
 
@@ -1353,13 +1540,18 @@ export class SpaceDapp {
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceNetworkId)
         if (!space) {
-            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+            throw new Error(
+                `Space with spaceId "${params.spaceNetworkId}" is not found.`,
+            )
         }
         const channelId = ensureHexPrefix(params.channelId)
 
         return wrapTransaction(
             () =>
-                space.Roles.write(signer).clearChannelPermissionOverrides(params.roleId, channelId),
+                space.Roles.write(signer).clearChannelPermissionOverrides(
+                    params.roleId,
+                    channelId,
+                ),
             txnOpts,
         )
     }
@@ -1376,9 +1568,15 @@ export class SpaceDapp {
         }
 
         if (disabled) {
-            return wrapTransaction(() => space.Pausable.write(signer).pause(), txnOpts)
+            return wrapTransaction(
+                () => space.Pausable.write(signer).pause(),
+                txnOpts,
+            )
         } else {
-            return wrapTransaction(() => space.Pausable.write(signer).unpause(), txnOpts)
+            return wrapTransaction(
+                () => space.Pausable.write(signer).unpause(),
+                txnOpts,
+            )
         }
     }
 
@@ -1415,7 +1613,10 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         return wrapTransaction(
-            () => space.Membership.write(signer).setMembershipPricingModule(pricingModule),
+            () =>
+                space.Membership.write(signer).setMembershipPricingModule(
+                    pricingModule,
+                ),
             txnOpts,
         )
     }
@@ -1447,7 +1648,10 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         return wrapTransaction(
-            () => space.Membership.write(signer).setMembershipFreeAllocation(freeAllocation),
+            () =>
+                space.Membership.write(signer).setMembershipFreeAllocation(
+                    freeAllocation,
+                ),
             txnOpts,
         )
     }
@@ -1462,7 +1666,8 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const cost = await space.Prepay.read.calculateMembershipPrepayFee(supply)
+        const cost =
+            await space.Prepay.read.calculateMembershipPrepayFee(supply)
 
         return wrapTransaction(
             () =>
@@ -1494,12 +1699,19 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         return wrapTransaction(
-            () => space.Channels.write(signer).updateChannel(channelId, '', disabled),
+            () =>
+                space.Channels.write(signer).updateChannel(
+                    channelId,
+                    '',
+                    disabled,
+                ),
             txnOpts,
         )
     }
 
-    public async getSpaceMembershipTokenAddress(spaceId: string): Promise<string> {
+    public async getSpaceMembershipTokenAddress(
+        spaceId: string,
+    ): Promise<string> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1521,18 +1733,21 @@ export class SpaceDapp {
         const membershipPriceEncoded =
             space.Membership.interface.encodeFunctionData('getMembershipPrice')
         // totalSupply = number of memberships minted
-        const totalSupplyEncoded = space.ERC721A.interface.encodeFunctionData('totalSupply')
+        const totalSupplyEncoded =
+            space.ERC721A.interface.encodeFunctionData('totalSupply')
         // free allocation is set at space creation and is unchanging - it neither increases nor decreases
         // if totalSupply < freeAllocation, the contracts won't charge for minting a membership nft,
         // else it will charge the membershipPrice
-        const freeAllocationEncoded = space.Membership.interface.encodeFunctionData(
-            'getMembershipFreeAllocation',
-        )
+        const freeAllocationEncoded =
+            space.Membership.interface.encodeFunctionData(
+                'getMembershipFreeAllocation',
+            )
         // prepaidSupply = number of additional prepaid memberships
         // if any prepaid memberships have been purchased, the contracts won't charge for minting a membership nft,
         // else it will charge the membershipPrice
-        const prepaidSupplyEncoded =
-            space.Prepay.interface.encodeFunctionData('prepaidMembershipSupply')
+        const prepaidSupplyEncoded = space.Prepay.interface.encodeFunctionData(
+            'prepaidMembershipSupply',
+        )
 
         const [
             membershipPriceResult,
@@ -1547,18 +1762,20 @@ export class SpaceDapp {
         ])
 
         try {
-            const membershipPrice = space.Membership.interface.decodeFunctionResult(
-                'getMembershipPrice',
-                membershipPriceResult,
-            )[0] as BigNumber
+            const membershipPrice =
+                space.Membership.interface.decodeFunctionResult(
+                    'getMembershipPrice',
+                    membershipPriceResult,
+                )[0] as BigNumber
             const totalSupply = space.ERC721A.interface.decodeFunctionResult(
                 'totalSupply',
                 totalSupplyResult,
             )[0] as BigNumber
-            const freeAllocation = space.Membership.interface.decodeFunctionResult(
-                'getMembershipFreeAllocation',
-                freeAllocationResult,
-            )[0] as BigNumber
+            const freeAllocation =
+                space.Membership.interface.decodeFunctionResult(
+                    'getMembershipFreeAllocation',
+                    freeAllocationResult,
+                )[0] as BigNumber
             const prepaidSupply = space.Prepay.interface.decodeFunctionResult(
                 'prepaidMembershipSupply',
                 prepaidSupplyResult,
@@ -1572,12 +1789,17 @@ export class SpaceDapp {
                 : prepaidSupply
 
             return {
-                price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
+                price: remainingFreeSupply.gt(0)
+                    ? ethers.BigNumber.from(0)
+                    : membershipPrice,
                 prepaidSupply,
                 remainingFreeSupply,
             }
         } catch (error) {
-            logger.error('getJoinSpacePriceDetails: Error decoding membership price', error)
+            logger.error(
+                'getJoinSpacePriceDetails: Error decoding membership price',
+                error,
+            )
             throw error
         }
     }
@@ -1595,7 +1817,10 @@ export class SpaceDapp {
         recipient: string,
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
-    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+    ): Promise<
+        | { issued: true; tokenId: string }
+        | { issued: false; tokenId: undefined }
+    > {
         const joinSpaceStart = Date.now()
 
         logger.log('joinSpace result before wrap', spaceId)
@@ -1606,11 +1831,16 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const issuedListener = space.Membership.listenForMembershipToken(recipient)
+        const issuedListener =
+            space.Membership.listenForMembershipToken(recipient)
 
         const blockNumber = await space.provider?.getBlockNumber()
 
-        logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
+        logger.log(
+            'joinSpace before blockNumber',
+            Date.now() - getSpaceStart,
+            blockNumber,
+        )
         const getPriceStart = Date.now()
         const { price } = await this.getJoinSpacePriceDetails(spaceId)
         logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
@@ -1645,12 +1875,18 @@ export class SpaceDapp {
     /**
      * @deprecated use getMembershipStatus instead
      */
-    public async hasSpaceMembership(spaceId: string, addresses: string[]): Promise<boolean> {
+    public async hasSpaceMembership(
+        spaceId: string,
+        addresses: string[],
+    ): Promise<boolean> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const membershipStatus = await this.getMembershipStatus(spaceId, addresses)
+        const membershipStatus = await this.getMembershipStatus(
+            spaceId,
+            addresses,
+        )
         return membershipStatus.isMember && !membershipStatus.isExpired
     }
 
@@ -1694,7 +1930,8 @@ export class SpaceDapp {
             space.ERC721A.read.totalSupply(),
             space.Membership.read.getMembershipPricingModule(),
         ])
-        const { price, prepaidSupply, remainingFreeSupply } = joinSpacePriceDetails
+        const { price, prepaidSupply, remainingFreeSupply } =
+            joinSpacePriceDetails
 
         return {
             price, // keep as BigNumber (wei)
@@ -1732,7 +1969,9 @@ export class SpaceDapp {
             space.Channels.read.getChannel(channelId),
             space.getEntitlementShims(),
         ])
-        const currentRoleIds = new Set<number>(channelInfo.roleIds.map((r) => r.toNumber()))
+        const currentRoleIds = new Set<number>(
+            channelInfo.roleIds.map((r) => r.toNumber()),
+        )
         const updatedRoleIds = new Set<number>(_updatedRoleIds)
         const rolesToRemove: number[] = []
         const rolesToAdd: number[] = []
@@ -1758,7 +1997,11 @@ export class SpaceDapp {
             encodedCallData.push(callData)
         }
         // encode the call data for each role to add
-        const encodedAddRoles = this.encodeAddRolesToChannel(space, channelId, rolesToAdd)
+        const encodedAddRoles = this.encodeAddRolesToChannel(
+            space,
+            channelId,
+            rolesToAdd,
+        )
         for (const callData of encodedAddRoles) {
             encodedCallData.push(callData)
         }
@@ -1773,10 +2016,10 @@ export class SpaceDapp {
         const channelId = ensureHexPrefix(channelNetworkId)
         const encodedCallData: BytesLike[] = []
         for (const roleId of roleIds) {
-            const encodedBytes = space.Channels.interface.encodeFunctionData('addRoleToChannel', [
-                channelId,
-                roleId,
-            ])
+            const encodedBytes = space.Channels.interface.encodeFunctionData(
+                'addRoleToChannel',
+                [channelId, roleId],
+            )
             encodedCallData.push(encodedBytes)
         }
         return encodedCallData
@@ -1803,7 +2046,11 @@ export class SpaceDapp {
         space: Space,
         params: LegacyUpdateRoleParams,
     ): Promise<IRolesBase.CreateEntitlementStruct[]> {
-        return createLegacyEntitlementStruct(space, params.users, params.ruleData)
+        return createLegacyEntitlementStruct(
+            space,
+            params.users,
+            params.ruleData,
+        )
     }
 
     public async createUpdatedEntitlements(
@@ -1834,15 +2081,19 @@ export class SpaceDapp {
      * @param senderAddress - The address of the sender. Required for the case of a receipt containing multiple events of the same type.
      * @returns The space address or undefined if the receipt is not successful
      */
-    public getSpaceAddress(receipt: ContractReceipt, senderAddress: string): string | undefined {
+    public getSpaceAddress(
+        receipt: ContractReceipt,
+        senderAddress: string,
+    ): string | undefined {
         if (receipt.status !== 1) {
             return undefined
         }
         for (const receiptLog of receipt.logs) {
-            const spaceAddress = this.spaceRegistrar.SpaceArchitect.getSpaceAddressFromLog(
-                receiptLog,
-                senderAddress,
-            )
+            const spaceAddress =
+                this.spaceRegistrar.SpaceArchitect.getSpaceAddressFromLog(
+                    receiptLog,
+                    senderAddress,
+                )
             if (spaceAddress) {
                 return spaceAddress
             }
@@ -1862,7 +2113,11 @@ export class SpaceDapp {
         return space.Tipping.getTipEvent(receipt, senderAddress)
     }
 
-    public withdrawSpaceFunds(spaceId: string, recipient: string, signer: ethers.Signer) {
+    public withdrawSpaceFunds(
+        spaceId: string,
+        recipient: string,
+        signer: ethers.Signer,
+    ) {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1885,7 +2140,10 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        return space.Membership.listenForMembershipToken(receiver, abortController)
+        return space.Membership.listenForMembershipToken(
+            receiver,
+            abortController,
+        )
     }
 
     /**
@@ -1904,7 +2162,10 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const linkedWallets = await this.getLinkedWalletsWithDelegations(owner, config)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(
+            owner,
+            config,
+        )
         const tokenIds = await space.getTokenIdsOfOwner(linkedWallets)
         return tokenIds[0]
     }
@@ -1934,7 +2195,15 @@ export class SpaceDapp {
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
-        const { spaceId, tokenId, currency, amount, messageId, channelId, receiver } = args
+        const {
+            spaceId,
+            tokenId,
+            currency,
+            amount,
+            messageId,
+            channelId,
+            receiver,
+        } = args
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1973,7 +2242,13 @@ export class SpaceDapp {
         transactionOpts?: TransactionOpts
         overrideExecution?: OverrideExecution<T>
     }) {
-        const { spaceId, operatorAddress, signer, transactionOpts, overrideExecution } = args
+        const {
+            spaceId,
+            operatorAddress,
+            signer,
+            transactionOpts,
+            overrideExecution,
+        } = args
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)

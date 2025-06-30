@@ -19,9 +19,14 @@ const all_tables = new Set<string>()
 
 /// decorator
 export function persistedObservable(options: PersistedOpts) {
-    check(!all_tables.has(options.tableName), `duplicate table name: ${options.tableName}`)
+    check(
+        !all_tables.has(options.tableName),
+        `duplicate table name: ${options.tableName}`,
+    )
     all_tables.add(options.tableName)
-    return function <T extends { new (...args: any[]): Storable }>(constructor: T) {
+    return function <T extends { new (...args: any[]): Storable }>(
+        constructor: T,
+    ) {
         return class extends constructor {
             constructor(...args: any[]) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -29,10 +34,13 @@ export function persistedObservable(options: PersistedOpts) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 ;(this as any).tableName = options.tableName
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                ;((this as any).store as Store).withTransaction(`new-${options.tableName}`, () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                    ;(this as any).load()
-                })
+                ;((this as any).store as Store).withTransaction(
+                    `new-${options.tableName}`,
+                    () => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                        ;(this as any).load()
+                    },
+                )
             }
             static tableName = options.tableName
         }
@@ -48,7 +56,11 @@ export class PersistedObservable<T extends Identifiable>
     protected readonly loadPriority: LoadPriority
 
     // must be called in a store transaction
-    constructor(initialValue: T, store: Store, loadPriority: LoadPriority = LoadPriority.low) {
+    constructor(
+        initialValue: T,
+        store: Store,
+        loadPriority: LoadPriority = LoadPriority.low,
+    ) {
         super({ status: 'loading', data: initialValue })
         this.loadPriority = loadPriority
         this.store = store
@@ -91,19 +103,26 @@ export class PersistedObservable<T extends Identifiable>
         const newData = { ...this.data, ...newDataPartial }
         check(newData.id === this.data.id, 'id mismatch')
         super.setValue({ status: 'loaded', data: newData })
-        this.store.withTransaction(`update-${this.tableName}:${this.data.id}`, () => {
-            this.store.save(
-                this.tableName,
-                newData,
-                () => {},
-                (e) => {
-                    super.setValue({ status: 'error', data: prevData, error: e })
-                },
-                () => {
-                    this.onSaved()
-                },
-            )
-        })
+        this.store.withTransaction(
+            `update-${this.tableName}:${this.data.id}`,
+            () => {
+                this.store.save(
+                    this.tableName,
+                    newData,
+                    () => {},
+                    (e) => {
+                        super.setValue({
+                            status: 'error',
+                            data: prevData,
+                            error: e,
+                        })
+                    },
+                    () => {
+                        this.onSaved()
+                    },
+                )
+            },
+        )
     }
 
     protected onLoaded() {

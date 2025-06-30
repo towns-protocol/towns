@@ -3,15 +3,21 @@
  */
 
 import { createTownWithRequirements, updateRole } from '../testUtils'
-import { NoopRuleData, UpdateRoleParams, Permission, EVERYONE_ADDRESS } from '@towns-protocol/web3'
+import {
+    NoopRuleData,
+    UpdateRoleParams,
+    Permission,
+    EVERYONE_ADDRESS,
+} from '@towns-protocol/web3'
 
 describe('updateRole', () => {
     test('user-gated space created with no-op ruleData allows updates on minter role', async () => {
-        const { bobSpaceDapp, bobProvider, spaceId } = await createTownWithRequirements({
-            everyone: false,
-            users: ['alice'],
-            ruleData: NoopRuleData,
-        })
+        const { bobSpaceDapp, bobProvider, spaceId } =
+            await createTownWithRequirements({
+                everyone: false,
+                users: ['alice'],
+                ruleData: NoopRuleData,
+            })
 
         // Update role to be ungated
         const { error } = await updateRole(

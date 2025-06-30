@@ -1,10 +1,18 @@
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
-import { ChannelPayload, ChannelPayload_Snapshot, Snapshot } from '@towns-protocol/proto'
+import {
+    ChannelPayload,
+    ChannelPayload_Snapshot,
+    Snapshot,
+} from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
-import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
+import {
+    StreamEncryptionEvents,
+    StreamEvents,
+    StreamStateEvents,
+} from './streamEvents'
 import { streamIdFromBytes } from './id'
 import { DecryptedContent } from './encryptedContentTypes'
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
@@ -31,7 +39,9 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
         _cleartexts: Record<string, Uint8Array | string> | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.spaceId = streamIdFromBytes(content.inception?.spaceId ?? Uint8Array.from([]))
+        this.spaceId = streamIdFromBytes(
+            content.inception?.spaceId ?? Uint8Array.from([]),
+        )
     }
 
     prependEvent(

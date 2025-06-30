@@ -1,4 +1,8 @@
-import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
+import {
+    Client,
+    ConnectTransportOptions,
+    createClient,
+} from '@towns-protocol/rpc-connector/common'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
@@ -68,7 +72,8 @@ export function getMaxTimeoutMs(opts: StreamRpcClientOptions): number {
     let maxTimeoutMs = 0
     for (let i = 1; i <= opts.retryParams.maxAttempts; i++) {
         maxTimeoutMs +=
-            opts.retryParams.defaultTimeoutMs ?? 0 + getRetryDelayMs(i, opts.retryParams)
+            opts.retryParams.defaultTimeoutMs ??
+            0 + getRetryDelayMs(i, opts.retryParams)
     }
     return maxTimeoutMs
 }
@@ -91,14 +96,15 @@ export async function getMiniblocks(
     const parsedSnapshots: Record<string, Snapshot> = {}
 
     while (currentFromInclusive < toExclusive) {
-        const { miniblocks, terminus, nextFromInclusive, snapshots } = await fetchMiniblocksFromRpc(
-            client,
-            streamId,
-            currentFromInclusive,
-            toExclusive,
-            omitSnapshots,
-            unpackEnvelopeOpts,
-        )
+        const { miniblocks, terminus, nextFromInclusive, snapshots } =
+            await fetchMiniblocksFromRpc(
+                client,
+                streamId,
+                currentFromInclusive,
+                toExclusive,
+                omitSnapshots,
+                unpackEnvelopeOpts,
+            )
 
         allMiniblocks.push(...miniblocks)
         if (!omitSnapshots) {
@@ -145,8 +151,12 @@ async function fetchMiniblocksFromRpc(
     const miniblocks: ParsedMiniblock[] = []
     const parsedSnapshots: Record<string, Snapshot> = {}
     for (const miniblock of response.miniblocks) {
-        const unpackedMiniblock = await unpackMiniblock(miniblock, unpackEnvelopeOpts)
-        const unpackedMiniblockNum = unpackedMiniblock.header.miniblockNum.toString()
+        const unpackedMiniblock = await unpackMiniblock(
+            miniblock,
+            unpackEnvelopeOpts,
+        )
+        const unpackedMiniblockNum =
+            unpackedMiniblock.header.miniblockNum.toString()
         miniblocks.push(unpackedMiniblock)
         if (!omitSnapshots && response.snapshots[unpackedMiniblockNum]) {
             parsedSnapshots[unpackedMiniblockNum] = (
@@ -161,12 +171,15 @@ async function fetchMiniblocksFromRpc(
     }
 
     const respondedFromInclusive =
-        miniblocks.length > 0 ? miniblocks[0].header.miniblockNum : fromInclusive
+        miniblocks.length > 0
+            ? miniblocks[0].header.miniblockNum
+            : fromInclusive
 
     return {
         miniblocks: miniblocks,
         terminus: response.terminus,
-        nextFromInclusive: respondedFromInclusive + BigInt(response.miniblocks.length),
+        nextFromInclusive:
+            respondedFromInclusive + BigInt(response.miniblocks.length),
         snapshots: parsedSnapshots,
     }
 }

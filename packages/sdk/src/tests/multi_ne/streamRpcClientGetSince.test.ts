@@ -26,7 +26,9 @@ describe('streamRpcClientGetSince', () => {
         bobsContext = await makeRandomUserContext()
         client = await makeTestRpcClient()
         bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        bobsSettingsStreamId = streamIdToBytes(makeUserSettingsStreamId(bobsUserId))
+        bobsSettingsStreamId = streamIdToBytes(
+            makeUserSettingsStreamId(bobsUserId),
+        )
 
         const settingsStreamResp = await client.createStream({
             events: [
@@ -96,7 +98,11 @@ describe('streamRpcClientGetSince', () => {
 
     test('make block with 2 events', async () => {
         await client.info({
-            debug: ['make_miniblock', streamIdAsString(bobsSettingsStreamId), 'true'],
+            debug: [
+                'make_miniblock',
+                streamIdAsString(bobsSettingsStreamId),
+                'true',
+            ],
         })
         await waitFor(async () => {
             // eventually the block should get made and we should have miniblocks instead of events in the pool
@@ -113,7 +119,9 @@ describe('streamRpcClientGetSince', () => {
     test('make a new snapshot', async () => {
         // this test expects RecencyConstraintsGen to be 5
         for (let i = 0; i < 6; i++) {
-            const resp = await client.getLastMiniblockHash({ streamId: bobsSettingsStreamId })
+            const resp = await client.getLastMiniblockHash({
+                streamId: bobsSettingsStreamId,
+            })
             await client.addEvent({
                 streamId: bobsSettingsStreamId,
                 event: await makeEvent(
@@ -128,7 +136,11 @@ describe('streamRpcClientGetSince', () => {
                 ),
             })
             await client.info({
-                debug: ['make_miniblock', streamIdAsString(bobsSettingsStreamId), 'true'],
+                debug: [
+                    'make_miniblock',
+                    streamIdAsString(bobsSettingsStreamId),
+                    'true',
+                ],
             })
         }
 

@@ -15,9 +15,12 @@ describe('protocol 1', () => {
         const client = await makeTestRpcClient()
         expect(client).toBeDefined()
 
-        const response: InfoResponse = await client.info(create(InfoRequestSchema, {}), {
-            timeoutMs: 10000,
-        })
+        const response: InfoResponse = await client.info(
+            create(InfoRequestSchema, {}),
+            {
+                timeoutMs: 10000,
+            },
+        )
         expect(response).toBeDefined()
         expect(response.graffiti).toEqual('River Node welcomes you!')
     })
@@ -51,7 +54,9 @@ describe('protocol 1', () => {
         await client.info(create(InfoRequestSchema, { debug: ['ping'] }))
 
         await expect(
-            client.info(create(InfoRequestSchema, { debug: ['sleep'] }), { timeoutMs: 2500 }),
+            client.info(create(InfoRequestSchema, { debug: ['sleep'] }), {
+                timeoutMs: 2500,
+            }),
         ).rejects.toThrow()
     })
 
@@ -65,22 +70,33 @@ describe('protocol 1', () => {
         })
 
         test('info using makeRiverRpcClient', async () => {
-            const client = await makeRiverRpcClient(provider, riverConfig.chainConfig)
+            const client = await makeRiverRpcClient(
+                provider,
+                riverConfig.chainConfig,
+            )
             expect(client).toBeDefined()
 
-            const response: InfoResponse = await client.info(create(InfoRequestSchema, {}), {
-                timeoutMs: 10000,
-            })
+            const response: InfoResponse = await client.info(
+                create(InfoRequestSchema, {}),
+                {
+                    timeoutMs: 10000,
+                },
+            )
             expect(response).toBeDefined()
             expect(response.graffiti).toEqual('River Node welcomes you!')
         })
 
         test('info-error using makeRiverRpcClient', async () => {
-            const client = await makeRiverRpcClient(provider, riverConfig.chainConfig)
+            const client = await makeRiverRpcClient(
+                provider,
+                riverConfig.chainConfig,
+            )
             expect(client).toBeDefined()
 
             try {
-                await client.info(create(InfoRequestSchema, { debug: ['error'] }))
+                await client.info(
+                    create(InfoRequestSchema, { debug: ['error'] }),
+                )
                 expect(true).toBe(false)
             } catch (err) {
                 expect(errorContains(err, Err.DEBUG_ERROR)).toBe(true)

@@ -61,10 +61,14 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
     if (cloneResult.status !== 0) return cloneResult
 
     // Set up sparse checkout
-    const sparseResult = spawn.sync('git', ['sparse-checkout', 'set', 'packages/playground'], {
-        stdio: 'inherit',
-        cwd: tempDir,
-    })
+    const sparseResult = spawn.sync(
+        'git',
+        ['sparse-checkout', 'set', 'packages/playground'],
+        {
+            stdio: 'inherit',
+            cwd: tempDir,
+        },
+    )
     if (sparseResult.status !== 0) return sparseResult
 
     // Checkout the content
@@ -79,7 +83,11 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
     const baseTsConfigPath = path.join(tempDir, 'packages/tsconfig.base.json')
 
     if (!fs.existsSync(playgroundDir)) {
-        console.error(picocolors.red(`\nPlayground directory not found at ${playgroundDir}`))
+        console.error(
+            picocolors.red(
+                `\nPlayground directory not found at ${playgroundDir}`,
+            ),
+        )
         return
     }
 
@@ -89,7 +97,10 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
 
     // Copy tsconfig.base.json if it exists (since playground uses the config from monorepo)
     if (fs.existsSync(baseTsConfigPath)) {
-        fs.copyFileSync(baseTsConfigPath, path.join(targetDir, 'tsconfig.base.json'))
+        fs.copyFileSync(
+            baseTsConfigPath,
+            path.join(targetDir, 'tsconfig.base.json'),
+        )
     }
     // Clean up temporary directory
     fs.rmSync(tempDir, { recursive: true, force: true })
@@ -101,12 +112,12 @@ const updateDependencies = async (cfg: CreateRiverBuildAppConfig) => {
 
     // Update package.json with latest Towns Protocol dependencies
     await addDependencies(projectDir, (json) => {
-        const allTownsProtocolDeps = Object.keys(json.dependencies).filter((dep) =>
-            dep.startsWith('@towns-protocol'),
+        const allTownsProtocolDeps = Object.keys(json.dependencies).filter(
+            (dep) => dep.startsWith('@towns-protocol'),
         )
-        const allTownsProtocolDevDeps = Object.keys(json.devDependencies).filter((dep) =>
-            dep.startsWith('@towns-protocol'),
-        )
+        const allTownsProtocolDevDeps = Object.keys(
+            json.devDependencies,
+        ).filter((dep) => dep.startsWith('@towns-protocol'))
         return {
             dependencies: allTownsProtocolDeps,
             devDependencies: [
@@ -130,12 +141,20 @@ const fixTsConfig = async (cfg: CreateRiverBuildAppConfig) => {
 
         if (tsConfig.extends === './../tsconfig.base.json') {
             // Create an edit to replace the extends value
-            const edits = jsoncParser.modify(tsConfigContent, ['extends'], './tsconfig.base.json', {
-                formattingOptions: { tabSize: 2 },
-            })
+            const edits = jsoncParser.modify(
+                tsConfigContent,
+                ['extends'],
+                './tsconfig.base.json',
+                {
+                    formattingOptions: { tabSize: 2 },
+                },
+            )
 
             // Apply the edit
-            const updatedContent = jsoncParser.applyEdits(tsConfigContent, edits)
+            const updatedContent = jsoncParser.applyEdits(
+                tsConfigContent,
+                edits,
+            )
             fs.writeFileSync(tsConfigPath, updatedContent)
         }
     }
@@ -144,7 +163,12 @@ const fixTsConfig = async (cfg: CreateRiverBuildAppConfig) => {
 function getLatestSdkTag(): string | null {
     const tagsResult = spawn.sync(
         'git',
-        ['ls-remote', '--tags', 'https://github.com/towns-protocol/towns.git', 'sdk-*'],
+        [
+            'ls-remote',
+            '--tags',
+            'https://github.com/towns-protocol/towns.git',
+            'sdk-*',
+        ],
         { encoding: 'utf8' },
     )
 
@@ -163,12 +187,18 @@ function getLatestSdkTag(): string | null {
 
             return {
                 tag,
-                version: [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])],
+                version: [
+                    parseInt(match[1]),
+                    parseInt(match[2]),
+                    parseInt(match[3]),
+                ],
             }
         })
         .filter(
             (item): item is { tag: string; version: number[] } =>
-                item !== null && Array.isArray(item.version) && item.version.length === 3,
+                item !== null &&
+                Array.isArray(item.version) &&
+                item.version.length === 3,
         )
         .sort((a, b) => {
             // Compare version numbers

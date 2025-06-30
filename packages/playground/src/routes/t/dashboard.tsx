@@ -14,7 +14,12 @@ import {
 } from '@towns-protocol/react-sdk'
 import { suspend } from 'suspend-react'
 import { Myself } from '@towns-protocol/sdk'
-import { DoorOpenIcon, DownloadIcon, PlusIcon, SettingsIcon } from 'lucide-react'
+import {
+    DoorOpenIcon,
+    DownloadIcon,
+    PlusIcon,
+    SettingsIcon,
+} from 'lucide-react'
 import type { BotInfo } from '@towns-protocol/web3'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { Button } from '@/components/ui/button'
@@ -77,7 +82,9 @@ export const DashboardRoute = () => {
             side={
                 <>
                     <div className="flex items-center justify-between gap-2">
-                        <h2 className="text-xs">Select a space to start messaging</h2>
+                        <h2 className="text-xs">
+                            Select a space to start messaging
+                        </h2>
                         <div className="flex items-center gap-2">
                             <Dialog
                                 open={createSpaceDialogOpen}
@@ -87,19 +94,25 @@ export const DashboardRoute = () => {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => setCreateSpaceDialogOpen(true)}
+                                        onClick={() =>
+                                            setCreateSpaceDialogOpen(true)
+                                        }
                                     >
                                         <PlusIcon className="h-4 w-4" />
                                     </Button>
                                 </Tooltip>
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Create a space</DialogTitle>
+                                        <DialogTitle>
+                                            Create a space
+                                        </DialogTitle>
                                     </DialogHeader>
                                     <DialogDescription>
                                         Create a space to start messaging.
                                     </DialogDescription>
-                                    <CreateSpace onCreateSpace={navigateToSpace} />
+                                    <CreateSpace
+                                        onCreateSpace={navigateToSpace}
+                                    />
                                 </DialogContent>
                             </Dialog>
                             <Dialog
@@ -110,7 +123,9 @@ export const DashboardRoute = () => {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => setJoinSpaceDialogOpen(true)}
+                                        onClick={() =>
+                                            setJoinSpaceDialogOpen(true)
+                                        }
                                     >
                                         <DoorOpenIcon className="h-4 w-4" />
                                     </Button>
@@ -120,7 +135,8 @@ export const DashboardRoute = () => {
                                         <DialogTitle>Join a space</DialogTitle>
                                     </DialogHeader>
                                     <DialogDescription>
-                                        You can join a space and hop into an existing conversation.
+                                        You can join a space and hop into an
+                                        existing conversation.
                                     </DialogDescription>
                                     <JoinSpace onJoinSpace={navigateToSpace} />
                                 </DialogContent>
@@ -173,7 +189,9 @@ export const DashboardRoute = () => {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => setCreateAppDialogOpen(true)}
+                                        onClick={() =>
+                                            setCreateAppDialogOpen(true)
+                                        }
                                     >
                                         <PlusIcon className="h-4 w-4" />
                                     </Button>
@@ -191,7 +209,9 @@ export const DashboardRoute = () => {
                                 Loading your apps...
                             </p>
                         ) : bots && bots.length > 0 ? (
-                            bots.map((bot) => <BotCard key={bot.appId} bot={bot} />)
+                            bots.map((bot) => (
+                                <BotCard key={bot.appId} bot={bot} />
+                            ))
                         ) : (
                             <p className="pt-4 text-center text-sm text-secondary-foreground">
                                 You don't have any apps yet.
@@ -204,22 +224,30 @@ export const DashboardRoute = () => {
                     <div className="flex items-center justify-between gap-2">
                         <span className="text-xs">Your direct messages</span>
                         <div className="flex items-center gap-2">
-                            <Dialog open={createDmDialogOpen} onOpenChange={setCreateDmDialogOpen}>
+                            <Dialog
+                                open={createDmDialogOpen}
+                                onOpenChange={setCreateDmDialogOpen}
+                            >
                                 <Tooltip title="Create a direct message">
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => setCreateDmDialogOpen(true)}
+                                        onClick={() =>
+                                            setCreateDmDialogOpen(true)
+                                        }
                                     >
                                         <PlusIcon className="h-4 w-4" />
                                     </Button>
                                 </Tooltip>
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Create a direct message</DialogTitle>
+                                        <DialogTitle>
+                                            Create a direct message
+                                        </DialogTitle>
                                     </DialogHeader>
                                     <DialogDescription>
-                                        Create a direct message with another user.
+                                        Create a direct message with another
+                                        user.
                                     </DialogDescription>
                                     <CreateDm onDmCreated={navigateToDm} />
                                 </DialogContent>
@@ -228,7 +256,10 @@ export const DashboardRoute = () => {
                     </div>
                     <div className="flex flex-col gap-2">
                         {dmStreamIds.map((dmStreamId) => (
-                            <Suspense key={dmStreamId} fallback={<div>Loading...</div>}>
+                            <Suspense
+                                key={dmStreamId}
+                                fallback={<div>Loading...</div>}
+                            >
                                 <NoSuspenseDmInfo
                                     key={dmStreamId}
                                     dmStreamId={dmStreamId}
@@ -301,7 +332,9 @@ const DmInfo = ({
             await dm.members.when((x) => x.data.initialized === true)
             return dm.members
         }, [dmStreamId, sync, dm])
-        const other = members.data.userIds.find((userId) => userId !== sync.userId)
+        const other = members.data.userIds.find(
+            (userId) => userId !== sync.userId,
+        )
         if (!other) {
             return members.myself
         }
@@ -312,10 +345,18 @@ const DmInfo = ({
     } = useObservable(member instanceof Myself ? member.member : member)
 
     return (
-        <button className="flex items-center gap-2" onClick={() => onDmChange(dm.id)}>
-            <Avatar userId={userId} className="size-10 border border-neutral-200" />
+        <button
+            className="flex items-center gap-2"
+            onClick={() => onDmChange(dm.id)}
+        >
+            <Avatar
+                userId={userId}
+                className="size-10 border border-neutral-200"
+            />
             <p className="font-mono text-sm font-medium">
-                {userId === sync.userId ? 'You' : displayName || username || shortenAddress(userId)}
+                {userId === sync.userId
+                    ? 'You'
+                    : displayName || username || shortenAddress(userId)}
             </p>
         </button>
     )
@@ -335,18 +376,25 @@ const NoSuspenseDmInfo = ({
     const { data: members } = useMemberList(dmStreamId)
     const { userId, username, displayName } = useMember({
         streamId: dmStreamId,
-        userId: members.userIds.find((userId) => userId !== sync.userId) || sync.userId,
+        userId:
+            members.userIds.find((userId) => userId !== sync.userId) ||
+            sync.userId,
     })
 
     return (
-        <button className="flex items-center gap-2" onClick={() => onDmChange(dm.id)}>
+        <button
+            className="flex items-center gap-2"
+            onClick={() => onDmChange(dm.id)}
+        >
             <Avatar
                 key={userId}
                 userId={userId}
                 className="h-10 w-10 rounded-full border border-neutral-200"
             />
             <p className="font-mono text-sm font-medium">
-                {userId === sync.userId ? 'You' : displayName || username || shortenAddress(userId)}
+                {userId === sync.userId
+                    ? 'You'
+                    : displayName || username || shortenAddress(userId)}
             </p>
         </button>
     )
@@ -358,12 +406,22 @@ const BotCard = ({ bot }: { bot: BotInfo }) => {
 
     return (
         <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-sm font-medium">{shortenAddress(bot.app.client)}</p>
+            <p className="font-mono text-sm font-medium">
+                {shortenAddress(bot.app.client)}
+            </p>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setSettingsOpen(true)}
+                >
                     <SettingsIcon className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => setInstallOpen(true)}>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setInstallOpen(true)}
+                >
                     <DownloadIcon className="h-4 w-4" />
                 </Button>
             </div>

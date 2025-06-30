@@ -152,8 +152,14 @@ describe('Combine', () => {
 
             obs.setValue('changed')
 
-            expect(subscriber1).toHaveBeenCalledWith({ value: 'changed' }, { value: 'test' })
-            expect(subscriber2).toHaveBeenCalledWith({ value: 'changed' }, { value: 'test' })
+            expect(subscriber1).toHaveBeenCalledWith(
+                { value: 'changed' },
+                { value: 'test' },
+            )
+            expect(subscriber2).toHaveBeenCalledWith(
+                { value: 'changed' },
+                { value: 'test' },
+            )
         })
 
         it('should support subscription options', () => {
@@ -327,8 +333,14 @@ describe('Combine', () => {
         })
 
         it('should handle complex nested objects', () => {
-            const userObs = new Observable({ name: 'John', details: { age: 25 } })
-            const settingsObs = new Observable({ theme: 'dark', notifications: true })
+            const userObs = new Observable({
+                name: 'John',
+                details: { age: 25 },
+            })
+            const settingsObs = new Observable({
+                theme: 'dark',
+                notifications: true,
+            })
 
             const combined = combine({
                 user: userObs,
@@ -341,7 +353,10 @@ describe('Combine', () => {
             })
 
             userObs.setValue({ name: 'Jane', details: { age: 30 } })
-            expect(combined.value.user).toEqual({ name: 'Jane', details: { age: 30 } })
+            expect(combined.value.user).toEqual({
+                name: 'Jane',
+                details: { age: 30 },
+            })
         })
 
         it('should maintain key order from input observables', () => {

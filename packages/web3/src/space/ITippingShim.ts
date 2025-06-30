@@ -39,7 +39,8 @@ export class ITippingShim extends BaseContractShim<typeof connect> {
                 const parsedLog = this.interface.parseLog(log)
                 if (
                     parsedLog.name === 'Tip' &&
-                    (parsedLog.args.sender as string).toLowerCase() === senderAddress.toLowerCase()
+                    (parsedLog.args.sender as string).toLowerCase() ===
+                        senderAddress.toLowerCase()
                 ) {
                     return {
                         tokenId: parsedLog.args.tokenId,

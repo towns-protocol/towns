@@ -71,11 +71,15 @@ export class SyncedStreamsExtension {
         private persistenceStore: IPersistenceStore,
         private logId: string,
     ) {
-        this.log = dlog('csb:syncedStreamsExtension', { defaultEnabled: true }).extend(logId)
-        this.logDebug = dlog('csb:syncedStreamsExtension:debug', { defaultEnabled: false }).extend(
+        this.log = dlog('csb:syncedStreamsExtension', {
+            defaultEnabled: true,
+        }).extend(logId)
+        this.logDebug = dlog('csb:syncedStreamsExtension:debug', {
+            defaultEnabled: false,
+        }).extend(logId)
+        this.logError = dlogError('csb:syncedStreamsExtension:error').extend(
             logId,
         )
-        this.logError = dlogError('csb:syncedStreamsExtension:error').extend(logId)
         this.highPriorityIds = new Set(highPriorityStreamIds ?? [])
         this.delegate = delegate
     }
@@ -133,8 +137,14 @@ export class SyncedStreamsExtension {
                 streamsFailedToLoad: this.numStreamsFailedToLoad,
             })
 
-            this.log('Streams loaded from cache', this.numStreamsLoadedFromCache)
-            this.log('Streams loaded from network', this.numStreamsLoadedFromNetwork)
+            this.log(
+                'Streams loaded from cache',
+                this.numStreamsLoadedFromCache,
+            )
+            this.log(
+                'Streams loaded from network',
+                this.numStreamsLoadedFromNetwork,
+            )
             this.log('Streams failed to load', this.numStreamsFailedToLoad)
             this.log(`Total time: ${executionTime.toFixed(0)} ms`)
             return
@@ -170,7 +180,10 @@ export class SyncedStreamsExtension {
         )
         await Promise.all(
             hpStreamIds.map(async (streamId) => {
-                await this.loadStreamFromPersistence(streamId, loadedStreams[streamId])
+                await this.loadStreamFromPersistence(
+                    streamId,
+                    loadedStreams[streamId],
+                )
                 delete loadedStreams[streamId]
             }),
         )
@@ -184,7 +197,12 @@ export class SyncedStreamsExtension {
         // push on a final task to update the client status and report stats
         this.tasks.unshift(async () => {
             const t3 = performance.now()
-            this.log('####Performance: loadedLowPriorityStreams!!', t3 - t2, 'total:', t3 - now)
+            this.log(
+                '####Performance: loadedLowPriorityStreams!!',
+                t3 - t2,
+                'total:',
+                t3 - now,
+            )
             this.didLoadStreamsFromPersistence = true
             this.emitClientStatus()
         })
@@ -203,16 +221,22 @@ export class SyncedStreamsExtension {
                         priorityFromStreamId(b, this.highPriorityIds),
                 )
                 .splice(0, MAX_CONCURRENT_FROM_PERSISTENCE)
-            const loadedStreams = await this.persistenceStore.loadStreams(streamIdsForStep)
+            const loadedStreams =
+                await this.persistenceStore.loadStreams(streamIdsForStep)
             // and then loads MAX_CONCURRENT_STREAMS streams
             await Promise.all(
                 streamIdsForStep.map(async (streamId) => {
-                    await this.loadStreamFromPersistence(streamId, loadedStreams[streamId])
+                    await this.loadStreamFromPersistence(
+                        streamId,
+                        loadedStreams[streamId],
+                    )
                     delete loadedStreams[streamId]
                 }),
             )
             if (performance.now() - this.lastLogInflightAt > 5000) {
-                this.log(`####loading streams from persistence remaining: ${streamIds.length}`)
+                this.log(
+                    `####loading streams from persistence remaining: ${streamIds.length}`,
+                )
                 this.lastLogInflightAt = performance.now()
             }
             // do the next few
@@ -231,13 +255,21 @@ export class SyncedStreamsExtension {
             this.streamCountRequiringNetworkAccess++
         } else {
             try {
-                await this.delegate.initStream(streamId, allowGetStream, persistedData)
+                await this.delegate.initStream(
+                    streamId,
+                    allowGetStream,
+                    persistedData,
+                )
                 this.loadedStreamCount++
                 this.numStreamsLoadedFromCache++
                 this.streamIds.delete(streamId)
             } catch (err) {
                 this.streamCountRequiringNetworkAccess++
-                this.logError('Error initializing stream from persistence', streamId, err)
+                this.logError(
+                    'Error initializing stream from persistence',
+                    streamId,
+                    err,
+                )
             }
         }
         this.emitClientStatus()
@@ -251,7 +283,9 @@ export class SyncedStreamsExtension {
             } satisfies StreamSyncItem
         })
         syncItems.sort((a, b) => a.priority - b.priority)
-        await Promise.all(syncItems.map((item) => this.loadStreamFromNetwork(item.streamId)))
+        await Promise.all(
+            syncItems.map((item) => this.loadStreamFromNetwork(item.streamId)),
+        )
         this.emitClientStatus()
     }
 
@@ -288,13 +322,16 @@ export class SyncedStreamsExtension {
     }
 
     private emitClientStatus() {
-        this.initStatus.isHighPriorityDataLoaded = this.didLoadHighPriorityStreams
+        this.initStatus.isHighPriorityDataLoaded =
+            this.didLoadHighPriorityStreams
         this.initStatus.isLocalDataLoaded = this.didLoadStreamsFromPersistence
         this.initStatus.isRemoteDataLoaded =
-            this.didLoadStreamsFromPersistence && this.streamCountRequiringNetworkAccess === 0
+            this.didLoadStreamsFromPersistence &&
+            this.streamCountRequiringNetworkAccess === 0
         if (this.totalStreamCount > 0) {
             this.initStatus.progress =
-                (this.totalStreamCount - this.streamIds.size) / this.totalStreamCount
+                (this.totalStreamCount - this.streamIds.size) /
+                this.totalStreamCount
         }
         this.delegate.emitClientInitStatus(this.initStatus)
     }
@@ -336,7 +373,10 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
             (x) => isDMChannelStreamId(x) || isGDMChannelStreamId(x),
         )
         if (hasHighPriorityDmORGDm) {
-            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+            if (
+                isDMChannelStreamId(streamId) ||
+                isGDMChannelStreamId(streamId)
+            ) {
                 return 2
             }
         }

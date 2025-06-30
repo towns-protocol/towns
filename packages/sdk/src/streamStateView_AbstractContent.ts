@@ -1,7 +1,15 @@
 import TypedEmitter from 'typed-emitter'
 import { EncryptedData } from '@towns-protocol/proto'
-import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
-import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
+import {
+    ConfirmedTimelineEvent,
+    RemoteTimelineEvent,
+    StreamTimelineEvent,
+} from './types'
+import {
+    DecryptedContent,
+    EncryptedContent,
+    toDecryptedContent,
+} from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { streamIdToBytes } from './id'
 
@@ -28,12 +36,21 @@ export abstract class StreamStateView_AbstractContent {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         if (cleartext) {
-            event.decryptedContent = toDecryptedContent(kind, content.version, cleartext)
-        } else {
-            encryptionEmitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+            event.decryptedContent = toDecryptedContent(
                 kind,
-                content,
-            })
+                content.version,
+                cleartext,
+            )
+        } else {
+            encryptionEmitter?.emit(
+                'newEncryptedContent',
+                this.streamId,
+                event.hashStr,
+                {
+                    kind,
+                    content,
+                },
+            )
         }
     }
 

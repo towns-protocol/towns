@@ -55,7 +55,8 @@ export function spaceMentionsTransform(
                 const threadStat = event.threadParentId
                     ? threadsStats[channelId]?.[event.threadParentId]
                     : undefined
-                const fullyReadMarker = unreadMarkers[event.threadParentId ?? channelId]
+                const fullyReadMarker =
+                    unreadMarkers[event.threadParentId ?? channelId]
                 return {
                     type: 'mention' as const,
                     unread:
