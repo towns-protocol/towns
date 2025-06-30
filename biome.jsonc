@@ -1,0 +1,74 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.0.5/schema.json",
+    "files": {
+        "includes": [
+            "**",
+            "!docs",
+            "!core/**/*",
+            "!packages/contracts/**/*",
+            "!packages/subgraph/generated/**/*",
+            "!packages/subgraph/*.d.ts",
+            "!core/xchain/src/gen/**/*",
+            "!.vscode",
+            "!packages/generated/**/*",
+            "!packages/proto/src/protocol_*.ts",
+            "!packages/workers/**/*.json",
+            "!CLAUDE.md"
+        ]
+    },
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4
+    },
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "linter": {
+        // No linter for now, only formatter
+        "enabled": false,
+        "rules": {
+            "recommended": true,
+            "correctness": {
+                "recommended": true
+            },
+            "style": {
+                "recommended": true
+            },
+            "complexity": {
+                "recommended": true
+            },
+            "security": {
+                "recommended": true
+            },
+            "performance": {
+                "recommended": true
+            },
+            "a11y": {
+                "recommended": true
+            },
+            "suspicious": {},
+            "nursery": {
+                "recommended": true
+            }
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "lineWidth": 80,
+            "lineEnding": "lf",
+            "semicolons": "asNeeded",
+            "quoteStyle": "single"
+        }
+    },
+    "json": {
+        "formatter": {
+            "enabled": true,
+            "indentWidth": 4
+        },
+        "linter": {
+            "enabled": true
+        }
+    }
+}

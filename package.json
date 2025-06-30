@@ -39,6 +39,7 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
+        "@biomejs/biome": "2.0.5",
         "@typechain/ethers-v5": "^10.1.1",
         "@types/node": "^20.14.8",
         "eslint": "^8.57.1",
