@@ -10,6 +10,7 @@ export const space = onchainTable('spaces', (t) => ({
     longDescription: t.text(),
     createdAt: t.bigint(),
     paused: t.boolean(),
+    totalAmountStaked: t.bigint().default(0n),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({
