@@ -68,4 +68,16 @@ interface IAppAccount is IAppAccountBase {
         address publicKey,
         bytes32 permission
     ) external view returns (bool);
+
+    /// @notice Request a transfer of tokens during app execution
+    /// @dev Can only be called by apps during authorized execution
+    /// @param token Token address (address(0) or NATIVE_TOKEN for ETH)
+    /// @param to Recipient address
+    /// @param amount Amount to transfer
+    /// @return success Whether the transfer was successful
+    function onRequestTransfer(
+        address token,
+        address to,
+        uint256 amount
+    ) external returns (bool success);
 }
