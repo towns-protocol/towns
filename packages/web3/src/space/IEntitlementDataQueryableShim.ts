@@ -5,10 +5,13 @@ import { IEntitlementDataQueryableBase } from '@towns-protocol/generated/dev/typ
 
 const { abi, connect } = IEntitlementDataQueryable__factory
 
-export class IEntitlementDataQueryableShim extends BaseContractShim<typeof connect> {
+export class IEntitlementDataQueryableShim extends BaseContractShim<
+    typeof connect
+> {
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
     }
 }
 
-export type EntitlementDataStructOutput = IEntitlementDataQueryableBase.EntitlementDataStructOutput
+export type EntitlementDataStructOutput =
+    IEntitlementDataQueryableBase.EntitlementDataStructOutput

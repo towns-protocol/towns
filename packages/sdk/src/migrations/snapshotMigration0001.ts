@@ -24,7 +24,10 @@ function compactFunc<T>(elements: T[], keyFn: (element: T) => Uint8Array): T[] {
 // / every insert, we need to remove duplicates
 export function snapshotMigration0001(snapshot: Snapshot): Snapshot {
     if (snapshot.members) {
-        snapshot.members.joined = compactFunc(snapshot.members.joined, (m) => m.userAddress)
+        snapshot.members.joined = compactFunc(
+            snapshot.members.joined,
+            (m) => m.userAddress,
+        )
     }
 
     switch (snapshot.content?.case) {

@@ -11,7 +11,11 @@ import {
     setupWalletsAndContexts,
 } from '../../testUtils'
 import { dlog } from '@towns-protocol/dlog'
-import { Address, TestERC721, createExternalNFTStruct } from '@towns-protocol/web3'
+import {
+    Address,
+    TestERC721,
+    createExternalNFTStruct,
+} from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithThreeNestedEntitlement')
 
@@ -25,7 +29,11 @@ describe('spaceWithThreeNestedEntitlement', () => {
         const testNftAddress2 = await TestERC721.getContractAddress(testNft2)
         const testNftAddress3 = await TestERC721.getContractAddress(testNft3)
 
-        const ruleData = createExternalNFTStruct([testNftAddress, testNftAddress2, testNftAddress3])
+        const ruleData = createExternalNFTStruct([
+            testNftAddress,
+            testNftAddress2,
+            testNftAddress3,
+        ])
 
         const {
             alice,
@@ -65,7 +73,12 @@ describe('spaceWithThreeNestedEntitlement', () => {
             await everyoneMembershipStruct(aliceSpaceDapp, alice),
             aliceProvider.wallet,
         )
-        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
+        await expectUserCannotJoinSpace(
+            spaceId,
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+        )
 
         await TestERC721.publicMint(testNft1, carolsWallet.address as Address)
         await expectUserCanJoin(

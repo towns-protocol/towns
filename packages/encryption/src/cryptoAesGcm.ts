@@ -1,14 +1,24 @@
 export async function generateNewAesGcmKey(): Promise<CryptoKey> {
-    return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])
+    return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+        'encrypt',
+        'decrypt',
+    ])
 }
 
-export async function exportAesGsmKeyBytes(key: CryptoKey): Promise<Uint8Array> {
+export async function exportAesGsmKeyBytes(
+    key: CryptoKey,
+): Promise<Uint8Array> {
     const exportedKey = await crypto.subtle.exportKey('raw', key)
     return new Uint8Array(exportedKey)
 }
 
-export async function importAesGsmKeyBytes(key: Uint8Array): Promise<CryptoKey> {
-    return crypto.subtle.importKey('raw', key, 'AES-GCM', true, ['encrypt', 'decrypt'])
+export async function importAesGsmKeyBytes(
+    key: Uint8Array,
+): Promise<CryptoKey> {
+    return crypto.subtle.importKey('raw', key, 'AES-GCM', true, [
+        'encrypt',
+        'decrypt',
+    ])
 }
 
 export async function encryptAesGcm(

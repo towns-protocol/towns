@@ -18,7 +18,9 @@ const joinSpaceFormSchema = z.object({
     spaceId: z.string().min(1, { message: 'Space Id is required' }),
 })
 
-export const JoinSpace = (props: { onJoinSpace: (spaceId: string) => void }) => {
+export const JoinSpace = (props: {
+    onJoinSpace: (spaceId: string) => void
+}) => {
     const { onJoinSpace } = props
     const { joinSpace, isPending } = useJoinSpace()
     const signer = useEthersSigner()
@@ -52,7 +54,10 @@ export const JoinSpace = (props: { onJoinSpace: (spaceId: string) => void }) => 
                                 <FormControl>
                                     <Input placeholder="spaceId" {...field} />
                                 </FormControl>
-                                <Button type="submit"> {isPending ? 'Joining...' : 'Join'}</Button>
+                                <Button type="submit">
+                                    {' '}
+                                    {isPending ? 'Joining...' : 'Join'}
+                                </Button>
                             </div>
 
                             <FormMessage />

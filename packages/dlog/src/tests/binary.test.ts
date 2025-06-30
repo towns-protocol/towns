@@ -26,7 +26,9 @@ describe.concurrent('types', () => {
 
     it('bin_fromBase64String', () => {
         const expected = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9])
-        const expected2 = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        const expected2 = new Uint8Array([
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        ])
         expect(bin_fromBase64('AQIDBAUGBwgJ')).toEqual(expected)
         expect(bin_fromBase64('AQIDBAUGBwgJAQIDBAUGBwgJ')).toEqual(expected2)
         expect(bin_fromBase64('')).toEqual(new Uint8Array([]))

@@ -1,5 +1,9 @@
 import spawn from 'cross-spawn'
-import { addDependencies, getPackageManager, type CreateRiverBuildAppConfig } from '../utils'
+import {
+    addDependencies,
+    getPackageManager,
+    type CreateRiverBuildAppConfig,
+} from '../utils'
 import path from 'node:path'
 import { readFileSync, writeFileSync } from 'node:fs'
 import picocolors from 'picocolors'
@@ -24,7 +28,9 @@ export const buildRiverReactApp = async (cfg: CreateRiverBuildAppConfig) => {
         devDependencies: ['vite-plugin-node-polyfills'],
     }))
 
-    console.log(picocolors.green('\nRiver SDK dependencies added successfully.'))
+    console.log(
+        picocolors.green('\nRiver SDK dependencies added successfully.'),
+    )
     console.log(picocolors.blue('\nUpdating vite.config.ts...'))
 
     await updateViteConfigWithPolyfills(cfg)
@@ -40,11 +46,29 @@ const scaffoldViteReactApp = async (cfg: CreateRiverBuildAppConfig) => {
         const nameForViteScript = targetDir === '.' ? '.' : packageName
         switch (pkgManager) {
             case 'yarn':
-                return ['create', 'vite', nameForViteScript, '--template', viteTemplate]
+                return [
+                    'create',
+                    'vite',
+                    nameForViteScript,
+                    '--template',
+                    viteTemplate,
+                ]
             case 'pnpm':
-                return ['create', 'vite', nameForViteScript, '--template', viteTemplate]
+                return [
+                    'create',
+                    'vite',
+                    nameForViteScript,
+                    '--template',
+                    viteTemplate,
+                ]
             case 'bun':
-                return ['create', 'vite', nameForViteScript, '--template', viteTemplate]
+                return [
+                    'create',
+                    'vite',
+                    nameForViteScript,
+                    '--template',
+                    viteTemplate,
+                ]
             default:
                 // npm requires the -- flag to pass args to the template
                 return [
@@ -61,21 +85,29 @@ const scaffoldViteReactApp = async (cfg: CreateRiverBuildAppConfig) => {
     return spawn.sync(pkgManager, createViteCommand, { stdio: 'inherit' })
 }
 
-const updateViteConfigWithPolyfills = async (cfg: CreateRiverBuildAppConfig) => {
+const updateViteConfigWithPolyfills = async (
+    cfg: CreateRiverBuildAppConfig,
+) => {
     const { projectDir, viteTemplate } = cfg
     const isJsTemplate = viteTemplate === 'react'
-    const viteConfigPath = path.join(projectDir, isJsTemplate ? 'vite.config.js' : 'vite.config.ts')
+    const viteConfigPath = path.join(
+        projectDir,
+        isJsTemplate ? 'vite.config.js' : 'vite.config.ts',
+    )
     let viteConfig = readFileSync(viteConfigPath, 'utf8')
 
     // Add import for vite-plugin-node-polyfills
     viteConfig = `import { nodePolyfills } from 'vite-plugin-node-polyfills'\n${viteConfig}`
 
     // Add nodePolyfills to plugins array
-    viteConfig = viteConfig.replace(/plugins:\s*\[([\s\S]*?)\]/, (_, pluginsContent) => {
-        const trimmedContent = pluginsContent.trim()
-        const separator = trimmedContent ? ',\n    ' : ''
-        return `plugins: [${pluginsContent}${separator}nodePolyfills()\n  ]`
-    })
+    viteConfig = viteConfig.replace(
+        /plugins:\s*\[([\s\S]*?)\]/,
+        (_, pluginsContent) => {
+            const trimmedContent = pluginsContent.trim()
+            const separator = trimmedContent ? ',\n    ' : ''
+            return `plugins: [${pluginsContent}${separator}nodePolyfills()\n  ]`
+        },
+    )
 
     writeFileSync(viteConfigPath, viteConfig)
 }

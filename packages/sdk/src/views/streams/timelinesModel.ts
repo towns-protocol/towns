@@ -30,7 +30,10 @@ export type TipsMap = Record<string, Record<string, MessageTips>>
 // store states
 export type TimelinesViewModel = {
     timelines: TimelinesMap
-    replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
+    replacedEvents: Record<
+        string,
+        { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]
+    >
     pendingReplacedEvents: Record<string, Record<string, TimelineEvent>>
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
@@ -48,19 +51,32 @@ export interface TimelinesViewInterface {
         streamId: string,
         specialFunction?: 'initializeStream',
     ) => void
-    prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
-    updateEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
+    prependEvents: (
+        events: TimelineEvent[],
+        userId: string,
+        streamId: string,
+    ) => void
+    updateEvents: (
+        events: TimelineEvent[],
+        userId: string,
+        streamId: string,
+    ) => void
     updateEvent: (
         event: TimelineEvent,
         userId: string,
         streamId: string,
         updatingEventId: string,
     ) => void
-    confirmEvents: (confirmations: TimelineEventConfirmation[], streamId: string) => void
+    confirmEvents: (
+        confirmations: TimelineEventConfirmation[],
+        streamId: string,
+    ) => void
 }
 
 export function makeTimelinesViewInterface(
-    setState: (fn: (prevState: TimelinesViewModel) => TimelinesViewModel) => void,
+    setState: (
+        fn: (prevState: TimelinesViewModel) => TimelinesViewModel,
+    ) => void,
 ): TimelinesViewInterface {
     const initializeStream = (userId: string, streamId: string) => {
         setState((state) => _initializeStream(state, streamId))
@@ -111,14 +127,24 @@ export function makeTimelinesViewInterface(
             return prev
         })
     }
-    const removeEvent = (state: TimelinesViewModel, streamId: string, eventId: string) => {
-        const eventIndex = state.timelines[streamId]?.findIndex((e) => e.eventId == eventId)
+    const removeEvent = (
+        state: TimelinesViewModel,
+        streamId: string,
+        eventId: string,
+    ) => {
+        const eventIndex = state.timelines[streamId]?.findIndex(
+            (e) => e.eventId == eventId,
+        )
         if ((eventIndex ?? -1) < 0) {
             return state
         }
         const event = state.timelines[streamId][eventIndex]
         return {
-            timelines: removeTimelineEvent(streamId, eventIndex, state.timelines),
+            timelines: removeTimelineEvent(
+                streamId,
+                eventIndex,
+                state.timelines,
+            ),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: removeThreadStat(streamId, event, state.threadsStats),
@@ -135,7 +161,11 @@ export function makeTimelinesViewInterface(
         timelineEvent: TimelineEvent,
     ) => {
         return {
-            timelines: appendTimelineEvent(streamId, timelineEvent, state.timelines),
+            timelines: appendTimelineEvent(
+                streamId,
+                timelineEvent,
+                state.timelines,
+            ),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
@@ -157,14 +187,22 @@ export function makeTimelinesViewInterface(
         streamId: string,
         inTimelineEvent: TimelineEvent,
     ) => {
-        const timelineEvent = state.pendingReplacedEvents[streamId]?.[inTimelineEvent.eventId]
+        const timelineEvent = state.pendingReplacedEvents[streamId]?.[
+            inTimelineEvent.eventId
+        ]
             ? toReplacedMessageEvent(
                   inTimelineEvent,
-                  state.pendingReplacedEvents[streamId][inTimelineEvent.eventId],
+                  state.pendingReplacedEvents[streamId][
+                      inTimelineEvent.eventId
+                  ],
               )
             : inTimelineEvent
         return {
-            timelines: prependTimelineEvent(streamId, timelineEvent, state.timelines),
+            timelines: prependTimelineEvent(
+                streamId,
+                timelineEvent,
+                state.timelines,
+            ),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
@@ -192,15 +230,16 @@ export function makeTimelinesViewInterface(
         const eventIndex = timeline.findIndex(
             (e: TimelineEvent) =>
                 e.eventId === replacedMsgId ||
-                (e.localEventId && e.localEventId === timelineEvent.localEventId),
+                (e.localEventId &&
+                    e.localEventId === timelineEvent.localEventId),
         )
 
         if (eventIndex === -1) {
             // if we didn't find an event to replace...
             if (
                 state.pendingReplacedEvents[streamId]?.[replacedMsgId] &&
-                state.pendingReplacedEvents[streamId][replacedMsgId].latestEventNum >
-                    timelineEvent.latestEventNum
+                state.pendingReplacedEvents[streamId][replacedMsgId]
+                    .latestEventNum > timelineEvent.latestEventNum
             ) {
                 // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
                 return state
@@ -232,7 +271,8 @@ export function makeTimelinesViewInterface(
             threadTimeline?.findIndex(
                 (e) =>
                     e.eventId === replacedMsgId ||
-                    (e.localEventId && e.localEventId === timelineEvent.localEventId),
+                    (e.localEventId &&
+                        e.localEventId === timelineEvent.localEventId),
             ) ?? -1
 
         return {
@@ -245,7 +285,10 @@ export function makeTimelinesViewInterface(
             ),
             replacedEvents: {
                 ...state.replacedEvents,
-                [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
+                [streamId]: [
+                    ...(state.replacedEvents[streamId] ?? []),
+                    { oldEvent, newEvent },
+                ],
             },
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
@@ -275,7 +318,12 @@ export function makeTimelinesViewInterface(
                 newEvent,
                 removeReaction(streamId, oldEvent, state.reactions),
             ),
-            tips: addTips(streamId, newEvent, removeTip(streamId, oldEvent, state.tips), 'append'), // not sure one will ever replace a tip
+            tips: addTips(
+                streamId,
+                newEvent,
+                removeTip(streamId, oldEvent, state.tips),
+                'append',
+            ), // not sure one will ever replace a tip
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -305,7 +353,9 @@ export function makeTimelinesViewInterface(
             ? state.threads[streamId]?.[threadParentId]
             : undefined
         const threadEventIndex =
-            threadTimeline?.findIndex((e) => e.eventId === confirmation.eventId) ?? -1
+            threadTimeline?.findIndex(
+                (e) => e.eventId === confirmation.eventId,
+            ) ?? -1
 
         return {
             timelines: replaceTimelineEvent(
@@ -317,7 +367,10 @@ export function makeTimelinesViewInterface(
             ),
             replacedEvents: {
                 ...state.replacedEvents,
-                [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
+                [streamId]: [
+                    ...(state.replacedEvents[streamId] ?? []),
+                    { oldEvent, newEvent },
+                ],
             },
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: state.threadsStats,
@@ -352,10 +405,22 @@ export function makeTimelinesViewInterface(
 
         if (redactsEventId) {
             const redactedEvent = makeRedactionEvent(event)
-            state = replaceEvent(state, userId, streamId, redactsEventId, redactedEvent)
+            state = replaceEvent(
+                state,
+                userId,
+                streamId,
+                redactsEventId,
+                redactedEvent,
+            )
             if (updatingEventId) {
                 // replace the formerly encrypted event
-                state = replaceEvent(state, userId, streamId, updatingEventId, event)
+                state = replaceEvent(
+                    state,
+                    userId,
+                    streamId,
+                    updatingEventId,
+                    event,
+                )
             } else {
                 state = appendEvent(state, userId, streamId, event)
             }
@@ -368,7 +433,13 @@ export function makeTimelinesViewInterface(
         } else {
             if (updatingEventId) {
                 // replace the formerly encrypted event
-                state = replaceEvent(state, userId, streamId, updatingEventId, event)
+                state = replaceEvent(
+                    state,
+                    userId,
+                    streamId,
+                    updatingEventId,
+                    event,
+                )
             } else {
                 state = appendEvent(state, userId, streamId, event)
             }
@@ -405,7 +476,11 @@ export function makeTimelinesViewInterface(
         })
     }
 
-    function prependEvents(events: TimelineEvent[], userId: string, streamId: string) {
+    function prependEvents(
+        events: TimelineEvent[],
+        userId: string,
+        streamId: string,
+    ) {
         setState((state) => {
             for (const event of [...events].reverse()) {
                 const editsEventId = getEditsId(event.content)
@@ -413,9 +488,21 @@ export function makeTimelinesViewInterface(
                 if (redactsEventId) {
                     const redactedEvent = makeRedactionEvent(event)
                     state = prependEvent(state, userId, streamId, event)
-                    state = replaceEvent(state, userId, streamId, redactsEventId, redactedEvent)
+                    state = replaceEvent(
+                        state,
+                        userId,
+                        streamId,
+                        redactsEventId,
+                        redactedEvent,
+                    )
                 } else if (editsEventId) {
-                    state = replaceEvent(state, userId, streamId, editsEventId, event)
+                    state = replaceEvent(
+                        state,
+                        userId,
+                        streamId,
+                        editsEventId,
+                        event,
+                    )
                 } else {
                     state = prependEvent(state, userId, streamId, event)
                 }
@@ -424,10 +511,20 @@ export function makeTimelinesViewInterface(
         })
     }
 
-    function updateEvents(events: TimelineEvent[], userId: string, streamId: string) {
+    function updateEvents(
+        events: TimelineEvent[],
+        userId: string,
+        streamId: string,
+    ) {
         setState((state) => {
             for (const event of events) {
-                state = processEvent(state, event, userId, streamId, event.eventId)
+                state = processEvent(
+                    state,
+                    event,
+                    userId,
+                    streamId,
+                    event.eventId,
+                )
             }
             return state
         })
@@ -440,11 +537,20 @@ export function makeTimelinesViewInterface(
         replacingEventId: string,
     ) {
         setState((state) => {
-            return processEvent(state, event, userId, streamId, replacingEventId)
+            return processEvent(
+                state,
+                event,
+                userId,
+                streamId,
+                replacingEventId,
+            )
         })
     }
 
-    function confirmEvents(confirmations: TimelineEventConfirmation[], streamId: string) {
+    function confirmEvents(
+        confirmations: TimelineEventConfirmation[],
+        streamId: string,
+    ) {
         setState((state) => {
             confirmations.forEach((confirmation) => {
                 state = confirmEvent(state, streamId, confirmation)
@@ -465,7 +571,10 @@ export function makeTimelinesViewInterface(
 }
 
 function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
-    if (next.content?.kind === RiverTimelineEvent.RedactedEvent && next.content.isAdminRedaction) {
+    if (
+        next.content?.kind === RiverTimelineEvent.RedactedEvent &&
+        next.content.isAdminRedaction
+    ) {
         return true
     }
     if (next.sender.id === prev.sender.id) {
@@ -475,7 +584,10 @@ function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
     return false
 }
 
-function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): TimelineEvent {
+function toReplacedMessageEvent(
+    prev: TimelineEvent,
+    next: TimelineEvent,
+): TimelineEvent {
     const isLocalId = prev.eventId.startsWith('~')
     if (!canReplaceEvent(prev, next)) {
         return prev
@@ -494,7 +606,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventId: next.eventId,
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
-            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedInBlockNum:
+                prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
             updatedAtEpochMs: next.createdAtEpochMs,
             content: {
@@ -515,7 +628,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventId: next.eventId,
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
-            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedInBlockNum:
+                prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
             updatedAtEpochMs: next.createdAtEpochMs,
             threadParentId: prev.threadParentId,
@@ -528,7 +642,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventId: next.eventId,
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
-            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedInBlockNum:
+                prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
         }
     } else {
         // make sure we carry the createdAtEpochMs of the previous event
@@ -541,7 +656,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventId: next.eventId,
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
-            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedInBlockNum:
+                prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
             updatedAtEpochMs: next.createdAtEpochMs,
         }
@@ -549,8 +665,13 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
 }
 
 function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {
-    if (redactionAction.content?.kind !== RiverTimelineEvent.RedactionActionEvent) {
-        throw new Error('makeRedactionEvent called with non-redaction action event')
+    if (
+        redactionAction.content?.kind !==
+        RiverTimelineEvent.RedactionActionEvent
+    ) {
+        throw new Error(
+            'makeRedactionEvent called with non-redaction action event',
+        )
     }
     const newContent = {
         kind: RiverTimelineEvent.RedactedEvent,
@@ -599,12 +720,17 @@ function addThreadStats(
                 [timelineEvent.eventId]: {
                     ...threadsStats[streamId][timelineEvent.eventId],
                     parentEvent: timelineEvent,
-                    parentMessageContent: getChannelMessageContent(timelineEvent),
+                    parentMessageContent:
+                        getChannelMessageContent(timelineEvent),
                     isParticipating:
-                        threadsStats[streamId][timelineEvent.eventId].isParticipating ||
-                        (timelineEvent.content?.kind !== RiverTimelineEvent.RedactedEvent &&
-                            threadsStats[streamId][timelineEvent.eventId].replyEventIds.size > 0 &&
-                            (timelineEvent.sender.id === userId || timelineEvent.isMentioned)),
+                        threadsStats[streamId][timelineEvent.eventId]
+                            .isParticipating ||
+                        (timelineEvent.content?.kind !==
+                            RiverTimelineEvent.RedactedEvent &&
+                            threadsStats[streamId][timelineEvent.eventId]
+                                .replyEventIds.size > 0 &&
+                            (timelineEvent.sender.id === userId ||
+                                timelineEvent.isMentioned)),
                 },
             },
         }
@@ -637,7 +763,9 @@ function addThreadStat(
     timeline: TimelineEvent[] | undefined,
     userId: string,
 ): ThreadStatsData {
-    const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline)
+    const updated = entry
+        ? { ...entry }
+        : makeNewThreadStats(event, parentId, timeline)
     if (event.content?.kind === RiverTimelineEvent.RedactedEvent) {
         return updated
     }
@@ -725,7 +853,11 @@ function addTip(
     }
 }
 
-function removeTip(streamId: string, event: TimelineEvent, tips: TipsMap): TipsMap {
+function removeTip(
+    streamId: string,
+    event: TimelineEvent,
+    tips: TipsMap,
+): TipsMap {
     if (!isMessageTipEvent(event)) {
         return tips
     }
@@ -737,7 +869,9 @@ function removeTip(streamId: string, event: TimelineEvent, tips: TipsMap): TipsM
         ...tips,
         [streamId]: {
             ...tips[streamId],
-            [refEventId]: tips[streamId][refEventId].filter((t) => t.eventId !== event.eventId),
+            [refEventId]: tips[streamId][refEventId].filter(
+                (t) => t.eventId !== event.eventId,
+            ),
         },
     }
 }
@@ -760,8 +894,14 @@ function addReactions(
     }
 }
 
-function addReaction(event: TimelineEvent, entry?: MessageReactions): MessageReactions {
-    const content = event.content?.kind === RiverTimelineEvent.Reaction ? event.content : undefined
+function addReaction(
+    event: TimelineEvent,
+    entry?: MessageReactions,
+): MessageReactions {
+    const content =
+        event.content?.kind === RiverTimelineEvent.Reaction
+            ? event.content
+            : undefined
     if (!content) {
         return entry ?? {}
     }
@@ -788,7 +928,10 @@ function removeReaction(
     if (!reactions[streamId]?.[parentId]) {
         return reactions
     }
-    const content = event.content?.kind === RiverTimelineEvent.Reaction ? event.content : undefined
+    const content =
+        event.content?.kind === RiverTimelineEvent.Reaction
+            ? event.content
+            : undefined
     if (!content) {
         return reactions
     }
@@ -818,13 +961,19 @@ function removeThreadEvent(
         return threads
     }
     const threadEventIndex =
-        threads[streamId]?.[parentId]?.findIndex((e) => e.eventId === event.eventId) ?? -1
+        threads[streamId]?.[parentId]?.findIndex(
+            (e) => e.eventId === event.eventId,
+        ) ?? -1
     if (threadEventIndex === -1) {
         return threads
     }
     return {
         ...threads,
-        [streamId]: removeTimelineEvent(parentId, threadEventIndex, threads[streamId]),
+        [streamId]: removeTimelineEvent(
+            parentId,
+            threadEventIndex,
+            threads[streamId],
+        ),
     }
 }
 
@@ -868,8 +1017,8 @@ function insertTimelineEvent(
     // thread items are decrypted in an unpredictable order, so we need to insert them in the correct order
     return {
         ...timelines,
-        [streamId]: [timelineEvent, ...(timelines[streamId] ?? [])].sort((a, b) =>
-            a.eventNum > b.eventNum ? 1 : -1,
+        [streamId]: [timelineEvent, ...(timelines[streamId] ?? [])].sort(
+            (a, b) => (a.eventNum > b.eventNum ? 1 : -1),
         ),
     }
 }
@@ -905,12 +1054,20 @@ function replaceTimelineEvent(
 ) {
     return {
         ...timelines,
-        [streamId]: [...timeline.slice(0, eventIndex), newEvent, ...timeline.slice(eventIndex + 1)],
+        [streamId]: [
+            ...timeline.slice(0, eventIndex),
+            newEvent,
+            ...timeline.slice(eventIndex + 1),
+        ],
     }
 }
 
-function getChannelMessageContent(event?: TimelineEvent): ChannelMessageEvent | undefined {
-    return event?.content?.kind === RiverTimelineEvent.ChannelMessage ? event.content : undefined
+function getChannelMessageContent(
+    event?: TimelineEvent,
+): ChannelMessageEvent | undefined {
+    return event?.content?.kind === RiverTimelineEvent.ChannelMessage
+        ? event.content
+        : undefined
 }
 
 function getMessageSenderId(event: TimelineEvent): string | undefined {

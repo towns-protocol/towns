@@ -1,12 +1,27 @@
 import { useCallback, useMemo, useState } from 'react'
 import { type Address, parseEther } from 'viem'
-import { useChannel, useSpace, useSyncAgent, useUserSpaces } from '@towns-protocol/react-sdk'
+import {
+    useChannel,
+    useSpace,
+    useSyncAgent,
+    useUserSpaces,
+} from '@towns-protocol/react-sdk'
 import { ArrowLeftIcon, LoaderCircleIcon } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AppRegistryDapp, SpaceAddressFromSpaceId, SpaceDapp } from '@towns-protocol/web3'
+import {
+    AppRegistryDapp,
+    SpaceAddressFromSpaceId,
+    SpaceDapp,
+} from '@towns-protocol/web3'
 import { makeBaseProvider } from '@towns-protocol/sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '../ui/dialog'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
@@ -44,17 +59,20 @@ export const BotInstallDialog = ({
         setCurrentStep('channel-selection')
     }, [])
 
-    const handleChannelToggle = useCallback((channelId: string, checked: boolean) => {
-        setState((prev) => {
-            const newSet = new Set(prev.channelIds)
-            if (checked) {
-                newSet.add(channelId)
-            } else {
-                newSet.delete(channelId)
-            }
-            return { ...prev, channelIds: newSet }
-        })
-    }, [])
+    const handleChannelToggle = useCallback(
+        (channelId: string, checked: boolean) => {
+            setState((prev) => {
+                const newSet = new Set(prev.channelIds)
+                if (checked) {
+                    newSet.add(channelId)
+                } else {
+                    newSet.delete(channelId)
+                }
+                return { ...prev, channelIds: newSet }
+            })
+        },
+        [],
+    )
 
     const handleBackToSpaceSelection = useCallback(() => {
         setCurrentStep('space-selection')
@@ -94,17 +112,25 @@ export const BotInstallDialog = ({
                 await tx.wait()
                 console.log('bot installed')
             }
-            await sync.riverConnection.call((client) => client.joinUser(state.spaceId, appClientId))
+            await sync.riverConnection.call((client) =>
+                client.joinUser(state.spaceId, appClientId),
+            )
             await Promise.all(
                 // TODO: can we batch those into a single call?
                 Array.from(state.channelIds).map((channelId) =>
-                    sync.riverConnection.call((client) => client.joinUser(channelId, appClientId)),
+                    sync.riverConnection.call((client) =>
+                        client.joinUser(channelId, appClientId),
+                    ),
                 ),
             )
         },
         onSuccess: () => {
             onOpenChange(false)
-            setState((prev) => ({ ...prev, spaceId: '', channelIds: new Set() }))
+            setState((prev) => ({
+                ...prev,
+                spaceId: '',
+                channelIds: new Set(),
+            }))
             setCurrentStep('space-selection')
         },
         onError: (error) => {
@@ -130,7 +156,8 @@ export const BotInstallDialog = ({
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>
-                        Install Bot - Step {currentStep === 'space-selection' ? '1' : '2'} of 2
+                        Install Bot - Step{' '}
+                        {currentStep === 'space-selection' ? '1' : '2'} of 2
                     </DialogTitle>
                     <DialogDescription>
                         {currentStep === 'space-selection'
@@ -165,7 +192,10 @@ export const BotInstallDialog = ({
 
                     {currentStep === 'space-selection' && (
                         <div className="flex justify-end">
-                            <Button variant="outline" onClick={() => onOpenChange(false)}>
+                            <Button
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                            >
                                 Cancel
                             </Button>
                         </div>
@@ -285,7 +315,9 @@ const ChannelSelectionStep = ({
     return (
         <>
             <div className="space-y-3">
-                <Label className="text-sm font-medium">Channels in {spaceName}</Label>
+                <Label className="text-sm font-medium">
+                    Channels in {spaceName}
+                </Label>
 
                 {channelIds.length > 0 && (
                     <>
@@ -315,13 +347,17 @@ const ChannelSelectionStep = ({
                                         channelId={channelId}
                                         selected={
                                             selectedChannelIds.has(channelId) ||
-                                            (botChannels?.includes(channelId) ?? false)
+                                            (botChannels?.includes(channelId) ??
+                                                false)
                                         }
                                         disabled={
                                             isInstalling ||
-                                            (botChannels?.includes(channelId) ?? false)
+                                            (botChannels?.includes(channelId) ??
+                                                false)
                                         }
-                                        onToggle={(checked) => onChannelToggle(channelId, checked)}
+                                        onToggle={(checked) =>
+                                            onChannelToggle(channelId, checked)
+                                        }
                                     />
                                 ))}
                             </div>
@@ -337,7 +373,11 @@ const ChannelSelectionStep = ({
             </div>
 
             <div className="flex justify-between">
-                <Button variant="outline" disabled={isInstalling} onClick={onBack}>
+                <Button
+                    variant="outline"
+                    disabled={isInstalling}
+                    onClick={onBack}
+                >
                     <ArrowLeftIcon className="mr-2 h-4 w-4" />
                     Back
                 </Button>
@@ -345,7 +385,9 @@ const ChannelSelectionStep = ({
                     disabled={selectedChannelIds.size === 0 || isInstalling}
                     onClick={onInstall}
                 >
-                    {isInstalling && <LoaderCircleIcon className="mr-2 h-4 w-4 animate-spin" />}
+                    {isInstalling && (
+                        <LoaderCircleIcon className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     {isInstalling ? 'Installing...' : 'Install Bot'}
                 </Button>
             </div>
@@ -368,7 +410,9 @@ const SpaceOption = ({
     return (
         <button
             className={`w-full rounded-md border px-3 py-3 text-left transition-colors hover:bg-muted ${
-                selected ? 'border-primary bg-primary/10 text-primary' : 'border-border'
+                selected
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border'
             }`}
             onClick={onSelect}
         >

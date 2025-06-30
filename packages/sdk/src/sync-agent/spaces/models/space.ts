@@ -5,7 +5,10 @@ import {
     makeDefaultChannelStreamId,
     makeUniqueChannelStreamId,
 } from '../../../id'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Channel } from './channel'
@@ -36,7 +39,11 @@ export class Space extends PersistedObservable<SpaceModel> {
         store: Store,
         private spaceDapp: SpaceDapp,
     ) {
-        super({ id, channelIds: [], initialized: false }, store, LoadPriority.high)
+        super(
+            { id, channelIds: [], initialized: false },
+            store,
+            LoadPriority.high,
+        )
         this.channels = {
             [makeDefaultChannelStreamId(id)]: new Channel(
                 makeDefaultChannelStreamId(id),
@@ -124,13 +131,20 @@ export class Space extends PersistedObservable<SpaceModel> {
             channelName,
             '',
             channelId,
-            roles.filter((role) => role.name !== 'Owner').map((role) => role.roleId),
+            roles
+                .filter((role) => role.name !== 'Owner')
+                .map((role) => role.roleId),
             signer,
         )
         const receipt = await tx.wait()
         logger.log('createChannel receipt', receipt)
         await this.riverConnection.call((client) =>
-            client.createChannel(spaceId, channelName, opts?.topic ?? '', channelId),
+            client.createChannel(
+                spaceId,
+                channelName,
+                opts?.topic ?? '',
+                channelId,
+            ),
         )
         return channelId
     }
@@ -140,7 +154,10 @@ export class Space extends PersistedObservable<SpaceModel> {
      * @returns The {@link Channel} model.
      */
     getChannel(channelId: string): Channel {
-        check(isChannelStreamId(channelId), 'channelId is not a channel stream id')
+        check(
+            isChannelStreamId(channelId),
+            'channelId is not a channel stream id',
+        )
         if (!this.channels[channelId]) {
             this.channels[channelId] = new Channel(
                 channelId,
@@ -165,7 +182,9 @@ export class Space extends PersistedObservable<SpaceModel> {
         if (this.data.id === streamId) {
             const stream = this.riverConnection.client?.stream(streamId)
             check(isDefined(stream), 'stream is not defined')
-            const channelIds = Object.keys(stream.view.spaceContent.spaceChannelsMetadata ?? {})
+            const channelIds = Object.keys(
+                stream.view.spaceContent.spaceChannelsMetadata ?? {},
+            )
             for (const channelId of channelIds) {
                 if (!this.channels[channelId]) {
                     this.channels[channelId] = new Channel(
@@ -193,7 +212,9 @@ export class Space extends PersistedObservable<SpaceModel> {
                 )
             }
             if (!this.data.channelIds.includes(channelId)) {
-                this.setData({ channelIds: [...this.data.channelIds, channelId] })
+                this.setData({
+                    channelIds: [...this.data.channelIds, channelId],
+                })
             }
         }
     }
@@ -201,7 +222,11 @@ export class Space extends PersistedObservable<SpaceModel> {
     private onSpaceChannelDeleted = (streamId: string, channelId: string) => {
         if (streamId === this.data.id) {
             delete this.channels[channelId]
-            this.setData({ channelIds: this.data.channelIds.filter((id) => id !== channelId) })
+            this.setData({
+                channelIds: this.data.channelIds.filter(
+                    (id) => id !== channelId,
+                ),
+            })
         }
     }
 

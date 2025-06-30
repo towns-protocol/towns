@@ -25,12 +25,23 @@ export class RiverRegistry {
     constructor(config: RiverChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.nodeRegistry = new INodeRegistryShim(config.addresses.riverRegistry, provider)
-        this.streamRegistry = new IStreamRegistryShim(config.addresses.riverRegistry, provider)
-        this.operatorRegistry = new IOperatorRegistryShim(config.addresses.riverRegistry, provider)
+        this.nodeRegistry = new INodeRegistryShim(
+            config.addresses.riverRegistry,
+            provider,
+        )
+        this.streamRegistry = new IStreamRegistryShim(
+            config.addresses.riverRegistry,
+            provider,
+        )
+        this.operatorRegistry = new IOperatorRegistryShim(
+            config.addresses.riverRegistry,
+            provider,
+        )
     }
 
-    public async getAllNodes(nodeStatus?: number): Promise<RiverNodesMap | undefined> {
+    public async getAllNodes(
+        nodeStatus?: number,
+    ): Promise<RiverNodesMap | undefined> {
         const allNodes = await this.nodeRegistry.read.getAllNodes()
         if (allNodes.length == 0) {
             return undefined
@@ -53,7 +64,9 @@ export class RiverRegistry {
         return this.riverNodesMap
     }
 
-    public async getAllNodeUrls(nodeStatus?: number): Promise<NodeUrls[] | undefined> {
+    public async getAllNodeUrls(
+        nodeStatus?: number,
+    ): Promise<NodeUrls[] | undefined> {
         const allNodes = await this.nodeRegistry.read.getAllNodes()
         if (allNodes.length == 0) {
             return undefined
@@ -104,11 +117,15 @@ export class RiverRegistry {
         }
     }
 
-    private async getStreamCountOnNode(nodeAddress: string): Promise<ethers.BigNumber> {
+    private async getStreamCountOnNode(
+        nodeAddress: string,
+    ): Promise<ethers.BigNumber> {
         return this.streamRegistry.read.getStreamCountOnNode(nodeAddress)
     }
 
-    public async getStreamCountsOnNodes(nodeAddresses: string[]): Promise<ethers.BigNumber[]> {
+    public async getStreamCountsOnNodes(
+        nodeAddresses: string[],
+    ): Promise<ethers.BigNumber[]> {
         const getStreamCountOnNode = this.getStreamCountOnNode.bind(this)
         const promises = nodeAddresses.map(getStreamCountOnNode)
         return Promise.all(promises)

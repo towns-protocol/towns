@@ -2,7 +2,10 @@
  * @group with-entitlements
  */
 
-import { setupChannelWithCustomRole, expectUserCanJoinChannel } from '../../testUtils'
+import {
+    setupChannelWithCustomRole,
+    expectUserCanJoinChannel,
+} from '../../testUtils'
 import { dlog } from '@towns-protocol/dlog'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
@@ -10,19 +13,28 @@ const log = dlog('csb:test:channelEntitlementPermissions')
 
 describe('channelEntitlementPermissions', () => {
     test("READ-only user cannot write or react to a channel's messages", async () => {
-        const { alice, bob, aliceSpaceDapp, spaceId, channelId } = await setupChannelWithCustomRole(
-            ['alice'],
-            NoopRuleData,
-        )
+        const { alice, bob, aliceSpaceDapp, spaceId, channelId } =
+            await setupChannelWithCustomRole(['alice'], NoopRuleData)
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
-        const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
+        const { eventId: refEventId } = await bob.sendMessage(
+            channelId!,
+            'Hello, world!',
+        )
 
         // React to Bob's message not allowed.
         await expect(
-            alice.sendChannelMessage_Reaction(channelId!, { reaction: '👍', refEventId }),
+            alice.sendChannelMessage_Reaction(channelId!, {
+                reaction: '👍',
+                refEventId,
+            }),
         ).rejects.toThrow(/*not entitled to add message to channel*/)
 
         // Reply to Bob's message not allowed.
@@ -50,22 +62,33 @@ describe('channelEntitlementPermissions', () => {
     })
 
     test('READ + REACT user can react and redact reactions, but cannot write (top-level or reply)', async () => {
-        const { alice, bob, aliceSpaceDapp, spaceId, channelId } = await setupChannelWithCustomRole(
-            ['alice'],
-            NoopRuleData,
-            [Permission.Read, Permission.React],
-        )
+        const { alice, bob, aliceSpaceDapp, spaceId, channelId } =
+            await setupChannelWithCustomRole(['alice'], NoopRuleData, [
+                Permission.Read,
+                Permission.React,
+            ])
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
-        const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
+        const { eventId: refEventId } = await bob.sendMessage(
+            channelId!,
+            'Hello, world!',
+        )
 
         // Reacting to Bob's message should be allowed. Redacting the reaction should also be allowed.
-        const { eventId } = await alice.sendChannelMessage_Reaction(channelId!, {
-            reaction: '👍',
-            refEventId,
-        })
+        const { eventId } = await alice.sendChannelMessage_Reaction(
+            channelId!,
+            {
+                reaction: '👍',
+                refEventId,
+            },
+        )
         expect(eventId).toBeDefined()
         await expect(
             alice.sendChannelMessage_Redaction(channelId!, {
@@ -100,22 +123,33 @@ describe('channelEntitlementPermissions', () => {
     // In practice we would never have a user with only write permissions, but this is a good test
     // to make sure our permissions are non-overlapping.
     test('WRITE user can write (top-level plus reply), react', async () => {
-        const { alice, bob, aliceSpaceDapp, spaceId, channelId } = await setupChannelWithCustomRole(
-            ['alice'],
-            NoopRuleData,
-            [Permission.Read, Permission.Write],
-        )
+        const { alice, bob, aliceSpaceDapp, spaceId, channelId } =
+            await setupChannelWithCustomRole(['alice'], NoopRuleData, [
+                Permission.Read,
+                Permission.Write,
+            ])
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
-        const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
+        const { eventId: refEventId } = await bob.sendMessage(
+            channelId!,
+            'Hello, world!',
+        )
 
         // Reacting to Bob's message should be allowed. Redacting the reaction should also be allowed.
-        const { eventId } = await alice.sendChannelMessage_Reaction(channelId!, {
-            reaction: '👍',
-            refEventId,
-        })
+        const { eventId } = await alice.sendChannelMessage_Reaction(
+            channelId!,
+            {
+                reaction: '👍',
+                refEventId,
+            },
+        )
         expect(eventId).toBeDefined()
         await expect(
             alice.sendChannelMessage_Redaction(channelId!, {
@@ -136,7 +170,9 @@ describe('channelEntitlementPermissions', () => {
         ).resolves.not.toThrow()
 
         // Top-level post currently allowed.
-        await expect(alice.sendMessage(channelId!, 'Hello, world!')).resolves.not.toThrow()
+        await expect(
+            alice.sendMessage(channelId!, 'Hello, world!'),
+        ).resolves.not.toThrow()
 
         const doneStart = Date.now()
         // kill the clients
@@ -146,22 +182,34 @@ describe('channelEntitlementPermissions', () => {
     })
 
     test('REACT + WRITE user can do all WRITE user can do', async () => {
-        const { alice, bob, aliceSpaceDapp, spaceId, channelId } = await setupChannelWithCustomRole(
-            ['alice'],
-            NoopRuleData,
-            [Permission.Read, Permission.React, Permission.Write],
-        )
+        const { alice, bob, aliceSpaceDapp, spaceId, channelId } =
+            await setupChannelWithCustomRole(['alice'], NoopRuleData, [
+                Permission.Read,
+                Permission.React,
+                Permission.Write,
+            ])
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
-        const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
+        const { eventId: refEventId } = await bob.sendMessage(
+            channelId!,
+            'Hello, world!',
+        )
 
         // Reacting to Bob's message should be allowed. Redacting the reaction should also be allowed.
-        const { eventId } = await alice.sendChannelMessage_Reaction(channelId!, {
-            reaction: '👍',
-            refEventId,
-        })
+        const { eventId } = await alice.sendChannelMessage_Reaction(
+            channelId!,
+            {
+                reaction: '👍',
+                refEventId,
+            },
+        )
         expect(eventId).toBeDefined()
         await expect(
             alice.sendChannelMessage_Redaction(channelId!, {
@@ -182,7 +230,9 @@ describe('channelEntitlementPermissions', () => {
         ).resolves.not.toThrow()
 
         // Top-level post currently allowed.
-        await expect(alice.sendMessage(channelId!, 'Hello, world!')).resolves.not.toThrow()
+        await expect(
+            alice.sendMessage(channelId!, 'Hello, world!'),
+        ).resolves.not.toThrow()
 
         const doneStart = Date.now()
         // kill the clients

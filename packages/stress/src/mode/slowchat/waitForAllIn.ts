@@ -4,7 +4,10 @@ import { ChatConfig } from '../common/types'
 import { isDefined, RiverTimelineEvent } from '@towns-protocol/sdk'
 import { getLogger } from '../../utils/logger'
 
-export async function waitForAllIn(rootClient: StressClient, chatConfig: ChatConfig) {
+export async function waitForAllIn(
+    rootClient: StressClient,
+    chatConfig: ChatConfig,
+) {
     check(isDefined(chatConfig.kickoffMessageEventId), 'kickoffMessageEventId')
     const logger = getLogger('stress:waitForAllIn', { logId: rootClient.logId })
     const lastReactionCount = 0
@@ -34,12 +37,18 @@ export async function waitForAllIn(rootClient: StressClient, chatConfig: ChatCon
     }
 }
 
-const countReactions = (client: StressClient, announceChannelId: string, rootMessageId: string) => {
+const countReactions = (
+    client: StressClient,
+    announceChannelId: string,
+    rootMessageId: string,
+) => {
     const channel = client.streamsClient.stream(announceChannelId)
     if (!channel) {
         return 0
     }
-    const message = channel.view.timeline.find((event) => event.eventId === rootMessageId)
+    const message = channel.view.timeline.find(
+        (event) => event.eventId === rootMessageId,
+    )
     if (!message) {
         return 0
     }

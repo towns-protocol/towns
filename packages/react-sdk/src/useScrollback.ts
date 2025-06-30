@@ -23,7 +23,11 @@ export const useScrollback = (
     const sync = useSyncAgent()
     const room = useMemo(() => getRoom(sync, streamId), [sync, streamId])
     assert(!(room instanceof Space), 'cant scrollback spaces')
-    const { action: scrollback, ...rest } = useAction(room.timeline, 'scrollback', config)
+    const { action: scrollback, ...rest } = useAction(
+        room.timeline,
+        'scrollback',
+        config,
+    )
     return {
         scrollback,
         ...rest,

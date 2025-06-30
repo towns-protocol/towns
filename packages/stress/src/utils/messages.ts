@@ -25,7 +25,23 @@ export function makeSillyMessage(opts?: { maxWords?: number }) {
         'zh',
         'ng',
     ]
-    const w1 = ['a', 'e', 'i', 'o', 'u', 'ə', 'ɑ', 'æ', 'ɛ', 'ɪ', 'i', 'ɔ', 'ʊ', 'u', 'ʌ']
+    const w1 = [
+        'a',
+        'e',
+        'i',
+        'o',
+        'u',
+        'ə',
+        'ɑ',
+        'æ',
+        'ɛ',
+        'ɪ',
+        'i',
+        'ɔ',
+        'ʊ',
+        'u',
+        'ʌ',
+    ]
     const w2 = [
         'ai',
         'au',
@@ -52,15 +68,23 @@ export function makeSillyMessage(opts?: { maxWords?: number }) {
     ]
 
     const wo = () =>
-        w0[Math.floor(Math.random() * w0.length)] + w1[Math.floor(Math.random() * w1.length)]
+        w0[Math.floor(Math.random() * w0.length)] +
+        w1[Math.floor(Math.random() * w1.length)]
 
     const word = () => {
-        const prefix = Array.from({ length: Math.floor(Math.random() * 3) + 1 }, wo).join('')
-        const suffix = Math.random() > 0.8 ? w2[Math.floor(Math.random() * w2.length)] : ''
+        const prefix = Array.from(
+            { length: Math.floor(Math.random() * 3) + 1 },
+            wo,
+        ).join('')
+        const suffix =
+            Math.random() > 0.8 ? w2[Math.floor(Math.random() * w2.length)] : ''
         return prefix + suffix
     }
 
-    return Array.from({ length: Math.floor(Math.random() * (maxWords - 1)) + 1 }, word).join(' ')
+    return Array.from(
+        { length: Math.floor(Math.random() * (maxWords - 1)) + 1 },
+        word,
+    ).join(' ')
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

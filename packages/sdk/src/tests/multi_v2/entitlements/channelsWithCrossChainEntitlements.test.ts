@@ -11,7 +11,11 @@ import {
     mockCrossChainCheckOp,
 } from '../../testUtils'
 import { dlog } from '@towns-protocol/dlog'
-import { Address, treeToRuleData, TestCrossChainEntitlement } from '@towns-protocol/web3'
+import {
+    Address,
+    treeToRuleData,
+    TestCrossChainEntitlement,
+} from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithCrossChainEntitlements')
 
@@ -19,7 +23,9 @@ describe('channelsWithCrossChainEntitlements', () => {
     test('cross chain entitlement gate pass', async () => {
         const idParam = 1n
         const contractName = 'TestCrossChain'
-        const ruleData = treeToRuleData(await mockCrossChainCheckOp(contractName, idParam))
+        const ruleData = treeToRuleData(
+            await mockCrossChainCheckOp(contractName, idParam),
+        )
 
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole([], ruleData)
@@ -32,7 +38,12 @@ describe('channelsWithCrossChainEntitlements', () => {
         )
 
         log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -44,7 +55,9 @@ describe('channelsWithCrossChainEntitlements', () => {
     test('cross chain entitlement gate fail', async () => {
         const idParam = 1n
         const contractName = 'TestCrossChain'
-        const ruleData = treeToRuleData(await mockCrossChainCheckOp(contractName, idParam))
+        const ruleData = treeToRuleData(
+            await mockCrossChainCheckOp(contractName, idParam),
+        )
 
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole([], ruleData)
@@ -57,7 +70,12 @@ describe('channelsWithCrossChainEntitlements', () => {
         )
 
         log('expect that alice cannot join the channel')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -69,7 +87,9 @@ describe('channelsWithCrossChainEntitlements', () => {
     test('cross chain entitlement gate join pass - join as root, linked wallet entitled', async () => {
         const idParam = 1n
         const contractName = 'TestCrossChain'
-        const ruleData = treeToRuleData(await mockCrossChainCheckOp(contractName, idParam))
+        const ruleData = treeToRuleData(
+            await mockCrossChainCheckOp(contractName, idParam),
+        )
 
         const {
             alice,
@@ -83,10 +103,19 @@ describe('channelsWithCrossChainEntitlements', () => {
         } = await setupChannelWithCustomRole([], ruleData)
 
         // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         log('expect that alice cannot join the channel')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Set entitlement for carol's wallet
         await TestCrossChainEntitlement.setIsEntitled(
@@ -100,7 +129,12 @@ describe('channelsWithCrossChainEntitlements', () => {
         await new Promise((f) => setTimeout(f, 2000))
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients
@@ -112,7 +146,9 @@ describe('channelsWithCrossChainEntitlements', () => {
     test('cross chain entitlement gated join - join as linked wallet, assets in root wallet', async () => {
         const idParam = 1n
         const contractName = 'TestCrossChain'
-        const ruleData = treeToRuleData(await mockCrossChainCheckOp(contractName, idParam))
+        const ruleData = treeToRuleData(
+            await mockCrossChainCheckOp(contractName, idParam),
+        )
 
         const {
             alice,
@@ -127,7 +163,11 @@ describe('channelsWithCrossChainEntitlements', () => {
         } = await setupChannelWithCustomRole([], ruleData)
 
         log("Joining alice's wallet as a linked wallet to carol's root wallet")
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+        await linkWallets(
+            carolSpaceDapp,
+            carolProvider.wallet,
+            aliceProvider.wallet,
+        )
 
         // Set carol's wallet as entitled
         await TestCrossChainEntitlement.setIsEntitled(
@@ -139,7 +179,12 @@ describe('channelsWithCrossChainEntitlements', () => {
 
         log('expect that alice can join the channel')
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients

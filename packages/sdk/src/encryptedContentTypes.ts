@@ -17,8 +17,14 @@ export interface EncryptedContent {
     content: EncryptedData
 }
 
-export function isEncryptedContentKind(kind: string): kind is EncryptedContent['kind'] {
-    return kind === 'text' || kind === 'channelMessage' || kind === 'channelProperties'
+export function isEncryptedContentKind(
+    kind: string,
+): kind is EncryptedContent['kind'] {
+    return (
+        kind === 'text' ||
+        kind === 'channelMessage' ||
+        kind === 'channelProperties'
+    )
 }
 
 /*************
@@ -58,7 +64,9 @@ export function toDecryptedContent(
     switch (dataVersion) {
         case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0:
             if (typeof cleartext !== 'string') {
-                throw new Error('cleartext is not a string when dataversion is 0')
+                throw new Error(
+                    'cleartext is not a string when dataversion is 0',
+                )
             }
             switch (kind) {
                 case 'text':
@@ -69,12 +77,18 @@ export function toDecryptedContent(
                 case 'channelMessage':
                     return {
                         kind,
-                        content: fromJsonString(ChannelMessageSchema, cleartext),
+                        content: fromJsonString(
+                            ChannelMessageSchema,
+                            cleartext,
+                        ),
                     } satisfies DecryptedContent_ChannelMessage
                 case 'channelProperties':
                     return {
                         kind,
-                        content: fromJsonString(ChannelPropertiesSchema, cleartext),
+                        content: fromJsonString(
+                            ChannelPropertiesSchema,
+                            cleartext,
+                        ),
                     } satisfies DecryptedContent_ChannelProperties
                 default:
                     // the client is responsible for this

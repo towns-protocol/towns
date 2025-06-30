@@ -13,7 +13,10 @@ import {
 import { waitForValue } from '../testUtils'
 import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
-import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
+import {
+    RiverTimelineEvent,
+    TimelineEvent,
+} from '../../views/models/timelineTypes'
 
 const base_log = dlog('csb:test:transaction_SpaceReview')
 
@@ -35,7 +38,10 @@ describe('transaction_SpaceReview', () => {
         const log = base_log.extend('beforeAll')
         log('start')
         // fund wallets
-        await Promise.all([bobIdentity.fundWallet(), aliceIdentity.fundWallet()])
+        await Promise.all([
+            bobIdentity.fundWallet(),
+            aliceIdentity.fundWallet(),
+        ])
         // make agents
         bob = await bobIdentity.makeSyncAgent()
         alice = await aliceIdentity.makeSyncAgent()
@@ -57,10 +63,11 @@ describe('transaction_SpaceReview', () => {
         // join the space
         await alice.spaces.joinSpace(spaceIdWithAlice, aliceIdentity.signer)
         // get alice's token id
-        const aliceTokenId_ = await bob.riverConnection.spaceDapp.getTokenIdOfOwner(
-            spaceIdWithAlice,
-            aliceIdentity.rootWallet.address,
-        )
+        const aliceTokenId_ =
+            await bob.riverConnection.spaceDapp.getTokenIdOfOwner(
+                spaceIdWithAlice,
+                aliceIdentity.rootWallet.address,
+            )
         expect(aliceTokenId_).toBeDefined()
         aliceTokenId = aliceTokenId_!
         // make another space
@@ -79,7 +86,8 @@ describe('transaction_SpaceReview', () => {
     })
 
     test('alice adds review', async () => {
-        const web3Space = alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
+        const web3Space =
+            alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
         expect(web3Space).toBeDefined()
         const tx = await web3Space!.Review.addReview(
             {
@@ -91,7 +99,10 @@ describe('transaction_SpaceReview', () => {
         expect(tx).toBeDefined()
         const receipt = await tx.wait(2)
         expect(receipt).toBeDefined()
-        const reviewEvent = getSpaceReviewEventData(receipt.logs, aliceIdentity.userId)
+        const reviewEvent = getSpaceReviewEventData(
+            receipt.logs,
+            aliceIdentity.userId,
+        )
         expect(reviewEvent).toBeDefined()
         expect(reviewEvent.rating).toBe(5)
         expect(reviewEvent.comment).toBe('This is a test review')
@@ -108,13 +119,16 @@ describe('transaction_SpaceReview', () => {
         )
         if (!stream) throw new Error('no stream found')
         const reviewEvent = await waitForValue(() => {
-            const reviewEvents = stream.view.timeline.filter(isUserBlockchainTransaction)
+            const reviewEvents = stream.view.timeline.filter(
+                isUserBlockchainTransaction,
+            )
             expect(reviewEvents.length).toBeGreaterThan(0)
             const reviewEvent = reviewEvents[0]
             expect(reviewEvent).toBeDefined()
             if (
                 !reviewEvent ||
-                reviewEvent.content?.kind !== RiverTimelineEvent.UserBlockchainTransaction
+                reviewEvent.content?.kind !==
+                    RiverTimelineEvent.UserBlockchainTransaction
             )
                 throw new Error('no review event whaaa?')
             return reviewEvent.content.transaction
@@ -123,7 +137,9 @@ describe('transaction_SpaceReview', () => {
             throw new Error('no review event whaaa?')
         }
         expect(reviewEvent.receipt).toBeDefined()
-        expect(reviewEvent.content.value.action).toBe(BlockchainTransaction_SpaceReview_Action.Add)
+        expect(reviewEvent.content.value.action).toBe(
+            BlockchainTransaction_SpaceReview_Action.Add,
+        )
         if (!reviewEvent.content.value.event) {
             throw new Error('no event in space review')
         }
@@ -195,10 +211,16 @@ describe('transaction_SpaceReview', () => {
         )
         if (!stream) throw new Error('no stream found')
         const tipEvent = await waitForValue(() => {
-            const tipEvents = stream.view.timeline.filter(isUserReceivedBlockchainTransaction)
+            const tipEvents = stream.view.timeline.filter(
+                isUserReceivedBlockchainTransaction,
+            )
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
-            if (!tip || tip.content?.kind !== RiverTimelineEvent.UserReceivedBlockchainTransaction)
+            if (
+                !tip ||
+                tip.content?.kind !==
+                    RiverTimelineEvent.UserReceivedBlockchainTransaction
+            )
                 throw new Error('no tip event found')
             return tip.content.receivedTransaction
         })
@@ -209,7 +231,9 @@ describe('transaction_SpaceReview', () => {
         const stream = alice.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
         const tipEvent = await waitForValue(() => {
-            const tipEvents = stream.view.timeline.filter(isTipBlockchainTransaction)
+            const tipEvents = stream.view.timeline.filter(
+                isTipBlockchainTransaction,
+            )
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             if (!tip || tip.content?.kind !== RiverTimelineEvent.TipEvent)
@@ -220,7 +244,8 @@ describe('transaction_SpaceReview', () => {
         expect(tipEvent.transaction?.receipt).toBeDefined()
     })
     test('alice updates review', async () => {
-        const web3Space = alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
+        const web3Space =
+            alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
         expect(web3Space).toBeDefined()
         const tx = await web3Space!.Review.updateReview(
             {
@@ -232,7 +257,10 @@ describe('transaction_SpaceReview', () => {
         expect(tx).toBeDefined()
         const receipt = await tx.wait(2)
         expect(receipt).toBeDefined()
-        const reviewEvent = getSpaceReviewEventData(receipt.logs, aliceIdentity.userId)
+        const reviewEvent = getSpaceReviewEventData(
+            receipt.logs,
+            aliceIdentity.userId,
+        )
         expect(reviewEvent).toBeDefined()
         expect(reviewEvent.rating).toBe(4)
         expect(reviewEvent.comment).toBe('This is a worse test review')
@@ -246,13 +274,17 @@ describe('transaction_SpaceReview', () => {
         ).resolves.not.toThrow()
     })
     test('alice deletes review', async () => {
-        const web3Space = alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
+        const web3Space =
+            alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
         expect(web3Space).toBeDefined()
         const tx = await web3Space!.Review.deleteReview(aliceIdentity.signer)
         expect(tx).toBeDefined()
         const receipt = await tx.wait(2)
         expect(receipt).toBeDefined()
-        const reviewEvent = getSpaceReviewEventData(receipt.logs, aliceIdentity.userId)
+        const reviewEvent = getSpaceReviewEventData(
+            receipt.logs,
+            aliceIdentity.userId,
+        )
         expect(reviewEvent).toBeDefined()
         expect(reviewEvent.rating).toBe(0)
         expect(reviewEvent.comment).toBeUndefined()
@@ -357,10 +389,14 @@ describe('transaction_SpaceReview', () => {
         expect(streamView).toBeDefined()
     })
     test('space snapshot', async () => {
-        await bob.riverConnection.client!.debugForceMakeMiniblock(spaceIdWithAlice, {
-            forceSnapshot: true,
-        })
-        const streamView = await bob.riverConnection.client!.getStream(spaceIdWithAlice)
+        await bob.riverConnection.client!.debugForceMakeMiniblock(
+            spaceIdWithAlice,
+            {
+                forceSnapshot: true,
+            },
+        )
+        const streamView =
+            await bob.riverConnection.client!.getStream(spaceIdWithAlice)
         expect(streamView).toBeDefined()
         // after the snapshot, we no longer see the review
         expect(streamView.membershipContent.spaceReviews.length).toBe(0)

@@ -1,5 +1,9 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { makeRiverConfig, makeSignerContext, NotificationService } from '@towns-protocol/sdk'
+import {
+    makeRiverConfig,
+    makeSignerContext,
+    NotificationService,
+} from '@towns-protocol/sdk'
 import { check } from '@towns-protocol/dlog'
 import {
     DmChannelSettingValue,
@@ -21,7 +25,8 @@ logger.info(config, 'config')
 
 const registerNotificationService = async () => {
     // demo connecting to the notification service
-    const notificationServiceUrl = 'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
+    const notificationServiceUrl =
+        'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
     if (!notificationServiceUrl) {
         logger.info('NOTIFICATION_SERVICE_URL is not set')
         return
@@ -29,13 +34,20 @@ const registerNotificationService = async () => {
 
     const wallet = ethers.Wallet.createRandom()
     const delegateWallet = ethers.Wallet.createRandom()
-    const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
+    const signerContext = await makeSignerContext(wallet, delegateWallet, {
+        days: 1,
+    })
 
     const { startResponse, finishResponse, notificationRpcClient } =
-        await NotificationService.authenticate(signerContext, notificationServiceUrl)
+        await NotificationService.authenticate(
+            signerContext,
+            notificationServiceUrl,
+        )
     logger.info({ startResponse, finishResponse }, 'authenticated')
 
-    let settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema, {}))
+    let settings = await notificationRpcClient.getSettings(
+        create(GetSettingsRequestSchema, {}),
+    )
     logger.info(toJson(GetSettingsResponseSchema, settings), 'settings')
 
     const response = await notificationRpcClient.setDmGdmSettings(
@@ -45,12 +57,16 @@ const registerNotificationService = async () => {
         }),
     )
     logger.info(response, 'set settings response')
-    settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema, {}))
+    settings = await notificationRpcClient.getSettings(
+        create(GetSettingsRequestSchema, {}),
+    )
     logger.info(toJson(GetSettingsResponseSchema, settings), 'new settings')
 }
 
 const run = async () => {
-    logger.debug('========================registerNotificationService========================')
+    logger.debug(
+        '========================registerNotificationService========================',
+    )
     await registerNotificationService()
     process.exit(0)
 }

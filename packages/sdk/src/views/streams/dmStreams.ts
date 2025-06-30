@@ -19,7 +19,11 @@ export class DmStreamsView extends ObservableRecord<string, DmStreamModel> {
         })
     }
 
-    setParticipants(streamId: string, firstPartyId: string, secondPartyId: string) {
+    setParticipants(
+        streamId: string,
+        firstPartyId: string,
+        secondPartyId: string,
+    ) {
         this.set((prev) => ({
             ...prev,
             [streamId]: {
@@ -30,7 +34,10 @@ export class DmStreamsView extends ObservableRecord<string, DmStreamModel> {
         }))
     }
 
-    setLastEventCreatedAtEpochMs(streamId: string, lastEventCreatedAtEpochMs: bigint) {
+    setLastEventCreatedAtEpochMs(
+        streamId: string,
+        lastEventCreatedAtEpochMs: bigint,
+    ) {
         this.set((prev) => ({
             ...prev,
             [streamId]: {

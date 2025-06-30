@@ -1,4 +1,10 @@
-import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
+import {
+    BigNumber,
+    BigNumberish,
+    ContractTransaction,
+    ethers,
+    Signer,
+} from 'ethers'
 import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
 import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
@@ -50,9 +56,14 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
     async listenForMembershipToken(
         receiver: string,
         providedAbortController?: AbortController,
-    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+    ): Promise<
+        | { issued: true; tokenId: string }
+        | { issued: false; tokenId: undefined }
+    > {
         //
-        const timeoutController = providedAbortController ? undefined : new AbortController()
+        const timeoutController = providedAbortController
+            ? undefined
+            : new AbortController()
 
         const abortTimeout = providedAbortController
             ? undefined
@@ -63,15 +74,16 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
 
         const abortController = providedAbortController ?? timeoutController!
         // TODO: this isn't picking up correct typed function signature, treating as string
-        const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
-            receiver,
-        ) as string
-        const rejectedFilter = this.read.filters['MembershipTokenRejected(address)'](
-            receiver,
-        ) as string
+        const issuedFilter = this.read.filters[
+            'MembershipTokenIssued(address,uint256)'
+        ](receiver) as string
+        const rejectedFilter = this.read.filters[
+            'MembershipTokenRejected(address)'
+        ](receiver) as string
 
         return new Promise<
-            { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
+            | { issued: true; tokenId: string }
+            | { issued: false; tokenId: undefined }
         >((resolve, _reject) => {
             const cleanup = () => {
                 this.read.off(issuedFilter, issuedListener)
@@ -83,14 +95,28 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
                 cleanup()
                 resolve({ issued: false, tokenId: undefined })
             }
-            const issuedListener = (recipient: string, tokenId: BigNumberish) => {
+            const issuedListener = (
+                recipient: string,
+                tokenId: BigNumberish,
+            ) => {
                 if (receiver === recipient) {
-                    log.log('MembershipTokenIssued', { receiver, recipient, tokenId })
+                    log.log('MembershipTokenIssued', {
+                        receiver,
+                        recipient,
+                        tokenId,
+                    })
                     cleanup()
-                    resolve({ issued: true, tokenId: BigNumber.from(tokenId).toString() })
+                    resolve({
+                        issued: true,
+                        tokenId: BigNumber.from(tokenId).toString(),
+                    })
                 } else {
                     // This techincally should never happen, but we should log it
-                    log.log('MembershipTokenIssued mismatch', { receiver, recipient, tokenId })
+                    log.log('MembershipTokenIssued mismatch', {
+                        receiver,
+                        recipient,
+                        tokenId,
+                    })
                 }
             }
 
@@ -100,7 +126,10 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
                     resolve({ issued: false, tokenId: undefined })
                 } else {
                     // This techincally should never happen, but we should log it
-                    log.log('MembershipTokenIssued mismatch', { receiver, recipient })
+                    log.log('MembershipTokenIssued mismatch', {
+                        receiver,
+                        recipient,
+                    })
                 }
             }
 

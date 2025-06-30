@@ -19,7 +19,9 @@ export class MetricsDiscovery {
 
     public static init(config: { riverRpcURL: string; env: string }) {
         const deployment = getWeb3Deployment(config.env)
-        const provider = new ethers.providers.JsonRpcProvider(config.riverRpcURL)
+        const provider = new ethers.providers.JsonRpcProvider(
+            config.riverRpcURL,
+        )
         const riverRegistry = new RiverRegistry(deployment.river, provider)
         return new MetricsDiscovery(riverRegistry, config.env)
     }
@@ -34,7 +36,8 @@ export class MetricsDiscovery {
 
     private async getTargetNodes() {
         console.info('Getting target nodes')
-        const allNodes = await this.riverRegistry.nodeRegistry.read.getAllNodes()
+        const allNodes =
+            await this.riverRegistry.nodeRegistry.read.getAllNodes()
         return allNodes.filter((node) => MetricsDiscovery.isTargeted(node))
     }
 
@@ -52,7 +55,9 @@ export class MetricsDiscovery {
 
     public async getPrometheusTargets() {
         const targetNodes = await this.getTargetNodes()
-        const prometheusTargets = targetNodes.map((node) => this.nodeToTargetEntry(node))
+        const prometheusTargets = targetNodes.map((node) =>
+            this.nodeToTargetEntry(node),
+        )
         const prometheusTargetsJSON = JSON.stringify(prometheusTargets, null, 2)
         return prometheusTargetsJSON
     }

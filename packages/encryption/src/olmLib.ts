@@ -21,8 +21,12 @@ export enum GroupEncryptionAlgorithmId {
     HybridGroupEncryption = 'grpaes',
 }
 
-export function isGroupEncryptionAlgorithmId(value: string): value is GroupEncryptionAlgorithmId {
-    return Object.values(GroupEncryptionAlgorithmId).includes(value as GroupEncryptionAlgorithmId)
+export function isGroupEncryptionAlgorithmId(
+    value: string,
+): value is GroupEncryptionAlgorithmId {
+    return Object.values(GroupEncryptionAlgorithmId).includes(
+        value as GroupEncryptionAlgorithmId,
+    )
 }
 
 type Matched = { kind: 'matched'; value: GroupEncryptionAlgorithmId }
@@ -36,7 +40,10 @@ export function parseGroupEncryptionAlgorithmId(
         if (defaultValue) {
             return { kind: 'matched', value: defaultValue }
         } else {
-            throw new DecryptionError('GROUP_DECRYPTION_UNSET_ALGORITHM', 'algorithm is unset')
+            throw new DecryptionError(
+                'GROUP_DECRYPTION_UNSET_ALGORITHM',
+                'algorithm is unset',
+            )
         }
     }
     if (isGroupEncryptionAlgorithmId(value)) {

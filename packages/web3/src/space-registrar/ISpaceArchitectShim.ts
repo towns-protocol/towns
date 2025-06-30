@@ -31,9 +31,16 @@ export class ISpaceArchitectShim extends BaseContractShim<typeof connect> {
     }
 }
 
-function isSpaceCreatedLog(log: ethers.utils.LogDescription): log is SpaceCreatedLog {
+function isSpaceCreatedLog(
+    log: ethers.utils.LogDescription,
+): log is SpaceCreatedLog {
     const { name, args } = log
-    return name === 'SpaceCreated' && 'owner' in args && 'space' in args && 'tokenId' in args
+    return (
+        name === 'SpaceCreated' &&
+        'owner' in args &&
+        'space' in args &&
+        'tokenId' in args
+    )
 }
 
 class SpaceCreatedLog extends LogDescription {

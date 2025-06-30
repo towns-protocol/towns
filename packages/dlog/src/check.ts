@@ -14,7 +14,11 @@ export class CodeException extends Error {
 }
 
 export function throwWithCode(message?: string, code?: Err, data?: any): never {
-    const e = new CodeException(message ?? 'Unknown', code ?? Err.ERR_UNSPECIFIED, data)
+    const e = new CodeException(
+        message ?? 'Unknown',
+        code ?? Err.ERR_UNSPECIFIED,
+        data,
+    )
     log('throwWithCode', e)
     throw e
 }
@@ -26,7 +30,12 @@ export function throwWithCode(message?: string, code?: Err, data?: any): never {
  * @param code JSON RPC error code to use if value is not valid
  * @param data Optional data to include in the error
  */
-export function check(value: boolean, message?: string, code?: Err, data?: any): asserts value {
+export function check(
+    value: boolean,
+    message?: string,
+    code?: Err,
+    data?: any,
+): asserts value {
     if (!value) {
         throwWithCode(message, code, data)
     }

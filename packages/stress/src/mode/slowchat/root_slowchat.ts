@@ -44,11 +44,16 @@ export async function startStressSlowChat(opts: {
 
     await waitForAllIn(clients[0], chatConfig)
 
-    const results = await Promise.allSettled(clients.map((client) => slowChat(client, chatConfig)))
+    const results = await Promise.allSettled(
+        clients.map((client) => slowChat(client, chatConfig)),
+    )
 
     results.forEach((r, index) => {
         if (r.status === 'rejected') {
-            logger.error(`${clients[index].logId} error calling chitChat`, r.reason)
+            logger.error(
+                `${clients[index].logId} error calling chitChat`,
+                r.reason,
+            )
         }
     })
 

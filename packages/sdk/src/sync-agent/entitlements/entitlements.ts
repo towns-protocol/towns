@@ -17,7 +17,12 @@ export class Entitlements implements EntitlementsDelegate {
         if (this.config.environmentId === 'local_multi_ne') {
             return true
         } else if (channelId && spaceId) {
-            return this.spaceDapp.isEntitledToChannel(spaceId, channelId, user, permission)
+            return this.spaceDapp.isEntitledToChannel(
+                spaceId,
+                channelId,
+                user,
+                permission,
+            )
         } else if (spaceId) {
             return this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
         } else {

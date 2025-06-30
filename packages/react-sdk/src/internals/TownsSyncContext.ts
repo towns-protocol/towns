@@ -9,4 +9,6 @@ type TownsSyncContextProps = {
         onTokenExpired?: () => void
     }
 }
-export const TownsSyncContext = createContext<TownsSyncContextProps | undefined>(undefined)
+export const TownsSyncContext = createContext<
+    TownsSyncContextProps | undefined
+>(undefined)

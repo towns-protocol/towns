@@ -69,7 +69,8 @@ export function getContractAddress(
     options?: Partial<AddressResolverOptions>,
 ): Address | null {
     const opts = { ...DEFAULT_OPTIONS, ...options }
-    const env = environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
+    const env =
+        environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
 
     try {
         // Construct the path to the address file
@@ -79,7 +80,9 @@ export function getContractAddress(
         )
 
         if (opts.debug) {
-            console.log(`Looking for contract ${contractName} in environment ${env}`)
+            console.log(
+                `Looking for contract ${contractName} in environment ${env}`,
+            )
             console.log(`Address path: ${addressPath}`)
             console.log(`__dirname: ${__dirname}`)
             console.log(`Working directory: ${process.cwd()}`)
@@ -92,7 +95,11 @@ export function getContractAddress(
                     `Address file not found for contract ${contractName} in environment ${env}, falling back to ${opts.defaultEnvironment}`,
                 )
                 // Fallback to default environment if the file doesn't exist
-                return getContractAddress(contractName, opts.defaultEnvironment, options)
+                return getContractAddress(
+                    contractName,
+                    opts.defaultEnvironment,
+                    options,
+                )
             }
 
             if (opts.throwOnError) {
@@ -143,10 +150,14 @@ export function getContractAddresses(
     const opts = { ...DEFAULT_OPTIONS, ...options }
 
     if (opts.debug) {
-        console.log(`Getting addresses for contracts: ${contractNames.join(', ')}`)
+        console.log(
+            `Getting addresses for contracts: ${contractNames.join(', ')}`,
+        )
         console.log(
             `Environment: ${
-                environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
+                environment ||
+                process.env.PONDER_ENVIRONMENT ||
+                opts.defaultEnvironment
             }`,
         )
     }
@@ -184,7 +195,8 @@ export function getAllContractAddresses(
     options?: Partial<AddressResolverOptions>,
 ): Record<string, Address> {
     const opts = { ...DEFAULT_OPTIONS, ...options }
-    const env = environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
+    const env =
+        environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
 
     if (opts.debug) {
         console.log(`Getting all addresses for environment: ${env}`)
@@ -212,7 +224,9 @@ export function getAllContractAddresses(
             }
 
             if (opts.throwOnError) {
-                throw new Error(`Addresses directory not found for environment ${env}`)
+                throw new Error(
+                    `Addresses directory not found for environment ${env}`,
+                )
             }
 
             return {}
@@ -230,14 +244,19 @@ export function getAllContractAddresses(
                 addresses[contractName] = getAddress(data.address)
 
                 if (opts.debug) {
-                    console.log(`Found address for ${contractName}: ${data.address}`)
+                    console.log(
+                        `Found address for ${contractName}: ${data.address}`,
+                    )
                 }
             }
         }
 
         return addresses
     } catch (error) {
-        console.error(`Error loading all addresses for environment ${env}:`, error)
+        console.error(
+            `Error loading all addresses for environment ${env}:`,
+            error,
+        )
 
         if (opts.throwOnError) {
             throw error

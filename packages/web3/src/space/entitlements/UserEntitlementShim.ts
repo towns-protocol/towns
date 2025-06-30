@@ -1,7 +1,10 @@
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from './ConvertersEntitlements'
-import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
+import {
+    EntitlementModuleType,
+    EntitlementModule,
+} from '../../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
 import { UserEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/UserEntitlement__factory'
 
@@ -46,7 +49,10 @@ export class UserEntitlementShim
             ) as unknown as { out: string[] }
             return decoded.out
         } catch (error) {
-            logger.error('RuleEntitlementShim Error decoding RuleDataStruct', error)
+            logger.error(
+                'RuleEntitlementShim Error decoding RuleDataStruct',
+                error,
+            )
         }
         return
     }

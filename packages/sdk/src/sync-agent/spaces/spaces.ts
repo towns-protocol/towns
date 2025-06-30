@@ -5,9 +5,16 @@ import {
     persistedObservable,
 } from '../../observable/persistedObservable'
 import { Space } from './models/space'
-import { UserMemberships, UserMembershipsModel } from '../user/models/userMemberships'
+import {
+    UserMemberships,
+    UserMembershipsModel,
+} from '../user/models/userMemberships'
 import { MembershipOp } from '@towns-protocol/proto'
-import { isSpaceStreamId, makeDefaultChannelStreamId, makeSpaceStreamId } from '../../id'
+import {
+    isSpaceStreamId,
+    makeDefaultChannelStreamId,
+    makeSpaceStreamId,
+} from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
 import { CreateSpaceParams, SpaceDapp } from '@towns-protocol/web3'
 import { makeDefaultMembershipInfo } from '../utils/spaceUtils'
@@ -56,13 +63,19 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         return this.spaces[spaceId]
     }
 
-    private onUserMembershipsChanged(value: PersistedModel<UserMembershipsModel>) {
+    private onUserMembershipsChanged(
+        value: PersistedModel<UserMembershipsModel>,
+    ) {
         if (value.status === 'loading') {
             return
         }
 
         const spaceIds = Object.values(value.data.memberships)
-            .filter((m) => isSpaceStreamId(m.streamId) && m.op === MembershipOp.SO_JOIN)
+            .filter(
+                (m) =>
+                    isSpaceStreamId(m.streamId) &&
+                    m.op === MembershipOp.SO_JOIN,
+            )
             .map((m) => m.streamId)
 
         this.setData({ spaceIds })
@@ -80,12 +93,17 @@ export class Spaces extends PersistedObservable<SpacesModel> {
     }
 
     async createSpace(
-        params: Partial<Omit<CreateSpaceParams, 'spaceName'>> & { spaceName: string },
+        params: Partial<Omit<CreateSpaceParams, 'spaceName'>> & {
+            spaceName: string
+        },
         signer: ethers.Signer,
     ) {
         const membershipInfo =
             params.membership ??
-            (await makeDefaultMembershipInfo(this.spaceDapp, this.riverConnection.userId))
+            (await makeDefaultMembershipInfo(
+                this.spaceDapp,
+                this.riverConnection.userId,
+            ))
         const channelName = params.channelName ?? 'general'
         const transaction = await this.spaceDapp.createSpace(
             {
@@ -100,7 +118,10 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         )
         const receipt = await transaction.wait()
         logger.log('transaction receipt', receipt)
-        const spaceAddress = this.spaceDapp.getSpaceAddress(receipt, await signer.getAddress())
+        const spaceAddress = this.spaceDapp.getSpaceAddress(
+            receipt,
+            await signer.getAddress(),
+        )
         if (!spaceAddress) {
             throw new Error('Space address not found')
         }
@@ -111,7 +132,12 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         await this.riverConnection.login({ spaceId })
         await this.riverConnection.call(async (client) => {
             await client.createSpace(spaceId)
-            await client.createChannel(spaceId, channelName, '', defaultChannelId)
+            await client.createChannel(
+                spaceId,
+                channelName,
+                '',
+                defaultChannelId,
+            )
         })
         return { spaceId, defaultChannelId }
     }

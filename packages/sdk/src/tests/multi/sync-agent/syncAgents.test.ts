@@ -19,7 +19,11 @@ describe('syncAgents.test.ts', () => {
     let charlie: SyncAgent
 
     beforeEach(async () => {
-        await Promise.all([bobUser.fundWallet(), aliceUser.fundWallet(), charlieUser.fundWallet()])
+        await Promise.all([
+            bobUser.fundWallet(),
+            aliceUser.fundWallet(),
+            charlieUser.fundWallet(),
+        ])
         bob = await bobUser.makeSyncAgent()
         alice = await aliceUser.makeSyncAgent()
         charlie = await charlieUser.makeSyncAgent()
@@ -34,7 +38,10 @@ describe('syncAgents.test.ts', () => {
     test('syncAgents', async () => {
         await Promise.all([bob.start(), alice.start(), charlie.start()])
 
-        const { spaceId } = await bob.spaces.createSpace({ spaceName: 'BlastOff' }, bobUser.signer)
+        const { spaceId } = await bob.spaces.createSpace(
+            { spaceName: 'BlastOff' },
+            bobUser.signer,
+        )
         expect(bob.user.memberships.isJoined(spaceId)).toBe(true)
 
         await Promise.all([
@@ -55,7 +62,9 @@ describe('syncAgents.test.ts', () => {
         expect(bob.user.memberships.isJoined(spaceId)).toBe(true)
 
         // queue up a join, then start the client (wow!)
-        const alicePromise = alice.spaces.getSpace(spaceId).join(aliceUser.signer)
+        const alicePromise = alice.spaces
+            .getSpace(spaceId)
+            .join(aliceUser.signer)
         await alice.start()
         await alicePromise
         expect(alice.user.memberships.isJoined(spaceId)).toBe(true)
@@ -70,23 +79,32 @@ describe('syncAgents.test.ts', () => {
         const space = bob.spaces.getSpace(spaceId)
         const channel = space.getDefaultChannel()
         await channel.sendMessage('Hello, World!')
-        expect(findMessageByText(channel.timeline.events.value, 'Hello, World!')).toBeDefined()
+        expect(
+            findMessageByText(channel.timeline.events.value, 'Hello, World!'),
+        ).toBeDefined()
 
         // sleep for a bit, then check if alice got the message
-        const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
+        const aliceChannel = alice.spaces
+            .getSpace(spaceId)
+            .getChannel(channel.data.id)
         logger.log(aliceChannel.timeline.events.value)
         await waitFor(
             () =>
                 expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'Hello, World!'),
+                    findMessageByText(
+                        aliceChannel.timeline.events.value,
+                        'Hello, World!',
+                    ),
                 ).toBeDefined(),
             { timeoutMS: 10000 },
         )
     })
 
     test('syncAgents send a message with disableSignatureValidation=true', async () => {
-        const prevBobOpts = bob.riverConnection.clientParams.opts?.unpackEnvelopeOpts
-        const prevAliceOpts = alice.riverConnection.clientParams.opts?.unpackEnvelopeOpts
+        const prevBobOpts =
+            bob.riverConnection.clientParams.opts?.unpackEnvelopeOpts
+        const prevAliceOpts =
+            alice.riverConnection.clientParams.opts?.unpackEnvelopeOpts
         bob.riverConnection.clientParams.opts = {
             ...bob.riverConnection.clientParams.opts,
             unpackEnvelopeOpts: {
@@ -108,13 +126,18 @@ describe('syncAgents.test.ts', () => {
         await channel.sendMessage('Hello, World again!')
 
         // join the channel, find the message
-        const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
+        const aliceChannel = alice.spaces
+            .getSpace(spaceId)
+            .getChannel(channel.data.id)
         await aliceChannel.join()
         logger.log(aliceChannel.timeline.events.value)
         await waitFor(
             () =>
                 expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'Hello, World again!'),
+                    findMessageByText(
+                        aliceChannel.timeline.events.value,
+                        'Hello, World again!',
+                    ),
                 ).toBeDefined(),
             { timeoutMS: 10000 },
         )
@@ -139,7 +162,10 @@ describe('syncAgents.test.ts', () => {
         const channel = space.getDefaultChannel()
         const channelId = channel.data.id
         const event = await waitForValue(() => {
-            const event = findMessageByText(channel.timeline.events.value, 'Hello, World!')
+            const event = findMessageByText(
+                channel.timeline.events.value,
+                'Hello, World!',
+            )
             expect(event).toBeDefined()
             return event!
         })
@@ -149,8 +175,8 @@ describe('syncAgents.test.ts', () => {
         expect(result.error).toBeUndefined()
         await waitFor(() =>
             expect(
-                bob.riverConnection.client?.streams.get(channelId)?.view.membershipContent.pins
-                    .length,
+                bob.riverConnection.client?.streams.get(channelId)?.view
+                    .membershipContent.pins.length,
             ).toBe(1),
         )
         // bob can unpin
@@ -159,7 +185,9 @@ describe('syncAgents.test.ts', () => {
         expect(result2.error).toBeUndefined()
 
         // alice can't pin yet, she doesn't have permissions
-        const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channelId)
+        const aliceChannel = alice.spaces
+            .getSpace(spaceId)
+            .getChannel(channelId)
         await waitFor(() => aliceChannel.value.status === 'loaded')
 
         // grant permissions
@@ -172,7 +200,10 @@ describe('syncAgents.test.ts', () => {
             bobUser.signer,
         )
         const { roleId, error: roleError } =
-            await alice.riverConnection.spaceDapp.waitForRoleCreated(spaceId, txn1)
+            await alice.riverConnection.spaceDapp.waitForRoleCreated(
+                spaceId,
+                txn1,
+            )
         expect(roleError).toBeUndefined()
         expect(roleId).toBeDefined()
         const txn2 = await bob.riverConnection.spaceDapp.addRoleToChannel(
@@ -193,7 +224,9 @@ describe('syncAgents.test.ts', () => {
         await Promise.all([bob.start(), alice.start()])
         const { streamId } = await bob.dms.createDM(alice.userId)
         const bobAndAliceDm = bob.dms.getDm(streamId)
-        await waitFor(() => expect(bobAndAliceDm.members.data.initialized).toBe(true))
+        await waitFor(() =>
+            expect(bobAndAliceDm.members.data.initialized).toBe(true),
+        )
         expect(bobAndAliceDm.members.data.userIds).toEqual(
             expect.arrayContaining([bob.userId, alice.userId]),
         )
@@ -201,14 +234,22 @@ describe('syncAgents.test.ts', () => {
         const aliceAndBobDm = alice.dms.getDmWithUserId(bob.userId)
         await waitFor(
             () =>
-                expect(findMessageByText(aliceAndBobDm.timeline.events.value, 'hi')).toBeDefined(),
+                expect(
+                    findMessageByText(
+                        aliceAndBobDm.timeline.events.value,
+                        'hi',
+                    ),
+                ).toBeDefined(),
             { timeoutMS: 10000 },
         )
     })
 
     test('gdm', async () => {
         await Promise.all([bob.start(), alice.start(), charlie.start()])
-        const { streamId } = await bob.gdms.createGDM([alice.userId, charlie.userId])
+        const { streamId } = await bob.gdms.createGDM([
+            alice.userId,
+            charlie.userId,
+        ])
         const bobGdm = bob.gdms.getGdm(streamId)
         await waitFor(() => expect(bobGdm.members.data.initialized).toBe(true))
         expect(bobGdm.members.data.userIds).toEqual(
@@ -219,7 +260,10 @@ describe('syncAgents.test.ts', () => {
         await waitFor(
             () =>
                 expect(
-                    findMessageByText(aliceGdm.timeline.events.value, 'Hello, World!'),
+                    findMessageByText(
+                        aliceGdm.timeline.events.value,
+                        'Hello, World!',
+                    ),
                 ).toBeDefined(),
             { timeoutMS: 10000 },
         )

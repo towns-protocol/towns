@@ -19,7 +19,10 @@ export class GdmStreamsView extends ObservableRecord<string, GdmStreamModel> {
         })
     }
 
-    setLastEventCreatedAtEpochMs(streamId: string, lastEventCreatedAtEpochMs: bigint) {
+    setLastEventCreatedAtEpochMs(
+        streamId: string,
+        lastEventCreatedAtEpochMs: bigint,
+    ) {
         this.set((prev) => ({
             ...prev,
             [streamId]: {
@@ -29,7 +32,11 @@ export class GdmStreamsView extends ObservableRecord<string, GdmStreamModel> {
         }))
     }
 
-    setMetadata(streamId: string, metadata: ChannelProperties, eventId: string) {
+    setMetadata(
+        streamId: string,
+        metadata: ChannelProperties,
+        eventId: string,
+    ) {
         this.set((prev) => ({
             ...prev,
             [streamId]: {

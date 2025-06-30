@@ -8,7 +8,9 @@ export type { LocalhostILegacySpaceArchitectBase as ILegacyArchitectBase }
 
 const { abi, connect } = MockLegacyArchitect__factory
 
-export class ILegacySpaceArchitectShim extends BaseContractShim<typeof connect> {
+export class ILegacySpaceArchitectShim extends BaseContractShim<
+    typeof connect
+> {
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
     }

@@ -5,9 +5,21 @@
 import { makeEvent, unpackStream } from '../../sign'
 import { SyncedStreams } from '../../syncedStreams'
 import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
-import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
-import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
-import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
+import {
+    makeDonePromise,
+    makeRandomUserContext,
+    makeTestRpcClient,
+    waitFor,
+} from '../testUtils'
+import {
+    makeUserInboxStreamId,
+    streamIdToBytes,
+    userIdFromAddress,
+} from '../../id'
+import {
+    make_UserInboxPayload_Ack,
+    make_UserInboxPayload_Inception,
+} from '../../types'
 import { dlog, shortenHexString } from '@towns-protocol/dlog'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
@@ -32,13 +44,23 @@ describe('syncStreams', () => {
 
     test('waitForSyncingStateTransitions', () => {
         // the syncing, canceling, and not syncing state should not be able to transition to itself, otherwise waitForSyncingState will break
-        expect(stateConstraints[SyncState.Syncing].has(SyncState.Syncing)).toBe(false)
-        expect(stateConstraints[SyncState.Canceling].has(SyncState.Syncing)).toBe(false)
-        expect(stateConstraints[SyncState.NotSyncing].has(SyncState.Syncing)).toBe(false)
+        expect(stateConstraints[SyncState.Syncing].has(SyncState.Syncing)).toBe(
+            false,
+        )
+        expect(
+            stateConstraints[SyncState.Canceling].has(SyncState.Syncing),
+        ).toBe(false)
+        expect(
+            stateConstraints[SyncState.NotSyncing].has(SyncState.Syncing),
+        ).toBe(false)
 
         // the starting, and retrying state should both be able to transition to syncing, otherwise waitForSyncingState will break
-        expect(stateConstraints[SyncState.Starting].has(SyncState.Syncing)).toBe(true)
-        expect(stateConstraints[SyncState.Retrying].has(SyncState.Syncing)).toBe(true) // if this breaks, we just need to change the two conditions in waitForSyncingState
+        expect(
+            stateConstraints[SyncState.Starting].has(SyncState.Syncing),
+        ).toBe(true)
+        expect(
+            stateConstraints[SyncState.Retrying].has(SyncState.Syncing),
+        ).toBe(true) // if this breaks, we just need to change the two conditions in waitForSyncingState
     })
 
     test('starting->syncing->canceling->notSyncing', async () => {
@@ -48,7 +70,8 @@ describe('syncStreams', () => {
         const stubPersistenceStore = new StubPersistenceStore()
         const done1 = makeDonePromise()
         let userInboxDeviceSummaryUpdatedCount = 0
-        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        const mockClientEmitter =
+            new EventEmitter() as TypedEmitter<StreamEvents>
         mockClientEmitter.on('streamSyncActive', (isActive: boolean) => {
             if (isActive) {
                 done1.done()
@@ -71,26 +94,37 @@ describe('syncStreams', () => {
         )
 
         // some helper functions
-        const createStream = async (streamId: Uint8Array, events: PlainMessage<Envelope>[]) => {
+        const createStream = async (
+            streamId: Uint8Array,
+            events: PlainMessage<Envelope>[],
+        ) => {
             const streamResponse = await rpcClient.createStream({
                 events,
                 streamId,
             })
-            const response = await unpackStream(streamResponse.stream, undefined)
+            const response = await unpackStream(
+                streamResponse.stream,
+                undefined,
+            )
             return response
         }
 
         // user inbox stream setup
         const alicesUserInboxStreamIdStr = makeUserInboxStreamId(alicesUserId)
-        const alicesUserInboxStreamId = streamIdToBytes(alicesUserInboxStreamIdStr)
-        const userInboxStreamResponse = await createStream(alicesUserInboxStreamId, [
-            await makeEvent(
-                alicesContext,
-                make_UserInboxPayload_Inception({
-                    streamId: alicesUserInboxStreamId,
-                }),
-            ),
-        ])
+        const alicesUserInboxStreamId = streamIdToBytes(
+            alicesUserInboxStreamIdStr,
+        )
+        const userInboxStreamResponse = await createStream(
+            alicesUserInboxStreamId,
+            [
+                await makeEvent(
+                    alicesContext,
+                    make_UserInboxPayload_Inception({
+                        streamId: alicesUserInboxStreamId,
+                    }),
+                ),
+            ],
+        )
 
         const streamsViewDelegate: StreamsViewDelegate = {
             isDMMessageEventBlocked: (_event) => {
@@ -118,7 +152,9 @@ describe('syncStreams', () => {
         )
 
         // some helper functions
-        const addEvent = async (payload: PlainMessage<StreamEvent>['payload']) => {
+        const addEvent = async (
+            payload: PlainMessage<StreamEvent>['payload'],
+        ) => {
             await rpcClient.addEvent({
                 streamId: alicesUserInboxStreamId,
                 event: await makeEvent(
@@ -170,10 +206,14 @@ describe('syncStreams', () => {
             })
             await Promise.all([p1, p2])
             await waitFor(() =>
-                expect(alicesSyncedStreams.pingInfo?.nonces[n2].receivedAt).toBeDefined(),
+                expect(
+                    alicesSyncedStreams.pingInfo?.nonces[n2].receivedAt,
+                ).toBeDefined(),
             )
             await waitFor(() =>
-                expect(alicesSyncedStreams.pingInfo?.nonces[n1].receivedAt).toBeDefined(),
+                expect(
+                    alicesSyncedStreams.pingInfo?.nonces[n1].receivedAt,
+                ).toBeDefined(),
             )
         }
 
@@ -189,7 +229,11 @@ describe('syncStreams', () => {
 
         // drop the stream
         await rpcClient.info({
-            debug: ['drop_stream', alicesSyncedStreams.getSyncId()!, alicesUserInboxStreamIdStr],
+            debug: [
+                'drop_stream',
+                alicesSyncedStreams.getSyncId()!,
+                alicesUserInboxStreamIdStr,
+            ],
         })
 
         // assert assumptions

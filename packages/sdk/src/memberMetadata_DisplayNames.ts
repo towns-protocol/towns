@@ -15,7 +15,10 @@ export class MemberMetadata_DisplayNames {
     readonly streamId: string
     readonly userIdToEventId = new Map<string, string>()
     readonly plaintextDisplayNames = new Map<string, string>()
-    readonly displayNameEvents = new Map<string, { userId: string; pending: boolean }>()
+    readonly displayNameEvents = new Map<
+        string,
+        { userId: string; pending: boolean }
+    >()
 
     constructor(streamId: string) {
         this.streamId = streamId
@@ -36,16 +39,25 @@ export class MemberMetadata_DisplayNames {
         if (cleartext) {
             this.plaintextDisplayNames.set(
                 userId,
-                typeof cleartext === 'string' ? cleartext : textDecoder.decode(cleartext),
+                typeof cleartext === 'string'
+                    ? cleartext
+                    : textDecoder.decode(cleartext),
             )
-        } else if (this.decryptionDispatchCount < MAX_DECRYPTED_NAMES_PER_STREAM) {
+        } else if (
+            this.decryptionDispatchCount < MAX_DECRYPTED_NAMES_PER_STREAM
+        ) {
             this.decryptionDispatchCount++
             // Clear the plaintext display name for this user on name change
             this.plaintextDisplayNames.delete(userId)
-            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
-                kind: 'text',
-                content: encryptedData,
-            })
+            encryptionEmitter?.emit(
+                'newEncryptedContent',
+                this.streamId,
+                eventId,
+                {
+                    kind: 'text',
+                    content: encryptedData,
+                },
+            )
         }
         this.emitDisplayNameUpdated(eventId, stateEmitter)
     }
@@ -55,7 +67,10 @@ export class MemberMetadata_DisplayNames {
         if (!event) {
             return
         }
-        this.displayNameEvents.set(eventId, { userId: event.userId, pending: false })
+        this.displayNameEvents.set(eventId, {
+            userId: event.userId,
+            pending: false,
+        })
 
         // if we don't have the plaintext display name, no need to emit an event
         if (this.plaintextDisplayNames.has(event.userId)) {
@@ -79,7 +94,10 @@ export class MemberMetadata_DisplayNames {
         this.emitDisplayNameUpdated(eventId, emitter)
     }
 
-    private emitDisplayNameUpdated(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
+    private emitDisplayNameUpdated(
+        eventId: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         const event = this.displayNameEvents.get(eventId)
         if (!event) {
             return
@@ -91,7 +109,9 @@ export class MemberMetadata_DisplayNames {
 
         // depending on confirmation status, emit different events
         emitter?.emit(
-            event.pending ? 'streamPendingDisplayNameUpdated' : 'streamDisplayNameUpdated',
+            event.pending
+                ? 'streamPendingDisplayNameUpdated'
+                : 'streamDisplayNameUpdated',
             this.streamId,
             event.userId,
         )
@@ -107,7 +127,9 @@ export class MemberMetadata_DisplayNames {
 
         const event = this.displayNameEvents.get(eventId)
         if (!event) {
-            this.log(`no existing event for user ${userId} — this is a programmer error`)
+            this.log(
+                `no existing event for user ${userId} — this is a programmer error`,
+            )
             return
         }
         this.displayNameEvents.delete(eventId)
@@ -134,7 +156,8 @@ export class MemberMetadata_DisplayNames {
     } {
         const displayName = this.plaintextDisplayNames.get(userId) ?? ''
         const displayNameEncrypted =
-            !this.plaintextDisplayNames.has(userId) && this.userIdToEventId.has(userId)
+            !this.plaintextDisplayNames.has(userId) &&
+            this.userIdToEventId.has(userId)
 
         return { displayName, displayNameEncrypted }
     }

@@ -21,7 +21,10 @@ export class MemberMetadata_EnsAddresses {
         for (const item of ensAddresses) {
             if (item.ensAddress.length > 0) {
                 if (item.ensAddress.length > 0) {
-                    this.confirmedEnsAddresses.set(item.userId, userIdFromAddress(item.ensAddress))
+                    this.confirmedEnsAddresses.set(
+                        item.userId,
+                        userIdFromAddress(item.ensAddress),
+                    )
                 }
             }
         }
@@ -37,7 +40,10 @@ export class MemberMetadata_EnsAddresses {
         this.removeEventForUserId(userId)
         if (!pending) {
             if (ensAddress.length > 0) {
-                this.confirmedEnsAddresses.set(userId, userIdFromAddress(ensAddress))
+                this.confirmedEnsAddresses.set(
+                    userId,
+                    userIdFromAddress(ensAddress),
+                )
             } else {
                 this.confirmedEnsAddresses.delete(userId)
             }
@@ -54,7 +60,10 @@ export class MemberMetadata_EnsAddresses {
         this.ensAddressEvents.set(eventId, { ...event, pending: false })
 
         if (event.ensAddress.length > 0) {
-            this.confirmedEnsAddresses.set(event.userId, userIdFromAddress(event.ensAddress))
+            this.confirmedEnsAddresses.set(
+                event.userId,
+                userIdFromAddress(event.ensAddress),
+            )
         } else {
             this.confirmedEnsAddresses.delete(event.userId)
         }
@@ -62,7 +71,10 @@ export class MemberMetadata_EnsAddresses {
         this.emitEnsAddressUpdated(eventId, emitter)
     }
 
-    private emitEnsAddressUpdated(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
+    private emitEnsAddressUpdated(
+        eventId: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         const event = this.ensAddressEvents.get(eventId)
         if (!event) {
             return
@@ -83,7 +95,9 @@ export class MemberMetadata_EnsAddresses {
 
         const event = this.ensAddressEvents.get(eventId)
         if (!event) {
-            this.log(`no existing event for user ${userId} — this is a programmer error`)
+            this.log(
+                `no existing event for user ${userId} — this is a programmer error`,
+            )
             return
         }
         this.ensAddressEvents.delete(eventId)

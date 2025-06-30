@@ -15,7 +15,10 @@ import {
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
+import {
+    EncryptionDevice,
+    type EncryptionDeviceInitOpts,
+} from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { check, dlog } from '@towns-protocol/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
@@ -45,13 +48,22 @@ export class GroupEncryptionCrypto {
     private delegate: EncryptionDelegate | undefined
 
     private readonly encryptionDevice: EncryptionDevice
-    public readonly groupEncryption: Record<GroupEncryptionAlgorithmId, EncryptionAlgorithm>
-    public readonly groupDecryption: Record<GroupEncryptionAlgorithmId, DecryptionAlgorithm>
+    public readonly groupEncryption: Record<
+        GroupEncryptionAlgorithmId,
+        EncryptionAlgorithm
+    >
+    public readonly groupDecryption: Record<
+        GroupEncryptionAlgorithmId,
+        DecryptionAlgorithm
+    >
     public readonly cryptoStore: CryptoStore
     public globalBlacklistUnverifiedDevices = false
     public globalErrorOnUnknownDevices = true
 
-    public constructor(client: IGroupEncryptionClient, cryptoStore: CryptoStore) {
+    public constructor(
+        client: IGroupEncryptionClient,
+        cryptoStore: CryptoStore,
+    ) {
         this.cryptoStore = cryptoStore
         // initialize Olm library
         this.delegate = new EncryptionDelegate()
@@ -67,18 +79,20 @@ export class GroupEncryptionCrypto {
                 device: this.encryptionDevice,
                 client,
             }),
-            [GroupEncryptionAlgorithmId.HybridGroupEncryption]: new HybridGroupEncryption({
-                device: this.encryptionDevice,
-                client,
-            }),
+            [GroupEncryptionAlgorithmId.HybridGroupEncryption]:
+                new HybridGroupEncryption({
+                    device: this.encryptionDevice,
+                    client,
+                }),
         }
         this.groupDecryption = {
             [GroupEncryptionAlgorithmId.GroupEncryption]: new GroupDecryption({
                 device: this.encryptionDevice,
             }),
-            [GroupEncryptionAlgorithmId.HybridGroupEncryption]: new HybridGroupDecryption({
-                device: this.encryptionDevice,
-            }),
+            [GroupEncryptionAlgorithmId.HybridGroupEncryption]:
+                new HybridGroupDecryption({
+                    device: this.encryptionDevice,
+                }),
         }
     }
 
@@ -114,12 +128,16 @@ export class GroupEncryptionCrypto {
         const ciphertextRecord: Record<string, string> = {}
         await Promise.all(
             deviceKeys.map(async (deviceKey) => {
-                const encrypted = await this.encryptionDevice.encryptUsingFallbackKey(
-                    deviceKey.deviceKey,
-                    deviceKey.fallbackKey,
-                    payload,
+                const encrypted =
+                    await this.encryptionDevice.encryptUsingFallbackKey(
+                        deviceKey.deviceKey,
+                        deviceKey.fallbackKey,
+                        payload,
+                    )
+                check(
+                    encrypted.type === 0,
+                    'expecting only prekey messages at this time',
                 )
-                check(encrypted.type === 0, 'expecting only prekey messages at this time')
                 ciphertextRecord[deviceKey.deviceKey] = encrypted.body
             }),
         )
@@ -136,7 +154,10 @@ export class GroupEncryptionCrypto {
         ciphertext: string,
         senderDeviceKey: string,
     ): Promise<string> {
-        return await this.encryptionDevice.decryptMessage(ciphertext, senderDeviceKey)
+        return await this.encryptionDevice.decryptMessage(
+            ciphertext,
+            senderDeviceKey,
+        )
     }
 
     /**
@@ -150,7 +171,10 @@ export class GroupEncryptionCrypto {
         algorithm: GroupEncryptionAlgorithmId,
         opts?: { awaitInitialShareSession: boolean },
     ): Promise<void> {
-        return this.groupEncryption[algorithm].ensureOutboundSession(streamId, opts)
+        return this.groupEncryption[algorithm].ensureOutboundSession(
+            streamId,
+            opts,
+        )
     }
 
     /**
@@ -177,7 +201,10 @@ export class GroupEncryptionCrypto {
         payload: string,
         algorithm: GroupEncryptionAlgorithmId,
     ): Promise<EncryptedData> {
-        return this.groupEncryption[algorithm].encrypt_deprecated_v0(streamId, payload)
+        return this.groupEncryption[algorithm].encrypt_deprecated_v0(
+            streamId,
+            payload,
+        )
     }
     /**
      * Decrypt a received event using group encryption algorithm
@@ -189,7 +216,10 @@ export class GroupEncryptionCrypto {
         // parse the algorithm, if value is not set, parsing function will throw
         const algorithm = parseGroupEncryptionAlgorithmId(content.algorithm)
         if (algorithm.kind === 'unrecognized') {
-            throw new DecryptionError('GROUP_DECRYPTION_UNKNOWN_ALGORITHM', content.algorithm)
+            throw new DecryptionError(
+                'GROUP_DECRYPTION_UNKNOWN_ALGORITHM',
+                content.algorithm,
+            )
         }
         return this.groupDecryption[algorithm.value].decrypt(streamId, content)
     }
@@ -199,10 +229,9 @@ export class GroupEncryptionCrypto {
         sessionId: string,
     ): Promise<GroupEncryptionSession | undefined> {
         for (const algorithm of Object.values(GroupEncryptionAlgorithmId)) {
-            const session = await this.groupDecryption[algorithm].exportGroupSession(
-                streamId,
-                sessionId,
-            )
+            const session = await this.groupDecryption[
+                algorithm
+            ].exportGroupSession(streamId, sessionId)
             if (session) {
                 return session
             }
@@ -214,7 +243,8 @@ export class GroupEncryptionCrypto {
     public async exportRoomKeys(): Promise<GroupEncryptionSession[]> {
         const retVal: GroupEncryptionSession[] = []
         for (const algorithm of Object.values(GroupEncryptionAlgorithmId)) {
-            const sessions = await this.groupDecryption[algorithm].exportGroupSessions()
+            const sessions =
+                await this.groupDecryption[algorithm].exportGroupSessions()
             retVal.push(...sessions)
         }
         return retVal
@@ -224,7 +254,10 @@ export class GroupEncryptionCrypto {
     public async getGroupSessionIds(streamId: string): Promise<string[]> {
         const retVal: string[] = []
         for (const algorithm of Object.values(GroupEncryptionAlgorithmId)) {
-            const sessions = await this.groupDecryption[algorithm].exportGroupSessionIds(streamId)
+            const sessions =
+                await this.groupDecryption[algorithm].exportGroupSessionIds(
+                    streamId,
+                )
             retVal.push(...sessions)
         }
         return retVal
@@ -236,7 +269,10 @@ export class GroupEncryptionCrypto {
         sessionId: string,
         algorithm: GroupEncryptionAlgorithmId,
     ): Promise<boolean> {
-        return this.groupDecryption[algorithm].hasSessionKey(streamId, sessionId)
+        return this.groupDecryption[algorithm].hasSessionKey(
+            streamId,
+            sessionId,
+        )
     }
 
     /** */
@@ -269,7 +305,9 @@ export class GroupEncryptionCrypto {
                     const algorithm = key.algorithm
                     if (algorithm in this.groupDecryption) {
                         try {
-                            await this.groupDecryption[algorithm].importStreamKey(streamId, key)
+                            await this.groupDecryption[
+                                algorithm
+                            ].importStreamKey(streamId, key)
                         } catch (error) {
                             log(`failed to import key`, error)
                         }
@@ -318,7 +356,10 @@ export class GroupEncryptionCrypto {
                 const algorithm = key.algorithm
                 if (algorithm in this.groupDecryption) {
                     try {
-                        await this.groupDecryption[algorithm].importStreamKey(key.streamId, key)
+                        await this.groupDecryption[algorithm].importStreamKey(
+                            key.streamId,
+                            key,
+                        )
                         successes++
                         if (opts.progressCallback) {
                             updateProgress()
@@ -353,7 +394,9 @@ export class GroupEncryptionCrypto {
 
     public async hasHybridSession(streamId: string): Promise<boolean> {
         try {
-            await this.encryptionDevice.getHybridGroupSessionKeyForStream(streamId)
+            await this.encryptionDevice.getHybridGroupSessionKeyForStream(
+                streamId,
+            )
             return true
         } catch {
             return false

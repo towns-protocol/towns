@@ -1,5 +1,9 @@
 import TypedEmitter from 'typed-emitter'
-import { Snapshot, MediaPayload, MediaPayload_Snapshot } from '@towns-protocol/proto'
+import {
+    Snapshot,
+    MediaPayload,
+    MediaPayload_Snapshot,
+} from '@towns-protocol/proto'
 import { RemoteTimelineEvent } from './types'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@towns-protocol/dlog'
@@ -40,8 +44,12 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
             throw new Error('invalid media snapshot')
         }
         this.info = {
-            spaceId: inception.spaceId ? streamIdFromBytes(inception.spaceId) : '',
-            channelId: inception.channelId ? streamIdFromBytes(inception.channelId) : '',
+            spaceId: inception.spaceId
+                ? streamIdFromBytes(inception.spaceId)
+                : '',
+            channelId: inception.channelId
+                ? streamIdFromBytes(inception.channelId)
+                : '',
             userId: inception.userId ? userIdFromAddress(inception.userId) : '',
             chunkCount: inception.chunkCount,
             chunks: Array<Uint8Array>(inception.chunkCount),
@@ -69,9 +77,12 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
                     payload.content.value.chunkIndex < 0 ||
                     payload.content.value.chunkIndex >= this.info.chunkCount
                 ) {
-                    throw new Error(`chunkIndex out of bounds: ${payload.content.value.chunkIndex}`)
+                    throw new Error(
+                        `chunkIndex out of bounds: ${payload.content.value.chunkIndex}`,
+                    )
                 }
-                this.info.chunks[payload.content.value.chunkIndex] = payload.content.value.data
+                this.info.chunks[payload.content.value.chunkIndex] =
+                    payload.content.value.data
                 if (payload.content.value.iv) {
                     this.info.perChunkIVs[payload.content.value.chunkIndex] =
                         payload.content.value.iv

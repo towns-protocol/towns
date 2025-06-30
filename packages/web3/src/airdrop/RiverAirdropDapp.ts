@@ -12,18 +12,33 @@ export class RiverAirdropDapp {
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         if (config.addresses.riverAirdrop) {
-            this.drop = new IDropFacetShim(config.addresses.riverAirdrop, provider)
-            this.riverPoints = new IRiverPointsShim(config.addresses.riverAirdrop, provider)
-            this.erc721A = new IERC721AShim(config.addresses.riverAirdrop, provider)
+            this.drop = new IDropFacetShim(
+                config.addresses.riverAirdrop,
+                provider,
+            )
+            this.riverPoints = new IRiverPointsShim(
+                config.addresses.riverAirdrop,
+                provider,
+            )
+            this.erc721A = new IERC721AShim(
+                config.addresses.riverAirdrop,
+                provider,
+            )
         }
     }
 
     public async getCurrentStreak(walletAddress: string): Promise<BigNumber> {
-        return this.riverPoints?.read.getCurrentStreak(walletAddress) ?? BigNumber.from(0)
+        return (
+            this.riverPoints?.read.getCurrentStreak(walletAddress) ??
+            BigNumber.from(0)
+        )
     }
 
     public async getLastCheckIn(walletAddress: string): Promise<BigNumber> {
-        return this.riverPoints?.read.getLastCheckIn(walletAddress) ?? BigNumber.from(0)
+        return (
+            this.riverPoints?.read.getLastCheckIn(walletAddress) ??
+            BigNumber.from(0)
+        )
     }
 
     public async checkIn(signer: ethers.Signer) {

@@ -55,7 +55,9 @@ export class MemberMetadata_Nft {
 
         const event = this.nftEvents.get(eventId)
         if (!event) {
-            this.log(`no existing event for user ${userId} — this is a programmer error`)
+            this.log(
+                `no existing event for user ${userId} — this is a programmer error`,
+            )
             return
         }
         this.nftEvents.delete(eventId)
@@ -93,7 +95,10 @@ export class MemberMetadata_Nft {
         })
     }
 
-    private emitNftUpdated(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
+    private emitNftUpdated(
+        eventId: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         const event = this.nftEvents.get(eventId)
         if (!event) {
             return
@@ -123,6 +128,10 @@ export class MemberMetadata_Nft {
     }
 
     isValidNft(nft: MemberPayload_Nft): boolean {
-        return nft.tokenId.length > 0 && nft.contractAddress.length > 0 && nft.chainId > 0
+        return (
+            nft.tokenId.length > 0 &&
+            nft.contractAddress.length > 0 &&
+            nft.chainId > 0
+        )
     }
 }

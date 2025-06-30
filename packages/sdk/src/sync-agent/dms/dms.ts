@@ -4,7 +4,10 @@ import {
     PersistedObservable,
     persistedObservable,
 } from '../../observable/persistedObservable'
-import { UserMemberships, UserMembershipsModel } from '../user/models/userMemberships'
+import {
+    UserMemberships,
+    UserMembershipsModel,
+} from '../user/models/userMemberships'
 import { MembershipOp } from '@towns-protocol/proto'
 import { isDMChannelStreamId, makeDMStreamId } from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
@@ -41,7 +44,11 @@ export class Dms extends PersistedObservable<DmsModel> {
     getDm(streamId: string): Dm {
         check(isDMChannelStreamId(streamId), 'Invalid streamId')
         if (!this.dms[streamId]) {
-            this.dms[streamId] = new Dm(streamId, this.riverConnection, this.store)
+            this.dms[streamId] = new Dm(
+                streamId,
+                this.riverConnection,
+                this.store,
+            )
         }
         return this.dms[streamId]
     }
@@ -51,23 +58,35 @@ export class Dms extends PersistedObservable<DmsModel> {
         return this.getDm(streamId)
     }
 
-    private onUserMembershipsChanged(value: PersistedModel<UserMembershipsModel>) {
+    private onUserMembershipsChanged(
+        value: PersistedModel<UserMembershipsModel>,
+    ) {
         if (value.status === 'loading') {
             return
         }
         const streamIds = Object.values(value.data.memberships)
-            .filter((m) => isDMChannelStreamId(m.streamId) && m.op === MembershipOp.SO_JOIN)
+            .filter(
+                (m) =>
+                    isDMChannelStreamId(m.streamId) &&
+                    m.op === MembershipOp.SO_JOIN,
+            )
             .map((m) => m.streamId)
 
         this.setData({ streamIds })
         for (const streamId of streamIds) {
             if (!this.dms[streamId]) {
-                this.dms[streamId] = new Dm(streamId, this.riverConnection, this.store)
+                this.dms[streamId] = new Dm(
+                    streamId,
+                    this.riverConnection,
+                    this.store,
+                )
             }
         }
     }
 
     async createDM(...args: Parameters<Client['createDMChannel']>) {
-        return this.riverConnection.call((client) => client.createDMChannel(...args))
+        return this.riverConnection.call((client) =>
+            client.createDMChannel(...args),
+        )
     }
 }

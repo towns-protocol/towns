@@ -14,7 +14,10 @@ export const towns = defineChain({
         },
     },
     blockExplorers: {
-        default: { name: 'Towns Chain Explorer', url: 'https://explorer.towns.com/' },
+        default: {
+            name: 'Towns Chain Explorer',
+            url: 'https://explorer.towns.com/',
+        },
     },
     contracts: {
         multicall3: {
@@ -38,7 +41,10 @@ export const townsTestnet = defineChain({
         },
     },
     blockExplorers: {
-        default: { name: 'Towns Chain Explorer', url: 'https://testnet.explorer.towns.com/' },
+        default: {
+            name: 'Towns Chain Explorer',
+            url: 'https://testnet.explorer.towns.com/',
+        },
     },
     contracts: {
         multicall3: {

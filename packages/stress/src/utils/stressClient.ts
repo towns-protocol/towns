@@ -6,7 +6,11 @@ import {
     spaceIdFromChannelId,
 } from '@towns-protocol/sdk'
 import { LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
-import { bin_fromBase64, bin_toBase64, shortenHexString } from '@towns-protocol/dlog'
+import {
+    bin_fromBase64,
+    bin_toBase64,
+    shortenHexString,
+} from '@towns-protocol/dlog'
 import { Wallet } from 'ethers'
 import {
     ChannelMessage_Post_Attachment,
@@ -38,7 +42,9 @@ export async function makeStressClient(
     })
     logger.info('makeStressClient')
     let device: ExportedDevice | undefined
-    const rawDevice = await globalPersistedStore?.get(storageKey).catch(() => undefined)
+    const rawDevice = await globalPersistedStore
+        ?.get(storageKey)
+        .catch(() => undefined)
 
     if (rawDevice) {
         try {
@@ -163,8 +169,11 @@ export class StressClient {
             return false
         }
         const stream = streamsClient.stream(streamId)
-        const streamStateView = stream?.view ?? (await streamsClient.getStream(streamId))
-        return streamStateView.membershipContent.joinedParticipants().has(this.userId)
+        const streamStateView =
+            stream?.view ?? (await streamsClient.getStream(streamId))
+        return streamStateView.membershipContent
+            .joinedParticipants()
+            .has(this.userId)
     }
 
     async createSpace(spaceName: string) {
@@ -192,7 +201,11 @@ export class StressClient {
         return channel.sendMessage(message, options)
     }
 
-    async sendReaction(channelId: string, refEventId: string, reaction: string) {
+    async sendReaction(
+        channelId: string,
+        refEventId: string,
+        reaction: string,
+    ) {
         const spaceId = spaceIdFromChannelId(channelId)
         const space = this.agent.spaces.getSpace(spaceId)
         const channel = space.getChannel(channelId)
@@ -210,14 +223,18 @@ export class StressClient {
     }
 
     async exportDevice(): Promise<void> {
-        const device = await this.agent.riverConnection.client?.cryptoBackend?.exportDevice()
+        const device =
+            await this.agent.riverConnection.client?.cryptoBackend?.exportDevice()
         if (device) {
             try {
                 await this.globalPersistedStore?.set(
                     this.storageKey,
                     bin_toBase64(toBinary(ExportedDeviceSchema, device)),
                 )
-                this.logger.info({ storageKey: this.storageKey }, 'device exported')
+                this.logger.info(
+                    { storageKey: this.storageKey },
+                    'device exported',
+                )
             } catch (e) {
                 this.logger.error(e, 'failed to export device')
             }

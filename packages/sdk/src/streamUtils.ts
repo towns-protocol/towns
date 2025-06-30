@@ -20,7 +20,10 @@ export interface ParsedPersistedSyncedStream {
     lastMiniblockNum: bigint
 }
 
-export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'backward'): boolean {
+export function isPersistedEvent(
+    event: ParsedEvent,
+    direction: 'forward' | 'backward',
+): boolean {
     if (!event.event) {
         return false
     }
@@ -72,12 +75,17 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
         case undefined:
             return false
         default:
-            logNever(event.event.payload, `unsupported event payload ${event.event.payload}`)
+            logNever(
+                event.event.payload,
+                `unsupported event payload ${event.event.payload}`,
+            )
             return false
     }
 }
 
-export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent | undefined {
+export function persistedEventToParsedEvent(
+    event: PersistedEvent,
+): ParsedEvent | undefined {
     if (!event.event) {
         return undefined
     }
@@ -99,7 +107,9 @@ export function persistedMiniblockToParsedMiniblock(
     return {
         hash: miniblock.hash,
         header: miniblock.header,
-        events: miniblock.events.map(persistedEventToParsedEvent).filter(isDefined),
+        events: miniblock.events
+            .map(persistedEventToParsedEvent)
+            .filter(isDefined),
     }
 }
 
@@ -129,7 +139,9 @@ function parsedEventToPersistedEvent(event: ParsedEvent) {
         event.event.payload.value = {
             ...event.event.payload.value,
             snapshot: undefined,
-            snapshotHash: computeBackwardsCompatibleSnapshotHash(event.event.payload.value),
+            snapshotHash: computeBackwardsCompatibleSnapshotHash(
+                event.event.payload.value,
+            ),
         }
     }
 
@@ -152,7 +164,9 @@ export function persistedSyncedStreamToParsedSyncedStream(
         streamId,
         syncCookie: stream.syncCookie,
         lastSnapshotMiniblockNum: stream.lastSnapshotMiniblockNum,
-        minipoolEvents: stream.minipoolEvents.map(persistedEventToParsedEvent).filter(isDefined),
+        minipoolEvents: stream.minipoolEvents
+            .map(persistedEventToParsedEvent)
+            .filter(isDefined),
         lastMiniblockNum: stream.lastMiniblockNum,
     }
 }

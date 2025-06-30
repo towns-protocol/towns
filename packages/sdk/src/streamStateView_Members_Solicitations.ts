@@ -1,9 +1,15 @@
 import TypedEmitter from 'typed-emitter'
-import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@towns-protocol/proto'
+import {
+    MemberPayload_KeyFulfillment,
+    MemberPayload_KeySolicitation,
+} from '@towns-protocol/proto'
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
-import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
+import {
+    EventSignatureBundle,
+    KeySolicitationContent,
+} from './decryptionExtensions'
 import { check } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 
@@ -69,7 +75,9 @@ export class StreamStateView_Members_Solicitations {
     ): void {
         check(isDefined(this.snapshotSigBundle), 'snapshotSigBundle not set')
         check(isDefined(this.snapshotEventId), 'snapshotEventId not set')
-        const index = user.solicitations.findIndex((x) => x.deviceKey === fulfillment.deviceKey)
+        const index = user.solicitations.findIndex(
+            (x) => x.deviceKey === fulfillment.deviceKey,
+        )
         if (index === undefined || index === -1) {
             return
         }
@@ -78,7 +86,12 @@ export class StreamStateView_Members_Solicitations {
             deviceKey: prev.deviceKey,
             fallbackKey: prev.fallbackKey,
             isNewDevice: false,
-            sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds.toSorted())],
+            sessionIds: [
+                ...removeCommon(
+                    prev.sessionIds,
+                    fulfillment.sessionIds.toSorted(),
+                ),
+            ],
         } satisfies KeySolicitationContent
         user.solicitations[index] = newEvent
         encryptionEmitter?.emit(

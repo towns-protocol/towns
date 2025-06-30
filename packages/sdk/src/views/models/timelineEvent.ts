@@ -67,7 +67,11 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from '../../types'
-import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
+import {
+    streamIdAsString,
+    streamIdFromBytes,
+    userIdFromAddress,
+} from '../../id'
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../../encryptedContentTypes'
@@ -87,7 +91,10 @@ type ErrorResult = {
 
 type TownsContentResult = SuccessResult | ErrorResult
 
-export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
+export function toEvent(
+    timelineEvent: StreamTimelineEvent,
+    userId: string,
+): TimelineEvent {
     const eventId = timelineEvent.hashStr
     const senderId = getSenderId(timelineEvent)
 
@@ -153,7 +160,9 @@ function getSenderId(timelineEvent: StreamTimelineEvent): string {
     return timelineEvent.creatorUserId
 }
 
-function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult {
+function toTownsContent(
+    timelineEvent: StreamTimelineEvent,
+): TownsContentResult {
     if (isLocalEvent(timelineEvent)) {
         return toTownsContent_FromChannelMessage(
             timelineEvent.localEvent.channelMessage,
@@ -161,7 +170,10 @@ function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult 
             timelineEvent.hashStr,
         )
     } else if (isRemoteEvent(timelineEvent)) {
-        return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent)
+        return toTownsContent_fromParsedEvent(
+            timelineEvent.hashStr,
+            timelineEvent,
+        )
     } else {
         return { error: 'unknown event content type' }
     }
@@ -181,7 +193,9 @@ function validateEvent(
         return error
     }
     if (!message.event.payload.value.content.case) {
-        error = { error: `${message.event.payload.case} - caseless payload content` }
+        error = {
+            error: `${message.event.payload.case} - caseless payload content`,
+        }
         return error
     }
     const description = `${message.event.payload.case}::${message.event.payload.value.content.case} id: ${eventId}`
@@ -289,7 +303,9 @@ function toTownsContent_MiniblockHeader(
         content: {
             kind: RiverTimelineEvent.MiniblockHeader,
             miniblockNum: value.miniblockNum,
-            hasSnapshot: value.snapshot !== undefined || value.snapshotHash !== undefined,
+            hasSnapshot:
+                value.snapshot !== undefined ||
+                value.snapshotHash !== undefined,
         } satisfies MiniblockHeaderEvent,
     }
 }
@@ -306,7 +322,9 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: RiverTimelineEvent.StreamMembership,
                     userId: userIdFromAddress(value.content.value.userAddress),
-                    initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
+                    initiatorId: userIdFromAddress(
+                        value.content.value.initiatorAddress,
+                    ),
                     membership: toMembership(value.content.value.op),
                     reason: value.content.value.reason,
                 } satisfies StreamMembershipEvent,
@@ -367,7 +385,9 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: RiverTimelineEvent.SpaceNft,
                     userId: message.creatorUserId,
-                    contractAddress: bin_toHexString(value.content.value.contractAddress),
+                    contractAddress: bin_toHexString(
+                        value.content.value.contractAddress,
+                    ),
                     tokenId: bin_toHexString(value.content.value.tokenId),
                     chainId: value.content.value.chainId,
                 } satisfies SpaceNftEvent,
@@ -385,7 +405,9 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: RiverTimelineEvent.Unpin,
                     userId: message.creatorUserId,
-                    unpinnedEventId: bin_toHexString(value.content.value.eventId),
+                    unpinnedEventId: bin_toHexString(
+                        value.content.value.eventId,
+                    ),
                 } satisfies UnpinEvent,
             }
         case 'memberBlockchainTransaction': {
@@ -408,10 +430,16 @@ function toTownsContent_MemberPayload(
                             kind: RiverTimelineEvent.TipEvent,
                             transaction: transaction,
                             tip: tipContent,
-                            transactionHash: bin_toHexString(transaction.receipt.transactionHash),
+                            transactionHash: bin_toHexString(
+                                transaction.receipt.transactionHash,
+                            ),
                             fromUserId: userIdFromAddress(fromUserAddress),
-                            refEventId: bin_toHexString(tipContent.event.messageId),
-                            toUserId: userIdFromAddress(tipContent.toUserAddress),
+                            refEventId: bin_toHexString(
+                                tipContent.event.messageId,
+                            ),
+                            toUserId: userIdFromAddress(
+                                tipContent.toUserAddress,
+                            ),
                         } satisfies TipEvent,
                     }
                 }
@@ -421,7 +449,9 @@ function toTownsContent_MemberPayload(
                     }
                     const reviewContent = transaction.content.value
                     if (!reviewContent.event) {
-                        return { error: `${description} no event in space review` }
+                        return {
+                            error: `${description} no event in space review`,
+                        }
                     }
                     const { comment, rating } = getSpaceReviewEventDataBin(
                         transaction.receipt.logs,
@@ -446,7 +476,9 @@ function toTownsContent_MemberPayload(
                             transfer: transferContent,
                             fromUserId: userIdFromAddress(fromUserAddress),
                             createdAtEpochMs: event.createdAtEpochMs,
-                            threadParentId: bin_toHexString(transferContent.messageId),
+                            threadParentId: bin_toHexString(
+                                transferContent.messageId,
+                            ),
                         } satisfies TokenTransferEvent,
                     }
                 }
@@ -455,12 +487,16 @@ function toTownsContent_MemberPayload(
                         content: {
                             kind: RiverTimelineEvent.MemberBlockchainTransaction,
                             transaction: value.content.value.transaction,
-                            fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                            fromUserId: bin_toHexString(
+                                value.content.value.fromUserAddress,
+                            ),
                         } satisfies MemberBlockchainTransactionEvent,
                     }
                 default:
                     logNever(transaction.content)
-                    return { error: `${description} unknown transaction content` }
+                    return {
+                        error: `${description} unknown transaction content`,
+                    }
             }
         }
         case 'encryptionAlgorithm':
@@ -574,7 +610,11 @@ function toTownsContent_ChannelPayload(
                 )
             }
             const payload = value.content.value
-            return toTownsContent_ChannelPayload_Message(timelineEvent, payload, description)
+            return toTownsContent_ChannelPayload_Message(
+                timelineEvent,
+                payload,
+                description,
+            )
         }
         case 'channelProperties': {
             const payload = value.content.value
@@ -723,7 +763,10 @@ function toTownsContent_ChannelPayload_Message_Post(
                     content: {
                         msgType: MessageType.Text,
                     },
-                    attachments: toAttachments(value.content.value.attachments, eventId),
+                    attachments: toAttachments(
+                        value.content.value.attachments,
+                        eventId,
+                    ),
                 } satisfies ChannelMessageEvent,
             }
         case 'image':
@@ -835,7 +878,10 @@ function toTownsContent_SpacePayload(
 function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
     if (timelineEvent.remoteEvent) {
         return EventStatus.SENT
-    } else if (timelineEvent.localEvent && timelineEvent.hashStr.startsWith('~')) {
+    } else if (
+        timelineEvent.localEvent &&
+        timelineEvent.hashStr.startsWith('~')
+    ) {
         return EventStatus.ENCRYPTING
     } else if (timelineEvent.localEvent) {
         switch (timelineEvent.localEvent.status) {
@@ -850,7 +896,9 @@ function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
                 return EventStatus.NOT_SENT
         }
     } else {
-        logger.error('$$$ timelineStoreEvents unknown event status', { timelineEvent })
+        logger.error('$$$ timelineStoreEvents unknown event status', {
+            timelineEvent,
+        })
         return EventStatus.NOT_SENT
     }
 }
@@ -860,7 +908,9 @@ function toAttachments(
     parentEventId: string,
 ): Attachment[] {
     return attachments
-        .map((attachment, index) => toAttachment(attachment, parentEventId, index))
+        .map((attachment, index) =>
+            toAttachment(attachment, parentEventId, index),
+        )
         .filter(isDefined)
 }
 
@@ -875,9 +925,12 @@ function toAttachment(
             const info = attachment.content.value.info
 
             if (!info) {
-                logger.error('$$$ timelineStoreEvents invalid chunkedMedia attachment', {
-                    attachment,
-                })
+                logger.error(
+                    '$$$ timelineStoreEvents invalid chunkedMedia attachment',
+                    {
+                        attachment,
+                    },
+                )
                 return undefined
             }
 
@@ -896,9 +949,12 @@ function toAttachment(
                     ? attachment.content.value.encryption.value
                     : undefined
             if (!encryption) {
-                logger.error('$$$ timelineStoreEvents invalid chunkedMedia encryption', {
-                    attachment,
-                })
+                logger.error(
+                    '$$$ timelineStoreEvents invalid chunkedMedia encryption',
+                    {
+                        attachment,
+                    },
+                )
                 return undefined
             }
 
@@ -935,14 +991,16 @@ function toAttachment(
             if (!content?.post || !content?.info) {
                 return undefined
             }
-            const channelMessageEvent = toTownsContent_ChannelPayload_Message_Post(
-                content.post,
-                content.info.messageId,
-                undefined,
-                '',
-            ).content
+            const channelMessageEvent =
+                toTownsContent_ChannelPayload_Message_Post(
+                    content.post,
+                    content.info.messageId,
+                    undefined,
+                    '',
+                ).content
 
-            return channelMessageEvent?.kind === RiverTimelineEvent.ChannelMessage
+            return channelMessageEvent?.kind ===
+                RiverTimelineEvent.ChannelMessage
                 ? ({
                       type: 'embedded_message',
                       ...content,
@@ -986,10 +1044,13 @@ export function toDecryptedEvent(
     userId: string,
 ): TimelineEvent {
     if (!event.content) {
-        logger.error('$$$ timelineStoreEvents invalid event in toDecryptedEvent', {
-            event,
-            decryptedContent,
-        })
+        logger.error(
+            '$$$ timelineStoreEvents invalid event in toDecryptedEvent',
+            {
+                event,
+                decryptedContent,
+            },
+        )
         return event
     }
     switch (event.content.kind) {
@@ -1013,10 +1074,13 @@ export function toDecryptedEvent(
                     isMentioned: getIsMentioned(content, userId),
                 }
             } else {
-                logger.error('$$$ timelineStoreEvents invalid channelMessageEncrypted', {
-                    event,
-                    decryptedContent,
-                })
+                logger.error(
+                    '$$$ timelineStoreEvents invalid channelMessageEncrypted',
+                    {
+                        event,
+                        decryptedContent,
+                    },
+                )
                 return event
             }
         }
@@ -1030,10 +1094,13 @@ export function toDecryptedEvent(
                     },
                 }
             } else {
-                logger.error('$$$ timelineStoreEvents invalid spaceDisplayName', {
-                    event,
-                    decryptedContent,
-                })
+                logger.error(
+                    '$$$ timelineStoreEvents invalid spaceDisplayName',
+                    {
+                        event,
+                        decryptedContent,
+                    },
+                )
                 return event
             }
         }
@@ -1064,10 +1131,13 @@ export function toDecryptedEvent(
                     } satisfies ChannelPropertiesEvent,
                 }
             } else {
-                logger.error('$$$ timelineStoreEvents invalid encryptedChannelProperties', {
-                    event,
-                    decryptedContent,
-                })
+                logger.error(
+                    '$$$ timelineStoreEvents invalid encryptedChannelProperties',
+                    {
+                        event,
+                        decryptedContent,
+                    },
+                )
                 return event
             }
         }
@@ -1199,7 +1269,9 @@ export function getFallbackContent(
             return `SpaceImage`
         case RiverTimelineEvent.Fulfillment:
             return `Fulfillment from: ${content.from} to: ${content.deviceKey} count: ${content.sessionIds.length} sessionIds: ${
-                content.sessionIds.length ? content.sessionIds.join(',') : 'forNewDevice: true'
+                content.sessionIds.length
+                    ? content.sessionIds.join(',')
+                    : 'forNewDevice: true'
             }`
         case RiverTimelineEvent.KeySolicitation:
             return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length} isNewDevice: ${content.isNewDevice}`
@@ -1230,7 +1302,9 @@ export function getFallbackContent(
                 content.receivedTransaction.transaction?.content?.case ?? '??'
             } fromUserAddress: ${
                 content.receivedTransaction.fromUserAddress
-                    ? bin_toHexString(content.receivedTransaction.fromUserAddress)
+                    ? bin_toHexString(
+                          content.receivedTransaction.fromUserAddress,
+                      )
                     : ''
             }`
         case RiverTimelineEvent.StreamEncryptionAlgorithm:

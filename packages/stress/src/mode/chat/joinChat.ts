@@ -18,7 +18,9 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     // wait for the user to have a membership nft
     await client.waitFor(
         () =>
-            client.spaceDapp.getMembershipStatus(cfg.spaceId, [client.baseProvider.wallet.address]),
+            client.spaceDapp.getMembershipStatus(cfg.spaceId, [
+                client.baseProvider.wallet.address,
+            ]),
         {
             interval: 1000 + Math.random() * 1000,
             timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
@@ -31,10 +33,13 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     // start up the client
     await startFollowerClient(client, cfg.spaceId, announceChannelId)
 
-    const announceChannel = await client.streamsClient.waitForStream(announceChannelId, {
-        timeoutMs: 1000 * 60,
-        logId: 'joinChatWaitForAnnounceChannel',
-    })
+    const announceChannel = await client.streamsClient.waitForStream(
+        announceChannelId,
+        {
+            timeoutMs: 1000 * 60,
+            logId: 'joinChatWaitForAnnounceChannel',
+        },
+    )
     let count = 0
     const message = await client.waitFor(
         () => {
@@ -42,17 +47,25 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
                 const cms = announceChannel.view.timeline.filter(
                     (v) =>
                         v.content?.kind === RiverTimelineEvent.ChannelMessage ||
-                        v.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
-                        v.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef,
+                        v.content?.kind ===
+                            RiverTimelineEvent.ChannelMessageEncrypted ||
+                        v.content?.kind ===
+                            RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                 )
                 const decryptedCount = cms.filter(
-                    (v) => v.content?.kind === RiverTimelineEvent.ChannelMessage,
+                    (v) =>
+                        v.content?.kind === RiverTimelineEvent.ChannelMessage,
                 )
-                logger.info({ decryptedCount, totalCount: cms.length }, 'waiting for root message')
+                logger.info(
+                    { decryptedCount, totalCount: cms.length },
+                    'waiting for root message',
+                )
             }
             count++
             return announceChannel.view.timeline.find(
-                channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
+                channelMessagePostWhere((value) =>
+                    value.body.includes(cfg.sessionId),
+                ),
             )
         },
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
@@ -76,7 +89,11 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     logger.info('emoji it')
 
     // emoji it
-    await client.sendReaction(announceChannelId, message.eventId, getRandomEmoji())
+    await client.sendReaction(
+        announceChannelId,
+        message.eventId,
+        getRandomEmoji(),
+    )
 
     logger.info('join channels')
     for (const channelId of cfg.channelIds) {

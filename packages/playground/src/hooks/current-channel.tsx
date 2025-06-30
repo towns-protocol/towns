@@ -4,7 +4,9 @@ import { createContext, useContext } from 'react'
 type ChannelContextProps = {
     channelId: string | undefined
 }
-export const ChannelContext = createContext<ChannelContextProps | undefined>(undefined)
+export const ChannelContext = createContext<ChannelContextProps | undefined>(
+    undefined,
+)
 
 export const ChannelProvider = ({
     channelId,
@@ -26,10 +28,14 @@ export const ChannelProvider = ({
 export const useCurrentChannelId = () => {
     const channel = useContext(ChannelContext)
     if (!channel) {
-        throw new Error('No channel set, use <ChannelProvider channelId={channelId} /> to set one')
+        throw new Error(
+            'No channel set, use <ChannelProvider channelId={channelId} /> to set one',
+        )
     }
     if (!channel.channelId) {
-        throw new Error('channelId is undefined, please check your <ChannelProvider /> usage')
+        throw new Error(
+            'channelId is undefined, please check your <ChannelProvider /> usage',
+        )
     }
 
     return channel.channelId

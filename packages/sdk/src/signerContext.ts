@@ -1,7 +1,16 @@
 import { ecrecover, fromRPCSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
-import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
-import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
+import {
+    bin_equal,
+    bin_fromHexString,
+    bin_toHexString,
+    check,
+} from '@towns-protocol/dlog'
+import {
+    publicKeyToAddress,
+    publicKeyToUint8Array,
+    riverDelegateHashSrc,
+} from './sign'
 import { BearerTokenSchema, Err } from '@towns-protocol/proto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
@@ -61,9 +70,13 @@ export const recoverPublicKeyFromDelegateSig = (params: {
             : params.delegatePubKey
     const hashSource = riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
     const hash = hashPersonalMessage(hashSource)
-    const { v, r, s } = fromRPCSig(('0x' + bin_toHexString(delegateSig)) as `0x${string}`)
+    const { v, r, s } = fromRPCSig(
+        ('0x' + bin_toHexString(delegateSig)) as `0x${string}`,
+    )
     const recoveredCreatorPubKey = ecrecover(hash, v, r, s)
-    const recoveredCreatorAddress = Uint8Array.from(publicKeyToAddress(recoveredCreatorPubKey))
+    const recoveredCreatorAddress = Uint8Array.from(
+        publicKeyToAddress(recoveredCreatorPubKey),
+    )
     return recoveredCreatorAddress
 }
 
@@ -77,7 +90,9 @@ async function makeRiverDelegateSig(
     }
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
     const hashSrc = riverDelegateHashSrc(devicePubKey, expiryEpochMs)
-    const delegateSig = bin_fromHexString(await primaryWallet.signMessage(hashSrc))
+    const delegateSig = bin_fromHexString(
+        await primaryWallet.signMessage(hashSrc),
+    )
     return delegateSig
 }
 
@@ -95,7 +110,9 @@ export async function makeSignerContext(
 ): Promise<SignerContext> {
     const expiryEpochMs = inExpiryEpochMs ?? 0n // todo make expiry required param once implemented down stream HNT-5213
     const delegateExpiryEpochMs =
-        typeof expiryEpochMs === 'bigint' ? expiryEpochMs : makeExpiryEpochMs(expiryEpochMs)
+        typeof expiryEpochMs === 'bigint'
+            ? expiryEpochMs
+            : makeExpiryEpochMs(expiryEpochMs)
     const delegateSig = await makeRiverDelegateSig(
         primaryWallet,
         delegateWallet.publicKey,
@@ -134,7 +151,10 @@ export async function makeBearerToken(
 export async function makeSignerContextFromBearerToken(
     bearerTokenStr: string,
 ): Promise<SignerContext> {
-    const bearerToken = fromBinary(BearerTokenSchema, bin_fromHexString(bearerTokenStr))
+    const bearerToken = fromBinary(
+        BearerTokenSchema,
+        bin_fromHexString(bearerTokenStr),
+    )
     const delegateWallet = new ethers.Wallet(bearerToken.delegatePrivateKey)
     const creatorAddress = recoverPublicKeyFromDelegateSig({
         delegatePubKey: delegateWallet.publicKey,
@@ -161,7 +181,11 @@ export async function makeSignerDelegate(
           },
 ): Promise<{ delegateWallet: ethers.Wallet; signerContext: SignerContext }> {
     const delegateWallet = ethers.Wallet.createRandom()
-    const signerContext = await makeSignerContext(signer, delegateWallet, expiry)
+    const signerContext = await makeSignerContext(
+        signer,
+        delegateWallet,
+        expiry,
+    )
 
     return {
         delegateWallet,

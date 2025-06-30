@@ -1,5 +1,11 @@
 import { useFormContext } from 'react-hook-form'
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { BotFormData } from '../types'
 
@@ -19,7 +25,9 @@ export const TypeStep = () => {
                                     type="radio"
                                     value="simple"
                                     checked={field.value === 'simple'}
-                                    onChange={(e) => field.onChange(e.target.value)}
+                                    onChange={(e) =>
+                                        field.onChange(e.target.value)
+                                    }
                                 />
                                 Simple Bot
                             </label>
@@ -28,7 +36,9 @@ export const TypeStep = () => {
                                     type="radio"
                                     value="contract"
                                     checked={field.value === 'contract'}
-                                    onChange={(e) => field.onChange(e.target.value)}
+                                    onChange={(e) =>
+                                        field.onChange(e.target.value)
+                                    }
                                 />
                                 Contract Bot
                             </label>

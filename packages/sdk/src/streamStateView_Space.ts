@@ -14,12 +14,20 @@ import {
     SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
     ChunkedMediaSchema,
 } from '@towns-protocol/proto'
-import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
+import {
+    StreamEncryptionEvents,
+    StreamEvents,
+    StreamStateEvents,
+} from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@towns-protocol/dlog'
 import { isDefined, logNever } from './check'
-import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
+import {
+    contractAddressFromSpaceId,
+    isDefaultChannelId,
+    streamIdAsString,
+} from './id'
 import { fromBinary } from '@bufbuild/protobuf'
 import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { bytesToHex } from 'ethereum-cryptography/utils'
@@ -36,9 +44,14 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     private spaceImage: ChunkedMedia | undefined
-    public encryptedSpaceImage: { eventId: string; data: EncryptedData } | undefined
+    public encryptedSpaceImage:
+        | { eventId: string; data: EncryptedData }
+        | undefined
     private decryptionInProgress:
-        | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
+        | {
+              encryptedData: EncryptedData
+              promise: Promise<ChunkedMedia | undefined>
+          }
         | undefined
 
     get spaceStreamModel(): SpaceStreamModel {
@@ -61,7 +74,11 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         // loop over content.channels, update space channels metadata
         for (const payload of content.channels) {
-            this.addSpacePayload_Channel(payload, payload.updatedAtEventNum, undefined)
+            this.addSpacePayload_Channel(
+                payload,
+                payload.updatedAtEventNum,
+                undefined,
+            )
         }
 
         if (content.spaceImage?.data) {
@@ -121,10 +138,17 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'channel':
-                this.addSpacePayload_Channel(payload.content.value, event.eventNum, stateEmitter)
+                this.addSpacePayload_Channel(
+                    payload.content.value,
+                    event.eventNum,
+                    stateEmitter,
+                )
                 break
             case 'updateChannelAutojoin':
-                this.addSpacePayload_UpdateChannelAutojoin(payload.content.value, stateEmitter)
+                this.addSpacePayload_UpdateChannelAutojoin(
+                    payload.content.value,
+                    stateEmitter,
+                )
                 break
             case 'updateChannelHideUserJoinLeaveEvents':
                 this.addSpacePayload_UpdateChannelHideUserJoinLeaveEvents(
@@ -133,7 +157,10 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 )
                 break
             case 'spaceImage':
-                this.encryptedSpaceImage = { data: payload.content.value, eventId: event.hashStr }
+                this.encryptedSpaceImage = {
+                    data: payload.content.value,
+                    eventId: event.hashStr,
+                }
                 stateEmitter?.emit('spaceImageUpdated', this.streamId)
                 break
             case undefined:
@@ -165,7 +192,9 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         return this.spaceImage
     }
 
-    private async decryptSpaceImage(encryptedData: EncryptedData): Promise<ChunkedMedia> {
+    private async decryptSpaceImage(
+        encryptedData: EncryptedData,
+    ): Promise<ChunkedMedia> {
         try {
             const spaceAddress = contractAddressFromSpaceId(this.streamId)
             const context = spaceAddress.toLowerCase()
@@ -188,8 +217,15 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         const { channelId: channelIdBytes, autojoin } = payload
         const channelId = streamIdAsString(channelIdBytes)
-        this.spacesView.updateChannelMetadata(this.streamId, channelId, { isAutojoin: autojoin })
-        stateEmitter?.emit('spaceChannelAutojoinUpdated', this.streamId, channelId, autojoin)
+        this.spacesView.updateChannelMetadata(this.streamId, channelId, {
+            isAutojoin: autojoin,
+        })
+        stateEmitter?.emit(
+            'spaceChannelAutojoinUpdated',
+            this.streamId,
+            channelId,
+            autojoin,
+        )
     }
 
     private addSpacePayload_UpdateChannelHideUserJoinLeaveEvents(
@@ -220,19 +256,32 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case ChannelOp.CO_CREATED: {
                 const isDefault = isDefaultChannelId(channelId)
                 const isAutojoin = payload.settings?.autojoin ?? isDefault
-                const hideUserJoinLeaveEvents = payload.settings?.hideUserJoinLeaveEvents ?? false
-                this.spacesView.updateChannelMetadata(this.streamId, channelId, {
-                    isDefault,
-                    updatedAtEventNum,
-                    isAutojoin,
-                    hideUserJoinLeaveEvents,
-                })
-                stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId)
+                const hideUserJoinLeaveEvents =
+                    payload.settings?.hideUserJoinLeaveEvents ?? false
+                this.spacesView.updateChannelMetadata(
+                    this.streamId,
+                    channelId,
+                    {
+                        isDefault,
+                        updatedAtEventNum,
+                        isAutojoin,
+                        hideUserJoinLeaveEvents,
+                    },
+                )
+                stateEmitter?.emit(
+                    'spaceChannelCreated',
+                    this.streamId,
+                    channelId,
+                )
                 break
             }
             case ChannelOp.CO_DELETED:
                 if (this.spacesView.delete(this.streamId, channelId)) {
-                    stateEmitter?.emit('spaceChannelDeleted', this.streamId, channelId)
+                    stateEmitter?.emit(
+                        'spaceChannelDeleted',
+                        this.streamId,
+                        channelId,
+                    )
                 }
                 break
             case ChannelOp.CO_UPDATED: {
@@ -244,17 +293,23 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     : isDefined(channel?.isAutojoin)
                       ? channel.isAutojoin
                       : isDefault
-                const hideUserJoinLeaveEvents = isDefined(payload.settings?.hideUserJoinLeaveEvents)
+                const hideUserJoinLeaveEvents = isDefined(
+                    payload.settings?.hideUserJoinLeaveEvents,
+                )
                     ? payload.settings.hideUserJoinLeaveEvents
                     : isDefined(channel?.hideUserJoinLeaveEvents)
                       ? channel.hideUserJoinLeaveEvents
                       : false
-                this.spacesView.updateChannelMetadata(this.streamId, channelId, {
-                    isDefault,
-                    updatedAtEventNum,
-                    isAutojoin,
-                    hideUserJoinLeaveEvents,
-                })
+                this.spacesView.updateChannelMetadata(
+                    this.streamId,
+                    channelId,
+                    {
+                        isDefault,
+                        updatedAtEventNum,
+                        isAutojoin,
+                        hideUserJoinLeaveEvents,
+                    },
+                )
                 stateEmitter?.emit(
                     'spaceChannelUpdated',
                     this.streamId,

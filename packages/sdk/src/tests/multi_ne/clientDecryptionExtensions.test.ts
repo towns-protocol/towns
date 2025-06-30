@@ -5,7 +5,12 @@
 import { Client } from '../../client'
 import { dlog } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
+import {
+    TestClientOpts,
+    makeTestClient,
+    makeUniqueSpaceStreamId,
+    waitFor,
+} from '../testUtils'
 import { Stream } from '../../stream'
 import { DecryptionSessionError } from '../../decryptionExtensions'
 import { makeUniqueChannelStreamId } from '../../id'
@@ -20,13 +25,19 @@ describe('ClientDecryptionExtensions', () => {
         const client = await makeTestClient(opts)
         await client.initializeUser()
         client.startSync()
-        await waitFor(() => expect(client.streams.syncState).toBe(SyncState.Syncing))
+        await waitFor(() =>
+            expect(client.streams.syncState).toBe(SyncState.Syncing),
+        )
         log('started client', client.userId, client.signerContext)
         clients.push(client)
         return client
     }
 
-    const sendMessage = async (client: Client, streamId: string, body: string) => {
+    const sendMessage = async (
+        client: Client,
+        streamId: string,
+        body: string,
+    ) => {
         await client.waitForStream(streamId)
         await client.sendMessage(streamId, body)
     }
@@ -43,7 +54,11 @@ describe('ClientDecryptionExtensions', () => {
             .filter(isDefined)
     }
 
-    const waitForMessages = async (client: Client, streamId: string, bodys: string[]) => {
+    const waitForMessages = async (
+        client: Client,
+        streamId: string,
+        bodys: string[],
+    ) => {
         log('waitForMessages', client.userId, streamId, bodys)
         const stream = await client.waitForStream(streamId)
         return waitFor(
@@ -59,12 +74,15 @@ describe('ClientDecryptionExtensions', () => {
         client: Client,
         streamId: string,
     ): Promise<DecryptionSessionError[]> => {
-        const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
+        const stream =
+            client.stream(streamId) ?? (await client.waitForStream(streamId))
         return stream.view.timeline
             .map((e) => {
                 if (
-                    e.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
-                    e.content?.kind === RiverTimelineEvent.EncryptedChannelProperties
+                    e.content?.kind ===
+                        RiverTimelineEvent.ChannelMessageEncrypted ||
+                    e.content?.kind ===
+                        RiverTimelineEvent.EncryptedChannelProperties
                 ) {
                     return e.content?.error
                 }
@@ -73,7 +91,11 @@ describe('ClientDecryptionExtensions', () => {
             .filter(isDefined)
     }
 
-    const waitForDecryptionErrors = async (client: Client, streamId: string, count: number) => {
+    const waitForDecryptionErrors = async (
+        client: Client,
+        streamId: string,
+        count: number,
+    ) => {
         log('waitForDecryptionErrors', client.userId, streamId, count)
         return waitFor(
             async () => {
@@ -102,7 +124,9 @@ describe('ClientDecryptionExtensions', () => {
         await expect(alice1.waitForStream(streamId)).resolves.not.toThrow()
 
         // wait for the message to arrive and decrypt
-        await expect(waitForMessages(alice1, streamId, ['hello'])).resolves.not.toThrow()
+        await expect(
+            waitForMessages(alice1, streamId, ['hello']),
+        ).resolves.not.toThrow()
 
         // boot up alice on a second device
         const alice2 = await makeAndStartClient({
@@ -114,7 +138,9 @@ describe('ClientDecryptionExtensions', () => {
         await expect(alice2.waitForStream(streamId)).resolves.not.toThrow()
 
         // alice gets keys sent via new device message
-        await expect(waitForMessages(alice2, streamId, ['hello'])).resolves.not.toThrow()
+        await expect(
+            waitForMessages(alice2, streamId, ['hello']),
+        ).resolves.not.toThrow()
 
         // stop alice2 so she's offline
         await alice2.stop()
@@ -130,7 +156,9 @@ describe('ClientDecryptionExtensions', () => {
         await sendMessage(bob2, streamId, 'whats up')
 
         // the message should get decrypted on alice1
-        await expect(waitForMessages(bob1, streamId, ['hello', 'whats up'])).resolves.not.toThrow()
+        await expect(
+            waitForMessages(bob1, streamId, ['hello', 'whats up']),
+        ).resolves.not.toThrow()
         await expect(
             waitForMessages(alice1, streamId, ['hello', 'whats up']),
         ).resolves.not.toThrow()
@@ -141,7 +169,9 @@ describe('ClientDecryptionExtensions', () => {
             deviceId: 'alice2',
         })
 
-        await expect(alice2_restarted.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(
+            alice2_restarted.waitForStream(streamId),
+        ).resolves.not.toThrow()
 
         // she should have the keys because bob2 should share with existing members
         await expect(
@@ -164,10 +194,16 @@ describe('ClientDecryptionExtensions', () => {
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
-        await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
-        await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
+        await expect(
+            waitForDecryptionErrors(alice1, channelId, 1),
+        ).resolves.not.toThrow() // alice should see a decryption error
+        await expect(
+            waitForMessages(alice1, channelId, []),
+        ).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
-        await expect(waitForMessages(alice1, channelId, ['its alice'])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
+        await expect(
+            waitForMessages(alice1, channelId, ['its alice']),
+        ).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
 
         // bob comes back online, same device
         const bob1IsBack = await makeAndStartClient({
@@ -219,8 +255,12 @@ describe('ClientDecryptionExtensions', () => {
         })
 
         // This wait takes over 5s, we should address
-        await expect(alice2.waitForStream(channel1StreamId)).resolves.not.toThrow()
-        await expect(alice2.waitForStream(channel2StreamId)).resolves.not.toThrow()
+        await expect(
+            alice2.waitForStream(channel1StreamId),
+        ).resolves.not.toThrow()
+        await expect(
+            alice2.waitForStream(channel2StreamId),
+        ).resolves.not.toThrow()
 
         // alice gets keys sent via new device message
         await expect(

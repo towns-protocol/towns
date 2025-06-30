@@ -23,7 +23,9 @@ import { useTowns } from './useTowns'
  * }
  * ```
  */
-export const useUserSpaces = (config?: ObservableConfig.FromObservable<Spaces>) => {
+export const useUserSpaces = (
+    config?: ObservableConfig.FromObservable<Spaces>,
+) => {
     const { data, ...rest } = useTowns((s) => s.spaces, config)
     return { spaceIds: data.spaceIds, ...rest }
 }

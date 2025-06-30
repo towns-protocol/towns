@@ -28,17 +28,25 @@ type ReturnOf<T> = Awaited<ReturnType<ActionFn<T>>>
  * @param config - Configuration options for the action.
  * @returns The action and its loading state.
  */
-export const useAction = <Namespace, Key extends keyof Namespace, Fn extends Namespace[Key]>(
+export const useAction = <
+    Namespace,
+    Key extends keyof Namespace,
+    Fn extends Namespace[Key],
+>(
     namespace: Namespace | undefined,
     fnName: Key & string,
     config?: ActionConfig<Fn>,
 ) => {
-    const [status, setStatus] = useState<'loading' | 'error' | 'success' | 'idle'>('idle')
+    const [status, setStatus] = useState<
+        'loading' | 'error' | 'success' | 'idle'
+    >('idle')
     const [error, setError] = useState<Error | undefined>()
     const [data, setData] = useState<ReturnOf<Fn> | undefined>()
 
     const action = useCallback(
-        async (...args: MultipleParams<ParamsOf<Fn>>): Promise<ReturnOf<Fn>> => {
+        async (
+            ...args: MultipleParams<ParamsOf<Fn>>
+        ): Promise<ReturnOf<Fn>> => {
             if (!namespace) {
                 throw new Error(`useAction: namespace is undefined`)
             }

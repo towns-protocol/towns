@@ -10,6 +10,10 @@ export async function makeRiverRpcClient(
 ): Promise<StreamRpcClient> {
     const riverRegistry = createRiverRegistry(provider, config)
     const urls = await riverRegistry.getOperationalNodeUrls()
-    const rpcClient = makeStreamRpcClient(urls, () => riverRegistry.getOperationalNodeUrls(), opts)
+    const rpcClient = makeStreamRpcClient(
+        urls,
+        () => riverRegistry.getOperationalNodeUrls(),
+        opts,
+    )
     return rpcClient
 }

@@ -19,13 +19,19 @@ import { makeRandomUserContext, makeUniqueSpaceStreamId } from '../testUtils'
 
 describe('idTest', () => {
     test('validStreamId', () => {
-        expect(isValidStreamId('10b6cd7a587ea499f57bfdc820b8c57ef654e38bc4' + '0'.repeat(22))).toBe(
-            true,
-        )
-        expect(isValidStreamId('101010101010101010101010101010101010101010' + '0'.repeat(22))).toBe(
-            true,
-        )
-        expect(isValidStreamId('a81010101010101010101010101010101010101010')).toBe(true)
+        expect(
+            isValidStreamId(
+                '10b6cd7a587ea499f57bfdc820b8c57ef654e38bc4' + '0'.repeat(22),
+            ),
+        ).toBe(true)
+        expect(
+            isValidStreamId(
+                '101010101010101010101010101010101010101010' + '0'.repeat(22),
+            ),
+        ).toBe(true)
+        expect(
+            isValidStreamId('a81010101010101010101010101010101010101010'),
+        ).toBe(true)
 
         expect(isValidStreamId('')).toBe(false)
         expect(isValidStreamId('0')).toBe(false)
@@ -36,19 +42,33 @@ describe('idTest', () => {
         expect(isValidStreamId('10AAbb')).toBe(false)
         expect(isValidStreamId('1000')).toBe(false)
         expect(
-            isValidStreamId('10B6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f'),
+            isValidStreamId(
+                '10B6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f',
+            ),
         ).toBe(false)
         expect(
-            isValidStreamId('1110101010101010101010101010101010101010101010101010101010101010'),
-        ).toBe(false)
-        expect(isValidStreamId('a810101010101010101010101010101010101010')).toBe(false)
-        expect(isValidStreamId('a8101010101010101010101010101010101010101')).toBe(false)
-        expect(isValidStreamId('a8101010101010101010101010101010101010101000')).toBe(false)
-        expect(
-            isValidStreamId('10b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f36'),
+            isValidStreamId(
+                '1110101010101010101010101010101010101010101010101010101010101010',
+            ),
         ).toBe(false)
         expect(
-            isValidStreamId('101010101010101010101010101010101010101010101010101010101010101010'),
+            isValidStreamId('a810101010101010101010101010101010101010'),
+        ).toBe(false)
+        expect(
+            isValidStreamId('a8101010101010101010101010101010101010101'),
+        ).toBe(false)
+        expect(
+            isValidStreamId('a8101010101010101010101010101010101010101000'),
+        ).toBe(false)
+        expect(
+            isValidStreamId(
+                '10b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f36',
+            ),
+        ).toBe(false)
+        expect(
+            isValidStreamId(
+                '101010101010101010101010101010101010101010101010101010101010101010',
+            ),
         ).toBe(false)
         expect(isValidStreamId('0x10aa')).toBe(false)
     })
@@ -62,11 +82,15 @@ describe('idTest', () => {
     test('makeDMStreamId', () => {
         const userId1 = '0x376eC15Fa24A76A18EB980629093cFFd559333Bb'
         const userId2 = '0x6d58a6597Eb5F849Fb46604a81Ee31654D6a4B44'
-        const expectedId = '88b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f'
+        const expectedId =
+            '88b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f'
         const id = makeDMStreamId(userId1, userId2)
         expect(id).toBe(expectedId)
 
-        const caseInsensitiveId = makeDMStreamId(userId1.toLowerCase(), userId2.toLowerCase())
+        const caseInsensitiveId = makeDMStreamId(
+            userId1.toLowerCase(),
+            userId2.toLowerCase(),
+        )
         expect(caseInsensitiveId).toBe(expectedId)
 
         const reverseOrderId = makeDMStreamId(userId2, userId1)
@@ -82,9 +106,9 @@ describe('idTest', () => {
     })
 
     test('makeUserStreamId', () => {
-        expect(makeUserStreamId('0x376eC15Fa24A76A18EB980629093cFFd559333Bb')).toBe(
-            'a8376ec15fa24a76a18eb980629093cffd559333bb' + '0'.repeat(22),
-        )
+        expect(
+            makeUserStreamId('0x376eC15Fa24A76A18EB980629093cFFd559333Bb'),
+        ).toBe('a8376ec15fa24a76a18eb980629093cffd559333bb' + '0'.repeat(22))
     })
 
     test('userIdFromAddress-addressFromUserId', async () => {

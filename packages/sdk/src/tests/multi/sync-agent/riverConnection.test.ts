@@ -18,7 +18,9 @@ describe('RiverConnection.test.ts', () => {
         const riverConnection = syncAgent.riverConnection
 
         // check initial state
-        expect(riverConnection.riverChain.data.urls).toStrictEqual({ value: '' })
+        expect(riverConnection.riverChain.data.urls).toStrictEqual({
+            value: '',
+        })
         expect(riverConnection.client).toBeUndefined()
 
         // load
@@ -44,14 +46,18 @@ describe('RiverConnection.test.ts', () => {
         const riverConnection = syncAgent.riverConnection
 
         // check initial state
-        expect(riverConnection.riverChain.data.urls).toStrictEqual({ value: '' })
+        expect(riverConnection.riverChain.data.urls).toStrictEqual({
+            value: '',
+        })
         expect(riverConnection.client).toBeUndefined()
 
         // load
         await syncAgent.start()
 
         // should still be defined before we even start!
-        expect(riverConnection.riverChain.data.urls).not.toStrictEqual({ value: '' })
+        expect(riverConnection.riverChain.data.urls).not.toStrictEqual({
+            value: '',
+        })
         expect(riverConnection.client).toBeDefined()
         await riverConnection.stop()
     })

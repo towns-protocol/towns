@@ -53,4 +53,6 @@ bot.onReaction(async (handler, { reaction, channelId, userId }) => {
 
 const { fetch } = await bot.start()
 serve({ fetch, port: parseInt(process.env.PORT!), createServer })
-console.log(`✅ Quickstart Bot is running on https://localhost:${process.env.PORT}`)
+console.log(
+    `✅ Quickstart Bot is running on https://localhost:${process.env.PORT}`,
+)

@@ -1,6 +1,9 @@
 import { check, dlogger } from '@towns-protocol/dlog'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { makeUserSettingsStreamId } from '../../../id'
 import { StreamStateView } from '../../../streamStateView'
@@ -47,7 +50,9 @@ export class UserSettings extends PersistedObservable<UserSettingsModel> {
 
     private onStreamInitialized = (streamId: string) => {
         if (streamId === this.data.streamId) {
-            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+            const streamView = this.riverConnection.client?.stream(
+                this.data.streamId,
+            )?.view
             check(isDefined(streamView), 'streamView is not defined')
             this.initialize(streamView)
         }

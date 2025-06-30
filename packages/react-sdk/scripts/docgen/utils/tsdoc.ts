@@ -5,7 +5,10 @@ import { SyntaxKind } from 'ts-morph'
 import { resolve } from 'node:path'
 
 // eslint-disable-next-line import-x/no-cycle
-import { type ResolveDeclarationReference, createResolveDeclarationReference } from './model'
+import {
+    type ResolveDeclarationReference,
+    createResolveDeclarationReference,
+} from './model'
 import { project } from './tsmorph'
 
 const tsdocConfiguration = new tsdoc.TSDocConfiguration()
@@ -16,10 +19,15 @@ configFile.configureParser(tsdocConfiguration)
 
 export const tsdocParser = new tsdoc.TSDocParser(tsdocConfiguration)
 
-export function extractNamespaceDocComments(file: string, apiItem: model.ApiItem) {
+export function extractNamespaceDocComments(
+    file: string,
+    apiItem: model.ApiItem,
+) {
     const entrypointAst = project.addSourceFileAtPath(file)
 
-    const nodes = entrypointAst.getDescendantsOfKind(SyntaxKind.ExportDeclaration)
+    const nodes = entrypointAst.getDescendantsOfKind(
+        SyntaxKind.ExportDeclaration,
+    )
 
     const docComments: Record<string, ReturnType<typeof processDocComment>> = {}
     for (const node of nodes) {
@@ -80,13 +88,18 @@ export function processDocComment(
         comment: docComment?.emitAsTsdoc(),
         defaultValue: cleanDoc(
             renderDocNode(
-                docComment.customBlocks.find((v) => v.blockTag.tagName === '@defaultValue'),
+                docComment.customBlocks.find(
+                    (v) => v.blockTag.tagName === '@defaultValue',
+                ),
                 resolveDeclarationReference,
             ),
             '@defaultValue',
         ),
         deprecated: cleanDoc(
-            renderDocNode(docComment?.deprecatedBlock, resolveDeclarationReference),
+            renderDocNode(
+                docComment?.deprecatedBlock,
+                resolveDeclarationReference,
+            ),
             '@deprecated',
         ),
         // docGroup: cleanDoc(
@@ -102,11 +115,17 @@ export function processDocComment(
             .map((example) => cleanDoc(example, '@example')),
         // experimental: docComment.modifierTagSet.isExperimental(),
         remarks: cleanDoc(
-            renderDocNode(docComment?.remarksBlock, resolveDeclarationReference),
+            renderDocNode(
+                docComment?.remarksBlock,
+                resolveDeclarationReference,
+            ),
             '@remarks',
         ),
         returns: cleanDoc(
-            renderDocNode(docComment?.returnsBlock, resolveDeclarationReference),
+            renderDocNode(
+                docComment?.returnsBlock,
+                resolveDeclarationReference,
+            ),
             '@returns',
         ),
         // since: cleanDoc(
@@ -116,7 +135,12 @@ export function processDocComment(
         //     ),
         //     '@since',
         // ),
-        summary: cleanDoc(renderDocNode(docComment?.summarySection, resolveDeclarationReference)),
+        summary: cleanDoc(
+            renderDocNode(
+                docComment?.summarySection,
+                resolveDeclarationReference,
+            ),
+        ),
         throws: docComment?.customBlocks
             .filter((v) => v.blockTag.tagName === '@throws')
             .map((v) => renderDocNode(v, resolveDeclarationReference))
@@ -126,7 +150,9 @@ export function processDocComment(
 
 export function cleanDoc(docString: string, removeTag?: undefined | string) {
     if (removeTag) {
-        return docString.replace(new RegExp(`^\\s*${removeTag}`, 'g'), '').trim()
+        return docString
+            .replace(new RegExp(`^\\s*${removeTag}`, 'g'), '')
+            .trim()
     }
     return docString.trim()
 }
@@ -139,7 +165,9 @@ export function renderDocNode(
         return ''
     }
     if (Array.isArray(node)) {
-        return node.map((node) => renderDocNode(node, resolveDeclarationReference)).join('')
+        return node
+            .map((node) => renderDocNode(node, resolveDeclarationReference))
+            .join('')
     }
 
     const docNode = node as tsdoc.DocNode
@@ -149,10 +177,13 @@ export function renderDocNode(
         if (docNode instanceof tsdoc.DocFencedCode) {
             let code = docNode.code.toString()
             let meta = ''
-            code = code.replace(/^\s*\/\/\s*codeblock-meta(\s.*?)$\n?/gm, (_line, metaMatch) => {
-                meta += metaMatch
-                return ''
-            })
+            code = code.replace(
+                /^\s*\/\/\s*codeblock-meta(\s.*?)$\n?/gm,
+                (_line, metaMatch) => {
+                    meta += metaMatch
+                    return ''
+                },
+            )
             return `\`\`\`${docNode.language}${meta}\n${code}\`\`\``
         }
         if (docNode instanceof tsdoc.DocExcerpt) {

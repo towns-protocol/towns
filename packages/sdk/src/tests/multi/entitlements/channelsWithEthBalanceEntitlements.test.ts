@@ -25,10 +25,20 @@ describe('channelsWithEthBalanceEntitlements', () => {
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole([], ruleData)
 
-        await Promise.all([TestEthBalance.setBaseBalance(alicesWallet.address as Address, oneEth)])
+        await Promise.all([
+            TestEthBalance.setBaseBalance(
+                alicesWallet.address as Address,
+                oneEth,
+            ),
+        ])
 
         log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -44,12 +54,23 @@ describe('channelsWithEthBalanceEntitlements', () => {
             await setupChannelWithCustomRole([], ruleData)
 
         await Promise.all([
-            TestEthBalance.setBaseBalance(alicesWallet.address as Address, oneHalfEth),
-            TestEthBalance.setRiverBalance(alicesWallet.address as Address, oneHalfEth),
+            TestEthBalance.setBaseBalance(
+                alicesWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                alicesWallet.address as Address,
+                oneHalfEth,
+            ),
         ])
 
         log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -66,10 +87,17 @@ describe('channelsWithEthBalanceEntitlements', () => {
 
         // alice's base wallet may need to be explicitly set to zero to compensate for wallet funding in
         // initialization methods.
-        await Promise.all([TestEthBalance.setBaseBalance(alicesWallet.address as Address, 0n)])
+        await Promise.all([
+            TestEthBalance.setBaseBalance(alicesWallet.address as Address, 0n),
+        ])
 
         log('expect that alice cannot join the channel (has no ETH)')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         const doneStart = Date.now()
@@ -93,7 +121,11 @@ describe('channelsWithEthBalanceEntitlements', () => {
         } = await setupChannelWithCustomRole([], ruleData)
 
         // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         // Explicitly set wallet balances to 0
         await Promise.all([
@@ -102,18 +134,34 @@ describe('channelsWithEthBalanceEntitlements', () => {
         ])
 
         // Validate alice cannot join the channel
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         await Promise.all([
-            TestEthBalance.setBaseBalance(carolsWallet.address as Address, oneHalfEth),
-            TestEthBalance.setRiverBalance(carolsWallet.address as Address, oneHalfEth),
+            TestEthBalance.setBaseBalance(
+                carolsWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                carolsWallet.address as Address,
+                oneHalfEth,
+            ),
         ])
 
         // Wait 2 seconds for the negative auth cache to expire
         await new Promise((f) => setTimeout(f, 2000))
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients
@@ -138,20 +186,37 @@ describe('channelsWithEthBalanceEntitlements', () => {
         } = await setupChannelWithCustomRole([], ruleData)
 
         log("Joining alice's wallet as a linked wallet to carol's root wallet")
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+        await linkWallets(
+            carolSpaceDapp,
+            carolProvider.wallet,
+            aliceProvider.wallet,
+        )
 
-        log("Setting carol and alice's wallet balances to 1ETH and 0, respectively")
+        log(
+            "Setting carol and alice's wallet balances to 1ETH and 0, respectively",
+        )
         // Carol's cumulative balance across wallets: 2ETH
         // Alice's cumulative balance: 0
         await Promise.all([
-            TestEthBalance.setBaseBalance(carolsWallet.address as Address, oneEth),
-            TestEthBalance.setRiverBalance(carolsWallet.address as Address, oneEth),
+            TestEthBalance.setBaseBalance(
+                carolsWallet.address as Address,
+                oneEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                carolsWallet.address as Address,
+                oneEth,
+            ),
             TestEthBalance.setBaseBalance(alicesWallet.address as Address, 0n),
         ])
 
         log('expect that alice can join the channel')
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients
@@ -175,19 +240,40 @@ describe('channelsWithEthBalanceEntitlements', () => {
         } = await setupChannelWithCustomRole([], ruleData)
 
         // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         // Set wallet balances to 0
         await Promise.all([
-            TestEthBalance.setBaseBalance(carolsWallet.address as Address, oneHalfEth),
-            TestEthBalance.setBaseBalance(alicesWallet.address as Address, oneHalfEth),
-            TestEthBalance.setRiverBalance(carolsWallet.address as Address, oneHalfEth),
-            TestEthBalance.setRiverBalance(alicesWallet.address as Address, oneHalfEth),
+            TestEthBalance.setBaseBalance(
+                carolsWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setBaseBalance(
+                alicesWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                carolsWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                alicesWallet.address as Address,
+                oneHalfEth,
+            ),
         ])
 
         // Validate alice can join the channel
         log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients
@@ -213,19 +299,45 @@ describe('channelsWithEthBalanceEntitlements', () => {
         } = await setupChannelWithCustomRole([], ruleData)
 
         // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         // Set wallet balances to 0
         await Promise.all([
-            TestEthBalance.setBaseBalance(carolsWallet.address as Address, oneHalfEth),
-            TestEthBalance.setBaseBalance(alicesWallet.address as Address, oneHalfEth),
-            TestEthBalance.setRiverBalance(carolsWallet.address as Address, oneHalfEth),
-            TestEthBalance.setRiverBalance(alicesWallet.address as Address, oneHalfEth),
+            TestEthBalance.setBaseBalance(
+                carolsWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setBaseBalance(
+                alicesWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                carolsWallet.address as Address,
+                oneHalfEth,
+            ),
+            TestEthBalance.setRiverBalance(
+                alicesWallet.address as Address,
+                oneHalfEth,
+            ),
         ])
 
         log('expect neither alice nor carol can join the channel')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
-        await expectUserCannotJoinChannel(carol, carolSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
+        await expectUserCannotJoinChannel(
+            carol,
+            carolSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients

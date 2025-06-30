@@ -9,7 +9,13 @@ import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '../ui/dialog'
 import {
     Form,
     FormControl,
@@ -21,7 +27,13 @@ import {
 } from '../ui/form'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../ui/select'
 
 const messageForwardingLabel = {
     [ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES]: 'All Messages',
@@ -64,7 +76,8 @@ export const BotSettingsDialog = ({
     const appSettingsForm = useForm<AppSettingsFormSchema>({
         resolver: zodResolver(appSettingsFormSchema),
         defaultValues: {
-            forwardSetting: ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+            forwardSetting:
+                ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
         },
     })
 
@@ -77,11 +90,12 @@ export const BotSettingsDialog = ({
                 return
             }
 
-            const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
-                signerAddress,
-                signer,
-                APP_REGISTRY_URL,
-            )
+            const { appRegistryRpcClient } =
+                await AppRegistryService.authenticateWithSigner(
+                    signerAddress,
+                    signer,
+                    APP_REGISTRY_URL,
+                )
             await appRegistryRpcClient.registerWebhook({
                 appId: bin_fromHexString(appClientId),
                 webhookUrl,
@@ -98,11 +112,12 @@ export const BotSettingsDialog = ({
                 return
             }
 
-            const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
-                signerAddress,
-                signer,
-                APP_REGISTRY_URL,
-            )
+            const { appRegistryRpcClient } =
+                await AppRegistryService.authenticateWithSigner(
+                    signerAddress,
+                    signer,
+                    APP_REGISTRY_URL,
+                )
             await appRegistryRpcClient.setAppSettings({
                 appId: bin_fromHexString(appClientId),
                 settings: {
@@ -130,7 +145,8 @@ export const BotSettingsDialog = ({
                 <DialogHeader>
                     <DialogTitle>Bot Settings</DialogTitle>
                     <DialogDescription>
-                        Configure your bot's webhook URL to receive space events.
+                        Configure your bot's webhook URL to receive space
+                        events.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -149,10 +165,14 @@ export const BotSettingsDialog = ({
                                     <FormItem>
                                         <FormLabel>Webhook URL</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://..." {...field} />
+                                            <Input
+                                                placeholder="https://..."
+                                                {...field}
+                                            />
                                         </FormControl>
                                         <FormDescription>
-                                            The URL where your bot will receive space events
+                                            The URL where your bot will receive
+                                            space events
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -179,19 +199,27 @@ export const BotSettingsDialog = ({
                     <Form {...appSettingsForm}>
                         <form
                             className="space-y-4"
-                            onSubmit={appSettingsForm.handleSubmit(async (data) => {
-                                await updateSettingsMutation.mutateAsync(data)
-                            })}
+                            onSubmit={appSettingsForm.handleSubmit(
+                                async (data) => {
+                                    await updateSettingsMutation.mutateAsync(
+                                        data,
+                                    )
+                                },
+                            )}
                         >
                             <FormField
                                 control={appSettingsForm.control}
                                 name="forwardSetting"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Message Forwarding</FormLabel>
+                                        <FormLabel>
+                                            Message Forwarding
+                                        </FormLabel>
                                         <Select
                                             value={field.value.toString()}
-                                            onValueChange={(value) => field.onChange(Number(value))}
+                                            onValueChange={(value) =>
+                                                field.onChange(Number(value))
+                                            }
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
@@ -199,17 +227,21 @@ export const BotSettingsDialog = ({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {Object.entries(messageForwardingLabel).map(
-                                                    ([key, label]) => (
-                                                        <SelectItem key={key} value={key}>
-                                                            {label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
+                                                {Object.entries(
+                                                    messageForwardingLabel,
+                                                ).map(([key, label]) => (
+                                                    <SelectItem
+                                                        key={key}
+                                                        value={key}
+                                                    >
+                                                        {label}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <FormDescription>
-                                            Choose which messages to forward to your bot
+                                            Choose which messages to forward to
+                                            your bot
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>

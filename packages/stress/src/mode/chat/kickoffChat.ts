@@ -10,10 +10,14 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     logger.info('start kickoffChat')
     check(rootClient.clientIndex === 0, 'rootClient.clientIndex === 0')
     const globalRunIndex = parseInt(
-        (await cfg.globalPersistedStore?.get('stress_global_run_index').catch(() => undefined)) ??
-            '0',
+        (await cfg.globalPersistedStore
+            ?.get('stress_global_run_index')
+            .catch(() => undefined)) ?? '0',
     )
-    await cfg.globalPersistedStore?.set('stress_global_run_index', `${globalRunIndex + 1}`)
+    await cfg.globalPersistedStore?.set(
+        'stress_global_run_index',
+        `${globalRunIndex + 1}`,
+    )
 
     const { spaceId, sessionId } = cfg
     const balance = await rootClient.baseProvider.wallet.getBalance()
@@ -35,10 +39,11 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         announceChannelId,
         `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} randomNewClients: ${cfg.randomClients.length} sessionId: ${sessionId}`,
     )
-    const { eventId: countClientsMessageEventId } = await rootClient.sendMessage(
-        cfg.announceChannelId,
-        `Clients: 0/${cfg.clientsCount} 🤖`,
-    )
+    const { eventId: countClientsMessageEventId } =
+        await rootClient.sendMessage(
+            cfg.announceChannelId,
+            `Clients: 0/${cfg.clientsCount} 🤖`,
+        )
 
     cfg.kickoffMessageEventId = kickoffMessageEventId
     cfg.countClientsMessageEventId = countClientsMessageEventId
@@ -62,9 +67,14 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
 
     const mintMembershipForWallet = async (wallet: Wallet, i: number) => {
         const hasSpaceMembership = (
-            await rootClient.spaceDapp.getMembershipStatus(spaceId, [wallet.address])
+            await rootClient.spaceDapp.getMembershipStatus(spaceId, [
+                wallet.address,
+            ])
         ).isMember
-        logger.debug({ i, address: wallet.address, hasSpaceMembership }, 'minting membership')
+        logger.debug(
+            { i, address: wallet.address, hasSpaceMembership },
+            'minting membership',
+        )
         if (!hasSpaceMembership) {
             const result = await rootClient.spaceDapp.joinSpace(
                 spaceId,

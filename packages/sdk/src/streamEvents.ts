@@ -16,7 +16,10 @@ import {
     StreamTimelineEvent,
 } from './types'
 import { UserDevice } from '@towns-protocol/encryption'
-import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
+import {
+    EventSignatureBundle,
+    KeySolicitationContent,
+} from './decryptionExtensions'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
@@ -32,8 +35,15 @@ export type StreamChange = {
 
 /// Encryption events, emitted by streams, always emitted.
 export type StreamEncryptionEvents = {
-    newGroupSessions: (sessions: UserInboxPayload_GroupEncryptionSessions, senderId: string) => void
-    newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
+    newGroupSessions: (
+        sessions: UserInboxPayload_GroupEncryptionSessions,
+        senderId: string,
+    ) => void
+    newEncryptedContent: (
+        streamId: string,
+        eventId: string,
+        content: EncryptedContent,
+    ) => void
     newKeySolicitation: (
         streamId: string,
         eventHashStr: string,
@@ -60,14 +70,21 @@ export type StreamEncryptionEvents = {
         }[],
         sigBundle: EventSignatureBundle,
     ) => void
-    userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
+    userDeviceKeyMessage: (
+        streamId: string,
+        userId: string,
+        userDevice: UserDevice,
+    ) => void
 }
 
 export type SyncedStreamEvents = {
     streamSyncStateChange: (newState: SyncState) => void
     streamRemovedFromSync: (streamId: string) => void
     streamSyncActive: (active: boolean) => void
-    streamSyncBatchCompleted: (details: { duration: number; count: number }) => void
+    streamSyncBatchCompleted: (details: {
+        duration: number
+        count: number
+    }) => void
     streamSyncTimedOut: (details: { duration: number }) => void
 }
 
@@ -82,7 +99,10 @@ export type StreamStateEvents = {
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
-    userStreamMembershipChanged: (streamId: string, payload: UserPayload_UserMembership) => void
+    userStreamMembershipChanged: (
+        streamId: string,
+        payload: UserPayload_UserMembership,
+    ) => void
     userProfileImageUpdated: (streamId: string) => void
     userBioUpdated: (streamId: string) => void
     userInboxDeviceSummaryUpdated: (
@@ -92,15 +112,27 @@ export type StreamStateEvents = {
     ) => void
     userDeviceKeysUpdated: (streamId: string, deviceKeys: UserDevice[]) => void
     userTipSent: (streamId: string, currency: string, amount: bigint) => void
-    userTipReceived: (streamId: string, currency: string, amount: bigint) => void
+    userTipReceived: (
+        streamId: string,
+        currency: string,
+        amount: bigint,
+    ) => void
     streamTipped: (
         streamId: string,
         eventId: string,
         transaction: BlockchainTransaction_Tip,
     ) => void
     spaceChannelCreated: (spaceId: string, channelId: string) => void
-    spaceChannelUpdated: (spaceId: string, channelId: string, updatedAtEventNum: bigint) => void
-    spaceChannelAutojoinUpdated: (spaceId: string, channelId: string, autojoin: boolean) => void
+    spaceChannelUpdated: (
+        spaceId: string,
+        channelId: string,
+        updatedAtEventNum: bigint,
+    ) => void
+    spaceChannelAutojoinUpdated: (
+        spaceId: string,
+        channelId: string,
+        autojoin: boolean,
+    ) => void
     spaceChannelHideUserJoinLeaveEventsUpdated: (
         spaceId: string,
         channelId: string,
@@ -108,7 +140,10 @@ export type StreamStateEvents = {
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     spaceImageUpdated: (spaceId: string) => void
-    spaceReviewsUpdated: (streamId: string, review: SpaceReviewEventObject) => void
+    spaceReviewsUpdated: (
+        streamId: string,
+        review: SpaceReviewEventObject,
+    ) => void
     channelPinAdded: (channelId: string, pin: Pin) => void
     channelPinRemoved: (channelId: string, pin: Pin, index: number) => void
     channelPinDecrypted: (channelId: string, pin: Pin, index: number) => void
@@ -117,7 +152,11 @@ export type StreamStateEvents = {
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
     userBlockUpdated: (userBlock: UserSettingsPayload_UserBlock) => void
-    eventDecrypted: (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent) => void
+    eventDecrypted: (
+        streamId: string,
+        contentKind: SnapshotCaseType,
+        event: TimelineEvent,
+    ) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpToDate: (streamId: string) => void
     streamLocalEventUpdated: (
@@ -134,7 +173,10 @@ export type StreamStateEvents = {
     streamEnsAddressUpdated: (streamId: string, userId: string) => void
     streamNftUpdated: (streamId: string, userId: string) => void
     streamChannelPropertiesUpdated: (streamId: string) => void
-    streamEncryptionAlgorithmUpdated: (streamId: string, encryptionAlgorithm?: string) => void
+    streamEncryptionAlgorithmUpdated: (
+        streamId: string,
+        encryptionAlgorithm?: string,
+    ) => void
     streamTokenTransfer: (
         streamId: string,
         transaction: {
@@ -149,4 +191,6 @@ export type StreamStateEvents = {
     ) => void
 }
 
-export type StreamEvents = StreamEncryptionEvents & StreamStateEvents & SyncedStreamEvents
+export type StreamEvents = StreamEncryptionEvents &
+    StreamStateEvents &
+    SyncedStreamEvents

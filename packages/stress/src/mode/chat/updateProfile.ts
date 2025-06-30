@@ -7,9 +7,10 @@ export async function updateProfile(client: StressClient, cfg: ChatConfig) {
     const logger = getLogger('stress:updateProfile', { logId: client.logId })
     // set the name and profile picture in the space
     const spaceStream = await client.streamsClient.waitForStream(cfg.spaceId)
-    const existingName = spaceStream.view?.membershipContent.memberMetadata.usernames.info(
-        client.userId,
-    )
+    const existingName =
+        spaceStream.view?.membershipContent.memberMetadata.usernames.info(
+            client.userId,
+        )
 
     if (existingName.username == '' && !existingName.usernameEncrypted) {
         const name = makeBotName(client.clientIndex)

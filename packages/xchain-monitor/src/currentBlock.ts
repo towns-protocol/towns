@@ -36,7 +36,9 @@ export async function getFirstUnscannedBlock(): Promise<bigint> {
     }
     const fileName = path.join(config.persistentStorageDir, 'currentBlock')
     try {
-        const currentBlock = BigInt((await fs.promises.readFile(fileName)).toString('utf8').trim())
+        const currentBlock = BigInt(
+            (await fs.promises.readFile(fileName)).toString('utf8').trim(),
+        )
         logger.info(
             {
                 fileName,
@@ -55,6 +57,8 @@ export async function getFirstUnscannedBlock(): Promise<bigint> {
             'Unable to read current block number from file',
         )
     }
-    logger.info('Unable to read current block from disk, falling back to config.initialBlockNum')
+    logger.info(
+        'Unable to read current block from disk, falling back to config.initialBlockNum',
+    )
     return config.initialBlockNum
 }

@@ -27,7 +27,11 @@ export const signAndConnect = async (
 ): Promise<SyncAgent> => {
     const delegateWallet = ethers.Wallet.createRandom()
     const signerContext = await makeSignerContext(signer, delegateWallet)
-    return new SyncAgent({ context: signerContext, ...defaultConfig, ...config })
+    return new SyncAgent({
+        context: signerContext,
+        ...defaultConfig,
+        ...config,
+    })
 }
 
 /**
@@ -42,7 +46,11 @@ export const connectTowns = async (
     signerContext: SignerContext,
     config: Omit<SyncAgentConfig, 'context'>,
 ): Promise<SyncAgent> => {
-    return new SyncAgent({ context: signerContext, ...defaultConfig, ...config })
+    return new SyncAgent({
+        context: signerContext,
+        ...defaultConfig,
+        ...config,
+    })
 }
 
 /**
@@ -59,5 +67,9 @@ export const connectTownsWithBearerToken = async (
     config: Omit<SyncAgentConfig, 'context'>,
 ): Promise<SyncAgent> => {
     const signerContext = await makeSignerContextFromBearerToken(token)
-    return new SyncAgent({ context: signerContext, ...defaultConfig, ...config })
+    return new SyncAgent({
+        context: signerContext,
+        ...defaultConfig,
+        ...config,
+    })
 }

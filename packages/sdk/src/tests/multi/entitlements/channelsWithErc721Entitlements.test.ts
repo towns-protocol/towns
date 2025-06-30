@@ -26,23 +26,42 @@ describe('channelsWithErc721Entitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address))
+        } = await setupChannelWithCustomRole(
+            [],
+            getNftRuleData(testNft1Address),
+        )
 
         // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         // Validate alice cannot join the channel
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Mint the needed asset to Alice's linked wallet
-        log('Minting an NFT for carols wallet, which is linked to alices wallet')
+        log(
+            'Minting an NFT for carols wallet, which is linked to alices wallet',
+        )
         await TestERC721.publicMint('TestNFT1', carolsWallet.address as Address)
 
         // Wait 2 seconds for the negative auth cache to expire
         await new Promise((f) => setTimeout(f, 2000))
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients
@@ -63,17 +82,31 @@ describe('channelsWithErc721Entitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address))
+        } = await setupChannelWithCustomRole(
+            [],
+            getNftRuleData(testNft1Address),
+        )
 
         log("Joining alice's wallet as a linked wallet to carols root wallet")
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+        await linkWallets(
+            carolSpaceDapp,
+            carolProvider.wallet,
+            aliceProvider.wallet,
+        )
 
-        log('Minting an NFT for carols wallet, which is the root to alices wallet')
+        log(
+            'Minting an NFT for carols wallet, which is the root to alices wallet',
+        )
         await TestERC721.publicMint('TestNFT1', carolsWallet.address as Address)
 
         log('expect that alice can join the space')
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const doneStart = Date.now()
         // kill the clients
@@ -88,7 +121,12 @@ describe('channelsWithErc721Entitlements', () => {
             await setupChannelWithCustomRole([], getNftRuleData(testNftAddress))
 
         // Alice initially cannot join because she has no nft
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Mint an nft for alice - she should be able to join now
         await TestERC721.publicMint('TestNFT', alicesWallet.address as Address)
@@ -97,7 +135,12 @@ describe('channelsWithErc721Entitlements', () => {
         await new Promise((f) => setTimeout(f, 2000))
 
         // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         await bob.stopSync()
         await alice.stopSync()
@@ -105,13 +148,19 @@ describe('channelsWithErc721Entitlements', () => {
 
     test('oneNftGateJoinFail', async () => {
         const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
-        const { alice, aliceSpaceDapp, bob, spaceId, channelId } = await setupChannelWithCustomRole(
-            [],
-            getNftRuleData(testNft1Address),
-        )
+        const { alice, aliceSpaceDapp, bob, spaceId, channelId } =
+            await setupChannelWithCustomRole(
+                [],
+                getNftRuleData(testNft1Address),
+            )
 
         // Alice has no NFTs, so she should not be able to join the channel
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCannotJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // kill the clients
         await bob.stopSync()

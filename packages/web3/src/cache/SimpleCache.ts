@@ -10,7 +10,8 @@ export class SimpleCache<K extends Keyable, V> {
      * @param maxSize Optional maximum number of entries in the cache.
      */
     constructor(args: { ttlSeconds?: number; maxSize?: number } = {}) {
-        const ttlSeconds = args.ttlSeconds !== undefined ? args.ttlSeconds * 1000 : Infinity
+        const ttlSeconds =
+            args.ttlSeconds !== undefined ? args.ttlSeconds * 1000 : Infinity
         const maxSize = args.maxSize ?? 10_000
         this.cache = new TTLCache({
             ttl: ttlSeconds,
@@ -38,7 +39,10 @@ export class SimpleCache<K extends Keyable, V> {
      * Executes a function to fetch a value if it's not in the cache,
      * stores the result, and returns it.
      */
-    async executeUsingCache(key: K, fetchFn: (key: K) => Promise<V>): Promise<V> {
+    async executeUsingCache(
+        key: K,
+        fetchFn: (key: K) => Promise<V>,
+    ): Promise<V> {
         const cacheKey = key.toKey()
 
         // 1. Check main cache

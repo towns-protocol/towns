@@ -28,17 +28,24 @@ export class GroupDecryption extends DecryptionAlgorithm {
      * decrypting, or rejects with an `algorithms.DecryptionError` if there is a
      * problem decrypting the event.
      */
-    public async decrypt(streamId: string, content: EncryptedData): Promise<Uint8Array | string> {
+    public async decrypt(
+        streamId: string,
+        content: EncryptedData,
+    ): Promise<Uint8Array | string> {
         if (!content.senderKey || !content.sessionId || !content.ciphertext) {
-            throw new DecryptionError('GROUP_DECRYPTION_MISSING_FIELDS', 'Missing fields in input')
+            throw new DecryptionError(
+                'GROUP_DECRYPTION_MISSING_FIELDS',
+                'Missing fields in input',
+            )
         }
 
         let session = this.lruCache.get(content.sessionId)
         if (!session) {
-            const { session: loadedSession } = await this.device.getInboundGroupSession(
-                streamId,
-                content.sessionId,
-            )
+            const { session: loadedSession } =
+                await this.device.getInboundGroupSession(
+                    streamId,
+                    content.sessionId,
+                )
             if (loadedSession) {
                 this.lruCache.set(content.sessionId, loadedSession)
                 session = loadedSession
@@ -59,7 +66,10 @@ export class GroupDecryption extends DecryptionAlgorithm {
                 return bin_fromBase64(result.plaintext)
 
             default:
-                throw new DecryptionError('GROUP_DECRYPTION_INVALID_VERSION', 'Unsupported version')
+                throw new DecryptionError(
+                    'GROUP_DECRYPTION_INVALID_VERSION',
+                    'Unsupported version',
+                )
         }
     }
 
@@ -67,7 +77,10 @@ export class GroupDecryption extends DecryptionAlgorithm {
      * @param streamId - the stream id of the session
      * @param session- the group session object
      */
-    public async importStreamKey(streamId: string, session: GroupEncryptionSession): Promise<void> {
+    public async importStreamKey(
+        streamId: string,
+        session: GroupEncryptionSession,
+    ): Promise<void> {
         const extraSessionData: GroupSessionExtraData = {}
         try {
             await this.device.addInboundGroupSession(
@@ -104,7 +117,10 @@ export class GroupDecryption extends DecryptionAlgorithm {
     }
 
     /** */
-    public async hasSessionKey(streamId: string, sessionId: string): Promise<boolean> {
+    public async hasSessionKey(
+        streamId: string,
+        sessionId: string,
+    ): Promise<boolean> {
         return this.device.hasInboundSessionKeys(streamId, sessionId)
     }
 }

@@ -17,7 +17,8 @@ export class EntitlementCache<K extends Keyable, V> {
         positiveCacheSize?: number
         negativeCacheSize?: number
     }) {
-        const positiveCacheTTLSeconds = options?.positiveCacheTTLSeconds ?? 15 * 60
+        const positiveCacheTTLSeconds =
+            options?.positiveCacheTTLSeconds ?? 15 * 60
         const negativeCacheTTLSeconds = options?.negativeCacheTTLSeconds ?? 2
         const positiveCacheSize = options?.positiveCacheSize ?? 10000
         const negativeCacheSize = options?.negativeCacheSize ?? 10000

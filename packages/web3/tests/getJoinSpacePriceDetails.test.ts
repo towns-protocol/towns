@@ -40,14 +40,20 @@ test('getJoinSpacePriceDetails returns correct values for free space', async () 
             spaceName: 'test',
             uri: '',
             channelName: 'test',
-            membership: await makeDefaultMembershipInfo(spaceDapp, wallet.address),
+            membership: await makeDefaultMembershipInfo(
+                spaceDapp,
+                wallet.address,
+            ),
             shortDescription: 'test',
             longDescription: 'test',
         },
         baseProvider.signer,
     )
     const receipt = await tx.wait()
-    const spaceAddress = spaceDapp.getSpaceAddress(receipt, baseProvider.wallet.address)
+    const spaceAddress = spaceDapp.getSpaceAddress(
+        receipt,
+        baseProvider.wallet.address,
+    )
     if (!spaceAddress) {
         throw new Error('Space address not found')
     }
@@ -82,7 +88,10 @@ test('getJoinSpacePriceDetails returns correct values for paid space', async () 
         baseProvider.signer,
     )
     const receipt = await tx.wait()
-    const spaceAddress = spaceDapp.getSpaceAddress(receipt, baseProvider.wallet.address)
+    const spaceAddress = spaceDapp.getSpaceAddress(
+        receipt,
+        baseProvider.wallet.address,
+    )
     if (!spaceAddress) {
         throw new Error('Space address not found')
     }
@@ -94,9 +103,14 @@ test('getJoinSpacePriceDetails returns correct values for paid space', async () 
     expect(priceDetails.prepaidSupply.toBigInt()).toBe(0n)
     expect(priceDetails.remainingFreeSupply.toBigInt()).toBe(0n)
 
-    const prepaidTx = await spaceDapp.prepayMembership(spaceId, 1, baseProvider.signer)
+    const prepaidTx = await spaceDapp.prepayMembership(
+        spaceId,
+        1,
+        baseProvider.signer,
+    )
     await prepaidTx.wait()
-    const prepaidSupply = await spaceDapp.getPrepaidMembershipSupply(spaceAddress)
+    const prepaidSupply =
+        await spaceDapp.getPrepaidMembershipSupply(spaceAddress)
     expect(prepaidSupply.toBigInt()).toBe(1n)
 
     const priceDetails2 = await spaceDapp.getJoinSpacePriceDetails(spaceAddress)

@@ -4,8 +4,16 @@
 
 import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { Client } from '../../client'
-import { makeUniqueChannelStreamId, makeDMStreamId, streamIdAsString } from '../../id'
-import { CreationCookie, CreationCookieSchema, InfoRequestSchema } from '@towns-protocol/proto'
+import {
+    makeUniqueChannelStreamId,
+    makeDMStreamId,
+    streamIdAsString,
+} from '../../id'
+import {
+    CreationCookie,
+    CreationCookieSchema,
+    InfoRequestSchema,
+} from '@towns-protocol/proto'
 import { deriveKeyAndIV, encryptAESGCM } from '@towns-protocol/sdk-crypto'
 import { create } from '@bufbuild/protobuf'
 
@@ -55,7 +63,9 @@ describe('mediaTests', () => {
             const result = await bobsClient.sendMediaPayload(cc, last, chunk, i)
             cc = create(CreationCookieSchema, {
                 ...cc,
-                prevMiniblockHash: new Uint8Array(result.creationCookie.prevMiniblockHash),
+                prevMiniblockHash: new Uint8Array(
+                    result.creationCookie.prevMiniblockHash,
+                ),
                 miniblockNum: result.creationCookie.miniblockNum,
             })
         }
@@ -68,7 +78,12 @@ describe('mediaTests', () => {
         chunkIndex: number,
         data: Uint8Array,
     ): Promise<CreationCookie> {
-        const result = await bobsClient.sendMediaPayload(creationCookie, last, data, chunkIndex)
+        const result = await bobsClient.sendMediaPayload(
+            creationCookie,
+            last,
+            data,
+            chunkIndex,
+        )
         return result.creationCookie
     }
 
@@ -105,7 +120,9 @@ describe('mediaTests', () => {
 
     test('clientCanCreateSpaceMediaStream', async () => {
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobCreateSpaceMediaStream(spaceId, 5)).resolves.not.toThrow()
+        await expect(
+            bobCreateSpaceMediaStream(spaceId, 5),
+        ).resolves.not.toThrow()
     })
 
     test('clientCanSendMediaPayload', async () => {
@@ -115,8 +132,14 @@ describe('mediaTests', () => {
 
     test('clientCanSendSpaceMediaPayload', async () => {
         const spaceId = makeUniqueSpaceStreamId()
-        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 5, new Uint8Array(100))
-        await expect(bobSendMediaPayloads(mediaStreamInfo.creationCookie, 5)).resolves.not.toThrow()
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(
+            spaceId,
+            5,
+            new Uint8Array(100),
+        )
+        await expect(
+            bobSendMediaPayloads(mediaStreamInfo.creationCookie, 5),
+        ).resolves.not.toThrow()
     })
 
     test('clientCanSendEncryptedDerivedAesGmPayload', async () => {
@@ -124,14 +147,21 @@ describe('mediaTests', () => {
         const data = createTestMediaChunks(2)
         const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 3)
         await expect(
-            bobSendEncryptedMediaPayload(mediaStreamInfo.creationCookie, false, 1, data),
+            bobSendEncryptedMediaPayload(
+                mediaStreamInfo.creationCookie,
+                false,
+                1,
+                data,
+            ),
         ).resolves.not.toThrow()
     })
 
     test('clientCanSendEncryptedDerivedAesGmPayloadInCreationRequest', async () => {
         const spaceId = makeUniqueSpaceStreamId()
         const data = createTestMediaChunks(2)
-        await expect(bobCreateSpaceMediaStream(spaceId, 3, data)).resolves.not.toThrow()
+        await expect(
+            bobCreateSpaceMediaStream(spaceId, 3, data),
+        ).resolves.not.toThrow()
     })
 
     test('clientCanDownloadEncryptedDerivedAesGmPayload', async () => {
@@ -142,13 +172,18 @@ describe('mediaTests', () => {
         const mediaStreamInfo = await bobCreateSpaceMediaStream(
             spaceId,
             2,
-            encryptedData.ciphertext.subarray(0, encryptedData.ciphertext.length / 2),
+            encryptedData.ciphertext.subarray(
+                0,
+                encryptedData.ciphertext.length / 2,
+            ),
         )
         const creationCookie = await bobSendEncryptedMediaPayload(
             mediaStreamInfo.creationCookie,
             true,
             1,
-            encryptedData.ciphertext.subarray(encryptedData.ciphertext.length / 2),
+            encryptedData.ciphertext.subarray(
+                encryptedData.ciphertext.length / 2,
+            ),
         )
         const decryptedChunks = await bobsClient.getMediaPayload(
             streamIdAsString(creationCookie.streamId),
@@ -162,7 +197,12 @@ describe('mediaTests', () => {
         const result = await bobCreateMediaStream(5)
         const chunk = new Uint8Array(100)
         await expect(
-            bobsClient.sendMediaPayload(result.creationCookie, false, chunk, -1),
+            bobsClient.sendMediaPayload(
+                result.creationCookie,
+                false,
+                chunk,
+                -1,
+            ),
         ).rejects.toThrow()
         await expect(
             bobsClient.sendMediaPayload(result.creationCookie, false, chunk, 6),
@@ -198,7 +238,12 @@ describe('mediaTests', () => {
         alicesClient.startSync()
 
         await expect(
-            alicesClient.sendMediaPayload(result.creationCookie, false, chunk, 5),
+            alicesClient.sendMediaPayload(
+                result.creationCookie,
+                false,
+                chunk,
+                5,
+            ),
         ).rejects.toThrow()
         await alicesClient.stop()
     })
@@ -213,16 +258,27 @@ describe('mediaTests', () => {
         alicesClient.startSync()
 
         await expect(
-            alicesClient.sendMediaPayload(result.creationCookie, false, chunk, 5),
+            alicesClient.sendMediaPayload(
+                result.creationCookie,
+                false,
+                chunk,
+                5,
+            ),
         ).rejects.toThrow()
         await alicesClient.stop()
     })
 
     test('channelNeedsToExistBeforeCreatingMediaStream', async () => {
         const nonExistentSpaceId = makeUniqueSpaceStreamId()
-        const nonExistentChannelId = makeUniqueChannelStreamId(nonExistentSpaceId)
+        const nonExistentChannelId =
+            makeUniqueChannelStreamId(nonExistentSpaceId)
         await expect(
-            bobsClient.createMediaStream(nonExistentChannelId, nonExistentSpaceId, undefined, 5),
+            bobsClient.createMediaStream(
+                nonExistentChannelId,
+                nonExistentSpaceId,
+                undefined,
+                5,
+            ),
         ).rejects.toThrow()
     })
 
@@ -231,9 +287,17 @@ describe('mediaTests', () => {
         await alicesClient.initializeUser()
         alicesClient.startSync()
 
-        const nonExistentChannelId = makeDMStreamId(bobsClient.userId, alicesClient.userId)
+        const nonExistentChannelId = makeDMStreamId(
+            bobsClient.userId,
+            alicesClient.userId,
+        )
         await expect(
-            bobsClient.createMediaStream(nonExistentChannelId, undefined, undefined, 5),
+            bobsClient.createMediaStream(
+                nonExistentChannelId,
+                undefined,
+                undefined,
+                5,
+            ),
         ).rejects.toThrow()
         await alicesClient.stop()
     })
@@ -243,7 +307,9 @@ describe('mediaTests', () => {
         await alicesClient.initializeUser()
         alicesClient.startSync()
 
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         await expect(
             bobsClient.createMediaStream(streamId, undefined, undefined, 5),
         ).resolves.not.toThrow()
@@ -282,7 +348,9 @@ describe('mediaTests', () => {
         await charliesClient.initializeUser()
         charliesClient.startSync()
 
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
 
         await expect(
             charliesClient.createMediaStream(streamId, undefined, undefined, 5),
@@ -331,7 +399,12 @@ describe('mediaTests', () => {
         await alicesClient.initializeUser()
         alicesClient.startSync()
         await expect(
-            alicesClient.createMediaStream(undefined, undefined, alicesClient.userId, 5),
+            alicesClient.createMediaStream(
+                undefined,
+                undefined,
+                alicesClient.userId,
+                5,
+            ),
         ).resolves.not.toThrow()
     })
 })

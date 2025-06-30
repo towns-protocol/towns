@@ -131,7 +131,12 @@ export async function deployContract(
                         'Nonce provided for the transaction is lower than the current nonce',
                     ))
             ) {
-                logger.log('retrying because nonce too low', e, retryCount, contractName)
+                logger.log(
+                    'retrying because nonce too low',
+                    e,
+                    retryCount,
+                    contractName,
+                )
             } else {
                 throw e
             }

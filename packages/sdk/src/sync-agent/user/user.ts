@@ -1,4 +1,7 @@
-import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../store/store'
 import { RiverConnection } from '../river-connection/riverConnection'
 import { UserMetadata } from './models/userMetadata'

@@ -29,9 +29,14 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
         })
     }
 
-    setMembership(userStreamId: string, streamId: string, membership: UserPayload_UserMembership) {
+    setMembership(
+        userStreamId: string,
+        streamId: string,
+        membership: UserPayload_UserMembership,
+    ) {
         this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            const prevStream =
+                prev[userStreamId] ?? this.makeDefault(userStreamId)
             return {
                 ...prev,
                 [userStreamId]: {
@@ -55,7 +60,8 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
         },
     ) {
         this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            const prevStream =
+                prev[userStreamId] ?? this.makeDefault(userStreamId)
             return {
                 ...prev,
                 [userStreamId]: {
@@ -66,27 +72,41 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
         })
     }
 
-    prependTokenTransfer(userStreamId: string, tokenTransfer: BlockchainTransaction_TokenTransfer) {
+    prependTokenTransfer(
+        userStreamId: string,
+        tokenTransfer: BlockchainTransaction_TokenTransfer,
+    ) {
         this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            const prevStream =
+                prev[userStreamId] ?? this.makeDefault(userStreamId)
             return {
                 ...prev,
                 [userStreamId]: {
                     ...prevStream,
-                    tokenTransfers: [tokenTransfer, ...prevStream.tokenTransfers],
+                    tokenTransfers: [
+                        tokenTransfer,
+                        ...prevStream.tokenTransfers,
+                    ],
                 },
             }
         })
     }
 
-    appendTokenTransfer(userStreamId: string, tokenTransfer: BlockchainTransaction_TokenTransfer) {
+    appendTokenTransfer(
+        userStreamId: string,
+        tokenTransfer: BlockchainTransaction_TokenTransfer,
+    ) {
         this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            const prevStream =
+                prev[userStreamId] ?? this.makeDefault(userStreamId)
             return {
                 ...prev,
                 [userStreamId]: {
                     ...prevStream,
-                    tokenTransfers: [...prevStream.tokenTransfers, tokenTransfer],
+                    tokenTransfers: [
+                        ...prevStream.tokenTransfers,
+                        tokenTransfer,
+                    ],
                 },
             }
         })
@@ -94,18 +114,21 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
 
     appendTipSent(userStreamId: string, currency: string, amount: bigint) {
         this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            const prevStream =
+                prev[userStreamId] ?? this.makeDefault(userStreamId)
             return {
                 ...prev,
                 [userStreamId]: {
                     ...prevStream,
                     tipsSent: {
                         ...prevStream.tipsSent,
-                        [currency]: (prevStream.tipsSent[currency] ?? 0n) + amount,
+                        [currency]:
+                            (prevStream.tipsSent[currency] ?? 0n) + amount,
                     },
                     tipsSentCount: {
                         ...prevStream.tipsSentCount,
-                        [currency]: (prevStream.tipsSentCount[currency] ?? 0n) + 1n,
+                        [currency]:
+                            (prevStream.tipsSentCount[currency] ?? 0n) + 1n,
                     },
                 },
             }
@@ -114,18 +137,21 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
 
     appendTipReceived(userStreamId: string, currency: string, amount: bigint) {
         this.set((prev) => {
-            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            const prevStream =
+                prev[userStreamId] ?? this.makeDefault(userStreamId)
             return {
                 ...prev,
                 [userStreamId]: {
                     ...prevStream,
                     tipsReceived: {
                         ...prevStream.tipsReceived,
-                        [currency]: (prevStream.tipsReceived[currency] ?? 0n) + amount,
+                        [currency]:
+                            (prevStream.tipsReceived[currency] ?? 0n) + amount,
                     },
                     tipsReceivedCount: {
                         ...prevStream.tipsReceivedCount,
-                        [currency]: (prevStream.tipsReceivedCount[currency] ?? 0n) + 1n,
+                        [currency]:
+                            (prevStream.tipsReceivedCount[currency] ?? 0n) + 1n,
                     },
                 },
             }

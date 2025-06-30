@@ -42,8 +42,14 @@ export class StreamStateView_MemberMetadata {
     }
 
     applySnapshot(
-        usernames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
-        displayNames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
+        usernames: {
+            userId: string
+            wrappedEncryptedData: WrappedEncryptedData
+        }[],
+        displayNames: {
+            userId: string
+            wrappedEncryptedData: WrappedEncryptedData
+        }[],
         ensAddresses: { userId: string; ensAddress: Uint8Array }[],
         nfts: { userId: string; nft: MemberPayload_Nft }[],
         cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -58,7 +64,9 @@ export class StreamStateView_MemberMetadata {
             }
             const data = payload.wrappedEncryptedData.data
             const userId = payload.userId
-            const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
+            const eventId = bin_toHexString(
+                payload.wrappedEncryptedData.eventHash,
+            )
             const clearText = cleartexts?.[eventId]
             this.usernames.addEncryptedData(
                 eventId,
@@ -77,7 +85,9 @@ export class StreamStateView_MemberMetadata {
             }
             const data = payload.wrappedEncryptedData.data
             const userId = payload.userId
-            const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
+            const eventId = bin_toHexString(
+                payload.wrappedEncryptedData.eventHash,
+            )
             const clearText = cleartexts?.[eventId]
             this.displayNames.addEncryptedData(
                 eventId,
@@ -158,7 +168,13 @@ export class StreamStateView_MemberMetadata {
         userId: string,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.ensAddresses.addEnsAddressEvent(eventId, EnsAddress, userId, true, stateEmitter)
+        this.ensAddresses.addEnsAddressEvent(
+            eventId,
+            EnsAddress,
+            userId,
+            true,
+            stateEmitter,
+        )
     }
 
     appendNft(
@@ -199,7 +215,9 @@ function sortPayloads(
     return payloads.sort((a, b) => {
         if (a.wrappedEncryptedData.eventNum > b.wrappedEncryptedData.eventNum) {
             return 1
-        } else if (a.wrappedEncryptedData.eventNum < b.wrappedEncryptedData.eventNum) {
+        } else if (
+            a.wrappedEncryptedData.eventNum < b.wrappedEncryptedData.eventNum
+        ) {
             return -1
         } else {
             return 0

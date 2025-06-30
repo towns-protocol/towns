@@ -1,6 +1,9 @@
 import { bin_toHexString, bin_toString, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import type { Store } from '../../../store/store'
 import type { RiverConnection } from '../../river-connection/riverConnection'
 import { MembershipOp } from '@towns-protocol/proto'
@@ -82,7 +85,9 @@ export class Member extends PersistedObservable<MemberModel> {
 
     onStreamInitialized(streamId: string) {
         if (this.data.streamId === streamId) {
-            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+            const streamView = this.riverConnection.client?.stream(
+                this.data.streamId,
+            )?.view
             check(isDefined(streamView), 'streamView is not defined')
             const metadata = streamView.getMemberMetadata()
             const usernameInfo = metadata?.usernames.info(this.userId)
@@ -107,9 +112,13 @@ export class Member extends PersistedObservable<MemberModel> {
 
     onStreamUsernameUpdated(streamId: string, userId: string) {
         if (this.data.userId === userId && this.data.streamId === streamId) {
-            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+            const streamView = this.riverConnection.client?.stream(
+                this.data.streamId,
+            )?.view
             check(isDefined(streamView), 'streamView is not defined')
-            const usernameInfo = streamView.getMemberMetadata()?.usernames.info(this.userId)
+            const usernameInfo = streamView
+                .getMemberMetadata()
+                ?.usernames.info(this.userId)
             this.setData({
                 username: usernameInfo?.username,
                 isUsernameConfirmed: usernameInfo?.usernameConfirmed,
@@ -120,13 +129,16 @@ export class Member extends PersistedObservable<MemberModel> {
 
     public onStreamNftUpdated = (streamId: string, userId: string) => {
         if (streamId === this.data.streamId && userId === this.userId) {
-            const streamView = this.riverConnection.client?.stream(streamId)?.view
+            const streamView =
+                this.riverConnection.client?.stream(streamId)?.view
             const metadata = streamView?.getMemberMetadata()
             if (metadata) {
                 const nftPayload = metadata.nfts.confirmedNfts.get(userId)
                 const nft = nftPayload
                     ? {
-                          contractAddress: bin_toHexString(nftPayload.contractAddress),
+                          contractAddress: bin_toHexString(
+                              nftPayload.contractAddress,
+                          ),
                           tokenId: bin_toString(nftPayload.tokenId),
                           chainId: nftPayload.chainId,
                       }

@@ -122,7 +122,10 @@ export const useAgentConnection = () => {
         [towns],
     )
 
-    const disconnect = useCallback(() => towns?.setSyncAgent(undefined), [towns])
+    const disconnect = useCallback(
+        () => towns?.setSyncAgent(undefined),
+        [towns],
+    )
 
     const isAgentConnected = useMemo(() => !!towns?.syncAgent, [towns])
 

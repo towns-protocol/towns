@@ -200,9 +200,9 @@ describe('Observable', () => {
         it('should timeout when condition is not met', async () => {
             const obs = new Observable(5)
 
-            await expect(obs.when((value) => value > 10, { timeoutMs: 50 })).rejects.toThrow(
-                'Timeout waiting for condition',
-            )
+            await expect(
+                obs.when((value) => value > 10, { timeoutMs: 50 }),
+            ).rejects.toThrow('Timeout waiting for condition')
         })
 
         it('should include description in timeout error', async () => {
@@ -213,7 +213,9 @@ describe('Observable', () => {
                     timeoutMs: 50,
                     description: 'value to exceed 10',
                 }),
-            ).rejects.toThrow('Timeout waiting for condition value to exceed 10')
+            ).rejects.toThrow(
+                'Timeout waiting for condition value to exceed 10',
+            )
         })
     })
 
@@ -254,7 +256,11 @@ describe('Observable', () => {
 
             obs.setValue(10)
             // Should be called with current state
-            expect(mapFn).toHaveBeenLastCalledWith(10, 5, { current: 5, previous: 5, count: 1 })
+            expect(mapFn).toHaveBeenLastCalledWith(10, 5, {
+                current: 5,
+                previous: 5,
+                count: 1,
+            })
 
             expect(mapped.value).toEqual({
                 current: 10,

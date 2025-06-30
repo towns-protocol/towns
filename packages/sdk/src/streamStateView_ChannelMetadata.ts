@@ -1,8 +1,16 @@
 import TypedEmitter from 'typed-emitter'
-import { ChannelProperties, EncryptedData, WrappedEncryptedData } from '@towns-protocol/proto'
+import {
+    ChannelProperties,
+    EncryptedData,
+    WrappedEncryptedData,
+} from '@towns-protocol/proto'
 import { bin_toHexString, dlog, check } from '@towns-protocol/dlog'
 import { DecryptedContent, toDecryptedContent } from './encryptedContentTypes'
-import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
+import {
+    StreamEncryptionEvents,
+    StreamEvents,
+    StreamStateEvents,
+} from './streamEvents'
 import { RemoteTimelineEvent } from './types'
 import { GdmStreamModel, GdmStreamsView } from './views/streams/gdmStreams'
 
@@ -43,7 +51,12 @@ export class StreamStateView_ChannelMetadata {
         const eventId = bin_toHexString(encryptedChannelProperties.eventHash)
         const cleartext = cleartexts?.[eventId]
         this.gdmStreamsView.setLatestMetadataEventId(this.streamId, eventId)
-        this.decryptPayload(encryptedChannelProperties.data, eventId, cleartext, encryptionEmitter)
+        this.decryptPayload(
+            encryptedChannelProperties.data,
+            eventId,
+            cleartext,
+            encryptionEmitter,
+        )
     }
 
     appendEvent(
@@ -52,9 +65,15 @@ export class StreamStateView_ChannelMetadata {
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'gdmChannelPayload')
-        check(event.remoteEvent.event.payload.value.content.case === 'channelProperties')
+        check(
+            event.remoteEvent.event.payload.value.content.case ===
+                'channelProperties',
+        )
         const payload = event.remoteEvent.event.payload.value.content.value
-        this.gdmStreamsView.setLatestMetadataEventId(this.streamId, event.hashStr)
+        this.gdmStreamsView.setLatestMetadataEventId(
+            this.streamId,
+            event.hashStr,
+        )
         this.decryptPayload(payload, event.hashStr, cleartext, emitter)
     }
 
@@ -86,12 +105,21 @@ export class StreamStateView_ChannelMetadata {
                 payload.version,
                 cleartext,
             )
-            this.handleDecryptedContent(eventId, decryptedContent, encryptionEmitter)
+            this.handleDecryptedContent(
+                eventId,
+                decryptedContent,
+                encryptionEmitter,
+            )
         } else {
-            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
-                kind: 'channelProperties',
-                content: payload,
-            })
+            encryptionEmitter?.emit(
+                'newEncryptedContent',
+                this.streamId,
+                eventId,
+                {
+                    kind: 'channelProperties',
+                    content: payload,
+                },
+            )
         }
     }
 
@@ -106,7 +134,11 @@ export class StreamStateView_ChannelMetadata {
                 !this.gdmStreamModel.metadata ||
                 this.gdmStreamModel.latestMetadataEventId === eventId
             ) {
-                this.gdmStreamsView.setMetadata(this.streamId, content.content, eventId)
+                this.gdmStreamsView.setMetadata(
+                    this.streamId,
+                    content.content,
+                    eventId,
+                )
                 emitter?.emit('streamChannelPropertiesUpdated', this.streamId)
             } else {
                 this.log('channelProperties eventId mismatch', {

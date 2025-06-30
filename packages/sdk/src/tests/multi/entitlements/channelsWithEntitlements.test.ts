@@ -31,7 +31,12 @@ describe('channelsWithEntitlements', () => {
             channelId,
         } = await setupChannelWithCustomRole(['alice'], NoopRuleData)
 
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         const tx = await bobSpaceDapp.banWalletAddress(
             spaceId,
@@ -95,13 +100,14 @@ describe('channelsWithEntitlements', () => {
             bobSpaceDapp,
         } = await setupWalletsAndContexts()
 
-        const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
-            bob,
-            bobSpaceDapp,
-            bobProvider.wallet,
-            'bob',
-            await everyoneMembershipStruct(bobSpaceDapp, bob),
-        )
+        const { spaceId, defaultChannelId } =
+            await createSpaceAndDefaultChannel(
+                bob,
+                bobSpaceDapp,
+                bobProvider.wallet,
+                'bob',
+                await everyoneMembershipStruct(bobSpaceDapp, bob),
+            )
         bob.startSync()
 
         // // Alice should have no issue joining the space and default channel.
@@ -130,10 +136,12 @@ describe('channelsWithEntitlements', () => {
         expect(stream).toBeDefined()
         expect(eventId).toBeDefined()
 
-        await expect(bob.redactMessage(defaultChannelId, eventId!)).resolves.not.toThrow()
-        await expect(alice.redactMessage(defaultChannelId, eventId!)).rejects.toThrow(
-            /PERMISSION_DENIED/,
-        )
+        await expect(
+            bob.redactMessage(defaultChannelId, eventId!),
+        ).resolves.not.toThrow()
+        await expect(
+            alice.redactMessage(defaultChannelId, eventId!),
+        ).rejects.toThrow(/PERMISSION_DENIED/)
 
         // kill the clients
         await bob.stopSync()

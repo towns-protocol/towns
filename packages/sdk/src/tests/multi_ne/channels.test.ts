@@ -54,11 +54,14 @@ describe('channelsTests', () => {
         expect(channelStream).toBeDefined()
         expect(eventId).toBeDefined()
 
-        await expect(bobsClient.redactMessage(channelId, eventId!)).resolves.not.toThrow()
+        await expect(
+            bobsClient.redactMessage(channelId, eventId!),
+        ).resolves.not.toThrow()
         await waitFor(() => {
             const event = channelStream.view.timeline.find(
                 (e) =>
-                    e.content?.kind === RiverTimelineEvent.RedactionActionEvent &&
+                    e.content?.kind ===
+                        RiverTimelineEvent.RedactionActionEvent &&
                     e.content.refEventId === eventId!,
             )
             expect(event).toBeDefined()

@@ -31,7 +31,9 @@ describe('memberMetadata_DisplayNamesTests', () => {
         // the plaintext map is empty until we've decrypted the display name
         expect(displayNames.plaintextDisplayNames).toEqual(new Map([]))
         displayNames.onDecryptedContent('eventid-1', displayName)
-        expect(displayNames.plaintextDisplayNames).toEqual(new Map([['userid-1', displayName]]))
+        expect(displayNames.plaintextDisplayNames).toEqual(
+            new Map([['userid-1', displayName]]),
+        )
     })
 
     test('clientCanUseSameDisplayName', async () => {

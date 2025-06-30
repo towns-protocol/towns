@@ -33,11 +33,18 @@ function getRootWallet() {
 }
 
 async function spamInfo(count: number) {
-    const staticRiverProvider = new ethers.providers.StaticJsonRpcProvider(config.river.rpcUrl)
-    const riverRegistry = createRiverRegistry(staticRiverProvider, config.river.chainConfig)
+    const staticRiverProvider = new ethers.providers.StaticJsonRpcProvider(
+        config.river.rpcUrl,
+    )
+    const riverRegistry = createRiverRegistry(
+        staticRiverProvider,
+        config.river.chainConfig,
+    )
     const urls = await riverRegistry.getOperationalNodeUrls()
     const selectedUrl = randomUrlSelector(urls)
-    const rpcClient = makeStreamRpcClient(selectedUrl, () => riverRegistry.getOperationalNodeUrls())
+    const rpcClient = makeStreamRpcClient(selectedUrl, () =>
+        riverRegistry.getOperationalNodeUrls(),
+    )
     for (let i = 0; i < count; i++) {
         logger.debug({ iteration: i }, 'iteration')
         const info = await rpcClient.info(create(InfoRequestSchema, {}), {
@@ -52,12 +59,16 @@ async function sendAMessage() {
     const isChannelMessage = (event: TimelineEvent) => {
         return event.content?.kind === RiverTimelineEvent.ChannelMessage
     }
-    logger.debug('=======================send a message - start =======================')
+    logger.debug(
+        '=======================send a message - start =======================',
+    )
     const bob = await makeStressClient(config, 0, getRootWallet(), undefined)
     const { spaceId, defaultChannelId } = await bob.createSpace("bob's space")
     await bob.sendMessage(defaultChannelId, 'hello')
 
-    logger.debug('=======================send a message - make alice =======================')
+    logger.debug(
+        '=======================send a message - make alice =======================',
+    )
     const alice = await makeStressClient(config, 1, undefined, undefined)
     await bob.spaceDapp.joinSpace(
         spaceId,
@@ -65,22 +76,41 @@ async function sendAMessage() {
         bob.baseProvider.wallet,
     )
     await alice.joinSpace(spaceId, { skipMintMembership: true })
-    logger.debug('=======================send a message - alice join space =======================')
+    logger.debug(
+        '=======================send a message - alice join space =======================',
+    )
     const channel = await alice.streamsClient.waitForStream(defaultChannelId)
-    logger.debug('=======================send a message - alice wait =======================')
-    await waitFor(() => channel.view.timeline.filter(isChannelMessage).length > 0)
-    logger.debug('alices sees: ', channel.view.timeline.filter(isChannelMessage))
-    logger.debug('=======================send a message - alice sends =======================')
+    logger.debug(
+        '=======================send a message - alice wait =======================',
+    )
+    await waitFor(
+        () => channel.view.timeline.filter(isChannelMessage).length > 0,
+    )
+    logger.debug(
+        'alices sees: ',
+        channel.view.timeline.filter(isChannelMessage),
+    )
+    logger.debug(
+        '=======================send a message - alice sends =======================',
+    )
     await alice.sendMessage(defaultChannelId, 'hi bob')
-    logger.debug('=======================send a message - alice sent =======================')
+    logger.debug(
+        '=======================send a message - alice sent =======================',
+    )
     const bobChannel = await bob.streamsClient.waitForStream(defaultChannelId)
-    logger.debug('=======================send a message - bob wait =======================')
-    await waitFor(() => bobChannel.view.timeline.filter(isChannelMessage).length > 0) // bob doesn't decrypt his own messages
+    logger.debug(
+        '=======================send a message - bob wait =======================',
+    )
+    await waitFor(
+        () => bobChannel.view.timeline.filter(isChannelMessage).length > 0,
+    ) // bob doesn't decrypt his own messages
     logger.debug(bobChannel.view.timeline.filter(isChannelMessage), 'bob sees')
 
     await bob.stop()
     await alice.stop()
-    logger.debug('=======================send a message - done =======================')
+    logger.debug(
+        '=======================send a message - done =======================',
+    )
 }
 
 async function encryptDecrypt() {

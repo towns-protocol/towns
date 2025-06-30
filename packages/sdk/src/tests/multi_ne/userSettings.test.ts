@@ -5,7 +5,10 @@
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { check } from '@towns-protocol/dlog'
-import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
+import {
+    RiverTimelineEvent,
+    TimelineEvent,
+} from '../../views/models/timelineTypes'
 
 describe('userSettingsTests', () => {
     let clients: Client[] = []
@@ -29,7 +32,9 @@ describe('userSettingsTests', () => {
     test('clientCanBlockUser', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         expect(stream.view.getMembers().joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
@@ -43,13 +48,16 @@ describe('userSettingsTests', () => {
         ).resolves.not.toThrow()
         await waitFor(() => {
             expect(
-                bobsClient.stream(bobsClient.userSettingsStreamId!)?.view?.userSettingsContent
-                    ?.userBlocks[alicesClient.userId]?.blocks.length,
+                bobsClient.stream(bobsClient.userSettingsStreamId!)?.view
+                    ?.userSettingsContent?.userBlocks[alicesClient.userId]
+                    ?.blocks.length,
             ).toBe(1)
             expect(
                 bobsClient
                     .stream(bobsClient.userSettingsStreamId!)
-                    ?.view?.userSettingsContent?.isUserBlocked(alicesClient.userId),
+                    ?.view?.userSettingsContent?.isUserBlocked(
+                        alicesClient.userId,
+                    ),
             ).toBe(true)
         })
 
@@ -57,13 +65,16 @@ describe('userSettingsTests', () => {
         await bobsClient.updateUserBlock(alicesClient.userId, false)
         await waitFor(() => {
             expect(
-                bobsClient.stream(bobsClient.userSettingsStreamId!)?.view?.userSettingsContent
-                    ?.userBlocks[alicesClient.userId]?.blocks.length,
+                bobsClient.stream(bobsClient.userSettingsStreamId!)?.view
+                    ?.userSettingsContent?.userBlocks[alicesClient.userId]
+                    ?.blocks.length,
             ).toBe(2)
             expect(
                 bobsClient
                     .stream(bobsClient.userSettingsStreamId!)
-                    ?.view?.userSettingsContent?.isUserBlocked(alicesClient.userId),
+                    ?.view?.userSettingsContent?.isUserBlocked(
+                        alicesClient.userId,
+                    ),
             ).toBe(false)
         })
 
@@ -71,13 +82,16 @@ describe('userSettingsTests', () => {
         await bobsClient.updateUserBlock(alicesClient.userId, true)
         await waitFor(() => {
             expect(
-                bobsClient.stream(bobsClient.userSettingsStreamId!)?.view?.userSettingsContent
-                    ?.userBlocks[alicesClient.userId]?.blocks.length,
+                bobsClient.stream(bobsClient.userSettingsStreamId!)?.view
+                    ?.userSettingsContent?.userBlocks[alicesClient.userId]
+                    ?.blocks.length,
             ).toBe(3)
             expect(
                 bobsClient
                     .stream(bobsClient.userSettingsStreamId!)
-                    ?.view?.userSettingsContent?.isUserBlocked(alicesClient.userId),
+                    ?.view?.userSettingsContent?.isUserBlocked(
+                        alicesClient.userId,
+                    ),
             ).toBe(true)
         })
     })
@@ -85,7 +99,9 @@ describe('userSettingsTests', () => {
     test('DMMessagesAreBlockedDuringBlockedPeriod', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
-        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const { streamId } = await bobsClient.createDMChannel(
+            alicesClient.userId,
+        )
         const stream = await bobsClient.waitForStream(streamId)
         expect(stream.view.getMembers().joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
@@ -101,15 +117,25 @@ describe('userSettingsTests', () => {
             expect(
                 bobsClient
                     .stream(bobsClient.userSettingsStreamId!)
-                    ?.view?.userSettingsContent?.isUserBlocked(alicesClient.userId),
+                    ?.view?.userSettingsContent?.isUserBlocked(
+                        alicesClient.userId,
+                    ),
             ).toBe(true)
         })
 
         // alice sends three messages during being blocked, total blocked message should be 3
-        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
-        await expect(alicesClient.sendMessage(streamId, 'hello 1st')).resolves.not.toThrow()
-        await expect(alicesClient.sendMessage(streamId, 'hello 2nd')).resolves.not.toThrow()
-        await expect(alicesClient.sendMessage(streamId, 'hello 3rd')).resolves.not.toThrow()
+        await expect(
+            alicesClient.waitForStream(streamId),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello 1st'),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello 2nd'),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello 3rd'),
+        ).resolves.not.toThrow()
 
         // sleeps are lame, but we want to give the message time to be synced
         await new Promise((resolve) => setTimeout(resolve, 230))
@@ -119,7 +145,10 @@ describe('userSettingsTests', () => {
             const timeline = bobsClient.stream(streamId)?.view?.timeline
             expect(
                 timeline?.filter((m) => {
-                    return m.sender.id === alicesClient.userId && isChannelMessage(m)
+                    return (
+                        m.sender.id === alicesClient.userId &&
+                        isChannelMessage(m)
+                    )
                 }).length,
             ).toBe(0)
         })
@@ -127,21 +156,29 @@ describe('userSettingsTests', () => {
         // bob unblocks alice
         await bobsClient.updateUserBlock(alicesClient.userId, false)
         // alice sends one more message after being unblocked, total blocked message should still be 3
-        await expect(alicesClient.sendMessage(streamId, 'hello 4th')).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello 4th'),
+        ).resolves.not.toThrow()
 
         await waitFor(() => {
             expect(
                 bobsClient
                     .stream(bobsClient.userSettingsStreamId!)
-                    ?.view?.userSettingsContent?.isUserBlocked(alicesClient.userId),
+                    ?.view?.userSettingsContent?.isUserBlocked(
+                        alicesClient.userId,
+                    ),
             ).toBe(false)
         })
 
         // bob blocks alice again
         await bobsClient.updateUserBlock(alicesClient.userId, true)
         // alice sends two messages after being blocked again, total blocked message should be 5
-        await expect(alicesClient.sendMessage(streamId, 'hello 5th')).resolves.not.toThrow()
-        await expect(alicesClient.sendMessage(streamId, 'hello 6th')).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello 5th'),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.sendMessage(streamId, 'hello 6th'),
+        ).resolves.not.toThrow()
 
         // sleeps are lame, but we want to give the message time to be synced
         await new Promise((resolve) => setTimeout(resolve, 230))
@@ -149,7 +186,10 @@ describe('userSettingsTests', () => {
         await waitFor(() => {
             expect(
                 bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
-                    return m.sender.id === alicesClient.userId && isChannelMessage(m)
+                    return (
+                        m.sender.id === alicesClient.userId &&
+                        isChannelMessage(m)
+                    )
                 }).length,
             ).toBe(1)
         })

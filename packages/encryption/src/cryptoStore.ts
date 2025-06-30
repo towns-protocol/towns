@@ -35,14 +35,20 @@ export class CryptoStore extends Dexie {
     }
 
     async initialize() {
-        await this.devices.where('expirationTimestamp').below(Date.now()).delete()
+        await this.devices
+            .where('expirationTimestamp')
+            .below(Date.now())
+            .delete()
     }
 
     deleteAllData() {
         throw new Error('Method not implemented.')
     }
 
-    async deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void> {
+    async deleteInboundGroupSessions(
+        streamId: string,
+        sessionId: string,
+    ): Promise<void> {
         await this.inboundGroupSessions.where({ streamId, sessionId }).delete()
     }
 
@@ -67,7 +73,11 @@ export class CryptoStore extends Dexie {
         sessionData: string,
         streamId: string,
     ): Promise<void> {
-        await this.outboundGroupSessions.put({ sessionId, session: sessionData, streamId })
+        await this.outboundGroupSessions.put({
+            sessionId,
+            session: sessionData,
+            streamId,
+        })
     }
 
     async getEndToEndOutboundGroupSession(streamId: string): Promise<string> {
@@ -96,12 +106,18 @@ export class CryptoStore extends Dexie {
         return await this.hybridGroupSessions.get({ streamId, sessionId })
     }
 
-    async getHybridGroupSessionsForStream(streamId: string): Promise<HybridGroupSessionRecord[]> {
-        const sessions = await this.hybridGroupSessions.where({ streamId }).toArray()
+    async getHybridGroupSessionsForStream(
+        streamId: string,
+    ): Promise<HybridGroupSessionRecord[]> {
+        const sessions = await this.hybridGroupSessions
+            .where({ streamId })
+            .toArray()
         return sessions
     }
 
-    async getAllEndToEndInboundGroupSessions(): Promise<ExtendedInboundGroupSessionData[]> {
+    async getAllEndToEndInboundGroupSessions(): Promise<
+        ExtendedInboundGroupSessionData[]
+    > {
         return await this.inboundGroupSessions.toArray()
     }
 
@@ -114,20 +130,30 @@ export class CryptoStore extends Dexie {
         sessionId: string,
         sessionData: InboundGroupSessionData,
     ): Promise<void> {
-        await this.inboundGroupSessions.put({ streamId, sessionId, ...sessionData })
+        await this.inboundGroupSessions.put({
+            streamId,
+            sessionId,
+            ...sessionData,
+        })
     }
 
-    async storeHybridGroupSession(sessionData: HybridGroupSessionRecord): Promise<void> {
+    async storeHybridGroupSession(
+        sessionData: HybridGroupSessionRecord,
+    ): Promise<void> {
         await this.hybridGroupSessions.put({ ...sessionData })
     }
 
     async getInboundGroupSessionIds(streamId: string): Promise<string[]> {
-        const sessions = await this.inboundGroupSessions.where({ streamId }).toArray()
+        const sessions = await this.inboundGroupSessions
+            .where({ streamId })
+            .toArray()
         return sessions.map((s) => s.sessionId)
     }
 
     async getHybridGroupSessionIds(streamId: string): Promise<string[]> {
-        const sessions = await this.hybridGroupSessions.where({ streamId }).toArray()
+        const sessions = await this.hybridGroupSessions
+            .where({ streamId })
+            .toArray()
         return sessions.map((s) => s.sessionId)
     }
 
@@ -181,7 +207,10 @@ export class CryptoStore extends Dexie {
             await this.devices
                 .where('userId')
                 .equals(userId)
-                .and((record) => record.expirationTimestamp > expirationTimestamp)
+                .and(
+                    (record) =>
+                        record.expirationTimestamp > expirationTimestamp,
+                )
                 .toArray()
         ).map((record) => ({
             deviceKey: record.deviceKey,

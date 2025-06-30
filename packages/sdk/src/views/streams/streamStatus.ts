@@ -20,14 +20,20 @@ export class StreamStatus extends ObservableRecord<string, StreamStatusModel> {
     setIsUpToDate(streamId: string, isUpToDate: boolean) {
         this.set((prev) => ({
             ...prev,
-            [streamId]: { ...(prev[streamId] ?? this.makeDefault(streamId)), isUpToDate },
+            [streamId]: {
+                ...(prev[streamId] ?? this.makeDefault(streamId)),
+                isUpToDate,
+            },
         }))
     }
 
     setIsInitialized(streamId: string, isInitialized: boolean) {
         this.set((prev) => ({
             ...prev,
-            [streamId]: { ...(prev[streamId] ?? this.makeDefault(streamId)), isInitialized },
+            [streamId]: {
+                ...(prev[streamId] ?? this.makeDefault(streamId)),
+                isInitialized,
+            },
         }))
     }
 }

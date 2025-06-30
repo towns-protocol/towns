@@ -32,7 +32,10 @@ import { getRoom } from './utils'
  * @param config - Configuration options for the action.
  * @returns The `redact` action and its loading state.
  */
-export const useRedact = (streamId: string, config?: ActionConfig<Channel['redact']>) => {
+export const useRedact = (
+    streamId: string,
+    config?: ActionConfig<Channel['redact']>,
+) => {
     const sync = useSyncAgent()
     const room = getRoom(sync, streamId)
     assert(!(room instanceof Space), 'Space does not have reactions')

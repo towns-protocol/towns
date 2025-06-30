@@ -15,7 +15,10 @@ import { cn } from '@/utils'
 const isDev = import.meta.env.DEV
 
 export const AuthRoute = () => {
-    const [open, setOpen] = useState<{ state: boolean; from: 'wallet' | 'bearer' }>({
+    const [open, setOpen] = useState<{
+        state: boolean
+        from: 'wallet' | 'bearer'
+    }>({
         state: false,
         from: 'wallet',
     })
@@ -31,12 +34,18 @@ export const AuthRoute = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Main Content */}
-            <div className={cn('mx-auto max-w-3xl space-y-6 text-center', isDev && 'max-w-4xl')}>
+            <div
+                className={cn(
+                    'mx-auto max-w-3xl space-y-6 text-center',
+                    isDev && 'max-w-4xl',
+                )}
+            >
                 <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
                     Welcome to Towns Playground
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                    An interactive environment for testing and experimenting with{' '}
+                    An interactive environment for testing and experimenting
+                    with{' '}
                     <a
                         href="https://towns.com"
                         target="_blank"
@@ -60,9 +69,12 @@ export const AuthRoute = () => {
                     >
                         <div className="space-y-4">
                             <GitHubLogoIcon className="mx-auto h-8 w-8" />
-                            <h2 className="text-xl font-semibold">Open Source</h2>
+                            <h2 className="text-xl font-semibold">
+                                Open Source
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                View the source code on GitHub and contribute to the project
+                                View the source code on GitHub and contribute to
+                                the project
                             </p>
                         </div>
                         <a
@@ -73,7 +85,8 @@ export const AuthRoute = () => {
                             href="https://github.com/towns-protocol/towns/tree/main/packages/playground"
                             target="_blank"
                         >
-                            View Repository <ExternalLink className="ml-2 size-4" />
+                            View Repository{' '}
+                            <ExternalLink className="ml-2 size-4" />
                         </a>
                     </Block>
                     {isDev && (
@@ -83,7 +96,9 @@ export const AuthRoute = () => {
                         >
                             <div className="space-y-4">
                                 <TownsIcon className="mx-auto h-8 w-8" />
-                                <h2 className="text-xl font-semibold">Community</h2>
+                                <h2 className="text-xl font-semibold">
+                                    Community
+                                </h2>
                                 <p className="text-sm text-muted-foreground">
                                     Join our official Developer Town for support
                                 </p>
@@ -96,7 +111,8 @@ export const AuthRoute = () => {
                                 href="https://app.towns.com/t/0xb089fc1acdea8b1da28463a2272d6fd3fe66a75b/"
                                 target="_blank"
                             >
-                                Join Community <ExternalLink className="ml-2 size-4" />
+                                Join Community{' '}
+                                <ExternalLink className="ml-2 size-4" />
                             </a>
                         </Block>
                     )}
@@ -106,9 +122,12 @@ export const AuthRoute = () => {
                     >
                         <div className="space-y-4">
                             <Book className="mx-auto h-8 w-8" />
-                            <h2 className="text-xl font-semibold">Documentation</h2>
+                            <h2 className="text-xl font-semibold">
+                                Documentation
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                Learn how to use Towns Protocol with our comprehensive docs
+                                Learn how to use Towns Protocol with our
+                                comprehensive docs
                             </p>
                         </div>
                         <a
@@ -135,7 +154,9 @@ export const AuthRoute = () => {
                             <Button
                                 variant="outline"
                                 className="w-full max-w-sm"
-                                onClick={() => setOpen({ state: true, from: 'bearer' })}
+                                onClick={() =>
+                                    setOpen({ state: true, from: 'bearer' })
+                                }
                             >
                                 Connect using bearer token
                             </Button>
@@ -160,20 +181,31 @@ export const AuthRoute = () => {
                             <Dialog
                                 open={open.state}
                                 onOpenChange={(open) =>
-                                    setOpen((prev) => ({ ...prev, state: open }))
+                                    setOpen((prev) => ({
+                                        ...prev,
+                                        state: open,
+                                    }))
                                 }
                             >
                                 <RiverEnvSwitcherContent
                                     allowBearerToken={open.from === 'bearer'}
-                                    onClose={() => setOpen((prev) => ({ ...prev, state: false }))}
+                                    onClose={() =>
+                                        setOpen((prev) => ({
+                                            ...prev,
+                                            state: false,
+                                        }))
+                                    }
                                 />
                             </Dialog>
                             <ChainConnectButton
                                 className="w-full max-w-sm"
-                                onWalletConnect={() => setOpen({ state: true, from: 'wallet' })}
+                                onWalletConnect={() =>
+                                    setOpen({ state: true, from: 'wallet' })
+                                }
                             />
                             <p className="text-sm text-muted-foreground">
-                                Use your existing wallet to connect to the network.
+                                Use your existing wallet to connect to the
+                                network.
                             </p>
                         </div>
                     </div>
@@ -183,7 +215,10 @@ export const AuthRoute = () => {
     )
 }
 
-const ChainConnectButton = (props: { onWalletConnect: () => void; className?: string }) => {
+const ChainConnectButton = (props: {
+    onWalletConnect: () => void
+    className?: string
+}) => {
     const { connector: activeConnector } = useAccount()
     const { connectors, connect, error, isPending } = useConnect({
         mutation: {

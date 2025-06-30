@@ -1,37 +1,37 @@
 :root {
-  --gray-10: #f7f7f8;
-  --gray-90: #02000a;
-  --gray-20: #959499;
-  --gray-60: #1d1b24;
-  --dark-gray: #131313;
-  --green-main: #82e4a3;
-  --purple-main: #8c84f7;
+    --gray-10: #f7f7f8;
+    --gray-90: #02000a;
+    --gray-20: #959499;
+    --gray-60: #1d1b24;
+    --dark-gray: #131313;
+    --green-main: #82e4a3;
+    --purple-main: #8c84f7;
 }
 
 #topbar-cta-button {
-  background-color: var(--gray-10) !important;
-  color: var(--gray-90) !important;
-  border: 1px solid var(--gray-90);
-  border-radius: 200px;
-  height: 40px;
-  transition: all 0.3s ease;
+    background-color: var(--gray-10) !important;
+    color: var(--gray-90) !important;
+    border: 1px solid var(--gray-90);
+    border-radius: 200px;
+    height: 40px;
+    transition: all 0.3s ease;
 }
 
 #topbar-cta-button span,
 #topbar-cta-button svg {
-  color: var(--gray-90) !important;
-  border: none;
-  transition: all 0.3s ease;
+    color: var(--gray-90) !important;
+    border: none;
+    transition: all 0.3s ease;
 }
 
 #topbar-cta-button:hover {
-  background-color: var(--gray-60) !important;
+    background-color: var(--gray-60) !important;
 }
 
 #topbar-cta-button:hover span,
 #topbar-cta-button:hover svg {
-  color: var(--gray-10) !important;
-  border: none;
+    color: var(--gray-10) !important;
+    border: none;
 }
 
 h1,
@@ -40,24 +40,24 @@ h3,
 h4,
 h5,
 h6 {
-  color: var(--gray-10) !important;
+    color: var(--gray-10) !important;
 }
 
 .prose {
-  color: var(--gray-20) !important;
+    color: var(--gray-20) !important;
 }
 
 code {
-  color: var(--gray-10) !important;
-  /* background-color: var(--dark-gray) !important; */
+    color: var(--gray-10) !important;
+    /* background-color: var(--dark-gray) !important; */
 }
 
 .prose :where(a):not(:where([class~="not-prose"] *)) {
-  border-bottom: 1px solid var(--green-main) !important;
+    border-bottom: 1px solid var(--green-main) !important;
 }
 
 .token.comment {
-  color: var(--gray-20) !important;
+    color: var(--gray-20) !important;
 }
 
 .token.string,
@@ -69,17 +69,17 @@ code {
 .token.symbol,
 .token.tag,
 .token.unit {
-  color: var(--green-main) !important;
+    color: var(--green-main) !important;
 }
 
 .token.function,
 .token.constant,
 .token.variable,
 .token.function .token.maybe-class-name {
-  color: var(--purple-main) !important;
+    color: var(--purple-main) !important;
 }
 
 /* hack to hide the powered by mintlify */
 footer > div[class*="sm:flex"] {
-  display: none !important;
+    display: none !important;
 }

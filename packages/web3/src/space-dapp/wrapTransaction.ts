@@ -26,16 +26,25 @@ export async function wrapTransaction(
                 logger.log('Transaction submitted in', Date.now() - txStart)
                 const startConfirm = Date.now()
                 await confirmTransaction(tx)
-                logger.log('Transaction confirmed in', Date.now() - startConfirm)
+                logger.log(
+                    'Transaction confirmed in',
+                    Date.now() - startConfirm,
+                )
                 // return the transaction, as it was successful
                 // the caller can wait() on it again if they want to wait for more confirmations
                 return tx
             } catch (error) {
                 retryCount++
                 if (retryCount >= retryLimit) {
-                    throw new Error('Transaction failed after retries: ' + (error as Error).message)
+                    throw new Error(
+                        'Transaction failed after retries: ' +
+                            (error as Error).message,
+                    )
                 }
-                logger.error('Transaction submission failed, retrying...', { error, retryCount })
+                logger.error('Transaction submission failed, retrying...', {
+                    error,
+                    retryCount,
+                })
                 await new Promise((resolve) => setTimeout(resolve, 1000))
             }
         }
@@ -58,7 +67,11 @@ export async function wrapTransaction(
                     'code' in error &&
                     (error as { code: unknown }).code === 'CALL_EXCEPTION'
                 ) {
-                    logger.error('Transaction failed', { tx, errorCount, error })
+                    logger.error('Transaction failed', {
+                        tx,
+                        errorCount,
+                        error,
+                    })
                     // TODO: is this a bug?
                     // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw error

@@ -63,7 +63,11 @@ describe.concurrent('Encryption Protocol', () => {
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const otkId = Object.keys(bobOneTimeKeys)[0]
         // create outbound sessions using bob's one time key
-        aliceSession.create_outbound(aliceAccount, bobIdKey, bobOneTimeKeys[otkId])
+        aliceSession.create_outbound(
+            aliceAccount,
+            bobIdKey,
+            bobOneTimeKeys[otkId],
+        )
         let TEST_TEXT = 'test message for bob'
         let encrypted = aliceSession.encrypt(TEST_TEXT)
         expect(encrypted.type).toEqual(0)
@@ -98,13 +102,19 @@ describe.concurrent('Encryption Protocol', () => {
 
         // public fallback key for pre-key message generation to establish the session
         bobAccount.generate_fallback_key()
-        const bobFallbackKey = JSON.parse(bobAccount.unpublished_fallback_key()).curve25519
+        const bobFallbackKey = JSON.parse(
+            bobAccount.unpublished_fallback_key(),
+        ).curve25519
         log('bobFallbackKeys', bobFallbackKey)
 
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const otkId = Object.keys(bobFallbackKey)[0]
         // create outbound sessions using bob's fallback key
-        aliceSession.create_outbound(aliceAccount, bobIdKey, bobFallbackKey[otkId])
+        aliceSession.create_outbound(
+            aliceAccount,
+            bobIdKey,
+            bobFallbackKey[otkId],
+        )
         let TEST_TEXT = 'test message for bob'
         let encrypted = aliceSession.encrypt(TEST_TEXT)
         expect(encrypted.type).toEqual(0)
@@ -127,11 +137,18 @@ describe.concurrent('Encryption Protocol', () => {
         // Sep 2: encrypt with same session as pre-key message
         log('aliceSession sessionId', aliceSession.session_id())
         const TEST_TEXT_2 = 'test message for bob 2'
-        aliceSession.create_outbound(aliceAccount, bobIdKey, bobFallbackKey[otkId])
+        aliceSession.create_outbound(
+            aliceAccount,
+            bobIdKey,
+            bobFallbackKey[otkId],
+        )
         const encrypted_2 = aliceSession.encrypt(TEST_TEXT_2)
         expect(encrypted_2.type).toEqual(0)
         bobSession.create_inbound(bobAccount, encrypted_2.body)
-        const decrypted_2 = bobSession.decrypt(encrypted_2.type, encrypted_2.body)
+        const decrypted_2 = bobSession.decrypt(
+            encrypted_2.type,
+            encrypted_2.body,
+        )
         log('bob decrypted ciphertext 2: ', decrypted_2)
         expect(decrypted_2).toEqual(TEST_TEXT_2)
     })
@@ -150,14 +167,20 @@ describe.concurrent('Encryption Protocol', () => {
 
         // public fallback key for pre-key message generation to establish the session
         aliceAccount.generate_fallback_key()
-        const aliceFallbackKey = JSON.parse(aliceAccount.unpublished_fallback_key()).curve25519
+        const aliceFallbackKey = JSON.parse(
+            aliceAccount.unpublished_fallback_key(),
+        ).curve25519
         log('aliceFallbackKey', aliceFallbackKey)
 
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const aliceIdKey = JSON.parse(aliceAccount?.identity_keys()).curve25519
         const otkId = Object.keys(aliceFallbackKey)[0]
         // create outbound sessions using alice's fallback key (should fail)
-        aliceSession.create_outbound(aliceAccount, bobIdKey, aliceFallbackKey[otkId])
+        aliceSession.create_outbound(
+            aliceAccount,
+            bobIdKey,
+            aliceFallbackKey[otkId],
+        )
         const TEST_TEXT = 'test message for bob'
         const encrypted = aliceSession.encrypt(TEST_TEXT)
         expect(encrypted.type).toEqual(0)
@@ -166,7 +189,11 @@ describe.concurrent('Encryption Protocol', () => {
         // create inbound sessions using own account and encrypted body from alice
         // this should fail as outbound session was not created using bob's fallback key
         try {
-            bobSession.create_inbound_from(bobAccount, aliceIdKey, encrypted.body)
+            bobSession.create_inbound_from(
+                bobAccount,
+                aliceIdKey,
+                encrypted.body,
+            )
             bobSession.decrypt(encrypted.type, encrypted.body)
         } catch (e) {
             log('bobSession.create_inbound_from failed as expected', e)

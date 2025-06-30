@@ -35,7 +35,10 @@ describe('membershipManagement', () => {
         const baseConfig = makeBaseChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
-        const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
+        const bobProvider = new LocalhostWeb3Provider(
+            baseConfig.rpcUrl,
+            bobsWallet,
+        )
         await bobProvider.fundWallet()
         const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
@@ -81,7 +84,10 @@ describe('membershipManagement', () => {
         const receipt = await transaction.wait()
         log('transaction receipt')
         expect(receipt.status).toEqual(1)
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt, bobProvider.wallet.address)
+        const spaceAddress = spaceDapp.getSpaceAddress(
+            receipt,
+            bobProvider.wallet.address,
+        )
         expect(spaceAddress).toBeDefined()
         const spaceId = makeSpaceStreamId(spaceAddress!)
         expect(isValidStreamId(spaceId)).toBe(true)
@@ -98,7 +104,11 @@ describe('membershipManagement', () => {
         for (let i = 0; i < bobsFriends.length; i++) {
             const wallet = bobsFriends[i]
             log('minting membership for', i, wallet.address)
-            const result = await spaceDapp.joinSpace(spaceId, wallet.address, bobProvider.wallet)
+            const result = await spaceDapp.joinSpace(
+                spaceId,
+                wallet.address,
+                bobProvider.wallet,
+            )
             log('minted membership', result)
         }
     })

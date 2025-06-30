@@ -5,7 +5,8 @@ import { type ObservableConfig, useObservable } from './useObservable'
 import { useSyncAgent } from './useSyncAgent'
 import { getRoom } from './utils'
 
-const getMyMember = (sync: SyncAgent, streamId: string) => getRoom(sync, streamId).members.myself
+const getMyMember = (sync: SyncAgent, streamId: string) =>
+    getRoom(sync, streamId).members.myself
 
 /**
  * Hook to get the data of the current user in a stream.
@@ -13,7 +14,10 @@ const getMyMember = (sync: SyncAgent, streamId: string) => getRoom(sync, streamI
  * @param config - Configuration options for the observable.
  * @returns The MemberModel of the current user.
  */
-export const useMyMember = (streamId: string, config?: ObservableConfig.FromObservable<Member>) => {
+export const useMyMember = (
+    streamId: string,
+    config?: ObservableConfig.FromObservable<Member>,
+) => {
     const sync = useSyncAgent()
     const myself = useMemo(() => getMyMember(sync, streamId), [sync, streamId])
     const { data } = useObservable(myself.member, config)
@@ -35,7 +39,11 @@ export const useSetEnsAddress = (
 ) => {
     const sync = useSyncAgent()
     const member = useMemo(() => getMyMember(sync, streamId), [sync, streamId])
-    const { action: setEnsAddress, ...rest } = useAction(member, 'setEnsAddress', config)
+    const { action: setEnsAddress, ...rest } = useAction(
+        member,
+        'setEnsAddress',
+        config,
+    )
     return { setEnsAddress, ...rest }
 }
 
@@ -45,10 +53,17 @@ export const useSetEnsAddress = (
  * @param config - Configuration options for the action.
  * @returns The `setUsername` action and its loading state.
  */
-export const useSetUsername = (streamId: string, config?: ActionConfig<Myself['setUsername']>) => {
+export const useSetUsername = (
+    streamId: string,
+    config?: ActionConfig<Myself['setUsername']>,
+) => {
     const sync = useSyncAgent()
     const member = useMemo(() => getMyMember(sync, streamId), [sync, streamId])
-    const { action: setUsername, ...rest } = useAction(member, 'setUsername', config)
+    const { action: setUsername, ...rest } = useAction(
+        member,
+        'setUsername',
+        config,
+    )
     return { setUsername, ...rest }
 }
 
@@ -64,7 +79,11 @@ export const useSetDisplayName = (
 ) => {
     const sync = useSyncAgent()
     const member = useMemo(() => getMyMember(sync, streamId), [sync, streamId])
-    const { action: setDisplayName, ...rest } = useAction(member, 'setDisplayName', config)
+    const { action: setDisplayName, ...rest } = useAction(
+        member,
+        'setDisplayName',
+        config,
+    )
     return { setDisplayName, ...rest }
 }
 
@@ -75,7 +94,10 @@ export const useSetDisplayName = (
  * @param config - Configuration options for the action.
  * @returns The `setNft` action and its loading state.
  */
-export const useSetNft = (streamId: string, config?: ActionConfig<Myself['setNft']>) => {
+export const useSetNft = (
+    streamId: string,
+    config?: ActionConfig<Myself['setNft']>,
+) => {
     const sync = useSyncAgent()
     const member = useMemo(() => getMyMember(sync, streamId), [sync, streamId])
     const { action: setNft, ...rest } = useAction(member, 'setNft', config)

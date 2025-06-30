@@ -3,6 +3,6 @@
  * @type {import("prettier").Config}
  */
 module.exports = {
-  ...require("@towns-protocol/prettier-config"),
-  plugins: ["prettier-plugin-tailwindcss"],
-};
+    ...require('@towns-protocol/prettier-config'),
+    plugins: ['prettier-plugin-tailwindcss'],
+}

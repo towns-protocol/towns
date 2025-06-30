@@ -21,10 +21,15 @@ const EMPTY_USER_BLOCKS: UserSettingsPayload_Snapshot_UserBlocks = create(
     },
 )
 
-export class UserSettingsStreamsView extends ObservableRecord<string, UserSettingsStreamModel> {
+export class UserSettingsStreamsView extends ObservableRecord<
+    string,
+    UserSettingsStreamModel
+> {
     constructor() {
         super({
-            makeDefault: (userSettingsStreamId: string): UserSettingsStreamModel => ({
+            makeDefault: (
+                userSettingsStreamId: string,
+            ): UserSettingsStreamModel => ({
                 streamId: userSettingsStreamId,
                 fullyReadMarkers: {},
                 userBlocks: {},
@@ -40,7 +45,8 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
         this.set((prev) => ({
             ...prev,
             [userSettingsStreamId]: {
-                ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
+                ...(prev[userSettingsStreamId] ??
+                    this.makeDefault(userSettingsStreamId)),
                 fullyReadMarkers: {
                     ...(prev[userSettingsStreamId]?.fullyReadMarkers ?? {}),
                     [streamId]: fullyReadMarkers,
@@ -57,7 +63,8 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
         this.set((prev) => ({
             ...prev,
             [userSettingsStreamId]: {
-                ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
+                ...(prev[userSettingsStreamId] ??
+                    this.makeDefault(userSettingsStreamId)),
                 userBlocks: {
                     ...(prev[userSettingsStreamId]?.userBlocks ?? {}),
                     [userId]: userBlocks,
@@ -74,13 +81,16 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
         this.set((prev) => ({
             ...prev,
             [userSettingsStreamId]: {
-                ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
+                ...(prev[userSettingsStreamId] ??
+                    this.makeDefault(userSettingsStreamId)),
                 userBlocks: {
                     ...(prev[userSettingsStreamId]?.userBlocks ?? {}),
                     [userId]: {
-                        ...(prev[userSettingsStreamId]?.userBlocks[userId] ?? EMPTY_USER_BLOCKS),
+                        ...(prev[userSettingsStreamId]?.userBlocks[userId] ??
+                            EMPTY_USER_BLOCKS),
                         blocks: [
-                            ...(prev[userSettingsStreamId]?.userBlocks[userId]?.blocks ?? []),
+                            ...(prev[userSettingsStreamId]?.userBlocks[userId]
+                                ?.blocks ?? []),
                             userBlock,
                         ],
                     },

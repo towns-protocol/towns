@@ -14,17 +14,20 @@ const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
 describe('appRegistryService test', () => {
     test('authenticate with primary key', async () => {
         const wallet = ethers.Wallet.createRandom()
-        const { finishResponse } = await AppRegistryService.authenticateWithSigner(
-            wallet.address,
-            wallet,
-            appRegistryUrl,
-        )
+        const { finishResponse } =
+            await AppRegistryService.authenticateWithSigner(
+                wallet.address,
+                wallet,
+                appRegistryUrl,
+            )
         expect(finishResponse.sessionToken).toBeDefined()
     })
     test('authenticate with delegate key', async () => {
         const wallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
-        const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
+        const signerContext = await makeSignerContext(wallet, delegateWallet, {
+            days: 1,
+        })
 
         const { finishResponse } = await AppRegistryService.authenticate(
             signerContext,
@@ -34,10 +37,14 @@ describe('appRegistryService test', () => {
     })
     test('cannot register a non-app user stream', async () => {
         // Set up wallets and contexts for space creation
-        const { bob, bobProvider, bobSpaceDapp } = await setupWalletsAndContexts()
+        const { bob, bobProvider, bobSpaceDapp } =
+            await setupWalletsAndContexts()
 
         // Create a space so that bob's user stream can be initialized.
-        const everyoneMembership = await everyoneMembershipStruct(bobSpaceDapp, bob)
+        const everyoneMembership = await everyoneMembershipStruct(
+            bobSpaceDapp,
+            bob,
+        )
         await createSpaceAndDefaultChannel(
             bob,
             bobSpaceDapp,
@@ -47,11 +54,12 @@ describe('appRegistryService test', () => {
         )
 
         // Authentication should work for any user
-        const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
-            bob.userId,
-            bob.wallet, // Use wallet directly as signer
-            appRegistryUrl,
-        )
+        const { appRegistryRpcClient } =
+            await AppRegistryService.authenticateWithSigner(
+                bob.userId,
+                bob.wallet, // Use wallet directly as signer
+                appRegistryUrl,
+            )
         expect(appRegistryRpcClient).toBeDefined()
 
         // However, trying to register should fail because the user's address

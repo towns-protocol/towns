@@ -1,4 +1,9 @@
-import { ethers, type BigNumber, type ContractReceipt, type ContractTransaction } from 'ethers'
+import {
+    ethers,
+    type BigNumber,
+    type ContractReceipt,
+    type ContractTransaction,
+} from 'ethers'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
@@ -47,7 +52,9 @@ export class AppRegistryDapp {
     ): Promise<ContractTransaction> {
         return this.shim.write(signer).createApp({
             name,
-            permissions: permissions.map((p) => ethers.utils.formatBytes32String(Permission[p])),
+            permissions: permissions.map((p) =>
+                ethers.utils.formatBytes32String(Permission[p]),
+            ),
             client,
             installPrice,
             accessDuration,
@@ -71,7 +78,9 @@ export class AppRegistryDapp {
         return { app: '', uid: '' }
     }
 
-    public getRegisterAppEvent(receipt: ContractReceipt): AppRegisteredEventObject {
+    public getRegisterAppEvent(
+        receipt: ContractReceipt,
+    ): AppRegisteredEventObject {
         for (const log of receipt.logs) {
             try {
                 const parsedLog = this.shim.interface.parseLog(log)
@@ -112,7 +121,9 @@ export class AppRegistryDapp {
     ): Promise<ContractTransaction> {
         return this.shim
             .write(signer)
-            .installApp(app, spaceAddress, data ?? new Uint8Array(0), { value: price })
+            .installApp(app, spaceAddress, data ?? new Uint8Array(0), {
+                value: price,
+            })
     }
 
     /** To uninstall a smart contract app from a space */
@@ -126,10 +137,15 @@ export class AppRegistryDapp {
         /** The data to pass to the app's onUninstall function */
         data?: Uint8Array,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).uninstallApp(app, spaceAddress, data ?? new Uint8Array(0))
+        return this.shim
+            .write(signer)
+            .uninstallApp(app, spaceAddress, data ?? new Uint8Array(0))
     }
 
-    public async removeApp(signer: ethers.Signer, appId: string): Promise<ContractTransaction> {
+    public async removeApp(
+        signer: ethers.Signer,
+        appId: string,
+    ): Promise<ContractTransaction> {
         return this.shim.write(signer).removeApp(appId)
     }
 
@@ -157,7 +173,9 @@ export class AppRegistryDapp {
         return this.shim.read.getLatestAppId(app)
     }
 
-    public async getAppById(appId: string): Promise<IAppRegistryBase.AppStructOutput> {
+    public async getAppById(
+        appId: string,
+    ): Promise<IAppRegistryBase.AppStructOutput> {
         return this.shim.read.getAppById(appId)
     }
 
@@ -167,10 +185,15 @@ export class AppRegistryDapp {
         resolver: Address,
         revocable: boolean,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).adminRegisterAppSchema(schema, resolver, revocable)
+        return this.shim
+            .write(signer)
+            .adminRegisterAppSchema(schema, resolver, revocable)
     }
 
-    public async adminBanApp(signer: ethers.Signer, app: Address): Promise<ContractTransaction> {
+    public async adminBanApp(
+        signer: ethers.Signer,
+        app: Address,
+    ): Promise<ContractTransaction> {
         return this.shim.write(signer).adminBanApp(app)
     }
 

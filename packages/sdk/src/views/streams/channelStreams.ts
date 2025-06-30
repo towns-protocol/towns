@@ -4,10 +4,15 @@ export interface ChannelStreamModel {
     streamId: string
 }
 
-export class ChannelStreamsView extends ObservableRecord<string, ChannelStreamModel> {
+export class ChannelStreamsView extends ObservableRecord<
+    string,
+    ChannelStreamModel
+> {
     constructor() {
         super({
-            makeDefault: (streamId: string): ChannelStreamModel => ({ streamId }),
+            makeDefault: (streamId: string): ChannelStreamModel => ({
+                streamId,
+            }),
         })
     }
 }

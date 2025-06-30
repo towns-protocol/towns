@@ -4,7 +4,10 @@
 
 import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import { GroupEncryptionAlgorithmId, UserDevice } from '@towns-protocol/encryption'
+import {
+    GroupEncryptionAlgorithmId,
+    UserDevice,
+} from '@towns-protocol/encryption'
 import { DecryptionStatus } from '../../decryptionExtensions'
 import {
     makeUserStreamId,
@@ -52,11 +55,17 @@ import {
 } from '../../types'
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
-import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
+import {
+    RiverTimelineEvent,
+    TimelineEvent,
+} from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test')
 
-const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () => void) => {
+const createMockSyncGenerator = (
+    shouldFail: () => boolean,
+    updateEmitted?: () => void,
+) => {
     let syncCanceled = false
     let syncStarted = false
 
@@ -140,7 +149,12 @@ describe('clientTest', () => {
         const bobsChannelTopic = 'Bobs channel topic'
         await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
         await expect(
-            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, channelId),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                channelId,
+            ),
         ).resolves.not.toThrow()
 
         const stream = await bobsClient.waitForStream(channelId)
@@ -158,7 +172,9 @@ describe('clientTest', () => {
 
         log('pass1 done')
 
-        await expect(bobCanReconnect(bobsClient.signerContext)).resolves.not.toThrow()
+        await expect(
+            bobCanReconnect(bobsClient.signerContext),
+        ).resolves.not.toThrow()
 
         log('pass2 done')
     })
@@ -173,7 +189,12 @@ describe('clientTest', () => {
         const bobsChannelTopic = 'Bobs channel topic'
         await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
         await expect(
-            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, channelId),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                channelId,
+            ),
         ).resolves.not.toThrow()
 
         await bobsClient.waitForStream(channelId)
@@ -181,7 +202,9 @@ describe('clientTest', () => {
         // send a bunch of messages and force some snapshots to push the events out of the view
         for (let i = 0; i < 10; i++) {
             await bobsClient.sendMessage(channelId, `Hello ${i}`)
-            await bobsClient.debugForceMakeMiniblock(channelId, { forceSnapshot: true })
+            await bobsClient.debugForceMakeMiniblock(channelId, {
+                forceSnapshot: true,
+            })
         }
 
         // hand construct a message, (don't do this normally! just use sendMessage(..))
@@ -192,7 +215,11 @@ describe('clientTest', () => {
                 value: {
                     content: {
                         case: 'text',
-                        value: { body: 'Hello world', mentions: [], attachments: [] },
+                        value: {
+                            body: 'Hello world',
+                            mentions: [],
+                            attachments: [],
+                        },
                     },
                 },
             },
@@ -309,10 +336,18 @@ describe('clientTest', () => {
     test('clientCreatesStreamsForNewUser', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         expect(bobsClient.streams.size()).toEqual(4)
-        expect(bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId))).toBeDefined()
-        expect(bobsClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
-        expect(bobsClient.streams.get(makeUserInboxStreamId(bobsClient.userId))).toBeDefined()
-        expect(bobsClient.streams.get(makeUserMetadataStreamId(bobsClient.userId))).toBeDefined()
+        expect(
+            bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId)),
+        ).toBeDefined()
+        expect(
+            bobsClient.streams.get(makeUserStreamId(bobsClient.userId)),
+        ).toBeDefined()
+        expect(
+            bobsClient.streams.get(makeUserInboxStreamId(bobsClient.userId)),
+        ).toBeDefined()
+        expect(
+            bobsClient.streams.get(makeUserMetadataStreamId(bobsClient.userId)),
+        ).toBeDefined()
     })
 
     test('clientCreatesStreamsForExistingUser', async () => {
@@ -321,11 +356,17 @@ describe('clientTest', () => {
         await expect(bobsAnotherClient.initializeUser()).resolves.not.toThrow()
         expect(bobsAnotherClient.streams.size()).toEqual(4)
         expect(
-            bobsAnotherClient.streams.get(makeUserSettingsStreamId(bobsClient.userId)),
+            bobsAnotherClient.streams.get(
+                makeUserSettingsStreamId(bobsClient.userId),
+            ),
         ).toBeDefined()
-        expect(bobsAnotherClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
         expect(
-            bobsAnotherClient.streams.get(makeUserMetadataStreamId(bobsClient.userId)),
+            bobsAnotherClient.streams.get(makeUserStreamId(bobsClient.userId)),
+        ).toBeDefined()
+        expect(
+            bobsAnotherClient.streams.get(
+                makeUserMetadataStreamId(bobsClient.userId),
+            ),
         ).toBeDefined()
     })
 
@@ -341,7 +382,10 @@ describe('clientTest', () => {
             sessionIds: ['bar'],
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+            bobsClient.makeEventAndAddToStream(
+                bobsClient.userSettingsStreamId!,
+                payload,
+            ),
         ).rejects.toThrow('INVALID_ARGUMENT')
 
         // solicitation with no keys should fail
@@ -352,7 +396,10 @@ describe('clientTest', () => {
             isNewDevice: false,
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+            bobsClient.makeEventAndAddToStream(
+                bobsClient.userSettingsStreamId!,
+                payload,
+            ),
         ).rejects.toThrow('INVALID_ARGUMENT')
 
         // solicitation with empty key should fail
@@ -363,7 +410,10 @@ describe('clientTest', () => {
             isNewDevice: false,
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+            bobsClient.makeEventAndAddToStream(
+                bobsClient.userSettingsStreamId!,
+                payload,
+            ),
         ).rejects.toThrow('INVALID_ARGUMENT')
 
         // solicitation for isNewDevice should resolve
@@ -374,12 +424,17 @@ describe('clientTest', () => {
             isNewDevice: true,
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+            bobsClient.makeEventAndAddToStream(
+                bobsClient.userSettingsStreamId!,
+                payload,
+            ),
         ).resolves.not.toThrow()
 
         // see solicitation in view
         await waitFor(() => {
-            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const stream = bobsClient.streams.get(
+                bobsClient.userSettingsStreamId!,
+            )
             const solicitation = stream?.view.membershipContent.joined
                 .get(bobsClient.userId)
                 ?.solicitations.find((x) => x.deviceKey === 'foo')
@@ -394,12 +449,17 @@ describe('clientTest', () => {
             sessionIds: [],
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+            bobsClient.makeEventAndAddToStream(
+                bobsClient.userSettingsStreamId!,
+                payload,
+            ),
         ).resolves.not.toThrow()
 
         // fullfillment should remove solicitation from view
         await waitFor(() => {
-            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const stream = bobsClient.streams.get(
+                bobsClient.userSettingsStreamId!,
+            )
             const solicitation = stream?.view.membershipContent.joined
                 .get(bobsClient.userId)
                 ?.solicitations.find((x) => x.deviceKey === 'foo')
@@ -414,7 +474,10 @@ describe('clientTest', () => {
             sessionIds: [],
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+            bobsClient.makeEventAndAddToStream(
+                bobsClient.userSettingsStreamId!,
+                payload,
+            ),
         ).rejects.toThrow('PERMISSION_DENIED')
     })
 
@@ -432,14 +495,25 @@ describe('clientTest', () => {
         const channelTopic = 'Bobs channel topic'
         const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(
-            bobsClient.createChannel(spaceId, channelName, channelTopic, channelId),
+            bobsClient.createChannel(
+                spaceId,
+                channelName,
+                channelTopic,
+                channelId,
+            ),
         ).resolves.not.toThrow()
         await expect(bobsClient.stopSync()).resolves.not.toThrow()
     })
 
     const bobCanReconnect = async (signer: SignerContextWithWallet) => {
-        const bobsAnotherClient = await makeTestClient({ context: signer, deviceId: 'd2' })
-        const bobsOneMoreAnotherClient = await makeTestClient({ context: signer, deviceId: 'd3' })
+        const bobsAnotherClient = await makeTestClient({
+            context: signer,
+            deviceId: 'd2',
+        })
+        const bobsOneMoreAnotherClient = await makeTestClient({
+            context: signer,
+            deviceId: 'd3',
+        })
 
         const eventDecryptedPromise = makeDonePromise()
         const streamInitializedPromise = makeDonePromise()
@@ -465,7 +539,10 @@ describe('clientTest', () => {
         }
 
         const channelWithContentIdPromise = makeDonePromise()
-        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
+        const onStreamInitialized = (
+            streamId: string,
+            streamKind: SnapshotCaseType,
+        ) => {
             log('streamInitialized', streamId, streamKind)
             try {
                 if (streamKind === 'channelContent') {
@@ -477,9 +554,12 @@ describe('clientTest', () => {
 
                     const messages = channel.view.timeline.filter(
                         (x) =>
-                            x.content?.kind === RiverTimelineEvent.ChannelMessage ||
-                            x.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
-                            x.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef,
+                            x.content?.kind ===
+                                RiverTimelineEvent.ChannelMessage ||
+                            x.content?.kind ===
+                                RiverTimelineEvent.ChannelMessageEncrypted ||
+                            x.content?.kind ===
+                                RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                     )
                     expect(messages).toHaveLength(1)
                     //This done should be inside of the if statement to be sure that check happened.
@@ -495,12 +575,17 @@ describe('clientTest', () => {
         bobsAnotherClient.startSync()
 
         bobsOneMoreAnotherClient.on('eventDecrypted', onEventDecrypted)
-        await expect(bobsOneMoreAnotherClient.initializeUser()).resolves.not.toThrow()
+        await expect(
+            bobsOneMoreAnotherClient.initializeUser(),
+        ).resolves.not.toThrow()
         bobsOneMoreAnotherClient.startSync()
 
         await channelWithContentIdPromise.expectToSucceed()
         expect(channelWithContentId).toBeDefined()
-        await bobsAnotherClient.sendMessage(channelWithContentId!, 'Hello, again!')
+        await bobsAnotherClient.sendMessage(
+            channelWithContentId!,
+            'Hello, again!',
+        )
 
         await streamInitializedPromise.expectToSucceed()
         await eventDecryptedPromise.expectToSucceed()
@@ -525,7 +610,12 @@ describe('clientTest', () => {
         const bobsChannelTopic = 'Bobs channel topic'
 
         await expect(
-            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                bobsChannelId,
+            ),
         ).resolves.not.toThrow()
 
         // Bob can send a message.
@@ -536,7 +626,8 @@ describe('clientTest', () => {
         ).resolves.not.toThrow()
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) => getTimelineMessagePayload(e) === 'Hello, world from Bob!',
+                (e) =>
+                    getTimelineMessagePayload(e) === 'Hello, world from Bob!',
             )
             expect(event).toBeDefined()
             expect(event?.confirmedInBlockNum).toBeDefined()
@@ -560,7 +651,12 @@ describe('clientTest', () => {
         const bobsChannelTopic = 'Bobs channel topic'
 
         await expect(
-            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                bobsChannelId,
+            ),
         ).resolves.not.toThrow()
 
         // Bob can send a message.
@@ -570,8 +666,14 @@ describe('clientTest', () => {
             bobsChannelId,
             'Hello, world from Bob!',
         )
-        const { eventId: eventId_2 } = await bobsClient.sendMessage(bobsChannelId, 'event 2')
-        const { eventId: eventId_3 } = await bobsClient.sendMessage(bobsChannelId, 'event 3')
+        const { eventId: eventId_2 } = await bobsClient.sendMessage(
+            bobsChannelId,
+            'event 2',
+        )
+        const { eventId: eventId_3 } = await bobsClient.sendMessage(
+            bobsChannelId,
+            'event 3',
+        )
 
         await bobsClient.pin(bobsChannelId, eventId_1)
 
@@ -582,9 +684,11 @@ describe('clientTest', () => {
             expect(pin).toBeDefined()
             expect(pin?.event.decryptedContent?.kind).toBe('channelMessage')
             if (pin?.event.decryptedContent?.kind === 'channelMessage') {
-                expect(getChannelMessagePayload(pin?.event.decryptedContent?.content)).toBe(
-                    'Hello, world from Bob!',
-                )
+                expect(
+                    getChannelMessagePayload(
+                        pin?.event.decryptedContent?.content,
+                    ),
+                ).toBe('Hello, world from Bob!')
             }
         })
 
@@ -602,7 +706,9 @@ describe('clientTest', () => {
         await bobsClient.pin(bobsChannelId, eventId_2)
         await bobsClient.pin(bobsChannelId, eventId_3)
 
-        await bobsClient.debugForceMakeMiniblock(bobsChannelId, { forceSnapshot: true })
+        await bobsClient.debugForceMakeMiniblock(bobsChannelId, {
+            forceSnapshot: true,
+        })
 
         await waitFor(() => {
             const pin = channelStream.view.membershipContent.pins.find(
@@ -625,12 +731,16 @@ describe('clientTest', () => {
 
         await bobsClient.unpin(bobsChannelId, eventId_1)
         await bobsClient.unpin(bobsChannelId, eventId_2)
-        await bobsClient.debugForceMakeMiniblock(bobsChannelId, { forceSnapshot: true })
+        await bobsClient.debugForceMakeMiniblock(bobsChannelId, {
+            forceSnapshot: true,
+        })
 
         const rawStream = await bobsClient.getStream(bobsChannelId)
         expect(rawStream).toBeDefined()
         expect(rawStream?.membershipContent.pins.length).toBe(1)
-        expect(rawStream?.membershipContent.pins[0].event.hashStr).toBe(eventId_3)
+        expect(rawStream?.membershipContent.pins[0].event.hashStr).toBe(
+            eventId_3,
+        )
 
         log('bobSendsSingleMessage done')
     })
@@ -650,9 +760,16 @@ describe('clientTest', () => {
         const bobsChannelTopic = 'Bobs channel topic'
 
         await expect(
-            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                bobsChannelId,
+            ),
         ).resolves.not.toThrow()
-        await expect(bobsClient.waitForStream(bobsChannelId)).resolves.not.toThrow()
+        await expect(
+            bobsClient.waitForStream(bobsChannelId),
+        ).resolves.not.toThrow()
 
         // Alice gest created.
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
@@ -671,7 +788,9 @@ describe('clientTest', () => {
             void (async () => {
                 try {
                     expect(streamId).toBe(bobsChannelId)
-                    await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
+                    await expect(
+                        alicesClient.joinStream(streamId),
+                    ).resolves.not.toThrow()
                     aliceJoined.done()
                 } catch (e) {
                     aliceJoined.reject(e)
@@ -698,7 +817,11 @@ describe('clientTest', () => {
 
         alicesClient.on(
             'eventDecrypted',
-            (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
+            (
+                streamId: string,
+                contentKind: SnapshotCaseType,
+                event: TimelineEvent,
+            ): void => {
                 const channelId = streamId
                 const content = event.content
                 expect(content).toBeDefined()
@@ -706,15 +829,24 @@ describe('clientTest', () => {
                 void (async () => {
                     try {
                         expect(channelId).toBe(bobsChannelId)
-                        check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                        check(
+                            event.content?.kind ===
+                                RiverTimelineEvent.ChannelMessage,
+                        )
                         const clearEvent = event.content
                         const body = clearEvent.body
                         // @ts-ignore
                         expect(conversation).toContain(body)
                         if (body === 'Hello, Alice!') {
-                            await alicesClient.sendMessage(channelId, 'Hello, Bob!')
+                            await alicesClient.sendMessage(
+                                channelId,
+                                'Hello, Bob!',
+                            )
                         } else if (body === 'Weather nice?') {
-                            await alicesClient.sendMessage(channelId, 'Sun and rain!')
+                            await alicesClient.sendMessage(
+                                channelId,
+                                'Sun and rain!',
+                            )
                         } else if (body === 'Coffee or tea?') {
                             await alicesClient.sendMessage(channelId, 'Both!')
                             aliceGetsMessage.done()
@@ -729,7 +861,11 @@ describe('clientTest', () => {
 
         bobsClient.on(
             'eventDecrypted',
-            (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
+            (
+                streamId: string,
+                contentKind: SnapshotCaseType,
+                event: TimelineEvent,
+            ): void => {
                 const channelId = streamId
                 const content = event.content
                 expect(content).toBeDefined()
@@ -738,15 +874,24 @@ describe('clientTest', () => {
                 void (async () => {
                     try {
                         expect(channelId).toBe(bobsChannelId)
-                        check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                        check(
+                            event.content?.kind ===
+                                RiverTimelineEvent.ChannelMessage,
+                        )
                         const clearEvent = event.content
                         const body = clearEvent.body
                         // @ts-ignore
                         expect(conversation).toContain(body)
                         if (body === 'Hello, Bob!') {
-                            await bobsClient.sendMessage(channelId, 'Weather nice?')
+                            await bobsClient.sendMessage(
+                                channelId,
+                                'Weather nice?',
+                            )
                         } else if (body === 'Sun and rain!') {
-                            await bobsClient.sendMessage(channelId, 'Coffee or tea?')
+                            await bobsClient.sendMessage(
+                                channelId,
+                                'Coffee or tea?',
+                            )
                         } else if (body === 'Both!') {
                             bobGetsMessage.done()
                         }
@@ -761,7 +906,9 @@ describe('clientTest', () => {
         await expect(
             bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
         ).resolves.not.toThrow()
-        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!')).resolves.not.toThrow()
+        await expect(
+            bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!'),
+        ).resolves.not.toThrow()
 
         log('Waiting for Alice to get messages...')
         await aliceGetsMessage.expectToSucceed()
@@ -779,8 +926,17 @@ describe('clientTest', () => {
         const bobSelfInbox = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, userDevice: UserDevice): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
+            (
+                streamId: string,
+                userId: string,
+                userDevice: UserDevice,
+            ): void => {
+                log(
+                    'userDeviceKeyMessage for Bob',
+                    streamId,
+                    userId,
+                    userDevice,
+                )
                 bobSelfInbox.runAndDone(() => {
                     expect(streamId).toBe(bobUserMetadataStreamId)
                     expect(userId).toBe(bobsUserId)
@@ -801,8 +957,17 @@ describe('clientTest', () => {
         const bobSelfInbox = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys)
+            (
+                streamId: string,
+                userId: string,
+                deviceKeys: UserDevice,
+            ): void => {
+                log(
+                    'userDeviceKeyMessage for Bob',
+                    streamId,
+                    userId,
+                    deviceKeys,
+                )
                 bobSelfInbox.runAndDone(() => {
                     expect(streamId).toBe(bobUserMetadataStreamId)
                     expect(userId).toBe(bobsUserId)
@@ -827,8 +992,17 @@ describe('clientTest', () => {
         const alicesSelfInbox = makeDonePromise()
         alicesClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
-                log('userDeviceKeyMessage for Alice', streamId, userId, deviceKeys)
+            (
+                streamId: string,
+                userId: string,
+                deviceKeys: UserDevice,
+            ): void => {
+                log(
+                    'userDeviceKeyMessage for Alice',
+                    streamId,
+                    userId,
+                    deviceKeys,
+                )
                 alicesSelfInbox.runAndDone(() => {
                     expect(streamId).toBe(aliceUserMetadataStreamId)
                     expect(userId).toBe(alicesUserId)
@@ -837,7 +1011,9 @@ describe('clientTest', () => {
             },
         )
         const aliceUserMetadataStreamId = alicesClient.userMetadataStreamId
-        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId])
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+        ])
         expect(deviceKeys[alicesUserId]).toBeDefined()
     })
 
@@ -854,10 +1030,17 @@ describe('clientTest', () => {
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
+            (
+                streamId: string,
+                userId: string,
+                deviceKeys: UserDevice,
+            ): void => {
                 log('userDeviceKeyMessage', streamId, userId, deviceKeys)
                 bobSelfInbox.runAndDone(() => {
-                    expect([bobUserMetadataStreamId, aliceUserMetadataStreamId]).toContain(streamId)
+                    expect([
+                        bobUserMetadataStreamId,
+                        aliceUserMetadataStreamId,
+                    ]).toContain(streamId)
                     expect([bobsUserId, alicesUserId]).toContain(userId)
                     expect(deviceKeys.deviceKey).toBeDefined()
                 })
@@ -865,7 +1048,10 @@ describe('clientTest', () => {
         )
         const aliceUserMetadataStreamId = alicesClient.userMetadataStreamId
         const bobUserMetadataStreamId = bobsClient.userMetadataStreamId
-        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+            bobsUserId,
+        ])
         expect(Object.keys(deviceKeys).length).toEqual(2)
         expect(deviceKeys[alicesUserId]).toBeDefined()
         expect(deviceKeys[bobsUserId]).toBeDefined()
@@ -885,10 +1071,17 @@ describe('clientTest', () => {
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
+            (
+                streamId: string,
+                userId: string,
+                deviceKeys: UserDevice,
+            ): void => {
                 log('userDeviceKeyMessage', streamId, userId, deviceKeys)
                 bobSelfInbox.runAndDone(() => {
-                    expect([bobUserMetadataStreamId, aliceUserMetadataStreamId]).toContain(streamId)
+                    expect([
+                        bobUserMetadataStreamId,
+                        aliceUserMetadataStreamId,
+                    ]).toContain(streamId)
                     expect([bobsUserId, alicesUserId]).toContain(userId)
                     expect(deviceKeys.deviceKey).toBeDefined()
                 })
@@ -896,7 +1089,10 @@ describe('clientTest', () => {
         )
         const aliceUserMetadataStreamId = alicesClient.userMetadataStreamId
         const bobUserMetadataStreamId = bobsClient.userMetadataStreamId
-        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+            bobsUserId,
+        ])
 
         expect(fallbackKeys).toBeDefined()
         expect(Object.keys(fallbackKeys).length).toEqual(2)
@@ -912,11 +1108,15 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.done)
+            expect(alicesClient.decryptionExtensions?.status).toEqual(
+                DecryptionStatus.done,
+            )
         })
         const alicesUserId = alicesClient.userId
 
-        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId])
+        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([
+            alicesUserId,
+        ])
         expect(Object.keys(fallbackKeys)).toContain(alicesUserId)
         expect(Object.keys(fallbackKeys).length).toEqual(1)
         expect(fallbackKeys[alicesUserId].map((k) => k.fallbackKey)).toContain(
@@ -939,27 +1139,44 @@ describe('clientTest', () => {
         const bobsChannelTopic = 'Bobs channel topic'
 
         await expect(
-            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                bobsChannelId,
+            ),
         ).resolves.not.toThrow()
-        await expect(bobsClient.waitForStream(bobsChannelId)).resolves.not.toThrow()
+        await expect(
+            bobsClient.waitForStream(bobsChannelId),
+        ).resolves.not.toThrow()
 
         // Alice gest created.
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
-        await expect(alicesClient.joinStream(bobsSpaceId)).resolves.not.toThrow()
-        await expect(alicesClient.joinStream(bobsChannelId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.joinStream(bobsSpaceId),
+        ).resolves.not.toThrow()
+        await expect(
+            alicesClient.joinStream(bobsChannelId),
+        ).resolves.not.toThrow()
         const channelStream = bobsClient.stream(bobsChannelId)
         expect(channelStream).toBeDefined()
         await waitFor(() => {
-            expect(channelStream?.view.getMembers().joinedUsers).toContain(alicesClient.userId)
+            expect(channelStream?.view.getMembers().joinedUsers).toContain(
+                alicesClient.userId,
+            )
         })
         // leave the space
-        await expect(alicesClient.leaveStream(bobsSpaceId)).resolves.not.toThrow()
+        await expect(
+            alicesClient.leaveStream(bobsSpaceId),
+        ).resolves.not.toThrow()
 
         // the channel should be left as well
         await waitFor(() => {
-            expect(channelStream?.view.getMembers().joinedUsers).not.toContain(alicesClient.userId)
+            expect(channelStream?.view.getMembers().joinedUsers).not.toContain(
+                alicesClient.userId,
+            )
         })
         await alicesClient.stopSync()
     })
@@ -972,16 +1189,22 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.done)
+            expect(alicesClient.decryptionExtensions?.status).toEqual(
+                DecryptionStatus.done,
+            )
         })
 
         await expect(
             bobsClient.downloadUserDeviceInfo([alicesClient.userId]),
         ).resolves.not.toThrow()
-        const knownDevices = await bobsClient.knownDevicesForUserId(alicesClient.userId)
+        const knownDevices = await bobsClient.knownDevicesForUserId(
+            alicesClient.userId,
+        )
 
         expect(knownDevices.length).toBe(1)
-        expect(knownDevices[0].fallbackKey).toBe(alicesClient.userDeviceKey().fallbackKey)
+        expect(knownDevices[0].fallbackKey).toBe(
+            alicesClient.userDeviceKey().fallbackKey,
+        )
     })
 
     // Make sure that the client only uploads device keys
@@ -1033,14 +1256,21 @@ describe('clientTest', () => {
 
         await bobsClient.setUserProfileImage(chunkedMediaInfo)
         await waitFor(() =>
-            expect(userMetadataStream.view.userMetadataContent.encryptedProfileImage).toBeDefined(),
+            expect(
+                userMetadataStream.view.userMetadataContent
+                    .encryptedProfileImage,
+            ).toBeDefined(),
         )
 
-        const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
+        const decrypted = await bobsClient.getUserProfileImage(
+            bobsClient.userId,
+        )
         expect(decrypted).toBeDefined()
         expect(decrypted?.info?.mimetype).toBe(image.mimetype)
         expect(decrypted?.info?.filename).toBe(image.filename)
-        expect(decrypted?.encryption.case).toBe(chunkedMediaInfo.encryption.case)
+        expect(decrypted?.encryption.case).toBe(
+            chunkedMediaInfo.encryption.case,
+        )
         expect(decrypted?.encryption.value?.secretKey).toBeDefined()
     })
 
@@ -1055,7 +1285,9 @@ describe('clientTest', () => {
         const bio = { bio: 'Hello, world!' }
         await bobsClient.setUserBio(bio)
         await waitFor(() =>
-            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+            expect(
+                userMetadataStream.view.userMetadataContent.encryptedBio,
+            ).toBeDefined(),
         )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
@@ -1073,7 +1305,9 @@ describe('clientTest', () => {
         const bio = { bio: '' }
         await bobsClient.setUserBio(bio)
         await waitFor(() =>
-            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+            expect(
+                userMetadataStream.view.userMetadataContent.encryptedBio,
+            ).toBeDefined(),
         )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)

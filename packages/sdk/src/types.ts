@@ -45,7 +45,10 @@ import { bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError, EventSignatureBundle } from './decryptionExtensions'
+import {
+    DecryptionSessionError,
+    EventSignatureBundle,
+} from './decryptionExtensions'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
@@ -140,7 +143,9 @@ export type SolanaTransactionReceipt = {
     slot: bigint
 }
 
-export function isSolanaTransactionReceipt(obj: unknown): obj is SolanaTransactionReceipt {
+export function isSolanaTransactionReceipt(
+    obj: unknown,
+): obj is SolanaTransactionReceipt {
     return (
         typeof obj === 'object' &&
         obj !== null &&
@@ -153,19 +158,29 @@ export function isSolanaTransactionReceipt(obj: unknown): obj is SolanaTransacti
     )
 }
 
-export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
+export function isLocalEvent(
+    event: StreamTimelineEvent,
+): event is LocalTimelineEvent {
     return event.localEvent !== undefined
 }
 
-export function isRemoteEvent(event: StreamTimelineEvent): event is RemoteTimelineEvent {
+export function isRemoteEvent(
+    event: StreamTimelineEvent,
+): event is RemoteTimelineEvent {
     return event.remoteEvent !== undefined
 }
 
-export function isDecryptedEvent(event: StreamTimelineEvent): event is DecryptedTimelineEvent {
-    return event.decryptedContent !== undefined && event.remoteEvent !== undefined
+export function isDecryptedEvent(
+    event: StreamTimelineEvent,
+): event is DecryptedTimelineEvent {
+    return (
+        event.decryptedContent !== undefined && event.remoteEvent !== undefined
+    )
 }
 
-export function isConfirmedEvent(event: StreamTimelineEvent): event is ConfirmedTimelineEvent {
+export function isConfirmedEvent(
+    event: StreamTimelineEvent,
+): event is ConfirmedTimelineEvent {
     return (
         isRemoteEvent(event) &&
         event.confirmedEventNum !== undefined &&
@@ -173,7 +188,9 @@ export function isConfirmedEvent(event: StreamTimelineEvent): event is Confirmed
     )
 }
 
-export function getEventSignature(remoteEvent: ParsedEvent): EventSignatureBundle {
+export function getEventSignature(
+    remoteEvent: ParsedEvent,
+): EventSignatureBundle {
     return {
         hash: remoteEvent.hash,
         signature: remoteEvent.signature,
@@ -239,7 +256,10 @@ export function isCiphertext(text: string): boolean {
     return cipherRegex.test(text.slice(0, maxPrefixCheck))
 }
 
-export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
+export const takeKeccakFingerprintInHex = (
+    buf: Uint8Array,
+    n: number,
+): string => {
     const hash = bin_toHexString(keccak256(buf))
     return hash.slice(0, n)
 }
@@ -539,7 +559,9 @@ export const make_MemberPayload_Membership2 = (
         userAddress: addressFromUserId(value.userId),
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
-        streamParentId: value.streamParentId ? streamIdAsBytes(value.streamParentId) : undefined,
+        streamParentId: value.streamParentId
+            ? streamIdAsBytes(value.streamParentId)
+            : undefined,
         reason: MembershipReason.MR_NONE,
     })
 }
@@ -990,7 +1012,9 @@ export const getMiniblockHeader = (
     return undefined
 }
 
-export const getRefEventIdFromChannelMessage = (message: ChannelMessage): string | undefined => {
+export const getRefEventIdFromChannelMessage = (
+    message: ChannelMessage,
+): string | undefined => {
     switch (message.payload.case) {
         case 'edit':
         case 'reaction':

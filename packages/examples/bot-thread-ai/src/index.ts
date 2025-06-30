@@ -25,7 +25,9 @@ const bot = await makeTownsBot(
 )
 
 bot.onChannelJoin(async (h, { channelId, userId }) => {
-    console.log(`🧵 user ${shortId(userId)} joined channel ${shortId(channelId)}`)
+    console.log(
+        `🧵 user ${shortId(userId)} joined channel ${shortId(channelId)}`,
+    )
     if (userId === bot.botId) {
         await h.setUsername(channelId, 'thread-ai-bot')
         await h.setDisplayName(channelId, 'Thread AI Bot')
@@ -42,14 +44,21 @@ bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
 })
 
 bot.onThreadMessage(async (h, { channelId, threadId, userId, message }) => {
-    console.log(`🧵 thread message: user ${shortId(userId)} sent message:`, message)
+    console.log(
+        `🧵 thread message: user ${shortId(userId)} sent message:`,
+        message,
+    )
     const context = updateContext(threadId, userId, message)
     const a = await ai(context)
     updateContext(threadId, bot.botId, a)
     await h.sendMessage(channelId, a, { threadId })
 })
 
-const newThread = (messageId: string, userId: string, initialPrompt: string) => {
+const newThread = (
+    messageId: string,
+    userId: string,
+    initialPrompt: string,
+) => {
     const data = { initialPrompt, conversation: [], userId }
     state[messageId] = data
     return data
@@ -96,4 +105,6 @@ const shortId = (id: string) => id.slice(0, 4) + '..' + id.slice(-4)
 
 const { fetch } = await bot.start()
 serve({ fetch, port: parseInt(process.env.PORT!), createServer })
-console.log(`✅ Thread AI Bot is running on https://localhost:${process.env.PORT}`)
+console.log(
+    `✅ Thread AI Bot is running on https://localhost:${process.env.PORT}`,
+)

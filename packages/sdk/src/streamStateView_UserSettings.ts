@@ -48,7 +48,10 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         this.streamId = streamId
     }
 
-    applySnapshot(snapshot: Snapshot, content: UserSettingsPayload_Snapshot): void {
+    applySnapshot(
+        snapshot: Snapshot,
+        content: UserSettingsPayload_Snapshot,
+    ): void {
         // iterate over content.fullyReadMarkers
         for (const payload of content.fullyReadMarkers) {
             this.fullyReadMarkerUpdate(payload)
@@ -56,7 +59,11 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
         for (const userBlocks of content.userBlocksList) {
             const userId = userIdFromAddress(userBlocks.userId)
-            this.userSettingsStreamsView.setUserBlocks(this.streamId, userId, userBlocks)
+            this.userSettingsStreamsView.setUserBlocks(
+                this.streamId,
+                userId,
+                userBlocks,
+            )
         }
     }
 
@@ -67,7 +74,8 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userSettingsPayload')
-        const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
+        const payload: UserSettingsPayload =
+            event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -91,7 +99,8 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userSettingsPayload')
-        const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
+        const payload: UserSettingsPayload =
+            event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -119,14 +128,21 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             return
         }
         const streamId = streamIdFromBytes(payload.streamId)
-        const fullyReadMarkersContent = fromJsonString(FullyReadMarkersSchema, content.data)
+        const fullyReadMarkersContent = fromJsonString(
+            FullyReadMarkersSchema,
+            content.data,
+        )
 
         this.userSettingsStreamsView.setFullyReadMarkers(
             this.streamId,
             streamId,
             fullyReadMarkersContent.markers,
         )
-        emitter?.emit('fullyReadMarkersUpdated', streamId, fullyReadMarkersContent.markers)
+        emitter?.emit(
+            'fullyReadMarkersUpdated',
+            streamId,
+            fullyReadMarkersContent.markers,
+        )
     }
 
     private userBlockUpdate(
@@ -134,11 +150,18 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         emitter?: TypedEmitter<StreamStateEvents>,
     ): void {
         const userId = userIdFromAddress(payload.userId)
-        const userBlock = create(UserSettingsPayload_Snapshot_UserBlocks_BlockSchema, {
-            eventNum: payload.eventNum,
-            isBlocked: payload.isBlocked,
-        } satisfies PlainMessage<UserSettingsPayload_Snapshot_UserBlocks_Block>)
-        this.userSettingsStreamsView.updateUserBlock(this.streamId, userId, userBlock)
+        const userBlock = create(
+            UserSettingsPayload_Snapshot_UserBlocks_BlockSchema,
+            {
+                eventNum: payload.eventNum,
+                isBlocked: payload.isBlocked,
+            } satisfies PlainMessage<UserSettingsPayload_Snapshot_UserBlocks_Block>,
+        )
+        this.userSettingsStreamsView.updateUserBlock(
+            this.streamId,
+            userId,
+            userBlock,
+        )
         emitter?.emit('userBlockUpdated', payload)
     }
 
@@ -160,7 +183,9 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         return isBlocked
     }
 
-    getLastBlock(userId: string): UserSettingsPayload_Snapshot_UserBlocks_Block | undefined {
+    getLastBlock(
+        userId: string,
+    ): UserSettingsPayload_Snapshot_UserBlocks_Block | undefined {
         const blocks = this.userBlocks[userId]?.blocks
         if (!blocks || blocks.length === 0) {
             return undefined

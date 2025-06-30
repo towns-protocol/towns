@@ -3,14 +3,29 @@
  */
 
 import { NoopRuleData } from '@towns-protocol/web3'
-import { expectUserCanJoinChannel, setupChannelWithCustomRole } from '../testUtils'
+import {
+    expectUserCanJoinChannel,
+    setupChannelWithCustomRole,
+} from '../testUtils'
 
 describe('disableChannel', () => {
     test('User cannot post events to a channel after it is disabled', async () => {
-        const { alice, carol, bobProvider, aliceSpaceDapp, bobSpaceDapp, spaceId, channelId } =
-            await setupChannelWithCustomRole(['alice', 'carol'], NoopRuleData)
+        const {
+            alice,
+            carol,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+            spaceId,
+            channelId,
+        } = await setupChannelWithCustomRole(['alice', 'carol'], NoopRuleData)
 
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
         // Disable the channel
         const txn = await bobSpaceDapp.setChannelAccess(
@@ -20,7 +35,10 @@ describe('disableChannel', () => {
             bobProvider.wallet,
         )
         await bobProvider.waitForTransaction(txn.hash)
-        const channelDetails = await bobSpaceDapp.getChannelDetails(spaceId, channelId!)
+        const channelDetails = await bobSpaceDapp.getChannelDetails(
+            spaceId,
+            channelId!,
+        )
         expect(channelDetails).toBeDefined()
         expect(channelDetails!.disabled).toBeTruthy()
 
@@ -36,6 +54,8 @@ describe('disableChannel', () => {
         //     spaceId,
         //     channelId!,
         // )
-        await expect(carol.joinStream(channelId!)).rejects.toThrow(/7:PERMISSION_DENIED/)
+        await expect(carol.joinStream(channelId!)).rejects.toThrow(
+            /7:PERMISSION_DENIED/,
+        )
     })
 })

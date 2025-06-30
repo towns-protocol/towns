@@ -85,7 +85,8 @@ export class BaseContractShim<
      */
     public executeCall<
         T = ContractTransaction,
-        FnName extends keyof T_CONTRACT['functions'] = keyof T_CONTRACT['functions'],
+        FnName extends
+            keyof T_CONTRACT['functions'] = keyof T_CONTRACT['functions'],
         Args extends Parameters<T_CONTRACT['functions'][FnName]> = Parameters<
             T_CONTRACT['functions'][FnName]
         >,
@@ -101,13 +102,18 @@ export class BaseContractShim<
             params.overrideExecution
                 ? params.overrideExecution({
                       toAddress: this.address,
-                      calldata: this.encodeFunctionData(params.functionName, params.args),
+                      calldata: this.encodeFunctionData(
+                          params.functionName,
+                          params.args,
+                      ),
                       value: params.value,
                   })
                 : wrapTransaction(
                       () =>
                           (
-                              this.write(params.signer)[params.functionName] as (
+                              this.write(params.signer)[
+                                  params.functionName
+                              ] as (
                                   ...args: Args
                               ) => Promise<ContractTransaction>
                           )(
@@ -128,7 +134,9 @@ export class BaseContractShim<
             throw new Error('functionName must be a string')
         }
         if (!this.interface.getFunction(functionName)) {
-            throw new Error(`Function ${functionName} not found in contract interface`)
+            throw new Error(
+                `Function ${functionName} not found in contract interface`,
+            )
         }
         const decoded = this.interface.decodeFunctionResult(functionName, data)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -143,7 +151,9 @@ export class BaseContractShim<
             throw new Error('functionName must be a string')
         }
         if (!this.interface.getFunction(functionName)) {
-            throw new Error(`Function ${functionName} not found in contract interface`)
+            throw new Error(
+                `Function ${functionName} not found in contract interface`,
+            )
         }
         return this.interface.decodeFunctionData(functionName, data)
     }
@@ -156,7 +166,9 @@ export class BaseContractShim<
             throw new Error('functionName must be a string')
         }
         if (!this.interface.getFunction(functionName)) {
-            throw new Error(`Function ${functionName} not found in contract interface`)
+            throw new Error(
+                `Function ${functionName} not found in contract interface`,
+            )
         }
         return this.interface.encodeFunctionData(functionName, args)
     }
@@ -167,7 +179,8 @@ export class BaseContractShim<
     } {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         const anyError = error as any
-        const { errorData, errorMessage, errorName } = this.getErrorData(anyError)
+        const { errorData, errorMessage, errorName } =
+            this.getErrorData(anyError)
         /**
          * Return early if we have trouble extracting the error data.
          * Don't know how to decode it.
@@ -252,9 +265,12 @@ export class BaseContractShim<
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 const reason = anyError?.reason || anyError?.message
                 if (typeof reason === 'string') {
-                    const errorMatch = reason?.match(/error\\":\{([^}]+)\}/)?.[1]
+                    const errorMatch =
+                        reason?.match(/error\\":\{([^}]+)\}/)?.[1]
                     if (errorMatch) {
-                        const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
+                        const parsedData = JSON.parse(
+                            `{${errorMatch?.replace(/\\/g, '')}}`,
+                        )
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         errorData = parsedData?.data
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

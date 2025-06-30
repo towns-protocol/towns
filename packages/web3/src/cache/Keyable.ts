@@ -43,7 +43,12 @@ export class EntitlementRequest implements Keyable {
     channelId: string
     userId: string
     permission: Permission
-    constructor(spaceId: string, channelId: string, userId: string, permission: Permission) {
+    constructor(
+        spaceId: string,
+        channelId: string,
+        userId: string,
+        permission: Permission,
+    ) {
         this.spaceId = spaceId
         this.channelId = channelId
         this.userId = userId

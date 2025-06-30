@@ -11,7 +11,11 @@ import { useSyncAgent } from './useSyncAgent'
  */
 export const useCreateGdm = (config?: ActionConfig<Gdms['createGDM']>) => {
     const sync = useSyncAgent()
-    const { action: createGDM, ...rest } = useAction(sync.gdms, 'createGDM', config)
+    const { action: createGDM, ...rest } = useAction(
+        sync.gdms,
+        'createGDM',
+        config,
+    )
 
     return {
         /**

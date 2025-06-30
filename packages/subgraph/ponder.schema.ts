@@ -34,7 +34,10 @@ export const swapFee = onchainTable('swap_fees', (t) => ({
 
 // each space has one swap fee
 export const spaceToSwapFee = relations(space, ({ one }) => ({
-    swapFee: one(swapFee, { fields: [space.id], references: [swapFee.spaceId] }),
+    swapFee: one(swapFee, {
+        fields: [space.id],
+        references: [swapFee.spaceId],
+    }),
 }))
 
 // each space has many swaps
@@ -55,7 +58,10 @@ export const swapRouter = onchainTable('swap_router', (t) => ({
 
 // each swap belongs to a swap router
 export const swapToSwapRouter = relations(swap, ({ one }) => ({
-    swapRouter: one(swapRouter, { fields: [swap.txHash], references: [swapRouter.txHash] }),
+    swapRouter: one(swapRouter, {
+        fields: [swap.txHash],
+        references: [swapRouter.txHash],
+    }),
 }))
 
 export const swapRouterSwap = onchainTable('swap_router_swap', (t) => ({
@@ -90,12 +96,15 @@ export const feeDistribution = onchainTable('fee_distribution', (t) => ({
 }))
 
 // each fee distribution belongs to a swap router swap
-export const feeDistributionToSwapRouterSwap = relations(feeDistribution, ({ one }) => ({
-    swapRouterSwap: one(swapRouterSwap, {
-        fields: [feeDistribution.txHash],
-        references: [swapRouterSwap.txHash],
+export const feeDistributionToSwapRouterSwap = relations(
+    feeDistribution,
+    ({ one }) => ({
+        swapRouterSwap: one(swapRouterSwap, {
+            fields: [feeDistribution.txHash],
+            references: [swapRouterSwap.txHash],
+        }),
     }),
-}))
+)
 
 // stakers
 export const stakers = onchainTable('stakers', (t) => ({

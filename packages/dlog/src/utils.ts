@@ -1,7 +1,10 @@
-export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined'
+export const isBrowser =
+    typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
 export const isNodeEnv =
-    typeof process !== 'undefined' && process.versions != null && process.versions.node != null
+    typeof process !== 'undefined' &&
+    process.versions != null &&
+    process.versions.node != null
 
 export function isTestEnv(): boolean {
     return (

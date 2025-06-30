@@ -4,7 +4,10 @@
 
 import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { LocalhostWeb3Provider, createRiverRegistry } from '@towns-protocol/web3'
+import {
+    LocalhostWeb3Provider,
+    createRiverRegistry,
+} from '@towns-protocol/web3'
 import { makeRiverChainConfig } from '../../riverConfig'
 
 const log = dlog('csb:test')
@@ -14,10 +17,16 @@ describe('nodeSelectionsTests', () => {
         // set up the web3 provider and riverRegistry
         const riverConfig = makeRiverChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
-        const bobRiverChainProvider = new LocalhostWeb3Provider(riverConfig.rpcUrl, bobsWallet)
+        const bobRiverChainProvider = new LocalhostWeb3Provider(
+            riverConfig.rpcUrl,
+            bobsWallet,
+        )
 
         // create river registry
-        const riverRegistry = createRiverRegistry(bobRiverChainProvider, riverConfig.chainConfig)
+        const riverRegistry = createRiverRegistry(
+            bobRiverChainProvider,
+            riverConfig.chainConfig,
+        )
         // read nodes from river registry
         const nodes = await riverRegistry.getAllNodes()
         log('river registry rpc nodes', nodes)

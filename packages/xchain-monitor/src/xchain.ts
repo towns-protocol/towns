@@ -99,7 +99,10 @@ async function scanForPostResults(
                     }
 
                     const [txTransactionId, roleId, nodeVoteStatus] = args
-                    if (txTransactionId.toLowerCase() !== transactionId.toLowerCase()) {
+                    if (
+                        txTransactionId.toLowerCase() !==
+                        transactionId.toLowerCase()
+                    ) {
                         continue
                     }
 
@@ -152,7 +155,8 @@ async function scanForPostResults(
                         continue
                     }
 
-                    roleResult[sender] = nodeVoteStatus === NodeVoteStatus.Passed
+                    roleResult[sender] =
+                        nodeVoteStatus === NodeVoteStatus.Passed
                 } catch (err) {
                     continue
                 }

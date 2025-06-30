@@ -26,24 +26,40 @@ import {
 const log = dlog('csb:test:spaceWithComplexEntitlements')
 
 describe('spaceWithComplexEntitlements', () => {
-    let testNft1Address: string, testNft2Address: string, testNft3Address: string
+    let testNft1Address: string,
+        testNft2Address: string,
+        testNft3Address: string
     beforeAll(async () => {
-        ;[testNft1Address, testNft2Address, testNft3Address] = await Promise.all([
-            TestERC721.getContractAddress('TestNFT1'),
-            TestERC721.getContractAddress('TestNFT2'),
-            TestERC721.getContractAddress('TestNFT3'),
-        ])
+        ;[testNft1Address, testNft2Address, testNft3Address] =
+            await Promise.all([
+                TestERC721.getContractAddress('TestNFT1'),
+                TestERC721.getContractAddress('TestNFT2'),
+                TestERC721.getContractAddress('TestNFT3'),
+            ])
     })
     test('two nft gate join pass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: twoNftRuleData(testNft1Address, testNft2Address),
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: twoNftRuleData(testNft1Address, testNft2Address),
+        })
 
-        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
-        const aliceMintTx2 = TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint(
+            'TestNFT1',
+            alicesWallet.address as Address,
+        )
+        const aliceMintTx2 = TestERC721.publicMint(
+            'TestNFT2',
+            alicesWallet.address as Address,
+        )
 
         log('Minting nfts for alice')
         await Promise.all([aliceMintTx1, aliceMintTx2])
@@ -83,14 +99,24 @@ describe('spaceWithComplexEntitlements', () => {
             ruleData: twoNftRuleData(testNft1Address, testNft2Address),
         })
 
-        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
-        const carolMintTx2 = TestERC721.publicMint('TestNFT2', carolsWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint(
+            'TestNFT1',
+            alicesWallet.address as Address,
+        )
+        const carolMintTx2 = TestERC721.publicMint(
+            'TestNFT2',
+            carolsWallet.address as Address,
+        )
 
         log('Minting nfts for alice and carol')
         await Promise.all([aliceMintTx1, carolMintTx2])
 
         log("linking carols wallet to alice's wallet")
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+        await linkWallets(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            carolProvider.wallet,
+        )
 
         log('Alice should be able to join space with one asset in carol wallet')
         await expectUserCanJoin(
@@ -111,12 +137,18 @@ describe('spaceWithComplexEntitlements', () => {
     })
 
     test('two nft gate join fail', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: twoNftRuleData(testNft1Address, testNft2Address),
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: twoNftRuleData(testNft1Address, testNft2Address),
+        })
 
         // join alice
         log('Minting an NFT for alice')
@@ -131,7 +163,10 @@ describe('spaceWithComplexEntitlements', () => {
             aliceProvider.wallet,
         )
         expect(issued).toBe(false)
-        log('Alice failed to join space and has a MembershipNFT', Date.now() - aliceJoinStart)
+        log(
+            'Alice failed to join space and has a MembershipNFT',
+            Date.now() - aliceJoinStart,
+        )
 
         // Have alice create her own space so she can initialize her user stream.
         // Then she will attempt to join the space from the client, which should fail.
@@ -143,7 +178,12 @@ describe('spaceWithComplexEntitlements', () => {
             aliceProvider.wallet,
         )
         // Alice cannot join the space on the stream node.
-        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
+        await expectUserCannotJoinSpace(
+            spaceId,
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+        )
 
         // kill the clients
         await bob.stopSync()
@@ -151,12 +191,23 @@ describe('spaceWithComplexEntitlements', () => {
     })
 
     test('or of two nft gate join pass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: twoNftRuleData(testNft1Address, testNft2Address, LogicalOperationType.OR),
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: twoNftRuleData(
+                testNft1Address,
+                testNft2Address,
+                LogicalOperationType.OR,
+            ),
+        })
 
         // join alice
         log('Minting an NFT for alice')
@@ -219,16 +270,29 @@ describe('spaceWithComplexEntitlements', () => {
         }
 
         const ruleData = treeToRuleData(root)
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData,
-            })
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData,
+        })
 
         log("Mint Alice's NFTs")
-        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
-        const aliceMintTx2 = TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint(
+            'TestNFT1',
+            alicesWallet.address as Address,
+        )
+        const aliceMintTx2 = TestERC721.publicMint(
+            'TestNFT2',
+            alicesWallet.address as Address,
+        )
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect alice can join space')

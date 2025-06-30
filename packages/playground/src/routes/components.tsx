@@ -27,8 +27,16 @@ import {
 export const ComponentsRoute = () => {
     return (
         <div className="space-y-6">
-            <Button asChild variant="link" className="rounded-md border border-zinc-200 px-2 py-1">
-                <a target="_blank" rel="noopener noreferrer" href="https://ui.shadcn.com">
+            <Button
+                asChild
+                variant="link"
+                className="rounded-md border border-zinc-200 px-2 py-1"
+            >
+                <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="https://ui.shadcn.com"
+                >
                     Get more components
                 </a>
             </Button>
@@ -83,7 +91,9 @@ const FormExample = () => {
                             <FormControl>
                                 <Input placeholder="shadcn" {...field} />
                             </FormControl>
-                            <FormDescription>This is your public display name.</FormDescription>
+                            <FormDescription>
+                                This is your public display name.
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -104,7 +114,8 @@ const DialogExample = () => {
                 <DialogHeader>
                     <DialogTitle>Edit profile</DialogTitle>
                     <DialogDescription>
-                        Make changes to your profile here. Click save when you're done.
+                        Make changes to your profile here. Click save when
+                        you're done.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -112,13 +123,21 @@ const DialogExample = () => {
                         <Label htmlFor="name" className="text-right">
                             Name
                         </Label>
-                        <Input id="name" value="John Doe" className="col-span-3" />
+                        <Input
+                            id="name"
+                            value="John Doe"
+                            className="col-span-3"
+                        />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="username" className="text-right">
                             Username
                         </Label>
-                        <Input id="username" value="@johndoe" className="col-span-3" />
+                        <Input
+                            id="username"
+                            value="@johndoe"
+                            className="col-span-3"
+                        />
                     </div>
                 </div>
                 <DialogFooter>

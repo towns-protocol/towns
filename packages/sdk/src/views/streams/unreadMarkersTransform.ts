@@ -1,6 +1,10 @@
 import { FullyReadMarker } from '@towns-protocol/proto'
 import { TimelinesViewModel } from './timelinesModel'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '../../id'
+import {
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+} from '../../id'
 import { RiverTimelineEvent, TimelineEvent } from '../models/timelineTypes'
 import { check, dlogger } from '@towns-protocol/dlog'
 
@@ -33,7 +37,10 @@ export function unreadMarkersTransform(
     for (const streamId of Object.keys(myRemoteFullyReadMarkers)) {
         const fullyReadMarkers = myRemoteFullyReadMarkers[streamId]
         if (fullyReadMarkers !== prev.myRemoteFullyReadMarkers[streamId]) {
-            state = updateFullyReadMarkersFromRemote({ [streamId]: fullyReadMarkers }, state)
+            state = updateFullyReadMarkersFromRemote(
+                { [streamId]: fullyReadMarkers },
+                state,
+            )
         }
     }
 
@@ -46,7 +53,10 @@ export function unreadMarkersTransform(
 
 /// when we get an update from the server, update our local state
 function updateFullyReadMarkersFromRemote(
-    fullyReadMarkersMap: Record<string, Record<string, FullyReadMarker | undefined> | undefined>,
+    fullyReadMarkersMap: Record<
+        string,
+        Record<string, FullyReadMarker | undefined> | undefined
+    >,
     state: { markers: Record<string, FullyReadMarker> },
 ) {
     let markersUpdated = 0
@@ -54,14 +64,19 @@ function updateFullyReadMarkersFromRemote(
     for (const fullyReadMarkers of Object.values(fullyReadMarkersMap)) {
         for (const [key, marker] of Object.entries(fullyReadMarkers!)) {
             // if we don't have a marker, or if the remote marker has been marked as read more recently than our local marker, update
-            if (!updated[key] || updated[key].beginUnreadWindow < marker!.beginUnreadWindow) {
+            if (
+                !updated[key] ||
+                updated[key].beginUnreadWindow < marker!.beginUnreadWindow
+            ) {
                 updated[key] = marker!
                 markersUpdated++
             }
         }
     }
     if (markersUpdated > 0) {
-        console.log('$ onRoomAccountDataEvent: set markers for ', { markersUpdated })
+        console.log('$ onRoomAccountDataEvent: set markers for ', {
+            markersUpdated,
+        })
         return { markers: updated }
     } else {
         return state
@@ -74,11 +89,16 @@ function diffTimeline(
     userId: string,
     state: { markers: Record<string, FullyReadMarker> },
 ): { markers: Record<string, FullyReadMarker> } {
-    if (Object.keys(prev.timelines).length === 0 || timelineState.timelines === prev.timelines) {
+    if (
+        Object.keys(prev.timelines).length === 0 ||
+        timelineState.timelines === prev.timelines
+    ) {
         // noop
         return state
     }
-    const channelIds = Object.keys(timelineState.timelines).filter(isDiffableStreamTimeline)
+    const channelIds = Object.keys(timelineState.timelines).filter(
+        isDiffableStreamTimeline,
+    )
     for (const channelId of channelIds) {
         const prevEvents = prev.timelines[channelId] ?? []
         const events = timelineState.timelines[channelId]
@@ -92,7 +112,13 @@ function diffTimeline(
                 prev.replacedEvents[channelId] ?? [],
                 updated,
             )
-            const resultAdded = diffAdded(channelId, userId, events, prevEvents, updated)
+            const resultAdded = diffAdded(
+                channelId,
+                userId,
+                events,
+                prevEvents,
+                updated,
+            )
             if (resultReplaced.didUpdate || resultAdded.didUpdate) {
                 state = { markers: updated }
             }
@@ -165,7 +191,10 @@ function diffReplaced(
                       ? marker.mentions - 1
                       : marker.mentions + 1
 
-            const endUnreadWindow = maxBigint(event.newEvent.eventNum, marker.endUnreadWindow)
+            const endUnreadWindow = maxBigint(
+                event.newEvent.eventNum,
+                marker.endUnreadWindow,
+            )
 
             if (
                 event.newEvent.isRedacted &&
@@ -195,9 +224,14 @@ function diffReplaced(
                 // meaning we just need to check to see if this is the new first unread event
                 const isNewFirstUnread =
                     isCountedAsUnread(event.newEvent, userId) &&
-                    (!marker.isUnread || event.newEvent.eventNum <= marker.eventNum)
-                const newEventId = isNewFirstUnread ? event.newEvent.eventId : marker.eventId
-                const newEventNum = isNewFirstUnread ? event.newEvent.eventNum : marker.eventNum
+                    (!marker.isUnread ||
+                        event.newEvent.eventNum <= marker.eventNum)
+                const newEventId = isNewFirstUnread
+                    ? event.newEvent.eventId
+                    : marker.eventId
+                const newEventNum = isNewFirstUnread
+                    ? event.newEvent.eventNum
+                    : marker.eventNum
 
                 updated[markerId] = {
                     ...marker,
@@ -240,8 +274,10 @@ function diffAdded(
         const isThread = markerId !== channelId
         const prevMarker = updated[markerId]
         const mentions =
-            prevMarker?.mentions ?? 0 + eventSegment.filter((e) => e.isMentioned).length
-        const beginUnreadWindow = prevMarker?.beginUnreadWindow ?? eventSegment[0].eventNum
+            prevMarker?.mentions ??
+            0 + eventSegment.filter((e) => e.isMentioned).length
+        const beginUnreadWindow =
+            prevMarker?.beginUnreadWindow ?? eventSegment[0].eventNum
         const endUnreadWindow = eventSegment[eventSegment.length - 1].eventNum
 
         if (beginUnreadWindow > endUnreadWindow) {
@@ -260,8 +296,12 @@ function diffAdded(
         updated[markerId] = {
             channelId: channelId,
             threadParentId: isThread ? markerId : undefined,
-            eventId: firstUnread?.eventId ?? eventSegment[eventSegment.length - 1].eventId,
-            eventNum: firstUnread?.eventNum ?? eventSegment[eventSegment.length - 1].eventNum,
+            eventId:
+                firstUnread?.eventId ??
+                eventSegment[eventSegment.length - 1].eventId,
+            eventNum:
+                firstUnread?.eventNum ??
+                eventSegment[eventSegment.length - 1].eventNum,
             beginUnreadWindow: beginUnreadWindow,
             endUnreadWindow: endUnreadWindow,
             isUnread: firstUnread !== undefined,
@@ -295,7 +335,10 @@ function firstUnreadEvent(
     endWindow: bigint,
 ): TimelineEvent | undefined {
     check(beginWindow <= endWindow, 'beginWindow must be <= endWindow')
-    const startIndex = indexOfFirstEventNumEqualToOrGreaterThan(events, beginWindow)
+    const startIndex = indexOfFirstEventNumEqualToOrGreaterThan(
+        events,
+        beginWindow,
+    )
     for (let i = startIndex; i < events.length; i++) {
         const event = events[i]
         const eventMarkerId = event.threadParentId ?? channelId

@@ -42,9 +42,15 @@ function makeSchema(classes: any[]) {
     const schema: { [tableName: string]: string | null } = {}
     for (const cls of classes) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        check(cls.tableName !== undefined, 'missing tableName, decorate with @persistedObservable')
+        check(
+            cls.tableName !== undefined,
+            'missing tableName, decorate with @persistedObservable',
+        )
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        check(schema[cls.tableName] === undefined, `duplicate table name: ${cls.tableName}`)
+        check(
+            schema[cls.tableName] === undefined,
+            `duplicate table name: ${cls.tableName}`,
+        )
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         schema[cls.tableName] = 'id'
     }
@@ -64,7 +70,10 @@ export class Store {
     }
 
     private checkTableName(tableName: string) {
-        check(this.db._dbSchema[tableName] !== undefined, `table "${tableName}" not registered`)
+        check(
+            this.db._dbSchema[tableName] !== undefined,
+            `table "${tableName}" not registered`,
+        )
     }
 
     newTransactionGroup(name: string) {
@@ -105,13 +114,20 @@ export class Store {
                 }
             })
             if (bundle.effects.length > 0 || bundle.onCommitted.length > 0) {
-                this.withTransaction(`${tGroup.name}>effects_${bundle.name}`, () => {
-                    bundle.effects.forEach((fn) => fn())
-                    bundle.onCommitted.map((fn) => fn())
-                })
+                this.withTransaction(
+                    `${tGroup.name}>effects_${bundle.name}`,
+                    () => {
+                        bundle.effects.forEach((fn) => fn())
+                        bundle.onCommitted.map((fn) => fn())
+                    },
+                )
             }
         }
-        log(`commitTransaction "${tGroup.name}" done`, 'elapsedMs:', Date.now() - time)
+        log(
+            `commitTransaction "${tGroup.name}" done`,
+            'elapsedMs:',
+            Date.now() - time,
+        )
     }
 
     withTransaction<T>(name: string, fn: () => T): T {
@@ -141,7 +157,10 @@ export class Store {
         // make sure that we're loading in a transaction started with either withTransaction or newTransactionGroup
         check(this.transactionGroup !== undefined, 'transaction not started')
         // there should only be one model loaded per row, to prevent things like concurrent writes and out of sync data
-        check(!this.isLoaded(tableName, id), `model already loaded ${tableName}:${id}`)
+        check(
+            !this.isLoaded(tableName, id),
+            `model already loaded ${tableName}:${id}`,
+        )
         this.setIsLoaded(tableName, id)
         const bundler = this.transactionGroup[loadPriority]
         bundler.tableNames.push(tableName)

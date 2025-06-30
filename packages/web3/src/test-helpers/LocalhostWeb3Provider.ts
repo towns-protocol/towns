@@ -23,12 +23,20 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     constructor(rpcUrl: string, wallet?: ethers.Wallet) {
         super(rpcUrl)
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
-        logger.log('initializing web3 provider with wallet', this.wallet.address)
+        logger.log(
+            'initializing web3 provider with wallet',
+            this.wallet.address,
+        )
     }
 
-    public async fundWallet(walletToFund: ethers.Wallet | string = this.wallet) {
+    public async fundWallet(
+        walletToFund: ethers.Wallet | string = this.wallet,
+    ) {
         const amountInWei = ethers.BigNumber.from(100).pow(18).toHexString()
-        const address = typeof walletToFund === 'string' ? walletToFund : walletToFund.address
+        const address =
+            typeof walletToFund === 'string'
+                ? walletToFund
+                : walletToFund.address
         const result = this.send('anvil_setBalance', [address, amountInWei])
         logger.log('fundWallet tx', result, amountInWei, address)
         const receipt = await result
@@ -98,6 +106,8 @@ export function balanceOfMockNFT(
     return mockNFT.read.balanceOf(address)
 }
 
-export async function getTestGatingNftAddress(_chainId: number): Promise<Address> {
+export async function getTestGatingNftAddress(
+    _chainId: number,
+): Promise<Address> {
     return await getTestGatingNFTContractAddress()
 }

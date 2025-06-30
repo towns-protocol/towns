@@ -38,7 +38,9 @@ export class IReviewShim extends BaseContractShim<typeof connect> {
      * @param userAddress - The address of the user to get the review for
      * @returns The review for the user
      */
-    public async getReview(userAddress: Address): Promise<ReviewStorage.ContentStructOutput> {
+    public async getReview(
+        userAddress: Address,
+    ): Promise<ReviewStorage.ContentStructOutput> {
         const review = await this.read.getReview(userAddress)
         return review
     }
@@ -61,7 +63,10 @@ export class IReviewShim extends BaseContractShim<typeof connect> {
         params: ReviewParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        return this.write(signer).setReview(SpaceReviewAction.Add, this.encodeReviewParams(params))
+        return this.write(signer).setReview(
+            SpaceReviewAction.Add,
+            this.encodeReviewParams(params),
+        )
     }
 
     public async updateReview(
@@ -74,7 +79,9 @@ export class IReviewShim extends BaseContractShim<typeof connect> {
         )
     }
 
-    public async deleteReview(signer: ethers.Signer): Promise<ContractTransaction> {
+    public async deleteReview(
+        signer: ethers.Signer,
+    ): Promise<ContractTransaction> {
         return this.write(signer).setReview(
             SpaceReviewAction.Delete,
             ethers.utils.defaultAbiCoder.encode(['string'], ['']),
@@ -119,7 +126,8 @@ export function getSpaceReviewEventData(
             const parsedLog = contractInterface.parseLog(log)
             if (
                 parsedLog.name === 'ReviewAdded' &&
-                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+                (parsedLog.args.user as string).toLowerCase() ===
+                    senderAddress.toLowerCase()
             ) {
                 return {
                     user: parsedLog.args.user,
@@ -129,7 +137,8 @@ export function getSpaceReviewEventData(
                 }
             } else if (
                 parsedLog.name === 'ReviewUpdated' &&
-                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+                (parsedLog.args.user as string).toLowerCase() ===
+                    senderAddress.toLowerCase()
             ) {
                 return {
                     user: parsedLog.args.user,
@@ -139,7 +148,8 @@ export function getSpaceReviewEventData(
                 }
             } else if (
                 parsedLog.name === 'ReviewDeleted' &&
-                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+                (parsedLog.args.user as string).toLowerCase() ===
+                    senderAddress.toLowerCase()
             ) {
                 return {
                     user: parsedLog.args.user,
@@ -152,5 +162,10 @@ export function getSpaceReviewEventData(
             // no need for error, this log is not from the contract we're interested in
         }
     }
-    return { user: '', comment: undefined, rating: 0, action: SpaceReviewAction.None }
+    return {
+        user: '',
+        comment: undefined,
+        rating: 0,
+        action: SpaceReviewAction.None,
+    }
 }

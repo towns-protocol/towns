@@ -1,7 +1,13 @@
 import { useFormContext } from 'react-hook-form'
 import { z } from 'zod'
 import { Permission } from '@towns-protocol/web3'
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
     Select,
@@ -16,8 +22,12 @@ export const infoSchema = z.object({
     name: z.string().min(1, { message: 'Name is required' }),
     description: z.string().optional(),
     installPrice: z.string().min(1, { message: 'Install price is required' }),
-    membershipDuration: z.string().min(1, { message: 'Membership duration is required' }),
-    permissions: z.array(z.nativeEnum(Permission)).min(1, { message: 'Select at least one' }),
+    membershipDuration: z
+        .string()
+        .min(1, { message: 'Membership duration is required' }),
+    permissions: z
+        .array(z.nativeEnum(Permission))
+        .min(1, { message: 'Select at least one' }),
 })
 
 const membershipDurationOptions = [
@@ -32,7 +42,9 @@ export const InfoStep = () => {
     const { control, watch, setValue } = useFormContext<BotFormData>()
     const selected = watch('permissions')
 
-    const availablePermissions = Object.values(Permission).filter((p) => p !== Permission.Undefined)
+    const availablePermissions = Object.values(Permission).filter(
+        (p) => p !== Permission.Undefined,
+    )
 
     const togglePermission = (p: Permission) => {
         if (selected.includes(p)) {
@@ -67,7 +79,10 @@ export const InfoStep = () => {
                     <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                            <Input placeholder="Optional description" {...field} />
+                            <Input
+                                placeholder="Optional description"
+                                {...field}
+                            />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -93,13 +108,19 @@ export const InfoStep = () => {
                     <FormItem>
                         <FormLabel>Membership Duration</FormLabel>
                         <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select membership duration" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {membershipDurationOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
                                             {option.label}
                                         </SelectItem>
                                     ))}
@@ -130,7 +151,9 @@ export const InfoStep = () => {
                     ))}
                 </div>
                 {selected.length === 0 && (
-                    <p className="text-xs text-destructive">Select at least one permission</p>
+                    <p className="text-xs text-destructive">
+                        Select at least one permission
+                    </p>
                 )}
             </div>
         </div>

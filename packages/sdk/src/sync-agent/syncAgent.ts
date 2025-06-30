@@ -1,4 +1,7 @@
-import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
+import {
+    RiverConnection,
+    RiverConnectionModel,
+} from './river-connection/riverConnection'
 import { RiverConfig } from '../riverConfig'
 import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
@@ -75,37 +78,68 @@ export class SyncAgent {
         this.config = config
         const base = config.riverConfig.base
         const river = config.riverConfig.river
-        const baseProvider = config.baseProvider ?? makeBaseProvider(config.riverConfig)
-        const riverProvider = config.riverProvider ?? makeRiverProvider(config.riverConfig)
+        const baseProvider =
+            config.baseProvider ?? makeBaseProvider(config.riverConfig)
+        const riverProvider =
+            config.riverProvider ?? makeRiverProvider(config.riverConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
         this.store.newTransactionGroup('SyncAgent::initialization')
         const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
-        const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
-        this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
-            signerContext: config.context,
-            cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
-            entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
-            opts: {
-                persistenceStoreName:
-                    config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
-                logNamespaceFilter: undefined,
-                highPriorityStreamIds: this.config.highPriorityStreamIds,
-                unpackEnvelopeOpts: config.unpackEnvelopeOpts,
-                logId: config.logId,
-                streamOpts: {
-                    useModifySync: true,
-                    useSharedSyncer: true,
+        const riverRegistryDapp = new RiverRegistry(
+            river.chainConfig,
+            riverProvider,
+        )
+        this.riverConnection = new RiverConnection(
+            this.store,
+            spaceDapp,
+            riverRegistryDapp,
+            {
+                signerContext: config.context,
+                cryptoStore: RiverDbManager.getCryptoDb(
+                    this.userId,
+                    this.cryptoDbName(),
+                ),
+                entitlementsDelegate: new Entitlements(
+                    this.config.riverConfig,
+                    spaceDapp,
+                ),
+                opts: {
+                    persistenceStoreName:
+                        config.disablePersistenceStore !== true
+                            ? this.persistenceDbName()
+                            : undefined,
+                    logNamespaceFilter: undefined,
+                    highPriorityStreamIds: this.config.highPriorityStreamIds,
+                    unpackEnvelopeOpts: config.unpackEnvelopeOpts,
+                    logId: config.logId,
+                    streamOpts: {
+                        useModifySync: true,
+                        useSharedSyncer: true,
+                    },
                 },
+                rpcRetryParams: config.retryParams,
+                encryptionDevice: config.encryptionDevice,
+                onTokenExpired: config.onTokenExpired,
             },
-            rpcRetryParams: config.retryParams,
-            encryptionDevice: config.encryptionDevice,
-            onTokenExpired: config.onTokenExpired,
-        })
+        )
 
         this.user = new User(this.userId, this.store, this.riverConnection)
-        this.spaces = new Spaces(this.store, this.riverConnection, this.user.memberships, spaceDapp)
-        this.gdms = new Gdms(this.store, this.riverConnection, this.user.memberships)
-        this.dms = new Dms(this.store, this.riverConnection, this.user.memberships)
+        this.spaces = new Spaces(
+            this.store,
+            this.riverConnection,
+            this.user.memberships,
+            spaceDapp,
+        )
+        this.gdms = new Gdms(
+            this.store,
+            this.riverConnection,
+            this.user.memberships,
+        )
+        this.dms = new Dms(
+            this.store,
+            this.riverConnection,
+            this.user.memberships,
+        )
         // flatten out the observables
         this.observables = {
             riverAuthStatus: this.riverConnection.authStatus,
@@ -124,7 +158,9 @@ export class SyncAgent {
 
     async start() {
         if (this.stopped) {
-            throw new Error('SyncAgent is stopped, please instantiate a new sync agent')
+            throw new Error(
+                'SyncAgent is stopped, please instantiate a new sync agent',
+            )
         }
         // commit the initialization transaction, which triggers onLoaded on the models
         await this.store.commitTransaction()
@@ -157,7 +193,8 @@ export class SyncAgent {
             this.config.riverConfig.environmentId === 'gamma'
                 ? ''
                 : `-${this.config.riverConfig.environmentId}`
-        const postfix = this.config.deviceId !== undefined ? `-${this.config.deviceId}` : ''
+        const postfix =
+            this.config.deviceId !== undefined ? `-${this.config.deviceId}` : ''
         const dbName = `${db}-${this.userId}${envSuffix}${postfix}`
         return dbName
     }

@@ -26,7 +26,12 @@ import {
 } from '@towns-protocol/proto'
 import { abytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
-import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
+import {
+    genIdBlob,
+    streamIdAsBytes,
+    streamIdAsString,
+    userIdFromAddress,
+} from './id'
 import {
     ParsedEvent,
     ParsedMiniblock,
@@ -93,8 +98,16 @@ export const makeEvent = async (
     check(isDefined(pl), "Payload can't be undefined", Err.BAD_PAYLOAD)
     check(isDefined(pl.case), "Payload can't be empty", Err.BAD_PAYLOAD)
     check(isDefined(pl.value), "Payload value can't be empty", Err.BAD_PAYLOAD)
-    check(isDefined(pl.value.content), "Payload content can't be empty", Err.BAD_PAYLOAD)
-    check(isDefined(pl.value.content.case), "Payload content case can't be empty", Err.BAD_PAYLOAD)
+    check(
+        isDefined(pl.value.content),
+        "Payload content can't be empty",
+        Err.BAD_PAYLOAD,
+    )
+    check(
+        isDefined(pl.value.content.case),
+        "Payload content case can't be empty",
+        Err.BAD_PAYLOAD,
+    )
 
     if (prevMiniblockHash) {
         check(
@@ -104,11 +117,25 @@ export const makeEvent = async (
         )
     }
     if (prevMiniblockNum) {
-        check(isDefined(prevMiniblockNum), 'prevMiniblockNum is not set', Err.BAD_PAYLOAD)
-        check(prevMiniblockNum >= 0, 'prevMiniblockNum should be non-negative', Err.BAD_PAYLOAD)
+        check(
+            isDefined(prevMiniblockNum),
+            'prevMiniblockNum is not set',
+            Err.BAD_PAYLOAD,
+        )
+        check(
+            prevMiniblockNum >= 0,
+            'prevMiniblockNum should be non-negative',
+            Err.BAD_PAYLOAD,
+        )
     }
 
-    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags)
+    return _impl_makeEvent_impl_(
+        context,
+        pl,
+        prevMiniblockHash,
+        prevMiniblockNum,
+        tags,
+    )
 }
 
 export const makeEvents = async (
@@ -145,7 +172,8 @@ export const unpackStream = async (
             streamAndCookie.nextSyncCookie.streamId,
         )}`,
     )
-    const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
+    const prevSnapshotMiniblockNum =
+        streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
     const eventIds = [
         ...streamAndCookie.miniblocks.flatMap(
             (mb) => mb.events.map((e) => e.hashStr),
@@ -181,9 +209,14 @@ export const unpackStreamAndCookie = async (
     streamAndCookie: StreamAndCookie,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedStreamAndCookie> => {
-    assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
+    assert(
+        streamAndCookie.nextSyncCookie !== undefined,
+        'bad stream: no cookie',
+    )
     const miniblocks = await Promise.all(
-        streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
+        streamAndCookie.miniblocks.map(
+            async (mb) => await unpackMiniblock(mb, opts),
+        ),
     )
     const events = await unpackEnvelopes(streamAndCookie.events, opts)
     let snapshot: ParsedSnapshot | undefined
@@ -243,7 +276,11 @@ export const unpackEnvelope = async (
 ): Promise<ParsedEvent> => {
     check(hasElements(envelope.event), 'Event base is not set', Err.BAD_EVENT)
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
-    check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
+    check(
+        hasElements(envelope.signature),
+        'Event signature is not set',
+        Err.BAD_EVENT,
+    )
 
     const event = fromBinary(StreamEventSchema, envelope.event)
     let hash = envelope.hash
@@ -251,7 +288,11 @@ export const unpackEnvelope = async (
     const doCheckEventHash = opts?.disableHashValidation !== true
     if (doCheckEventHash) {
         hash = riverHash(envelope.event)
-        check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
+        check(
+            bin_equal(hash, envelope.hash),
+            'Event id is not valid',
+            Err.BAD_EVENT_ID,
+        )
     }
 
     const doCheckEventSignature = opts?.disableSignatureValidation !== true
@@ -268,9 +309,17 @@ export const unpackSnapshot = async (
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
-    check(hasElements(snapshot.event), 'Snapshot base is not set', Err.BAD_EVENT)
+    check(
+        hasElements(snapshot.event),
+        'Snapshot base is not set',
+        Err.BAD_EVENT,
+    )
     check(hasElements(snapshot.hash), 'Snapshot hash is not set', Err.BAD_EVENT)
-    check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
+    check(
+        hasElements(snapshot.signature),
+        'Snapshot signature is not set',
+        Err.BAD_EVENT,
+    )
 
     // make sure the given snapshot corresponds to the miniblock
     check(
@@ -287,12 +336,20 @@ export const unpackSnapshot = async (
     // check snapshot hash
     if (opts?.disableHashValidation !== true) {
         const hash = riverSnapshotHash(snapshot.event)
-        check(bin_equal(hash, snapshot.hash), 'Snapshot hash is not valid', Err.BAD_EVENT_ID)
+        check(
+            bin_equal(hash, snapshot.hash),
+            'Snapshot hash is not valid',
+            Err.BAD_EVENT_ID,
+        )
     }
 
     if (opts?.disableSignatureValidation !== true) {
         // header event contains the creatorAddress of the snapshot.
-        check(isDefined(miniblockHeader), 'Miniblock header is not set', Err.BAD_EVENT)
+        check(
+            isDefined(miniblockHeader),
+            'Miniblock header is not set',
+            Err.BAD_EVENT,
+        )
         checkEventSignature(miniblockHeader, snapshot.hash, snapshot.signature)
     }
 
@@ -391,7 +448,10 @@ export const unpackStreamEnvelopes = async (
     return ret
 }
 
-export const makeEventRef = (streamId: string | Uint8Array, event: Envelope): EventRef => {
+export const makeEventRef = (
+    streamId: string | Uint8Array,
+    event: Envelope,
+): EventRef => {
     return create(EventRefSchema, {
         streamId: streamIdAsBytes(streamId),
         hash: event.hash,
@@ -418,7 +478,10 @@ function numberToUint8Array64LE(num: number): Uint8Array {
     return result
 }
 
-function bigintToUint8Array64(num: bigint, endianMode: 'bigEndian' | 'littleEndian'): Uint8Array {
+function bigintToUint8Array64(
+    num: bigint,
+    endianMode: 'bigEndian' | 'littleEndian',
+): Uint8Array {
     const buffer = new ArrayBuffer(8)
     const view = new DataView(buffer)
     view.setBigInt64(0, num, endianMode === 'littleEndian') // true for little endian
@@ -468,7 +531,10 @@ export function riverDelegateHashSrc(
 ): Uint8Array {
     abytes(devicePublicKey)
     check(expiryEpochMs >= 0, 'Expiry should be positive')
-    check(devicePublicKey.length === 64 || devicePublicKey.length === 65, 'Bad public key')
+    check(
+        devicePublicKey.length === 64 || devicePublicKey.length === 65,
+        'Bad public key',
+    )
     const expiryBytes = bigintToUint8Array64(expiryEpochMs, 'littleEndian')
     const retVal = new Uint8Array(
         RIVER_SIG_HEADER.length + devicePublicKey.length + expiryBytes.length,
@@ -493,7 +559,10 @@ export function notificationServiceHash(
 
     // Concatenate all data and hash with web-compatible sha256
     const totalLength =
-        prefixBytes.length + userId.length + expirationBytes.length + challenge.length
+        prefixBytes.length +
+        userId.length +
+        expirationBytes.length +
+        challenge.length
     const data = new Uint8Array(totalLength)
     let offset = 0
     data.set(prefixBytes, offset)
@@ -517,7 +586,10 @@ export function appRegistryHash(
     check(userId.length === 20, 'User ID should be 20 bytes')
     check(challenge.length === 16, 'Challenge should be 16 bytes')
     const totalLength =
-        prefixBytes.length + userId.length + expirationBytes.length + challenge.length
+        prefixBytes.length +
+        userId.length +
+        expirationBytes.length +
+        challenge.length
     const data = new Uint8Array(totalLength)
     let offset = 0
     data.set(prefixBytes, offset)
@@ -553,7 +625,10 @@ export function riverVerifySignature(
     return secp256k1.verify(signature.slice(0, 64), hash, publicKey)
 }
 
-export function riverRecoverPubKey(hash: Uint8Array, signature: Uint8Array): Uint8Array {
+export function riverRecoverPubKey(
+    hash: Uint8Array,
+    signature: Uint8Array,
+): Uint8Array {
     checkHash(hash)
     checkSignature(signature)
     const rBytes = signature.slice(0, 32)
@@ -580,7 +655,9 @@ export function publicKeyToAddress(publicKey: Uint8Array): Uint8Array {
 export function publicKeyToUint8Array(publicKey: string): Uint8Array {
     // Uncompressed public key in string form should start with '0x04'.
     check(
-        typeof publicKey === 'string' && publicKey.startsWith('0x04') && publicKey.length === 132,
+        typeof publicKey === 'string' &&
+            publicKey.startsWith('0x04') &&
+            publicKey.length === 132,
         'Bad public key',
         Err.BAD_PUBLIC_KEY,
     )
@@ -592,6 +669,7 @@ const bytesToNumberBE = (bytes: Uint8Array): bigint => {
 }
 
 export function hexToNumber(hex: string) {
-    if (typeof hex !== 'string') throw new Error('hex string expected, got ' + typeof hex)
+    if (typeof hex !== 'string')
+        throw new Error('hex string expected, got ' + typeof hex)
     return BigInt(hex === '' ? '0' : `0x${hex}`)
 }

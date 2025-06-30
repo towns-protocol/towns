@@ -49,14 +49,15 @@ describe('EntitlementsCacheTests', () => {
             return Promise.resolve(new BooleanCacheResult(true))
         }
 
-        const { value, cacheHit } = await cache.executeUsingCache(new Key('key'), onMiss)
-        expect(value).toBe(true)
-        expect(cacheHit).toBe(false)
-
-        const { value: value2, cacheHit: cacheHit2 } = await cache.executeUsingCache(
+        const { value, cacheHit } = await cache.executeUsingCache(
             new Key('key'),
             onMiss,
         )
+        expect(value).toBe(true)
+        expect(cacheHit).toBe(false)
+
+        const { value: value2, cacheHit: cacheHit2 } =
+            await cache.executeUsingCache(new Key('key'), onMiss)
         expect(value2).toBe(true)
         expect(cacheHit2).toBe(true)
     })
@@ -71,14 +72,15 @@ describe('EntitlementsCacheTests', () => {
             return Promise.resolve(new BooleanCacheResult(false))
         }
 
-        const { value, cacheHit } = await cache.executeUsingCache(new Key('key'), onMiss)
-        expect(value).toBe(false)
-        expect(cacheHit).toBe(false)
-
-        const { value: value2, cacheHit: cacheHit2 } = await cache.executeUsingCache(
+        const { value, cacheHit } = await cache.executeUsingCache(
             new Key('key'),
             onMiss,
         )
+        expect(value).toBe(false)
+        expect(cacheHit).toBe(false)
+
+        const { value: value2, cacheHit: cacheHit2 } =
+            await cache.executeUsingCache(new Key('key'), onMiss)
         expect(value2).toBe(false)
         expect(cacheHit2).toBe(true)
     })
@@ -93,14 +95,15 @@ describe('EntitlementsCacheTests', () => {
             return Promise.resolve(new StringCacheResult('value'))
         }
 
-        const { value, cacheHit } = await cache.executeUsingCache(new Key('key'), onMiss)
-        expect(value).toBe('value')
-        expect(cacheHit).toBe(false)
-
-        const { value: value2, cacheHit: cacheHit2 } = await cache.executeUsingCache(
+        const { value, cacheHit } = await cache.executeUsingCache(
             new Key('key'),
             onMiss,
         )
+        expect(value).toBe('value')
+        expect(cacheHit).toBe(false)
+
+        const { value: value2, cacheHit: cacheHit2 } =
+            await cache.executeUsingCache(new Key('key'), onMiss)
         expect(value2).toBe('value')
         expect(cacheHit2).toBe(true)
     })
@@ -115,14 +118,15 @@ describe('EntitlementsCacheTests', () => {
             return Promise.resolve(new StringCacheResult(''))
         }
 
-        const { value, cacheHit } = await cache.executeUsingCache(new Key('key'), onMiss)
-        expect(value).toBe('')
-        expect(cacheHit).toBe(false)
-
-        const { value: value2, cacheHit: cacheHit2 } = await cache.executeUsingCache(
+        const { value, cacheHit } = await cache.executeUsingCache(
             new Key('key'),
             onMiss,
         )
+        expect(value).toBe('')
+        expect(cacheHit).toBe(false)
+
+        const { value: value2, cacheHit: cacheHit2 } =
+            await cache.executeUsingCache(new Key('key'), onMiss)
         expect(value2).toBe('')
         expect(cacheHit2).toBe(true)
     })
@@ -137,17 +141,18 @@ describe('EntitlementsCacheTests', () => {
             return Promise.resolve(new BooleanCacheResult(true))
         }
 
-        const { value, cacheHit } = await cache.executeUsingCache(new Key('key'), onMiss)
+        const { value, cacheHit } = await cache.executeUsingCache(
+            new Key('key'),
+            onMiss,
+        )
         expect(value).toBe(true)
         expect(cacheHit).toBe(false)
 
         // Wait 5 seconds for the positive auth cache to expire
         await new Promise((f) => setTimeout(f, 5000))
 
-        const { value: value2, cacheHit: cacheHit2 } = await cache.executeUsingCache(
-            new Key('key'),
-            onMiss,
-        )
+        const { value: value2, cacheHit: cacheHit2 } =
+            await cache.executeUsingCache(new Key('key'), onMiss)
         expect(value2).toBe(true)
         expect(cacheHit2).toBe(false)
     })
@@ -162,17 +167,18 @@ describe('EntitlementsCacheTests', () => {
             return Promise.resolve(new BooleanCacheResult(false))
         }
 
-        const { value, cacheHit } = await cache.executeUsingCache(new Key('key'), onMiss)
+        const { value, cacheHit } = await cache.executeUsingCache(
+            new Key('key'),
+            onMiss,
+        )
         expect(value).toBe(false)
         expect(cacheHit).toBe(false)
 
         // Wait 5 seconds for the positive auth cache to expire
         await new Promise((f) => setTimeout(f, 1000))
 
-        const { value: value2, cacheHit: cacheHit2 } = await cache.executeUsingCache(
-            new Key('key'),
-            onMiss,
-        )
+        const { value: value2, cacheHit: cacheHit2 } =
+            await cache.executeUsingCache(new Key('key'), onMiss)
         expect(value2).toBe(false)
         expect(cacheHit2).toBe(false)
     })

@@ -14,7 +14,10 @@ import { randomBytes } from '../../utils'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { deepCopy } from 'ethers/lib/utils'
 import { cloneDeep } from 'lodash-es'
-import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
+import {
+    RiverTimelineEvent,
+    TimelineEvent,
+} from '../../views/models/timelineTypes'
 
 const base_log = dlog('csb:test:transactions_Tip')
 const logError = dlogError('csb:test:transactions_Tip_error')
@@ -72,23 +75,27 @@ describe('transactions_Tip', () => {
         ])
 
         // before they can do anything on river, they need to be in a space
-        const { spaceId: sid, defaultChannelId: cid } = await bob.spaces.createSpace(
-            { spaceName: 'BlastOff_Tip' },
-            bobIdentity.signer,
-        )
+        const { spaceId: sid, defaultChannelId: cid } =
+            await bob.spaces.createSpace(
+                { spaceName: 'BlastOff_Tip' },
+                bobIdentity.signer,
+            )
         spaceId = sid
         defaultChannelId = cid
 
         await alice.spaces.joinSpace(spaceId, aliceIdentity.signer)
-        const channel = alice.spaces.getSpace(spaceId).getChannel(defaultChannelId)
+        const channel = alice.spaces
+            .getSpace(spaceId)
+            .getChannel(defaultChannelId)
         const { eventId } = await channel.sendMessage('hello bob')
         messageId = eventId
         log('bob and alice joined space', spaceId, defaultChannelId, messageId)
 
-        const aliceTokenId_ = await bob.riverConnection.spaceDapp.getTokenIdOfOwner(
-            spaceId,
-            aliceIdentity.rootWallet.address,
-        )
+        const aliceTokenId_ =
+            await bob.riverConnection.spaceDapp.getTokenIdOfOwner(
+                spaceId,
+                aliceIdentity.rootWallet.address,
+            )
         expect(aliceTokenId_).toBeDefined()
         aliceTokenId = aliceTokenId_!
 
@@ -113,7 +120,10 @@ describe('transactions_Tip', () => {
                 bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
             )!
         } catch (err) {
-            const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(spaceId, err)
+            const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(
+                spaceId,
+                err,
+            )
             logError('parsedError', parsedError)
             throw err
         }
@@ -167,16 +177,24 @@ describe('transactions_Tip', () => {
 
     test('bobSeesTipInUserStream', async () => {
         // get the user "stream" that is being synced by bob
-        const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
+        const stream = bob.riverConnection.client!.stream(
+            bob.riverConnection.client!.userStreamId!,
+        )
         if (!stream) throw new Error('no stream found')
         const tipEvent = await waitForValue(() => {
             const isUserBlockchainTransaction = (e: TimelineEvent) =>
                 e.content?.kind === RiverTimelineEvent.UserBlockchainTransaction
-            const tipEvents = stream.view.timeline.filter(isUserBlockchainTransaction)
+            const tipEvents = stream.view.timeline.filter(
+                isUserBlockchainTransaction,
+            )
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             // make it compile
-            if (!tip || tip.content?.kind !== RiverTimelineEvent.UserBlockchainTransaction)
+            if (
+                !tip ||
+                tip.content?.kind !==
+                    RiverTimelineEvent.UserBlockchainTransaction
+            )
                 throw new Error('no tip event found')
             return tip.content?.transaction
         })
@@ -184,7 +202,9 @@ describe('transactions_Tip', () => {
         // the view should have been updated with the tip
         expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(1n)
-        expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
+        expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(
+            undefined,
+        )
     })
 
     test('aliceSeesTipReceivedInUserStream', async () => {
@@ -195,21 +215,32 @@ describe('transactions_Tip', () => {
         if (!stream) throw new Error('no stream found')
         const tipEvent = await waitForValue(() => {
             const isUserReceivedBlockchainTransaction = (e: TimelineEvent) =>
-                e.content?.kind === RiverTimelineEvent.UserReceivedBlockchainTransaction
-            const tipEvents = stream.view.timeline.filter(isUserReceivedBlockchainTransaction)
+                e.content?.kind ===
+                RiverTimelineEvent.UserReceivedBlockchainTransaction
+            const tipEvents = stream.view.timeline.filter(
+                isUserReceivedBlockchainTransaction,
+            )
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             // make it compile
-            if (!tip || tip.content?.kind !== RiverTimelineEvent.UserReceivedBlockchainTransaction)
+            if (
+                !tip ||
+                tip.content?.kind !==
+                    RiverTimelineEvent.UserReceivedBlockchainTransaction
+            )
                 throw new Error('no tip event found')
             return tip.content
         })
         if (!tipEvent) throw new Error('no tip event found')
         expect(tipEvent.receivedTransaction.transaction?.receipt).toBeDefined()
-        expect(tipEvent?.receivedTransaction.transaction?.content?.case).toEqual('tip')
+        expect(
+            tipEvent?.receivedTransaction.transaction?.content?.case,
+        ).toEqual('tip')
         // the view should have been updated with the tip
         expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(1000n)
-        expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(1n)
+        expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(
+            1n,
+        )
     })
 
     test('bobSeesOnMessageInChannel', async () => {
@@ -219,7 +250,9 @@ describe('transactions_Tip', () => {
         const tipEvent = await waitForValue(() => {
             const isTipBlockchainTransaction = (e: TimelineEvent) =>
                 e.content?.kind === RiverTimelineEvent.TipEvent
-            const tipEvents = stream.view.timeline.filter(isTipBlockchainTransaction)
+            const tipEvents = stream.view.timeline.filter(
+                isTipBlockchainTransaction,
+            )
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
             // make it compile
@@ -235,13 +268,14 @@ describe('transactions_Tip', () => {
         expect(stream.view.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.view.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
         expect(
-            stream.view.membershipContent.joined.get(bobIdentity.rootWallet.address)?.tipsSent?.[
-                ETH_ADDRESS
-            ],
+            stream.view.membershipContent.joined.get(
+                bobIdentity.rootWallet.address,
+            )?.tipsSent?.[ETH_ADDRESS],
         ).toEqual(1000n)
         expect(
-            stream.view.membershipContent.joined.get(bobIdentity.rootWallet.address)
-                ?.tipsSentCount?.[ETH_ADDRESS],
+            stream.view.membershipContent.joined.get(
+                bobIdentity.rootWallet.address,
+            )?.tipsSentCount?.[ETH_ADDRESS],
         ).toEqual(1n)
     })
 
@@ -349,7 +383,9 @@ describe('transactions_Tip', () => {
         expect(stream.userContent.tipsSent[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.userContent.tipsReceived[ETH_ADDRESS]).toBeUndefined()
         expect(stream.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(1n)
-        expect(stream.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(undefined)
+        expect(stream.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(
+            undefined,
+        )
     })
 
     test('aliceSnapshot', async () => {
@@ -370,16 +406,24 @@ describe('transactions_Tip', () => {
 
     test('channelSnapshot', async () => {
         // force a snapshot of the channel "stream" that is being synced by bob
-        await bob.riverConnection.client!.debugForceMakeMiniblock(defaultChannelId, {
-            forceSnapshot: true,
-        })
+        await bob.riverConnection.client!.debugForceMakeMiniblock(
+            defaultChannelId,
+            {
+                forceSnapshot: true,
+            },
+        )
         // refetch the stream using getStream, make sure it parses the snapshot correctly
-        const stream = await bob.riverConnection.client!.getStream(defaultChannelId)
+        const stream =
+            await bob.riverConnection.client!.getStream(defaultChannelId)
         if (!stream) throw new Error('no stream found')
         expect(stream.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
-        const bobMember = stream.membershipContent.joined.get(bobIdentity.rootWallet.address)
-        const aliceMember = stream.membershipContent.joined.get(aliceIdentity.rootWallet.address)
+        const bobMember = stream.membershipContent.joined.get(
+            bobIdentity.rootWallet.address,
+        )
+        const aliceMember = stream.membershipContent.joined.get(
+            aliceIdentity.rootWallet.address,
+        )
         expect(bobMember?.tipsSent?.[ETH_ADDRESS]).toEqual(1000n)
         expect(bobMember?.tipsSentCount?.[ETH_ADDRESS]).toEqual(1n)
         expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(1000n)
@@ -422,13 +466,19 @@ describe('transactions_Tip', () => {
 
     test('bobSeesSecondTipInUserStream', async () => {
         // get the user "stream" that is being synced by bob
-        const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
+        const stream = bob.riverConnection.client!.stream(
+            bob.riverConnection.client!.userStreamId!,
+        )
         if (!stream) throw new Error('no stream found')
         // the view should have been updated with the tip
         await waitFor(() => {
             expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(2000n)
-            expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(2n)
-            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
+            expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(
+                2n,
+            )
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(
+                undefined,
+            )
         })
     })
 
@@ -440,8 +490,12 @@ describe('transactions_Tip', () => {
         if (!stream) throw new Error('no stream found')
         // the view should have been updated with the tip
         await waitFor(() => {
-            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(2000n)
-            expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(2n)
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(
+                2000n,
+            )
+            expect(
+                stream.view.userContent.tipsReceivedCount[ETH_ADDRESS],
+            ).toEqual(2n)
         })
     })
 })

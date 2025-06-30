@@ -1,4 +1,10 @@
-import { createTestClient, http, publicActions, walletActions, defineChain } from 'viem'
+import {
+    createTestClient,
+    http,
+    publicActions,
+    walletActions,
+    defineChain,
+} from 'viem'
 import { foundry } from 'viem/chains'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
@@ -25,7 +31,10 @@ export const foundryRiver = /*#__PURE__*/ defineChain({
     },
 })
 
-async function setBaseBalance(walletAddress: Address, balance: bigint): Promise<void> {
+async function setBaseBalance(
+    walletAddress: Address,
+    balance: bigint,
+): Promise<void> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -61,7 +70,10 @@ async function getBaseBalance(walletAddress: Address): Promise<bigint> {
     return balance
 }
 
-async function setRiverBalance(walletAddress: Address, balance: bigint): Promise<void> {
+async function setRiverBalance(
+    walletAddress: Address,
+    balance: bigint,
+): Promise<void> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({

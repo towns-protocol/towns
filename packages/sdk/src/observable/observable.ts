@@ -35,7 +35,11 @@ export class Observable<T> {
 
     subscribe(
         subscriber: (newValue: T, prevValue: T) => void,
-        opts: { fireImediately?: boolean; once?: boolean; condition?: (value: T) => boolean } = {},
+        opts: {
+            fireImediately?: boolean
+            once?: boolean
+            condition?: (value: T) => boolean
+        } = {},
     ): () => void {
         const nextId = this._nextId++
         const sub = {
@@ -85,7 +89,9 @@ export class Observable<T> {
         const mappedObservable = new Observable(fn(this.value, this.value))
 
         mappedObservable._dispose = this.subscribe((newValue, prevValue) => {
-            mappedObservable.setValue(fn(newValue, prevValue, mappedObservable.value))
+            mappedObservable.setValue(
+                fn(newValue, prevValue, mappedObservable.value),
+            )
         })
 
         return mappedObservable

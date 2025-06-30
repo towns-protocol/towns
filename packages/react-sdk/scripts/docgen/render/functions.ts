@@ -56,7 +56,11 @@ function renderImports(options: { module: string }) {
     const { module } = options
     const content = [
         '## Imports',
-        ['```ts', `import { ${module} } from '@towns-protocol/react-sdk'`, '```'].join('\n'),
+        [
+            '```ts',
+            `import { ${module} } from '@towns-protocol/react-sdk'`,
+            '```',
+        ].join('\n'),
     ]
     return content.join('\n\n')
 }
@@ -79,7 +83,12 @@ function renderSignature(options: {
     overloads: string[]
 }) {
     const { data, dataLookup, overloads } = options
-    const { displayName, parameters = [], returnType, typeParameters = [] } = data
+    const {
+        displayName,
+        parameters = [],
+        returnType,
+        typeParameters = [],
+    } = data
 
     const content = ['## Definition']
 
@@ -155,7 +164,9 @@ function renderParameters(options: {
         const link = getTypeLink({ dataLookup, type: parameter })
 
         const c = `\`${type}\``
-        const listContent = link ? [`- **Type:** [${c}](${link})`] : [`- **Type:** ${c}`]
+        const listContent = link
+            ? [`- **Type:** [${c}](${link})`]
+            : [`- **Type:** ${c}`]
         if (parameter.optional) {
             listContent.push('- **Optional**')
         }
@@ -184,7 +195,9 @@ function renderProperties(options: {
     const contentMap = new Map<string, string>()
 
     function render(node: ts.TypeNode) {
-        const properties = node.getDescendantsOfKind(ts.SyntaxKind.PropertySignature)
+        const properties = node.getDescendantsOfKind(
+            ts.SyntaxKind.PropertySignature,
+        )
         for (const property of properties) {
             const propertyName = property.getName()
             const typeNode = property.getTypeNode()
@@ -195,7 +208,10 @@ function renderProperties(options: {
 
             let type = typeNode
                 ?.getType()
-                ?.getText(undefined, ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope)
+                ?.getText(
+                    undefined,
+                    ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope,
+                )
             if (type === 'any') {
                 type = typeNode?.getText()
             }
@@ -209,7 +225,9 @@ function renderProperties(options: {
             const tsDoc = getTsDoc(comment, apiItem)
 
             if (type) {
-                content.push(`- **Type:** \`${type.replaceAll('`', '').replace(/(<.*>)/, '')}\``)
+                content.push(
+                    `- **Type:** \`${type.replaceAll('`', '').replace(/(<.*>)/, '')}\``,
+                )
             }
             if (tsDoc?.defaultValue) {
                 content.push(`- **Default:** \`${tsDoc.defaultValue}\``)
@@ -227,7 +245,9 @@ function renderProperties(options: {
         }
 
         // Expand sibling type references
-        const reference = node.getFirstDescendantByKind(ts.SyntaxKind.TypeReference)
+        const reference = node.getFirstDescendantByKind(
+            ts.SyntaxKind.TypeReference,
+        )
         const isChild = reference
             ? properties.some((x) => x.getDescendants().includes(reference))
             : false
@@ -237,13 +257,16 @@ function renderProperties(options: {
 
         const references = [
             reference,
-            ...(reference?.getNextSiblings().filter((x) => x.isKind(ts.SyntaxKind.TypeReference)) ??
-                []),
+            ...(reference
+                ?.getNextSiblings()
+                .filter((x) => x.isKind(ts.SyntaxKind.TypeReference)) ?? []),
         ]
 
         const nodes = references
             .map((x) => {
-                const typeName = x?.asKind(ts.SyntaxKind.TypeReference)?.getTypeName()
+                const typeName = x
+                    ?.asKind(ts.SyntaxKind.TypeReference)
+                    ?.getTypeName()
 
                 const identifier = typeName?.isKind(ts.SyntaxKind.QualifiedName)
                     ? typeName.getRight()
@@ -272,7 +295,9 @@ function renderProperties(options: {
     render(node)
 
     // sort properties alphabetically
-    const contents = Array.from(contentMap.entries()).sort(([a], [b]) => (a > b ? 1 : -1))
+    const contents = Array.from(contentMap.entries()).sort(([a], [b]) =>
+        a > b ? 1 : -1,
+    )
 
     return contents.map(([, content]) => content).join('\n\n')
 }
@@ -304,7 +329,8 @@ function resolveInlineParameterTypeForOverloads(options: {
 }) {
     const { dataLookup, index, overloads, parameter } = options
 
-    const inlineParameterType = parameter.type.startsWith('{') && parameter.type.endsWith('}')
+    const inlineParameterType =
+        parameter.type.startsWith('{') && parameter.type.endsWith('}')
     if (overloads.length && inlineParameterType) {
         const overload = overloads.find(
             (x) => dataLookup[x]?.parameters?.[index]?.type !== parameter.type,
@@ -330,7 +356,9 @@ function resolveReturnTypeForOverloads(options: {
     const { dataLookup, overloads, returnType } = options
 
     if (overloads.length && returnType) {
-        const overload = overloads.find((x) => dataLookup[x]?.returnType?.type !== returnType.type)
+        const overload = overloads.find(
+            (x) => dataLookup[x]?.returnType?.type !== returnType.type,
+        )
         if (overload) {
             return (
                 dataLookup[overload]?.returnType?.type.replace(
@@ -359,9 +387,17 @@ function extractParameterTypeNode(
     parameter: NonNullable<Data['parameters']>[number],
     parameterDeclarations: ts.ParameterDeclaration[],
 ) {
-    const declaration = parameterDeclarations.find((x) => x.getName() === parameter.name)
-    const reference = declaration?.getDescendantsOfKind(ts.SyntaxKind.TypeReference).at(0)
-    const typeAliasDeclaration = reference?.getTypeName().getSymbol()?.getDeclarations().at(0)
+    const declaration = parameterDeclarations.find(
+        (x) => x.getName() === parameter.name,
+    )
+    const reference = declaration
+        ?.getDescendantsOfKind(ts.SyntaxKind.TypeReference)
+        .at(0)
+    const typeAliasDeclaration = reference
+        ?.getTypeName()
+        .getSymbol()
+        ?.getDeclarations()
+        .at(0)
     if (!typeAliasDeclaration?.isKind(ts.SyntaxKind.TypeAliasDeclaration)) {
         return
     }
@@ -373,7 +409,10 @@ function getTsDoc(comment: string | undefined, apiItem: model.ApiItem) {
         return
     }
     const context = tsdocParser.parseString(`/**${comment}*/`)
-    return processDocComment(context.docComment, createResolveDeclarationReference(apiItem))
+    return processDocComment(
+        context.docComment,
+        createResolveDeclarationReference(apiItem),
+    )
 }
 
 function getTypeLink(options: {

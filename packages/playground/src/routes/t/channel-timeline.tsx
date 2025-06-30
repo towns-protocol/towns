@@ -1,5 +1,10 @@
 import { useParams } from 'react-router-dom'
-import { useChannel, useSyncAgent, useThreads, useTimeline } from '@towns-protocol/react-sdk'
+import {
+    useChannel,
+    useSyncAgent,
+    useThreads,
+    useTimeline,
+} from '@towns-protocol/react-sdk'
 import { useState } from 'react'
 import { Users } from 'lucide-react'
 import { Timeline } from '@/components/blocks/timeline'
@@ -39,7 +44,8 @@ export const ChannelTimelineRoute = () => {
         <ChannelProvider channelId={channelId}>
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">
-                    Channel Timeline {channel.metadata?.name ? `#${channel.metadata.name}` : ''}
+                    Channel Timeline{' '}
+                    {channel.metadata?.name ? `#${channel.metadata.name}` : ''}
                 </h2>
                 {channelId && channel.isJoined && (
                     <Button
@@ -61,7 +67,11 @@ export const ChannelTimelineRoute = () => {
                         {isJoining ? 'Joining...' : 'Join Channel'}
                     </button>
                 ) : (
-                    <Timeline streamId={channelId!} events={events} threads={threads} />
+                    <Timeline
+                        streamId={channelId!}
+                        events={events}
+                        threads={threads}
+                    />
                 )}
             </>
             {channelId && (

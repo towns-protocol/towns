@@ -9,7 +9,8 @@ export const DmTimelineRoute = () => {
     return (
         <>
             <h2 className="text-2xl font-bold">
-                Direct Message Timeline {dm.metadata?.name ? `#${dm.metadata.name}` : ''}
+                Direct Message Timeline{' '}
+                {dm.metadata?.name ? `#${dm.metadata.name}` : ''}
             </h2>
             <Timeline events={timeline} streamId={dmStreamId!} />
         </>

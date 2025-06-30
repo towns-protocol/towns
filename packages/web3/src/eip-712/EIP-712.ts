@@ -1,5 +1,10 @@
 import { BigNumber, TypedDataDomain, TypedDataField } from 'ethers'
-import { defaultAbiCoder, keccak256, solidityPack, toUtf8Bytes } from 'ethers/lib/utils'
+import {
+    defaultAbiCoder,
+    keccak256,
+    solidityPack,
+    toUtf8Bytes,
+} from 'ethers/lib/utils'
 import { Address } from '../types/ContractTypes'
 
 /**
@@ -60,18 +65,30 @@ export function getDomainSeparator(domain: TypedDataDomain): string {
     // Encode the data
     const encodedData = defaultAbiCoder.encode(
         ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
-        [DOMAIN_TYPE_HASH, nameHash, versionHash, domain.chainId, domain.verifyingContract],
+        [
+            DOMAIN_TYPE_HASH,
+            nameHash,
+            versionHash,
+            domain.chainId,
+            domain.verifyingContract,
+        ],
     )
 
     // Compute the keccak256 hash of the encoded data
     return keccak256(encodedData)
 }
 
-export function toLinkedWalletHash(message: string, address: string, nonce: BigNumber): string {
+export function toLinkedWalletHash(
+    message: string,
+    address: string,
+    nonce: BigNumber,
+): string {
     // this hash should match _LINKED_WALLET_TYPEHASH in
     // river/contracts/src/factory/facets/wallet-link/WalletLinkBase.sol
     const LINKED_WALLET_TYPE_HASH = keccak256(
-        toUtf8Bytes('LinkedWallet(string message,address userID,uint256 nonce)'),
+        toUtf8Bytes(
+            'LinkedWallet(string message,address userID,uint256 nonce)',
+        ),
     )
     const structHash = keccak256(
         defaultAbiCoder.encode(
@@ -91,7 +108,10 @@ export function toLinkedWalletHash(message: string, address: string, nonce: BigN
  *
  * See {ECDSA-recover}.
  */
-export function toTypedDataHash(domain: TypedDataDomain, structHash: string): string {
+export function toTypedDataHash(
+    domain: TypedDataDomain,
+    structHash: string,
+): string {
     const domainSeparator = getDomainSeparator(domain)
     const encodedData = solidityPack(
         ['bytes2', 'bytes32', 'bytes32'],

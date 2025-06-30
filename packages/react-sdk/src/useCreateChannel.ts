@@ -15,8 +15,15 @@ export const useCreateChannel = (
     config?: ActionConfig<Space['createChannel']>,
 ) => {
     const sync = useSyncAgent()
-    const space = useMemo(() => sync.spaces.getSpace(spaceId), [spaceId, sync.spaces])
-    const { action: createChannel, ...rest } = useAction(space, 'createChannel', config)
+    const space = useMemo(
+        () => sync.spaces.getSpace(spaceId),
+        [spaceId, sync.spaces],
+    )
+    const { action: createChannel, ...rest } = useAction(
+        space,
+        'createChannel',
+        config,
+    )
 
     return {
         /**

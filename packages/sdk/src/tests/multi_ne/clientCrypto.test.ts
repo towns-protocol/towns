@@ -30,7 +30,8 @@ describe('clientCrypto', () => {
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         expect(
-            alicesClient.userDeviceKey().deviceKey !== bobsClient.userDeviceKey().deviceKey,
+            alicesClient.userDeviceKey().deviceKey !==
+                bobsClient.userDeviceKey().deviceKey,
         ).toBe(true)
         alicesClient.startSync()
         const keys = create(SessionKeysSchema, { keys: ['hi!'] })
@@ -56,7 +57,8 @@ describe('clientCrypto', () => {
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         expect(
-            alicesClient.userDeviceKey().deviceKey !== bobsClient.userDeviceKey().deviceKey,
+            alicesClient.userDeviceKey().deviceKey !==
+                bobsClient.userDeviceKey().deviceKey,
         ).toBe(true)
         alicesClient.startSync()
 
@@ -88,7 +90,8 @@ describe('clientCrypto', () => {
 
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
-        let hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
+        let hasSession =
+            await bobsClient.cryptoBackend.hasHybridSession(streamId)
         expect(hasSession).toBe(false)
 
         await bobsClient.cryptoBackend.ensureOutboundSession(

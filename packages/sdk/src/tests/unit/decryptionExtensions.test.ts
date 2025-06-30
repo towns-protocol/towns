@@ -29,7 +29,12 @@ import {
     GroupEncryptionCrypto,
     IGroupEncryptionClient,
 } from '@towns-protocol/encryption'
-import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@towns-protocol/dlog'
+import {
+    bin_fromHexString,
+    bin_toHexString,
+    dlog,
+    shortenHexString,
+} from '@towns-protocol/dlog'
 
 import EventEmitter from 'events'
 import { Permission } from '@towns-protocol/web3'
@@ -51,14 +56,10 @@ describe.concurrent('TestDecryptionExtensions', () => {
             const aliceUserAddress = stringToArray(alice)
             const bob = genUserId('Bob')
             const bobsPlaintext = "bob's plaintext"
-            const { client: aliceClient, decryptionExtension: aliceDex } = await createCryptoMocks(
-                alice,
-                clientDiscoveryService,
-            )
-            const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
-                bob,
-                clientDiscoveryService,
-            )
+            const { client: aliceClient, decryptionExtension: aliceDex } =
+                await createCryptoMocks(alice, clientDiscoveryService)
+            const { crypto: bobCrypto, decryptionExtension: bobDex } =
+                await createCryptoMocks(bob, clientDiscoveryService)
 
             // act
             aliceDex.start()
@@ -70,11 +71,12 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 new TextEncoder().encode(bobsPlaintext),
                 algorithm,
             )
-            const encryptedData_V0 = await bobCrypto.encryptGroupEvent_deprecated_v0(
-                streamId,
-                bobsPlaintext,
-                algorithm,
-            )
+            const encryptedData_V0 =
+                await bobCrypto.encryptGroupEvent_deprecated_v0(
+                    streamId,
+                    bobsPlaintext,
+                    algorithm,
+                )
             const sessionId = encryptedData.sessionId
             // alice doesn't have the session key
             // alice sends a key solicitation request
@@ -84,7 +86,8 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 isNewDevice: true,
                 sessionIds: [sessionId],
             }
-            const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
+            const keySolicitation =
+                aliceClient.sendKeySolicitation(keySolicitationData)
             // pretend bob receives a key solicitation request from alice, and starts processing it.
             await bobDex.handleKeySolicitationRequest(
                 streamId,
@@ -107,8 +110,14 @@ describe.concurrent('TestDecryptionExtensions', () => {
             // after alice gets the session key,
 
             // try to decrypt the message
-            const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
-            const decrypted_V0 = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData_V0)
+            const decrypted = await aliceDex.crypto.decryptGroupEvent(
+                streamId,
+                encryptedData,
+            )
+            const decrypted_V0 = await aliceDex.crypto.decryptGroupEvent(
+                streamId,
+                encryptedData_V0,
+            )
 
             if (typeof decrypted === 'string') {
                 throw new Error('decrypted is a string') // v1 should be bytes
@@ -143,10 +152,8 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 alice,
                 clientDiscoveryService,
             )
-            const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
-                bob,
-                clientDiscoveryService,
-            )
+            const { crypto: bobCrypto, decryptionExtension: bobDex } =
+                await createCryptoMocks(bob, clientDiscoveryService)
 
             // act
             aliceDex.start()
@@ -158,11 +165,12 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 new TextEncoder().encode(bobsPlaintext),
                 algorithm,
             )
-            const encryptedData_V0 = await bobCrypto.encryptGroupEvent_deprecated_v0(
-                streamId,
-                bobsPlaintext,
-                algorithm,
-            )
+            const encryptedData_V0 =
+                await bobCrypto.encryptGroupEvent_deprecated_v0(
+                    streamId,
+                    bobsPlaintext,
+                    algorithm,
+                )
             // alice doesn't have the session key
             // alice imports the keys exported by bob
             const roomKeys = await bobDex.crypto.exportRoomKeys()
@@ -172,13 +180,19 @@ describe.concurrent('TestDecryptionExtensions', () => {
 
             // after alice gets the session key,
             // try to decrypt the message
-            const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
+            const decrypted = await aliceDex.crypto.decryptGroupEvent(
+                streamId,
+                encryptedData,
+            )
 
             if (typeof decrypted === 'string') {
                 throw new Error('decrypted is a string') // v1 should be bytes
             }
 
-            const decrypted_V0 = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData_V0)
+            const decrypted_V0 = await aliceDex.crypto.decryptGroupEvent(
+                streamId,
+                encryptedData_V0,
+            )
 
             if (typeof decrypted_V0 !== 'string') {
                 throw new Error('decrypted_V0 is a string') // v0 should be bytes
@@ -208,7 +222,9 @@ interface MicroTasks {
 
 // given a device key, resolve the key solicitation request
 interface SharedKeysResponses {
-    [deviceKey: string]: (value: GroupSessionsData | PromiseLike<GroupSessionsData>) => void
+    [deviceKey: string]: (
+        value: GroupSessionsData | PromiseLike<GroupSessionsData>,
+    ) => void
 }
 
 async function createCryptoMocks(
@@ -285,7 +301,15 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
     ) {
         const upToDateStreams = new Set<string>()
         const logId = shortenHexString(userId)
-        super(client, crypto, entitlementDelegate, userDevice, userId, upToDateStreams, logId)
+        super(
+            client,
+            crypto,
+            entitlementDelegate,
+            userDevice,
+            userId,
+            upToDateStreams,
+            logId,
+        )
         this._upToDateStreams = upToDateStreams
         this.client = client
         this._onStopFn = () => {
@@ -321,7 +345,9 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return p
     }
 
-    public ackNewGroupSession(session: UserInboxPayload_GroupEncryptionSessions): Promise<void> {
+    public ackNewGroupSession(
+        session: UserInboxPayload_GroupEncryptionSessions,
+    ): Promise<void> {
         log('newGroupSessionsDone', session.streamId)
         return Promise.resolve()
     }
@@ -360,7 +386,10 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return this._upToDateStreams.has(streamId)
     }
 
-    public isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string } {
+    public isValidEvent(item: KeySolicitationItem): {
+        isValid: boolean
+        reason?: string
+    } {
         log('isValidEvent', item)
         return { isValid: true }
     }
@@ -385,12 +414,18 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return []
     }
 
-    public isUserEntitledToKeyExchange(_streamId: string, _userId: string): Promise<boolean> {
+    public isUserEntitledToKeyExchange(
+        _streamId: string,
+        _userId: string,
+    ): Promise<boolean> {
         log('isUserEntitledToKeyExchange')
         return Promise.resolve(true)
     }
 
-    public onDecryptionError(_item: EncryptedContentItem, _err: DecryptionSessionError): void {
+    public onDecryptionError(
+        _item: EncryptedContentItem,
+        _err: DecryptionSessionError,
+    ): void {
         log('onDecryptionError', 'item:', _item, 'err:', _err)
     }
 
@@ -406,7 +441,9 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return Promise.resolve({})
     }
 
-    public encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void> {
+    public encryptAndShareGroupSessions(
+        args: GroupSessionsData,
+    ): Promise<void> {
         log('encryptAndSendToGroup')
         return this.client.encryptAndSendMock(args)
     }
@@ -473,17 +510,24 @@ class MockGroupEncryptionClient
         return Promise.resolve()
     }
 
-    public getDevicesInStream(_streamId: string): Promise<UserDeviceCollection> {
+    public getDevicesInStream(
+        _streamId: string,
+    ): Promise<UserDeviceCollection> {
         return Promise.resolve({})
     }
 
     public getMiniblockInfo(
         _streamId: string,
     ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> {
-        return Promise.resolve({ miniblockNum: 0n, miniblockHash: new Uint8Array() })
+        return Promise.resolve({
+            miniblockNum: 0n,
+            miniblockHash: new Uint8Array(),
+        })
     }
 
-    public sendKeySolicitation(args: KeySolicitationContent): Promise<GroupSessionsData> {
+    public sendKeySolicitation(
+        args: KeySolicitationContent,
+    ): Promise<GroupSessionsData> {
         // assume the request is sent
         return new Promise((resolve) => {
             // resolve when the response is received
@@ -500,29 +544,36 @@ class MockGroupEncryptionClient
         // prepare the common parts of the payload
         const streamIdBytes = streamIdToBytes(streamId)
         const sessionIds = sessions.map((s) => s.sessionId)
-        const payload = toJsonString(SessionKeysSchema, makeSessionKeys(sessions))
+        const payload = toJsonString(
+            SessionKeysSchema,
+            makeSessionKeys(sessions),
+        )
 
         // encrypt and send the payload to each client
         const otherClients = Object.values(this.clientDiscoveryService).filter(
             (c) => c.userDevice?.deviceKey != this.userDevice?.deviceKey,
         )
         const promises = otherClients.map(async (c) => {
-            const cipertext = await this.crypto?.encryptWithDeviceKeys(payload, [c.userDevice!])
-            const groupSession: UserInboxPayload_GroupEncryptionSessions = create(
-                UserInboxPayload_GroupEncryptionSessionsSchema,
-                {
+            const cipertext = await this.crypto?.encryptWithDeviceKeys(
+                payload,
+                [c.userDevice!],
+            )
+            const groupSession: UserInboxPayload_GroupEncryptionSessions =
+                create(UserInboxPayload_GroupEncryptionSessionsSchema, {
                     streamId: streamIdBytes,
                     senderKey: this.userDevice?.deviceKey,
                     sessionIds: sessionIds,
                     ciphertexts: cipertext,
                     algorithm: args.algorithm,
-                },
-            )
+                })
             // pretend sending the payload to the client
             // ....
             // pretend receiving the response
             // trigger a new group session processing
-            await c.decryptionExtensions?.newGroupSessions(groupSession, this.userDevice!.deviceKey)
+            await c.decryptionExtensions?.newGroupSessions(
+                groupSession,
+                this.userDevice!.deviceKey,
+            )
             await c.resolveGroupSessionResponse(args)
         })
 
@@ -531,7 +582,8 @@ class MockGroupEncryptionClient
 
     public resolveGroupSessionResponse(args: GroupSessionsData): Promise<void> {
         // fake receiving the response
-        const resolve = this.shareKeysResponses[args.item.solicitation.deviceKey]
+        const resolve =
+            this.shareKeysResponses[args.item.solicitation.deviceKey]
         if (resolve) {
             resolve(args)
         }

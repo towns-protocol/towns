@@ -11,7 +11,9 @@ import {
 } from './index'
 import { create } from '@bufbuild/protobuf'
 
-const testData = new TextEncoder().encode('Hello, World! This is a test message.')
+const testData = new TextEncoder().encode(
+    'Hello, World! This is a test message.',
+)
 const testString = 'Hello, World!'
 const testBase64 = 'SGVsbG8sIFdvcmxkIQ=='
 const testKeyPhrase = 'test-passphrase-123'
@@ -108,13 +110,17 @@ describe('Crypto Functions', () => {
 
         test('encryptAESGCM should throw on invalid key length', async () => {
             const shortKey = new Uint8Array(16) // Too short
-            await expect(encryptAESGCM(testData, shortKey)).rejects.toThrow('Invalid key length')
+            await expect(encryptAESGCM(testData, shortKey)).rejects.toThrow(
+                'Invalid key length',
+            )
         })
 
         test('encryptAESGCM should throw on invalid IV length', async () => {
             const key = new Uint8Array(32)
             const shortIV = new Uint8Array(8) // Too short
-            await expect(encryptAESGCM(testData, key, shortIV)).rejects.toThrow('Invalid IV length')
+            await expect(encryptAESGCM(testData, key, shortIV)).rejects.toThrow(
+                'Invalid IV length',
+            )
         })
     })
 
@@ -129,7 +135,11 @@ describe('Crypto Functions', () => {
         test('decryptAESGCM should decrypt base64 encoded data', async () => {
             const { ciphertext, iv, secretKey } = await encryptAESGCM(testData)
             const base64Ciphertext = uint8ArrayToBase64(ciphertext)
-            const decrypted = await decryptAESGCM(base64Ciphertext, secretKey, iv)
+            const decrypted = await decryptAESGCM(
+                base64Ciphertext,
+                secretKey,
+                iv,
+            )
 
             expect(decrypted).toEqual(testData)
         })
@@ -138,18 +148,18 @@ describe('Crypto Functions', () => {
             const { ciphertext, iv } = await encryptAESGCM(testData)
             const shortKey = new Uint8Array(16)
 
-            await expect(decryptAESGCM(ciphertext, shortKey, iv)).rejects.toThrow(
-                'Invalid key length',
-            )
+            await expect(
+                decryptAESGCM(ciphertext, shortKey, iv),
+            ).rejects.toThrow('Invalid key length')
         })
 
         test('decryptAESGCM should throw on invalid IV length', async () => {
             const { ciphertext, secretKey } = await encryptAESGCM(testData)
             const shortIV = new Uint8Array(8)
 
-            await expect(decryptAESGCM(ciphertext, secretKey, shortIV)).rejects.toThrow(
-                'Invalid IV length',
-            )
+            await expect(
+                decryptAESGCM(ciphertext, secretKey, shortIV),
+            ).rejects.toThrow('Invalid IV length')
         })
 
         test('decryptAESGCM should throw on tampered ciphertext', async () => {
@@ -157,7 +167,9 @@ describe('Crypto Functions', () => {
             const tamperedCiphertext = new Uint8Array(ciphertext)
             tamperedCiphertext[0] = tamperedCiphertext[0] ^ 1 // Flip a bit
 
-            await expect(decryptAESGCM(tamperedCiphertext, secretKey, iv)).rejects.toThrow()
+            await expect(
+                decryptAESGCM(tamperedCiphertext, secretKey, iv),
+            ).rejects.toThrow()
         })
     })
 
@@ -171,7 +183,10 @@ describe('Crypto Functions', () => {
                 ciphertext: uint8ArrayToBase64(ciphertext),
             })
 
-            const decrypted = await decryptDerivedAESGCM(testKeyPhrase, encryptedData)
+            const decrypted = await decryptDerivedAESGCM(
+                testKeyPhrase,
+                encryptedData,
+            )
             expect(decrypted).toEqual(testData)
         })
 
@@ -181,9 +196,9 @@ describe('Crypto Functions', () => {
                 ciphertext: 'dummy-data',
             })
 
-            await expect(decryptDerivedAESGCM(testKeyPhrase, encryptedData)).rejects.toThrow(
-                'algorithm not implemented',
-            )
+            await expect(
+                decryptDerivedAESGCM(testKeyPhrase, encryptedData),
+            ).rejects.toThrow('algorithm not implemented')
         })
     })
 
@@ -192,15 +207,20 @@ describe('Crypto Functions', () => {
             const originalData = new TextEncoder().encode(
                 'This is a comprehensive test message with various characters: !@#$%^&*()_+{}[]|:;<>?,./`~',
             )
-            const { ciphertext, iv, secretKey } = await encryptAESGCM(originalData)
+            const { ciphertext, iv, secretKey } =
+                await encryptAESGCM(originalData)
             const decrypted = await decryptAESGCM(ciphertext, secretKey, iv)
 
             expect(decrypted).toEqual(originalData)
-            expect(new TextDecoder().decode(decrypted)).toBe(new TextDecoder().decode(originalData))
+            expect(new TextDecoder().decode(decrypted)).toBe(
+                new TextDecoder().decode(originalData),
+            )
         })
 
         test('derived key encryption/decryption cycle should preserve data', async () => {
-            const originalData = new TextEncoder().encode('Test message for derived key encryption')
+            const originalData = new TextEncoder().encode(
+                'Test message for derived key encryption',
+            )
             const keyPhrase = 'my-secret-passphrase-12345'
 
             const { key, iv } = await deriveKeyAndIV(keyPhrase)
@@ -211,7 +231,10 @@ describe('Crypto Functions', () => {
                 ciphertext: uint8ArrayToBase64(ciphertext),
             })
 
-            const decrypted = await decryptDerivedAESGCM(keyPhrase, encryptedData)
+            const decrypted = await decryptDerivedAESGCM(
+                keyPhrase,
+                encryptedData,
+            )
             expect(decrypted).toEqual(originalData)
         })
     })
@@ -233,7 +256,8 @@ describe('Crypto Functions', () => {
                 binaryData[i] = i
             }
 
-            const { ciphertext, iv, secretKey } = await encryptAESGCM(binaryData)
+            const { ciphertext, iv, secretKey } =
+                await encryptAESGCM(binaryData)
             const decrypted = await decryptAESGCM(ciphertext, secretKey, iv)
 
             expect(decrypted).toEqual(binaryData)
@@ -247,7 +271,8 @@ describe('Crypto Functions', () => {
             expect(iv.length).toBe(12)
 
             // Should be deterministic
-            const { key: key2, iv: iv2 } = await deriveKeyAndIV(unicodeKeyPhrase)
+            const { key: key2, iv: iv2 } =
+                await deriveKeyAndIV(unicodeKeyPhrase)
             expect(key).toEqual(key2)
             expect(iv).toEqual(iv2)
         })

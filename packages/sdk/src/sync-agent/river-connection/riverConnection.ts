@@ -4,11 +4,17 @@ import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
 import { check, dlogger, shortenHexString } from '@towns-protocol/dlog'
 import { PromiseQueue } from '../utils/promiseQueue'
-import { CryptoStore, type EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
+import {
+    CryptoStore,
+    type EncryptionDeviceInitOpts,
+} from '@towns-protocol/encryption'
 import { EntitlementsDelegate } from '../../decryptionExtensions'
 import { Client, ClientOptions } from '../../client'
 import { SignerContext } from '../../signerContext'
-import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../observable/persistedObservable'
 import { userIdFromAddress } from '../../id'
 import { TransactionalClient } from './models/transactionalClient'
 import { Observable } from '../../observable/observable'
@@ -59,9 +65,15 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         public clientParams: ClientParams,
     ) {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
-        const logId = this.clientParams.opts?.logId ?? shortenHexString(this.userId)
+        const logId =
+            this.clientParams.opts?.logId ?? shortenHexString(this.userId)
         this.logger = dlogger(`csb:rconn:${logId}`)
-        this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId, logId)
+        this.riverChain = new RiverChain(
+            store,
+            riverRegistryDapp,
+            this.userId,
+            logId,
+        )
     }
 
     protected override onLoaded() {
@@ -112,7 +124,9 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
     }
 
     withStream(streamId: string): {
-        call: <T>(fn: (client: Client, stream: Stream) => Promise<T>) => Promise<T>
+        call: <T>(
+            fn: (client: Client, stream: Stream) => Promise<T>,
+        ) => Promise<T>
     } {
         return {
             call: (fn) => {
@@ -124,7 +138,10 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         }
     }
 
-    callWithStream<T>(streamId: string, fn: (client: Client, stream: Stream) => Promise<T>) {
+    callWithStream<T>(
+        streamId: string,
+        fn: (client: Client, stream: Stream) => Promise<T>,
+    ) {
         return this.withStream(streamId).call(fn)
     }
 
@@ -141,7 +158,10 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
 
         if (this.client !== undefined) {
             // this is wired up to be reactive to changes in the urls
-            this.logger.log('RiverConnection: rpc urls changed, client already set', urls)
+            this.logger.log(
+                'RiverConnection: rpc urls changed, client already set',
+                urls,
+            )
             return
         }
         if (!urls) {
@@ -187,8 +207,14 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
     }
 
     private async loginWithRetries() {
-        check(isDefined(this.client), 'riverConnection::loginWithRetries client is not defined')
-        this.logger.info('login', { authStatus: this.authStatus.value, promise: this.loginPromise })
+        check(
+            isDefined(this.client),
+            'riverConnection::loginWithRetries client is not defined',
+        )
+        this.logger.info('login', {
+            authStatus: this.authStatus.value,
+            promise: this.loginPromise,
+        })
         if (this.loginPromise) {
             this.loginPromise.context.cancelled = true
             await this.loginPromise.promise
@@ -215,7 +241,8 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                     const client = this.client
                     await client.initializeUser({
                         spaceId: this.newUserMetadata?.spaceId,
-                        encryptionDeviceInit: this.clientParams.encryptionDevice,
+                        encryptionDeviceInit:
+                            this.clientParams.encryptionDevice,
                     })
                     this.logger.info('user initialized')
                     client.startSync()
@@ -255,7 +282,9 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                         const retryDelay = getRetryDelay(retryCount)
                         this.logger.info('retrying', { retryDelay, retryCount })
                         // sleep
-                        await new Promise((resolve) => setTimeout(resolve, retryDelay))
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, retryDelay),
+                        )
                     }
                 }
             }

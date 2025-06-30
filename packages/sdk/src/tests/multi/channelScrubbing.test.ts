@@ -37,32 +37,64 @@ describe('channelScrubbing', () => {
 
         // link wallets
         await Promise.all([
-            linkWallets(aliceSpaceDapp, aliceProvider.wallet, aliceLinkedWallet),
-            linkWallets(carolSpaceDapp, carolProvider.wallet, carolLinkedWallet),
+            linkWallets(
+                aliceSpaceDapp,
+                aliceProvider.wallet,
+                aliceLinkedWallet,
+            ),
+            linkWallets(
+                carolSpaceDapp,
+                carolProvider.wallet,
+                carolLinkedWallet,
+            ),
         ])
         // Mint the needed asset to Alice and Carol's linked wallets
         log('Minting an NFT to alices linked wallet')
         await Promise.all([
-            TestERC721.publicMint(TestNftName, aliceLinkedWallet.address as Address),
-            TestERC721.publicMint(TestNftName, carolLinkedWallet.address as Address),
+            TestERC721.publicMint(
+                TestNftName,
+                aliceLinkedWallet.address as Address,
+            ),
+            TestERC721.publicMint(
+                TestNftName,
+                carolLinkedWallet.address as Address,
+            ),
         ])
 
         // Join alice to the channel based on her linked wallet credentials
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            alice,
+            aliceSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
-        await unlinkWallet(aliceSpaceDapp, aliceProvider.wallet, aliceLinkedWallet)
+        await unlinkWallet(
+            aliceSpaceDapp,
+            aliceProvider.wallet,
+            aliceLinkedWallet,
+        )
 
         // Wait 5 seconds so the channel stream will become eligible for scrubbing
         await new Promise((f) => setTimeout(f, 5000))
 
         // When carol's join event is added to the stream, it should trigger a scrub, and Alice
         // should be booted from the stream since she unlinked her entitled wallet.
-        await expectUserCanJoinChannel(carol, carolSpaceDapp, spaceId, channelId!)
+        await expectUserCanJoinChannel(
+            carol,
+            carolSpaceDapp,
+            spaceId,
+            channelId!,
+        )
 
-        const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
+        const userStreamView = (
+            await alice.waitForStream(makeUserStreamId(alice.userId))
+        ).view
         // Wait for alice's user stream to have the leave event
         await waitFor(() => {
-            const membership = userStreamView.userContent.getMembership(channelId!)
+            const membership = userStreamView.userContent.getMembership(
+                channelId!,
+            )
             expect(membership?.op).toBe(MembershipOp.SO_LEAVE)
             expect(membership?.reason).toBe(MembershipReason.MR_NOT_ENTITLED)
         })

@@ -10,7 +10,10 @@ import { type ObservableConfig, useObservable } from './useObservable'
  * @param config - Configuration options for the observable.
  * @returns The GdmModel of the Group DM.
  */
-export const useGdm = (streamId: string, config?: ObservableConfig.FromData<GdmModel>) => {
+export const useGdm = (
+    streamId: string,
+    config?: ObservableConfig.FromData<GdmModel>,
+) => {
     const sync = useSyncAgent()
     const gdm = useMemo(() => sync.gdms.getGdm(streamId), [streamId, sync])
     return useObservable(gdm, config)

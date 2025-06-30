@@ -21,7 +21,11 @@ export const useSendMessage = (
     const sync = useSyncAgent()
     const room = useMemo(() => getRoom(sync, streamId), [streamId, sync])
     assert(!(room instanceof Space), 'room cant be a space')
-    const { action: sendMessage, ...rest } = useAction(room, 'sendMessage', config)
+    const { action: sendMessage, ...rest } = useAction(
+        room,
+        'sendMessage',
+        config,
+    )
 
     return {
         /** Sends a message to the stream.

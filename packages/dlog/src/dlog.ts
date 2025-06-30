@@ -48,11 +48,17 @@ if ((debug as any).namespaces === undefined) {
 
 const MAX_CALL_STACK_SZ = 18
 
-const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Record<Y, unknown> => {
+const hasOwnProperty = <Y extends PropertyKey>(
+    obj: object,
+    prop: Y,
+): obj is Record<Y, unknown> => {
     return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
-export const cloneAndFormat = (obj: unknown, opts?: { shortenHex?: boolean }): unknown => {
+export const cloneAndFormat = (
+    obj: unknown,
+    opts?: { shortenHex?: boolean },
+): unknown => {
     return _cloneAndFormat(obj, 0, new WeakSet(), opts?.shortenHex === true)
 }
 
@@ -78,7 +84,9 @@ const _cloneAndFormat = (
     }
 
     if (obj instanceof Uint8Array) {
-        return shorten ? shortenHexString(bin_toHexString(obj)) : bin_toHexString(obj)
+        return shorten
+            ? shortenHexString(bin_toHexString(obj))
+            : bin_toHexString(obj)
     }
 
     if (obj instanceof BigInt || typeof obj === 'bigint') {
@@ -113,7 +121,12 @@ const _cloneAndFormat = (
                 if (key == 'emitter') {
                     newObj[newKey] = '[emitter]'
                 } else {
-                    newObj[newKey] = _cloneAndFormat(obj[key], depth + 1, seen, shorten)
+                    newObj[newKey] = _cloneAndFormat(
+                        obj[key],
+                        depth + 1,
+                        seen,
+                        shorten,
+                    )
                 }
             }
         }
@@ -242,7 +255,11 @@ export const dlog = (ns: string, opts?: DLogOpts): DLogger => {
  * @returns New logger with namespace `ns`.
  */
 export const dlogError = (ns: string): DLogger => {
-    const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true, allowJest: true })
+    const l = makeDlog(debug(ns), {
+        defaultEnabled: true,
+        printStack: true,
+        allowJest: true,
+    })
     return l
 }
 
@@ -261,7 +278,10 @@ export interface ExtendedLogger {
 export const dlogger = (ns: string): ExtendedLogger => {
     return {
         log: makeDlog(debug(ns + ':log')),
-        info: makeDlog(debug(ns + ':info'), { defaultEnabled: true, allowJest: true }),
+        info: makeDlog(debug(ns + ':info'), {
+            defaultEnabled: true,
+            allowJest: true,
+        }),
         error: dlogError(ns + ':error'),
         extend: (sub: string) => {
             return dlogger(ns + ':' + sub)

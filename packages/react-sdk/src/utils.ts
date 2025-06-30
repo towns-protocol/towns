@@ -11,9 +11,14 @@ import {
     spaceIdFromChannelId,
 } from '@towns-protocol/sdk'
 
-export const getRoom = (sync: SyncAgent, streamId: string): Gdm | Channel | Dm | Space => {
+export const getRoom = (
+    sync: SyncAgent,
+    streamId: string,
+): Gdm | Channel | Dm | Space => {
     if (isChannelStreamId(streamId)) {
-        return sync.spaces.getSpace(spaceIdFromChannelId(streamId)).getChannel(streamId)
+        return sync.spaces
+            .getSpace(spaceIdFromChannelId(streamId))
+            .getChannel(streamId)
     }
     if (isGDMChannelStreamId(streamId)) {
         return sync.gdms.getGdm(streamId)

@@ -12,7 +12,16 @@ module.exports = {
     trailingComma: 'all',
     overrides: [
         {
-            files: ['*.js', '*.mjs', '*.json', '*.ts', '*.tsx', '*.mts', '*.yml', '*.yaml'],
+            files: [
+                '*.js',
+                '*.mjs',
+                '*.json',
+                '*.ts',
+                '*.tsx',
+                '*.mts',
+                '*.yml',
+                '*.yaml',
+            ],
             options: {
                 arrowParens: 'always',
                 endOfLine: 'lf',

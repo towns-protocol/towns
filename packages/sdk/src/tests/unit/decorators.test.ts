@@ -9,9 +9,14 @@ const logger = dlogger('csb:test:decorators')
 const ALL_NAMES = new Set<string>()
 
 function decoratedWith(options: { fancyName: string }) {
-    check(!ALL_NAMES.has(options.fancyName), `duplicate decorator name: ${options.fancyName}`)
+    check(
+        !ALL_NAMES.has(options.fancyName),
+        `duplicate decorator name: ${options.fancyName}`,
+    )
     ALL_NAMES.add(options.fancyName)
-    return function <T extends { new (...args: any[]): Something }>(constructor: T) {
+    return function <T extends { new (...args: any[]): Something }>(
+        constructor: T,
+    ) {
         return class extends constructor {
             constructor(...args: any[]) {
                 super(...args)
@@ -61,7 +66,9 @@ describe('decorator tests', () => {
             class MyBadClass extends Something {}
             expect(MyBadClass).toBeUndefined()
         } catch (e) {
-            expect((e as Error).message).toContain('duplicate decorator name: foo')
+            expect((e as Error).message).toContain(
+                'duplicate decorator name: foo',
+            )
         }
     })
 })

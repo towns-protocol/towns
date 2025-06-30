@@ -30,7 +30,10 @@ import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
 import { create } from '@bufbuild/protobuf'
-import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@towns-protocol/web3'
+import {
+    getSpaceReviewEventDataBin,
+    SpaceReviewEventObject,
+} from '@towns-protocol/web3'
 import { StreamMemberIdsView } from './views/streams/streamMemberIds'
 
 const log = dlog('csb:streamStateView_Members')
@@ -82,7 +85,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly pendingJoinedUsers = new Set<string>()
     readonly pendingInvitedUsers = new Set<string>()
     readonly pendingLeftUsers = new Set<string>()
-    readonly pendingMembershipEvents = new Map<string, MemberPayload_Membership>()
+    readonly pendingMembershipEvents = new Map<
+        string,
+        MemberPayload_Membership
+    >()
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
@@ -144,7 +150,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 tipsSentCount: member.tipsSentCount,
                 tipsReceivedCount: member.tipsReceivedCount,
             })
-            this.applyMembershipEvent(userId, MembershipOp.SO_JOIN, 'confirmed', undefined)
+            this.applyMembershipEvent(
+                userId,
+                MembershipOp.SO_JOIN,
+                'confirmed',
+                undefined,
+            )
         }
         this.streamMemberIdsView.setMembers(this.streamId, memberIds)
         // user/display names were ported from an older implementation and could be simpler
@@ -196,7 +207,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     snappedPin.pin.eventId,
                     undefined,
                 )
-                const remoteEvent = makeRemoteTimelineEvent({ parsedEvent, eventNum: 0n })
+                const remoteEvent = makeRemoteTimelineEvent({
+                    parsedEvent,
+                    eventNum: 0n,
+                })
                 const cleartext = cleartexts?.[remoteEvent.hashStr]
                 this.addPin(
                     userIdFromAddress(snappedPin.creatorAddress),
@@ -210,7 +224,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
         this.tips = { ...snapshot.members.tips }
         this.tipsCount = { ...snapshot.members.tipsCount }
-        this.encryptionAlgorithm = snapshot.members.encryptionAlgorithm?.algorithm
+        this.encryptionAlgorithm =
+            snapshot.members.encryptionAlgorithm?.algorithm
     }
 
     prependEvent(
@@ -224,7 +239,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         switch (payload.content.case) {
             case 'memberBlockchainTransaction': {
                 const receipt = payload.content.value.transaction?.receipt
-                const transactionContent = payload.content.value.transaction?.content
+                const transactionContent =
+                    payload.content.value.transaction?.content
                 switch (transactionContent?.case) {
                     case 'spaceReview': {
                         // space reviews need to be prepended
@@ -248,7 +264,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                 createdAtEpochMs: event.createdAtEpochMs,
                                 eventHashStr: event.hashStr,
                             })
-                            stateEmitter?.emit('spaceReviewsUpdated', this.streamId, review)
+                            stateEmitter?.emit(
+                                'spaceReviewsUpdated',
+                                this.streamId,
+                                review,
+                            )
                         }
                         break
                     }
@@ -294,7 +314,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             if (this.joined.has(userId)) {
                                 // aellis 12/24 there is a real bug here, not sure why we
                                 // are getting duplicate join events
-                                log('user already joined', this.streamId, userId)
+                                log(
+                                    'user already joined',
+                                    this.streamId,
+                                    userId,
+                                )
                                 return
                             }
                             this.joined.set(userId, {
@@ -304,23 +328,37 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                 eventNum: event.eventNum,
                                 solicitations: [],
                             })
-                            this.streamMemberIdsView.addMember(this.streamId, userId)
+                            this.streamMemberIdsView.addMember(
+                                this.streamId,
+                                userId,
+                            )
                             break
                         case MembershipOp.SO_LEAVE:
                             this.joined.delete(userId)
-                            this.streamMemberIdsView.removeMember(this.streamId, userId)
+                            this.streamMemberIdsView.removeMember(
+                                this.streamId,
+                                userId,
+                            )
                             break
                         default:
                             break
                     }
-                    this.applyMembershipEvent(userId, membership.op, 'pending', stateEmitter)
+                    this.applyMembershipEvent(
+                        userId,
+                        membership.op,
+                        'pending',
+                        stateEmitter,
+                    )
                 }
                 break
 
             case 'keySolicitation':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'key solicitation from non-member')
+                    check(
+                        isDefined(stateMember),
+                        'key solicitation from non-member',
+                    )
                     this.solicitHelper.applySolicitation(
                         stateMember,
                         event.hashStr,
@@ -332,9 +370,14 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 break
             case 'keyFulfillment':
                 {
-                    const userId = userIdFromAddress(payload.content.value.userAddress)
+                    const userId = userIdFromAddress(
+                        payload.content.value.userAddress,
+                    )
                     const stateMember = this.joined.get(userId)
-                    check(isDefined(stateMember), 'key fulfillment from non-member')
+                    check(
+                        isDefined(stateMember),
+                        'key fulfillment from non-member',
+                    )
                     this.solicitHelper.applyFulfillment(
                         stateMember,
                         payload.content.value,
@@ -346,9 +389,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
                     check(isDefined(stateMember), 'displayName from non-member')
-                    stateMember.encryptedDisplayName = create(WrappedEncryptedDataSchema, {
-                        data: payload.content.value,
-                    })
+                    stateMember.encryptedDisplayName = create(
+                        WrappedEncryptedDataSchema,
+                        {
+                            data: payload.content.value,
+                        },
+                    )
                     this.memberMetadata.appendDisplayName(
                         event.hashStr,
                         payload.content.value,
@@ -363,9 +409,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
                     check(isDefined(stateMember), 'username from non-member')
-                    stateMember.encryptedUsername = create(WrappedEncryptedDataSchema, {
-                        data: payload.content.value,
-                    })
+                    stateMember.encryptedUsername = create(
+                        WrappedEncryptedDataSchema,
+                        {
+                            data: payload.content.value,
+                        },
+                    )
                     this.memberMetadata.appendUsername(
                         event.hashStr,
                         payload.content.value,
@@ -402,8 +451,15 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const pin = payload.content.value
                     check(isDefined(pin.event), 'invalid pin event')
-                    const parsedEvent = makeParsedEvent(pin.event, pin.eventId, undefined)
-                    const remoteEvent = makeRemoteTimelineEvent({ parsedEvent, eventNum: 0n })
+                    const parsedEvent = makeParsedEvent(
+                        pin.event,
+                        pin.eventId,
+                        undefined,
+                    )
+                    const remoteEvent = makeRemoteTimelineEvent({
+                        parsedEvent,
+                        eventNum: 0n,
+                    })
                     this.addPin(
                         event.creatorUserId,
                         remoteEvent,
@@ -420,7 +476,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 }
                 break
             case 'memberBlockchainTransaction': {
-                const transactionContent = payload.content.value.transaction?.content
+                const transactionContent =
+                    payload.content.value.transaction?.content
                 switch (transactionContent?.case) {
                     case undefined:
                         break
@@ -429,33 +486,49 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         if (!tipEvent) {
                             return
                         }
-                        const currency = utils.getAddress(bin_toHexString(tipEvent.currency))
-                        this.tips[currency] = (this.tips[currency] ?? 0n) + tipEvent.amount
-                        this.tipsCount[currency] = (this.tipsCount[currency] ?? 0n) + 1n
-                        const senderAddress = payload.content.value.fromUserAddress
-                        const sender = this.joined.get(userIdFromAddress(senderAddress))
+                        const currency = utils.getAddress(
+                            bin_toHexString(tipEvent.currency),
+                        )
+                        this.tips[currency] =
+                            (this.tips[currency] ?? 0n) + tipEvent.amount
+                        this.tipsCount[currency] =
+                            (this.tipsCount[currency] ?? 0n) + 1n
+                        const senderAddress =
+                            payload.content.value.fromUserAddress
+                        const sender = this.joined.get(
+                            userIdFromAddress(senderAddress),
+                        )
                         if (sender) {
                             sender.tipsSent = {
                                 ...sender.tipsSent,
-                                [currency]: (sender.tipsSent?.[currency] ?? 0n) + tipEvent.amount,
+                                [currency]:
+                                    (sender.tipsSent?.[currency] ?? 0n) +
+                                    tipEvent.amount,
                             }
                             sender.tipsSentCount = {
                                 ...sender.tipsSentCount,
-                                [currency]: (sender.tipsSentCount?.[currency] ?? 0n) + 1n,
+                                [currency]:
+                                    (sender.tipsSentCount?.[currency] ?? 0n) +
+                                    1n,
                             }
                         }
                         const receiver = this.joined.get(
-                            userIdFromAddress(transactionContent.value.toUserAddress),
+                            userIdFromAddress(
+                                transactionContent.value.toUserAddress,
+                            ),
                         )
                         if (receiver) {
                             receiver.tipsReceived = {
                                 ...receiver.tipsReceived,
                                 [currency]:
-                                    (receiver.tipsReceived?.[currency] ?? 0n) + tipEvent.amount,
+                                    (receiver.tipsReceived?.[currency] ?? 0n) +
+                                    tipEvent.amount,
                             }
                             receiver.tipsReceivedCount = {
                                 ...receiver.tipsReceivedCount,
-                                [currency]: (receiver.tipsReceivedCount?.[currency] ?? 0n) + 1n,
+                                [currency]:
+                                    (receiver.tipsReceivedCount?.[currency] ??
+                                        0n) + 1n,
                             }
                         }
 
@@ -476,7 +549,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         )
                         break
                     case 'spaceReview': {
-                        const receipt = payload.content.value.transaction?.receipt
+                        const receipt =
+                            payload.content.value.transaction?.receipt
                         if (!receipt) {
                             return
                         }
@@ -504,7 +578,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                 eventHashStr: event.hashStr,
                             }
                         }
-                        stateEmitter?.emit('spaceReviewsUpdated', this.streamId, review)
+                        stateEmitter?.emit(
+                            'spaceReviewsUpdated',
+                            this.streamId,
+                            review,
+                        )
                         break
                     }
                     default:
@@ -547,7 +625,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             streamMember.miniblockNum = event.miniblockNum
                             streamMember.eventNum = event.eventNum
                         }
-                        this.applyMembershipEvent(userId, membership.op, 'confirmed', stateEmitter)
+                        this.applyMembershipEvent(
+                            userId,
+                            membership.op,
+                            'confirmed',
+                            stateEmitter,
+                        )
                     }
                 }
                 break
@@ -582,12 +665,23 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         if (content.kind === 'text') {
-            this.memberMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
+            this.memberMetadata.onDecryptedContent(
+                eventId,
+                content.content,
+                stateEmitter,
+            )
         }
-        const pinIndex = this.pins.findIndex((pin) => pin.event.hashStr === eventId)
+        const pinIndex = this.pins.findIndex(
+            (pin) => pin.event.hashStr === eventId,
+        )
         if (pinIndex !== -1) {
             this.pins[pinIndex].event.decryptedContent = content
-            stateEmitter?.emit('channelPinDecrypted', this.streamId, this.pins[pinIndex], pinIndex)
+            stateEmitter?.emit(
+                'channelPinDecrypted',
+                this.streamId,
+                this.pins[pinIndex],
+                pinIndex,
+            )
         }
     }
 
@@ -602,7 +696,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case MembershipOp.SO_JOIN:
                 return this.joinedUsers.has(userId)
             case MembershipOp.SO_LEAVE:
-                return !this.invitedUsers.has(userId) && !this.joinedUsers.has(userId)
+                return (
+                    !this.invitedUsers.has(userId) &&
+                    !this.joinedUsers.has(userId)
+                )
             case MembershipOp.SO_UNSPECIFIED:
                 return false
             default:
@@ -612,7 +709,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     }
 
     participants(): Set<string> {
-        return new Set([...this.joinedUsers, ...this.invitedUsers, ...this.leftUsers])
+        return new Set([
+            ...this.joinedUsers,
+            ...this.invitedUsers,
+            ...this.leftUsers,
+        ])
     }
 
     joinedParticipants(): Set<string> {
@@ -680,11 +781,14 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         this.pins.push(newPin)
         if (
             (event.remoteEvent.event.payload.case === 'channelPayload' &&
-                event.remoteEvent.event.payload.value.content.case === 'message') ||
+                event.remoteEvent.event.payload.value.content.case ===
+                    'message') ||
             (event.remoteEvent.event.payload.case === 'dmChannelPayload' &&
-                event.remoteEvent.event.payload.value.content.case === 'message') ||
+                event.remoteEvent.event.payload.value.content.case ===
+                    'message') ||
             (event.remoteEvent.event.payload.case === 'gdmChannelPayload' &&
-                event.remoteEvent.event.payload.value.content.case === 'message')
+                event.remoteEvent.event.payload.value.content.case ===
+                    'message')
         ) {
             this.decryptEvent(
                 'channelMessage',
@@ -702,7 +806,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
         const eventIdStr = bin_toHexString(eventId)
-        const index = this.pins.findIndex((pin) => pin.event.hashStr === eventIdStr)
+        const index = this.pins.findIndex(
+            (pin) => pin.event.hashStr === eventIdStr,
+        )
         if (index !== -1) {
             const pin = this.pins.splice(index, 1)[0]
             stateEmitter?.emit('channelPinRemoved', this.streamId, pin, index)
@@ -720,12 +826,24 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 if (type === 'confirmed') {
                     this.pendingInvitedUsers.delete(userId)
                     if (this.invitedUsers.add(userId)) {
-                        stateEmitter?.emit('streamNewUserInvited', this.streamId, userId)
-                        this.emitMembershipChange(userId, stateEmitter, this.streamId)
+                        stateEmitter?.emit(
+                            'streamNewUserInvited',
+                            this.streamId,
+                            userId,
+                        )
+                        this.emitMembershipChange(
+                            userId,
+                            stateEmitter,
+                            this.streamId,
+                        )
                     }
                 } else {
                     if (this.pendingInvitedUsers.add(userId)) {
-                        stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                        stateEmitter?.emit(
+                            'streamPendingMembershipUpdated',
+                            this.streamId,
+                            userId,
+                        )
                     }
                 }
                 break
@@ -733,12 +851,24 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 if (type === 'confirmed') {
                     this.pendingJoinedUsers.delete(userId)
                     if (this.joinedUsers.add(userId)) {
-                        stateEmitter?.emit('streamNewUserJoined', this.streamId, userId)
-                        this.emitMembershipChange(userId, stateEmitter, this.streamId)
+                        stateEmitter?.emit(
+                            'streamNewUserJoined',
+                            this.streamId,
+                            userId,
+                        )
+                        this.emitMembershipChange(
+                            userId,
+                            stateEmitter,
+                            this.streamId,
+                        )
                     }
                 } else {
                     if (this.pendingJoinedUsers.add(userId)) {
-                        stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                        stateEmitter?.emit(
+                            'streamPendingMembershipUpdated',
+                            this.streamId,
+                            userId,
+                        )
                     }
                 }
                 break
@@ -749,12 +879,24 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     this.pendingLeftUsers.delete(userId)
                     this.leftUsers.add(userId)
                     if (wasJoined || wasInvited) {
-                        stateEmitter?.emit('streamUserLeft', this.streamId, userId)
-                        this.emitMembershipChange(userId, stateEmitter, this.streamId)
+                        stateEmitter?.emit(
+                            'streamUserLeft',
+                            this.streamId,
+                            userId,
+                        )
+                        this.emitMembershipChange(
+                            userId,
+                            stateEmitter,
+                            this.streamId,
+                        )
                     }
                 } else {
                     if (this.pendingLeftUsers.add(userId)) {
-                        stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                        stateEmitter?.emit(
+                            'streamPendingMembershipUpdated',
+                            this.streamId,
+                            userId,
+                        )
                     }
                 }
                 break

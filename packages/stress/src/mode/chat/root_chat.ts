@@ -79,7 +79,9 @@ export async function startStressChat(opts: {
 
     for (let i = 0; i < clients.length; i += PARALLEL_UPDATES) {
         const span = clients.slice(i, i + PARALLEL_UPDATES)
-        const results = await Promise.allSettled(span.map((client) => joinChat(client, chatConfig)))
+        const results = await Promise.allSettled(
+            span.map((client) => joinChat(client, chatConfig)),
+        )
         results.forEach((r, index) => {
             const client = span[index]
             if (r.status === 'rejected') {
@@ -212,7 +214,12 @@ export async function setupChat(opts: {
 }) {
     const logger = getLogger('stress:setupChat')
     logger.info('setupChat')
-    const client = await makeStressClient(opts.config, 0, opts.rootWallet, undefined)
+    const client = await makeStressClient(
+        opts.config,
+        0,
+        opts.rootWallet,
+        undefined,
+    )
     // make a space
     const { spaceId } = await client.createSpace('stress test space')
     // make an announce channel

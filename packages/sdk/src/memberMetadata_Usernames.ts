@@ -22,12 +22,19 @@ export class MemberMetadata_Usernames {
         this.streamId = streamId
     }
 
-    setLocalUsername(userId: string, username: string, emitter?: TypedEmitter<StreamStateEvents>) {
+    setLocalUsername(
+        userId: string,
+        username: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         this.plaintextUsernames.set(userId, username)
         emitter?.emit('streamPendingUsernameUpdated', this.streamId, userId)
     }
 
-    resetLocalUsername(userId: string, emitter?: TypedEmitter<StreamStateEvents>) {
+    resetLocalUsername(
+        userId: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         this.plaintextUsernames.delete(userId)
         emitter?.emit('streamPendingUsernameUpdated', this.streamId, userId)
     }
@@ -46,7 +53,9 @@ export class MemberMetadata_Usernames {
             return
         }
         if (!this.usernameAvailable(encryptedData.checksum)) {
-            this.log(`username not available for checksum ${encryptedData.checksum}`)
+            this.log(
+                `username not available for checksum ${encryptedData.checksum}`,
+            )
             return
         }
 
@@ -56,15 +65,22 @@ export class MemberMetadata_Usernames {
         if (cleartext) {
             this.plaintextUsernames.set(
                 userId,
-                typeof cleartext === 'string' ? cleartext : textDecoder.decode(cleartext),
+                typeof cleartext === 'string'
+                    ? cleartext
+                    : textDecoder.decode(cleartext),
             )
         } else {
             // Clear the plaintext username for this user on name change
             this.plaintextUsernames.delete(userId)
-            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
-                kind: 'text',
-                content: encryptedData,
-            })
+            encryptionEmitter?.emit(
+                'newEncryptedContent',
+                this.streamId,
+                eventId,
+                {
+                    kind: 'text',
+                    content: encryptedData,
+                },
+            )
         }
 
         if (!pending) {
@@ -111,7 +127,9 @@ export class MemberMetadata_Usernames {
         // If the checksum doesn't match, we don't want to update the username
         const calculatedChecksum = usernameChecksum(content, this.streamId)
         if (checksum !== calculatedChecksum) {
-            this.log(`checksum mismatch for userId: ${event.userId}, username: ${content}`)
+            this.log(
+                `checksum mismatch for userId: ${event.userId}, username: ${content}`,
+            )
             return
         }
 
@@ -129,7 +147,10 @@ export class MemberMetadata_Usernames {
         return !this.checksums.has(checksum)
     }
 
-    private emitUsernameUpdated(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
+    private emitUsernameUpdated(
+        eventId: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         const event = this.usernameEvents.get(eventId)
         if (!event) {
             return
@@ -141,7 +162,9 @@ export class MemberMetadata_Usernames {
 
         // depending on confirmation status, emit different events
         emitter?.emit(
-            event.pending ? 'streamPendingUsernameUpdated' : 'streamUsernameUpdated',
+            event.pending
+                ? 'streamPendingUsernameUpdated'
+                : 'streamUsernameUpdated',
             this.streamId,
             event.userId,
         )
@@ -158,7 +181,9 @@ export class MemberMetadata_Usernames {
 
         const event = this.usernameEvents.get(eventId)
         if (!event) {
-            this.log(`no existing username event for user ${userId} — this is a programmer error`)
+            this.log(
+                `no existing username event for user ${userId} — this is a programmer error`,
+            )
             return
         }
         this.checksums.delete(event.checksum ?? '')
@@ -205,7 +230,9 @@ export class MemberMetadata_Usernames {
                 usernameEncrypted: false,
             }
         }
-        const encrypted = this.usernameEvents.has(eventId) && !this.plaintextUsernames.has(userId)
+        const encrypted =
+            this.usernameEvents.has(eventId) &&
+            !this.plaintextUsernames.has(userId)
         return {
             username: name,
             usernameConfirmed: this.confirmedUserIds.has(userId),

@@ -1,4 +1,7 @@
-import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
+import {
+    PersistedObservable,
+    persistedObservable,
+} from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import {
@@ -38,7 +41,11 @@ export class Channel extends PersistedObservable<ChannelModel> {
         store: Store,
     ) {
         super({ id, spaceId, isJoined: false }, store, LoadPriority.high)
-        this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
+        this.timeline = new MessageTimeline(
+            id,
+            riverConnection.userId,
+            riverConnection,
+        )
         this.members = new Members(id, riverConnection, store)
     }
 
@@ -70,7 +77,10 @@ export class Channel extends PersistedObservable<ChannelModel> {
                     }
                 })
                 .catch((error) => {
-                    logger.error('failed to get channel details', { id: this.data.id, error })
+                    logger.error('failed to get channel details', {
+                        id: this.data.id,
+                        error,
+                    })
                 })
         }
     }
@@ -104,19 +114,21 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
     ): Promise<{ eventId: string }> {
         const channelId = this.data.id
-        const result = await this.riverConnection.withStream(channelId).call((client) => {
-            return client.sendChannelMessage_Text(channelId, {
-                threadId: options?.threadId,
-                threadPreview: options?.threadId ? '🙉' : undefined,
-                replyId: options?.replyId,
-                replyPreview: options?.replyId ? '🙈' : undefined,
-                content: {
-                    body: message,
-                    mentions: options?.mentions ?? [],
-                    attachments: options?.attachments ?? [],
-                },
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) => {
+                return client.sendChannelMessage_Text(channelId, {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadId ? '🙉' : undefined,
+                    replyId: options?.replyId,
+                    replyPreview: options?.replyId ? '🙈' : undefined,
+                    content: {
+                        body: message,
+                        mentions: options?.mentions ?? [],
+                        attachments: options?.attachments ?? [],
+                    },
+                })
             })
-        })
         return result
     }
 
@@ -142,19 +154,21 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
     ) {
         const channelId = this.data.id
-        const result = await this.riverConnection.withStream(channelId).call((client) =>
-            client.sendChannelMessage_Edit_Text(channelId, eventId, {
-                threadId: options?.threadId,
-                threadPreview: options?.threadId ? '🙉' : undefined,
-                replyId: options?.replyId,
-                replyPreview: options?.replyId ? '🙈' : undefined,
-                content: {
-                    body: message,
-                    mentions: options?.mentions ?? [],
-                    attachments: options?.attachments ?? [],
-                },
-            }),
-        )
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) =>
+                client.sendChannelMessage_Edit_Text(channelId, eventId, {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadId ? '🙉' : undefined,
+                    replyId: options?.replyId,
+                    replyPreview: options?.replyId ? '🙈' : undefined,
+                    content: {
+                        body: message,
+                        mentions: options?.mentions ?? [],
+                        attachments: options?.attachments ?? [],
+                    },
+                }),
+            )
         return result
     }
 
@@ -203,21 +217,25 @@ export class Channel extends PersistedObservable<ChannelModel> {
      */
     async redact(eventId: string, reason?: string) {
         const channelId = this.data.id
-        const result = await this.riverConnection.withStream(channelId).call((client, stream) => {
-            const event = stream.view.timeline.find((x) => x.eventId === eventId)
-            if (!event) {
-                throw new Error(`ref event not found: ${eventId}`)
-            }
-            if (event.sender.id !== this.riverConnection.userId) {
-                throw new Error(
-                    `You can only redact your own messages. Message creator: ${event.sender.id} - Your id: ${this.riverConnection.userId}`,
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client, stream) => {
+                const event = stream.view.timeline.find(
+                    (x) => x.eventId === eventId,
                 )
-            }
-            return client.sendChannelMessage_Redaction(channelId, {
-                refEventId: eventId,
-                reason,
+                if (!event) {
+                    throw new Error(`ref event not found: ${eventId}`)
+                }
+                if (event.sender.id !== this.riverConnection.userId) {
+                    throw new Error(
+                        `You can only redact your own messages. Message creator: ${event.sender.id} - Your id: ${this.riverConnection.userId}`,
+                    )
+                }
+                return client.sendChannelMessage_Redaction(channelId, {
+                    refEventId: eventId,
+                    reason,
+                })
             })
-        })
         return result
     }
 
@@ -242,7 +260,10 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
         signer: ethers.Signer,
     ) {
-        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tip.receiver)
+        const tokenId = await this.spaceDapp.getTokenIdOfOwner(
+            this.data.spaceId,
+            tip.receiver,
+        )
         if (!tokenId) {
             throw new Error('tokenId not found')
         }
@@ -260,7 +281,11 @@ export class Channel extends PersistedObservable<ChannelModel> {
         )
         const receipt = await tx.wait()
         const senderAddress = await signer.getAddress()
-        const tipEvent = this.spaceDapp.getTipEvent(this.data.spaceId, receipt, senderAddress)
+        const tipEvent = this.spaceDapp.getTipEvent(
+            this.data.spaceId,
+            receipt,
+            senderAddress,
+        )
         if (!tipEvent) {
             throw new Error('tipEvent not found')
         }
@@ -269,7 +294,12 @@ export class Channel extends PersistedObservable<ChannelModel> {
         const result = await this.riverConnection
             .withStream(channelId)
             .call((client) =>
-                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tip.receiver),
+                client.addTransaction_Tip(
+                    tip.chainId,
+                    receipt,
+                    tipEvent,
+                    tip.receiver,
+                ),
             )
         return result
     }
@@ -278,20 +308,28 @@ export class Channel extends PersistedObservable<ChannelModel> {
         if (streamId === this.data.id) {
             const stream = this.riverConnection.client?.stream(this.data.id)
             check(isDefined(stream), 'stream is not defined')
-            const hasJoined = stream.view.getMembers().isMemberJoined(this.riverConnection.userId)
+            const hasJoined = stream.view
+                .getMembers()
+                .isMemberJoined(this.riverConnection.userId)
             this.setData({ isJoined: hasJoined })
             this.timeline.initialize(stream)
         }
     }
 
     private onStreamUserJoined = (streamId: string, userId: string) => {
-        if (streamId === this.data.id && userId === this.riverConnection.userId) {
+        if (
+            streamId === this.data.id &&
+            userId === this.riverConnection.userId
+        ) {
             this.setData({ isJoined: true })
         }
     }
 
     private onStreamUserLeft = (streamId: string, userId: string) => {
-        if (streamId === this.data.id && userId === this.riverConnection.userId) {
+        if (
+            streamId === this.data.id &&
+            userId === this.riverConnection.userId
+        ) {
             this.setData({ isJoined: false })
         }
     }

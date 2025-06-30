@@ -43,7 +43,8 @@ export class ConversationBuilder {
 
     private nextTimestamp(): number {
         const now = Date.now()
-        const timestamp = now > this.lastTimestamp ? now : this.lastTimestamp + 1
+        const timestamp =
+            now > this.lastTimestamp ? now : this.lastTimestamp + 1
         this.lastTimestamp = timestamp
         return timestamp
     }
@@ -154,7 +155,9 @@ export class ConversationBuilder {
         isSender?: boolean
     }): TimelineEvent {
         const oUserId = params.userId ?? '@alice:example.com'
-        const eventId = params.eventId ? this.checkId(params.eventId) : this.nextId()
+        const eventId = params.eventId
+            ? this.checkId(params.eventId)
+            : this.nextId()
         const timestamp = this.nextTimestamp()
         return {
             eventId: eventId,
@@ -191,7 +194,9 @@ function makeMessage(params: {
         threadPreview: undefined,
         mentions: [],
         editsEventId: params.editsEventId,
-        content: { msgType: MessageType.Text } satisfies ChannelMessageEventContent_Text,
+        content: {
+            msgType: MessageType.Text,
+        } satisfies ChannelMessageEventContent_Text,
     } satisfies ChannelMessageEvent
 }
 
@@ -209,7 +214,10 @@ function makeEdit(params: {
     })
 }
 
-function makeRedaction(params: { redacts: string; isAdmin?: boolean }): RedactionActionEvent {
+function makeRedaction(params: {
+    redacts: string
+    isAdmin?: boolean
+}): RedactionActionEvent {
     return {
         kind: RiverTimelineEvent.RedactionActionEvent,
         refEventId: params.redacts,
