@@ -183,6 +183,19 @@ contract RolesTest is RolesBaseSetup {
         roles.createRole(roleName, permissions, entitlements);
     }
 
+    function test_createRole_AsBot() external {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.ModifySpaceSettings));
+        address app = _createTestApp(permissions);
+        _installAppOnEveryoneSpace(app);
+
+        string[] memory rolePermissions = new string[](1);
+        rolePermissions[0] = Permissions.Read;
+
+        vm.prank(appClient);
+        roles.createRole("test", rolePermissions, new IRoles.CreateEntitlement[](0));
+    }
+
     // =============================================================
     //                           Get Roles
     // =============================================================
