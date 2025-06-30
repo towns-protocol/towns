@@ -303,10 +303,22 @@ func (pool *pendingTransactionPool) closeTx(
 
 	pool.pendingTxCount.Add(-1)
 	pool.processedTxCount.Add(1)
-	pool.transactionTotalInclusionDuration.Observe(time.Since(ptx.firstSubmit).Seconds())
-	pool.transactionInclusionDuration.Observe(time.Since(ptx.lastSubmit).Seconds())
+	took := time.Since(ptx.firstSubmit)
+	pool.transactionTotalInclusionDuration.Observe(took.Seconds())
+	pool.transactionInclusionDuration.Observe(took.Seconds())
 	pool.transactionsProcessed.With(prometheus.Labels{"status": status}).Inc()
 	pool.transactionsPending.Add(-1)
+
+	if took >= 15*time.Second {
+		log.Warnw("Transaction took too long to be included in the chain",
+			"name", ptx.name,
+			"executedHash", ptx.executedHash.Load(),
+			"took", took,
+			"hashes", ptx.txHashes,
+			"firstSubmit", ptx.firstSubmit,
+			"lastSubmit", ptx.lastSubmit,
+		)
+	}
 }
 
 func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context, head *types.Header) {
