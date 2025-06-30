@@ -115,6 +115,8 @@ describe('bot membership tests', () => {
     test('registered and installed bots can join spaces and channels in towns with gated membership', async () => {
         // Create a town with user entitlements that only allows 'bob' (space owner)
         // The bot is NOT in this list, so it doesn't satisfy the space entitlements.
+        // Thus we know the bot is disqualified for regular membership by the gating
+        // and can only be admitted to the space via the bot entitlement pathway.
         const {
             spaceId,
             channelId: defaultChannelId,
