@@ -91,6 +91,9 @@ message StreamEvent {
     /** prev_miniblock_num contains miniblock number for prev_miniblock_hash. */
     optional int64 prev_miniblock_num = 8;
 
+    /** Set to true when there is no need to save the event. */
+    bool ephemeral = 9;
+
     /** Variable-type payload. 
       * Payloads should obey the following rules:
       * - payloads should have their own unique type
