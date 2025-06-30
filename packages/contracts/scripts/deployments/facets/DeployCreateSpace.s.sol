@@ -12,19 +12,17 @@ import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 
 library DeployCreateSpace {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](4);
-        _selectors[0] = CreateSpaceFacet.createSpace.selector;
-        _selectors[1] = bytes4(
-            keccak256(
-                "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))"
-            )
-        );
-        _selectors[2] = bytes4(
-            keccak256(
-                "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"
-            )
-        );
+        _selectors = new bytes4[](5);
+        // createSpace(SpaceInfo) - Basic space creation with SpaceInfo struct
+        _selectors[0] = 0xf822028d;
+        // createSpaceWithPrepay(CreateSpace) - Space creation with prepay (new format)
+        _selectors[1] = 0xcd55d94c;
+        // createSpaceWithPrepay(CreateSpaceOld) - Space creation with prepay (legacy format)
+        _selectors[2] = 0xc07ed896;
+        // createSpaceV2(CreateSpace, SpaceOptions) - Space creation with options
         _selectors[3] = CreateSpaceFacet.createSpaceV2.selector;
+        // createSpace(Action, bytes) - Unified entry point with action dispatch
+        _selectors[4] = bytes4(keccak256("createSpace(uint8,bytes)"));
     }
 
     function makeCut(

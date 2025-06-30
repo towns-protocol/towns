@@ -24,12 +24,32 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
         _addInterface(type(ICreateSpace).interfaceId);
     }
 
-    /// @inheritdoc ICreateSpace
-    function createSpaceV2(
-        CreateSpace memory spaceInfo,
-        SpaceOptions memory options
+    function createSpace(
+        Action action,
+        bytes calldata data
     ) external payable nonReentrant whenNotPaused returns (address) {
-        return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, options);
+        if (action == Action.CreateBasic) {
+            SpaceInfo memory spaceInfo = abi.decode(data, (SpaceInfo));
+            SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+            return CreateSpaceLib.createSpace(spaceInfo, spaceOptions);
+        } else if (action == Action.CreateWithPrepay) {
+            CreateSpace memory spaceInfo = abi.decode(data, (CreateSpace));
+            SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+            return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, spaceOptions);
+        } else if (action == Action.CreateWithOptions) {
+            (CreateSpace memory spaceInfo, SpaceOptions memory options) = abi.decode(
+                data,
+                (CreateSpace, SpaceOptions)
+            );
+            return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, options);
+        } else if (action == Action.CreateLegacy) {
+            CreateSpaceOld memory spaceInfo = abi.decode(data, (CreateSpaceOld));
+            CreateSpace memory newSpaceInfo = _convertLegacySpace(spaceInfo);
+            SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+            return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
+        } else {
+            revert CreateSpaceFacet__InvalidAction();
+        }
     }
 
     /// @inheritdoc ICreateSpace
@@ -38,6 +58,14 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
     ) external nonReentrant whenNotPaused returns (address) {
         SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
         return CreateSpaceLib.createSpace(spaceInfo, spaceOptions);
+    }
+
+    /// @inheritdoc ICreateSpace
+    function createSpaceV2(
+        CreateSpace memory spaceInfo,
+        SpaceOptions memory options
+    ) external payable nonReentrant whenNotPaused returns (address) {
+        return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, options);
     }
 
     /// @inheritdoc ICreateSpace
@@ -52,6 +80,15 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
     function createSpaceWithPrepay(
         CreateSpaceOld memory spaceInfo
     ) external payable nonReentrant whenNotPaused returns (address) {
+        CreateSpace memory newSpaceInfo = _convertLegacySpace(spaceInfo);
+        SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+        return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
+    }
+
+    /// @dev Converts CreateSpaceOld format to CreateSpace format
+    function _convertLegacySpace(
+        CreateSpaceOld memory spaceInfo
+    ) private pure returns (CreateSpace memory) {
         MembershipRequirements memory requirements = MembershipRequirements({
             everyone: spaceInfo.membership.requirements.everyone,
             users: spaceInfo.membership.requirements.users,
@@ -63,13 +100,12 @@ contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet 
             requirements: requirements,
             permissions: spaceInfo.membership.permissions
         });
-        CreateSpace memory newSpaceInfo = CreateSpace({
-            metadata: spaceInfo.metadata,
-            membership: membership,
-            channel: spaceInfo.channel,
-            prepay: spaceInfo.prepay
-        });
-        SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-        return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
+        return
+            CreateSpace({
+                metadata: spaceInfo.metadata,
+                membership: membership,
+                channel: spaceInfo.channel,
+                prepay: spaceInfo.prepay
+            });
     }
 }

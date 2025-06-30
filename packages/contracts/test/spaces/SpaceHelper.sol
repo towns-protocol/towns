@@ -3,12 +3,11 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
-
-import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 import {ILegacyArchitectBase} from "test/mocks/legacy/IMockLegacyArchitect.sol";
 
 // libraries
+import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {RuleEntitlementUtil} from "test/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
@@ -151,5 +150,42 @@ abstract contract SpaceHelper {
             channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"}),
             prepay: IArchitectBase.Prepay({supply: 0})
         });
+    }
+
+    function _createSpaceLegacy(
+        string memory spaceId,
+        address founder,
+        address pricingModule
+    ) internal pure returns (IArchitectBase.CreateSpaceOld memory) {
+        return
+            IArchitectBase.CreateSpaceOld({
+                metadata: IArchitectBase.Metadata({
+                    name: spaceId,
+                    uri: "ipfs://test",
+                    shortDescription: "short description",
+                    longDescription: "long description"
+                }),
+                membership: IArchitectBase.MembershipOld({
+                    settings: IMembershipBase.Membership({
+                        name: "Member",
+                        symbol: "MEM",
+                        price: 0,
+                        maxSupply: 1000,
+                        duration: 0,
+                        currency: address(0),
+                        feeRecipient: founder,
+                        freeAllocation: 0,
+                        pricingModule: pricingModule
+                    }),
+                    requirements: IArchitectBase.MembershipRequirementsOld({
+                        everyone: true,
+                        users: new address[](0),
+                        ruleData: ""
+                    }),
+                    permissions: new string[](0)
+                }),
+                channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"}),
+                prepay: IArchitectBase.Prepay({supply: 0})
+            });
     }
 }

@@ -220,6 +220,7 @@ export declare namespace IArchitectBase {
 
 export interface ICreateSpaceInterface extends utils.Interface {
   functions: {
+    "createSpace(uint8,bytes)": FunctionFragment;
     "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": FunctionFragment;
     "createSpaceV2(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)),(address))": FunctionFragment;
     "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": FunctionFragment;
@@ -228,14 +229,19 @@ export interface ICreateSpaceInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "createSpace"
+      | "createSpace(uint8,bytes)"
+      | "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))"
       | "createSpaceV2"
       | "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"
       | "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "createSpace",
+    functionFragment: "createSpace(uint8,bytes)",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))",
     values: [IArchitectBase.SpaceInfoStruct]
   ): string;
   encodeFunctionData(
@@ -255,7 +261,11 @@ export interface ICreateSpaceInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "createSpace",
+    functionFragment: "createSpace(uint8,bytes)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -332,7 +342,13 @@ export interface ICreateSpace extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    createSpace(
+    "createSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))"(
       SpaceInfo: IArchitectBase.SpaceInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -354,7 +370,13 @@ export interface ICreateSpace extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  createSpace(
+  "createSpace(uint8,bytes)"(
+    action: PromiseOrValue<BigNumberish>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))"(
     SpaceInfo: IArchitectBase.SpaceInfoStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -376,7 +398,13 @@ export interface ICreateSpace extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    createSpace(
+    "createSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))"(
       SpaceInfo: IArchitectBase.SpaceInfoStruct,
       overrides?: CallOverrides
     ): Promise<string>;
@@ -419,7 +447,13 @@ export interface ICreateSpace extends BaseContract {
   };
 
   estimateGas: {
-    createSpace(
+    "createSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))"(
       SpaceInfo: IArchitectBase.SpaceInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -442,7 +476,13 @@ export interface ICreateSpace extends BaseContract {
   };
 
   populateTransaction: {
-    createSpace(
+    "createSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))"(
       SpaceInfo: IArchitectBase.SpaceInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
