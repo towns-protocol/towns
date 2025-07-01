@@ -104,9 +104,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 	}
 
 	// Register the subscription with the registry
-	if err := m.registry.AddSubscription(sub); err != nil {
-		return nil, err
-	}
+	m.registry.AddSubscription(sub)
 
 	return sub, nil
 }

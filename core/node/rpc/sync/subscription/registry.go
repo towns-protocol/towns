@@ -9,7 +9,7 @@ import (
 
 // Registry defines the contract for managing subscription lifecycle
 type Registry interface {
-	AddSubscription(sub *Subscription) error
+	AddSubscription(sub *Subscription)
 	RemoveSubscription(syncID string) error
 	GetSubscriptionsForStream(streamID StreamId) []*Subscription
 	GetSubscriptionByID(syncID string) (*Subscription, bool)
@@ -38,12 +38,10 @@ func newRegistry() *registry {
 }
 
 // AddSubscription adds a subscription to the registry
-func (r *registry) AddSubscription(sub *Subscription) error {
+func (r *registry) AddSubscription(sub *Subscription) {
 	r.sLock.Lock()
-	defer r.sLock.Unlock()
-
 	r.subscriptionsByID[sub.syncID] = sub
-	return nil
+	r.sLock.Unlock()
 }
 
 // RemoveSubscription removes a subscription from the registry
@@ -117,8 +115,6 @@ func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (sh
 // Returns true if the given stream must be removed from the main syncer set
 func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool) {
 	r.sLock.Lock()
-	defer r.sLock.Unlock()
-
 	r.subscriptionsByStream[streamID] = slices.DeleteFunc(
 		r.subscriptionsByStream[streamID],
 		func(sub *Subscription) bool {
@@ -129,6 +125,7 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 	if shouldRemoveFromRemote = len(r.subscriptionsByStream[streamID]) == 0; shouldRemoveFromRemote {
 		delete(r.subscriptionsByStream, streamID)
 	}
+	r.sLock.Unlock()
 	return
 }
 
@@ -143,8 +140,6 @@ func (r *registry) GetStats() (streamCount, subscriptionCount int) {
 // CancelAll cancels all subscriptions with the given error.
 func (r *registry) CancelAll(err error) {
 	r.sLock.Lock()
-	defer r.sLock.Unlock()
-
 	for _, sub := range r.subscriptionsByID {
 		if !sub.isClosed() {
 			sub.cancel(err)
@@ -152,4 +147,5 @@ func (r *registry) CancelAll(err error) {
 	}
 	r.subscriptionsByID = make(map[string]*Subscription)
 	r.subscriptionsByStream = make(map[StreamId][]*Subscription)
+	r.sLock.Unlock()
 }
