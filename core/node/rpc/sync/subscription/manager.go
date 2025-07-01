@@ -2,14 +2,11 @@ package subscription
 
 import (
 	"context"
-	"slices"
-	"sync"
 	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -37,8 +34,10 @@ type Manager struct {
 	syncers *client.SyncerSet
 	// messages is the global channel for messages of all syncing streams
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	// registry is the subscription registry that manages all subscriptions.
-	registry *registry
+	// Registry is the subscription registry that manages all subscriptions.
+	registry Registry
+	// distributor is the message distributor that distributes messages to subscriptions.
+	distributor *distributor
 	// stopped is a flag that indicates whether the manager is stopped (1) or not (0).
 	stopped atomic.Bool
 	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
@@ -61,6 +60,9 @@ func NewManager(
 
 	go syncers.Run()
 
+	reg := newRegistry()
+	dis := newDistributor(reg, log.Named("distributor"))
+
 	manager := &Manager{
 		log:           log,
 		localNodeAddr: localNodeAddr,
@@ -70,7 +72,8 @@ func NewManager(
 		otelTracer:    otelTracer,
 		syncers:       syncers,
 		messages:      messages,
-		registry:      newRegistry(),
+		registry:      reg,
+		distributor:   dis,
 	}
 
 	go manager.start()
@@ -84,8 +87,11 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		return nil, RiverError(Err_UNAVAILABLE, "subscription manager is stopped").Tag("syncId", syncID)
 	}
 
+	// Create a logger for the subscription
+	subLogger := m.log.With("syncId", syncID)
+
 	sub := &Subscription{
-		log:                 m.log.With("syncId", syncID),
+		log:                 subLogger,
 		ctx:                 ctx,
 		cancel:              cancel,
 		syncID:              syncID,
@@ -126,23 +132,8 @@ func (m *Manager) start() {
 			}
 
 			for _, msg := range msgs {
-				// Ignore messages that are not SYNC_UPDATE or SYNC_DOWN
-				if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-					m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
-					continue
-				}
-
-				// Get the stream ID from the message.
-				streamID, err := StreamIdFromBytes(msg.StreamID())
-				if err != nil {
-					m.log.Errorw("Failed to get stream ID from the message", "streamId", msg.StreamID(), "error", err)
-					continue
-				}
-
-				if len(msg.GetTargetSyncIds()) > 0 {
-					m.distributeBackfillMessage(streamID, msg)
-				} else {
-					m.distributeMessage(streamID, msg)
+				if err := m.processMessage(msg); err != nil {
+					m.log.Errorw("Failed to process message", "error", err, "op", msg.GetSyncOp())
 				}
 
 				// In case of the global context (the node itself) is done in the middle of the sending messages
@@ -163,106 +154,25 @@ func (m *Manager) start() {
 	}
 }
 
-// distributeMessage processes the given message and sends it to all relevant subscriptions.
-func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
-	// Send the message to all subscriptions for this stream.
-	subscriptions := m.registry.GetSubscriptionsForStream(streamID)
-	if len(subscriptions) == 0 {
-		// No subscriptions for this stream, nothing to do. This should not happen in theory.
-		return
+// processMessage processes a single message
+func (m *Manager) processMessage(msg *SyncStreamsResponse) error {
+	// Validate message type
+	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
+		m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
+		return nil
 	}
 
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		// The given stream is no longer syncing, remove it from the subscriptions.
-		for _, sub := range subscriptions {
-			m.registry.RemoveStreamFromSubscription(sub.syncID, streamID)
-		}
+	// Extract stream ID
+	streamID, err := StreamIdFromBytes(msg.StreamID())
+	if err != nil {
+		m.log.Errorw("Failed to get stream ID from message", "streamId", msg.StreamID(), "error", err)
+		return err
 	}
 
-	// Sending the message to all subscriptions for the given stream.
-	// It is safe to use waitgroup here becasue subscribers use dynamic buffer channel and can just throw the
-	// error if the buffer is full. Meaning, this is not a blocking by client operation.
-	var wg sync.WaitGroup
-	var toRemove []string
-	for _, subscription := range subscriptions {
-		if subscription.isClosed() {
-			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-				// Collect the subscription IDs to remove
-				toRemove = append(toRemove, subscription.syncID)
-			}
-			continue
-		}
-
-		wg.Add(1)
-		go func(msg *SyncStreamsResponse, subscription *Subscription) {
-			defer wg.Done()
-
-			// There is a special logic for the SYNC_UPDATE operation:
-			// - If the subscription is still initializing, we skip sending the message before the backfill message is sent.
-			// - Filter out backfill events if they were sent already by distributeBackfillMessage in the backfill message.
-			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-				if _, found := subscription.initializingStreams.Load(streamID); found {
-					// If the subscription is still initializing, skip sending the message.
-					// It will be sent later when the subscription is ready after sending the backfill message.
-					return
-				}
-
-				// If the message is a sync update, we need to check if there are any backfill events sent already.
-				// If there are, we need to remove them from the message.
-				backfillEvents, _ := subscription.backfillEvents.LoadAndDelete(StreamId(msg.StreamID()))
-				if len(backfillEvents) > 0 {
-					msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
-						return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-					})
-					msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
-						return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-					})
-				}
-			}
-
-			subscription.Send(msg)
-		}(proto.CloneOf(msg), subscription)
-	}
-	wg.Wait()
-
-	// Remove collected subscriptions after iteration is complete
-	for _, syncID := range toRemove {
-		_ = m.registry.RemoveSubscription(syncID)
-	}
-}
-
-// distributeBackfillMessage handles a backfill messages targeted to specific subscriptions.
-func (m *Manager) distributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse) {
-	// Look for the subscription that matches the target sync ID.
-	var sub *Subscription
-	for _, subscription := range m.registry.GetSubscriptionsForStream(streamID) {
-		if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
-			sub = subscription
-			break
-		}
-	}
-
-	if sub == nil {
-		// No subscription found for the target sync ID, nothing to do.
-		// This can happen if the subscription was closed before the backfill message was sent.
-		return
-	}
-
-	msg.TargetSyncIds = msg.TargetSyncIds[1:]
-	sub.Send(msg)
-
-	// The given stream is in initialization state for the given subscription.
-	// Backfill of the stream targeted specifically to the given subscription.
-	// Remove the stream from the initializing streams map for the given subscription
-	// to start sending updates.
-	if _, found := sub.initializingStreams.LoadAndDelete(streamID); found {
-		hashes := make([]common.Hash, 0, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
-		for _, event := range msg.GetStream().GetEvents() {
-			hashes = append(hashes, common.BytesToHash(event.Hash))
-		}
-		for _, miniblock := range msg.GetStream().GetMiniblocks() {
-			hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
-		}
-		sub.backfillEvents.Store(streamID, hashes)
+	// Route message based on type
+	if len(msg.GetTargetSyncIds()) > 0 {
+		return m.distributor.DistributeBackfillMessage(m.globalCtx, streamID, msg)
+	} else {
+		return m.distributor.DistributeMessage(m.globalCtx, streamID, msg)
 	}
 }

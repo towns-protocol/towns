@@ -7,6 +7,18 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+// Registry defines the contract for managing subscription lifecycle
+type Registry interface {
+	AddSubscription(sub *Subscription) error
+	RemoveSubscription(syncID string) error
+	GetSubscriptionsForStream(streamID StreamId) []*Subscription
+	GetSubscriptionByID(syncID string) (*Subscription, bool)
+	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
+	RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool)
+	GetStats() (streamCount, subscriptionCount int)
+	CancelAll(err error)
+}
+
 // registry implements SubscriptionRegistry for managing subscription lifecycle
 type registry struct {
 	// sLock is the mutex that protects the subscriptions maps

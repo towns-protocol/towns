@@ -41,7 +41,7 @@ type Subscription struct {
 	// syncers is the set of syncers that handle stream synchronization
 	syncers *client.SyncerSet
 	// registry is the subscription registry that manages all subscriptions.
-	registry *registry
+	registry Registry
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.
 	closed atomic.Bool
 	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
