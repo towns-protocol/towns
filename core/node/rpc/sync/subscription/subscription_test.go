@@ -2,25 +2,17 @@ package subscription
 
 import (
 	"context"
-	"slices"
 	"testing"
-
-	"github.com/towns-protocol/towns/core/node/base"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	testutils "github.com/towns-protocol/towns/core/node/testutils"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
-
-// SyncerSetInterface for testing
-type SyncerSetInterface interface {
-	Modify(ctx context.Context, req client.ModifyRequest) error
-}
 
 // MockSyncerSet for testing
 type MockSyncerSet struct {
@@ -32,95 +24,6 @@ func (m *MockSyncerSet) Modify(ctx context.Context, req client.ModifyRequest) er
 	return args.Error(0)
 }
 
-// TestSubscription is a test-specific version that can accept SyncerSetInterface
-type TestSubscription struct {
-	*Subscription
-	syncers SyncerSetInterface
-}
-
-func (ts *TestSubscription) Modify(ctx context.Context, req client.ModifyRequest) error {
-	if ts.otelTracer != nil {
-		var span trace.Span
-		ctx, span = ts.otelTracer.Start(ctx, "subscription::modify",
-			trace.WithAttributes(attribute.String("syncId", ts.syncID)))
-		defer span.End()
-	}
-
-	// Validate the given request first
-	if err := req.Validate(); err != nil {
-		return err
-	}
-
-	// Prepare a request to be sent to the syncer set if needed
-	modifiedReq := client.ModifyRequest{
-		SyncID:                    ts.syncID,
-		ToBackfill:                req.ToBackfill,
-		BackfillingFailureHandler: req.BackfillingFailureHandler,
-		AddingFailureHandler: func(status *SyncStreamOpStatus) {
-			req.AddingFailureHandler(status)
-			_ = ts.registry.RemoveStreamFromSubscription(ts.syncID, StreamId(status.GetStreamId()))
-		},
-		RemovingFailureHandler: req.RemovingFailureHandler,
-	}
-
-	// Handle streams that the clients wants to subscribe to.
-	var implicitBackfills []*SyncCookie
-	for _, toAdd := range req.ToAdd {
-		addToRemote, shouldBackfill := ts.registry.AddStreamToSubscription(ts.syncID, StreamId(toAdd.GetStreamId()))
-		if addToRemote {
-			// The given stream must be added to the main syncer set
-			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
-		} else if shouldBackfill {
-			// The given stream must be backfilled implicitly only for the given subscription
-			implicitBackfills = append(implicitBackfills, toAdd)
-		}
-	}
-
-	// Handle streams that the clients wants to unsubscribe from.
-	for _, toRemove := range req.ToRemove {
-		removeFromRemote := ts.registry.RemoveStreamFromSubscription(ts.syncID, StreamId(toRemove))
-		if removeFromRemote {
-			// The given stream must be removed from the main syncer set
-			modifiedReq.ToRemove = append(modifiedReq.ToRemove, toRemove)
-		}
-	}
-
-	if len(implicitBackfills) > 0 {
-		if modifiedReq.BackfillingFailureHandler == nil {
-			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
-		} else {
-			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
-				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
-					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
-				}) {
-					modifiedReq.AddingFailureHandler(status)
-				} else {
-					modifiedReq.BackfillingFailureHandler(status)
-				}
-			}
-		}
-
-		modifiedReq.ToBackfill = append(modifiedReq.ToBackfill, &ModifySyncRequest_Backfill{
-			SyncId:  ts.syncID,
-			Streams: implicitBackfills,
-		})
-	}
-
-	if len(modifiedReq.ToBackfill) == 0 &&
-		len(modifiedReq.ToAdd) == 0 &&
-		len(modifiedReq.ToRemove) == 0 {
-		// No changes to be made, just return
-		return nil
-	}
-
-	// Send the request to the syncer set
-	if err := ts.syncers.Modify(ctx, modifiedReq); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func TestSubscription_Modify(t *testing.T) {
 	// Generate stream IDs once to ensure consistency
 	streamID1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -128,21 +31,21 @@ func TestSubscription_Modify(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		setup         func() (*TestSubscription, SyncerSetInterface, *MockRegistry)
+		setup         func() (*Subscription, SyncerSet, *MockRegistry)
 		req           client.ModifyRequest
-		expectedCalls func(SyncerSetInterface, *MockRegistry)
+		expectedCalls func(SyncerSet, *MockRegistry)
 		expectError   Err
 		errorContains string
 	}{
 		{
 			name: "add new stream - should add to remote",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -151,7 +54,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
@@ -160,13 +63,13 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "add existing stream - should backfill",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -175,7 +78,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID2).Return(false, true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
@@ -184,13 +87,13 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "remove stream - should remove from remote",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -199,7 +102,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID1).Return(true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 1 && len(req.ToBackfill) == 0
@@ -208,13 +111,13 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "remove stream - should not remove from remote",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -223,20 +126,20 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2).Return(false)
 				// No call to syncer.Modify expected since no remote changes
 			},
 		},
 		{
 			name: "mixed add and remove streams",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -249,7 +152,7 @@ func TestSubscription_Modify(t *testing.T) {
 				AddingFailureHandler:   func(status *SyncStreamOpStatus) {},
 				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2).Return(true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
@@ -259,13 +162,13 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "add stream with backfill and custom backfill handler",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -275,7 +178,7 @@ func TestSubscription_Modify(t *testing.T) {
 				AddingFailureHandler:      func(status *SyncStreamOpStatus) {},
 				BackfillingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(false, true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
@@ -284,18 +187,18 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "empty request - should return early",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				// No calls expected since request is empty
 			},
 			expectError:   Err_INVALID_ARGUMENT,
@@ -303,13 +206,13 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "syncer modify returns error",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -318,7 +221,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
@@ -327,13 +230,13 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "invalid request - duplicate streams in add",
-			setup: func() (*TestSubscription, SyncerSetInterface, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &MockRegistry{}
 				sub := createTestSubscription("test-sync-1")
-				testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-				testSub.registry = mockReg
-				return testSub, mockSyncer, mockReg
+				sub.syncers = mockSyncer
+				sub.registry = mockReg
+				return sub, mockSyncer, mockReg
 			},
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
@@ -343,7 +246,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSetInterface, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
 				// No calls expected due to validation error
 			},
 			expectError:   Err_INVALID_ARGUMENT,
@@ -379,8 +282,8 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &MockRegistry{}
 	sub := createTestSubscription("test-sync-1")
-	testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-	testSub.registry = mockReg
+	sub.syncers = mockSyncer
+	sub.registry = mockReg
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -400,7 +303,7 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 		},
 	}
 
-	err := testSub.Modify(context.Background(), req)
+	err := sub.Modify(context.Background(), req)
 	assert.NoError(t, err)
 
 	mockSyncer.AssertExpectations(t)
@@ -412,8 +315,8 @@ func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &MockRegistry{}
 	sub := createTestSubscription("test-sync-1")
-	testSub := &TestSubscription{Subscription: sub, syncers: mockSyncer}
-	testSub.registry = mockReg
+	sub.syncers = mockSyncer
+	sub.registry = mockReg
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -437,7 +340,7 @@ func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 		},
 	}
 
-	err := testSub.Modify(context.Background(), req)
+	err := sub.Modify(context.Background(), req)
 	assert.NoError(t, err)
 
 	mockSyncer.AssertExpectations(t)

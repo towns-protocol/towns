@@ -18,6 +18,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+// SyncerSet represents a syncer set behaviour
+type SyncerSet interface {
+	Modify(ctx context.Context, req client.ModifyRequest) error
+}
+
 // Subscription represents an individual subscription for streams synchronization.
 type Subscription struct {
 	// Messages is the channel for the subscription messages
@@ -39,7 +44,7 @@ type Subscription struct {
 	// The list of hashes is deleted after receiving the first message after the backfill.
 	backfillEvents *xsync.Map[StreamId, []common.Hash]
 	// syncers is the set of syncers that handle stream synchronization
-	syncers *client.SyncerSet
+	syncers SyncerSet
 	// registry is the subscription registry that manages all subscriptions.
 	registry Registry
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.

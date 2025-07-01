@@ -31,7 +31,7 @@ type Manager struct {
 	// nodeRegistry is the node registry that provides information about other nodes in the network
 	nodeRegistry nodes.NodeRegistry
 	// syncers is the set of syncers that handle stream synchronization
-	syncers *client.SyncerSet
+	syncers SyncerSet
 	// messages is the global channel for messages of all syncing streams
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	// Registry is the subscription registry that manages all subscriptions.
