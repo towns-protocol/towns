@@ -346,6 +346,7 @@ export function makeParsedEvent(
         hashStr: bin_toHexString(hash),
         signature,
         creatorUserId: userIdFromAddress(event.creatorAddress),
+        ephemeral: event.ephemeral,
     } satisfies ParsedEvent
 }
 

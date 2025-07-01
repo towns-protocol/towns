@@ -66,6 +66,7 @@ export class StreamStateView {
     readonly streamsView: StreamsView
     readonly contentKind: SnapshotCaseType
     readonly minipoolEvents = new Map<string, StreamTimelineEvent>()
+    readonly ephemeralEvents = new Map<string, ParsedEvent>()
 
     prevMiniblockHash?: Uint8Array
     prevMiniblockNum?: bigint
@@ -315,6 +316,10 @@ export class StreamStateView {
         const updated: StreamTimelineEvent[] = []
         const confirmed: ConfirmedTimelineEvent[] = []
         for (const parsedEvent of minipoolEvents) {
+            if (parsedEvent.ephemeral) {
+                this.ephemeralEvents.set(parsedEvent.hashStr, parsedEvent)
+                continue
+            }
             const existingEvent = this.minipoolEvents.get(parsedEvent.hashStr)
             if (existingEvent) {
                 existingEvent.remoteEvent = parsedEvent

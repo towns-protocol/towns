@@ -40,19 +40,17 @@ describe('ephemeralEvents', () => {
             isNewDevice: false,
             sessionIds: ['abc'],
         })
-        const { eventId } = await alice.makeEventAndAddToStream(streamId, event, {
+
+        await alice.makeEventAndAddToStream(streamId, event, {
             ephemeral: true,
         })
-
-        console.log('eventId', eventId)
 
         const stream = await alice.waitForStream(streamId)
         expect(stream.view.getMembers().joinedUsers).toEqual(new Set([alice.userId, bob.userId]))
 
         await waitFor(() => {
-            return stream.view.timeline.length == 6
+            return stream.view.ephemeralEvents.size == 1
         })
-        const events = stream.view.timeline
-        console.log(events)
+        console.log(stream.view.ephemeralEvents)
     })
 })
