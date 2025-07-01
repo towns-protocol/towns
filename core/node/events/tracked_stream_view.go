@@ -9,7 +9,7 @@ import (
 )
 
 // TrackedStreamView presents an interface that can be used to apply the returned
-// data structures of a stream synced from another node in order to render an up-to-date
+// data structures of a stream reconciled from another node in order to render an up-to-date
 // view of the stream locally.
 type TrackedStreamView interface {
 	// ApplyBlock applies the block to the internal view, updating the stream with the latest
