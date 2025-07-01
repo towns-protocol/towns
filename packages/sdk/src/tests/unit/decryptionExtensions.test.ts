@@ -28,6 +28,7 @@ import {
     CryptoStore,
     GroupEncryptionCrypto,
     IGroupEncryptionClient,
+    createCryptoStore,
 } from '@towns-protocol/encryption'
 import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@towns-protocol/dlog'
 
@@ -221,7 +222,7 @@ async function createCryptoMocks(
     decryptionExtension: MockDecryptionExtensions
     userDevice: UserDevice
 }> {
-    const cryptoStore = new CryptoStore(`db_${userId}`, userId)
+    const cryptoStore = createCryptoStore(`db_${userId}`, userId)
     const entitlementDelegate = new MockEntitlementsDelegate()
     const client = new MockGroupEncryptionClient(clientDiscoveryService)
     const crypto = new GroupEncryptionCrypto(client, cryptoStore)
