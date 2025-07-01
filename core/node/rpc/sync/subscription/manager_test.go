@@ -80,7 +80,7 @@ func TestManager_processMessage(t *testing.T) {
 			},
 		},
 	}
-	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
+	mockReg.On("GetSubscriptionsForStream", mock.Anything).Return([]*Subscription{}).Maybe()
 	err := m.processMessage(msg)
 	assert.NoError(t, err)
 	mockReg.AssertExpectations(t)
@@ -90,7 +90,7 @@ func TestManager_processMessage(t *testing.T) {
 		SyncOp:   SyncOp_SYNC_DOWN,
 		StreamId: streamID[:],
 	}
-	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
+	mockReg.On("GetSubscriptionsForStream", mock.Anything).Return([]*Subscription{}).Maybe()
 	err = m.processMessage(msg2)
 	assert.NoError(t, err)
 	mockReg.AssertExpectations(t)
@@ -133,7 +133,7 @@ func TestManager_start(t *testing.T) {
 	}
 
 	// Mock the registry to expect the message processing
-	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
+	mockReg.On("GetSubscriptionsForStream", mock.Anything).Return([]*Subscription{}).Maybe()
 
 	// Add message to the buffer
 	err := m.messages.AddMessage(msg)

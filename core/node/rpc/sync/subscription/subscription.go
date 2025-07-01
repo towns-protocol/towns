@@ -52,8 +52,8 @@ type Subscription struct {
 func (s *Subscription) Close() {
 	s.closed.Store(true)
 	s.Messages.Close()
-	// The given subscription is going to be removed from the list (s.subscriptions) automatically during the next stream update.
-	// This way we can avoid iterating over all streams to remove the current subscription.
+	// Remove the subscription from the registry
+	s.registry.RemoveSubscription(s.syncID)
 }
 
 // isClosed returns true if the subscription is closed, false otherwise.

@@ -20,5 +20,6 @@ func createTestSubscription(syncID string) *Subscription {
 		cancel:              cancel,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
+		registry:            newRegistry(),
 	}
 }
