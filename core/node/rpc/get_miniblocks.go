@@ -34,10 +34,7 @@ func (s *Service) localGetMiniblocks(
 	// Apply exclusion filtering if filters are provided
 	if len(req.Msg.GetExclusionFilter()) > 0 {
 		for i := range mbsInfo {
-			mbsInfo[i], err = s.applyExclusionFilter(mbsInfo[i], req.Msg.GetExclusionFilter())
-			if err != nil {
-				return nil, err
-			}
+			mbsInfo[i] = s.applyExclusionFilter(mbsInfo[i], req.Msg.GetExclusionFilter())
 		}
 	}
 
@@ -72,7 +69,7 @@ func (s *Service) localGetMiniblocks(
 
 // applyExclusionFilter applies exclusion filters to a miniblock, returning a new MiniblockInfo
 // with filtered events and partial flag set if any events were excluded
-func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*EventFilter) (*MiniblockInfo, error) {
+func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*EventFilter) *MiniblockInfo {
 	// Use the existing miniblock proto directly (no need to unmarshal)
 	miniblock := info.Proto
 
@@ -89,7 +86,7 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*E
 
 	// If no events were filtered, return original miniblock info
 	if len(filteredEvents) == originalEventCount {
-		return info, nil
+		return info
 	}
 
 	// Create new miniblock with filtered events and partial flag
@@ -104,7 +101,7 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*E
 		Proto:    filteredMiniblock,
 		Ref:      info.Ref,
 		Snapshot: info.Snapshot,
-	}, nil
+	}
 }
 
 // shouldExcludeEvent determines if an event should be excluded based on exclusion filters
