@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
     Client,
     makeBaseProvider,
@@ -32,6 +30,7 @@ import {
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -193,10 +192,13 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
-        const { fetch } = await bot.start()
+        const { jwtMiddleware, handler } = await bot.start()
+        const app = new Hono()
+        app.use(jwtMiddleware)
+        app.post('/webhook', handler)
         serve({
             port: Number(process.env.BOT_PORT!),
-            fetch,
+            fetch: app.fetch,
             createServer,
         })
         await appRegistryRpcClient.registerWebhook({
@@ -204,15 +206,11 @@ describe('Bot', { sequential: true }, () => {
             webhookUrl: WEBHOOK_URL,
         })
 
-        // Verify webhook registration
         const { isRegistered, validResponse } = await appRegistryRpcClient.getStatus({
             appId: bin_fromHexString(botClientAddress),
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
-        // await bobClient.riverConnection.call((client) =>
-        //     client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
-        // )
     }
 
     it('should receive a message forwarded', async () => {
@@ -441,6 +439,7 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
 
+    // TODO: flaky test
     it.skip('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const receivedReplyEvents: BotPayload<'reply'>[] = []
