@@ -97,9 +97,9 @@ func (s *StreamCache) onStreamPlacementUpdated(
 		event.Stream.Stream.Nodes[0] == s.params.Wallet.Address {
 		go s.writeLatestMbToBlockchain(ctx, stream)
 	} else {
-		// Always submit a sync task, since this only happens on stream placement updates it happens
+		// Always submit a reconciliation task, since this only happens on stream placement updates it happens
 		// rarely. If local node was in quorum, it should be up-to-date making this a no-op task.
-		s.SubmitSyncStreamTask(stream, event.Stream)
+		s.SubmitReconcileStreamTask(stream, event.Stream)
 	}
 }
 
