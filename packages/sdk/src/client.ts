@@ -2515,6 +2515,7 @@ export class Client
             cleartext?: Uint8Array
             optional?: boolean
             tags?: PlainMessage<Tags>
+            ephemeral?: boolean
         } = {},
     ): Promise<{ eventId: string; error?: AddEventResponse_Error }> {
         // TODO: filter this.logged payload for PII reasons
@@ -2550,6 +2551,8 @@ export class Client
             options.localId,
             options.cleartext,
             options.tags,
+            undefined, // retryCount
+            options.ephemeral,
         )
         return { eventId, error }
     }
@@ -2564,6 +2567,7 @@ export class Client
         cleartext?: Uint8Array,
         tags?: PlainMessage<Tags>,
         retryCount?: number,
+        ephemeral?: boolean,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
@@ -2573,6 +2577,7 @@ export class Client
             prevMiniblockHash,
             prevMiniblockNum,
             tags,
+            ephemeral,
         )
         const eventId = bin_toHexString(event.hash)
         if (localId) {
