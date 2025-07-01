@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -12,6 +13,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
@@ -418,4 +420,164 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		view = getView(t, ctx, stream)
 		require.Equal(int64(i*3+4), view.LastBlock().Ref.Num)
 	}
+}
+
+func TestAddEventLockedWithEphemeralEvents(t *testing.T) {
+	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	require := require.New(t)
+
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	genesisMb := MakeGenesisMiniblockForSpaceStream(
+		t,
+		tt.instances[0].params.Wallet,
+		tt.instances[0].params.Wallet,
+		spaceStreamId,
+		nil,
+	)
+
+	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+
+	// Test 1: Non-ephemeral event should write to storage
+	nonEphemeralEvent := MakeEvent(
+		t,
+		tt.instances[0].params.Wallet,
+		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "non-ephemeral"}),
+		view.LastBlock().Ref,
+	)
+	nonEphemeralEvent.Event.Ephemeral = false
+
+	// Mock the storage to verify it's called for non-ephemeral events
+	originalStorage := stream.params.Storage
+	mockStorage := &mockStorage{StreamStorage: originalStorage, writeEventCalled: false}
+	stream.params.Storage = mockStorage
+
+	newSV, err := stream.addEventLocked(ctx, nonEphemeralEvent, false)
+	require.NoError(err)
+	require.NotNil(newSV)
+	require.True(mockStorage.writeEventCalled, "Storage.WriteEvent should be called for non-ephemeral events")
+
+	// Test 2: Ephemeral event should NOT write to storage but still notify
+	ephemeralEvent := MakeEvent(
+		t,
+		tt.instances[0].params.Wallet,
+		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "ephemeral"}),
+		view.LastBlock().Ref,
+	)
+	ephemeralEvent.Event.Ephemeral = true
+
+	// Reset mock and test ephemeral event
+	mockStorage.writeEventCalled = false
+	newSV, err = stream.addEventLocked(ctx, ephemeralEvent, false)
+	require.NoError(err)
+	require.NotNil(newSV)
+	require.False(mockStorage.writeEventCalled, "Storage.WriteEvent should NOT be called for ephemeral events")
+
+	// Test 3: Verify that both events are in the view (ephemeral events are still added to the view)
+	finalView, err := stream.GetView(ctx)
+	require.NoError(err)
+	require.Equal(2, finalView.minipool.size(), "Both events should be in the view")
+
+	// Test 4: Verify that subscribers are notified for both ephemeral and non-ephemeral events
+	subscriber := &testSubscriber{}
+	err = stream.Sub(ctx, view.SyncCookie(tt.instances[0].params.Wallet.Address), subscriber)
+	require.NoError(err)
+
+	// Add another ephemeral event and verify subscriber is notified
+	ephemeralEvent2 := MakeEvent(
+		t,
+		tt.instances[0].params.Wallet,
+		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "ephemeral2"}),
+		finalView.LastBlock().Ref,
+	)
+	ephemeralEvent2.Event.Ephemeral = true
+
+	mockStorage.writeEventCalled = false
+	newSV, err = stream.addEventLocked(ctx, ephemeralEvent2, false)
+	require.NoError(err)
+	require.NotNil(newSV)
+	require.False(mockStorage.writeEventCalled, "Storage.WriteEvent should NOT be called for ephemeral events")
+
+	// Give some time for notifications to be processed
+	time.Sleep(10 * time.Millisecond)
+	require.Greater(len(subscriber.receivedUpdates), 0, "Subscriber should receive updates for ephemeral events")
+
+	// Cleanup
+	stream.Unsub(subscriber)
+}
+
+func TestAddEventLockedWithEphemeralEventsAndRelaxedDuplicateCheck(t *testing.T) {
+	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	require := require.New(t)
+
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	genesisMb := MakeGenesisMiniblockForSpaceStream(
+		t,
+		tt.instances[0].params.Wallet,
+		tt.instances[0].params.Wallet,
+		spaceStreamId,
+		nil,
+	)
+
+	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+
+	// Create an ephemeral event
+	ephemeralEvent := MakeEvent(
+		t,
+		tt.instances[0].params.Wallet,
+		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "ephemeral"}),
+		view.LastBlock().Ref,
+	)
+	ephemeralEvent.Event.Ephemeral = true
+
+	// Mock the storage
+	originalStorage := stream.params.Storage
+	mockStorage := &mockStorage{StreamStorage: originalStorage, writeEventCalled: false}
+	stream.params.Storage = mockStorage
+
+	// Test with relaxed duplicate check
+	newSV, err := stream.addEventLocked(ctx, ephemeralEvent, true)
+	require.NoError(err)
+	require.NotNil(newSV)
+	require.False(
+		mockStorage.writeEventCalled,
+		"Storage.WriteEvent should NOT be called for ephemeral events even with relaxed duplicate check",
+	)
+}
+
+// mockStorage is a mock implementation of the storage interface for testing
+type mockStorage struct {
+	storage.StreamStorage
+	writeEventCalled bool
+}
+
+func (m *mockStorage) WriteEvent(
+	ctx context.Context,
+	streamId StreamId,
+	generation int64,
+	slotNumber int,
+	envelopeBytes []byte,
+) error {
+	m.writeEventCalled = true
+	return m.StreamStorage.WriteEvent(ctx, streamId, generation, slotNumber, envelopeBytes)
+}
+
+// testSubscriber is a test implementation of SyncResultReceiver for testing notifications
+type testSubscriber struct {
+	receivedUpdates []*StreamAndCookie
+	receivedErrors  []error
+	streamErrors    []StreamId
+}
+
+func (s *testSubscriber) OnUpdate(sac *StreamAndCookie) {
+	s.receivedUpdates = append(s.receivedUpdates, sac)
+}
+
+func (s *testSubscriber) OnSyncError(err error) {
+	s.receivedErrors = append(s.receivedErrors, err)
+}
+
+func (s *testSubscriber) OnStreamSyncDown(streamID StreamId) {
+	s.streamErrors = append(s.streamErrors, streamID)
 }
