@@ -5,11 +5,10 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/towns-protocol/towns/core/node/logging"
-
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
