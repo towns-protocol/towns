@@ -97,7 +97,7 @@ contract RewardsDistributionV2 is
         address delegatee,
         address beneficiary
     ) external returns (uint256 depositId) {
-        depositId = _stake(amount, delegatee, beneficiary, msg.sender);
+        depositId = _stake(amount, delegatee, beneficiary, msg.sender, false);
     }
 
     /// @inheritdoc IRewardsDistribution
@@ -105,13 +105,12 @@ contract RewardsDistributionV2 is
         uint96 amount,
         address delegatee,
         address beneficiary,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external returns (uint256 depositId) {
-        _permitStakeToken(amount, deadline, v, r, s);
-        depositId = _stake(amount, delegatee, beneficiary, msg.sender);
+        _permitStakeToken(amount, nonce, deadline, signature);
+        depositId = _stake(amount, delegatee, beneficiary, msg.sender, true);
     }
 
     /// @inheritdoc IRewardsDistribution
@@ -123,25 +122,24 @@ contract RewardsDistributionV2 is
         uint256,
         bytes calldata
     ) external returns (uint256 depositId) {
-        depositId = _stake(amount, delegatee, beneficiary, owner);
+        depositId = _stake(amount, delegatee, beneficiary, owner, false);
     }
 
     /// @inheritdoc IRewardsDistribution
     function increaseStake(uint256 depositId, uint96 amount) external {
-        _increaseStake(depositId, amount);
+        _increaseStake(depositId, amount, false);
     }
 
     /// @inheritdoc IRewardsDistribution
     function permitAndIncreaseStake(
         uint256 depositId,
         uint96 amount,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external {
-        _permitStakeToken(amount, deadline, v, r, s);
-        _increaseStake(depositId, amount);
+        _permitStakeToken(amount, nonce, deadline, signature);
+        _increaseStake(depositId, amount, true);
     }
 
     /// @inheritdoc IRewardsDistribution
