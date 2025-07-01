@@ -442,6 +442,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SwapRouter__SameToken",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SwapRouter__UnexpectedETH",
     inputs: [],
   },

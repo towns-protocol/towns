@@ -74,6 +74,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when recipient is not specified (address(0))
     error SwapRouter__RecipientRequired();
 
+    /// @notice Error thrown when tokenIn and tokenOut are the same
+    error SwapRouter__SameToken();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

@@ -130,6 +130,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapRouter__SameToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__UnexpectedETH",
     "inputs": []
   }
