@@ -568,6 +568,10 @@ func (a *Archiver) advanceNodeAndRetryWithDelay(stream *ArchiveStream, delay tim
 	})
 }
 
+func isAvailabilityErr(err error) bool {
+	return err != nil && (AsRiverError(err).Code == Err_NOT_FOUND || AsRiverError(err).Code == Err_UNAVAILABLE)
+}
+
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
 // since the last time the stream was archived into storage.  It creates a new stream for
 // streams that have not yet been seen.
@@ -594,7 +598,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	// Check if stream info was loaded from db.
 	if mbsInDb <= -1 {
 		maxBlockNum, err := a.storage.GetMaxArchivedMiniblockNumber(ctx, stream.streamId)
-		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
+		if isAvailabilityErr(err) {
 			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
 				return err
@@ -647,7 +651,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 				ToExclusive:   toBlock,
 			}),
 		)
-		if err != nil && AsRiverError(err).Code != Err_NOT_FOUND {
+		if err != nil && !isAvailabilityErr(err) {
 			log.Warnw(
 				"Error when calling GetMiniblocks on server",
 				"error",
@@ -662,7 +666,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			return err
 		}
 
-		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
+		if isAvailabilityErr(err) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
 			// If the stream is unable to fully update, consider this attempt to archive the stream as
 			// a failure, even though we do not return an error.
 			stream.corrupt.RecordBlockUpdateFailure(
