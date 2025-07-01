@@ -37,10 +37,8 @@ type Manager struct {
 	syncers *client.SyncerSet
 	// messages is the global channel for messages of all syncing streams
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	// sLock is the mutex that protects the subscriptions map
-	sLock sync.Mutex
-	// subscriptions is a map of stream IDs to subscriptions.
-	subscriptions map[StreamId][]*Subscription
+	// registry is the subscription registry that manages all subscriptions.
+	registry *registry
 	// stopped is a flag that indicates whether the manager is stopped (1) or not (0).
 	stopped atomic.Bool
 	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
@@ -72,7 +70,7 @@ func NewManager(
 		otelTracer:    otelTracer,
 		syncers:       syncers,
 		messages:      messages,
-		subscriptions: make(map[StreamId][]*Subscription),
+		registry:      newRegistry(),
 	}
 
 	go manager.start()
@@ -86,24 +84,32 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		return nil, RiverError(Err_UNAVAILABLE, "subscription manager is stopped").Tag("syncId", syncID)
 	}
 
-	return &Subscription{
+	sub := &Subscription{
 		log:                 m.log.With("syncId", syncID),
 		ctx:                 ctx,
 		cancel:              cancel,
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		manager:             m,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
+		syncers:             m.syncers,
+		registry:            m.registry,
 		otelTracer:          m.otelTracer,
-	}, nil
+	}
+
+	// Register the subscription with the registry
+	if err := m.registry.AddSubscription(sub); err != nil {
+		return nil, err
+	}
+
+	return sub, nil
 }
 
 // start starts the subscription manager and listens for messages from the syncer set.
 func (m *Manager) start() {
 	defer func() {
 		m.stopped.Store(true)
-		m.cancelAllSubscriptions()
+		m.registry.CancelAll(m.globalCtx.Err())
 	}()
 
 	var msgs []*SyncStreamsResponse
@@ -160,25 +166,18 @@ func (m *Manager) start() {
 // distributeMessage processes the given message and sends it to all relevant subscriptions.
 func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	// Send the message to all subscriptions for this stream.
-	m.sLock.Lock()
-	subs, ok := m.subscriptions[streamID]
-	if !ok || len(subs) == 0 {
+	subscriptions := m.registry.GetSubscriptionsForStream(streamID)
+	if len(subscriptions) == 0 {
 		// No subscriptions for this stream, nothing to do. This should not happen in theory.
-		go m.dropStream(streamID)
-		delete(m.subscriptions, streamID)
-		m.sLock.Unlock()
 		return
 	}
 
-	// Clone subscriptions slice to avoid data race when iterating over it below and modifying on the
-	// subscription level (addStream/removeStream).
-	subscriptions := slices.Clone(subs)
-
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The given stream is no longer syncing, remove it from the subscriptions.
-		delete(m.subscriptions, streamID)
+		for _, sub := range subscriptions {
+			m.registry.RemoveStreamFromSubscription(sub.syncID, streamID)
+		}
 	}
-	m.sLock.Unlock()
 
 	// Sending the message to all subscriptions for the given stream.
 	// It is safe to use waitgroup here becasue subscribers use dynamic buffer channel and can just throw the
@@ -198,6 +197,9 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 		go func(msg *SyncStreamsResponse, subscription *Subscription) {
 			defer wg.Done()
 
+			// There is a special logic for the SYNC_UPDATE operation:
+			// - If the subscription is still initializing, we skip sending the message before the backfill message is sent.
+			// - Filter out backfill events if they were sent already by distributeBackfillMessage in the backfill message.
 			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 				if _, found := subscription.initializingStreams.Load(streamID); found {
 					// If the subscription is still initializing, skip sending the message.
@@ -224,25 +226,16 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 	wg.Wait()
 
 	// Remove collected subscriptions after iteration is complete
-	if len(toRemove) > 0 {
-		m.sLock.Lock()
-		m.subscriptions[streamID] = slices.DeleteFunc(m.subscriptions[streamID], func(s *Subscription) bool {
-			return slices.Contains(toRemove, s.syncID)
-		})
-		m.sLock.Unlock()
+	for _, syncID := range toRemove {
+		_ = m.registry.RemoveSubscription(syncID)
 	}
 }
 
 // distributeBackfillMessage handles a backfill messages targeted to specific subscriptions.
 func (m *Manager) distributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse) {
-	// Send the message to all subscriptions for this stream.
-	m.sLock.Lock()
-	subs, _ := m.subscriptions[streamID]
-	m.sLock.Unlock()
-
 	// Look for the subscription that matches the target sync ID.
 	var sub *Subscription
-	for _, subscription := range subs {
+	for _, subscription := range m.registry.GetSubscriptionsForStream(streamID) {
 		if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
 			sub = subscription
 			break
@@ -272,30 +265,4 @@ func (m *Manager) distributeBackfillMessage(streamID StreamId, msg *SyncStreamsR
 		}
 		sub.backfillEvents.Store(streamID, hashes)
 	}
-}
-
-// dropStream removes the given stream from the syncers set and all subscriptions.
-func (m *Manager) dropStream(streamID StreamId) {
-	if err := m.syncers.Modify(m.globalCtx, client.ModifyRequest{
-		ToRemove: [][]byte{streamID[:]},
-		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
-			m.log.Errorw("Failed to remove stream from syncer set", "streamId", streamID, "status", status)
-		},
-	}); err != nil {
-		m.log.Errorw("Failed to drop stream from syncer set", "streamId", streamID, "err", err)
-	}
-}
-
-// cancelAllSubscriptions cancels all subscriptions with the given error.
-func (m *Manager) cancelAllSubscriptions() {
-	m.sLock.Lock()
-	for _, subscriptions := range m.subscriptions {
-		for _, sub := range subscriptions {
-			if !sub.isClosed() {
-				sub.cancel(m.globalCtx.Err())
-			}
-		}
-	}
-	m.subscriptions = make(map[StreamId][]*Subscription)
-	m.sLock.Unlock()
 }
