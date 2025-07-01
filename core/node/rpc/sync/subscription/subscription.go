@@ -42,6 +42,8 @@ type Subscription struct {
 	closed atomic.Bool
 	// manager is the subscription manager that manages this subscription
 	manager *Manager
+	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
+	otelTracer trace.Tracer
 }
 
 // Close closes the subscription.
@@ -77,9 +79,9 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 // Modify modifies the current subscription by adding or removing streams.
 // It also handles implicit backfills for streams that are added or being added.
 func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) error {
-	if s.manager.otelTracer != nil {
+	if s.otelTracer != nil {
 		var span trace.Span
-		ctx, span = s.manager.otelTracer.Start(ctx, "subscription::modify",
+		ctx, span = s.otelTracer.Start(ctx, "subscription::modify",
 			trace.WithAttributes(
 				attribute.String("syncId", s.syncID),
 			))

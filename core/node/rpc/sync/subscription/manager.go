@@ -95,6 +95,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		manager:             m,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
+		otelTracer:          m.otelTracer,
 	}, nil
 }
 
