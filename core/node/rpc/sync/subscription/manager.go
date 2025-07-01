@@ -133,8 +133,11 @@ func (m *Manager) start() {
 					continue
 				}
 
-				// Distribute the messages to all relevant subscriptions.
-				m.distributeMessage(streamID, msg)
+				if len(msg.GetTargetSyncIds()) > 0 {
+					m.distributeBackfillMessage(streamID, msg)
+				} else {
+					m.distributeMessage(streamID, msg)
+				}
 
 				// In case of the global context (the node itself) is done in the middle of the sending messages
 				// from the current batch, just interrupt the sending process and close.
@@ -177,44 +180,6 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 	}
 	m.sLock.Unlock()
 
-	// If the given message has a specific target subscription, just fetch the subscription by the sync ID
-	if len(msg.GetTargetSyncIds()) > 0 {
-		// Applicable only for backfill operation
-		var sub *Subscription
-		for _, subscription := range subscriptions {
-			if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
-				sub = subscription
-				break
-			}
-		}
-
-		// If the subscription is closed, just skip sending the message.
-		// This can happen if a client immediately closes the subscription before receiving the backfill message.
-		if sub != nil {
-			msg.TargetSyncIds = msg.TargetSyncIds[1:]
-			sub.Send(msg)
-
-			if _, found := sub.initializingStreams.Load(streamID); found {
-				// The given stream is in initialization state for the given subscription.
-				// Backfill of the stream targeted specifically to the given subscription.
-				// Remove the stream from the initializing streams map for the given subscription
-				// to start sending updates.
-				sub.initializingStreams.Delete(streamID)
-
-				// Store backfill events and miniblocks hashes for the given stream in the subscription.
-				hashes := make([]common.Hash, 0, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
-				for _, event := range msg.GetStream().GetEvents() {
-					hashes = append(hashes, common.BytesToHash(event.Hash))
-				}
-				for _, miniblock := range msg.GetStream().GetMiniblocks() {
-					hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
-				}
-				sub.backfillEvents.Store(streamID, hashes)
-			}
-		}
-		return
-	}
-
 	// Sending the message to all subscriptions for the given stream.
 	// It is safe to use waitgroup here becasue subscribers use dynamic buffer channel and can just throw the
 	// error if the buffer is full. Meaning, this is not a blocking by client operation.
@@ -231,30 +196,15 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 
 		if _, found := subscription.initializingStreams.Load(streamID); found {
 			// If the subscription is still initializing, skip sending the message.
-			// It will be sent later when the subscription is ready.
+			// It will be sent later when the subscription is ready after sending the backfill message.
 			continue
 		}
 
 		wg.Add(1)
-		go func(subscription *Subscription) {
-			msg := proto.Clone(msg).(*SyncStreamsResponse)
-
-			// Prevent sending duplicates that have already been sent to the client in the backfill message.
-			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-				backfillEvents, loaded := subscription.backfillEvents.LoadAndDelete(streamID)
-				if loaded && len(backfillEvents) > 0 {
-					msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
-						return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-					})
-					msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
-						return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-					})
-				}
-			}
-
+		go func(msg *SyncStreamsResponse, subscription *Subscription) {
 			subscription.Send(msg)
 			wg.Done()
-		}(subscription)
+		}(proto.CloneOf(msg), subscription)
 	}
 	wg.Wait()
 
@@ -265,6 +215,47 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 			return slices.Contains(toRemove, s.syncID)
 		})
 		m.sLock.Unlock()
+	}
+}
+
+// distributeBackfillMessage handles a backfill messages targeted to specific subscriptions.
+func (m *Manager) distributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse) {
+	// Send the message to all subscriptions for this stream.
+	m.sLock.Lock()
+	subs, _ := m.subscriptions[streamID]
+	m.sLock.Unlock()
+
+	// Look for the subscription that matches the target sync ID.
+	var sub *Subscription
+	for _, subscription := range subs {
+		if subscription.syncID == msg.GetTargetSyncIds()[0] && !subscription.isClosed() {
+			sub = subscription
+			break
+		}
+	}
+
+	if sub == nil {
+		// No subscription found for the target sync ID, nothing to do.
+		// This can happen if the subscription was closed before the backfill message was sent.
+		return
+	}
+
+	msg.TargetSyncIds = msg.TargetSyncIds[1:]
+	sub.Send(msg)
+
+	// The given stream is in initialization state for the given subscription.
+	// Backfill of the stream targeted specifically to the given subscription.
+	// Remove the stream from the initializing streams map for the given subscription
+	// to start sending updates.
+	if _, found := sub.initializingStreams.LoadAndDelete(streamID); found {
+		hashes := make([]common.Hash, 0, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
+		for _, event := range msg.GetStream().GetEvents() {
+			hashes = append(hashes, common.BytesToHash(event.Hash))
+		}
+		for _, miniblock := range msg.GetStream().GetMiniblocks() {
+			hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
+		}
+		sub.backfillEvents.Store(streamID, hashes)
 	}
 }
 
