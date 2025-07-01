@@ -13,7 +13,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
@@ -108,6 +107,7 @@ func MakeTestBlockForUserSettingsStream(
 		t,
 		userWallet,
 		Make_UserSettingsPayload_FullyReadMarkers(&UserSettingsPayload_FullyReadMarkers{}),
+		false,
 		prevBlock.Ref,
 	)
 
@@ -133,9 +133,16 @@ func MakeEvent(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
+	ephemeral bool,
 	prevMiniblock *MiniblockRef,
 ) *ParsedEvent {
-	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblock)
+	var envelope *Envelope
+	var err error
+	if ephemeral {
+		envelope, err = MakeEphemeralEnvelopeWithPayload(wallet, payload, prevMiniblock)
+	} else {
+		envelope, err = MakeEnvelopeWithPayload(wallet, payload, prevMiniblock)
+	}
 	require.NoError(t, err)
 	return parsedEvent(t, envelope)
 }
@@ -147,6 +154,7 @@ func addEventToStream(
 	stream *Stream,
 	data string,
 	prevMiniblock *MiniblockRef,
+	ephemeral bool,
 ) {
 	err := stream.AddEvent(
 		ctx,
@@ -154,6 +162,7 @@ func addEventToStream(
 			t,
 			streamCacheParams.Wallet,
 			Make_MemberPayload_Username(&EncryptedData{Ciphertext: data}),
+			ephemeral,
 			prevMiniblock,
 		),
 	)
@@ -172,6 +181,7 @@ func addEventToView(
 			t,
 			streamCacheParams.Wallet,
 			Make_MemberPayload_Username(&EncryptedData{Ciphertext: data}),
+			false,
 			prevMiniblock,
 		),
 	)
@@ -213,8 +223,8 @@ func mbTest(
 
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
 
 	candidate, err := tt.instances[0].makeAndSaveMbCandidate(ctx, stream, 0)
 	require.NoError(err)
@@ -238,7 +248,7 @@ func mbTest(
 	require.NoError(err)
 
 	if params.addAfterProposal {
-		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref)
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref, false)
 	}
 
 	require.NoError(err)
@@ -252,7 +262,7 @@ func mbTest(
 	require.NoError(err)
 	stats := view2.GetStats()
 	require.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Ref, false)
 
 	view2, err = stream.GetView(ctx)
 	require.NoError(err)
@@ -293,8 +303,8 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 	stream := syncStream
 
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
 
 	candidate, err := tt.instances[0].makeMbCandidate(
 		ctx,
@@ -340,8 +350,8 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 	stream := syncStream
 
-	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref)
-	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref, false)
 
 	view = getView(t, ctx, stream)
 	require.Equal(2, view.minipool.size())
@@ -422,145 +432,40 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	}
 }
 
-func TestAddEventLockedWithEphemeralEvents(t *testing.T) {
+func TestAddEventWithEphemeralEvents(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
 	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	require := require.New(t)
+	params := tt.instances[0].params
 
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	genesisMb := MakeGenesisMiniblockForSpaceStream(
 		t,
-		tt.instances[0].params.Wallet,
-		tt.instances[0].params.Wallet,
+		params.Wallet,
+		params.Wallet,
 		spaceStreamId,
 		nil,
 	)
 
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 
-	// Test 1: Non-ephemeral event should write to storage
-	nonEphemeralEvent := MakeEvent(
-		t,
-		tt.instances[0].params.Wallet,
-		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "non-ephemeral"}),
-		view.LastBlock().Ref,
-	)
-	nonEphemeralEvent.Event.Ephemeral = false
-
-	// Mock the storage to verify it's called for non-ephemeral events
-	originalStorage := stream.params.Storage
-	mockStorage := &mockStorage{StreamStorage: originalStorage, writeEventCalled: false}
-	stream.params.Storage = mockStorage
-
-	newSV, err := stream.addEventLocked(ctx, nonEphemeralEvent, false)
-	require.NoError(err)
-	require.NotNil(newSV)
-	require.True(mockStorage.writeEventCalled, "Storage.WriteEvent should be called for non-ephemeral events")
-
-	// Test 2: Ephemeral event should NOT write to storage but still notify
-	ephemeralEvent := MakeEvent(
-		t,
-		tt.instances[0].params.Wallet,
-		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "ephemeral"}),
-		view.LastBlock().Ref,
-	)
-	ephemeralEvent.Event.Ephemeral = true
-
-	// Reset mock and test ephemeral event
-	mockStorage.writeEventCalled = false
-	newSV, err = stream.addEventLocked(ctx, ephemeralEvent, false)
-	require.NoError(err)
-	require.NotNil(newSV)
-	require.False(mockStorage.writeEventCalled, "Storage.WriteEvent should NOT be called for ephemeral events")
-
-	// Test 3: Verify that both events are in the view (ephemeral events are still added to the view)
-	finalView, err := stream.GetView(ctx)
-	require.NoError(err)
-	require.Equal(2, finalView.minipool.size(), "Both events should be in the view")
-
-	// Test 4: Verify that subscribers are notified for both ephemeral and non-ephemeral events
 	subscriber := &testSubscriber{}
-	err = stream.Sub(ctx, view.SyncCookie(tt.instances[0].params.Wallet.Address), subscriber)
+	err := stream.Sub(ctx, view.SyncCookie(tt.instances[0].params.Wallet.Address), subscriber)
 	require.NoError(err)
 
-	// Add another ephemeral event and verify subscriber is notified
-	ephemeralEvent2 := MakeEvent(
-		t,
-		tt.instances[0].params.Wallet,
-		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "ephemeral2"}),
-		finalView.LastBlock().Ref,
-	)
-	ephemeralEvent2.Event.Ephemeral = true
+	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref, true)
 
-	mockStorage.writeEventCalled = false
-	newSV, err = stream.addEventLocked(ctx, ephemeralEvent2, false)
-	require.NoError(err)
-	require.NotNil(newSV)
-	require.False(mockStorage.writeEventCalled, "Storage.WriteEvent should NOT be called for ephemeral events")
+	view = getView(t, ctx, stream)
+	require.True(view.minipool.size() == 1, "Storage.WriteEvent should be called for non-ephemeral events")
 
 	// Give some time for notifications to be processed
 	time.Sleep(10 * time.Millisecond)
-	require.Greater(len(subscriber.receivedUpdates), 0, "Subscriber should receive updates for ephemeral events")
+	// initial update + 2 events
+	require.Equal(3, len(subscriber.receivedUpdates), "Subscriber should receive updates for ephemeral events")
 
 	// Cleanup
 	stream.Unsub(subscriber)
-}
-
-func TestAddEventLockedWithEphemeralEventsAndRelaxedDuplicateCheck(t *testing.T) {
-	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
-	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
-	require := require.New(t)
-
-	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	genesisMb := MakeGenesisMiniblockForSpaceStream(
-		t,
-		tt.instances[0].params.Wallet,
-		tt.instances[0].params.Wallet,
-		spaceStreamId,
-		nil,
-	)
-
-	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
-
-	// Create an ephemeral event
-	ephemeralEvent := MakeEvent(
-		t,
-		tt.instances[0].params.Wallet,
-		Make_MemberPayload_Username(&EncryptedData{Ciphertext: "ephemeral"}),
-		view.LastBlock().Ref,
-	)
-	ephemeralEvent.Event.Ephemeral = true
-
-	// Mock the storage
-	originalStorage := stream.params.Storage
-	mockStorage := &mockStorage{StreamStorage: originalStorage, writeEventCalled: false}
-	stream.params.Storage = mockStorage
-
-	// Test with relaxed duplicate check
-	newSV, err := stream.addEventLocked(ctx, ephemeralEvent, true)
-	require.NoError(err)
-	require.NotNil(newSV)
-	require.False(
-		mockStorage.writeEventCalled,
-		"Storage.WriteEvent should NOT be called for ephemeral events even with relaxed duplicate check",
-	)
-}
-
-// mockStorage is a mock implementation of the storage interface for testing
-type mockStorage struct {
-	storage.StreamStorage
-	writeEventCalled bool
-}
-
-func (m *mockStorage) WriteEvent(
-	ctx context.Context,
-	streamId StreamId,
-	generation int64,
-	slotNumber int,
-	envelopeBytes []byte,
-) error {
-	m.writeEventCalled = true
-	return m.StreamStorage.WriteEvent(ctx, streamId, generation, slotNumber, envelopeBytes)
 }
 
 // testSubscriber is a test implementation of SyncResultReceiver for testing notifications

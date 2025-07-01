@@ -121,16 +121,34 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}, nil
 }
 
-func MakeEnvelopeWithPayload(
+func makeEnvelopeWithPayload(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
+	ephemeral bool,
 	prevMiniblock *MiniblockRef,
 ) (*Envelope, error) {
 	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblock)
 	if err != nil {
 		return nil, err
 	}
+	streamEvent.Ephemeral = ephemeral
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
+}
+
+func MakeEphemeralEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload IsStreamEvent_Payload,
+	prevMiniblock *MiniblockRef,
+) (*Envelope, error) {
+	return makeEnvelopeWithPayload(wallet, payload, true, prevMiniblock)
+}
+
+func MakeEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload IsStreamEvent_Payload,
+	prevMiniblock *MiniblockRef,
+) (*Envelope, error) {
+	return makeEnvelopeWithPayload(wallet, payload, false, prevMiniblock)
 }
 
 func MakeEnvelopeWithPayloadAndTags(
