@@ -126,7 +126,7 @@ jobs:
                       }
 
     deploy:
-        if: success()
+        if: success() && github.event_name != 'workflow_dispatch'
         needs: build
         uses: ./.github/workflows/Subgraph_service_continuous_deployment.yml
         with:
@@ -137,7 +137,7 @@ jobs:
             RIVER_GITHUB_PAT: ${{ secrets.RIVER_GITHUB_PAT }}
 
     notify_deploy_failure:
-        if: failure()
+        if: failure() && github.event_name != 'workflow_dispatch'
         needs: deploy
         runs-on: ubuntu-latest
         steps:
