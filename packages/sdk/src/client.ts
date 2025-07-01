@@ -1205,7 +1205,21 @@ export class Client
     async pin(streamId: string, eventId: string) {
         const stream = this.streams.get(streamId)
         check(isDefined(stream), 'stream not found')
-        const event = stream.view.events.get(eventId)
+        let event = stream.view.events.get(eventId)
+
+        if (!event) {
+            for (const [, timelineEvent] of stream.view.events) {
+                if (timelineEvent.decryptedContent?.kind === 'channelMessage') {
+                    const refEventId = getRefEventIdFromChannelMessage(
+                        timelineEvent.decryptedContent.content,
+                    )
+                    if (refEventId === eventId) {
+                        event = timelineEvent
+                        break
+                    }
+                }
+            }
+        }
         check(isDefined(event), 'event not found')
         const remoteEvent = event.remoteEvent
         check(isDefined(remoteEvent), 'remoteEvent not found')
