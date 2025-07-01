@@ -385,7 +385,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	for _, job := range proposals {
-		if job.replicated || len(job.syncNodes) > 0 || job.candidate.Ref.Num%freq == 0 || job.candidate.Ref.Num == 1 {
+		if job.replicated || len(job.reconcileNodes) > 0 || job.candidate.Ref.Num%freq == 0 || job.candidate.Ref.Num == 1 {
 			filteredProposals = append(filteredProposals, job)
 		} else {
 			success = append(success, job.stream.streamId)
@@ -431,7 +431,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 		"mbFrequency", freq,
 	)
 
-	streamsOutOfSync := make([]*mbJob, 0, len(invalidProposals))
+	streamsNeedingReconciliation := make([]*mbJob, 0, len(invalidProposals))
 
 	for _, job := range proposals {
 		if slices.Contains(success, job.stream.streamId) && !job.skipPromotion {
@@ -449,13 +449,13 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 				p.jobDone(ctx, job)
 			}()
 		} else if slices.Contains(invalidProposals, job.stream.streamId) && !job.skipPromotion {
-			streamsOutOfSync = append(streamsOutOfSync, job)
+			streamsNeedingReconciliation = append(streamsNeedingReconciliation, job)
 		} else {
 			p.jobDone(ctx, job)
 		}
 	}
 
-	if err := p.promoteConfirmedCandidates(ctx, streamsOutOfSync); err != nil {
+	if err := p.promoteConfirmedCandidates(ctx, streamsNeedingReconciliation); err != nil {
 		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "error", err)
 	}
 }
