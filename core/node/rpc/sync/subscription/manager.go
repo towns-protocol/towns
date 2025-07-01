@@ -194,16 +194,31 @@ func (m *Manager) distributeMessage(streamID StreamId, msg *SyncStreamsResponse)
 			continue
 		}
 
-		if _, found := subscription.initializingStreams.Load(streamID); found {
-			// If the subscription is still initializing, skip sending the message.
-			// It will be sent later when the subscription is ready after sending the backfill message.
-			continue
-		}
-
 		wg.Add(1)
 		go func(msg *SyncStreamsResponse, subscription *Subscription) {
+			defer wg.Done()
+
+			if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+				if _, found := subscription.initializingStreams.Load(streamID); found {
+					// If the subscription is still initializing, skip sending the message.
+					// It will be sent later when the subscription is ready after sending the backfill message.
+					return
+				}
+
+				// If the message is a sync update, we need to check if there are any backfill events sent already.
+				// If there are, we need to remove them from the message.
+				backfillEvents, _ := subscription.backfillEvents.LoadAndDelete(StreamId(msg.StreamID()))
+				if len(backfillEvents) > 0 {
+					msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
+					})
+					msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
+						return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
+					})
+				}
+			}
+
 			subscription.Send(msg)
-			wg.Done()
 		}(proto.CloneOf(msg), subscription)
 	}
 	wg.Wait()

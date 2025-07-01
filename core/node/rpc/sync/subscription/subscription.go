@@ -65,20 +65,6 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 		return
 	}
 
-	if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-		// If the message is a sync update, we need to check if there are any backfill events sent already.
-		// If there are, we need to remove them from the message.
-		backfillEvents, _ := s.backfillEvents.LoadAndDelete(StreamId(msg.StreamID()))
-		if len(backfillEvents) > 0 {
-			msg.Stream.Events = slices.DeleteFunc(msg.Stream.Events, func(e *Envelope) bool {
-				return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-			})
-			msg.Stream.Miniblocks = slices.DeleteFunc(msg.Stream.Miniblocks, func(mb *Miniblock) bool {
-				return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-			})
-		}
-	}
-
 	err := s.Messages.AddMessage(msg)
 	if err != nil {
 		rvrErr := AsRiverError(err).
