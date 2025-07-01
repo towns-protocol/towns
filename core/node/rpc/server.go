@@ -853,6 +853,7 @@ func (s *Service) initAppRegistryHandlers() error {
 		s.config.AppRegistry.Authentication.SessionToken.Key.Algorithm,
 		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
 		"/river.AppRegistryService/GetStatus",
+		"/river.AppRegistryService/GetAppMetadata",
 	)
 	if err != nil {
 		return err

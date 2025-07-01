@@ -382,6 +382,13 @@ func (s *Service) Register(
 		)
 	}
 
+	// Validate metadata
+	metadata := req.Msg.GetMetadata()
+	if err := types.ValidateAppMetadata(metadata); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("Register")
+	}
+
 	// Generate a secret, encrypt it, and store the app record in pg.
 	appSecret, err := genHS256SharedSecret()
 	if err != nil {
@@ -397,7 +404,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error validating app contract address in user stream")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), encrypted); err != nil {
+	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), types.ProtocolToStorageAppMetadata(metadata), encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
@@ -783,6 +790,79 @@ func (s *Service) GetStatus(
 			IsRegistered:  true,
 			ValidResponse: true,
 			Status:        status,
+		},
+	}, nil
+}
+
+func (s *Service) SetAppMetadata(
+	ctx context.Context,
+	req *connect.Request[SetAppMetadataRequest],
+) (
+	*connect.Response[SetAppMetadataResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetAppMetadata")
+	}
+
+	// Validate metadata
+	metadata := req.Msg.GetMetadata()
+	if err := types.ValidateAppMetadata(metadata); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("SetAppMetadata")
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetAppMetadata")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
+	}
+
+	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
+		return nil, base.RiverError(Err_DB_OPERATION_FAILURE, "Unable to update app metadata").
+			Tag("appId", app).
+			Tag("userId", userId).
+			Func("SetAppMetadata")
+	}
+
+	return &connect.Response[SetAppMetadataResponse]{
+		Msg: &SetAppMetadataResponse{},
+	}, nil
+}
+
+func (s *Service) GetAppMetadata(
+	ctx context.Context,
+	req *connect.Request[GetAppMetadataRequest],
+) (
+	*connect.Response[GetAppMetadataResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetAppMetadata")
+	}
+
+	// For GetAppMetadata, we don't require authentication - this should be publicly readable
+	metadata, err := s.store.GetAppMetadata(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not get app metadata").
+			Tag("appId", app).Func("GetAppMetadata")
+	}
+
+	return &connect.Response[GetAppMetadataResponse]{
+		Msg: &GetAppMetadataResponse{
+			Metadata: types.StorageToProtocolAppMetadata(*metadata),
 		},
 	}, nil
 }

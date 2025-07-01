@@ -30,6 +30,17 @@ var (
 	testSecretHexString2 = "202122232425262728292a2b2c2d2e2f101112131415161718191a1b1c1d1e1f"
 )
 
+// Helper function to create test metadata
+func testAppMetadata() types.AppMetadata {
+	return types.AppMetadata{
+		Name:        "Test App",
+		Description: "A test application",
+		ImageUrl:    "https://example.com/image.png",
+		ExternalUrl: "",
+		AvatarUrl:   "https://example.com/avatar.png",
+	}
+}
+
 type testAppRegistryStoreParams struct {
 	ctx                context.Context
 	pgAppRegistryStore *storage.PostgresAppRegistryStore
@@ -109,6 +120,7 @@ func TestGetSessionKey(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadata(),
 		secret,
 	)
 	require.NoError(err)
@@ -193,6 +205,7 @@ func TestUpdateSettings(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadata(),
 		secret,
 	)
 	require.NoError(err)
@@ -204,6 +217,7 @@ func TestUpdateSettings(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
+			Metadata:        testAppMetadata(),
 		},
 		info,
 	)
@@ -222,6 +236,7 @@ func TestUpdateSettings(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
+			Metadata:        testAppMetadata(),
 			Settings:        types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
 		},
 		info,
@@ -258,6 +273,7 @@ func TestRegisterWebhook(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadata(),
 		secret,
 	)
 	require.NoError(err)
@@ -269,6 +285,7 @@ func TestRegisterWebhook(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
+			Metadata:        testAppMetadata(),
 		},
 		info,
 	)
@@ -284,6 +301,7 @@ func TestRegisterWebhook(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
+			Metadata:        testAppMetadata(),
 			WebhookUrl:      webhook,
 			EncryptionDevice: storage.EncryptionDevice{
 				DeviceKey:   deviceKey,
@@ -306,6 +324,7 @@ func TestRegisterWebhook(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
+			Metadata:        testAppMetadata(),
 			WebhookUrl:      webhook2,
 			EncryptionDevice: storage.EncryptionDevice{
 				DeviceKey:   deviceKey2,
@@ -323,6 +342,7 @@ func TestRegisterWebhook(t *testing.T) {
 		owner,
 		app2,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadata(),
 		secret,
 	)
 	require.NoError(err)
@@ -358,6 +378,7 @@ func TestCreateApp(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		testAppMetadata(),
 		secret,
 	)
 	require.NoError(err)
@@ -367,6 +388,7 @@ func TestCreateApp(t *testing.T) {
 		owner2,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		testAppMetadata(),
 		secret,
 	)
 	require.ErrorContains(err, "app already exists")
@@ -378,6 +400,7 @@ func TestCreateApp(t *testing.T) {
 		owner,
 		app2,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		testAppMetadata(),
 		secret2,
 	)
 	require.NoError(err)
@@ -389,6 +412,7 @@ func TestCreateApp(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
+			Metadata:        testAppMetadata(),
 			Settings: types.AppSettings{
 				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
 			},
@@ -403,6 +427,7 @@ func TestCreateApp(t *testing.T) {
 			App:             app2,
 			Owner:           owner,
 			EncryptedSecret: secret2,
+			Metadata:        testAppMetadata(),
 			Settings: types.AppSettings{
 				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 			},
@@ -437,7 +462,7 @@ func TestRotateSecret(t *testing.T) {
 
 	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret)
+	}, testAppMetadata(), secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -501,7 +526,7 @@ func TestPublishSessionKeys(t *testing.T) {
 
 	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret)
+	}, testAppMetadata(), secret)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/callme"
@@ -594,12 +619,12 @@ func TestGetSendableApps(t *testing.T) {
 
 	require.NoError(store.CreateApp(params.ctx, owner, app, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret))
+	}, testAppMetadata(), secret))
 	require.NoError(store.RegisterWebhook(params.ctx, app, sApp.WebhookUrl, sApp.DeviceKey, "fallbackKey"))
 
 	require.NoError(store.CreateApp(params.ctx, owner2, app2, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret2))
+	}, testAppMetadata(), secret2))
 	require.NoError(store.RegisterWebhook(params.ctx, app2, sApp2.WebhookUrl, sApp2.DeviceKey, "fallbackKey2"))
 
 	sendableApps, err := store.GetSendableApps(params.ctx, []common.Address{})
@@ -698,6 +723,7 @@ func TestEnqueueMessages(t *testing.T) {
 		types.AppSettings{
 			ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
 		},
+		testAppMetadata(),
 		secrets[0],
 	)
 	require.NoError(err)
@@ -780,6 +806,7 @@ func TestEnqueueMessages(t *testing.T) {
 				types.AppSettings{
 					ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
 				},
+				testAppMetadata(),
 				secrets[i+1],
 			),
 		)
@@ -1103,4 +1130,188 @@ func TestEnqueueMessages(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetAppMetadata(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with initial metadata
+	initialMetadata := testAppMetadata()
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		initialMetadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Verify initial metadata
+	appInfo, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(initialMetadata, appInfo.Metadata)
+
+	// Update metadata
+	updatedMetadata := types.AppMetadata{
+		Name:        "Updated App Name",
+		Description: "Updated description for the app",
+		ImageUrl:    "https://example.com/updated-image.png",
+		AvatarUrl:   "https://example.com/updated-avatar.png",
+		ExternalUrl: "https://external.example.com",
+	}
+
+	err = store.SetAppMetadata(params.ctx, app, updatedMetadata)
+	require.NoError(err)
+
+	// Verify updated metadata
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(updatedMetadata, appInfo.Metadata)
+
+	// Test setting metadata with empty external URL
+	metadataWithoutExternal := types.AppMetadata{
+		Name:        "App Without External",
+		Description: "App without external URL",
+		ImageUrl:    "https://example.com/image2.png",
+		AvatarUrl:   "https://example.com/avatar2.png",
+		ExternalUrl: "",
+	}
+
+	err = store.SetAppMetadata(params.ctx, app, metadataWithoutExternal)
+	require.NoError(err)
+
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(metadataWithoutExternal, appInfo.Metadata)
+	require.Empty(appInfo.Metadata.ExternalUrl)
+
+	// Test setting metadata for non-existent app
+	err = store.SetAppMetadata(params.ctx, unregisteredApp, updatedMetadata)
+	require.Error(err)
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+	require.ErrorContains(err, "app was not found in registry")
+}
+
+func TestGetAppMetadata(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with metadata
+	originalMetadata := types.AppMetadata{
+		Name:        "My Test App",
+		Description: "This is a test application for unit testing",
+		ImageUrl:    "https://example.com/my-image.png",
+		AvatarUrl:   "https://example.com/my-avatar.png",
+		ExternalUrl: "https://my-external-site.com",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		originalMetadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Test getting metadata for existing app
+	metadata, err := store.GetAppMetadata(params.ctx, app)
+	require.NoError(err)
+	require.NotNil(metadata)
+	require.Equal(originalMetadata, *metadata)
+
+	// Test getting metadata for non-existent app
+	metadata, err = store.GetAppMetadata(params.ctx, unregisteredApp)
+	require.Error(err)
+	require.Nil(metadata)
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+	require.ErrorContains(err, "app is not registered")
+}
+
+func TestAppMetadataInGetAppInfo(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with comprehensive metadata
+	metadata := types.AppMetadata{
+		Name:        "Comprehensive Test App",
+		Description: "This app tests all metadata fields integration with AppInfo",
+		ImageUrl:    "https://example.com/comprehensive-image.jpg",
+		AvatarUrl:   "https://example.com/comprehensive-avatar.jpg",
+		ExternalUrl: "https://comprehensive-test.com",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		metadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Register a webhook to have full AppInfo
+	deviceKey := "comprehensive-device-key"
+	fallbackKey := "comprehensive-fallback-key"
+	webhookUrl := "https://webhook.example.com/comprehensive"
+
+	err = store.RegisterWebhook(params.ctx, app, webhookUrl, deviceKey, fallbackKey)
+	require.NoError(err)
+
+	// Get full app info and verify all fields including metadata
+	appInfo, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+			Settings: types.AppSettings{
+				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+			},
+			Metadata:   metadata,
+			WebhookUrl: webhookUrl,
+			EncryptionDevice: storage.EncryptionDevice{
+				DeviceKey:   deviceKey,
+				FallbackKey: fallbackKey,
+			},
+		},
+		appInfo,
+	)
 }

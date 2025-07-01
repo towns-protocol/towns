@@ -79,6 +79,7 @@ func (ar *appRegistryServiceTester) RegisterApp(
 		appWallet.Address[:],
 		ownerWallet.Address[:],
 		forwardSetting,
+		testAppMetadata(),
 		ownerWallet,
 		ar.authClient,
 		ar.appRegistryClient,
@@ -448,12 +449,28 @@ func safeNewWallet(ctx context.Context, require *require.Assertions) *crypto.Wal
 	return wallet
 }
 
+// Helper function to create test metadata
+func testAppMetadata() *protocol.AppMetadata {
+	return &protocol.AppMetadata{
+		Name:        "Test Bot App",
+		Description: "A test bot application for integration testing",
+		ImageUrl:    "https://example.com/test-image.png",
+		AvatarUrl:   "https://example.com/test-avatar.png",
+		ExternalUrl: stringPtr("https://example.com/test-app"),
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
+}
+
 func register(
 	ctx context.Context,
 	require *require.Assertions,
 	appAddress []byte,
 	ownerAddress []byte,
 	forwardSetting protocol.ForwardSettingValue,
+	metadata *protocol.AppMetadata,
 	signer *crypto.Wallet,
 	authClient protocolconnect.AuthenticationServiceClient,
 	appRegistryClient protocolconnect.AppRegistryServiceClient,
@@ -465,6 +482,7 @@ func register(
 			Settings: &protocol.AppSettings{
 				ForwardSetting: forwardSetting,
 			},
+			Metadata: metadata,
 		},
 	}
 	authenticateBS(ctx, require, authClient, signer, req)
@@ -502,6 +520,185 @@ func registerWebhook(
 	)
 	require.NoError(err)
 	require.NotNil(resp)
+}
+
+func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+	tester.StartBotServices()
+	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
+
+	appWallet, ownerWallet := tester.BotWallets(0)
+	unregisteredAppWallet := safeNewWallet(tester.ctx, tester.require)
+
+	// Test valid metadata
+	validMetadata := &protocol.AppMetadata{
+		Name:        "Updated Test App",
+		Description: "Updated description for testing",
+		ImageUrl:    "https://example.com/updated-image.jpg",
+		AvatarUrl:   "https://example.com/updated-avatar.jpg",
+		ExternalUrl: stringPtr("https://updated.example.com"),
+	}
+
+	tests := map[string]struct {
+		appId                []byte
+		authenticatingWallet *crypto.Wallet
+		metadata             *protocol.AppMetadata
+		expectedErr          string
+	}{
+		"Update Success (app wallet signer)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata:             validMetadata,
+		},
+		"Update Success (owner wallet signer)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: ownerWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Owner Updated App",
+				Description: "Updated by owner wallet",
+				ImageUrl:    "https://owner.example.com/image.png",
+				AvatarUrl:   "https://owner.example.com/avatar.png",
+				ExternalUrl: stringPtr("https://owner.example.com"),
+			},
+		},
+		"Update Success (empty optional fields)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Minimal App",
+				Description: "App with minimal metadata",
+				ImageUrl:    "",
+				AvatarUrl:   "https://example.com/minimal-avatar.png",
+				ExternalUrl: nil,
+			},
+		},
+		"Failure: missing name": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "",
+				Description: "Missing name test",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata name is required",
+		},
+		"Failure: missing description": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata description is required",
+		},
+		"Failure: missing avatar URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Missing avatar URL",
+				AvatarUrl:   "",
+			},
+			expectedErr: "metadata avatar_url is required",
+		},
+		"Failure: invalid avatar URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid avatar URL",
+				AvatarUrl:   "not-a-valid-url",
+			},
+			expectedErr: "metadata avatar_url must be a valid URL",
+		},
+		"Failure: invalid image URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid image URL",
+				ImageUrl:    "invalid-url",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata image_url must be a valid URL",
+		},
+		"Failure: invalid external URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid external URL",
+				AvatarUrl:   "https://example.com/avatar.png",
+				ExternalUrl: stringPtr("not-valid-url"),
+			},
+			expectedErr: "metadata external_url must be a valid URL",
+		},
+		"Failure: unregistered app": {
+			appId:                unregisteredAppWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			metadata:             validMetadata,
+			expectedErr:          "app is not registered",
+		},
+		"Failure: missing authentication": {
+			appId:       appWallet.Address[:],
+			metadata:    validMetadata,
+			expectedErr: "missing session token",
+		},
+		"Failure: unauthorized user": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			metadata:             validMetadata,
+			expectedErr:          "authenticated user must be app or owner",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := &connect.Request[protocol.SetAppMetadataRequest]{
+				Msg: &protocol.SetAppMetadataRequest{
+					AppId:    tc.appId,
+					Metadata: tc.metadata,
+				},
+			}
+			if tc.authenticatingWallet != nil {
+				authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, req)
+			}
+
+			resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+
+			if tc.expectedErr == "" {
+				tester.require.NoError(err)
+				tester.require.NotNil(resp)
+
+				// Test GetAppMetadata - should work without authentication (publicly readable)
+				getReq := &connect.Request[protocol.GetAppMetadataRequest]{
+					Msg: &protocol.GetAppMetadataRequest{
+						AppId: tc.appId,
+					},
+				}
+				getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
+				tester.require.NoError(err)
+				tester.require.NotNil(getResp)
+				tester.require.Equal(tc.metadata, getResp.Msg.GetMetadata())
+			} else {
+				tester.require.Nil(resp)
+				tester.require.ErrorContains(err, tc.expectedErr)
+			}
+		})
+	}
+
+	// Test GetAppMetadata for unregistered app
+	t.Run("GetAppMetadata_UnregisteredApp", func(t *testing.T) {
+		getReq := &connect.Request[protocol.GetAppMetadataRequest]{
+			Msg: &protocol.GetAppMetadataRequest{
+				AppId: unregisteredAppWallet.Address[:],
+			},
+		}
+		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
+		tester.require.Nil(getResp)
+		tester.require.ErrorContains(err, "app is not registered")
+	})
 }
 
 func TestAppRegistry_SetGetSettings(t *testing.T) {
@@ -1281,35 +1478,128 @@ func TestAppRegistry_Register(t *testing.T) {
 	tests := map[string]struct {
 		appId                []byte
 		ownerId              []byte
+		metadata             *protocol.AppMetadata
 		authenticatingWallet *crypto.Wallet
 		expectedErr          string
 	}{
 		"Success": {
 			appId:                appWallet.Address[:],
 			ownerId:              ownerWallet.Address[:],
+			metadata:             testAppMetadata(),
+			authenticatingWallet: ownerWallet,
+		},
+		"Success with minimal metadata": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Minimal App",
+				Description: "Minimal app description",
+				ImageUrl:    "",
+				AvatarUrl:   "https://example.com/minimal-avatar.png",
+				ExternalUrl: nil,
+			},
 			authenticatingWallet: ownerWallet,
 		},
 		"Invalid app id": {
 			appId:                invalidAddressBytes,
 			ownerId:              ownerWallet.Address[:],
+			metadata:             testAppMetadata(),
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "invalid app id",
 		},
 		"Invalid owner id": {
 			appId:                appWallet.Address[:],
 			ownerId:              invalidAddressBytes,
+			metadata:             testAppMetadata(),
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "invalid owner id",
+		},
+		"Missing metadata": {
+			appId:                appWallet.Address[:],
+			ownerId:              ownerWallet.Address[:],
+			metadata:             nil,
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata is required",
+		},
+		"Invalid metadata - missing name": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "",
+				Description: "Missing name",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata name is required",
+		},
+		"Invalid metadata - missing description": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata description is required",
+		},
+		"Invalid metadata - missing avatar URL": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Missing avatar URL",
+				AvatarUrl:   "",
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata avatar_url is required",
+		},
+		"Invalid metadata - invalid avatar URL": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid avatar URL",
+				AvatarUrl:   "not-a-valid-url",
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata avatar_url must be a valid URL",
+		},
+		"Invalid metadata - invalid image URL": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid image URL",
+				ImageUrl:    "invalid-url",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata image_url must be a valid URL",
+		},
+		"Invalid metadata - invalid external URL": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid external URL",
+				AvatarUrl:   "https://example.com/avatar.png",
+				ExternalUrl: stringPtr("not-valid-url"),
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "metadata external_url must be a valid URL",
 		},
 		"Invalid authorization": {
 			appId:                appWallet.Address[:],
 			ownerId:              ownerWallet.Address[:],
+			metadata:             testAppMetadata(),
 			authenticatingWallet: appWallet,
 			expectedErr:          "authenticated user must be app owner",
 		},
 		"Missing authorization": {
 			appId:       appWallet.Address[:],
 			ownerId:     ownerWallet.Address[:],
+			metadata:    testAppMetadata(),
 			expectedErr: "missing session token",
 		},
 	}
@@ -1319,6 +1609,7 @@ func TestAppRegistry_Register(t *testing.T) {
 				Msg: &protocol.RegisterRequest{
 					AppId:      tc.appId,
 					AppOwnerId: tc.ownerId,
+					Metadata:   tc.metadata,
 				},
 			}
 
@@ -1335,6 +1626,17 @@ func TestAppRegistry_Register(t *testing.T) {
 				tester.require.NoError(err)
 				tester.require.NotNil(resp)
 				tester.require.Len(resp.Msg.GetHs256SharedSecret(), 32)
+
+				// Verify metadata was stored correctly
+				getReq := &connect.Request[protocol.GetAppMetadataRequest]{
+					Msg: &protocol.GetAppMetadataRequest{
+						AppId: tc.appId,
+					},
+				}
+				getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
+				tester.require.NoError(err)
+				tester.require.NotNil(getResp)
+				tester.require.Equal(tc.metadata, getResp.Msg.GetMetadata())
 			} else {
 				tester.require.Nil(resp)
 				tester.require.ErrorContains(err, tc.expectedErr)

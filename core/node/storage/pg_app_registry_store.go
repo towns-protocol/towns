@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -91,6 +92,7 @@ type (
 		Owner            common.Address
 		EncryptedSecret  [32]byte
 		Settings         types.AppSettings
+		Metadata         types.AppMetadata
 		WebhookUrl       string
 		EncryptionDevice EncryptionDevice
 	}
@@ -103,6 +105,7 @@ type (
 			owner common.Address,
 			app common.Address,
 			settings types.AppSettings,
+			metadata types.AppMetadata,
 			encryptedSharedSecret [32]byte,
 		) error
 
@@ -167,6 +170,19 @@ type (
 			app common.Address,
 			sessionId string,
 		) (encryptionEnvelope []byte, err error)
+
+		// SetAppMetadata sets the metadata for an app
+		SetAppMetadata(
+			ctx context.Context,
+			app common.Address,
+			metadata types.AppMetadata,
+		) error
+
+		// GetAppMetadata gets the metadata for an app
+		GetAppMetadata(
+			ctx context.Context,
+			app common.Address,
+		) (*types.AppMetadata, error)
 	}
 )
 
@@ -274,6 +290,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 	owner common.Address,
 	app common.Address,
 	settings types.AppSettings,
+	metadata types.AppMetadata,
 	encryptedSharedSecret [32]byte,
 ) error {
 	return s.txRunner(
@@ -281,12 +298,13 @@ func (s *PostgresAppRegistryStore) CreateApp(
 		"CreateApp",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createApp(ctx, owner, app, settings, encryptedSharedSecret, tx)
+			return s.createApp(ctx, owner, app, settings, metadata, encryptedSharedSecret, tx)
 		},
 		nil,
 		"appAddress", app,
 		"ownerAddress", owner,
 		"settings", settings,
+		"metadata", metadata,
 	)
 }
 
@@ -295,16 +313,24 @@ func (s *PostgresAppRegistryStore) createApp(
 	owner common.Address,
 	app common.Address,
 	settings types.AppSettings,
+	metadata types.AppMetadata,
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_INTERNAL).
+			Message("Unable to marshal app metadata to JSON")
+	}
+
 	if _, err := txn.Exec(
 		ctx,
-		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting) values ($1, $2, $3, $4);",
+		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata) values ($1, $2, $3, $4, $5);",
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
 		int16(settings.ForwardSetting),
+		string(metadataJSON),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
@@ -485,10 +511,11 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	var encryptedSecret PGSecret
 	app = PGAddress(appAddr)
 	var appInfo AppInfo
+	var metadataJSON string
 	if err := tx.QueryRow(
 		ctx,
 		`
-		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting,
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata,
 			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
 		    FROM app_registry WHERE app_id = $1
 		`,
@@ -498,6 +525,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&owner,
 		&encryptedSecret,
 		&appInfo.Settings.ForwardSetting,
+		&metadataJSON,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
@@ -512,6 +540,12 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		appInfo.App = common.BytesToAddress(app[:])
 		appInfo.Owner = common.BytesToAddress(owner[:])
 		appInfo.EncryptedSecret = encryptedSecret
+
+		// Parse metadata JSON
+		if err := json.Unmarshal([]byte(metadataJSON), &appInfo.Metadata); err != nil {
+			return nil, AsRiverError(err, protocol.Err_INTERNAL).
+				Message("Unable to unmarshal app metadata from JSON")
+		}
 	}
 	return &appInfo, nil
 }
@@ -949,4 +983,102 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 // Close closes the postgres connection pool
 func (s *PostgresAppRegistryStore) Close(ctx context.Context) {
 	s.PostgresEventStore.Close(ctx)
+}
+
+func (s *PostgresAppRegistryStore) SetAppMetadata(
+	ctx context.Context,
+	app common.Address,
+	metadata types.AppMetadata,
+) error {
+	return s.txRunner(
+		ctx,
+		"SetAppMetadata",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.setAppMetadata(ctx, app, metadata, tx)
+		},
+		nil,
+		"appAddress", app,
+		"metadata", metadata,
+	)
+}
+
+func (s *PostgresAppRegistryStore) setAppMetadata(
+	ctx context.Context,
+	app common.Address,
+	metadata types.AppMetadata,
+	txn pgx.Tx,
+) error {
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_INTERNAL).
+			Message("Unable to marshal app metadata to JSON")
+	}
+
+	tag, err := txn.Exec(
+		ctx,
+		`UPDATE app_registry SET app_metadata = $2 WHERE app_id = $1`,
+		PGAddress(app),
+		string(metadataJSON),
+	)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Unable to update the app metadata")
+	}
+	if tag.RowsAffected() < 1 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
+	return nil
+}
+
+func (s *PostgresAppRegistryStore) GetAppMetadata(
+	ctx context.Context,
+	app common.Address,
+) (*types.AppMetadata, error) {
+	var metadata *types.AppMetadata
+	err := s.txRunner(
+		ctx,
+		"GetAppMetadata",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			metadata, err = s.getAppMetadata(ctx, app, tx)
+			return err
+		},
+		nil,
+		"appAddress", app,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return metadata, nil
+}
+
+func (s *PostgresAppRegistryStore) getAppMetadata(
+	ctx context.Context,
+	app common.Address,
+	tx pgx.Tx,
+) (*types.AppMetadata, error) {
+	var metadataJSON string
+	if err := tx.QueryRow(
+		ctx,
+		`SELECT app_metadata FROM app_registry WHERE app_id = $1`,
+		PGAddress(app),
+	).Scan(&metadataJSON); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
+		} else {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to find app metadata in registry")
+		}
+	}
+
+	var metadata types.AppMetadata
+	if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
+		return nil, AsRiverError(err, protocol.Err_INTERNAL).
+			Message("Unable to unmarshal app metadata from JSON")
+	}
+
+	return &metadata, nil
 }

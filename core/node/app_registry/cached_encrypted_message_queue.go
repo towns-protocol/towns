@@ -60,12 +60,13 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	owner common.Address,
 	app common.Address,
 	settings types.AppSettings,
+	metadata types.AppMetadata,
 	sharedSecret [32]byte,
 ) error {
 	fs := &ForwardState{}
 	fs.Settings.Store(&settings)
 	q.appIdCache.Store(app, fs)
-	return q.store.CreateApp(ctx, owner, app, settings, sharedSecret)
+	return q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
 }
 
 func (q *CachedEncryptedMessageQueue) RotateSharedSecret(
@@ -120,6 +121,21 @@ func (q *CachedEncryptedMessageQueue) GetSessionKey(
 	sessionId string,
 ) (encryptionEnvelope []byte, err error) {
 	return q.store.GetSessionKey(ctx, app, sessionId)
+}
+
+func (q *CachedEncryptedMessageQueue) SetAppMetadata(
+	ctx context.Context,
+	app common.Address,
+	metadata types.AppMetadata,
+) error {
+	return q.store.SetAppMetadata(ctx, app, metadata)
+}
+
+func (q *CachedEncryptedMessageQueue) GetAppMetadata(
+	ctx context.Context,
+	app common.Address,
+) (*types.AppMetadata, error) {
+	return q.store.GetAppMetadata(ctx, app)
 }
 
 func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
