@@ -1,0 +1,27 @@
+# fly.toml app configuration file generated for bot-quickstart-flyio on 2025-06-30T19:05:58-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'bot-quickstart-flyio'
+primary_region = 'gru'
+
+[build]
+  dockerfile = "Dockerfile"
+  build-context = "../../.."
+
+  [build.args]
+    GIT_SHA = 'latest'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

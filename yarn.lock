@@ -8803,6 +8803,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@towns-protocol/example-bot-quickstart-flyio@workspace:packages/examples/bot-quickstart-flyio":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-quickstart-flyio@workspace:packages/examples/bot-quickstart-flyio"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    tsx: ^4.7.1
+    typescript: ^5.8.2
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart"
@@ -8834,6 +8852,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     openai: ^5.7.0
     tsx: ^4.7.1
     typescript: ^5.8.2
