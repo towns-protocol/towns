@@ -35,26 +35,12 @@ func TestManager_Subscribe(t *testing.T) {
 	assert.Error(t, err2)
 }
 
-type mockDistributor struct {
-	mock.Mock
-}
-
-func (m *mockDistributor) DistributeMessage(ctx context.Context, streamID StreamId, msg *SyncStreamsResponse) error {
-	args := m.Called(ctx, streamID, msg)
-	return args.Error(0)
-}
-
-func (m *mockDistributor) DistributeBackfillMessage(ctx context.Context, streamID StreamId, msg *SyncStreamsResponse) error {
-	args := m.Called(ctx, streamID, msg)
-	return args.Error(0)
-}
-
 type mockRegistry struct {
 	mock.Mock
 }
 
 func (m *mockRegistry) AddSubscription(sub *Subscription) { m.Called(sub) }
-func (m *mockRegistry) RemoveSubscription(syncID string) { m.Called(syncID) }
+func (m *mockRegistry) RemoveSubscription(syncID string)  { m.Called(syncID) }
 func (m *mockRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
 	args := m.Called(streamID)
 	return args.Get(0).([]*Subscription)
@@ -72,7 +58,8 @@ func (m *mockRegistry) RemoveStreamFromSubscription(syncID string, streamID Stre
 	return args.Bool(0)
 }
 func (m *mockRegistry) GetStats() (int, int) {
-	args := m.Called(); return args.Int(0), args.Int(1)
+	args := m.Called()
+	return args.Int(0), args.Int(1)
 }
 func (m *mockRegistry) CancelAll(err error) { m.Called(err) }
 
@@ -83,7 +70,7 @@ func TestManager_processMessage(t *testing.T) {
 	m.distributor = newDistributor(mockReg, nil)
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	
+
 	// Test SYNC_UPDATE message - needs Stream field with NextSyncCookie
 	msg := &SyncStreamsResponse{
 		SyncOp: SyncOp_SYNC_UPDATE,
@@ -167,4 +154,4 @@ func TestManager_start(t *testing.T) {
 
 	// Verify all mocks were called
 	mockReg.AssertExpectations(t)
-} 
+}
