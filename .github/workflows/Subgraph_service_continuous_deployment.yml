@@ -31,7 +31,7 @@ on:
             SLACK_CD_WORKFLOW_WEBHOOK_URL:
                 description: 'Slack webhook url for alerting'
                 required: true
-            RIVER_GITHUB_PAT:
+            ARGOCD_GITHUB_PAT:
                 description: 'Github personal access token to trigger repository dispatch'
                 required: true
 
@@ -72,7 +72,7 @@ jobs:
                   DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
               uses: actions/github-script@v7
               with:
-                  github-token: ${{ secrets.RIVER_GITHUB_PAT }}
+                  github-token: ${{ secrets.ARGOCD_GITHUB_PAT }}
                   script: |
                       await github.rest.repos.createDispatchEvent({
                         owner: "HereNotThere",

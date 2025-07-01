@@ -134,7 +134,7 @@ jobs:
             docker_image_tag: ${{ needs.build.outputs.release_image_tag }}
         secrets:
             SLACK_CD_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
-            RIVER_GITHUB_PAT: ${{ secrets.RIVER_GITHUB_PAT }}
+            ARGOCD_GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_PAT }}
 
     notify_deploy_failure:
         if: failure() && github.event_name != 'workflow_dispatch'
