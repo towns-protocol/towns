@@ -4,11 +4,11 @@
     "private": true,
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "scripts": {
-        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx --env-file=.env src/index.ts",
+        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build && node --env-file=.env dist/index.js",
         "build": "tsc",
-        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx src/index.ts",
+        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node dist/index.js",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix"

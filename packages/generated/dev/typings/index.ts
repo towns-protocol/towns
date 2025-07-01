@@ -61,7 +61,6 @@ export type { SimpleApp } from "./SimpleApp";
 export type { SpaceOwner } from "./SpaceOwner";
 export type { StreamRegistry } from "./StreamRegistry";
 export type { TokenPausableFacet } from "./TokenPausableFacet";
-export type { Towns } from "./Towns";
 export type { UserEntitlement } from "./UserEntitlement";
 export type { WalletLink } from "./WalletLink";
 export * as factories from "./factories";

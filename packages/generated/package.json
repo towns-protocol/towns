@@ -6,6 +6,15 @@
         "access": "public"
     },
     "type": "module",
+    "main": "./dist/dev/typings/index.js",
+    "types": "./dist/dev/typings/index.d.ts",
+    "exports": {
+        "./dev/typings/factories/*": "./dist/dev/typings/factories/*.js",
+        "./dev/typings/*": "./dist/dev/typings/*.js",
+        "./dev/*": "./dist/dev/*",
+        "./config/*": "./config/*",
+        "./package.json": "./package.json"
+    },
     "imports": {
         "#/dev/*": "./dev/*",
         "#/v3/*": "./v3/*",
@@ -13,8 +22,11 @@
         "#/config/*": "./config/*"
     },
     "scripts": {
-        "build": "yarn make-config",
+        "build": "yarn make-config && tsc",
         "make-config": "node ./scripts/make-config.js",
         "preinstall": "node ./scripts/make-config.js"
+    },
+    "devDependencies": {
+        "typescript": "^5.8.2"
     }
 }

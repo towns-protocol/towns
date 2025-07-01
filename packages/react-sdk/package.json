@@ -3,14 +3,21 @@
     "description": "React Hooks for Towns Protocol SDK",
     "version": "0.0.263",
     "type": "module",
-    "main": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "publishConfig": {
         "access": "public"
     },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./package.json": "./package.json"
+    },
     "scripts": {
-        "build": "yarn run clean && yarn run build:esm+types",
-        "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
+        "build": "tsdown",
         "lint": "eslint ./src --max-warnings=0",
         "gen": "yarn gen:extractor && yarn gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
@@ -18,7 +25,7 @@
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
-        "watch": "yarn build -w"
+        "watch": "tsdown --watch"
     },
     "dependencies": {
         "@towns-protocol/sdk": "workspace:^",
@@ -42,15 +49,12 @@
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "ts-morph": "^24.0.0",
+        "tsdown": "^0.12.9",
         "tsx": "^4.7.1",
         "typescript": "^5.8.2"
     },
     "files": [
-        "dist/**",
-        "!dist/**/*.tsbuildinfo",
-        "src/**/*.ts",
-        "!src/**/*.test.ts",
-        "!src/**/*.test-d.ts"
+        "/dist"
     ],
     "keywords": [
         "hooks",
@@ -69,5 +73,5 @@
         "directory": "packages/react"
     },
     "sideEffects": false,
-    "typings": "./dist/types/index.d.ts"
+    "typings": "./dist/index.d.ts"
 }

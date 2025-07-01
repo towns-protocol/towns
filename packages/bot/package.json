@@ -8,13 +8,21 @@
     "publishConfig": {
         "access": "public"
     },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./package.json": "./package.json"
+    },
     "scripts": {
-        "build": "tsc",
+        "build": "tsdown",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "typecheck": "tsc --noEmit",
-        "watch": "tsc --watch",
+        "watch": "tsdown --watch",
         "test": "vitest",
         "test:ci:multi:ent": "vitest run",
         "test:watch": "vitest --watch"
@@ -47,6 +55,7 @@
         "eslint-plugin-import-x": "^4.10.2",
         "eslint-plugin-tsdoc": "^0.3.0",
         "hono": "^4.7.11",
+        "tsdown": "^0.12.9",
         "typescript": "^5.8.2",
         "vitest": "^3.2.3"
     },

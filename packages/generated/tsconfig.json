@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "lib": ["ES2022"],
+        "outDir": "./dist",
+        "declaration": true,
+        "declarationMap": true,
+        "skipLibCheck": true,
+        "strict": false,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true
+    },
+    "include": [
+        "dev/**/*"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules",
+        "v3/**/*"
+    ]
+}

@@ -8,11 +8,19 @@
     "publishConfig": {
         "access": "public"
     },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./package.json": "./package.json"
+    },
     "scripts": {
         "buf:clean": "rm -rf ./src/gen/*",
         "buf:generate": "cd ../.. && buf generate --template packages/proto/buf.gen.yaml --path protocol/protocol.proto --path protocol/payloads.proto --path packages/proto/internal.proto --path protocol/notifications.proto --path protocol/auth.proto --path protocol/apps.proto",
         "buf:lint": "cd ../.. && buf lint --path protocol/protocol.proto --path protocol/payloads.proto --path packages/proto/internal.proto --path protocol/notifications.proto --path protocol/auth.proto --path protocol/apps.proto",
-        "build": "yarn buf:generate && tsc",
+        "build": "yarn buf:generate && tsdown",
         "cb": "yarn clean && yarn build",
         "clean": "yarn buf:clean && rm -rf ./dist",
         "test": "vitest run",
@@ -31,6 +39,7 @@
         "@types/node": "^20.14.8",
         "lodash.debounce": "^4.0.8",
         "ts-node": "^10.9.1",
+        "tsdown": "^0.12.9",
         "typescript": "^5.8.2",
         "vitest": "^3.2.3"
     },
