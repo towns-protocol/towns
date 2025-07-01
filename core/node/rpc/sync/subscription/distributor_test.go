@@ -20,9 +20,8 @@ func (m *MockRegistry) AddSubscription(sub *Subscription) {
 	m.Called(sub)
 }
 
-func (m *MockRegistry) RemoveSubscription(syncID string) error {
-	args := m.Called(syncID)
-	return args.Error(0)
+func (m *MockRegistry) RemoveSubscription(syncID string) {
+	m.Called(syncID)
 }
 
 func (m *MockRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
@@ -116,7 +115,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				sub := createTestSubscription("test-sync-1")
 				sub.Close() // Mark as closed
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub})
-				mockReg.On("RemoveSubscription", "test-sync-1").Return(nil)
+				mockReg.On("RemoveSubscription", "test-sync-1")
 			},
 			expectError: false,
 		},

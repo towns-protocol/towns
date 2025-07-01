@@ -10,7 +10,7 @@ import (
 // Registry defines the contract for managing subscription lifecycle
 type Registry interface {
 	AddSubscription(sub *Subscription)
-	RemoveSubscription(syncID string) error
+	RemoveSubscription(syncID string)
 	GetSubscriptionsForStream(streamID StreamId) []*Subscription
 	GetSubscriptionByID(syncID string) (*Subscription, bool)
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
@@ -45,7 +45,7 @@ func (r *registry) AddSubscription(sub *Subscription) {
 }
 
 // RemoveSubscription removes a subscription from the registry
-func (r *registry) RemoveSubscription(syncID string) error {
+func (r *registry) RemoveSubscription(syncID string) {
 	r.sLock.Lock()
 	defer r.sLock.Unlock()
 
@@ -60,7 +60,6 @@ func (r *registry) RemoveSubscription(syncID string) error {
 			delete(r.subscriptionsByStream, streamID)
 		}
 	}
-	return nil
 }
 
 // GetSubscriptionsForStream returns all subscriptions for a given stream

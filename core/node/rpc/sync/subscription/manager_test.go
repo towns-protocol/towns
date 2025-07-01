@@ -54,10 +54,7 @@ type mockRegistry struct {
 }
 
 func (m *mockRegistry) AddSubscription(sub *Subscription) { m.Called(sub) }
-func (m *mockRegistry) RemoveSubscription(syncID string) error {
-	args := m.Called(syncID)
-	return args.Error(0)
-}
+func (m *mockRegistry) RemoveSubscription(syncID string) { m.Called(syncID) }
 func (m *mockRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
 	args := m.Called(streamID)
 	return args.Get(0).([]*Subscription)

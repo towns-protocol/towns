@@ -97,22 +97,16 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := tt.setup(t)
 			
-			err := reg.RemoveSubscription(tt.syncIDToRemove)
+			reg.RemoveSubscription(tt.syncIDToRemove)
 			
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
+			if tt.verifyRemoved {
+				// Verify subscription was removed
+				_, exists := reg.GetSubscriptionByID(tt.syncIDToRemove)
+				assert.False(t, exists)
 				
-				if tt.verifyRemoved {
-					// Verify subscription was removed
-					_, exists := reg.GetSubscriptionByID(tt.syncIDToRemove)
-					assert.False(t, exists)
-					
-					// Verify no streams remain for this subscription
-					streamCount, _ := reg.GetStats()
-					assert.Equal(t, 0, streamCount)
-				}
+				// Verify no streams remain for this subscription
+				streamCount, _ := reg.GetStats()
+				assert.Equal(t, 0, streamCount)
 			}
 		})
 	}
