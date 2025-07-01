@@ -761,7 +761,6 @@ func (s *Stream) addEventLocked(
 	}
 
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
-
 	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
 
 	return newSV, nil
