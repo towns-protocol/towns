@@ -35,8 +35,12 @@ export class CryptoStoreIndexedDb extends Dexie implements CryptoStore {
         await this.devices.where('expirationTimestamp').below(Date.now()).delete()
     }
 
-    deleteAllData() {
-        throw new Error('Method not implemented.')
+    async deleteAllData() {
+        await this.account.clear()
+        await this.outboundGroupSessions.clear()
+        await this.inboundGroupSessions.clear()
+        await this.hybridGroupSessions.clear()
+        await this.devices.clear()
     }
 
     async deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void> {

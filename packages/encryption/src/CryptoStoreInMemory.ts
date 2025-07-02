@@ -29,8 +29,12 @@ export class CryptoStoreInMemory implements CryptoStore {
         expiredKeys.forEach((key) => this.devices.delete(key))
     }
 
-    deleteAllData(): void {
-        throw new Error('Method not implemented.')
+    async deleteAllData(): Promise<void> {
+        this.accounts.clear()
+        this.outboundGroupSessions.clear()
+        this.inboundGroupSessions.clear()
+        this.hybridGroupSessions.clear()
+        this.devices.clear()
     }
 
     async deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void> {
