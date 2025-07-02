@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
@@ -317,6 +318,7 @@ func (s *PostgresAppRegistryStore) createApp(
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
+	// Marshal metadata to JSON (Name field is omitted via json:"-" tag)
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_INTERNAL).
@@ -325,14 +327,24 @@ func (s *PostgresAppRegistryStore) createApp(
 
 	if _, err := txn.Exec(
 		ctx,
-		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata) values ($1, $2, $3, $4, $5);",
+		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting, display_name, app_metadata) values ($1, $2, $3, $4, $5, $6);",
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
 		int16(settings.ForwardSetting),
+		// We store the name in a separate column from the metadata so we can guarantee unique bot diplay
+		// names. Therefore, the name field is removed from the JSON output of the app metadata struct,
+		// and is stored separately in its own column.
+		metadata.Name,
 		string(metadataJSON),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
+			if strings.Contains(err.Error(), "app_registry_display_name_idx") {
+				return WrapRiverError(
+					protocol.Err_ALREADY_EXISTS,
+					err,
+				).Message("another app with the same name already exists")
+			}
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
 		} else {
 			return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message("unable to create app record")
@@ -512,10 +524,11 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	app = PGAddress(appAddr)
 	var appInfo AppInfo
 	var metadataJSON string
+	var displayName string
 	if err := tx.QueryRow(
 		ctx,
 		`
-		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata,
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata, display_name,
 			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
 		    FROM app_registry WHERE app_id = $1
 		`,
@@ -526,6 +539,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&encryptedSecret,
 		&appInfo.Settings.ForwardSetting,
 		&metadataJSON,
+		&displayName,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
@@ -541,11 +555,14 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		appInfo.Owner = common.BytesToAddress(owner[:])
 		appInfo.EncryptedSecret = encryptedSecret
 
-		// Parse metadata JSON
+		// Parse metadata JSON And apply the name field from the display name column.
+		// The metadata JSON will not have a Name field defined, as it is omitted from
+		// the json serialization of the object.
 		if err := json.Unmarshal([]byte(metadataJSON), &appInfo.Metadata); err != nil {
 			return nil, AsRiverError(err, protocol.Err_INTERNAL).
 				Message("Unable to unmarshal app metadata from JSON")
 		}
+		appInfo.Metadata.Name = displayName
 	}
 	return &appInfo, nil
 }
@@ -1009,6 +1026,7 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	metadata types.AppMetadata,
 	txn pgx.Tx,
 ) error {
+	// Marshal metadata to JSON (Name field is omitted via json:"-" tag)
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_INTERNAL).
@@ -1017,13 +1035,24 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 
 	tag, err := txn.Exec(
 		ctx,
-		`UPDATE app_registry SET app_metadata = $2 WHERE app_id = $1`,
+		`UPDATE app_registry SET app_metadata = $2, display_name = $3 WHERE app_id = $1`,
 		PGAddress(app),
 		string(metadataJSON),
+		// We store the name in a separate column so we can guarantee unique bot diplay names.
+		// Therefore, the name field is removed from the JSON output of the app metadata struct,
+		// and is stored separately in its own column.
+		metadata.Name,
 	)
 	if err != nil {
-		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
-			Message("Unable to update the app metadata")
+		if isPgError(err, pgerrcode.UniqueViolation) {
+			return WrapRiverError(
+				protocol.Err_ALREADY_EXISTS,
+				err,
+			).Message("another app with the same name already exists")
+		} else {
+			return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+				Message("Unable to update the app metadata")
+		}
 	}
 	if tag.RowsAffected() < 1 {
 		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
@@ -1061,11 +1090,12 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	tx pgx.Tx,
 ) (*types.AppMetadata, error) {
 	var metadataJSON string
+	var displayName string
 	if err := tx.QueryRow(
 		ctx,
-		`SELECT app_metadata FROM app_registry WHERE app_id = $1`,
+		`SELECT app_metadata, display_name FROM app_registry WHERE app_id = $1`,
 		PGAddress(app),
-	).Scan(&metadataJSON); err != nil {
+	).Scan(&metadataJSON, &displayName); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
 		} else {
@@ -1079,6 +1109,8 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		return nil, AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to unmarshal app metadata from JSON")
 	}
+	// Set the Name field from the display_name column
+	metadata.Name = displayName
 
 	return &metadata, nil
 }

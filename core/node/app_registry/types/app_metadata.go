@@ -8,7 +8,10 @@ import (
 )
 
 type AppMetadata struct {
-	Name        string
+	// We omit the name property from the JSON serialization of the app metadata object because
+	// we store the name in a separate column so that we can performantly guarantee uniqueness
+	// between bot display names.
+	Name        string `json:"-"`
 	Description string
 	ImageUrl    string
 	ExternalUrl string
