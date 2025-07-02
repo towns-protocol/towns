@@ -10,6 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -246,36 +247,27 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 }
 
 func TestEphemeralMessageInChat(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 3, start: true})
+	tt := newServiceTesterForReplication(t)
 	require := tt.require
 
-	// Create two users: Alice and Bob
-	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
-	bob := tt.newTestClient(1, testClientOpts{enableSync: true})
+	clients := tt.newTestClients(tt.opts.replicationFactor, testClientOpts{enableSync: true})
+	alice := clients[0]
 
-	// Create user streams for both users
-	_ = alice.createUserStream()
-	_ = bob.createUserStream()
-
-	// Alice creates a space
+	// let alice create a channel and let all clients join
 	spaceId, _ := alice.createSpace()
+	channelId, _ := clients.createChannelAndJoin(spaceId)
 
-	// Alice creates a channel in the space
-	channelId, _, _ := alice.createChannel(spaceId)
+	// add a non-ephemeral message that must be included in the stream
+	nonEphemeralMessage := "This is a message that should be persisted!"
+	alice.say(channelId, nonEphemeralMessage)
 
-	// Bob joins the channel
-	bob.joinChannel(spaceId, channelId, bob.getLastMiniblockHash(shared.UserStreamIdFromAddr(bob.wallet.Address)))
-
-	// Alice sends an ephemeral message
+	// add a ephemeral message that must not be included in the stream
 	ephemeralMessage := "This is an ephemeral message that should not be persisted!"
-
-	_, aliceView := alice.getStreamAndView(channelId, false)
-
-	// Create ephemeral message envelope
+	aliceView := alice.getLastMiniblockHash(channelId)
 	ephemeralEnvelope, err := events.MakeEphemeralEnvelopeWithPayload(
 		alice.wallet,
 		events.Make_ChannelPayload_Message(ephemeralMessage),
-		aliceView.LastBlock().Ref,
+		&shared.MiniblockRef{Hash: aliceView.Hash, Num: aliceView.Num},
 	)
 	require.NoError(err)
 
@@ -289,42 +281,40 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Wait for the ephemeral message to be processed
-	time.Sleep(100 * time.Millisecond)
+	ephemeralEventHash := common.BytesToHash(ephemeralEnvelope.Hash)
 
-	// Verify that both users receive the ephemeral message in real-time
-	// but it's not persisted in the stream storage
-	_, aliceView = alice.getStreamAndView(channelId, false)
-	_, bobView := bob.getStreamAndView(channelId, false)
+	// make sure that the ephemeral message is not included in the stream, grab the latest stream
+	// view and loop over all events in the stream and ensure that the ephemeral message is not included.
+	_, view := alice.getStreamAndView(channelId, true)
+	messages := userMessages{}
+	for e := range view.AllEvents() {
+		payload := e.GetChannelMessage()
+		if payload != nil {
+			messages = append(messages, usersMessage{
+				userId:  crypto.PublicKeyToAddress(e.SignerPubKey),
+				message: string(payload.Message.Ciphertext),
+			})
+		}
+	}
 
-	// The ephemeral message should be in the current view (in memory) but not persisted
-	// We can verify this by checking that the minipool still only has 1 event (the regular message)
-	require.Equal(2, aliceView.GetStats().EventsInMinipool, "Alice should only see the regular message persisted")
-	require.Equal(2, bobView.GetStats().EventsInMinipool, "Bob should only see the regular message persisted")
+	require.Equal(1, len(messages), "stream should only contain the single non-ephemeral message")
+	require.Equal(nonEphemeralMessage, messages[0].message, "stream should contain the non-ephemeral message")
 
-	// Test that ephemeral messages are received by subscribers
-	// Send another ephemeral message
-	ephemeralMessage2 := "Another ephemeral message!"
-	ephemeralEnvelope2, err := events.MakeEphemeralEnvelopeWithPayload(
-		alice.wallet,
-		events.Make_ChannelPayload_Message(ephemeralMessage2),
-		aliceView.LastBlock().Ref,
-	)
-	require.NoError(err)
+	// ensure that miniblocks as stored in storage don't contain ephemeral message
+	for i := 0; i < len(tt.nodes); i++ {
+		tt.require.NoError(tt.nodes[i].service.storage.ReadMiniblocksByStream(tt.ctx, channelId, false, func(mbBytes []byte, _ int64, snBytes []byte) error {
+			var mb protocol.Miniblock
+			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+				return err
+			}
 
-	_, err = alice.client.AddEvent(
-		tt.ctx,
-		connect.NewRequest(&protocol.AddEventRequest{
-			StreamId: channelId[:],
-			Event:    ephemeralEnvelope2,
-		}),
-	)
-	require.NoError(err)
+			for _, env := range mb.GetEvents() {
+				parsedEvent, err := events.ParseEvent(env)
+				require.NoError(err)
+				tt.require.NotEqual(ephemeralEventHash, parsedEvent.Hash, "ephemeral message should not be in miniblock")
+			}
 
-	// Wait for the message to be processed
-	time.Sleep(100 * time.Millisecond)
-
-	// Verify that ephemeral messages are not persisted
-	_, aliceView = alice.getStreamAndView(channelId, false)
-	require.Equal(1, aliceView.GetStats().EventsInMinipool, "Ephemeral messages should not be persisted")
+			return nil
+		}))
+	}
 }
