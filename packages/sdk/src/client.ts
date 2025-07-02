@@ -209,10 +209,6 @@ export type ClientOptions = {
         store?: INotificationStore
         rpcOptions?: RpcOptions
     }
-    largeGroupUsernameSettings?: {
-        largeGroupThreshold?: number // default: 100
-        delayMs?: number // default: 60000 (60 seconds)
-    }
 }
 
 type SendChannelMessageOptions = {
@@ -1246,7 +1242,15 @@ export class Client
         )
     }
 
-    async setUsername(streamId: string, username: string, force: boolean = false) {
+    async setUsername(
+        streamId: string,
+        username: string,
+        force: boolean = false,
+        options?: {
+            largeGroupThreshold?: number // default: 100
+            delayMs?: number // default: 60000 (60 seconds)
+        },
+    ) {
         check(isDefined(this.cryptoBackend))
         check(username.length > 0, 'username cannot be empty')
 
@@ -1268,14 +1272,13 @@ export class Client
         const memberCount = stream.view.membershipContent.joined.size
         const hasHybridSession = (await this.cryptoBackend?.hasHybridSession?.(streamId)) ?? false
 
-        const largeGroupThreshold =
-            this.opts?.largeGroupUsernameSettings?.largeGroupThreshold ?? 100
-        const delayMs = this.opts?.largeGroupUsernameSettings?.delayMs ?? 60000
+        const largeGroupThreshold = options?.largeGroupThreshold ?? 100
+        const delayMs = options?.delayMs ?? 60000
 
         if (memberCount > largeGroupThreshold && !hasHybridSession && !force) {
             this.pendingUsernames.set(streamId, username)
             const timeout = setTimeout(() => {
-                void this.setUsername(streamId, username, true)
+                void this.setUsername(streamId, username, true, options)
             }, delayMs)
             this.pendingUsernameTimeouts.set(streamId, timeout)
             return

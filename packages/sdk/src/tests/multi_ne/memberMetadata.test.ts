@@ -717,13 +717,8 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
-        // Create client with custom large group settings
-        const clientWithSettings = await makeTestClient({
-            largeGroupUsernameSettings: {
-                largeGroupThreshold: 1, // Low threshold for testing
-                delayMs: 2000, // 2 seconds for faster testing
-            },
-        })
+        // Create client
+        const clientWithSettings = await makeTestClient()
 
         await clientWithSettings.initializeUser()
         clientWithSettings.startSync()
@@ -760,7 +755,10 @@ describe('memberMetadataTests', () => {
         })
 
         // Should not set immediately - will be delayed
-        await clientWithSettings.setUsername(streamId, 'delayed-username')
+        await clientWithSettings.setUsername(streamId, 'delayed-username', false, {
+            largeGroupThreshold: 1, // Low threshold for testing
+            delayMs: 2000, // 2 seconds for faster testing
+        })
 
         const stream = clientWithSettings.streams.get(streamId)!
         expect(
