@@ -209,6 +209,10 @@ export type ClientOptions = {
         store?: INotificationStore
         rpcOptions?: RpcOptions
     }
+    largeGroupUsernameSettings?: {
+        largeGroupThreshold?: number // default: 100
+        delayMs?: number // default: 60000 (60 seconds)
+    }
 }
 
 type SendChannelMessageOptions = {
@@ -1256,7 +1260,7 @@ export class Client
             this.pendingUsernameTimeouts.delete(streamId)
         }
 
-        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
+        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username, this)
 
         // be very careful about setting a username for a large group, we don't want to inject
         // more sessions than needed into the group. unless a session has been received in 60 seconds,
@@ -1264,11 +1268,15 @@ export class Client
         const memberCount = stream.view.membershipContent.joined.size
         const hasHybridSession = (await this.cryptoBackend?.hasHybridSession?.(streamId)) ?? false
 
-        if (memberCount > 100 && !hasHybridSession && !force) {
+        const largeGroupThreshold =
+            this.opts?.largeGroupUsernameSettings?.largeGroupThreshold ?? 100
+        const delayMs = this.opts?.largeGroupUsernameSettings?.delayMs ?? 60000
+
+        if (memberCount > largeGroupThreshold && !hasHybridSession && !force) {
             this.pendingUsernames.set(streamId, username)
             const timeout = setTimeout(() => {
                 void this.setUsername(streamId, username, true)
-            }, 60000)
+            }, delayMs)
             this.pendingUsernameTimeouts.set(streamId, timeout)
             return
         }

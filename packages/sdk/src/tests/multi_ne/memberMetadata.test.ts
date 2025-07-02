@@ -709,4 +709,84 @@ describe('memberMetadataTests', () => {
             undefined,
         )
     })
+
+    test('setUsername delays for large groups without hybrid session', async () => {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        bobsClient.startSync()
+
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
+        alicesClient.startSync()
+
+        // Create client with custom large group settings
+        const clientWithSettings = await makeTestClient({
+            largeGroupUsernameSettings: {
+                largeGroupThreshold: 1, // Low threshold for testing
+                delayMs: 2000, // 2 seconds for faster testing
+            },
+        })
+
+        await clientWithSettings.initializeUser()
+        clientWithSettings.startSync()
+
+        const streamId = makeUniqueSpaceStreamId()
+        await clientWithSettings.createSpace(streamId)
+        await clientWithSettings.waitForStream(streamId)
+
+        // Add more members to exceed threshold
+
+        await alicesClient.joinStream(streamId)
+
+        // Mock hasHybridSession to return false
+        clientWithSettings['cryptoBackend']!.hasHybridSession = async () => false
+
+        const startTime = Date.now()
+        let usernameSetTime: number | null = null
+        let pendingUsernameSetTime: number | null = null
+
+        const streamUsernameUpdated = makeDonePromise()
+        clientWithSettings.on('streamUsernameUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(clientWithSettings.userId)
+            usernameSetTime = Date.now()
+            streamUsernameUpdated.done()
+        })
+
+        const streamPendingUsernameUpdated = makeDonePromise()
+        clientWithSettings.once('streamPendingUsernameUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(clientWithSettings.userId)
+            pendingUsernameSetTime = Date.now()
+            streamPendingUsernameUpdated.done()
+        })
+
+        // Should not set immediately - will be delayed
+        await clientWithSettings.setUsername(streamId, 'delayed-username')
+
+        const stream = clientWithSettings.streams.get(streamId)!
+        expect(
+            stream.view
+                .getMemberMetadata()
+                .usernames.plaintextUsernames.get(clientWithSettings.userId),
+        ).toBe('delayed-username')
+
+        // Verify timeout was set
+        expect(clientWithSettings['pendingUsernameTimeouts'].has(streamId)).toBe(true)
+        expect(clientWithSettings['pendingUsernames'].get(streamId)).toBe('delayed-username')
+        await streamPendingUsernameUpdated.expectToSucceed()
+
+        // Wait for the delayed set
+        await streamUsernameUpdated.expectToSucceed()
+
+        // Verify it was delayed by approximately the configured time
+        const elapsed = usernameSetTime! - startTime
+        expect(elapsed).toBeGreaterThanOrEqual(2000)
+
+        const pendingUsernameElapsed = pendingUsernameSetTime! - startTime
+        expect(pendingUsernameElapsed).toBeLessThanOrEqual(100)
+
+        expect(clientWithSettings['pendingUsernameTimeouts'].has(streamId)).toBe(false)
+        expect(clientWithSettings['pendingUsernames'].get(streamId)).toBe(undefined)
+
+        await clientWithSettings.stop()
+    })
 })
