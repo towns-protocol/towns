@@ -9128,6 +9128,7 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     eslint-plugin-prettier: ^5.2.6
     ethers: ^5.7.2
+    fake-indexeddb: ^6.0.0
     fastify: ^5.3.3
     lru-cache: ^11.0.1
     magic-bytes.js: ^1.10.0
@@ -16402,7 +16403,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fake-indexeddb@npm:^6.0.1":
+"fake-indexeddb@npm:^6.0.0, fake-indexeddb@npm:^6.0.1":
   version: 6.0.1
   resolution: "fake-indexeddb@npm:6.0.1"
   checksum: c4b8a0576cf3165238494b67641539d4ff36194e038b36e6992449eb882923dfaadba78a62cfc7d5ae9a5c0ac2fa1e70af5cb6c2228dc764ac79b65f0e68e942
