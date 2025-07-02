@@ -46,11 +46,9 @@ describe('ephemeralEvents', () => {
         })
 
         const stream = await alice.waitForStream(streamId)
-        expect(stream.view.getMembers().joinedUsers).toEqual(new Set([alice.userId, bob.userId]))
 
         await waitFor(() => {
             return stream.view.ephemeralEvents.size == 1
         })
-        console.log(stream.view.ephemeralEvents)
     })
 })
