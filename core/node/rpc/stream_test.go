@@ -283,6 +283,8 @@ func TestEphemeralMessageInChat(t *testing.T) {
 
 	ephemeralEventHash := common.BytesToHash(ephemeralEnvelope.Hash)
 
+	clients.listen(channelId, [][]string{{nonEphemeralMessage}})
+
 	// make sure that the ephemeral message is not included in the stream, grab the latest stream
 	// view and loop over all events in the stream and ensure that the ephemeral message is not included.
 	_, view := alice.getStreamAndView(channelId, true)
