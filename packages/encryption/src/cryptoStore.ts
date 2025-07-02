@@ -7,27 +7,17 @@ import { InboundGroupSessionData } from './encryptionDevice'
 import { UserDevice } from './olmLib'
 import { CryptoStoreIndexedDb } from './CryptoStoreIndexedDb'
 import { CryptoStoreInMemory } from './CryptoStoreInMemory'
+import { isBrowser } from '@towns-protocol/dlog'
 
 // TODO: Increase this time to 10 days or something.
 // Its 15 min right now so we can catch any issues with the expiration time.
 export const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000
 
 export function createCryptoStore(databaseName: string, userId: string): CryptoStore {
-    if (isIndexedDBAvailable()) {
+    if (isBrowser) {
         return new CryptoStoreIndexedDb(databaseName, userId)
     } else {
         return new CryptoStoreInMemory(userId)
-    }
-}
-
-function isIndexedDBAvailable(): boolean {
-    try {
-        if (typeof window !== 'undefined' && 'indexedDB' in window && window.indexedDB) {
-            return true
-        }
-        return false
-    } catch {
-        return false
     }
 }
 
@@ -35,7 +25,7 @@ export interface CryptoStore {
     userId: string
 
     initialize(): Promise<void>
-    deleteAllData(): void
+    deleteAllData(): Promise<void>
     deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void>
     deleteAccount(userId: string): Promise<void>
     getAccount(): Promise<string>
