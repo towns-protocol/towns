@@ -754,7 +754,7 @@ func (s *Stream) addEventLocked(
 
 	newSV := oldSV
 	if !event.Event.Ephemeral {
-		newSV, err = s.writeEventToStorage(ctx, event, oldSV, envelopeBytes)
+		newSV, err = s.addEventToMinipoolAndStorageLocked(ctx, event, oldSV, envelopeBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -766,7 +766,7 @@ func (s *Stream) addEventLocked(
 	return newSV, nil
 }
 
-func (s *Stream) writeEventToStorage(
+func (s *Stream) addEventToMinipoolAndStorageLocked(
 	ctx context.Context,
 	event *ParsedEvent,
 	oldSV *StreamView,

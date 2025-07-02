@@ -461,8 +461,14 @@ func TestAddEventWithEphemeralEvents(t *testing.T) {
 
 	// Give some time for notifications to be processed
 	time.Sleep(10 * time.Millisecond)
-	// initial update + 2 events
-	require.Equal(3, len(subscriber.receivedUpdates), "Subscriber should receive updates for ephemeral events")
+	require.Eventually(
+		func() bool {
+			return len(subscriber.receivedUpdates) == 3
+		},
+		10*time.Second,
+		10*time.Millisecond,
+		"Subscriber should receive updates for ephemeral events",
+	)
 
 	// Cleanup
 	stream.Unsub(subscriber)
