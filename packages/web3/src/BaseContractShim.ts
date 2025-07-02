@@ -4,6 +4,7 @@ import { Connect, ContractType } from './types/typechain'
 import { Abi } from 'abitype'
 import { TransactionOpts } from './types/ContractTypes'
 import { wrapTransaction } from './space-dapp/wrapTransaction'
+import { readRetryWrapper } from './readContractRetryer'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
@@ -54,7 +55,7 @@ export class BaseContractShim<
             this.readContract = this.connect(this.address, this.provider)
             this.contractInterface = this.readContract.interface
         }
-        return this.readContract
+        return readRetryWrapper(this.readContract)
     }
 
     public write(signer: ethers.Signer): T_CONTRACT {
