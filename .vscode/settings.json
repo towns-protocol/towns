@@ -53,4 +53,5 @@
   "typescript.preferences.autoImportFileExcludePatterns": [
     "**/@radix-ui/react-*",
   ],
+  "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${activeRepositoryBranchName}"
 }

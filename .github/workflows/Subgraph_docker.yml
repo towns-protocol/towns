@@ -6,7 +6,8 @@ on:
     push:
         branches:
             - main
-
+        paths:
+            - 'packages/subgraph/**'
     workflow_dispatch: # A build was manually requested
         inputs:
             release_version:
@@ -25,13 +26,12 @@ env:
 jobs:
     build:
         name: Build docker image
-
         runs-on: ubuntu-latest
-
+        outputs:
+            release_image_tag: ${{ steps.build-image.outputs.release_image_tag }}
         permissions:
             contents: write
             packages: write
-
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -60,6 +60,7 @@ jobs:
                   ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
               run: |
                   COMMIT_HASH=$(git describe --tags --always --dirty)
+                  echo "release_image_tag=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
                   BRANCH=$(git rev-parse --abbrev-ref HEAD)
                   TAGS=($COMMIT_HASH)
 
@@ -118,6 +119,37 @@ jobs:
                       {
                           "step": "Build Subgraph Docker Image",
                           "environment": "N/",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
+
+    deploy:
+        if: success() && github.event_name != 'workflow_dispatch'
+        needs: build
+        uses: ./.github/workflows/Subgraph_service_continuous_deployment.yml
+        with:
+            environment_name: gamma
+            docker_image_tag: ${{ needs.build.outputs.release_image_tag }}
+        secrets:
+            SLACK_CD_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+            ARGOCD_GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_PAT }}
+
+    notify_deploy_failure:
+        if: failure() && github.event_name != 'workflow_dispatch'
+        needs: deploy
+        runs-on: ubuntu-latest
+        steps:
+            - name: Slack notification
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+              with:
+                  payload: |
+                      {
+                          "step": "Subgraph Docker Deploy",
+                          "environment": "gamma",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",

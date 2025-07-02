@@ -1,0 +1,103 @@
+name: 'Subgraph service continuous deployment'
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: choice
+                options:
+                    - gamma
+                    - omega
+                default: gamma
+            docker_image_tag:
+                description: 'The tag to use for the Docker image'
+                required: true
+                type: string
+
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: string
+            docker_image_tag:
+                description: 'The tag to use for the Docker image'
+                required: true
+                type: string
+
+        secrets:
+            SLACK_CD_WORKFLOW_WEBHOOK_URL:
+                description: 'Slack webhook url for alerting'
+                required: true
+            ARGOCD_GITHUB_PAT:
+                description: 'Github personal access token to trigger repository dispatch'
+                required: true
+
+concurrency:
+    group: subgraph-service-cd-${{ github.ref }}-${{ inputs.environment_name }}
+    cancel-in-progress: true
+
+jobs:
+    deploy:
+        name: Deploy
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set Deployment Parameters
+              env:
+                  BRANCH_NAME: ${{ github.ref }}
+                  ENVIRONMENT_NAME_INPUT: ${{ inputs.environment_name }}
+                  DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
+              run: |
+                  if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
+                    ENV_NAME=$ENVIRONMENT_NAME_INPUT
+                  elif [ $BRANCH_NAME = "refs/heads/main" ]; then
+                    ENV_NAME="gamma"
+                  else
+                      echo "Error: Could not determine environment name. Exiting."
+                      exit 1
+                  fi
+
+                  echo "ENV_NAME=$ENV_NAME" >> $GITHUB_ENV
+                  echo "DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG" >> $GITHUB_ENV
+
+            - name: Deploy via Repository Dispatch
+              env:
+                  ENVIRONMENT_NAME: ${{ env.ENV_NAME }}
+                  DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.ARGOCD_GITHUB_PAT }}
+                  script: |
+                      await github.rest.repos.createDispatchEvent({
+                        owner: "HereNotThere",
+                        repo: "argocd",
+                        event_type: "update-infra",
+                        client_payload: {
+                          environment: process.env.ENVIRONMENT_NAME,
+                          subgraphImageTag: process.env.DOCKER_IMAGE_TAG
+                        }
+                      });
+
+            # If action failed, we send a slack notification
+            - name: Alert notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+                  ENV_NAME: ${{ env.ENV_NAME }}
+              with:
+                  payload: |
+                      {
+                          "step": "Subgraph Service Continuous Deployment",
+                          "environment": "${{ env.ENV_NAME }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
