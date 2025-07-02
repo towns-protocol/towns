@@ -730,6 +730,13 @@ describe('memberMetadataTests', () => {
         // Add more members to exceed threshold
 
         await alicesClient.joinStream(streamId)
+        await bobsClient.joinStream(streamId)
+
+        await waitFor(() => {
+            expect(
+                clientWithSettings.streams.get(streamId)?.view.membershipContent.joined.size,
+            ).toBe(3)
+        })
 
         // Mock hasHybridSession to return false
         clientWithSettings['cryptoBackend']!.hasHybridSession = async () => false
@@ -756,7 +763,7 @@ describe('memberMetadataTests', () => {
 
         // Should not set immediately - will be delayed
         await clientWithSettings.setUsername(streamId, 'delayed-username', false, {
-            largeGroupThreshold: 1, // Low threshold for testing
+            largeGroupThreshold: 2, // Low threshold for testing
             delayMs: 2000, // 2 seconds for faster testing
         })
 
