@@ -25,14 +25,14 @@ type e2eTestEnv struct {
 
 func newE2ETestEnv(t *testing.T) *e2eTestEnv {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	// Create real components (not mocks)
 	manager := NewManager(ctx, [20]byte{1}, nil, nil, nil)
-	
+
 	// Extract the real registry and distributor for testing
 	registry := manager.registry.(*registry)
 	distributor := manager.distributor
-	
+
 	return &e2eTestEnv{
 		manager:     manager,
 		registry:    registry,
@@ -69,7 +69,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	// Add stream directly to registry for testing
 	shouldAddToRemote, shouldBackfill := env.registry.AddStreamToSubscription("test-sync-1", streamID)
-	assert.True(t, shouldAddToRemote)  // First subscription to this stream
+	assert.True(t, shouldAddToRemote) // First subscription to this stream
 	assert.False(t, shouldBackfill)
 
 	// Step 4: Verify stream is associated with subscription
@@ -102,7 +102,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 
 	// Step 7: Test stream removal
 	shouldRemoveFromRemote := env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
-	assert.True(t, shouldRemoveFromRemote)  // Last subscription for this stream
+	assert.True(t, shouldRemoveFromRemote) // Last subscription for this stream
 
 	// Verify stream is no longer associated
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -140,7 +140,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 
 	// Add same stream to both subscriptions
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	
+
 	// Add stream to subscription using Modify method
 	shouldAddToRemote, shouldBackfill := env.registry.AddStreamToSubscription("test-sync-1", streamID)
 	assert.True(t, shouldAddToRemote)
@@ -178,8 +178,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	}
 
 	// Send message through distributor
-	err = env.distributor.DistributeMessage(env.ctx, streamID, msg)
-	require.NoError(t, err)
+	env.distributor.DistributeMessage(streamID, msg)
 
 	// Wait for processing
 	time.Sleep(100 * time.Millisecond)
@@ -205,7 +204,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 
 	// Test removing one subscription - should not remove from remote
 	shouldRemoveFromRemote := env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
-	assert.False(t, shouldRemoveFromRemote)  // Other subscription still has this stream
+	assert.False(t, shouldRemoveFromRemote) // Other subscription still has this stream
 
 	// Verify remaining subscription still has the stream
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -214,7 +213,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 
 	// Remove second subscription - should remove from remote
 	shouldRemoveFromRemote = env.registry.RemoveStreamFromSubscription("test-sync-2", streamID)
-	assert.True(t, shouldRemoveFromRemote)  // No more subscriptions for this stream
+	assert.True(t, shouldRemoveFromRemote) // No more subscriptions for this stream
 
 	// Verify stream is gone
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -234,7 +233,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	require.NoError(t, err)
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	
+
 	// Add stream to subscription using Modify method
 	shouldAddToRemote, shouldBackfill := env.registry.AddStreamToSubscription("test-sync-1", streamID)
 	assert.True(t, shouldAddToRemote)
@@ -250,8 +249,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 		},
 	}
 
-	err = env.distributor.DistributeMessage(env.ctx, streamID, updateMsg)
-	require.NoError(t, err)
+	env.distributor.DistributeMessage(streamID, updateMsg)
 	time.Sleep(50 * time.Millisecond)
 	receivedMsgs := sub.Messages.GetBatch(nil)
 	assert.Len(t, receivedMsgs, 1)
@@ -263,10 +261,9 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 		StreamId: streamID[:],
 	}
 
-	err = env.distributor.DistributeMessage(env.ctx, streamID, downMsg)
-	require.NoError(t, err)
+	env.distributor.DistributeMessage(streamID, downMsg)
 	time.Sleep(50 * time.Millisecond)
-	
+
 	// Check that SYNC_DOWN was received
 	receivedMsgs = sub.Messages.GetBatch(nil)
 	assert.Len(t, receivedMsgs, 1)
@@ -286,10 +283,9 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 			},
 		},
 	}
-	err = env.distributor.DistributeMessage(env.ctx, streamID, furtherMsg)
-	require.NoError(t, err)
+	env.distributor.DistributeMessage(streamID, furtherMsg)
 	time.Sleep(50 * time.Millisecond)
-	
+
 	// Check that no additional messages were received after SYNC_DOWN
 	receivedMsgs = sub.Messages.GetBatch(nil)
 	t.Logf("After further message, received %d messages", len(receivedMsgs))
@@ -309,8 +305,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 		TargetSyncIds: []string{"test-sync-1"},
 	}
 
-	err = env.distributor.DistributeBackfillMessage(env.ctx, streamID, backfillMsg)
-	require.NoError(t, err)
+	env.distributor.DistributeBackfillMessage(streamID, backfillMsg)
 
 	time.Sleep(50 * time.Millisecond)
 
@@ -325,7 +320,7 @@ func TestE2E_ErrorHandlingAndRecovery(t *testing.T) {
 
 	// Test 1: Subscription to stopped manager
 	env.manager.stopped.Store(true)
-	
+
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
@@ -359,8 +354,7 @@ func TestE2E_ErrorHandlingAndRecovery(t *testing.T) {
 	}
 
 	// This should not panic and should handle closed subscription gracefully
-	err = env.distributor.DistributeMessage(env.ctx, streamID, msg)
-	assert.NoError(t, err)
+	env.distributor.DistributeMessage(streamID, msg)
 }
 
 // TestE2E_PerformanceAndStress tests with multiple subscriptions and high volume
@@ -437,8 +431,7 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 				},
 			}
 
-			err := env.distributor.DistributeMessage(env.ctx, streamID, msg)
-			require.NoError(t, err)
+			env.distributor.DistributeMessage(streamID, msg)
 		}
 	}
 
@@ -451,7 +444,7 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		var receivedMsgs []*SyncStreamsResponse
 		receivedMsgs = sub.Messages.GetBatch(receivedMsgs)
 		receivedCount := len(receivedMsgs)
-		assert.Equal(t, expectedMessages, receivedCount, 
+		assert.Equal(t, expectedMessages, receivedCount,
 			"Subscription %d should have received %d messages", i, expectedMessages)
 	}
 
@@ -466,7 +459,7 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		// Explicitly close the subscription
 		subscriptions[i].Close()
 		time.Sleep(5 * time.Millisecond)
-		
+
 		// Verify subscription is removed
 		_, exists := env.registry.GetSubscriptionByID(fmt.Sprintf("test-sync-%d", i))
 		t.Logf("After canceling subscription %d, exists in registry: %v", i, exists)
@@ -477,4 +470,4 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 	streamCount, subCount = env.registry.GetStats()
 	assert.Equal(t, 0, streamCount)
 	assert.Equal(t, 0, subCount)
-} 
+}
