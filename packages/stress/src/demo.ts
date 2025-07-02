@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import {
     makeRiverConfig,
     makeStreamRpcClient,

@@ -11,6 +11,7 @@ export default mergeConfig(
             include: ['./src/**/*.test.ts'],
             hookTimeout: 120_000,
             testTimeout: 120_000,
+            setupFiles: './vitest.setup.ts',
         },
     }),
 )
