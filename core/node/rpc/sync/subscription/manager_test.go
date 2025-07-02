@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	testutils "github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestManager_Subscribe(t *testing.T) {
@@ -34,34 +34,6 @@ func TestManager_Subscribe(t *testing.T) {
 	assert.Nil(t, sub2)
 	assert.Error(t, err2)
 }
-
-type mockRegistry struct {
-	mock.Mock
-}
-
-func (m *mockRegistry) AddSubscription(sub *Subscription) { m.Called(sub) }
-func (m *mockRegistry) RemoveSubscription(syncID string)  { m.Called(syncID) }
-func (m *mockRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
-	args := m.Called(streamID)
-	return args.Get(0).([]*Subscription)
-}
-func (m *mockRegistry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
-	args := m.Called(syncID)
-	return args.Get(0).(*Subscription), args.Bool(1)
-}
-func (m *mockRegistry) AddStreamToSubscription(syncID string, streamID StreamId) (bool, bool) {
-	args := m.Called(syncID, streamID)
-	return args.Bool(0), args.Bool(1)
-}
-func (m *mockRegistry) RemoveStreamFromSubscription(syncID string, streamID StreamId) bool {
-	args := m.Called(syncID, streamID)
-	return args.Bool(0)
-}
-func (m *mockRegistry) GetStats() (int, int) {
-	args := m.Called()
-	return args.Int(0), args.Int(1)
-}
-func (m *mockRegistry) CancelAll(err error) { m.Called(err) }
 
 func TestManager_processMessage(t *testing.T) {
 	mockReg := &mockRegistry{}
