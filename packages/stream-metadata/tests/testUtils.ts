@@ -1,3 +1,5 @@
+import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
+
 import { ethers } from 'ethers'
 import {
 	ChunkedMedia,
