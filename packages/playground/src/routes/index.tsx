@@ -98,6 +98,15 @@ export const router = createBrowserRouter([
                     }
                 },
             },
+            {
+                path: '/u/:userId',
+                lazy: async () => {
+                    const { UserProfileRoute } = await import('./u/user-profile')
+                    return {
+                        Component: UserProfileRoute,
+                    }
+                },
+            },
         ],
     },
 ])

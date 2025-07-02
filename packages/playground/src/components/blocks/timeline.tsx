@@ -18,6 +18,7 @@ import { useCallback, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/utils'
 import { getNativeEmojiFromName } from '@/utils/emojis'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
@@ -154,6 +155,7 @@ const Message = ({
     thread: TimelineEvent[] | undefined
     streamId: string
 }) => {
+    const navigate = useNavigate()
     const sync = useSyncAgent()
     const preferSpaceMember = isChannelStreamId(streamId)
         ? spaceIdFromChannelId(streamId)
@@ -176,9 +178,10 @@ const Message = ({
                     <div className="flex items-center gap-1">
                         <span
                             className={cn(
-                                'font-semibold',
+                                'font-semibold cursor-pointer hover:underline',
                                 isMyMessage ? 'text-sky-500' : 'text-purple-500',
                             )}
+                            onClick={() => navigate(`/u/${event.sender.id}`)}
                         >
                             {prettyDisplayName || event.sender.id}
                         </span>
