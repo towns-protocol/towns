@@ -1244,42 +1244,57 @@ export class Client
 
     async setUsername(streamId: string, username: string, force: boolean = false) {
         check(isDefined(this.cryptoBackend))
+        check(username.length > 0, 'username cannot be empty')
+
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
+
+        // Clear any existing timeout first
+        const existingTimeout = this.pendingUsernameTimeouts.get(streamId)
+        if (existingTimeout) {
+            clearTimeout(existingTimeout)
+            this.pendingUsernameTimeouts.delete(streamId)
+        }
+
         stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
 
         // be very careful about setting a username for a large group, we don't want to inject
         // more sessions than needed into the group. unless a session has been received in 60 seconds,
         // we will force set the username.
-        const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
-        if (stream.view.membershipContent.joined.size > 100 && !hasHybridSession && !force) {
+        const memberCount = stream.view.membershipContent.joined.size
+        const hasHybridSession = (await this.cryptoBackend?.hasHybridSession?.(streamId)) ?? false
+
+        if (memberCount > 100 && !hasHybridSession && !force) {
             this.pendingUsernames.set(streamId, username)
-            const prevTimeout = this.pendingUsernameTimeouts.get(streamId)
-            if (prevTimeout) clearTimeout(prevTimeout)
             const timeout = setTimeout(() => {
                 void this.setUsername(streamId, username, true)
             }, 60000)
             this.pendingUsernameTimeouts.set(streamId, timeout)
             return
         }
+
+        // Clean up pending state
+        this.pendingUsernames.delete(streamId)
         this.pendingUsernameTimeouts.delete(streamId)
 
-        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
-            streamId,
-            new TextEncoder().encode(username),
-            this.defaultGroupEncryptionAlgorithm,
-        )
-        encryptedData.checksum = usernameChecksum(username, streamId)
         try {
+            const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+                streamId,
+                new TextEncoder().encode(username),
+                this.defaultGroupEncryptionAlgorithm,
+            )
+            encryptedData.checksum = usernameChecksum(username, streamId)
+
             await this.makeEventAndAddToStream(
                 streamId,
                 make_MemberPayload_Username(encryptedData),
-                {
-                    method: 'username',
-                },
+                { method: 'username' },
             )
         } catch (err) {
             stream.view.getMemberMetadata().usernames.resetLocalUsername(this.userId)
+            // Clean up pending state on error
+            this.pendingUsernames.delete(streamId)
+            this.pendingUsernameTimeouts.delete(streamId)
             throw err
         }
     }
