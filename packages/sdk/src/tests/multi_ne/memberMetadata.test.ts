@@ -222,10 +222,13 @@ describe('memberMetadataTests', () => {
         await bobsClient.inviteUser(streamId, alicesClient.userId)
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
+        const startTime = Date.now()
+        let usernameSetTime: number | null = null
         const bobPromise = makeDonePromise()
         bobsClient.on('streamUsernameUpdated', (updatedStreamId, userId) => {
             expect(updatedStreamId).toBe(streamId)
             expect(userId).toBe(bobsClient.userId)
+            usernameSetTime = Date.now()
             bobPromise.done()
         })
 
@@ -255,6 +258,10 @@ describe('memberMetadataTests', () => {
         // wait for the username to be updated
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
+
+        // Verify that setting the username was not delayed — see `setUsername delays` for details
+        const elapsed = usernameSetTime! - startTime
+        expect(elapsed).toBeLessThanOrEqual(5000)
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
