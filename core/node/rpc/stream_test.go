@@ -14,7 +14,9 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
@@ -241,4 +243,88 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 	}, 20*time.Second, 25*time.Millisecond)
 
 	alice.listen(channelId, []common.Address{alice.userId}, conversation)
+}
+
+func TestEphemeralMessageInChat(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 3, start: true})
+	require := tt.require
+
+	// Create two users: Alice and Bob
+	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
+	bob := tt.newTestClient(1, testClientOpts{enableSync: true})
+
+	// Create user streams for both users
+	_ = alice.createUserStream()
+	_ = bob.createUserStream()
+
+	// Alice creates a space
+	spaceId, _ := alice.createSpace()
+
+	// Alice creates a channel in the space
+	channelId, _, _ := alice.createChannel(spaceId)
+
+	// Bob joins the channel
+	bob.joinChannel(spaceId, channelId, bob.getLastMiniblockHash(shared.UserStreamIdFromAddr(bob.wallet.Address)))
+
+	// Alice sends an ephemeral message
+	ephemeralMessage := "This is an ephemeral message that should not be persisted!"
+
+	_, aliceView := alice.getStreamAndView(channelId, false)
+
+	// Create ephemeral message envelope
+	ephemeralEnvelope, err := events.MakeEphemeralEnvelopeWithPayload(
+		alice.wallet,
+		events.Make_ChannelPayload_Message(ephemeralMessage),
+		aliceView.LastBlock().Ref,
+	)
+	require.NoError(err)
+
+	// Add the ephemeral message to the channel
+	_, err = alice.client.AddEvent(
+		tt.ctx,
+		connect.NewRequest(&protocol.AddEventRequest{
+			StreamId: channelId[:],
+			Event:    ephemeralEnvelope,
+		}),
+	)
+	require.NoError(err)
+
+	// Wait for the ephemeral message to be processed
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify that both users receive the ephemeral message in real-time
+	// but it's not persisted in the stream storage
+	_, aliceView = alice.getStreamAndView(channelId, false)
+	_, bobView := bob.getStreamAndView(channelId, false)
+
+	// The ephemeral message should be in the current view (in memory) but not persisted
+	// We can verify this by checking that the minipool still only has 1 event (the regular message)
+	require.Equal(2, aliceView.GetStats().EventsInMinipool, "Alice should only see the regular message persisted")
+	require.Equal(2, bobView.GetStats().EventsInMinipool, "Bob should only see the regular message persisted")
+
+	// Test that ephemeral messages are received by subscribers
+	// Send another ephemeral message
+	ephemeralMessage2 := "Another ephemeral message!"
+	ephemeralEnvelope2, err := events.MakeEphemeralEnvelopeWithPayload(
+		alice.wallet,
+		events.Make_ChannelPayload_Message(ephemeralMessage2),
+		aliceView.LastBlock().Ref,
+	)
+	require.NoError(err)
+
+	_, err = alice.client.AddEvent(
+		tt.ctx,
+		connect.NewRequest(&protocol.AddEventRequest{
+			StreamId: channelId[:],
+			Event:    ephemeralEnvelope2,
+		}),
+	)
+	require.NoError(err)
+
+	// Wait for the message to be processed
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify that ephemeral messages are not persisted
+	_, aliceView = alice.getStreamAndView(channelId, false)
+	require.Equal(1, aliceView.GetStats().EventsInMinipool, "Ephemeral messages should not be persisted")
 }
