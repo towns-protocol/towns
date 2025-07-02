@@ -1030,7 +1030,7 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to marshal app metadata to JSON")
+			Message("Unable to marshal app metadata to JSON").Tag("metadata", metadata).Tag("name", metadata.Name)
 	}
 
 	tag, err := txn.Exec(
@@ -1050,8 +1050,7 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 				err,
 			).Message("another app with the same name already exists")
 		} else {
-			return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
-				Message("Unable to update the app metadata")
+			return RiverErrorWithBase(protocol.Err_DB_OPERATION_FAILURE, "unable to update the app metadata", err)
 		}
 	}
 	if tag.RowsAffected() < 1 {

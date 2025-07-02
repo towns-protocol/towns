@@ -66,8 +66,16 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata description is required")
 	}
 
+	if metadata.GetAvatarUrl() == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url must be a valid URL")
+	}
+
 	if _, err := url.Parse(metadata.GetAvatarUrl()); err != nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url must be a valid URL")
+	}
+
+	if metadata.GetAvatarUrl() == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata image_url must be a valid URL")
 	}
 
 	if _, err := url.Parse(metadata.GetImageUrl()); err != nil {

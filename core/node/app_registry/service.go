@@ -812,7 +812,7 @@ func (s *Service) SetAppMetadata(
 	metadata := req.Msg.GetMetadata()
 	if err := types.ValidateAppMetadata(metadata); err != nil {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Tag("appId", app).Func("SetAppMetadata")
+			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
 	}
 
 	appInfo, err := s.store.GetAppInfo(ctx, app)
@@ -828,7 +828,8 @@ func (s *Service) SetAppMetadata(
 	}
 
 	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
-		return nil, base.RiverError(Err_DB_OPERATION_FAILURE, "Unable to update app metadata").
+		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Unable to update app metadata").
 			Tag("appId", app).
 			Tag("userId", userId).
 			Func("SetAppMetadata")
