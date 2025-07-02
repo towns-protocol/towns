@@ -4,7 +4,8 @@
 
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
-import { make_MemberPayload_KeySolicitation } from '../../types'
+import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from '../../types'
+import { hexToBytes } from 'ethereum-cryptography/utils'
 
 // Scaffold for ephemeral events tests
 
@@ -49,6 +50,27 @@ describe('ephemeralEvents', () => {
 
         await waitFor(() => {
             return stream.view.ephemeralEvents.size == 1
+        })
+
+        // before actually fulfilling the key solicitation, this event tells everyone that is listening, that bob fulfilled alice's key solicitation
+        const fulfillmentEvent = make_MemberPayload_KeyFulfillment({
+            userAddress: hexToBytes(bob.userId),
+            deviceKey: deviceKey.deviceKey,
+            sessionIds: ['abc'],
+        })
+
+        /*
+            out of scope for this test, Bob sends Alice the keys on a private channel <- 
+        */
+
+        await expect(
+            bob.makeEventAndAddToStream(streamId, fulfillmentEvent, {
+                ephemeral: false,
+            }),
+        ).rejects.toThrow('solicitation with matching device key not found')
+
+        await bob.makeEventAndAddToStream(streamId, fulfillmentEvent, {
+            ephemeral: true,
         })
     })
 })

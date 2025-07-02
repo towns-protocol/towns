@@ -2621,6 +2621,7 @@ export class Client
                     cleartext,
                     tags,
                     (retryCount ?? 0) + 1,
+                    ephemeral,
                 )
             }
 
