@@ -317,6 +317,7 @@ export class StreamStateView {
         const confirmed: ConfirmedTimelineEvent[] = []
         for (const parsedEvent of minipoolEvents) {
             if (parsedEvent.ephemeral) {
+                this.processEphemeralEvent(parsedEvent, encryptionEmitter)
                 this.ephemeralEvents.set(parsedEvent.hashStr, parsedEvent)
                 continue
             }
@@ -345,6 +346,38 @@ export class StreamStateView {
         }
         this.syncCookie = nextSyncCookie
         return { appended, updated, confirmed }
+    }
+
+    private processEphemeralEvent(
+        event: ParsedEvent,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ) {
+        const payload = event.event.payload
+        check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
+        if (payload.case !== 'memberPayload') {
+            return
+        }
+
+        switch (payload.value.content.case) {
+            case 'keySolicitation':
+                encryptionEmitter?.emit(
+                    'newKeySolicitation',
+                    this.streamId,
+                    event.hashStr,
+                    event.creatorUserId,
+                    event.creatorUserAddress,
+                    payload.value.content,
+                    getEventSignature(event.remoteEvent),
+                    encryptionEmitter,
+                )
+                break
+            case 'keyFulfillment':
+                break
+            case undefined:
+                break
+            default:
+                logNever(payload.value.content)
+        }
     }
 
     private processAppendedEvent(

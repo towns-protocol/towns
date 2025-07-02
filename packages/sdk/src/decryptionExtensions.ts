@@ -370,6 +370,7 @@ export abstract class BaseDecryptionExtensions {
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
+        ephemeral: boolean = false,
     ): void {
         if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
             //this.log.debug('ignoring key solicitation for our own device')
@@ -577,6 +578,12 @@ export abstract class BaseDecryptionExtensions {
         if (priorityTask) {
             this.setStatus(DecryptionStatus.updating)
             return priorityTask()
+        }
+
+        const ephemeralTask = this.mainQueues.ephemeralTasks.shift()
+        if (ephemeralTask) {
+            this.setStatus(DecryptionStatus.working)
+            return ephemeralTask()
         }
 
         // update any new group sessions

@@ -88,6 +88,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
             sigBundle: EventSignatureBundle,
+            ephemeral?: boolean,
         ) =>
             this.enqueueKeySolicitation(
                 streamId,
@@ -96,6 +97,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 fromUserAddress,
                 keySolicitation,
                 sigBundle,
+                ephemeral,
             )
 
         const onInitKeySolicitations = (
