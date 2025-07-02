@@ -31,17 +31,17 @@ func TestSubscription_Modify(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		setup         func() (*Subscription, SyncerSet, *MockRegistry)
+		setup         func() (*Subscription, SyncerSet, *mockRegistry)
 		req           client.ModifyRequest
-		expectedCalls func(SyncerSet, *MockRegistry)
+		expectedCalls func(SyncerSet, *mockRegistry)
 		expectError   Err
 		errorContains string
 	}{
 		{
 			name: "add new stream - should add to remote",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -54,7 +54,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
@@ -63,9 +63,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "add existing stream - should backfill",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -78,7 +78,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID2).Return(false, true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
@@ -87,9 +87,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "remove stream - should remove from remote",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -102,7 +102,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID1).Return(true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 1 && len(req.ToBackfill) == 0
@@ -111,9 +111,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "remove stream - should not remove from remote",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -126,16 +126,16 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2).Return(false)
 				// No call to syncer.Modify expected since no remote changes
 			},
 		},
 		{
 			name: "mixed add and remove streams",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -152,7 +152,7 @@ func TestSubscription_Modify(t *testing.T) {
 				AddingFailureHandler:   func(status *SyncStreamOpStatus) {},
 				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2).Return(true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
@@ -162,9 +162,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "add stream with backfill and custom backfill handler",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -178,7 +178,7 @@ func TestSubscription_Modify(t *testing.T) {
 				AddingFailureHandler:      func(status *SyncStreamOpStatus) {},
 				BackfillingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(false, true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
@@ -187,9 +187,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "empty request - should return early",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -198,7 +198,7 @@ func TestSubscription_Modify(t *testing.T) {
 			req: client.ModifyRequest{
 				SyncID: "test-sync-1",
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				// No calls expected since request is empty
 			},
 			expectError:   Err_INVALID_ARGUMENT,
@@ -206,9 +206,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "syncer modify returns error",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -221,7 +221,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
@@ -230,9 +230,9 @@ func TestSubscription_Modify(t *testing.T) {
 		},
 		{
 			name: "invalid request - duplicate streams in add",
-			setup: func() (*Subscription, SyncerSet, *MockRegistry) {
+			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
-				mockReg := &MockRegistry{}
+				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
@@ -246,7 +246,7 @@ func TestSubscription_Modify(t *testing.T) {
 				},
 				AddingFailureHandler: func(status *SyncStreamOpStatus) {},
 			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *MockRegistry) {
+			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				// No calls expected due to validation error
 			},
 			expectError:   Err_INVALID_ARGUMENT,
@@ -280,7 +280,7 @@ func TestSubscription_Modify(t *testing.T) {
 func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 	// Test that the adding failure handler properly removes streams from registry
 	mockSyncer := &MockSyncerSet{}
-	mockReg := &MockRegistry{}
+	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg
@@ -313,7 +313,7 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 	// Test that the backfill failure handler properly routes failures
 	mockSyncer := &MockSyncerSet{}
-	mockReg := &MockRegistry{}
+	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg

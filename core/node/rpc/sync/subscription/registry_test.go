@@ -9,9 +9,8 @@ import (
 
 func TestRegistry_AddSubscription(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func(t *testing.T) (*registry, *Subscription)
-		expectError bool
+		name  string
+		setup func(t *testing.T) (*registry, *Subscription)
 	}{
 		{
 			name: "successfully add subscription",
@@ -20,7 +19,6 @@ func TestRegistry_AddSubscription(t *testing.T) {
 				sub := createTestSubscription("test-sync-1")
 				return reg, sub
 			},
-			expectError: false,
 		},
 		{
 			name: "add multiple subscriptions",
@@ -30,16 +28,15 @@ func TestRegistry_AddSubscription(t *testing.T) {
 				sub := createTestSubscription("test-sync-2")
 				return reg, sub
 			},
-			expectError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reg, sub := tt.setup(t)
-			
+
 			reg.AddSubscription(sub)
-			
+
 			// Verify subscription was added
 			retrieved, exists := reg.GetSubscriptionByID(sub.syncID)
 			assert.True(t, exists)
@@ -53,7 +50,6 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 		name           string
 		setup          func(t *testing.T) *registry
 		syncIDToRemove string
-		expectError    bool
 		verifyRemoved  bool
 	}{
 		{
@@ -64,7 +60,6 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 				return reg
 			},
 			syncIDToRemove: "test-sync-1",
-			expectError:    false,
 			verifyRemoved:  true,
 		},
 		{
@@ -75,7 +70,6 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 				return reg
 			},
 			syncIDToRemove: "non-existent",
-			expectError:    false,
 			verifyRemoved:  false,
 		},
 		{
@@ -88,7 +82,6 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 				return reg
 			},
 			syncIDToRemove: "test-sync-1",
-			expectError:    false,
 			verifyRemoved:  true,
 		},
 	}
@@ -96,14 +89,14 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := tt.setup(t)
-			
+
 			reg.RemoveSubscription(tt.syncIDToRemove)
-			
+
 			if tt.verifyRemoved {
 				// Verify subscription was removed
 				_, exists := reg.GetSubscriptionByID(tt.syncIDToRemove)
 				assert.False(t, exists)
-				
+
 				// Verify no streams remain for this subscription
 				streamCount, _ := reg.GetStats()
 				assert.Equal(t, 0, streamCount)
@@ -426,33 +419,33 @@ func TestRegistry_GetStats(t *testing.T) {
 func TestRegistry_CancelAll(t *testing.T) {
 	t.Run("cancel all subscriptions", func(t *testing.T) {
 		reg := newRegistry()
-		
+
 		// Add some subscriptions
 		sub1 := createTestSubscription("test-sync-1")
 		sub2 := createTestSubscription("test-sync-2")
-		
+
 		reg.AddSubscription(sub1)
 		reg.AddSubscription(sub2)
 		reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
 		reg.AddStreamToSubscription("test-sync-2", StreamId{5, 6, 7, 8})
-		
+
 		// Verify initial state
 		streamCount, subCount := reg.GetStats()
 		assert.Equal(t, 2, streamCount)
 		assert.Equal(t, 2, subCount)
-		
+
 		// Cancel all
 		reg.CancelAll(nil)
-		
+
 		// Verify all subscriptions were removed
 		streamCount, subCount = reg.GetStats()
 		assert.Equal(t, 0, streamCount)
 		assert.Equal(t, 0, subCount)
-		
+
 		// Verify subscriptions are no longer accessible
 		_, exists := reg.GetSubscriptionByID("test-sync-1")
 		assert.False(t, exists)
-		
+
 		_, exists = reg.GetSubscriptionByID("test-sync-2")
 		assert.False(t, exists)
 	})

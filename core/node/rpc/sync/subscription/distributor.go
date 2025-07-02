@@ -1,7 +1,6 @@
 package subscription
 
 import (
-	"context"
 	"slices"
 	"sync"
 
@@ -15,8 +14,8 @@ import (
 
 // MessageDistributor defines the contract for distributing messages to subscriptions
 type MessageDistributor interface {
-	DistributeMessage(ctx context.Context, streamID StreamId, msg *SyncStreamsResponse) error
-	DistributeBackfillMessage(ctx context.Context, streamID StreamId, msg *SyncStreamsResponse) error
+	DistributeMessage(streamID StreamId, msg *SyncStreamsResponse)
+	DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse)
 }
 
 // distributor implements MessageDistributor for distributing messages to subscriptions
@@ -34,10 +33,10 @@ func newDistributor(registry Registry, logger *logging.Log) *distributor {
 }
 
 // DistributeMessage distributes a regular sync message to all relevant subscriptions
-func (d *distributor) DistributeMessage(ctx context.Context, streamID StreamId, msg *SyncStreamsResponse) error {
+func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	subscriptions := d.registry.GetSubscriptionsForStream(streamID)
 	if len(subscriptions) == 0 {
-		return nil
+		return
 	}
 
 	// Handle SYNC_DOWN by removing stream from registry
@@ -71,20 +70,18 @@ func (d *distributor) DistributeMessage(ctx context.Context, streamID StreamId, 
 	for _, syncID := range toRemove {
 		d.registry.RemoveSubscription(syncID)
 	}
-
-	return nil
 }
 
 // DistributeBackfillMessage distributes a backfill message to a specific subscription
-func (d *distributor) DistributeBackfillMessage(ctx context.Context, streamID StreamId, msg *SyncStreamsResponse) error {
+func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	if len(msg.GetTargetSyncIds()) == 0 {
-		return nil
+		return
 	}
 
 	targetSyncID := msg.GetTargetSyncIds()[0]
 	subscription, exists := d.registry.GetSubscriptionByID(targetSyncID)
 	if !exists || subscription.isClosed() {
-		return nil
+		return
 	}
 
 	// Check if the subscription is still associated with this stream
@@ -97,7 +94,7 @@ func (d *distributor) DistributeBackfillMessage(ctx context.Context, streamID St
 		}
 	}
 	if !found {
-		return nil // Subscription is no longer associated with this stream
+		return // Subscription is no longer associated with this stream
 	}
 
 	// Remove the target sync ID from the message
@@ -107,12 +104,10 @@ func (d *distributor) DistributeBackfillMessage(ctx context.Context, streamID St
 	subscription.Send(msg)
 
 	// Mark stream as no longer initializing and store backfill events
-	if _, found := subscription.initializingStreams.LoadAndDelete(streamID); found {
+	if _, found = subscription.initializingStreams.LoadAndDelete(streamID); found {
 		hashes := d.extractBackfillHashes(msg)
 		subscription.backfillEvents.Store(streamID, hashes)
 	}
-
-	return nil
 }
 
 // sendMessageToSubscription sends a message to a specific subscription with proper filtering

@@ -1,71 +1,26 @@
 package subscription
 
 import (
-	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// MockRegistry for testing
-type MockRegistry struct {
-	mock.Mock
-}
-
-func (m *MockRegistry) AddSubscription(sub *Subscription) {
-	m.Called(sub)
-}
-
-func (m *MockRegistry) RemoveSubscription(syncID string) {
-	m.Called(syncID)
-}
-
-func (m *MockRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
-	args := m.Called(streamID)
-	return args.Get(0).([]*Subscription)
-}
-
-func (m *MockRegistry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
-	args := m.Called(syncID)
-	return args.Get(0).(*Subscription), args.Bool(1)
-}
-
-func (m *MockRegistry) AddStreamToSubscription(syncID string, streamID StreamId) (bool, bool) {
-	args := m.Called(syncID, streamID)
-	return args.Bool(0), args.Bool(1)
-}
-
-func (m *MockRegistry) RemoveStreamFromSubscription(syncID string, streamID StreamId) bool {
-	args := m.Called(syncID, streamID)
-	return args.Bool(0)
-}
-
-func (m *MockRegistry) GetStats() (int, int) {
-	args := m.Called()
-	return args.Int(0), args.Int(1)
-}
-
-func (m *MockRegistry) CancelAll(err error) {
-	m.Called(err)
-}
-
 func TestDistributor_DistributeMessage(t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func() (*distributor, *MockRegistry)
+		setup         func() (*distributor, *mockRegistry)
 		streamID      StreamId
 		msg           *SyncStreamsResponse
-		expectedCalls func(*MockRegistry)
-		expectError   bool
+		expectedCalls func(*mockRegistry)
 	}{
 		{
 			name: "distribute message to single subscription",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -74,16 +29,15 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				sub := createTestSubscription("test-sync-1")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub})
 			},
-			expectError: false,
 		},
 		{
 			name: "distribute message to multiple subscriptions",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -92,17 +46,16 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				sub1 := createTestSubscription("test-sync-1")
 				sub2 := createTestSubscription("test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
 			},
-			expectError: false,
 		},
 		{
 			name: "distribute message to closed subscription - should remove it",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -111,18 +64,17 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				sub := createTestSubscription("test-sync-1")
 				sub.Close() // Mark as closed
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub}).Maybe()
 				mockReg.On("RemoveSubscription", "test-sync-1")
 			},
-			expectError: false,
 		},
 		{
 			name: "distribute SYNC_DOWN message - should remove streams",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -131,19 +83,18 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				SyncOp:   SyncOp_SYNC_DOWN,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				sub1 := createTestSubscription("test-sync-1")
 				sub2 := createTestSubscription("test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", StreamId{1, 2, 3, 4}).Return(false)
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-2", StreamId{1, 2, 3, 4}).Return(false)
 			},
-			expectError: false,
 		},
 		{
 			name: "no subscriptions for stream",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -152,10 +103,9 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{})
 			},
-			expectError: false,
 		},
 	}
 
@@ -163,15 +113,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dis, mockReg := tt.setup()
 			tt.expectedCalls(mockReg)
-
-			err := dis.DistributeMessage(context.Background(), tt.streamID, tt.msg)
-
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-
+			dis.DistributeMessage(tt.streamID, tt.msg)
 			mockReg.AssertExpectations(t)
 		})
 	}
@@ -180,16 +122,15 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func() (*distributor, *MockRegistry)
+		setup         func() (*distributor, *mockRegistry)
 		streamID      StreamId
 		msg           *SyncStreamsResponse
-		expectedCalls func(*MockRegistry)
-		expectError   bool
+		expectedCalls func(*mockRegistry)
 	}{
 		{
 			name: "distribute backfill message to existing subscription",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -199,17 +140,16 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{"test-sync-1"},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				sub := createTestSubscription("test-sync-1")
 				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub})
 			},
-			expectError: false,
 		},
 		{
 			name: "distribute backfill message to non-existent subscription",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -219,16 +159,15 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{"non-existent"},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				mockReg.On("GetSubscriptionByID", "non-existent").Return((*Subscription)(nil), false)
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{}).Maybe()
 			},
-			expectError: false,
 		},
 		{
 			name: "distribute backfill message to closed subscription",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -238,18 +177,17 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{"test-sync-1"},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				sub := createTestSubscription("test-sync-1")
 				sub.Close() // Mark as closed
 				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{}).Maybe()
 			},
-			expectError: false,
 		},
 		{
 			name: "distribute backfill message with no target sync IDs",
-			setup: func() (*distributor, *MockRegistry) {
-				mockReg := &MockRegistry{}
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
 				dis := newDistributor(mockReg, nil)
 				return dis, mockReg
 			},
@@ -259,10 +197,9 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{},
 			},
-			expectedCalls: func(mockReg *MockRegistry) {
+			expectedCalls: func(mockReg *mockRegistry) {
 				// No calls expected
 			},
-			expectError: false,
 		},
 	}
 
@@ -270,15 +207,7 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dis, mockReg := tt.setup()
 			tt.expectedCalls(mockReg)
-
-			err := dis.DistributeBackfillMessage(context.Background(), tt.streamID, tt.msg)
-
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-
+			dis.DistributeBackfillMessage(tt.streamID, tt.msg)
 			mockReg.AssertExpectations(t)
 		})
 	}
@@ -349,10 +278,10 @@ func TestDistributor_ExtractBackfillHashes(t *testing.T) {
 				},
 			},
 			expectedHashes: []common.Hash{
-				common.Hash{1, 2, 3, 4},
-				common.Hash{5, 6, 7, 8},
-				common.Hash{9, 10, 11, 12},
-				common.Hash{13, 14, 15, 16},
+				{1, 2, 3, 4},
+				{5, 6, 7, 8},
+				{9, 10, 11, 12},
+				{13, 14, 15, 16},
 			},
 		},
 		{
@@ -365,7 +294,7 @@ func TestDistributor_ExtractBackfillHashes(t *testing.T) {
 				},
 			},
 			expectedHashes: []common.Hash{
-				common.Hash{1, 2, 3, 4},
+				{1, 2, 3, 4},
 			},
 		},
 		{
@@ -378,7 +307,7 @@ func TestDistributor_ExtractBackfillHashes(t *testing.T) {
 				},
 			},
 			expectedHashes: []common.Hash{
-				common.Hash{1, 2, 3, 4},
+				{1, 2, 3, 4},
 			},
 		},
 		{

@@ -47,7 +47,6 @@ func (r *registry) AddSubscription(sub *Subscription) {
 // RemoveSubscription removes a subscription from the registry
 func (r *registry) RemoveSubscription(syncID string) {
 	r.sLock.Lock()
-	defer r.sLock.Unlock()
 
 	delete(r.subscriptionsByID, syncID)
 
@@ -60,14 +59,15 @@ func (r *registry) RemoveSubscription(syncID string) {
 			delete(r.subscriptionsByStream, streamID)
 		}
 	}
+
+	r.sLock.Unlock()
 }
 
 // GetSubscriptionsForStream returns all subscriptions for a given stream
 func (r *registry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
 	r.sLock.RLock()
-	defer r.sLock.RUnlock()
-
 	subs, ok := r.subscriptionsByStream[streamID]
+	r.sLock.RUnlock()
 	if !ok {
 		return nil
 	}
@@ -77,9 +77,8 @@ func (r *registry) GetSubscriptionsForStream(streamID StreamId) []*Subscription 
 // GetSubscriptionByID returns a subscription by its sync ID
 func (r *registry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
 	r.sLock.RLock()
-	defer r.sLock.RUnlock()
-
 	sub, ok := r.subscriptionsByID[syncID]
+	r.sLock.RUnlock()
 	return sub, ok
 }
 

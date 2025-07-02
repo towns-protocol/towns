@@ -169,8 +169,10 @@ func (m *Manager) processMessage(msg *SyncStreamsResponse) error {
 
 	// Route message based on type
 	if len(msg.GetTargetSyncIds()) > 0 {
-		return m.distributor.DistributeBackfillMessage(m.globalCtx, streamID, msg)
+		m.distributor.DistributeBackfillMessage(streamID, msg)
 	} else {
-		return m.distributor.DistributeMessage(m.globalCtx, streamID, msg)
+		m.distributor.DistributeMessage(streamID, msg)
 	}
+
+	return nil
 }
