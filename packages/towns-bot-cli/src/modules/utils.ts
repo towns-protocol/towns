@@ -1,7 +1,13 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import spawn from 'cross-spawn'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import { default as spawn } from 'cross-spawn'
 import picocolors from 'picocolors'
+
+export type PackageJson = {
+    private?: boolean
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+}
 
 export const getPackageManager = () => {
     if (process.env.npm_config_user_agent) {
@@ -69,6 +75,7 @@ export async function getLatestTownsProtocolVersion(): Promise<string> {
 
         let output = ''
         child.stdout?.on('data', (data) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
             output += data.toString()
         })
 
@@ -223,12 +230,12 @@ export async function cloneTemplate(packagePath: string, targetDir: string): Pro
     // Copy template contents to target directory
     fs.mkdirSync(targetDir, { recursive: true })
     // Use filter to ensure all files (including hidden) are copied
-    fs.cpSync(sourceDir, targetDir, { 
+    fs.cpSync(sourceDir, targetDir, {
         recursive: true,
         filter: () => {
             // Copy all files, including hidden ones
             return true
-        }
+        },
     })
 
     // Clean up temporary directory

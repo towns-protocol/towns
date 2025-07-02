@@ -1,46 +1,48 @@
 import minimist from 'minimist'
 import { green, red, yellow, cyan } from 'picocolors'
-import { init, TEMPLATES } from './modules/init.js'
+import { init, TEMPLATES, type Template } from './modules/init.js'
 import { update } from './modules/update.js'
 
+export type Argv = typeof argv
+
 const argv = minimist(process.argv.slice(2), {
-  string: ['template'],
-  boolean: ['help'],
-  alias: {
-    h: 'help',
-    t: 'template',
-  },
+    string: ['template'],
+    boolean: ['help'],
+    alias: {
+        h: 'help',
+        t: 'template',
+    },
 })
 
 async function main() {
-  const command = argv._[0]
+    const command = argv._[0]
 
-  if (argv.help || !command) {
-    showHelp()
-    return
-  }
-
-  try {
-    switch (command) {
-      case 'init':
-        await init(argv)
-        break
-      case 'update':
-        await update(argv)
-        break
-      default:
-        console.error(red(`Unknown command: ${command}`))
+    if (argv.help || !command) {
         showHelp()
+        return
+    }
+
+    try {
+        switch (command) {
+            case 'init':
+                await init(argv)
+                break
+            case 'update':
+                await update(argv)
+                break
+            default:
+                console.error(red(`Unknown command: ${command}`))
+                showHelp()
+                process.exit(1)
+        }
+    } catch (error) {
+        console.error(red('Error:'), error instanceof Error ? error.message : error)
         process.exit(1)
     }
-  } catch (error) {
-    console.error(red('Error:'), error instanceof Error ? error.message : error)
-    process.exit(1)
-  }
 }
 
 function showHelp() {
-  console.log(`
+    console.log(`
 ${cyan('towns-bot')} - CLI for creating and managing Towns Protocol bot projects
 
 ${yellow('Usage:')}
@@ -52,7 +54,12 @@ ${yellow('Commands:')}
 
 ${yellow('Options:')}
   -t, --template <name>   Template to use:
-${Object.entries(TEMPLATES).map(([key, template]: [string, any]) => `                            ${key} - ${template.description}`).join('\n')}
+${Object.entries(TEMPLATES)
+    .map(
+        ([key, template]: [string, Template]) =>
+            `                            ${key} - ${template.description}`,
+    )
+    .join('\n')}
                           Default: quickstart
   -h, --help              Show this help message
 
@@ -69,6 +76,6 @@ ${yellow('Examples:')}
 }
 
 main().catch((error) => {
-  console.error(red('Unexpected error:'), error)
-  process.exit(1)
+    console.error(red('Unexpected error:'), error)
+    process.exit(1)
 })

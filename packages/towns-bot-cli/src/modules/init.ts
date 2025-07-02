@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import prompts from 'prompts'
-import { green, red, yellow, cyan } from 'picocolors'
+import { default as prompts } from 'prompts'
+import { red, yellow, cyan } from 'picocolors'
 import * as jsonc from 'jsonc-parser'
 import {
     getPackageManager,
@@ -9,8 +9,11 @@ import {
     cloneTemplate,
     applyReplacements,
     printSuccess,
+    type PackageJson,
 } from './utils.js'
+import type { Argv } from '../index.js'
 
+export type Template = (typeof TEMPLATES)[keyof typeof TEMPLATES]
 export const TEMPLATES = {
     quickstart: {
         name: 'Bot Quickstart',
@@ -27,9 +30,9 @@ export const TEMPLATES = {
         description: 'Interactive poll bot for creating votes',
         packagePath: 'bot-ask-poll',
     },
-}
+} as const
 
-export async function init(argv: any) {
+export async function init(argv: Argv) {
     const projectName = argv._[1]
     const template = argv.template || 'quickstart'
 
@@ -98,7 +101,7 @@ export async function init(argv: any) {
 
             let modifiedContent = jsonc.applyEdits(content, edits.flat())
 
-            const parsed = jsonc.parse(modifiedContent)
+            const parsed = jsonc.parse(modifiedContent) as PackageJson
             delete parsed.private
 
             modifiedContent = JSON.stringify(parsed, null, 2)
