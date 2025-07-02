@@ -17,9 +17,9 @@
         "dev:no-ui": "ponder dev --disable-ui"
     },
     "dependencies": {
-        "hono": "^4.5.0",
-        "ponder": "^0.9.27",
-        "viem": "^2.21.51"
+        "hono": "^4.7.11",
+        "ponder": "^0.11.17",
+        "viem": "^2.29.3"
     },
     "devDependencies": {
         "@towns-protocol/contracts": "workspace:^",

@@ -21,6 +21,7 @@ export const swap = onchainTable('swaps', (t) => ({
     amountIn: t.bigint(),
     amountOut: t.bigint(),
     poster: t.hex(),
+    blockTimestamp: t.bigint(),
     createdAt: t.bigint(),
 }))
 
@@ -66,6 +67,7 @@ export const swapRouterSwap = onchainTable('swap_router_swap', (t) => ({
     amountIn: t.bigint(),
     amountOut: t.bigint(),
     recipient: t.hex(),
+    blockTimestamp: t.bigint(),
     createdAt: t.bigint(),
 }))
 
@@ -93,4 +95,47 @@ export const feeDistributionToSwapRouterSwap = relations(feeDistribution, ({ one
         fields: [feeDistribution.txHash],
         references: [swapRouterSwap.txHash],
     }),
+}))
+
+// stakers
+export const stakers = onchainTable('stakers', (t) => ({
+    depositId: t.bigint().primaryKey(),
+    owner: t.hex(),
+    delegatee: t.hex(),
+    beneficiary: t.hex(),
+    amount: t.bigint(),
+    createdAt: t.bigint(),
+}))
+
+// each staker can optionally belong to a space
+export const stakingToSpace = relations(stakers, ({ one }) => ({
+    space: one(space, {
+        fields: [stakers.delegatee],
+        references: [space.id],
+    }),
+}))
+
+// each space can have many stakers
+export const spaceToStakers = relations(space, ({ many }) => ({
+    stakers: many(stakers),
+}))
+
+// operators
+export const operator = onchainTable('operators', (t) => ({
+    address: t.hex().primaryKey(),
+    status: t.integer(),
+    createdAt: t.bigint(),
+}))
+
+// each staker can optionally belong to an operator
+export const stakingToOperator = relations(stakers, ({ one }) => ({
+    operator: one(operator, {
+        fields: [stakers.delegatee],
+        references: [operator.address],
+    }),
+}))
+
+// each operator can have many stakings
+export const operatorToStakings = relations(operator, ({ many }) => ({
+    stakings: many(stakers),
 }))

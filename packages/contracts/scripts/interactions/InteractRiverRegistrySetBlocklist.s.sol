@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
 import {IRiverConfig} from "src/river/registry/facets/config/IRiverConfig.sol";
 
 // libraries
+import {RiverConfigValues} from "scripts/interactions/helpers/RiverConfigValues.sol";
 
 // contracts
 import {Interaction} from "scripts/common/Interaction.s.sol";
@@ -20,7 +21,7 @@ contract InteractRiverRegistrySetFreq is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("node.blocklist"),
+            RiverConfigValues.NODE_BLOCKLIST,
             13_396_808,
             abi.encode(value)
         );

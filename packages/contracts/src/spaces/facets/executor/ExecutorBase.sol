@@ -40,14 +40,37 @@ abstract contract ExecutorBase is IExecutorBase {
 
     /// @notice Creates a new group and marks it as active.
     /// @param groupId The ID of the group to create.
-    function _createGroup(bytes32 groupId) internal {
-        _getGroup(groupId).createGroup();
+    /// @param status The status to set (active/inactive).
+    /// @param expiration Optional timestamp when the group should expire (0 for no expiration).
+    function _setGroupStatus(bytes32 groupId, bool status, uint48 expiration) internal {
+        Group storage group = _getGroup(groupId);
+        group.setStatus(status);
+        if (status && expiration > 0) {
+            if (expiration <= block.timestamp) revert InvalidExpiration();
+            group.expiration = expiration;
+        }
+        emit GroupStatusSet(groupId, status);
     }
 
-    /// @notice Removes (deactivates) a group.
-    /// @param groupId The ID of the group to remove.
-    function _removeGroup(bytes32 groupId) internal {
-        _getGroup(groupId).removeGroup();
+    function _getGroupExpiration(bytes32 groupId) internal view returns (uint48) {
+        return _getGroup(groupId).expiration;
+    }
+
+    /// @notice Creates a new group and marks it as active without expiration.
+    /// @param groupId The ID of the group to create.
+    /// @param status The status to set (active/inactive).
+    function _setGroupStatus(bytes32 groupId, bool status) internal {
+        _setGroupStatus(groupId, status, 0);
+    }
+
+    /// @notice Sets or extends the expiration for a group.
+    /// @param groupId The ID of the group.
+    /// @param expiration The new expiration timestamp.
+    function _setGroupExpiration(bytes32 groupId, uint48 expiration) internal {
+        if (expiration <= block.timestamp) revert InvalidExpiration();
+        Group storage group = _getGroup(groupId);
+        group.expiration = expiration;
+        emit GroupExpirationSet(groupId, expiration);
     }
 
     /// @notice Grants access to a group for an account.
@@ -102,14 +125,6 @@ abstract contract ExecutorBase is IExecutorBase {
         emit GroupGuardianSet(groupId, guardian);
     }
 
-    /// @notice Sets the ETH allowance for a group.
-    /// @param groupId The ID of the group.
-    /// @param allowance The new ETH allowance.
-    function _setGroupAllowance(bytes32 groupId, uint256 allowance) internal {
-        _getGroup(groupId).setAllowance(allowance);
-        emit GroupMaxEthValueSet(groupId, allowance);
-    }
-
     /// @notice Sets the grant delay for a group.
     /// @param groupId The ID of the group.
     /// @param grantDelay The new grant delay.
@@ -137,11 +152,14 @@ abstract contract ExecutorBase is IExecutorBase {
         return _getGroup(groupId).getGrantDelay();
     }
 
-    /// @notice Gets the ETH allowance for a group.
+    /// @notice Checks if a group is active and not expired.
     /// @param groupId The ID of the group.
-    /// @return The ETH allowance.
-    function _getGroupAllowance(bytes32 groupId) internal view returns (uint256) {
-        return _getGroup(groupId).getAllowance();
+    /// @return True if the group is active and not expired.
+    function _isGroupActive(bytes32 groupId) internal view returns (bool) {
+        Group storage group = _getGroup(groupId);
+        if (!group.active) return false;
+        if (group.expiration == 0) return true;
+        return group.expiration > block.timestamp;
     }
 
     /// @notice Checks if an account has access to a group.
@@ -149,26 +167,21 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param account The account to check.
     /// @return isMember True if the account is a member.
     /// @return executionDelay The execution delay for the account.
-    /// @return allowance The ETH allowance for the group.
-    /// @return active True if the group is active.
+    /// @return active True if the group is active and not expired.
     function _hasGroupAccess(
         bytes32 groupId,
         address account
-    ) internal view returns (bool isMember, uint32 executionDelay, uint256 allowance, bool active) {
+    ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
         Group storage group = _getGroup(groupId);
-        (isMember, executionDelay, allowance, active) = group.hasAccess(account);
+        (isMember, executionDelay) = group.hasAccess(account);
+
+        // Check both active status and expiration
+        active = group.active && (group.expiration == 0 || group.expiration > block.timestamp);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ACCESS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Checks if a group is active.
-    /// @param groupId The ID of the group.
-    /// @return True if the group is active.
-    function _isGroupActive(bytes32 groupId) internal view returns (bool) {
-        return _getGroup(groupId).active;
-    }
 
     /// @notice Gets access details for an account in a group.
     /// @param groupId The ID of the group.
@@ -267,14 +280,12 @@ abstract contract ExecutorBase is IExecutorBase {
 
     /// @notice Schedules an execution operation.
     /// @param target The target contract.
-    /// @param value The ETH value to send.
     /// @param data The calldata for the operation.
     /// @param when The earliest time the operation can be executed.
     /// @return operationId The ID of the scheduled operation.
     /// @return nonce The operation nonce.
     function _scheduleExecution(
         address target,
-        uint256 value,
         bytes calldata data,
         uint48 when
     ) internal returns (bytes32 operationId, uint32 nonce) {
@@ -282,7 +293,7 @@ abstract contract ExecutorBase is IExecutorBase {
         bytes4 selector = _getSelector(data);
 
         // Fetch restrictions that apply to the caller on the targeted function
-        (, uint32 setback) = _canCall(caller, target, value, selector);
+        (, uint32 setback) = _canCall(caller, target, selector);
 
         uint48 minWhen = Time.timestamp() + setback;
 
@@ -351,7 +362,7 @@ abstract contract ExecutorBase is IExecutorBase {
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
             // a guardian of the required role.
-            (bool isGuardian, , , ) = _hasGroupAccess(
+            (bool isGuardian, , ) = _hasGroupAccess(
                 _getGroupGuardian(_getTargetFunctionGroupId(target, selector)),
                 sender
             );
@@ -381,7 +392,7 @@ abstract contract ExecutorBase is IExecutorBase {
         bytes4 selector = _getSelector(data);
 
         // Fetch restrictions that apply to the caller on the targeted function
-        (bool allowed, uint32 delay) = _canCall(caller, target, value, selector);
+        (bool allowed, uint32 delay) = _canCall(caller, target, selector);
 
         // If call is not authorized, revert
         if (!allowed && delay == 0) {
@@ -402,10 +413,6 @@ abstract contract ExecutorBase is IExecutorBase {
         // Mark the target and selector as authorized
         bytes32 executionIdBefore = ExecutorStorage.getLayout().executionId;
         ExecutorStorage.getLayout().executionId = _hashExecutionId(target, selector);
-
-        // Reduce the allowance of the group before external call
-        bytes32 groupId = _getTargetFunctionGroupId(target, selector);
-        _getGroup(groupId).allowance -= value;
 
         // Call the target
         result = LibCall.callContract(target, value, data);
@@ -453,14 +460,12 @@ abstract contract ExecutorBase is IExecutorBase {
     ///      Handles both self-calls and external calls.
     /// @param caller The address attempting the call.
     /// @param target The contract being called.
-    /// @param value The ETH value sent with the call.
     /// @param selector The function selector being called.
     /// @return allowed True if the call is allowed immediately, false otherwise.
     /// @return delay The required delay before the call is allowed (0 if immediate).
     function _canCall(
         address caller,
         address target,
-        uint256 value,
         bytes4 selector
     ) private view returns (bool allowed, uint32 delay) {
         // If the contract is calling itself, ensure it's during an authorized execution
@@ -479,13 +484,10 @@ abstract contract ExecutorBase is IExecutorBase {
 
         // Check group permissions for the caller
         bytes32 groupId = _getTargetFunctionGroupId(target, selector);
-        (bool isMember, uint32 currentDelay, uint256 allowance, bool active) = _hasGroupAccess(
-            groupId,
-            caller
-        );
+        (bool isMember, uint32 currentDelay, bool active) = _hasGroupAccess(groupId, caller);
 
         // Disallow if group is inactive or allowance exceeded
-        if (!active || value > allowance) {
+        if (!active) {
             return (false, 0);
         }
 

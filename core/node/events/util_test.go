@@ -51,6 +51,7 @@ type testParams struct {
 	recencyConstraintsGenerations int
 	recencyConstraintsAgeSec      int
 	defaultMinEventsPerSnapshot   int
+	enableNewSnapshotFormat       int
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -97,6 +98,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 	setOnChainStreamConfig(t, ctx, btc, p)
 
+	// register nodes as operational
 	baseCtx := ctx
 	for i := range p.numInstances {
 		log := logging.FromCtx(baseCtx)
@@ -104,6 +106,13 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		ctx = logging.CtxWithLog(baseCtx, log)
 
 		ctc.require.NoError(btc.InitNodeRecord(ctx, i, "fakeurl"))
+	}
+
+	// load instances
+	for i := range p.numInstances {
+		log := logging.FromCtx(baseCtx)
+		log = log.With("instance", i)
+		ctx = logging.CtxWithLog(baseCtx, log)
 
 		bc := btc.GetBlockchain(ctx, i)
 
@@ -128,6 +137,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			blockNumber,
 			bc.ChainMonitor,
 			btc.OnChainConfig,
+			nil,
 			nil,
 			nil,
 		)
@@ -281,7 +291,13 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 			defer wg.Done()
 
 			streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID, nil)
+			mb := MakeGenesisMiniblockForSpaceStream(
+				ctc.t,
+				ctc.clientWallet,
+				ctc.instances[0].params.Wallet,
+				streamID,
+				nil,
+			)
 			ctc.createStreamNoCache(streamID, mb.Proto)
 
 			mu.Lock()
@@ -353,7 +369,7 @@ func (ctc *cacheTestContext) GetMbs(
 				return nil, err
 			}
 
-			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive)
+			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
 			if err != nil {
 				return nil, err
 			}
@@ -405,6 +421,12 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 		btc.SetConfigValue(t, ctx,
 			crypto.StreamDefaultMinEventsPerSnapshotConfigKey,
 			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
+		)
+	}
+	if p.enableNewSnapshotFormat != 0 {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamEnableNewSnapshotFormatConfigKey,
+			crypto.ABIEncodeUint64(uint64(p.enableNewSnapshotFormat)),
 		)
 	}
 }

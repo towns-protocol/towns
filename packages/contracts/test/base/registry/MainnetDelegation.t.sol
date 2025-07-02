@@ -121,6 +121,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
 
         relayDelegations(_delegators, _claimers, _quantities, _operators);
 
+        address[] memory mainnetDelegators = mainnetDelegationFacet.getMainnetDelegators();
+        assertEq(mainnetDelegators, _delegators);
+
         verifyBatch(_delegators, _claimers, _quantities, _operators, _commissionRates);
     }
 
@@ -224,6 +227,147 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
             uint256 depositId = mainnetDelegationFacet.getDepositIdByDelegator(delegators[i]);
             verifyRemoval(delegators[i], depositId);
         }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_getMessenger() external view {
+        assertEq(mainnetDelegationFacet.getMessenger(), address(messenger));
+    }
+
+    function test_getProxyDelegation(address proxyDelegation) external {
+        vm.prank(deployer);
+        mainnetDelegationFacet.setProxyDelegation(proxyDelegation);
+
+        address retrievedProxy = mainnetDelegationFacet.getProxyDelegation();
+        assertEq(retrievedProxy, proxyDelegation);
+    }
+
+    function test_getProxyDelegation_defaultValue() external view {
+        address retrievedProxy = mainnetDelegationFacet.getProxyDelegation();
+        assertEq(retrievedProxy, mainnetProxyDelegation);
+    }
+
+    function test_getMainnetDelegators_empty() external view {
+        address[] memory delegators = mainnetDelegationFacet.getMainnetDelegators();
+        assertEq(delegators.length, 0);
+    }
+
+    function test_getMainnetDelegators_single(address delegator) external {
+        setDelegation(delegator, address(0), 1 ether, OPERATOR, 1000);
+
+        address[] memory delegators = mainnetDelegationFacet.getMainnetDelegators();
+        assertEq(delegators.length, 1);
+        assertEq(delegators[0], delegator);
+    }
+
+    function test_getDepositIdByDelegator_nonExistent(address delegator) external view {
+        uint256 depositId = mainnetDelegationFacet.getDepositIdByDelegator(delegator);
+        assertEq(depositId, 0);
+    }
+
+    function test_getDepositIdByDelegator_exists(address delegator) external {
+        setDelegation(delegator, address(0), 1 ether, OPERATOR, 1000);
+
+        uint256 depositId = mainnetDelegationFacet.getDepositIdByDelegator(delegator);
+        assertGt(depositId, 0);
+    }
+
+    function test_getDelegationByDelegator_nonExistent(address delegator) external view {
+        Delegation memory delegation = mainnetDelegationFacet.getDelegationByDelegator(delegator);
+
+        assertEq(delegation.operator, address(0));
+        assertEq(delegation.quantity, 0);
+        assertEq(delegation.delegator, address(0));
+        assertEq(delegation.delegationTime, 0);
+    }
+
+    function test_getDelegationByDelegator_exists(address delegator) external {
+        uint96 amount = 1 ether;
+
+        setDelegation(delegator, address(0), amount, OPERATOR, 1000);
+
+        Delegation memory delegation = mainnetDelegationFacet.getDelegationByDelegator(delegator);
+
+        assertEq(delegation.operator, OPERATOR);
+        assertEq(delegation.quantity, amount);
+        assertEq(delegation.delegator, delegator);
+        assertEq(delegation.delegationTime, block.timestamp);
+    }
+
+    function test_getMainnetDelegationsByOperator_empty(address operator) external view {
+        Delegation[] memory delegations = mainnetDelegationFacet.getMainnetDelegationsByOperator(
+            operator
+        );
+        assertEq(delegations.length, 0);
+    }
+
+    function test_getMainnetDelegationsByOperator_single(address delegator) external {
+        uint96 amount = 1 ether;
+
+        setDelegation(delegator, address(0), amount, OPERATOR, 1000);
+
+        Delegation[] memory delegations = mainnetDelegationFacet.getMainnetDelegationsByOperator(
+            OPERATOR
+        );
+        assertEq(delegations.length, 1);
+        assertEq(delegations[0].operator, OPERATOR);
+        assertEq(delegations[0].quantity, amount);
+        assertEq(delegations[0].delegator, delegator);
+    }
+
+    function test_getDelegatedStakeByOperator_empty() external view {
+        uint256 stake = mainnetDelegationFacet.getDelegatedStakeByOperator(OPERATOR);
+        assertEq(stake, 0);
+    }
+
+    function test_getDelegatedStakeByOperator_single(address delegator) external {
+        uint96 amount = 1 ether;
+
+        setDelegation(delegator, address(0), amount, OPERATOR, 1000);
+
+        uint256 stake = mainnetDelegationFacet.getDelegatedStakeByOperator(OPERATOR);
+        assertEq(stake, amount);
+    }
+
+    function test_getDelegatedStakeByOperator_multiple(
+        address delegator1,
+        address delegator2,
+        uint96 amount1,
+        uint96 amount2
+    ) external {
+        vm.assume(delegator1 != delegator2 && delegator1 != address(0) && delegator2 != address(0));
+        amount1 = uint96(bound(amount1, 1, type(uint96).max - totalStaked - 1));
+        amount2 = uint96(bound(amount2, 1, type(uint96).max - totalStaked - amount1));
+
+        address[] memory delegators = new address[](2);
+        delegators[0] = delegator1;
+        delegators[1] = delegator2;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = amount1;
+        amounts[1] = amount2;
+        address[] memory operators = new address[](2);
+        operators[0] = OPERATOR;
+        operators[1] = OPERATOR;
+
+        relayDelegations(delegators, new address[](2), amounts, operators);
+
+        uint256 stake = mainnetDelegationFacet.getDelegatedStakeByOperator(OPERATOR);
+        assertEq(stake, amount1 + amount2);
+    }
+
+    function test_getAuthorizedClaimer_nonExistent(address delegator) external view {
+        address claimer = mainnetDelegationFacet.getAuthorizedClaimer(delegator);
+        assertEq(claimer, address(0));
+    }
+
+    function test_getAuthorizedClaimer_exists(address delegator, address claimer) external {
+        setDelegation(delegator, claimer, 1 ether, OPERATOR, 1000);
+
+        address retrievedClaimer = mainnetDelegationFacet.getAuthorizedClaimer(delegator);
+        assertEq(retrievedClaimer, claimer);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -144,7 +144,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	s.mu.Unlock()
-	s.params.streamCache.SubmitSyncStreamTask(s, nil)
+	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
 	// Wait for reconciliation to complete.
 	backoff := BackoffTracker{
@@ -284,6 +284,7 @@ func (s *Stream) importMiniblocksLocked(
 	var err error
 	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
+	var snapshot *Envelope
 	for _, miniblock := range miniblocks {
 		currentView, newEvents, err = currentView.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 		if err != nil {
@@ -291,6 +292,9 @@ func (s *Stream) importMiniblocksLocked(
 		}
 		allNewEvents = append(allNewEvents, newEvents...)
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
+		if len(miniblock.Header().GetSnapshotHash()) > 0 {
+			snapshot = miniblock.Snapshot
+		}
 	}
 
 	newMinipoolBytes, err := currentView.minipool.getEnvelopeBytes()
@@ -314,7 +318,7 @@ func (s *Stream) importMiniblocksLocked(
 	s.setViewLocked(currentView)
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 	// TODO: should we notify with entire miniblocks for efficiency?
-	s.notifySubscribersLocked(allNewEvents, newSyncCookie)
+	s.notifySubscribersLocked(allNewEvents, newSyncCookie, snapshot)
 	return nil
 }
 
@@ -375,7 +379,11 @@ func (s *Stream) applyMiniblockImplLocked(
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 
 	newEvents = append(newEvents, info.headerEvent.Envelope)
-	s.notifySubscribersLocked(newEvents, newSyncCookie)
+	var snapshot *Envelope
+	if len(info.Header().GetSnapshotHash()) > 0 {
+		snapshot = info.Snapshot
+	}
+	s.notifySubscribersLocked(newEvents, newSyncCookie, snapshot)
 	return nil
 }
 
@@ -389,7 +397,7 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	return s.promoteCandidateLocked(ctx, mb)
 }
 
-// promoteCandidateLocked shouldbe called with a lock held.
+// promoteCandidateLocked should be called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
@@ -441,7 +449,7 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 			return RiverError(
 				Err_STREAM_RECONCILIATION_REQUIRED,
 				"schedulePromotionNoLock: next promotion is not for the next block",
-			)
+			).Tags("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	} else if len(s.local.pendingCandidates) > 3 {
@@ -449,7 +457,8 @@ func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
-			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
+			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive").
+				Tag("stream", s.streamId)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
@@ -642,15 +651,23 @@ func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
+	omitSnapshot bool,
 ) ([]*MiniblockInfo, bool, error) {
-	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
+	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
 	if err != nil {
 		return nil, false, err
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
-		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
+		opts := NewParsedMiniblockInfoOpts()
+		if block.Number > -1 {
+			opts = opts.WithExpectedBlockNumber(block.Number)
+		}
+		if omitSnapshot {
+			opts = opts.WithSkipSnapshotValidation()
+		}
+		miniblocks[i], err = NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 		if err != nil {
 			return nil, false, err
 		}
@@ -678,6 +695,7 @@ func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView
 func (s *Stream) notifySubscribersLocked(
 	envelopes []*Envelope,
 	newSyncCookie *SyncCookie,
+	snapshot *Envelope,
 ) {
 	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
 		s.lastAccessedTime = time.Now()
@@ -685,6 +703,7 @@ func (s *Stream) notifySubscribersLocked(
 		resp := &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: newSyncCookie,
+			Snapshot:       snapshot,
 		}
 		for receiver := range s.local.receivers.Iter() {
 			receiver.OnUpdate(resp)
@@ -710,7 +729,11 @@ func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicat
 // old to be in the cache and thus can't complete the duplicate check.
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+func (s *Stream) addEventLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	relaxDuplicateCheck bool,
+) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
 		return nil, err
@@ -766,9 +789,65 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent, relaxDu
 	s.setViewLocked(newSV)
 	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
 
-	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie)
+	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
 
 	return newSV, nil
+}
+
+// UpdatesSinceCookie retrieves the stream content since the given cookie and sends it to the callback.
+// This function locks the stream until the callback is executed.
+// One of the use cases is to properly handle race condition when sending stream delta to the sync client
+// (avoid updating the stream until the delta is sent to the client).
+func (s *Stream) UpdatesSinceCookie(
+	ctx context.Context,
+	cookie *SyncCookie,
+	cb func(*StreamAndCookie),
+) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not local",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
+	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
+		return RiverError(
+			Err_BAD_SYNC_COOKIE,
+			"cookies is not for this node",
+			"cookie.NodeAddress",
+			cookie.NodeAddress,
+			"s.params.Wallet.AddressStr",
+			s.params.Wallet,
+		)
+	}
+	if !s.streamId.EqualsBytes(cookie.StreamId) {
+		return RiverError(
+			Err_BAD_SYNC_COOKIE,
+			"bad stream id",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
+
+	view, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	if err != nil {
+		return err
+	}
+
+	cb(resp)
+
+	return nil
 }
 
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.
@@ -812,7 +891,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 		return err
 	}
 
-	resp, err := view.GetStreamSince(ctx, s.params.Wallet, cookie)
+	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
 	if err != nil {
 		return err
 	}
@@ -1050,7 +1129,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 			})
 			if err != nil {
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-					s.params.streamCache.SubmitSyncStreamTask(s, nil)
+					s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 				} else {
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
@@ -1082,16 +1161,16 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	return slices.Clone(r), l
 }
 
-// GetQuorumAndSyncNodesAndIsLocal returns
+// GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
-// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
-func (s *Stream) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+// GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
+func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	qn, sn, l := s.nodesLocked.GetQuorumAndSyncNodesAndIsLocal()
+	qn, sn, l := s.nodesLocked.GetQuorumAndReconcileNodesAndIsLocal()
 	return slices.Clone(qn), slices.Clone(sn), l
 }
 
@@ -1127,11 +1206,11 @@ func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode 
 	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
 }
 
-func (s *Stream) GetSyncNodes() []common.Address {
+func (s *Stream) GetReconcileNodes() []common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.nodesLocked.GetSyncNodes()
+	return s.nodesLocked.GetReconcileNodes()
 }
 
 func (s *Stream) IsLocalInQuorum() bool {

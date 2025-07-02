@@ -63,7 +63,7 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 		require.Len(t, stream.Nodes, expectedNodes, "stream nodes length mismatch")
 
 		quorumNodes := stream.Nodes[:streamReplFactor]
-		syncNodes := stream.Nodes[streamReplFactor:]
+		reconcileNodes := stream.Nodes[streamReplFactor:]
 
 		// ensure that nodes that take part in stream quorum have the stream in
 		// their stream cache and storage
@@ -74,14 +74,14 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 				require.NoError(c, err)
 
 				require.EqualValues(c, quorumNodes, stream.GetQuorumNodes(), "quorum nodes mismatch in quorum node")
-				require.EqualValues(c, syncNodes, stream.GetSyncNodes(), "sync nodes mismatch in quorum node")
+				require.EqualValues(c, reconcileNodes, stream.GetReconcileNodes(), "reconcile nodes mismatch in quorum node")
 			}
 		})
 
-		// ensure that nodes that sync the node have it in their stream cache and storage
+		// ensure that nodes that reconcile the node have it in their stream cache and storage
 		eventuallyForAllNodesWithT(tt, func(c *assert.CollectT, node *testNodeRecord) {
-			syncsStream := slices.Contains(syncNodes, node.address)
-			if syncsStream {
+			reconcileStream := slices.Contains(reconcileNodes, node.address)
+			if reconcileStream {
 				stream, err := node.service.cache.GetStreamNoWait(tt.ctx, channelId)
 				require.NoError(c, err)
 
@@ -89,9 +89,9 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 					c,
 					quorumNodes,
 					stream.GetQuorumNodes(),
-					"quorum nodes mismatch in sync streams test",
+					"quorum nodes mismatch in reconcile streams test",
 				)
-				require.EqualValues(c, syncNodes, stream.GetSyncNodes(), "sync nodes mismatch in sync streams test")
+				require.EqualValues(c, reconcileNodes, stream.GetReconcileNodes(), "reconcile nodes mismatch in reconcile streams test")
 
 				// Test stream is not returned if RiverAllowNoQuorum is not set
 				testClient := tt.testClientForUrl(node.url)
@@ -130,7 +130,7 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 				require.NoError(c, err)
 
 				require.EqualValues(c, quorumNodes, stream.GetQuorumNodes(), "quorum nodes mismatch in unplaced node")
-				require.EqualValues(c, syncNodes, stream.GetSyncNodes(), "sync nodes mismatch in unplaced node")
+				require.EqualValues(c, reconcileNodes, stream.GetReconcileNodes(), "reconcile nodes mismatch in unplaced node")
 
 				view, err := stream.GetViewIfLocal(tt.ctx)
 				require.NoError(c, err)
@@ -272,9 +272,13 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 		}},
 	)
 
-	var allNodes []common.Address
+	var (
+		allNodes         []common.Address
+		nodeAddrToRecord = make(map[common.Address]*testNodeRecord)
+	)
 	for _, node := range tt.nodes {
 		allNodes = append(allNodes, node.address)
+		nodeAddrToRecord[node.address] = node
 	}
 	testfmt.Logf(t, "all nodes: %v", allNodes)
 
@@ -292,22 +296,27 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 	initialNodes := slices.Clone(stream.Nodes)
 	testfmt.Logf(t, "stream %s placed on nodes %v\n", channelId, initialNodes)
 
+	testClient := tt.testClientForUrl(nodeAddrToRecord[stream.Nodes[0]].url)
+
 	// keep adding events to the stream to ensure it is hot/active
 	atLeastMBNum := stream.LastMiniblockNum + 10
 	mbProdCtx, mbProdCancel := context.WithCancel(tt.ctx)
 	mbProdDone := make(chan struct{})
 	go func() {
+		defer close(mbProdDone)
 		for i := 1; true; i++ {
 			select {
-			case <-time.After(50 * time.Millisecond):
+			case <-time.After(10 * time.Millisecond):
 				stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
 				tt.require.NoError(err)
 				if stream.LastMiniblockNum >= atLeastMBNum+10 { // produced enough miniblocks
 					return
 				}
 				alice.say(channelId, fmt.Sprintf("hello from Alice %d times", i))
+				mbRef, err := makeMiniblock(tt.ctx, testClient, channelId, false, -1)
+				tt.require.NoError(err)
+				testfmt.Logf(t, "stream %s make miniblock %d\n", channelId, mbRef.Num)
 			case <-mbProdCtx.Done():
-				close(mbProdDone)
 				return
 			}
 		}
@@ -332,7 +341,8 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 		require.EqualValues(c, len(replicatedNodesAddrs), len(registryStream.Nodes))
 
 		// make sure that stream has progressed enough to be considered hot
-		require.GreaterOrEqual(c, registryStream.LastMiniblockNum, atLeastMBNum)
+		require.GreaterOrEqual(c, registryStream.LastMiniblockNum, atLeastMBNum,
+			"stream %s not enough miniblocks", channelId)
 
 		participatesInStream := slices.Contains(replicatedNodesAddrs, node.address)
 
@@ -351,15 +361,15 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 		stream, err := node.service.cache.GetStreamNoWait(tt.ctx, channelId)
 		require.NoError(c, err)
 
-		quorumNodes, syncNodes, isLocal := stream.GetQuorumAndSyncNodesAndIsLocal()
+		quorumNodes, reconcileNodes, isLocal := stream.GetQuorumAndReconcileNodesAndIsLocal()
 		require.Truef(c, isLocal, "stream %s must be local for node %s", channelId, node.address)
 		quorumNode := slices.Contains(quorumNodes, node.address)
-		syncNode := slices.Contains(syncNodes, node.address)
+		reconcileNode := slices.Contains(reconcileNodes, node.address)
 
 		require.Truef(
 			c,
-			(quorumNode || syncNode) && (quorumNode != syncNode),
-			"node %s must be either a quorum or a sync node for stream %s",
+			(quorumNode || reconcileNode) && (quorumNode != reconcileNode),
+			"node %s must be either a quorum or a reconcile node for stream %s",
 			node.address,
 			channelId,
 		)
@@ -367,7 +377,7 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 		view, err := stream.GetViewIfLocal(tt.ctx)
 		require.NoErrorf(c, err, "node %s can't fetch view for stream %s", node.address, channelId)
 
-		if syncNode {
+		if reconcileNode {
 			require.Nilf(c, view, "node %s has unexpected view for stream %s", node.address, channelId)
 		}
 

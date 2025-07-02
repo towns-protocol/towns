@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"maps"
+	"math"
 	"math/big"
 	"net"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -38,6 +40,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -93,7 +97,7 @@ type serviceTesterOpts struct {
 }
 
 func makeTestListener(t *testing.T) (net.Listener, string) {
-	l, url := testcert.MakeTestListener(t)
+	l, url := testcert.MakeTestListener(t, nil)
 	t.Cleanup(func() { _ = l.Close() })
 	return l, url
 }
@@ -164,6 +168,18 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		crypto.StreamReplicationFactorConfigKey,
 		crypto.ABIEncodeUint64(uint64(opts.replicationFactor)),
 	)
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.StreamEnableNewSnapshotFormatConfigKey,
+		crypto.ABIEncodeUint64(1),
+	)
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.ServerEnableNode2NodeAuthConfigKey,
+		crypto.ABIEncodeUint64(1),
+	)
 
 	if opts.start {
 		st.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
@@ -222,7 +238,24 @@ func (st *serviceTester) cleanup(f any) {
 }
 
 func (st *serviceTester) makeTestListener() (net.Listener, string) {
-	l, url := testcert.MakeTestListener(st.t)
+	l, url := testcert.MakeTestListener(
+		st.t,
+		node2nodeauth.VerifyPeerCertificate(
+			logging.FromCtx(st.ctx),
+			func(addr common.Address) error {
+				node, err := st.btc.NodeRegistry.GetNode(nil, addr)
+				if err != nil {
+					return err
+				}
+
+				if node.NodeAddress.Cmp(addr) != 0 {
+					return fmt.Errorf("node address mismatch: expected %s, got %s", node.NodeAddress.Hex(), addr.Hex())
+				}
+
+				return nil
+			},
+		),
+	)
 	st.cleanup(l.Close)
 	return l, url
 }
@@ -336,6 +369,9 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 	cfg.StandByOnStart = false
 	cfg.ShutdownTimeout = 0
+	cfg.EnableTestAPIs = true
+
+	cfg.MetadataShardMask = 0b11
 
 	if options.configUpdater != nil {
 		options.configUpdater(cfg)
@@ -363,10 +399,11 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 
 	bc := st.btc.GetBlockchain(ctx, i)
 	service, err := StartServer(ctx, ctxCancel, cfg, &ServerStartOpts{
-		RiverChain:      bc,
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
-		ScrubberMaker:   options.scrubberMaker,
+		RiverChain:              bc,
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
+		ScrubberMaker:           options.scrubberMaker,
 	})
 	if err != nil {
 		st.require.Nil(service)
@@ -388,21 +425,27 @@ func (st *serviceTester) testClient(i int) protocolconnect.StreamServiceClient {
 }
 
 func (st *serviceTester) testNode2NodeClient(i int) protocolconnect.NodeToNodeClient {
-	return st.testNode2NodeClientForUrl(st.nodes[i].url)
+	return st.testNode2NodeClientForUrl(st.nodes[i].url, i)
 }
 
 func (st *serviceTester) testClientForUrl(url string) protocolconnect.StreamServiceClient {
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
-	return protocolconnect.NewStreamServiceClient(httpClient, url, connect.WithGRPCWeb())
+	return protocolconnect.NewStreamServiceClient(st.httpClient(), url, connect.WithGRPCWeb())
 }
 
-func (st *serviceTester) testNode2NodeClientForUrl(url string) protocolconnect.NodeToNodeClient {
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
-	return protocolconnect.NewNodeToNodeClient(httpClient, url, connect.WithGRPCWeb())
+func (st *serviceTester) testNode2NodeClientForUrl(url string, i int) protocolconnect.NodeToNodeClient {
+	return protocolconnect.NewNodeToNodeClient(st.httpClientWithCert(i), url, connect.WithGRPCWeb())
 }
 
 func (st *serviceTester) httpClient() *http.Client {
 	c, err := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
+	st.require.NoError(err)
+	return c
+}
+
+func (st *serviceTester) httpClientWithCert(i int) *http.Client {
+	c, err := testcert.GetHttp2LocalhostTLSClientWithCert(
+		st.ctx, st.getConfig(), node2nodeauth.CertGetter(nil, st.btc.NodeWallets[i], st.btc.ChainId),
+	)
 	st.require.NoError(err)
 	return c
 }
@@ -553,22 +596,56 @@ func (r *receivedStreamUpdates) Clone() []*SyncStreamsResponse {
 	return slices.Clone(r.updates)
 }
 
+func (r *receivedStreamUpdates) ForEachEvent(
+	t *testing.T,
+	op func(e *ParsedEvent) bool,
+) {
+	if r == nil {
+		return
+	}
+
+	for _, update := range r.updates {
+		stream := update.GetStream()
+		for _, block := range stream.GetMiniblocks() {
+			for _, event := range block.Events {
+				parsedEvent, err := ParseEvent(event)
+				require.NoError(t, err)
+				if !op(parsedEvent) {
+					return
+				}
+			}
+		}
+		for _, event := range stream.GetEvents() {
+			parsedEvent, err := ParseEvent(event)
+			require.NoError(t, err)
+			if !op(parsedEvent) {
+				return
+			}
+		}
+	}
+}
+
 type testClient struct {
-	t                    *testing.T
-	ctx                  context.Context
-	assert               *assert.Assertions
-	require              *require.Assertions
-	client               protocolconnect.StreamServiceClient
-	node2nodeClient      protocolconnect.NodeToNodeClient
-	nodes                []*testNodeRecord
-	wallet               *crypto.Wallet
-	userId               common.Address
-	userStreamId         StreamId
-	name                 string
-	syncID               atomic.String // use testClient#SyncID() to retrieve the value
-	enableSync           bool
-	updates              *xsync.Map[StreamId, *receivedStreamUpdates]
-	disableMiniblockComp bool
+	t                     *testing.T
+	ctx                   context.Context
+	assert                *assert.Assertions
+	require               *require.Assertions
+	client                protocolconnect.StreamServiceClient
+	node2nodeClient       protocolconnect.NodeToNodeClient
+	nodes                 []*testNodeRecord
+	wallet                *crypto.Wallet
+	userId                common.Address
+	userStreamId          StreamId
+	name                  string
+	syncID                atomic.String // use testClient#SyncID() to retrieve the value
+	enableSync            bool
+	updates               *xsync.Map[StreamId, *receivedStreamUpdates]
+	disableMiniblockComp  bool
+	deviceKey             string
+	fallbackKey           string
+	defaultSessionId      string
+	defaultSessionIdBytes []byte
+	serviceTester         *serviceTester // Reference to the service tester
 }
 
 type testClientOpts struct {
@@ -576,6 +653,11 @@ type testClientOpts struct {
 	// enableSync set to true means that the client will sync with all channels that it joined and compares all
 	// received updates with other clients.
 	enableSync bool
+
+	deviceKey   string
+	fallbackKey string
+
+	createUserStreamsWithEncryptionDevice bool
 }
 
 func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
@@ -585,22 +667,41 @@ func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 }
 
 func (st *serviceTester) newTestClientWithWallet(i int, opts testClientOpts, wallet *crypto.Wallet) *testClient {
-	return &testClient{
-		t:                    st.t,
-		ctx:                  st.ctx,
-		assert:               assert.New(st.t),
-		require:              st.require,
-		client:               st.testClient(i),
-		node2nodeClient:      st.testNode2NodeClient(i),
-		nodes:                st.nodes,
-		wallet:               wallet,
-		userId:               wallet.Address,
-		userStreamId:         UserStreamIdFromAddr(wallet.Address),
-		name:                 fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
-		enableSync:           opts.enableSync,
-		updates:              xsync.NewMap[StreamId, *receivedStreamUpdates](),
-		disableMiniblockComp: opts.disableMiniblockComp,
+	deviceKey := opts.deviceKey
+	if deviceKey == "" {
+		deviceKey = fmt.Sprintf("deviceKey_%x", wallet.Address[:6])
 	}
+	fallbackKey := opts.fallbackKey
+	if fallbackKey == "" {
+		fallbackKey = fmt.Sprintf("fallbackKey_%x", wallet.Address[:6])
+	}
+
+	tc := &testClient{
+		t:                     st.t,
+		ctx:                   st.ctx,
+		assert:                assert.New(st.t),
+		require:               st.require,
+		client:                st.testClient(i),
+		node2nodeClient:       st.testNode2NodeClient(i),
+		nodes:                 st.nodes,
+		wallet:                wallet,
+		userId:                wallet.Address,
+		userStreamId:          UserStreamIdFromAddr(wallet.Address),
+		name:                  fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+		enableSync:            opts.enableSync,
+		updates:               xsync.NewMap[StreamId, *receivedStreamUpdates](),
+		disableMiniblockComp:  opts.disableMiniblockComp,
+		deviceKey:             deviceKey,
+		fallbackKey:           fallbackKey,
+		defaultSessionId:      fmt.Sprintf("%0x", wallet.Address[:6]),
+		defaultSessionIdBytes: wallet.Address[:6],
+		serviceTester:         st, // Set the service tester reference
+	}
+
+	if opts.createUserStreamsWithEncryptionDevice {
+		tc.createUserStreamsWithEncryptionDevice()
+	}
+	return tc
 }
 
 // newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
@@ -617,6 +718,73 @@ func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) tes
 	})
 
 	return clients
+}
+
+// createMetadataStreams creates metadata streams for all shards using the operator client.
+func (st *serviceTester) createMetadataStreams() {
+	operatorClient := st.newTestClientWithWallet(0, testClientOpts{}, st.btc.OperatorWallets[0])
+
+	numStreams := st.nodes[0].service.config.MetadataShardMask + 1
+
+	var wg sync.WaitGroup
+	for i := uint64(0); i < numStreams; i++ {
+		wg.Add(1)
+		go func(i uint64) {
+			defer wg.Done()
+			operatorClient.createMetadataStream(i)
+		}(i)
+	}
+	wg.Wait()
+}
+
+func (tc *testClient) DefaultEncryptionDevice() app_client.EncryptionDevice {
+	return app_client.EncryptionDevice{
+		DeviceKey:   tc.deviceKey,
+		FallbackKey: tc.fallbackKey,
+	}
+}
+
+func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
+	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err, "Error creating user metadata stream for testClient")
+
+	event, err := MakeEnvelopeWithPayloadAndTags(
+		tc.wallet,
+		Make_UserMetadataPayload_EncryptionDevice(
+			tc.deviceKey,
+			tc.fallbackKey,
+		),
+		&MiniblockRef{
+			Num:  cookie.GetMinipoolGen() - 1,
+			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
+		},
+		nil,
+	)
+	tc.require.NoError(err)
+
+	addEventResp, err := tc.client.AddEvent(
+		tc.ctx,
+		&connect.Request[AddEventRequest]{
+			Msg: &AddEventRequest{
+				StreamId: cookie.StreamId,
+				Event:    event,
+			},
+		},
+	)
+	tc.require.NoError(err)
+	tc.require.Nil(addEventResp.Msg.GetError())
+}
+
+func (tc *testClient) createUserInboxStream() {
+	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err, "Error creating user inbox stream for testClient")
+}
+
+func (tc *testClient) createUserStreamsWithEncryptionDevice() *MiniblockRef {
+	userStreamMbRef := tc.createUserStream()
+	tc.createUserInboxStream()
+	tc.createUserMetadataStreamWithEncryptionDevice()
+	return userStreamMbRef
 }
 
 func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
@@ -636,45 +804,6 @@ func (tc *testClient) createUserStreamGetCookie(
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
 	return cookie
-}
-
-func (tc *testClient) createUserStreamsWithEncryptionDevice(
-	encryptionDevice *UserMetadataPayload_EncryptionDevice,
-) *SyncCookie {
-	userCookie := tc.createUserStreamGetCookie()
-
-	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
-	tc.require.NoError(err)
-
-	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
-	tc.require.NoError(err)
-
-	event, err := MakeEnvelopeWithPayload(
-		tc.wallet,
-		Make_UserMetadataPayload_EncryptionDevice(
-			encryptionDevice.DeviceKey,
-			encryptionDevice.FallbackKey,
-		),
-		&MiniblockRef{
-			Num:  cookie.GetMinipoolGen() - 1,
-			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
-		},
-	)
-	tc.require.NoError(err)
-
-	addEventResp, err := tc.client.AddEvent(
-		tc.ctx,
-		&connect.Request[AddEventRequest]{
-			Msg: &AddEventRequest{
-				StreamId: cookie.StreamId,
-				Event:    event,
-			},
-		},
-	)
-	tc.require.NoError(err)
-	tc.require.Nil(addEventResp.Msg.GetError())
-
-	return userCookie
 }
 
 func (tc *testClient) createUserStream(
@@ -709,12 +838,22 @@ func (tc *testClient) syncChannel(cookie *SyncCookie) {
 		return
 	}
 
-	_, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
+	resp, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
 		SyncId:     tc.SyncID(),
 		AddStreams: []*SyncCookie{cookie},
 	}))
-
 	tc.require.NoError(err)
+	tc.require.Len(resp.Msg.GetBackfills(), 0)
+	tc.require.Len(resp.Msg.GetAdds(), 0)
+	tc.require.Len(resp.Msg.GetRemovals(), 0)
+}
+
+func (tc *testClient) syncChannelFromInit(streamId StreamId) {
+	tc.syncChannel(&SyncCookie{
+		StreamId:          streamId[:],
+		MinipoolGen:       math.MaxInt64,
+		PrevMiniblockHash: common.Hash{}.Bytes(),
+	})
 }
 
 // startSync initiates a sync session without streams.
@@ -723,7 +862,11 @@ func (tc *testClient) startSync() {
 		return
 	}
 
-	updates, err := tc.client.SyncStreams(tc.ctx, connect.NewRequest(&SyncStreamsRequest{}))
+	// TODO: Remove after removing the legacy syncer
+	req := connect.NewRequest(&SyncStreamsRequest{})
+	req.Header().Set(UseSharedSyncHeaderName, "true")
+
+	updates, err := tc.client.SyncStreams(tc.ctx, req)
 	tc.require.NoError(err)
 
 	if updates.Receive() {
@@ -806,7 +949,7 @@ func (tc *testClient) joinChannel(
 		Make_UserPayload_Membership(
 			MembershipOp_SO_JOIN,
 			channelId,
-			nil,
+			common.Address{},
 			spaceId[:],
 			nil,
 		),
@@ -980,6 +1123,30 @@ func TestDiffUserMessages(t *testing.T) {
 	assert.ElementsMatch(b, umAll[:2])
 }
 
+func (tc *testClient) getAllSyncedMessages(streamId StreamId) userMessages {
+	require.True(tc.t, tc.enableSync, "Sync must be enabled on the client for getAllSyncedMessages")
+
+	updates, ok := tc.updates.Load(streamId)
+	if !ok {
+		tc.syncChannelFromInit(streamId)
+		return userMessages{} // Return empty initially as sync starts
+	}
+
+	messages := userMessages{}
+	updates.ForEachEvent(tc.t, func(e *ParsedEvent) bool {
+		payload := e.GetChannelMessage()
+		if payload != nil {
+			messages = append(messages, usersMessage{
+				userId:  crypto.PublicKeyToAddress(e.SignerPubKey),
+				message: string(payload.Message.Ciphertext),
+			})
+		}
+		return true // Continue processing events
+	})
+
+	return messages
+}
+
 func (tc *testClient) getAllMessages(channelId StreamId) userMessages {
 	_, view := tc.getStreamAndView(channelId, true)
 
@@ -1024,7 +1191,7 @@ func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
 		if len(expectedExtra) > 0 {
 			tc.require.FailNow(
 				"Didn't receive all messages",
-				"client %s\nexpectedExtra:%vactualExtra:%v",
+				"client %s\nexpectedExtra:%v\nactualExtra:%v",
 				tc.name,
 				expectedExtra,
 				actualExtra,
@@ -1087,7 +1254,10 @@ func (tc *testClient) maybeDumpStreamView(view *StreamView) {
 			tc.name,
 			"Dumping stream view",
 			"\n",
-			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{
+				EventContent: true,
+				TestMessages: true,
+			}),
 		)
 	}
 }
@@ -1101,7 +1271,10 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{
+				EventContent: true,
+				TestMessages: true,
+			}),
 		)
 	}
 }
@@ -1232,6 +1405,7 @@ func findKeySolicitation(
 			return isKeySolicitation(event, deviceKey, sessionId)
 		},
 	)
+
 	require.True(exists)
 }
 
@@ -1239,13 +1413,83 @@ func containsKeySolicitation(
 	require *require.Assertions,
 	channel *StreamAndCookie,
 	deviceKey string,
+	sessionId string,
 ) bool {
 	return overAllEvents(
 		require, channel,
 		func(event *ParsedEvent) bool {
-			return isKeySolicitation(event, deviceKey, "")
+			return isKeySolicitation(event, deviceKey, sessionId)
 		},
 	)
+}
+
+func (tcs testClients) waitForKeySolicitationsFrom(t *testing.T, channelId StreamId, senders testClients) {
+	tcs.waitForAll(
+		t,
+		func(t require.TestingT, tc *testClient) {
+			tc.hasKeySolicitationsFromClients(t, channelId, senders)
+		},
+		10*time.Second,
+		1*time.Second,
+	)
+}
+
+func (tcs testClients) sendSolicitationResponsesTo(channelId StreamId, receivers testClients) {
+	tcs.parallelForAll(func(senderClient *testClient) {
+		for _, receiverClient := range receivers {
+			// senderClient sends a solicitation response to receiverClient's user inbox.
+			// The response is for the receiverClient's deviceKey and concerns a session
+			// identified by receiverClient.defaultSessionId for the given channelId.
+			senderClient.sendSolicitationResponse(
+				receiverClient.userId,                   // The user (receiver) to whom the response is addressed.
+				channelId,                               // The channel context for these encryption sessions.
+				receiverClient.deviceKey,                // The specific device key of the receiver this response is for.
+				[]string{senderClient.defaultSessionId}, // The session ID(s) this response pertains to.
+				fmt.Sprintf(
+					"%s:%s",
+					senderClient.defaultSessionId,
+					receiverClient.deviceKey,
+				),
+			)
+		}
+	})
+}
+
+func (tc *testClient) hasKeySolicitationsFromClients(t require.TestingT, channelId StreamId, tcs testClients) {
+	var updates *receivedStreamUpdates
+	var ok bool
+	if updates, ok = tc.updates.Load(channelId); !ok {
+		tc.syncChannelFromInit(channelId)
+	}
+
+	type missingSolicitation struct {
+		deviceKey string
+		sessionId string
+	}
+	var missingSolicitations []missingSolicitation
+	for _, c := range tcs {
+		var found bool
+		findSolicitation := func(e *ParsedEvent) bool {
+			if isKeySolicitation(e, c.deviceKey, tc.defaultSessionId) {
+				found = true
+			}
+			return !found
+		}
+		updates.ForEachEvent(tc.t, findSolicitation)
+		if updates == nil || !found {
+			missingSolicitations = append(missingSolicitations, missingSolicitation{
+				deviceKey: c.deviceKey,
+				sessionId: tc.defaultSessionId,
+			})
+		}
+	}
+	for _, missingSolicitation := range missingSolicitations {
+		t.Errorf(
+			"missing key solicitation from device(%v) for session(%v)",
+			missingSolicitation.deviceKey,
+			missingSolicitation.sessionId,
+		)
+	}
 }
 
 func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey string, sessionId string) {
@@ -1263,7 +1507,7 @@ func (tc *testClient) requireNoKeySolicitation(
 ) {
 	tc.require.Never(func() bool {
 		channel := tc.getStream(channelId)
-		return containsKeySolicitation(tc.require, channel, deviceKey)
+		return containsKeySolicitation(tc.require, channel, deviceKey, "")
 	}, waitTime, tick, "Expected no key solicitation for device in channel")
 }
 
@@ -1353,7 +1597,13 @@ func (tcs testClients) listen(channelId StreamId, messages [][]string) {
 func (tcs testClients) say(channelId StreamId, messages ...string) {
 	parallel(tcs, func(tc *testClient, msg string) {
 		if msg != "" {
-			tc.say(channelId, msg)
+			tc.sayWithSessionAndTags(
+				channelId,
+				msg,
+				nil,
+				tc.wallet.Address[:6],
+				tc.deviceKey,
+			)
 		}
 	}, messages...)
 }
@@ -1425,11 +1675,11 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 	}
 }
 
-// setupChannelWithClients creates a channel and returns a testClients with clients subscribed/connected to it.
+// createChannelAndJoin creates a channel and joins all clients to it.
 // The first client is the creator of both the space and the channel.
 // Other clients join the channel.
 // Clients are connected to nodes in a round-robin fashion.
-func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
+func (tcs testClients) createChannelAndJoin(spaceId StreamId) (StreamId, *SyncCookie) {
 	alice := tcs[0]
 	channelId, _, syncCookie := alice.createChannel(spaceId)
 
@@ -1446,7 +1696,32 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 
 	tcs.requireSubscribed(channelId)
 
-	return channelId
+	return channelId, syncCookie
+}
+
+func (tcs testClients) joinChannel(
+	spaceId StreamId,
+	channelId StreamId,
+	channelSyncCookie *SyncCookie,
+	extraMembers testClients,
+) {
+	tcs.parallelForAll(func(tc *testClient) {
+		userLastMb := tc.getLastMiniblockHash(tc.userStreamId)
+		tc.joinChannel(spaceId, channelId, userLastMb)
+	})
+
+	userIds := tcs.userIds()
+	if extraMembers != nil {
+		userIds = append(userIds, extraMembers.userIds()...)
+	}
+
+	tcs.requireMembership(channelId, userIds)
+
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.syncChannel(channelSyncCookie)
+	})
+
+	tcs.requireSubscribed(channelId)
 }
 
 func (tcs testClients) compareNowImpl(
@@ -1538,14 +1813,14 @@ func (tcs testClients) compareNowImpl(
 				clientUpdate := clientUpdates[j]
 
 				success = success && assert.Equal(
-					first.GetSyncOp(), clientUpdates[i].GetSyncOp(),
+					first.GetSyncOp(), clientUpdate.GetSyncOp(),
 					"sync op not matching [%d:%d]: %s / %s",
 					i+1, j,
 					first.GetSyncOp(),
 					clientUpdate.GetSyncOp())
 
 				success = success && assert.Equal(
-					first.GetStreamId(), clientUpdates[i].GetStreamId(),
+					first.GetStreamId(), clientUpdate.GetStreamId(),
 					"different stream id [%d:%d]: %x / %x",
 					i+1, j,
 					first.GetStreamId(),
@@ -1627,4 +1902,124 @@ func (c *collectT) copyErrorsTo(t require.TestingT) {
 	for _, err := range c.errors {
 		t.Errorf("%v", err)
 	}
+}
+
+// attemptRunOnAll performs one attempt to run f on all clients
+// and returns true if all succeeded, false otherwise, along with any errors.
+func (tcs testClients) attemptRunOnAll(f func(require.TestingT, *testClient)) (bool, []error) {
+	collects := make([]*collectT, len(tcs))
+	for i := range tcs {
+		collects[i] = &collectT{} // Each client gets its own error collector for this attempt
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(tcs))
+
+	for i, tc := range tcs {
+		go func(clientIdx int, currentClient *testClient) {
+			defer wg.Done()
+			// The function f will use collects[clientIdx] via withRequireFor
+			f(collects[clientIdx], currentClient)
+		}(i, tc)
+	}
+
+	wg.Wait() // Wait for all goroutines for this attempt to complete
+
+	allSucceededThisAttempt := true
+	var allErrorsThisAttempt []error
+	for _, collector := range collects {
+		if collector.Failed() {
+			allSucceededThisAttempt = false
+			allErrorsThisAttempt = append(allErrorsThisAttempt, collector.errors...)
+		}
+	}
+	return allSucceededThisAttempt, allErrorsThisAttempt
+}
+
+// waitForAll repeatedly executes the function f on all testClients in parallel.
+// It checks for success at each checkInterval. If f succeeds for all clients
+// in any given attempt, waitForAll returns. If maxWaitDuration is reached
+// without a fully successful attempt, it fails the test t with the errors
+// from the last attempt.
+func (tcs testClients) waitForAll(
+	t require.TestingT,
+	f func(require.TestingT, *testClient),
+	maxWaitDuration time.Duration,
+	checkInterval time.Duration,
+) {
+	if len(tcs) == 0 {
+		return // Nothing to wait for
+	}
+
+	if checkInterval <= 0 {
+		t.Errorf("waitForAll: checkInterval must be positive, got %v", checkInterval)
+		t.FailNow()
+		return
+	}
+
+	timeout := time.NewTimer(maxWaitDuration)
+	defer timeout.Stop()
+
+	ticker := time.NewTicker(checkInterval)
+	defer ticker.Stop()
+
+	var lastErrors []error
+
+	// Perform the first check immediately
+	allSucceeded, currentErrors := tcs.attemptRunOnAll(f)
+	lastErrors = currentErrors
+	if allSucceeded {
+		return
+	}
+
+	// If the first check failed and maxWaitDuration is very short,
+	// ensure we don't miss the timeout before the first tick.
+	// This select handles both timeout and subsequent ticks.
+	for {
+		select {
+		case <-timeout.C:
+			// Timeout reached
+			t.Errorf("waitForAll timed out after %v. Last errors from final attempt:", maxWaitDuration)
+			if len(lastErrors) == 0 {
+				t.Errorf(
+					" (No specific errors reported in the final attempt, but condition was not met across all clients)",
+				)
+			} else {
+				for _, err := range lastErrors {
+					t.Errorf("  - %v", err) // Indent errors for clarity
+				}
+			}
+			t.FailNow()
+			return // Should be unreachable due to FailNow
+		case <-ticker.C:
+			// Time for another check
+			allSucceeded, currentErrors = tcs.attemptRunOnAll(f)
+			lastErrors = currentErrors // Store errors from this latest attempt
+
+			if allSucceeded {
+				return // Success!
+			}
+			// Continue loop to wait for next tick or timeout
+		}
+	}
+}
+
+func (tc *testClient) clearUpdatesForChannel(streamId StreamId) {
+	// Store a new empty updates object
+	tc.updates.Store(streamId, &receivedStreamUpdates{})
+}
+
+func (tcs testClients) clearUpdatesForChannel(streamId StreamId) {
+	tcs.parallelForAll(func(tc *testClient) { tc.clearUpdatesForChannel(streamId) })
+}
+
+func (tc *testClient) createMetadataStream(i uint64) {
+	streamId := MetadataStreamIdFromShard(i)
+	resp, err := tc.rpcClient().CreateMetadataStream(tc.ctx, streamId)
+	tc.require.NoError(err)
+	tc.require.Equal(streamId, StreamId(resp.Msg.Stream.NextSyncCookie.StreamId))
+}
+
+func (tc *testClient) rpcClient() *rpc_client.RpcClient {
+	return rpc_client.NewRpcClient(tc.wallet, tc.client)
 }

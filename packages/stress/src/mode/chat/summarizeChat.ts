@@ -65,7 +65,7 @@ export async function summarizeChat(
     }
 
     await processLeadClient.sendMessage(cfg.announceChannelId, `Done ${makeCodeBlock(summary)}`, {
-        threadId: message.hashStr,
+        threadId: message.eventId,
     })
 
     return summary

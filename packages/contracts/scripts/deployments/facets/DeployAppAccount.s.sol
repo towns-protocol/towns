@@ -9,16 +9,28 @@ import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployAppAccount {
-    function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](6);
-        _selectors[0] = AppAccount.execute.selector;
-        _selectors[1] = AppAccount.installApp.selector;
-        _selectors[2] = AppAccount.uninstallApp.selector;
-        _selectors[3] = AppAccount.isAppEntitled.selector;
-        _selectors[4] = AppAccount.setAppAllowance.selector;
-        _selectors[5] = AppAccount.getAppAllowance.selector;
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(11);
+        arr.p(AppAccount.execute.selector);
+        arr.p(AppAccount.onInstallApp.selector);
+        arr.p(AppAccount.onUninstallApp.selector);
+        arr.p(AppAccount.onRenewApp.selector);
+        arr.p(AppAccount.isAppEntitled.selector);
+        arr.p(AppAccount.disableApp.selector);
+        arr.p(AppAccount.getInstalledApps.selector);
+        arr.p(AppAccount.getAppId.selector);
+        arr.p(AppAccount.enableApp.selector);
+        arr.p(AppAccount.getAppExpiration.selector);
+        arr.p(AppAccount.isAppInstalled.selector);
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
     function makeCut(

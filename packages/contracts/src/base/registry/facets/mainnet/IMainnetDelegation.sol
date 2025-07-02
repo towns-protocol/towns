@@ -1,15 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
-// contracts
 interface IMainnetDelegationBase {
-    // =============================================================
-    //                           Structs
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STRUCTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Delegation struct
     /// @param operator The operator address
@@ -35,9 +30,9 @@ interface IMainnetDelegationBase {
         address claimer;
     }
 
-    // =============================================================
-    //                           Events
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     event DelegationSet(address indexed delegator, address indexed operator, uint256 quantity);
 
@@ -47,9 +42,13 @@ interface IMainnetDelegationBase {
 
     event DelegationDigestSet(bytes32 digest);
 
-    // =============================================================
-    //                           Errors
-    // =============================================================
+    event CrossDomainMessengerSet(address messenger);
+
+    event ProxyDelegationSet(address proxyDelegation);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error InvalidDelegator(address delegator);
     error InvalidOperator(address operator);
@@ -61,52 +60,68 @@ interface IMainnetDelegationBase {
 }
 
 interface IMainnetDelegation is IMainnetDelegationBase {
-    /// @notice Set delegation digest from L1
-    /// @dev Only the L2 messenger can call this function
-    /// @param digest The delegation digest
-    function setDelegationDigest(bytes32 digest) external;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set proxy delegation
+    /// @param proxyDelegation The proxy delegation address
+    function setProxyDelegation(address proxyDelegation) external;
 
     /// @notice Relay cross-chain delegations
     /// @dev Only the owner can call this function
     /// @param encodedMsgs The encoded delegation messages
     function relayDelegations(bytes calldata encodedMsgs) external;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         DELEGATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set delegation digest from L1
+    /// @dev Only the L2 messenger can call this function
+    /// @param digest The delegation digest
+    function setDelegationDigest(bytes32 digest) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Get the L2 messenger address
+    /// @return The L2 messenger address
+    function getMessenger() external view returns (address);
+
+    /// @notice Get proxy delegation
+    /// @return The proxy delegation address
+    function getProxyDelegation() external view returns (address);
+
+    /// @notice Get all mainnet delegators
+    /// @return Array of all mainnet delegator addresses
+    function getMainnetDelegators() external view returns (address[] memory);
+
+    /// @notice Get the deposit ID by delegator
+    /// @param delegator The mainnet delegator address
+    /// @return The deposit ID
+    function getDepositIdByDelegator(address delegator) external view returns (uint256);
+
     /// @notice Get delegation of a delegator
     /// @param delegator The delegator address
-    /// @return Delegation delegation struct
+    /// @return Delegation of the delegator
     function getDelegationByDelegator(address delegator) external view returns (Delegation memory);
 
-    /// @notice Get delegation of a operator
+    /// @notice Get all delegations to a specific operator
     /// @param operator The operator address
-    /// @return Delegation delegation struct
+    /// @return Array of all delegations to the operator
     function getMainnetDelegationsByOperator(
         address operator
     ) external view returns (Delegation[] memory);
 
-    /// @notice Get delegated stake of a operator
+    /// @notice Get the total delegated stake of an operator
     /// @param operator The operator address
-    /// @return uint256 The delegated stake
+    /// @return The total delegated stake of the operator
     function getDelegatedStakeByOperator(address operator) external view returns (uint256);
 
-    /// @notice Get authorized claimer
-    /// @param owner The owner address
-    /// @return address The claimer address
-    function getAuthorizedClaimer(address owner) external view returns (address);
-
-    /// @notice Set proxy delegation
-    /// @param proxyDelegation The proxy delegation address
-    function setProxyDelegation(address proxyDelegation) external;
-
-    /// @notice Get proxy delegation
-    /// @return address The proxy delegation address
-    function getProxyDelegation() external view returns (address);
-
-    /// @notice Get the L2 messenger address
-    /// @return address The L2 messenger address
-    function getMessenger() external view returns (address);
-
-    /// @notice Get the deposit ID by delegator
+    /// @notice Get the authorized claimer for a mainnet delegator
     /// @param delegator The mainnet delegator address
-    /// @return uint256 The deposit ID
-    function getDepositIdByDelegator(address delegator) external view returns (uint256);
+    /// @return The authorized claimer address for the delegator
+    function getAuthorizedClaimer(address delegator) external view returns (address);
 }

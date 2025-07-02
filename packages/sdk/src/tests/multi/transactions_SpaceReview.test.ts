@@ -10,10 +10,10 @@ import {
     SpaceReviewAction,
     SpaceReviewEventObject,
 } from '@towns-protocol/web3'
-import { StreamTimelineEvent } from '../../types'
-import { waitFor } from '../testUtils'
+import { waitForValue } from '../testUtils'
 import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 const base_log = dlog('csb:test:transaction_SpaceReview')
 
@@ -107,18 +107,17 @@ describe('transaction_SpaceReview', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const reviewEvent = await waitFor(() => {
+        const reviewEvent = await waitForValue(() => {
             const reviewEvents = stream.view.timeline.filter(isUserBlockchainTransaction)
             expect(reviewEvents.length).toBeGreaterThan(0)
             const reviewEvent = reviewEvents[0]
             expect(reviewEvent).toBeDefined()
             if (
                 !reviewEvent ||
-                reviewEvent.remoteEvent?.event.payload.value?.content.case !==
-                    'blockchainTransaction'
+                reviewEvent.content?.kind !== RiverTimelineEvent.UserBlockchainTransaction
             )
                 throw new Error('no review event whaaa?')
-            return reviewEvent.remoteEvent.event.payload.value.content.value
+            return reviewEvent.content.transaction
         })
         if (reviewEvent?.content.case !== 'spaceReview') {
             throw new Error('no review event whaaa?')
@@ -139,7 +138,7 @@ describe('transaction_SpaceReview', () => {
     test('alice sees review in space stream', async () => {
         const stream = alice.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const reviewEvent = await waitFor(() => {
+        const reviewEvent = await waitForValue(() => {
             const reviewEvents = stream.view.membershipContent.spaceReviews
             expect(reviewEvents.length).toBe(1)
             const reviewEvent = reviewEvents[0]
@@ -153,7 +152,7 @@ describe('transaction_SpaceReview', () => {
     test('bob sees review in space stream', async () => {
         const stream = bob.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const reviewEvent = await waitFor(() => {
+        const reviewEvent = await waitForValue(() => {
             const reviewEvents = stream.view.membershipContent.spaceReviews
             expect(reviewEvents.length).toBe(1)
             return reviewEvents[0]
@@ -195,17 +194,13 @@ describe('transaction_SpaceReview', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
+        const tipEvent = await waitForValue(() => {
             const tipEvents = stream.view.timeline.filter(isUserReceivedBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
-            if (
-                !tip ||
-                tip.remoteEvent?.event.payload.value?.content.case !==
-                    'receivedBlockchainTransaction'
-            )
+            if (!tip || tip.content?.kind !== RiverTimelineEvent.UserReceivedBlockchainTransaction)
                 throw new Error('no tip event found')
-            return tip.remoteEvent.event.payload.value.content.value
+            return tip.content.receivedTransaction
         })
         if (!tipEvent) throw new Error('no tip event found')
         expect(tipEvent.transaction?.receipt).toBeDefined()
@@ -213,16 +208,13 @@ describe('transaction_SpaceReview', () => {
     test('alice can see tip in space stream', async () => {
         const stream = alice.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const tipEvent = await waitFor(() => {
-            const tipEvents = stream.view.timeline.filter(isMemberBlockchainTransaction)
+        const tipEvent = await waitForValue(() => {
+            const tipEvents = stream.view.timeline.filter(isTipBlockchainTransaction)
             expect(tipEvents.length).toBeGreaterThan(0)
             const tip = tipEvents[0]
-            if (
-                !tip ||
-                tip.remoteEvent?.event.payload.value?.content.case !== 'memberBlockchainTransaction'
-            )
+            if (!tip || tip.content?.kind !== RiverTimelineEvent.TipEvent)
                 throw new Error('no tip event found')
-            return tip.remoteEvent.event.payload.value.content.value
+            return tip.content
         })
         if (!tipEvent) throw new Error('no tip event found')
         expect(tipEvent.transaction?.receipt).toBeDefined()
@@ -381,14 +373,11 @@ describe('transaction_SpaceReview', () => {
     })
 })
 
-const isMemberBlockchainTransaction = (e: StreamTimelineEvent) =>
-    e.remoteEvent?.event.payload.case === 'memberPayload' &&
-    e.remoteEvent.event.payload.value.content.case === 'memberBlockchainTransaction'
+const isTipBlockchainTransaction = (e: TimelineEvent) =>
+    e.content?.kind === RiverTimelineEvent.TipEvent
 
-const isUserBlockchainTransaction = (e: StreamTimelineEvent) =>
-    e.remoteEvent?.event.payload.case === 'userPayload' &&
-    e.remoteEvent.event.payload.value.content.case === 'blockchainTransaction'
+const isUserBlockchainTransaction = (e: TimelineEvent) =>
+    e.content?.kind === RiverTimelineEvent.UserBlockchainTransaction
 
-const isUserReceivedBlockchainTransaction = (e: StreamTimelineEvent) =>
-    e.remoteEvent?.event.payload.case === 'userPayload' &&
-    e.remoteEvent.event.payload.value.content.case === 'receivedBlockchainTransaction'
+const isUserReceivedBlockchainTransaction = (e: TimelineEvent) =>
+    e.content?.kind === RiverTimelineEvent.UserReceivedBlockchainTransaction

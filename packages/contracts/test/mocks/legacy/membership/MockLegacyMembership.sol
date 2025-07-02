@@ -22,18 +22,19 @@ contract MockLegacyMembership is MembershipJoin {
     function _checkEntitlement(
         address receiver,
         address,
-        bytes32 transactionId
+        bytes32 transactionId,
+        uint256
     ) internal virtual override returns (bool isEntitled, bool isCrosschainPending) {
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
         address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
         uint256 totalRoles = roles.length;
 
-        for (uint256 i = 0; i < totalRoles; i++) {
+        for (uint256 i; i < totalRoles; ++i) {
             Role memory role = roles[i];
             if (role.disabled) continue;
 
-            for (uint256 j = 0; j < role.entitlements.length; j++) {
+            for (uint256 j; j < role.entitlements.length; ++j) {
                 IEntitlement entitlement = IEntitlement(role.entitlements[j]);
 
                 if (entitlement.isEntitled(IN_TOWN, linkedWallets, JOIN_SPACE)) {

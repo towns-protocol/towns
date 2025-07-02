@@ -39,6 +39,10 @@ contract MockPlugin is OwnableFacet, ITownsApp {
         return permissions;
     }
 
+    function moduleOwner() external view returns (address) {
+        return _owner();
+    }
+
     function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return
             interfaceId == type(IERC6900Module).interfaceId ||
@@ -60,5 +64,13 @@ contract MockPlugin is OwnableFacet, ITownsApp {
 
     function moduleId() external pure override returns (string memory) {
         return "mock.plugin.0.1";
+    }
+
+    function installPrice() external pure override returns (uint256) {
+        return 0;
+    }
+
+    function accessDuration() external pure override returns (uint48) {
+        return 0;
     }
 }

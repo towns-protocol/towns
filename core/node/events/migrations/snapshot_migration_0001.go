@@ -9,7 +9,7 @@ import (
 
 // nasty bug with the insert_sorted function, it was inserting an extra element at the end
 // every insert, we need to remove duplicates
-func snapshot_migration_0001(iSnapshot *Snapshot) *Snapshot {
+func snapshot_migration_0001(iSnapshot *Snapshot) {
 	// gotta fix everywhere we used insertSorted, keep the first instance
 
 	if iSnapshot.Members != nil {
@@ -51,6 +51,4 @@ func snapshot_migration_0001(iSnapshot *Snapshot) *Snapshot {
 			)
 		}
 	}
-
-	return iSnapshot
 }

@@ -2,71 +2,88 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
-
-import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
-import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {IVotesEnumerable} from "src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
-import {IArchitect} from "src/factory/facets/architect/IArchitect.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IArchitect} from "../../../../factory/facets/architect/IArchitect.sol";
+import {IVotesEnumerable} from "../../../../diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IMainnetDelegation} from "../mainnet/IMainnetDelegation.sol";
+import {IRewardsDistributionBase} from "../distribution/v2/IRewardsDistribution.sol";
+import {ISpaceDelegation} from "./ISpaceDelegation.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SpaceDelegationStorage} from "src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
-
-import {RewardsDistributionStorage} from "src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
-import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
-import {NodeOperatorStatus, NodeOperatorStorage} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "../operator/NodeOperatorStorage.sol";
+import {RewardsDistributionStorage} from "../distribution/v2/RewardsDistributionStorage.sol";
+import {StakingRewards} from "../distribution/v2/StakingRewards.sol";
+import {SpaceDelegationStorage} from "./SpaceDelegationStorage.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, OwnableBase, Facet {
+contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     using EnumerableSet for EnumerableSet.AddressSet;
     using StakingRewards for StakingRewards.Layout;
-
-    function __SpaceDelegation_init(address riverToken_) external onlyInitializing {
-        SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-        ds.riverToken = riverToken_;
-    }
+    using CustomRevert for bytes4;
 
     modifier onlySpaceOwner(address space) {
-        if (!_isValidSpaceOwner(space)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidSpace.selector);
-        }
+        if (!_isValidSpace(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
+        if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
         _;
     }
 
-    /// @inheritdoc ISpaceDelegation
-    function addSpaceDelegation(address space, address operator) external onlySpaceOwner(space) {
-        if (operator == address(0)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
-        }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         DELEGATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /**
+     * @inheritdoc ISpaceDelegation
+     * @dev Delegates a space to a node operator for reward distribution.
+     * Authorization logic:
+     * - Only space members can delegate a space that has never been delegated
+     * - Only the space owner can delegate/redelegate once the space has been delegated before
+     *
+     * Process:
+     * 1. Validates operator address and space existence
+     * 2. Checks operator is registered and not exiting
+     * 3. Validates caller is member (for never delegated) or owner (for previously delegated)
+     * 4. Sweeps any pending rewards from previous delegation
+     * 5. Updates storage mappings and delegation timestamp
+     * 6. Emits SpaceDelegatedToOperator event
+     */
+    function addSpaceDelegation(address space, address operator) external {
+        if (operator == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
+
+        // validate that the space exists
+        if (!_isValidSpace(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
 
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
         address currentOperator = ds.operatorBySpace[space];
 
-        if (currentOperator == operator) {
-            CustomRevert.revertWith(SpaceDelegation__AlreadyDelegated.selector);
+        if (currentOperator == operator) SpaceDelegation__AlreadyDelegated.selector.revertWith();
+
+        // Authorization logic: only members can delegate if space has never been delegated,
+        // only owner can delegate/redelegate if space has been delegated before (even if removed)
+        if (ds.spaceDelegationTime[space] != 0) {
+            // space has been delegated before (even if currently removed), only owner can delegate
+            if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
+        } else {
+            // Space has never been delegated, only members can delegate
+            if (!_isValidSpaceMember(space)) SpaceDelegation__NotSpaceMember.selector.revertWith();
         }
 
         NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();
 
         // check if the operator is valid
-        if (!nodeOperatorDs.operators.contains(operator)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidOperator.selector);
-        }
+        if (!nodeOperatorDs.operators.contains(operator))
+            SpaceDelegation__InvalidOperator.selector.revertWith();
 
         // check if operator is not exiting
-        if (nodeOperatorDs.statusByOperator[operator] == NodeOperatorStatus.Exiting) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidOperator.selector);
-        }
+        if (nodeOperatorDs.statusByOperator[operator] == NodeOperatorStatus.Exiting)
+            SpaceDelegation__InvalidOperator.selector.revertWith();
 
         _sweepSpaceRewardsIfNecessary(space, currentOperator);
 
@@ -83,117 +100,61 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
         emit SpaceDelegatedToOperator(space, operator);
     }
 
-    /// @inheritdoc ISpaceDelegation
+    /**
+     * @inheritdoc ISpaceDelegation
+     * @dev Removes delegation from a space, returning it to an undelegated state.
+     * Only the space owner can call this function.
+     * Note: The delegation timestamp is preserved to maintain history that the space
+     * was delegated before, ensuring only the owner can redelegate.
+     *
+     * Process:
+     * 1. Validates space address and delegation existence
+     * 2. Sweeps any pending rewards to the current operator
+     * 3. Clears operator mappings but preserves delegation timestamp
+     * 4. Emits SpaceDelegatedToOperator event with address(0)
+     */
     function removeSpaceDelegation(address space) external onlySpaceOwner(space) {
-        if (space == address(0)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
-        }
+        if (space == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
 
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
         address operator = ds.operatorBySpace[space];
 
-        if (operator == address(0)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
-        }
+        if (operator == address(0)) SpaceDelegation__NotDelegated.selector.revertWith();
 
         _sweepSpaceRewardsIfNecessary(space, operator);
 
         ds.operatorBySpace[space] = address(0);
         ds.spacesByOperator[operator].remove(space);
-        ds.spaceDelegationTime[space] = 0;
+        // don't reset spaceDelegationTime to preserve delegation history
 
         emit SpaceDelegatedToOperator(space, address(0));
     }
 
     /// @inheritdoc ISpaceDelegation
     function getSpaceDelegation(address space) external view returns (address) {
-        SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-        return ds.operatorBySpace[space];
+        return SpaceDelegationStorage.layout().operatorBySpace[space];
     }
 
     /// @inheritdoc ISpaceDelegation
     function getSpaceDelegationsByOperator(
         address operator
     ) external view returns (address[] memory) {
-        SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-        return ds.spacesByOperator[operator].values();
+        return SpaceDelegationStorage.layout().spacesByOperator[operator].values();
     }
-
-    // =============================================================
-    //                           Token
-    // =============================================================
-
-    /// @inheritdoc ISpaceDelegation
-    function setRiverToken(address newToken) external onlyOwner {
-        if (newToken == address(0)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
-        }
-
-        SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-
-        ds.riverToken = newToken;
-        emit RiverTokenChanged(newToken);
-    }
-
-    /// @inheritdoc ISpaceDelegation
-    function riverToken() external view returns (address) {
-        SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-        return ds.riverToken;
-    }
-
-    // =============================================================
-    //                      Mainnet Delegation
-    // =============================================================
-
-    /// @inheritdoc ISpaceDelegation
-    function setMainnetDelegation(address newDelegation) external onlyOwner {
-        if (newDelegation == address(0)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
-        }
-
-        SpaceDelegationStorage.layout().mainnetDelegation = newDelegation;
-        emit MainnetDelegationChanged(newDelegation);
-    }
-
-    /// @inheritdoc ISpaceDelegation
-    function mainnetDelegation() external view returns (address) {
-        return SpaceDelegationStorage.layout().mainnetDelegation;
-    }
-
-    // =============================================================
-    //                           Stake
-    // =============================================================
 
     /// @inheritdoc ISpaceDelegation
     function getTotalDelegation(address operator) external view returns (uint256) {
         return _getTotalDelegation(operator);
     }
 
-    /// @inheritdoc ISpaceDelegation
-    function setStakeRequirement(uint256 newRequirement) external onlyOwner {
-        if (newRequirement == 0) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidStakeRequirement.selector);
-        }
-
-        SpaceDelegationStorage.layout().stakeRequirement = newRequirement;
-        emit StakeRequirementChanged(newRequirement);
-    }
-
-    /// @inheritdoc ISpaceDelegation
-    function stakeRequirement() external view returns (uint256) {
-        return SpaceDelegationStorage.layout().stakeRequirement;
-    }
-
-    // =============================================================
-    //                           Space Factory
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           FACTORY                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISpaceDelegation
     function setSpaceFactory(address spaceFactory) external onlyOwner {
-        if (spaceFactory == address(0)) {
-            CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
-        }
+        if (spaceFactory == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
 
         SpaceDelegationStorage.layout().spaceFactory = spaceFactory;
         emit SpaceFactoryChanged(spaceFactory);
@@ -204,31 +165,33 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
         return SpaceDelegationStorage.layout().spaceFactory;
     }
 
-    // =============================================================
-    //                           Internal
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Sweeps the rewards in the space delegation to the operator if necessary
+    /// @dev Handles two scenarios:
+    /// 1. If currentOperator exists: transfers accumulated rewards to the current operator
+    ///    (rewards earned while the space was delegated to them)
+    /// 2. If no currentOperator: forfeits accumulated rewards (clears unallocated rewards from
+    ///    existing stakes after undelegation that shouldn't go to a new operator)
+    /// @param space The space address to sweep rewards from
+    /// @param currentOperator The current operator (address(0) if undelegated)
     function _sweepSpaceRewardsIfNecessary(address space, address currentOperator) internal {
         StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        StakingRewards.Treasure storage spaceTreasure = staking.treasureByBeneficiary[space];
 
-        staking.updateGlobalReward();
-        staking.updateReward(spaceTreasure);
-
-        uint256 reward = spaceTreasure.unclaimedRewardSnapshot;
-        if (reward == 0) return;
-
-        // forfeit the rewards if the space has undelegated
+        uint256 reward;
         if (currentOperator != address(0)) {
-            StakingRewards.Treasure storage operatorTreasure = staking.treasureByBeneficiary[
-                currentOperator
-            ];
-            operatorTreasure.unclaimedRewardSnapshot += reward;
+            // transfer rewards from space to current operator
+            reward = staking.transferReward(space, currentOperator);
+        } else {
+            // forfeit rewards (clear without transfer)
+            reward = staking.sweepReward(space);
         }
-        spaceTreasure.unclaimedRewardSnapshot = 0;
 
-        emit SpaceRewardsSwept(space, currentOperator, reward);
+        if (reward != 0) {
+            emit IRewardsDistributionBase.SpaceRewardsSwept(space, currentOperator, reward);
+        }
     }
 
     function _getTotalDelegation(address operator) internal view returns (uint256) {
@@ -263,9 +226,25 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
         return delegation;
     }
 
+    /// @dev Checks if the space is valid by verifying if it has a nonzero token ID in the factory
+    function _isValidSpace(address space) internal view returns (bool) {
+        return IArchitect(getSpaceFactory()).getTokenIdBySpace(space) != 0;
+    }
+
+    /// @dev Checks if the caller is the owner of the space
+    /// @dev Assumes that the space is valid
     function _isValidSpaceOwner(address space) internal view returns (bool) {
-        return
-            IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0 &&
-            IERC173(space).owner() == msg.sender;
+        return IERC173(space).owner() == msg.sender;
+    }
+
+    /// @dev Checks if the caller is a member of the space (has at least one membership token)
+    /// @dev Also considers the space owner as a member
+    /// @dev Assumes that the space is valid
+    function _isValidSpaceMember(address space) internal view returns (bool) {
+        // Check if caller is the space owner
+        if (IERC173(space).owner() == msg.sender) return true;
+
+        // Check if caller has at least one membership token
+        return IERC721(space).balanceOf(msg.sender) != 0;
     }
 }

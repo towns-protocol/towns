@@ -212,7 +212,6 @@ export interface RolesInterface extends utils.Interface {
     "RoleCreated(address,uint256)": EventFragment;
     "RoleRemoved(address,uint256)": EventFragment;
     "RoleUpdated(address,uint256)": EventFragment;
-    "SubscriptionUpdate(uint256,uint64)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
     "Unbanned(address,uint256)": EventFragment;
     "Unpaused(address)": EventFragment;
@@ -236,7 +235,6 @@ export interface RolesInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
@@ -378,18 +376,6 @@ export type RoleUpdatedEvent = TypedEvent<
 >;
 
 export type RoleUpdatedEventFilter = TypedEventFilter<RoleUpdatedEvent>;
-
-export interface SubscriptionUpdateEventObject {
-  tokenId: BigNumber;
-  expiration: BigNumber;
-}
-export type SubscriptionUpdateEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  SubscriptionUpdateEventObject
->;
-
-export type SubscriptionUpdateEventFilter =
-  TypedEventFilter<SubscriptionUpdateEvent>;
 
 export interface TransferEventObject {
   from: string;
@@ -794,15 +780,6 @@ export interface Roles extends BaseContract {
       updater?: PromiseOrValue<string> | null,
       roleId?: PromiseOrValue<BigNumberish> | null
     ): RoleUpdatedEventFilter;
-
-    "SubscriptionUpdate(uint256,uint64)"(
-      tokenId?: PromiseOrValue<BigNumberish> | null,
-      expiration?: null
-    ): SubscriptionUpdateEventFilter;
-    SubscriptionUpdate(
-      tokenId?: PromiseOrValue<BigNumberish> | null,
-      expiration?: null
-    ): SubscriptionUpdateEventFilter;
 
     "Transfer(address,address,uint256)"(
       from?: PromiseOrValue<string> | null,

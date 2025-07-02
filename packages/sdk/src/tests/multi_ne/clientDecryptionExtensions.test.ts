@@ -7,9 +7,10 @@ import { dlog } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
 import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Stream } from '../../stream'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError } from '../../decryptionExtensions'
 import { makeUniqueChannelStreamId } from '../../id'
 import { SyncState } from '../../syncedStreamsLoop'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -34,19 +35,8 @@ describe('ClientDecryptionExtensions', () => {
         return stream.view.timeline
             .map((e) => {
                 // for tests, return decrypted content
-                if (
-                    e.decryptedContent?.kind === 'channelMessage' &&
-                    e.decryptedContent.content.payload?.case === 'post' &&
-                    e.decryptedContent.content.payload?.value?.content?.case === 'text'
-                ) {
-                    return e.decryptedContent.content.payload?.value?.content?.value?.body
-                }
-                // and local content
-                if (
-                    e.localEvent?.channelMessage?.payload?.case === 'post' &&
-                    e.localEvent?.channelMessage?.payload?.value?.content?.case === 'text'
-                ) {
-                    return e.localEvent?.channelMessage?.payload?.value?.content?.value?.body
+                if (e.content?.kind === RiverTimelineEvent.ChannelMessage) {
+                    return e.content.body
                 }
                 return undefined
             })
@@ -72,8 +62,11 @@ describe('ClientDecryptionExtensions', () => {
         const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
         return stream.view.timeline
             .map((e) => {
-                if (e.decryptedContentError) {
-                    return e.decryptedContentError
+                if (
+                    e.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                    e.content?.kind === RiverTimelineEvent.EncryptedChannelProperties
+                ) {
+                    return e.content?.error
                 }
                 return undefined
             })
@@ -150,7 +143,7 @@ describe('ClientDecryptionExtensions', () => {
 
         await expect(alice2_restarted.waitForStream(streamId)).resolves.not.toThrow()
 
-        // she should have the keys because bob2 should share with existing memebers
+        // she should have the keys because bob2 should share with existing members
         await expect(
             waitForMessages(alice2_restarted, streamId, ['hello', 'whats up']),
         ).resolves.not.toThrow()
@@ -172,9 +165,9 @@ describe('ClientDecryptionExtensions', () => {
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
         await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
-        await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the messsage if bob isn't online to send keys
+        await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
-        await expect(waitForMessages(alice1, channelId, ['its alice'])).resolves.not.toThrow() // alice doesn't see the messsage if bob isn't online to send keys
+        await expect(waitForMessages(alice1, channelId, ['its alice'])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
 
         // bob comes back online, same device
         const bob1IsBack = await makeAndStartClient({

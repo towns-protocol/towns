@@ -6,26 +6,33 @@ import {
     PersistedSyncedStreamSchema,
 } from '@towns-protocol/proto'
 import { Stream } from './stream'
-import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
-import { DLogger, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse, ParsedSnapshot } from './types'
+import { DLogger, bin_equal, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 import { ISyncedStream } from './syncedStreamsLoop'
 import { create } from '@bufbuild/protobuf'
+import { StreamsView } from './views/streamsView'
 
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
-    isUpToDate = false
+    get isUpToDate(): boolean {
+        return this.streamsView.streamStatus.get(this.streamId).isUpToDate
+    }
+    private set isUpToDate(value: boolean) {
+        this.streamsView.streamStatus.setIsUpToDate(this.streamId, value)
+    }
     readonly persistenceStore: IPersistenceStore
     constructor(
         userId: string,
         streamId: string,
+        streamsView: StreamsView,
         clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: DLogger,
         persistenceStore: IPersistenceStore,
     ) {
-        super(userId, streamId, clientEmitter, logEmitFromStream)
+        super(userId, streamId, streamsView, clientEmitter, logEmitFromStream)
         this.log = dlog('csb:syncedStream', { defaultEnabled: false }).extend(userId)
         this.persistenceStore = persistenceStore
     }
@@ -109,17 +116,30 @@ export class SyncedStream extends Stream implements ISyncedStream {
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
+        snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
-        await super.appendEvents(events, nextSyncCookie, cleartexts)
+        const minipoolEvents = new Map<string, ParsedEvent>(
+            Array.from(this.view.minipoolEvents.entries())
+                .filter(([_, event]) => isDefined(event.remoteEvent))
+                .map(([hash, event]) => [hash, event.remoteEvent!]),
+        )
+        await super.appendEvents(events, nextSyncCookie, snapshot, cleartexts)
         for (const event of events) {
             const payload = event.event.payload
             switch (payload.case) {
                 case 'miniblockHeader': {
-                    await this.onMiniblockHeader(payload.value, event, event.hash)
+                    await this.onMiniblockHeader(
+                        payload.value,
+                        event,
+                        event.hash,
+                        snapshot,
+                        minipoolEvents,
+                    )
                     break
                 }
                 default:
+                    minipoolEvents.set(event.hashStr, event)
                     break
             }
         }
@@ -130,6 +150,8 @@ export class SyncedStream extends Stream implements ISyncedStream {
         miniblockHeader: MiniblockHeader,
         miniblockEvent: ParsedEvent,
         hash: Uint8Array,
+        snapshot: ParsedSnapshot | undefined,
+        viewMinipoolEvents: Map<string, ParsedEvent>,
     ) {
         this.log(
             'Received miniblock header',
@@ -138,18 +160,33 @@ export class SyncedStream extends Stream implements ISyncedStream {
         )
 
         const eventHashes = miniblockHeader.eventHashes.map(bin_toHexString)
-        const events = eventHashes
-            .map((hash) => this.view.events.get(hash)?.remoteEvent)
-            .filter(isDefined)
+        const events = eventHashes.map((hash) => viewMinipoolEvents.get(hash)).filter(isDefined)
 
         if (events.length !== eventHashes.length) {
-            throw new Error("Couldn't find event for hash in miniblock")
+            throw new Error(
+                `Couldn't find event for hash in miniblock ${miniblockHeader.miniblockNum.toString()} ${eventHashes.join(
+                    ', ',
+                )} ${Array.from(viewMinipoolEvents.keys()).join(', ')}`,
+            )
         }
 
         const miniblock: ParsedMiniblock = {
             hash: hash,
             header: miniblockHeader,
             events: [...events, miniblockEvent],
+        }
+        if (snapshot && bin_equal(snapshot.hash, miniblockHeader.snapshotHash)) {
+            await this.persistenceStore.saveSnapshot(
+                this.streamId,
+                miniblock.header.miniblockNum,
+                snapshot.snapshot,
+            )
+        } else if (miniblockHeader.snapshot !== undefined) {
+            await this.persistenceStore.saveSnapshot(
+                this.streamId,
+                miniblockHeader.miniblockNum,
+                miniblockHeader.snapshot,
+            )
         }
         await this.persistenceStore.saveMiniblock(this.streamId, miniblock)
 
@@ -158,10 +195,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             return
         }
 
-        const minipoolEvents = this.view.timeline
-            .filter((e) => e.confirmedEventNum === undefined)
-            .map((e) => e.remoteEvent)
-            .filter(isDefined)
+        const minipoolEvents = Array.from(this.view.minipoolEvents.values())
 
         const lastSnapshotMiniblockNum =
             miniblock.header.snapshot !== undefined || miniblock.header.snapshotHash !== undefined

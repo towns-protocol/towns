@@ -5,12 +5,10 @@ import {
     Snapshot,
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
-    UserSettingsPayload_MarkerContent,
     UserSettingsPayload_Snapshot,
     UserSettingsPayload_Snapshot_UserBlocks,
     UserSettingsPayload_Snapshot_UserBlocks_Block,
     UserSettingsPayload_Snapshot_UserBlocks_BlockSchema,
-    UserSettingsPayload_Snapshot_UserBlocksSchema,
     UserSettingsPayload_UserBlock,
 } from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
@@ -21,17 +19,31 @@ import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { create, fromJsonString } from '@bufbuild/protobuf'
 import { streamIdFromBytes, userIdFromAddress } from './id'
+import {
+    UserSettingsStreamModel,
+    UserSettingsStreamsView,
+} from './views/streams/userSettingsStreams'
 
 const log = dlog('csb:stream')
 
 export class StreamStateView_UserSettings extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly settings = new Map<string, string>()
-    readonly fullyReadMarkersSrc = new Map<string, UserSettingsPayload_MarkerContent>()
-    readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarker>>()
-    readonly userBlocks: Record<string, UserSettingsPayload_Snapshot_UserBlocks> = {}
 
-    constructor(streamId: string) {
+    get fullyReadMarkers(): Record<string, Record<string, FullyReadMarker>> {
+        return this.userSettingsStreamModel.fullyReadMarkers
+    }
+    get userBlocks(): Record<string, UserSettingsPayload_Snapshot_UserBlocks> {
+        return this.userSettingsStreamModel.userBlocks
+    }
+
+    get userSettingsStreamModel(): UserSettingsStreamModel {
+        return this.userSettingsStreamsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private readonly userSettingsStreamsView: UserSettingsStreamsView,
+    ) {
         super()
         this.streamId = streamId
     }
@@ -44,7 +56,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
         for (const userBlocks of content.userBlocksList) {
             const userId = userIdFromAddress(userBlocks.userId)
-            this.userBlocks[userId] = userBlocks
+            this.userSettingsStreamsView.setUserBlocks(this.streamId, userId, userBlocks)
         }
     }
 
@@ -107,10 +119,13 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             return
         }
         const streamId = streamIdFromBytes(payload.streamId)
-        this.fullyReadMarkersSrc.set(streamId, content)
         const fullyReadMarkersContent = fromJsonString(FullyReadMarkersSchema, content.data)
 
-        this.fullyReadMarkers.set(streamId, fullyReadMarkersContent.markers)
+        this.userSettingsStreamsView.setFullyReadMarkers(
+            this.streamId,
+            streamId,
+            fullyReadMarkersContent.markers,
+        )
         emitter?.emit('fullyReadMarkersUpdated', streamId, fullyReadMarkersContent.markers)
     }
 
@@ -119,15 +134,11 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         emitter?: TypedEmitter<StreamStateEvents>,
     ): void {
         const userId = userIdFromAddress(payload.userId)
-        if (!this.userBlocks[userId]) {
-            this.userBlocks[userId] = create(UserSettingsPayload_Snapshot_UserBlocksSchema, {})
-        }
-        this.userBlocks[userId].blocks.push(
-            create(UserSettingsPayload_Snapshot_UserBlocks_BlockSchema, {
-                eventNum: payload.eventNum,
-                isBlocked: payload.isBlocked,
-            } satisfies PlainMessage<UserSettingsPayload_Snapshot_UserBlocks_Block>),
-        )
+        const userBlock = create(UserSettingsPayload_Snapshot_UserBlocks_BlockSchema, {
+            eventNum: payload.eventNum,
+            isBlocked: payload.isBlocked,
+        } satisfies PlainMessage<UserSettingsPayload_Snapshot_UserBlocks_Block>)
+        this.userSettingsStreamsView.updateUserBlock(this.streamId, userId, userBlock)
         emitter?.emit('userBlockUpdated', payload)
     }
 

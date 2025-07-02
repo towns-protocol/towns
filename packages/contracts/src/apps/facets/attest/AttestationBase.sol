@@ -178,6 +178,14 @@ abstract contract AttestationBase is IAttestationRegistryBase {
             }
         }
 
+        // The 'last' parameter indicates this is the final batch in a sequence of operations.
+        // When true, any remaining ETH should be refunded to the sender.
+        // This is important because:
+        // 1. Multiple batches might be processed in sequence
+        // 2. We want to refund unused ETH only after all batches are complete
+        // 3. Prevents unnecessary gas costs from multiple refunds
+        if (last) _refund(availableValue);
+
         // Process either revocation or attestation for multiple items
         if (isRevocation) {
             if (!resolver.multiRevoke{value: totalUsedValue}(attestations, values)) {
@@ -186,14 +194,6 @@ abstract contract AttestationBase is IAttestationRegistryBase {
         } else if (!resolver.multiAttest{value: totalUsedValue}(attestations, values)) {
             InvalidAttestation.selector.revertWith();
         }
-
-        // The 'last' parameter indicates this is the final batch in a sequence of operations.
-        // When true, any remaining ETH should be refunded to the sender.
-        // This is important because:
-        // 1. Multiple batches might be processed in sequence
-        // 2. We want to refund unused ETH only after all batches are complete
-        // 3. Prevents unnecessary gas costs from multiple refunds
-        if (last) _refund(availableValue);
     }
 
     /// @notice Refunds any remaining ETH value if no value was used

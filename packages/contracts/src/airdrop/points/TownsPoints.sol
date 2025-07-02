@@ -69,6 +69,7 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
         TownsPointsStorage.Layout storage self = TownsPointsStorage.layout();
         for (uint256 i; i < accounts.length; ++i) {
             self.inner.mint(accounts[i], values[i]);
+            emit Transfer(address(0), accounts[i], values[i]);
         }
     }
 
@@ -87,7 +88,7 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
             (points, ) = CheckIn.getPointsAndStreak(lastCheckIn, streak, currentTime);
         }
 
-        if (action == Action.Tip) {
+        if (action == Action.Tip || action == Action.Swap) {
             uint256 protocolFee = abi.decode(data, (uint256));
             points = (protocolFee * 2_000_000) / 3;
         }
@@ -114,6 +115,7 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
 
         (userCheckIn.streak, userCheckIn.lastCheckIn) = (newStreak, block.timestamp);
         TownsPointsStorage.layout().inner.mint(msg.sender, pointsToAward);
+        emit Transfer(address(0), msg.sender, pointsToAward);
         emit CheckedIn(msg.sender, pointsToAward, newStreak, block.timestamp);
     }
 
@@ -134,23 +136,27 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     /// @inheritdoc IERC20
     function approve(address spender, uint256 value) external returns (bool) {
         TownsPointsStorage.layout().inner.approve(spender, value);
+        emit Approval(msg.sender, spender, value);
         return true;
     }
 
     /// @inheritdoc ITownsPoints
     function mint(address to, uint256 value) external onlySpace {
         TownsPointsStorage.layout().inner.mint(to, value);
+        emit Transfer(address(0), to, value);
     }
 
     /// @inheritdoc IERC20
     function transfer(address to, uint256 value) external returns (bool) {
         TownsPointsStorage.layout().inner.transfer(to, value);
+        emit Transfer(msg.sender, to, value);
         return true;
     }
 
     /// @inheritdoc IERC20
     function transferFrom(address from, address to, uint256 value) external returns (bool) {
         TownsPointsStorage.layout().inner.transferFrom(from, to, value);
+        emit Transfer(from, to, value);
         return true;
     }
 

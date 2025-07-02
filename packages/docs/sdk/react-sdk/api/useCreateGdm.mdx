@@ -24,6 +24,7 @@ function useCreateGdm(
     isError: boolean;
     createGDM: (userIds: string[], channelProperties?: EncryptedData | undefined, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;
@@ -56,6 +57,7 @@ An object containing the `createGDM` action and the rest of the action result.
     isError: boolean;
     createGDM: (userIds: string[], channelProperties?: EncryptedData | undefined, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;

@@ -19,13 +19,20 @@ const (
 type DynamicBuffer[T any] struct {
 	mu         sync.Mutex
 	buffer     []T
+	maxSize    int
 	signalChan chan struct{} // Signals when new items are added
 }
 
 // NewDynamicBuffer initializes a new dynamic buffer.
 func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
+	return NewDynamicBufferWithSize[T](MaxBufferSize)
+}
+
+// NewDynamicBufferWithSize initializes a new dynamic buffer with the given max size.
+func NewDynamicBufferWithSize[T any](maxSize int) *DynamicBuffer[T] {
 	return &DynamicBuffer[T]{
 		buffer:     make([]T, 0, MinBufferSize),
+		maxSize:    maxSize,
 		signalChan: make(chan struct{}, 1),
 	}
 }

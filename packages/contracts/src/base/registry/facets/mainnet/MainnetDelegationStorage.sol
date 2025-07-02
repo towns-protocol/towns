@@ -2,8 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-import {ICrossDomainMessenger} from "./ICrossDomainMessenger.sol";
 import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
 
 // libraries
@@ -22,7 +20,7 @@ library MainnetDelegationStorage {
         mapping(address delegator => IMainnetDelegationBase.Delegation delegation) delegationByDelegator;
         mapping(address delegator => address claimer) claimerByDelegator;
         address deprecatedProxyDelegation; // Do not use this, use proxyDelegation
-        ICrossDomainMessenger messenger;
+        address messenger;
         mapping(address claimer => EnumerableSet.AddressSet delegators) delegatorsByAuthorizedClaimer;
         address proxyDelegation;
         EnumerableSet.AddressSet delegators;

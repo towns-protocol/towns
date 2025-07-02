@@ -1,6 +1,6 @@
 import { ContractTransaction, ethers } from 'ethers'
 import { ISpaceOwnerBase } from '@towns-protocol/generated/dev/typings/SpaceOwner'
-import { BaseContractShim } from '../BaseContractShim'
+import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
 import { SpaceOwner__factory } from '@towns-protocol/generated/dev/typings/factories/SpaceOwner__factory'
 import { Keyable } from '../cache/Keyable'
 import { SimpleCache } from '../cache/SimpleCache'
@@ -53,7 +53,7 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
         shortDescription: string
         longDescription: string
         signer: ethers.Signer
-        overrideExecution?: (calldata: string) => Promise<T>
+        overrideExecution?: OverrideExecution<T>
         transactionOpts?: TransactionOpts
     }) {
         const {

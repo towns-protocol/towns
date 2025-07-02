@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IDropFacet, IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 
 // libraries
-import {DropClaimLib} from "src/airdrop/drop/DropClaimLib.sol";
+import {DropGroup} from "src/airdrop/drop/DropGroup.sol";
 import {MerkleTree} from "test/utils/MerkleTree.sol";
 
 // contracts
@@ -39,8 +39,8 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
         address townsBase = deployTownsBase.deploy(deployer);
         (bytes32 root, ) = merkleTree.constructTree(wallets, amounts, points);
 
-        DropClaimLib.ClaimCondition[] memory conditions = new DropClaimLib.ClaimCondition[](1);
-        conditions[0] = DropClaimLib.ClaimCondition({
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = DropGroup.ClaimCondition({
             startTimestamp: uint40(block.timestamp),
             endTimestamp: 0,
             maxClaimableSupply: MAX_CLAIMABLE_SUPPLY,

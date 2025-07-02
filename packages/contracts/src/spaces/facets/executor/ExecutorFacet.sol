@@ -36,7 +36,18 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
         address account,
         uint32 delay
     ) external onlyOwner returns (bool newMember) {
-        _createGroup(groupId);
+        _setGroupStatus(groupId, true);
+        return _grantGroupAccess(groupId, account, _getGroupGrantDelay(groupId), delay);
+    }
+
+    /// @inheritdoc IExecutor
+    function grantAccessWithExpiration(
+        bytes32 groupId,
+        address account,
+        uint32 delay,
+        uint48 expiration
+    ) external onlyOwner returns (bool newMember) {
+        _setGroupStatus(groupId, true, expiration);
         return _grantGroupAccess(groupId, account, _getGroupGrantDelay(groupId), delay);
     }
 
@@ -61,8 +72,8 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     }
 
     /// @inheritdoc IExecutor
-    function setAllowance(bytes32 groupId, uint256 allowance) external onlyOwner {
-        _setGroupAllowance(groupId, allowance);
+    function setGroupExpiration(bytes32 groupId, uint48 expiration) external onlyOwner {
+        _setGroupExpiration(groupId, expiration);
     }
 
     /// @inheritdoc IExecutor
@@ -85,11 +96,10 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     /// @inheritdoc IExecutor
     function scheduleOperation(
         address target,
-        uint256 value,
         bytes calldata data,
         uint48 when
     ) external payable returns (bytes32 operationId, uint32 nonce) {
-        return _scheduleExecution(target, value, data, when);
+        return _scheduleExecution(target, data, when);
     }
 
     /// @inheritdoc IExecutor
@@ -114,11 +124,7 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     function hasAccess(
         bytes32 groupId,
         address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
-    {
+    ) external view returns (bool isMember, uint32 executionDelay, bool active) {
         return _hasGroupAccess(groupId, account);
     }
 
@@ -137,11 +143,6 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     /// @inheritdoc IExecutor
     function getGroupDelay(bytes32 groupId) external view returns (uint32) {
         return _getGroupGrantDelay(groupId);
-    }
-
-    /// @inheritdoc IExecutor
-    function getAllowance(bytes32 groupId) external view returns (uint256) {
-        return _getGroupAllowance(groupId);
     }
 
     /// @inheritdoc IExecutor

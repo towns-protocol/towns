@@ -74,11 +74,111 @@ export default [
   },
   {
     "type": "function",
+    "name": "executeSwapWithPermit",
+    "inputs": [
+      {
+        "name": "params",
+        "type": "tuple",
+        "internalType": "struct ISwapRouterBase.ExactInputParams",
+        "components": [
+          {
+            "name": "tokenIn",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenOut",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minAmountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      },
+      {
+        "name": "routerParams",
+        "type": "tuple",
+        "internalType": "struct ISwapRouterBase.RouterParams",
+        "components": [
+          {
+            "name": "router",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "approveTarget",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "swapData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "permit",
+        "type": "tuple",
+        "internalType": "struct ISwapRouterBase.Permit2Params",
+        "components": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "signature",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "poster",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "amountOut",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "getSwapFees",
     "inputs": [],
     "outputs": [
       {
-        "name": "treasuryBps",
+        "name": "protocolBps",
         "type": "uint16",
         "internalType": "uint16"
       },
@@ -88,7 +188,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "internalType": "bool"
       }
@@ -118,7 +218,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "internalType": "bool"
       }
@@ -137,7 +237,7 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "treasury",
+        "name": "protocol",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -149,7 +249,7 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "treasuryAmount",
+        "name": "protocolAmount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -266,7 +366,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "indexed": false,
         "internalType": "bool"
@@ -289,17 +389,17 @@ export default [
   },
   {
     "type": "error",
-    "name": "SwapFacet__SwapFailed",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "SwapFacet__SwapRouterNotSet",
     "inputs": []
   },
   {
     "type": "error",
     "name": "SwapFacet__TotalFeeTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapFacet__UnexpectedETH",
     "inputs": []
   },
   {
@@ -314,7 +414,22 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapRouter__InvalidBps",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__InvalidRouter",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__NativeTokenNotSupportedWithPermit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__RecipientRequired",
     "inputs": []
   },
   {

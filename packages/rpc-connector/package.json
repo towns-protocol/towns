@@ -1,0 +1,72 @@
+{
+    "name": "@towns-protocol/rpc-connector",
+    "version": "0.0.264",
+    "packageManager": "yarn@3.8.0",
+    "type": "module",
+    "publishConfig": {
+        "access": "public"
+    },
+    "main": "./dist/node/index.cjs",
+    "module": "./dist/node/index.js",
+    "types": "./dist/node/index.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "import": {
+                "node": "./dist/node/index.js",
+                "browser": "./dist/web/index.js",
+                "default": "./dist/web/index.js"
+            },
+            "require": {
+                "node": "./dist/node/index.cjs",
+                "browser": "./dist/web/index.cjs",
+                "default": "./dist/web/index.cjs"
+            }
+        },
+        "./common": {
+            "import": "./dist/common/index.js",
+            "require": "./dist/common/index.cjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "scripts": {
+        "build": "tsdown",
+        "cb": "yarn clean && yarn build",
+        "clean": "rm -rf dist",
+        "lint": "eslint --format unix ./src  --max-warnings=0",
+        "lint:fix": "yarn lint --fix",
+        "test": "vitest",
+        "test:ci": "echo 'CI test skipped'",
+        "watch": "tsdown --watch"
+    },
+    "dependencies": {
+        "@connectrpc/connect": "^2.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.8",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "eslint": "^8.57.1",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-import-x": "^4.10.2",
+        "eslint-plugin-tsdoc": "^0.3.0",
+        "tsdown": "^0.12.3",
+        "typescript": "^5.8.2",
+        "vitest": "^3.2.3"
+    },
+    "peerDependencies": {
+        "@connectrpc/connect-node": ">=2.0.0",
+        "@connectrpc/connect-web": ">=2.0.0"
+    },
+    "peerDependenciesMeta": {
+        "@connectrpc/connect-node": {
+            "optional": true
+        },
+        "@connectrpc/connect-web": {
+            "optional": true
+        }
+    },
+    "files": [
+        "/dist"
+    ]
+}

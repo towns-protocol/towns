@@ -7,6 +7,7 @@ import {
     MemberPayload_MemberBlockchainTransaction,
     BlockchainTransaction_TokenTransfer,
     WrappedEncryptedDataSchema,
+    MemberPayload_Membership,
 } from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
@@ -20,17 +21,17 @@ import {
 } from './types'
 import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
-import { StreamStateView_Members_Membership } from './streamStateView_Members_Membership'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
 import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { KeySolicitationContent } from '@towns-protocol/encryption'
+import { KeySolicitationContent } from './decryptionExtensions'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
 import { create } from '@bufbuild/protobuf'
 import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@towns-protocol/web3'
+import { StreamMemberIdsView } from './views/streams/streamMemberIds'
 
 const log = dlog('csb:streamStateView_Members')
 
@@ -75,7 +76,13 @@ export interface MemberSpaceReview {
 export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly joined = new Map<string, StreamMember>()
-    readonly membership: StreamStateView_Members_Membership
+    readonly joinedUsers = new Set<string>()
+    readonly invitedUsers = new Set<string>()
+    readonly leftUsers = new Set<string>()
+    readonly pendingJoinedUsers = new Set<string>()
+    readonly pendingInvitedUsers = new Set<string>()
+    readonly pendingLeftUsers = new Set<string>()
+    readonly pendingMembershipEvents = new Map<string, MemberPayload_Membership>()
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
@@ -86,10 +93,17 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     tokenTransfers: MemberTokenTransfer[] = []
 
-    constructor(streamId: string, currentUserId: string) {
+    get streamMemberIds(): string[] {
+        return this.streamMemberIdsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        currentUserId: string,
+        private streamMemberIdsView: StreamMemberIdsView,
+    ) {
         super()
         this.streamId = streamId
-        this.membership = new StreamStateView_Members_Membership(streamId)
         this.solicitHelper = new StreamStateView_Members_Solicitations(streamId)
         this.memberMetadata = new StreamStateView_MemberMetadata(streamId, currentUserId)
     }
@@ -104,8 +118,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         if (!snapshot.members) {
             return
         }
+        const memberIds: string[] = []
         for (const member of snapshot.members.joined) {
             const userId = userIdFromAddress(member.userAddress)
+            memberIds.push(userId)
             this.joined.set(userId, {
                 userId,
                 userAddress: member.userAddress,
@@ -129,13 +145,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 tipsSentCount: member.tipsSentCount,
                 tipsReceivedCount: member.tipsReceivedCount,
             })
-            this.membership.applyMembershipEvent(
-                userId,
-                MembershipOp.SO_JOIN,
-                'confirmed',
-                undefined,
-            )
+            this.applyMembershipEvent(userId, MembershipOp.SO_JOIN, 'confirmed', undefined)
         }
+        this.streamMemberIdsView.setMembers(this.streamId, memberIds)
         // user/display names were ported from an older implementation and could be simpler
         const usernames = Array.from(this.joined.values())
             .filter((x) => isDefined(x.encryptedUsername))
@@ -276,7 +288,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'membership':
                 {
                     const membership = payload.content.value
-                    this.membership.pendingMembershipEvents.set(event.hashStr, membership)
+                    this.pendingMembershipEvents.set(event.hashStr, membership)
                     const userId = userIdFromAddress(membership.userAddress)
                     switch (membership.op) {
                         case MembershipOp.SO_JOIN:
@@ -293,19 +305,16 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                 eventNum: event.eventNum,
                                 solicitations: [],
                             })
+                            this.streamMemberIdsView.addMember(this.streamId, userId)
                             break
                         case MembershipOp.SO_LEAVE:
                             this.joined.delete(userId)
+                            this.streamMemberIdsView.removeMember(this.streamId, userId)
                             break
                         default:
                             break
                     }
-                    this.membership.applyMembershipEvent(
-                        userId,
-                        membership.op,
-                        'pending',
-                        stateEmitter,
-                    )
+                    this.applyMembershipEvent(userId, membership.op, 'pending', stateEmitter)
                 }
                 break
 
@@ -530,21 +539,16 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'membership':
                 {
                     const eventId = event.hashStr
-                    const membership = this.membership.pendingMembershipEvents.get(eventId)
+                    const membership = this.pendingMembershipEvents.get(eventId)
                     if (membership) {
-                        this.membership.pendingMembershipEvents.delete(eventId)
+                        this.pendingMembershipEvents.delete(eventId)
                         const userId = userIdFromAddress(membership.userAddress)
                         const streamMember = this.joined.get(userId)
                         if (streamMember) {
                             streamMember.miniblockNum = event.miniblockNum
                             streamMember.eventNum = event.eventNum
                         }
-                        this.membership.applyMembershipEvent(
-                            userId,
-                            membership.op,
-                            'confirmed',
-                            stateEmitter,
-                        )
+                        this.applyMembershipEvent(userId, membership.op, 'confirmed', stateEmitter)
                     }
                 }
                 break
@@ -589,23 +593,49 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     }
 
     isMemberJoined(userId: string): boolean {
-        return this.membership.joinedUsers.has(userId)
+        return this.joinedUsers.has(userId)
     }
 
     isMember(membership: MembershipOp, userId: string): boolean {
-        return this.membership.isMember(membership, userId)
+        switch (membership) {
+            case MembershipOp.SO_INVITE:
+                return this.invitedUsers.has(userId)
+            case MembershipOp.SO_JOIN:
+                return this.joinedUsers.has(userId)
+            case MembershipOp.SO_LEAVE:
+                return !this.invitedUsers.has(userId) && !this.joinedUsers.has(userId)
+            case MembershipOp.SO_UNSPECIFIED:
+                return false
+            default:
+                logNever(membership)
+                return false
+        }
     }
 
     participants(): Set<string> {
-        return this.membership.participants()
+        return new Set([...this.joinedUsers, ...this.invitedUsers, ...this.leftUsers])
     }
 
     joinedParticipants(): Set<string> {
-        return this.membership.joinedParticipants()
+        return this.joinedUsers
+    }
+
+    joinedOrPendingJoinedParticipants(): Set<string> {
+        return new Set([...this.joinedUsers, ...this.pendingJoinedUsers])
     }
 
     joinedOrInvitedParticipants(): Set<string> {
-        return this.membership.joinedOrInvitedParticipants()
+        return new Set([...this.joinedUsers, ...this.invitedUsers])
+    }
+
+    info(userId: string): MembershipOp {
+        const isJoined = this.joinedUsers.has(userId)
+        if (isJoined) return MembershipOp.SO_JOIN
+        const isInvited = this.invitedUsers.has(userId)
+        if (isInvited) return MembershipOp.SO_INVITE
+        const hasLeft = this.leftUsers.has(userId)
+        if (hasLeft) return MembershipOp.SO_LEAVE
+        return MembershipOp.SO_UNSPECIFIED
     }
 
     private addTokenTransfer(
@@ -678,5 +708,69 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             const pin = this.pins.splice(index, 1)[0]
             stateEmitter?.emit('channelPinRemoved', this.streamId, pin, index)
         }
+    }
+
+    applyMembershipEvent(
+        userId: string,
+        op: MembershipOp,
+        type: 'pending' | 'confirmed',
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
+        switch (op) {
+            case MembershipOp.SO_INVITE:
+                if (type === 'confirmed') {
+                    this.pendingInvitedUsers.delete(userId)
+                    if (this.invitedUsers.add(userId)) {
+                        stateEmitter?.emit('streamNewUserInvited', this.streamId, userId)
+                        this.emitMembershipChange(userId, stateEmitter, this.streamId)
+                    }
+                } else {
+                    if (this.pendingInvitedUsers.add(userId)) {
+                        stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                    }
+                }
+                break
+            case MembershipOp.SO_JOIN:
+                if (type === 'confirmed') {
+                    this.pendingJoinedUsers.delete(userId)
+                    if (this.joinedUsers.add(userId)) {
+                        stateEmitter?.emit('streamNewUserJoined', this.streamId, userId)
+                        this.emitMembershipChange(userId, stateEmitter, this.streamId)
+                    }
+                } else {
+                    if (this.pendingJoinedUsers.add(userId)) {
+                        stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                    }
+                }
+                break
+            case MembershipOp.SO_LEAVE:
+                if (type === 'confirmed') {
+                    const wasJoined = this.joinedUsers.delete(userId)
+                    const wasInvited = this.invitedUsers.delete(userId)
+                    this.pendingLeftUsers.delete(userId)
+                    this.leftUsers.add(userId)
+                    if (wasJoined || wasInvited) {
+                        stateEmitter?.emit('streamUserLeft', this.streamId, userId)
+                        this.emitMembershipChange(userId, stateEmitter, this.streamId)
+                    }
+                } else {
+                    if (this.pendingLeftUsers.add(userId)) {
+                        stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                    }
+                }
+                break
+            case MembershipOp.SO_UNSPECIFIED:
+                break
+            default:
+                logNever(op)
+        }
+    }
+
+    private emitMembershipChange(
+        userId: string,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        streamId: string,
+    ) {
+        stateEmitter?.emit('streamMembershipUpdated', streamId, userId)
     }
 }

@@ -2,47 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
+import {IRewardsDistribution} from "../distribution/v2/IRewardsDistribution.sol";
 import {ICrossDomainMessenger} from "./ICrossDomainMessenger.sol";
 import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
 
 // libraries
-
 import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
-import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    function _setDelegationDigest(bytes32 digest) internal {
-        MainnetDelegationStorage.layout().delegationDigest = digest;
-
-        emit DelegationDigestSet(digest);
-    }
-
-    function _verifyDelegations(bytes calldata encodedMsgs) internal view {
-        MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
-
-        bytes32 digest = keccak256(abi.encode(keccak256(encodedMsgs)));
-        require(digest == ds.delegationDigest);
-    }
-
-    /// @dev equivalent: abi.decode(encodedMsgs, (DelegationMsg[]));
-    function _decodeDelegations(
-        bytes calldata encodedMsgs
-    ) internal pure returns (DelegationMsg[] calldata msgs) {
-        assembly {
-            // this is a dynamic array, so calldataload(encodedMsgs.offset) is the
-            // offset from encodedMsgs.offset at which the array begins
-            let lengthPtr := add(encodedMsgs.offset, calldataload(encodedMsgs.offset))
-            msgs.length := calldataload(lengthPtr)
-            msgs.offset := add(lengthPtr, 0x20)
-        }
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       STATE MUTATING                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _relayDelegations(bytes calldata encodedMsgs) internal {
         _verifyDelegations(encodedMsgs);
@@ -192,6 +168,29 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
+    function _setAuthorizedClaimer(address delegator, address claimer) internal {
+        MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
+
+        address currentClaimer = ds.claimerByDelegator[delegator];
+        if (currentClaimer != claimer) {
+            ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
+            ds.claimerByDelegator[delegator] = claimer;
+            if (claimer != address(0)) {
+                ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
+            }
+
+            emit ClaimerSet(delegator, claimer);
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _getMainnetDelegators() internal view returns (address[] memory) {
+        return MainnetDelegationStorage.layout().delegators.values();
+    }
+
     function _getDepositIdByDelegator(address delegator) internal view returns (uint256) {
         return MainnetDelegationStorage.layout().depositIdByDelegator[delegator];
     }
@@ -230,21 +229,6 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
-    function _setAuthorizedClaimer(address delegator, address claimer) internal {
-        MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
-
-        address currentClaimer = ds.claimerByDelegator[delegator];
-        if (currentClaimer != claimer) {
-            ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
-            ds.claimerByDelegator[delegator] = claimer;
-            if (claimer != address(0)) {
-                ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
-            }
-
-            emit ClaimerSet(delegator, claimer);
-        }
-    }
-
     function _getDelegatorsByAuthorizedClaimer(
         address claimer
     ) internal view returns (address[] memory) {
@@ -252,23 +236,39 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         return ds.delegatorsByAuthorizedClaimer[claimer].values();
     }
 
-    function _getAuthorizedClaimer(address owner) internal view returns (address) {
-        return MainnetDelegationStorage.layout().claimerByDelegator[owner];
-    }
-
-    function _setProxyDelegation(address proxyDelegation) internal {
-        MainnetDelegationStorage.layout().proxyDelegation = proxyDelegation;
+    function _getAuthorizedClaimer(address delegator) internal view returns (address) {
+        return MainnetDelegationStorage.layout().claimerByDelegator[delegator];
     }
 
     function _getProxyDelegation() internal view returns (address) {
         return MainnetDelegationStorage.layout().proxyDelegation;
     }
 
-    function _setMessenger(ICrossDomainMessenger messenger) internal {
-        MainnetDelegationStorage.layout().messenger = messenger;
+    function _getMessenger() internal view returns (address) {
+        return MainnetDelegationStorage.layout().messenger;
     }
 
-    function _getMessenger() internal view returns (ICrossDomainMessenger) {
-        return MainnetDelegationStorage.layout().messenger;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            UTILS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _verifyDelegations(bytes calldata encodedMsgs) internal view {
+        MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
+
+        bytes32 digest = keccak256(abi.encode(keccak256(encodedMsgs)));
+        require(digest == ds.delegationDigest);
+    }
+
+    /// @dev equivalent: abi.decode(encodedMsgs, (DelegationMsg[]));
+    function _decodeDelegations(
+        bytes calldata encodedMsgs
+    ) internal pure returns (DelegationMsg[] calldata msgs) {
+        assembly {
+            // this is a dynamic array, so calldataload(encodedMsgs.offset) is the
+            // offset from encodedMsgs.offset at which the array begins
+            let lengthPtr := add(encodedMsgs.offset, calldataload(encodedMsgs.offset))
+            msgs.length := calldataload(lengthPtr)
+            msgs.offset := add(lengthPtr, 0x20)
+        }
     }
 }

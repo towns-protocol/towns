@@ -2,6 +2,7 @@ import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 import { getRandomEmoji } from '../../utils/emoji'
 import { channelMessagePostWhere } from '../../utils/timeline'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 
 export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
     const logger = client.logger.child({ name: 'joinSlowChat' })
@@ -13,7 +14,12 @@ export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
 
     // wait for the user to have a membership nft
     await client.waitFor(
-        () => client.spaceDapp.hasSpaceMembership(cfg.spaceId, client.baseProvider.wallet.address),
+        async () =>
+            (
+                await client.spaceDapp.getMembershipStatus(cfg.spaceId, [
+                    client.baseProvider.wallet.address,
+                ])
+            ).isMember,
         {
             interval: 1000 + Math.random() * 1000,
             timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
@@ -36,10 +42,13 @@ export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
             if (count % 3 === 0) {
                 const cms = announceChannel.view.timeline.filter(
                     (v) =>
-                        v.remoteEvent?.event.payload.case === 'channelPayload' &&
-                        v.remoteEvent?.event.payload.value?.content.case === 'message',
+                        v.content?.kind === RiverTimelineEvent.ChannelMessage ||
+                        v.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                        v.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                 )
-                const decryptedCount = cms.filter((v) => v.decryptedContent).length
+                const decryptedCount = cms.filter(
+                    (v) => v.content?.kind === RiverTimelineEvent.ChannelMessage,
+                )
                 logger.info({ decryptedCount, total: cms.length }, 'waiting for root message')
             }
             count++
@@ -51,13 +60,13 @@ export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
     )
 
     if (!cfg.kickoffMessageEventId) {
-        cfg.kickoffMessageEventId = message.hashStr
+        cfg.kickoffMessageEventId = message.eventId
     }
 
     logger.info('emoji it')
 
     // emoji it
-    await client.sendReaction(announceChannelId, message.hashStr, getRandomEmoji())
+    await client.sendReaction(announceChannelId, message.eventId, getRandomEmoji())
 
     logger.info('joined')
 }

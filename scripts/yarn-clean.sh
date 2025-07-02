@@ -22,8 +22,6 @@ fi
 
 echo "cleaning node"
 
-yarn cache clean
-
 # remove large directories that we know we will rebuild. Git clean hangs if we try to remove these in one go
 find . -name "node_modules" -type d -exec rm -r "{}" \;
 find . -name "dist" -type d -exec rm -r "{}" \;

@@ -15,9 +15,6 @@ import {Factory} from "src/utils/libraries/Factory.sol";
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract MembershipDurationTest is MembershipBaseSetup {
     uint64 CUSTOM_DURATION = 20 days;
 
@@ -221,7 +218,7 @@ contract MembershipDurationTest is MembershipBaseSetup {
         MembershipFacet(userSpace).setMembershipDuration(zeroDuration);
     }
 
-    function test_revertWhen_renewMembershipAfterExpiration() public {
+    function test_renewMembershipAfterExpiration() public {
         // Create a space with custom duration
         address spaceAddress = test_createSpaceWithCustomDuration();
         IMembership space = IMembership(spaceAddress);
@@ -233,8 +230,6 @@ contract MembershipDurationTest is MembershipBaseSetup {
         uint256 tokenId = IERC721AQueryable(spaceAddress).tokensOfOwner(alice)[0];
         uint256 initialExpiry = space.expiresAt(tokenId);
 
-        uint256 expectedNewExpiry = initialExpiry + CUSTOM_DURATION;
-
         // Fast forward past expiration
         vm.warp(initialExpiry + 1);
 
@@ -243,6 +238,9 @@ contract MembershipDurationTest is MembershipBaseSetup {
 
         hoax(alice, renewalPrice);
         space.renewMembership{value: renewalPrice}(tokenId);
+
+        // Expired memberships renew from current time + duration
+        uint256 expectedNewExpiry = block.timestamp + CUSTOM_DURATION;
 
         // Verify the new expiration is based on current time + duration (not extending from the expired time)
         assertEq(space.expiresAt(tokenId), expectedNewExpiry);

@@ -11,7 +11,7 @@ import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
 import { dlog, dlogError, check } from '@towns-protocol/dlog'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {
     maxAttempts: 3,
@@ -374,6 +374,14 @@ export function getRpcErrorProperty(err: unknown, prop: string): string | undefi
         }
     }
     return undefined
+}
+
+// check to see if the error contains a specific message
+export function errorContainsMessage(err: unknown, message: string): boolean {
+    if (err !== null && typeof err === 'object' && 'message' in err) {
+        return (err.message as string).includes(message)
+    }
+    return false
 }
 
 export function getRetryDelayMs(attempts: number, retryParams: RetryParams): number {

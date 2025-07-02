@@ -58,3 +58,5 @@ packages/contracts/scripts/bytecode-diff/**/*.html
 packages/contracts/scripts/bytecode-diff/**/*.json
 packages/proto/src/protocol_*.ts
 packages/workers/**/*.json
+
+CLAUDE.md

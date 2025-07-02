@@ -13,7 +13,7 @@ library DeployExecutorFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(16);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(17);
 
         // Access Management
         arr.p(IExecutor.grantAccess.selector);
@@ -21,7 +21,8 @@ library DeployExecutorFacet {
         arr.p(IExecutor.renounceAccess.selector);
         arr.p(IExecutor.setGuardian.selector);
         arr.p(IExecutor.setGroupDelay.selector);
-        arr.p(IExecutor.setAllowance.selector);
+        arr.p(IExecutor.setGroupExpiration.selector);
+        arr.p(IExecutor.grantAccessWithExpiration.selector);
 
         // Target Management
         arr.p(IExecutor.setTargetFunctionGroup.selector);
@@ -36,7 +37,6 @@ library DeployExecutorFacet {
         arr.p(IExecutor.hasAccess.selector);
         arr.p(IExecutor.getAccess.selector);
         arr.p(IExecutor.getGroupDelay.selector);
-        arr.p(IExecutor.getAllowance.selector);
         arr.p(IExecutor.getScheduleTimepoint.selector);
         arr.p(IExecutor.hashOperation.selector);
 

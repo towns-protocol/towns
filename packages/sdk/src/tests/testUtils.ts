@@ -17,7 +17,7 @@ import {
     BlockchainTransaction_TokenTransfer,
 } from '@towns-protocol/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
-import { IStreamStateView } from '../streamStateView'
+import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
 import {
     makeBaseChainConfig,
@@ -33,15 +33,15 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from '../id'
-import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
+import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
-import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { EntitlementsDelegate } from '../decryptionExtensions'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
 import assert from 'assert'
-import _ from 'lodash'
+import { forEachRight } from 'lodash-es'
 import { MockEntitlementsDelegate } from '../utils'
 import { SignerContext, makeSignerContext } from '../signerContext'
 import {
@@ -83,10 +83,7 @@ import {
     getFixedPricingModule,
     getDynamicPricingModule,
 } from '@towns-protocol/web3'
-import {
-    RiverTimelineEvent,
-    type TimelineEvent,
-} from '../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, type TimelineEvent } from '../views/models/timelineTypes'
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'
@@ -300,6 +297,10 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
         persistenceStoreName: persistenceDbName,
+        streamOpts: {
+            useModifySync: true,
+            useSharedSyncer: true,
+        },
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
@@ -458,7 +459,7 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     f: T,
 ): ReturnType<T> | undefined => {
     let ret: ReturnType<T> | undefined = undefined
-    _.forEachRight(events, (v): boolean => {
+    forEachRight(events, (v): boolean => {
         const r = f(v)
         if (r !== undefined) {
             ret = r
@@ -481,7 +482,7 @@ export async function createSpaceAndDefaultChannel(
 ): Promise<{
     spaceId: string
     defaultChannelId: string
-    userStreamView: IStreamStateView
+    userStreamView: StreamStateView
 }> {
     const transaction = await createVersionedSpaceFromMembership(
         client,
@@ -507,7 +508,9 @@ export async function createSpaceAndDefaultChannel(
 
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
-    expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+    await waitFor(() =>
+        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true),
+    )
 
     const channelReturnVal = await client.createChannel(
         spaceId,
@@ -516,7 +519,9 @@ export async function createSpaceAndDefaultChannel(
         channelId,
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
-    expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+    await waitFor(() =>
+        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true),
+    )
 
     return {
         spaceId,
@@ -953,16 +958,77 @@ export async function linkWallets(
     expect(linkedWallets).toContain(linkedWallet.address)
 }
 
-export function waitFor<T>(
-    callback: (() => T) | (() => Promise<T>),
+/// wait for a value, return the value if it is defined, otherwise throw an error or return undefined. false is a valid value.
+export function waitForValue<T>(
+    callback: () => T | undefined,
     options: { timeoutMS: number } = { timeoutMS: 5000 },
 ): Promise<T> {
+    const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
-        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
+        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
     )
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let lastError: any = undefined
+        const intervalId = setInterval(checkCallback, pollIntervalMS)
+        const timeoutId = setInterval(onTimeout, timeoutMS)
+        function onDone(result: T | undefined) {
+            clearInterval(intervalId)
+            clearInterval(timeoutId)
+            if (result) {
+                resolve(result)
+            } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                reject(lastError)
+            }
+        }
+        function onTimeout() {
+            lastError = lastError ?? timeoutContext
+            onDone(undefined)
+        }
+        function checkCallback() {
+            try {
+                const result = callback()
+                if (result !== undefined) {
+                    // if result is truthy, resolve
+                    onDone(result)
+                }
+                // otherwise let the polling continue
+            } catch (err: any) {
+                lastError = err
+            }
+        }
+    })
+}
+
+/// wait for the callback to not throw an error or return anything other than false (undefined is a valid value)
+/// usage (preferred):
+/// await waitFor(() => {
+///     expect(true).toBe(true)
+///     expect(myCounter.count).toBe(10)
+/// })
+/// usage (acceptable):
+/// await waitFor(() => {
+///     return myCounter.count > 9 // not preferred, but valid
+/// })
+/// usage (alternate):
+/// const myValidValue = await waitFor(async () => {
+///     const result = await myPromiseThatReturnsValueOrUndefinedOrError()
+///     return result
+/// })
+export function waitFor<T extends void | boolean>(
+    callback: (() => T) | (() => Promise<T>),
+    options: { timeoutMS: number } = { timeoutMS: 5000 },
+): Promise<T> {
+    const tmpError = new Error('tmp')
+    const timeoutContext: Error = new Error(
+        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
+    )
+    return new Promise((resolve, reject) => {
+        const timeoutMS = options.timeoutMS
+        const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let timedOut = false
         let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
         const intervalId = setInterval(checkCallback, pollIntervalMS)
@@ -981,6 +1047,7 @@ export function waitFor<T>(
         }
         function onTimeout() {
             lastError = lastError ?? timeoutContext
+            timedOut = true
             onDone()
         }
         function checkCallback() {
@@ -991,22 +1058,22 @@ export function waitFor<T>(
                     promiseStatus = 'pending'
                     result.then(
                         (res) => {
-                            promiseStatus = 'resolved'
-                            onDone(res)
+                            if (!timedOut) {
+                                promiseStatus = 'resolved'
+                                onDone(res)
+                            }
                         },
                         (err) => {
                             promiseStatus = 'rejected'
-                            // splat the error to get a stack trace, i don't know why this works
-                            lastError = {
-                                ...err,
-                            }
+                            lastError = err
                         },
                     )
                 } else {
-                    promiseStatus = 'resolved'
-                    if (result) {
-                        // if result is not truthy, resolve
-                        resolve(result)
+                    // explicitly check for false, most of these will return void
+                    if (result !== false) {
+                        promiseStatus = 'resolved'
+                        // if result is truthy, resolve
+                        onDone(result)
                     }
                     // otherwise let the polling continue
                 }
@@ -1061,16 +1128,22 @@ export function getChannelMessagePayload(event?: ChannelMessage) {
     return undefined
 }
 
+export function getTimelineMessagePayload(event?: TimelineEvent) {
+    if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return event.content.body
+    }
+    return undefined
+}
+
 export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(
         'eventDecrypted',
-        (streamId: string, contentKind: SnapshotCaseType, event: DecryptedTimelineEvent): void => {
+        (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
             recipientReceivesMessageWithoutError.runAndDone(() => {
-                const content = event.decryptedContent
-                expect(content).toBeDefined()
-                check(content.kind === 'channelMessage')
-                expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
+                expect(event.content).toBeDefined()
+                check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                expect(event.content.body).toEqual(expectedMessageText)
             })
         },
     )
