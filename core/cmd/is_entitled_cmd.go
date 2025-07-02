@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,7 +23,7 @@ func isEntitledForSpaceAndChannel(
 	cfg config.Config,
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
-	userId string,
+	userId common.Address,
 ) error {
 	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
 	ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.InfoLevel))
@@ -72,6 +71,7 @@ func isEntitledForSpaceAndChannel(
 		baseChain,
 		evaluator,
 		&cfg.ArchitectContract,
+		&cfg.AppRegistryContract,
 		20,
 		30000,
 		metricsFactory,
@@ -85,6 +85,7 @@ func isEntitledForSpaceAndChannel(
 		channelId,
 		userId,
 		auth.PermissionRead,
+		common.Address{},
 	)
 
 	isEntitledResult, err := chainAuth.IsEntitled(
@@ -131,15 +132,12 @@ func init() {
 				return fmt.Errorf("could not parse channelId: %w", err)
 			}
 
-			rawUserId := args[2]
-			addr := common.HexToAddress(rawUserId)
-			// HexToAddress never fails, so convert the hex back to a raw string and see if the strings match,
-			// case-insensitively.
-			if !strings.EqualFold(addr.String(), rawUserId) {
-				return fmt.Errorf("invalid address for walletAddr: %v, decodes to %v", rawUserId, addr.String())
+			if !common.IsHexAddress(args[2]) {
+				return fmt.Errorf("not a hex address: %s", args[2])
 			}
+			addr := common.HexToAddress(args[2])
 
-			return isEntitledForSpaceAndChannel(cmd.Context(), *cmdConfig, spaceId, channelId, rawUserId)
+			return isEntitledForSpaceAndChannel(cmd.Context(), *cmdConfig, spaceId, channelId, addr)
 		},
 	}
 

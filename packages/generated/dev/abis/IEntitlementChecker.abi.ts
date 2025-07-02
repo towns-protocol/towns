@@ -298,6 +298,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "EntitlementChecker_InvalidValue",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "EntitlementChecker_NoPendingRequests",
     "inputs": []
   },

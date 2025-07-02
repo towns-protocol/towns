@@ -15,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
@@ -28,8 +29,11 @@ func TestLoad(t *testing.T) {
 	defer cancel()
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
+	cfg := crypto.DefaultOnChainSettings()
+	cfg.StreamEnableNewSnapshotFormat = 1
 	params := &StreamCacheParams{
-		Wallet: nodeWallet,
+		Wallet:      nodeWallet,
+		ChainConfig: &mocks.MockOnChainCfg{Settings: cfg},
 	}
 	streamId := UserStreamIdFromAddr(userWallet.Address)
 
@@ -43,7 +47,7 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	join, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -123,8 +127,6 @@ func TestLoad(t *testing.T) {
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
 
-	cfg := crypto.DefaultOnChainSettings()
-
 	// check for invalid config
 	num := cfg.MinSnapshotEvents.ForType(0)
 	assert.EqualValues(t, num, 100) // hard coded default
@@ -140,7 +142,7 @@ func TestLoad(t *testing.T) {
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
@@ -168,7 +170,7 @@ func TestLoad(t *testing.T) {
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
@@ -195,7 +197,8 @@ func TestLoad(t *testing.T) {
 	mbCandidate, err = view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal))
 	require.NoError(t, err)
 	miniblockHeader = mbCandidate.headerEvent.Event.GetMiniblockHeader()
-	assert.NotNil(t, miniblockHeader.Snapshot)
+	assert.Nil(t, miniblockHeader.Snapshot)
+	assert.NotEmpty(t, miniblockHeader.SnapshotHash)
 
 	// check count2
 	count2 := 0
@@ -224,9 +227,7 @@ func TestLoad(t *testing.T) {
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
-	parsedSnapshot, err := MakeParsedSnapshot(userWallet, miniblockHeader.Snapshot)
-	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), parsedSnapshot)
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), mbCandidate.snapshot)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
 	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)
@@ -243,7 +244,7 @@ func TestLoad(t *testing.T) {
 	// add an event with an old hash
 	join4, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, nil, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil, nil),
 		newSV1.blocks[0].Ref,
 	)
 	assert.NoError(t, err)
@@ -299,14 +300,14 @@ func TestMbHashConstraints(t *testing.T) {
 		prevMb = mb
 	}
 
+	cfg := crypto.DefaultOnChainSettings()
+
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbDescriptors,
 		},
 	)
 	require.NoError(err)
-
-	cfg := crypto.DefaultOnChainSettings()
 
 	for i, mb := range mbs {
 		err = view.ValidateNextEvent(

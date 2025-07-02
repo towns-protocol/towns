@@ -12,21 +12,24 @@ import {ERC5643Storage} from "./ERC5643Storage.sol";
 abstract contract ERC5643Base is IERC5643Base {
     function _renewSubscription(uint256 tokenId, uint64 duration) internal {
         ERC5643Storage.Layout storage ds = ERC5643Storage.layout();
-
         uint64 currentExpiration = ds.expiration[tokenId];
-        uint64 newExpiration;
 
-        if (currentExpiration == 0) {
-            newExpiration = uint64(block.timestamp) + duration;
-        } else {
-            if (!_isRenewable(tokenId)) {
-                revert ERC5643__SubscriptionNotRenewable(tokenId);
-            }
+        // Check renewability for existing subscriptions
+        if (currentExpiration != 0 && !_isRenewable(tokenId)) {
+            revert ERC5643__SubscriptionNotRenewable(tokenId);
+        }
+
+        // Calculate new expiration
+        uint64 newExpiration;
+        if (currentExpiration > block.timestamp) {
+            // Active subscription: extend from current expiration
             newExpiration = currentExpiration + duration;
+        } else {
+            // New or expired subscription: start from current time
+            newExpiration = uint64(block.timestamp) + duration;
         }
 
         ds.expiration[tokenId] = newExpiration;
-
         emit SubscriptionUpdate(tokenId, newExpiration);
     }
 

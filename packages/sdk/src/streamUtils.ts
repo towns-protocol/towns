@@ -1,4 +1,5 @@
 import {
+    MiniblockHeader,
     PersistedEvent,
     PersistedEventSchema,
     PersistedMiniblock,
@@ -66,6 +67,8 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
             return direction === 'forward' ? true : false
         case 'userInboxPayload':
             return direction === 'forward' ? true : false
+        case 'metadataPayload':
+            return false
         case undefined:
             return false
         default:
@@ -104,12 +107,16 @@ export function parsedMiniblockToPersistedMiniblock(
     miniblock: ParsedMiniblock,
     direction: 'forward' | 'backward',
 ) {
-    if (direction === 'backward') {
-        miniblock.header.snapshot = undefined
+    // always zero out the snapshot since we save it separately
+    const header = {
+        ...miniblock.header,
+        snapshot: undefined,
+        snapshotHash: computeBackwardsCompatibleSnapshotHash(miniblock.header),
     }
+
     return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
-        header: miniblock.header,
+        header: header,
         events: miniblock.events
             .filter((event) => isPersistedEvent(event, direction))
             .map(parsedEventToPersistedEvent),
@@ -117,6 +124,15 @@ export function parsedMiniblockToPersistedMiniblock(
 }
 
 function parsedEventToPersistedEvent(event: ParsedEvent) {
+    // always zero out the snapshot since we save it separately
+    if (event.event?.payload.case === 'miniblockHeader') {
+        event.event.payload.value = {
+            ...event.event.payload.value,
+            snapshot: undefined,
+            snapshotHash: computeBackwardsCompatibleSnapshotHash(event.event.payload.value),
+        }
+    }
+
     return create(PersistedEventSchema, {
         event: event.event,
         hash: event.hash,
@@ -139,4 +155,19 @@ export function persistedSyncedStreamToParsedSyncedStream(
         minipoolEvents: stream.minipoolEvents.map(persistedEventToParsedEvent).filter(isDefined),
         lastMiniblockNum: stream.lastMiniblockNum,
     }
+}
+
+/// deprecated backfill
+/// if we have a snapshot, we don't want to save it here, but we do want to indicate that we have a snapshot
+/// if we don't have a snapshot hash but we do have an old snapshot (which is the deprecated case)
+/// we make up a fake string in place of the hash
+/// const snapshotHash =
+function computeBackwardsCompatibleSnapshotHash(header: MiniblockHeader) {
+    if (header.snapshotHash) {
+        return header.snapshotHash
+    }
+    if (header.snapshot) {
+        return new Uint8Array(16).fill(1)
+    }
+    return undefined
 }

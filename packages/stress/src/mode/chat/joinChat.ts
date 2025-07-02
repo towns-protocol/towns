@@ -4,6 +4,7 @@ import { getRandomEmoji } from '../../utils/emoji'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
 import { makeSillyMessage } from '../../utils/messages'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 
 export async function joinChat(client: StressClient, cfg: ChatConfig) {
     const logger = client.logger.child({ name: 'joinChat' })
@@ -16,7 +17,8 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
 
     // wait for the user to have a membership nft
     await client.waitFor(
-        () => client.spaceDapp.hasSpaceMembership(cfg.spaceId, client.baseProvider.wallet.address),
+        () =>
+            client.spaceDapp.getMembershipStatus(cfg.spaceId, [client.baseProvider.wallet.address]),
         {
             interval: 1000 + Math.random() * 1000,
             timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
@@ -39,10 +41,13 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
             if (count % 3 === 0) {
                 const cms = announceChannel.view.timeline.filter(
                     (v) =>
-                        v.remoteEvent?.event.payload.case === 'channelPayload' &&
-                        v.remoteEvent?.event.payload.value?.content.case === 'message',
+                        v.content?.kind === RiverTimelineEvent.ChannelMessage ||
+                        v.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                        v.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                 )
-                const decryptedCount = cms.filter((v) => v.decryptedContent).length
+                const decryptedCount = cms.filter(
+                    (v) => v.content?.kind === RiverTimelineEvent.ChannelMessage,
+                )
                 logger.info({ decryptedCount, totalCount: cms.length }, 'waiting for root message')
             }
             count++
@@ -64,14 +69,14 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
             `c${cfg.containerIndex}p${cfg.processIndex} Starting up! freeMemory: ${
                 getSystemInfo().FreeMemory
             } clientStart:${cfg.localClients.startIndex} ${cfg.localClients.endIndex}`,
-            { threadId: message.hashStr },
+            { threadId: message.eventId },
         )
     }
 
     logger.info('emoji it')
 
     // emoji it
-    await client.sendReaction(announceChannelId, message.hashStr, getRandomEmoji())
+    await client.sendReaction(announceChannelId, message.eventId, getRandomEmoji())
 
     logger.info('join channels')
     for (const channelId of cfg.channelIds) {

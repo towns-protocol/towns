@@ -14,7 +14,9 @@ import (
 	"github.com/towns-protocol/towns/core/contracts/base"
 	"github.com/towns-protocol/towns/core/contracts/types"
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/xchain/bindings/ierc5313"
 )
@@ -27,6 +29,7 @@ type Space struct {
 	banning         Banning
 	pausable        *base.Pausable
 	channels        *base.Channels
+	appAccount      *base.AppAccount
 }
 
 type SpaceContractV3 struct {
@@ -35,6 +38,7 @@ type SpaceContractV3 struct {
 	backend    bind.ContractBackend
 	spaces     map[shared.StreamId]*Space
 	spacesLock sync.Mutex
+	decoder    *crypto.EvmErrorDecoder
 }
 
 var EMPTY_ADDRESS = common.Address{}
@@ -51,11 +55,31 @@ func NewSpaceContractV3(
 		return nil, err
 	}
 
+	decoder, err := crypto.NewEVMErrorDecoder(
+		base.DiamondMetaData,
+		base.AppAccountMetaData,
+		base.ArchitectMetaData,
+		base.BanningMetaData,
+		base.ChannelsMetaData,
+		base.EntitlementDataQueryableMetaData,
+		base.EntitlementsManagerMetaData,
+		base.Erc721aQueryableMetaData,
+		base.IRolesMetaData,
+		base.IEntitlementMetaData,
+		base.ICrossChainEntitlementMetaData,
+		base.RuleEntitlementMetaData,
+		base.RuleEntitlementV2MetaData,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	spaceContract := &SpaceContractV3{
 		architect: architect,
 		chainCfg:  chainCfg,
 		backend:   backend,
 		spaces:    make(map[shared.StreamId]*Space),
+		decoder:   decoder,
 	}
 
 	return spaceContract, nil
@@ -69,9 +93,9 @@ func (sc *SpaceContractV3) GetChannels(
 	if err != nil {
 		return nil, err
 	}
-	contractChannels, err := space.channels.GetChannels(nil)
+	contractChannels, err := space.channels.GetChannels(&bind.CallOpts{Context: ctx})
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(sc.decodeError(err)).Tag("method", "GetChannels")
 	}
 	baseChannels := make([]types.BaseChannel, len(contractChannels))
 	for i, channel := range contractChannels {
@@ -98,9 +122,9 @@ func (sc *SpaceContractV3) GetRoles(
 		return nil, err
 	}
 
-	iRoleBaseRoles, err := space.rolesContract.GetRoles(nil)
+	iRoleBaseRoles, err := space.rolesContract.GetRoles(&bind.CallOpts{Context: ctx})
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(sc.decodeError(err)).Tag("method", "GetRoles")
 	}
 
 	iEntitlementCache := make(map[common.Address]*base.IEntitlement)
@@ -117,21 +141,24 @@ func (sc *SpaceContractV3) GetRoles(
 				iEntitlementCache[entitlement] = iEntitlement
 			}
 			iEntitlement := iEntitlementCache[entitlement]
-			entitlementType, err := iEntitlement.ModuleType(nil)
+			entitlementType, err := iEntitlement.ModuleType(&bind.CallOpts{Context: ctx})
 			if err != nil {
 				return nil, fmt.Errorf(
 					"error fetching entitlement type for IEntitlement @ address %v: %w",
 					entitlement,
-					err,
+					AsRiverError(sc.decodeError(err)).Tag("method", "ModuleType"),
 				)
 			}
-			entitlementData, err := iEntitlement.GetEntitlementDataByRoleId(nil, iRoleBaseRole.Id)
+			entitlementData, err := iEntitlement.GetEntitlementDataByRoleId(
+				&bind.CallOpts{Context: ctx},
+				iRoleBaseRole.Id,
+			)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"error fetching entitlement data for role %v from IEntitlement @ address %v: %w",
 					iRoleBaseRole.Id.Uint64(),
 					entitlement,
-					err,
+					AsRiverError(sc.decodeError(err)).Tag("method", "GetEntitlementDataByRoleId"),
 				)
 			}
 			rawEntitlement := base.IEntitlementDataQueryableBaseEntitlementData{
@@ -199,7 +226,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 
 	tokens, err := spaceAsQueryable.TokensOfOwner(&bind.CallOpts{Context: ctx}, user)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(sc.decodeError(err)).Tag("method", "TokensOfOwner")
 	}
 
 	status.TokenIds = tokens
@@ -226,8 +253,14 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 	for _, tokenId := range tokens {
 		expiresAt, err := membership.ExpiresAt(&bind.CallOpts{Context: ctx}, tokenId)
 		if err != nil {
-			log.Warnw("Failed to get expiration for token", "tokenId", tokenId, "error", err)
-			continue
+			log.Warnw(
+				"Failed to get expiration for token",
+				"tokenId",
+				tokenId,
+				"error",
+				AsRiverError(sc.decodeError(err)).Tag("method", "ExpiresAt"),
+			)
+			return nil, err
 		}
 
 		// Token never expires
@@ -283,7 +316,10 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 		user,
 		permission.String(),
 	)
-	return isEntitled, err
+	if err != nil {
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "IsEntitledToSpace")
+	}
+	return isEntitled, nil
 }
 
 func (sc *SpaceContractV3) marshalEntitlements(
@@ -307,7 +343,7 @@ func (sc *SpaceContractV3) marshalEntitlements(
 func (sc *SpaceContractV3) IsBanned(
 	ctx context.Context,
 	spaceId shared.StreamId,
-	linkedWallets []common.Address,
+	tokenIds []*big.Int,
 ) (bool, error) {
 	log := logging.FromCtx(ctx).With("function", "SpaceContractV3.IsBanned")
 	space, err := sc.getSpace(ctx, spaceId)
@@ -315,7 +351,11 @@ func (sc *SpaceContractV3) IsBanned(
 		log.Warnw("Failed to get space", "space_id", spaceId, "error", err)
 		return false, err
 	}
-	return space.banning.IsBanned(ctx, linkedWallets)
+	isBanned, err := space.banning.IsBanned(ctx, tokenIds)
+	if err != nil {
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "IsBanned")
+	}
+	return isBanned, nil
 }
 
 /**
@@ -347,10 +387,10 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	owner, err := spaceAsIerc5313.Owner(nil)
+	owner, err := spaceAsIerc5313.Owner(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		log.Warnw("Failed to get owner", "space_id", spaceId, "error", err)
-		return nil, EMPTY_ADDRESS, err
+		return nil, EMPTY_ADDRESS, AsRiverError(sc.decodeError(err)).Tag("method", "Owner")
 	}
 
 	entitlementData, err := space.queryContract.GetChannelEntitlementDataByPermission(
@@ -359,7 +399,9 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 		permission.String(),
 	)
 	if err != nil {
-		return nil, EMPTY_ADDRESS, err
+		return nil, EMPTY_ADDRESS, AsRiverError(
+			sc.decodeError(err),
+		).Tag("method", "GetChannelEntitlementDataByPermission")
 	}
 
 	log.Debugw(
@@ -410,10 +452,10 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	owner, err := spaceAsIerc5313.Owner(nil)
+	owner, err := spaceAsIerc5313.Owner(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		log.Warnw("Failed to get owner", "space_id", spaceId, "error", err)
-		return nil, EMPTY_ADDRESS, err
+		return nil, EMPTY_ADDRESS, AsRiverError(sc.decodeError(err)).Tag("method", "Owner")
 	}
 
 	entitlementData, err := space.queryContract.GetEntitlementDataByPermission(
@@ -432,7 +474,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		permission.String(),
 	)
 	if err != nil {
-		return nil, EMPTY_ADDRESS, err
+		return nil, EMPTY_ADDRESS, AsRiverError(sc.decodeError(err)).Tag("method", "GetEntitlementDataByPermission")
 	}
 
 	entitlements, err := sc.marshalEntitlements(ctx, entitlementData)
@@ -472,7 +514,11 @@ func (sc *SpaceContractV3) IsEntitledToChannel(
 		user,
 		permission.String(),
 	)
-	return isEntitled, err
+	if err != nil {
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "IsEntitledToChannel")
+	}
+
+	return isEntitled, nil
 }
 
 func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceId shared.StreamId) (bool, error) {
@@ -481,8 +527,12 @@ func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceId shared.S
 		return false, err
 	}
 
-	isDisabled, err := space.pausable.Paused(nil)
-	return isDisabled, err
+	isDisabled, err := space.pausable.Paused(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "IsSpaceDisabled")
+	}
+
+	return isDisabled, nil
 }
 
 func (sc *SpaceContractV3) IsChannelDisabled(
@@ -500,10 +550,72 @@ func (sc *SpaceContractV3) IsChannelDisabled(
 		channelId,
 	)
 	if err != nil {
-		return false, err
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "GetChannel")
 	}
 
 	return channel.Disabled, nil
+}
+
+func (sc *SpaceContractV3) IsAppEntitled(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	appClient common.Address,
+	appAddress common.Address,
+	permission Permission,
+) (bool, error) {
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil {
+		return false, err
+	}
+
+	// Convert permission string to bytes32
+	var permissionBytes [32]byte
+	permissionStr := permission.String()
+	copy(permissionBytes[:], []byte(permissionStr))
+
+	isEntitled, err := space.appAccount.IsAppEntitled(
+		&bind.CallOpts{Context: ctx},
+		appAddress,
+		appClient,
+		permissionBytes,
+	)
+	if err != nil {
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "IsAppEntitled")
+	}
+
+	return isEntitled, nil
+}
+
+func (sc *SpaceContractV3) decodeError(err error) error {
+	ce, se, err := sc.decoder.DecodeEVMError(err)
+	if ce != nil {
+		return AsRiverError(ce, protocol.Err_CANNOT_CALL_CONTRACT)
+	} else if se != nil {
+		return AsRiverError(se, protocol.Err_CANNOT_CALL_CONTRACT)
+	} else {
+		return err
+	}
+}
+
+func (sc *SpaceContractV3) IsAppInstalled(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	appAddress common.Address,
+) (bool, error) {
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil {
+		return false, err
+	}
+
+	isInstalled, err := space.appAccount.IsAppInstalled(
+		&bind.CallOpts{Context: ctx},
+		appAddress,
+	)
+	if err != nil {
+		return false, AsRiverError(sc.decodeError(err)).Tag("method", "IsAppInstalled")
+	}
+
+	return isInstalled, nil
 }
 
 func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId) (*Space, error) {
@@ -539,6 +651,10 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 		if err != nil {
 			return nil, err
 		}
+		appAccount, err := base.NewAppAccount(address, sc.backend)
+		if err != nil {
+			return nil, err
+		}
 
 		// cache the space
 		sc.spaces[spaceId] = &Space{
@@ -549,6 +665,7 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 			banning:         banning,
 			pausable:        pausable,
 			channels:        channels,
+			appAccount:      appAccount,
 		}
 	}
 	return sc.spaces[spaceId], nil

@@ -86,7 +86,7 @@ describe('memberMetadataTests', () => {
         await alicesClient.waitForStream(streamId)
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
             )
         })
@@ -138,7 +138,7 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
             )
         })
@@ -277,7 +277,7 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
             )
         })
@@ -330,7 +330,7 @@ describe('memberMetadataTests', () => {
         await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
 
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
             )
         })
@@ -425,7 +425,7 @@ describe('memberMetadataTests', () => {
         await alicesClient.waitForStream(streamId)
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
             )
         })
@@ -477,7 +477,7 @@ describe('memberMetadataTests', () => {
         await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            expect(stream.view.getMembers().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
             )
         })

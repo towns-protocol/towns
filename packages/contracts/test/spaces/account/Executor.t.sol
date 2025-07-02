@@ -6,12 +6,9 @@ import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {DeployFacet} from "scripts/common/DeployFacet.s.sol";
 import {DeployDiamond} from "@towns-protocol/diamond/scripts/deployments/diamonds/DeployDiamond.s.sol";
 import {DeployExecutorFacet} from "scripts/deployments/facets/DeployExecutorFacet.s.sol";
-import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
-import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 
@@ -44,7 +41,7 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
     }
 
     modifier givenHasAccess(bytes32 groupId, address account, uint32 delay) {
-        (bool isMember, , , ) = executor.hasAccess(groupId, account);
+        (bool isMember, , ) = executor.hasAccess(groupId, account);
         vm.assume(!isMember);
 
         uint48 since = Time.timestamp() + executor.getGroupDelay(groupId);
@@ -76,7 +73,7 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         address account,
         uint32 delay
     ) external givenHasAccess(groupId, account, delay) {
-        (bool isMember, uint32 executionDelay, , ) = executor.hasAccess(groupId, account);
+        (bool isMember, uint32 executionDelay, ) = executor.hasAccess(groupId, account);
         assertEq(isMember, true);
         assertEq(executionDelay, delay);
     }
@@ -121,8 +118,6 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
             mockERC721.mintWithPayment.selector,
             groupId
         );
-
-        executor.setAllowance(groupId, 1 ether);
         vm.stopPrank();
 
         // This will revert because the bot does not have access to the mint function
@@ -145,7 +140,6 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         vm.prank(bot);
         (bytes32 operationId, ) = executor.scheduleOperation(
             address(mockERC721),
-            0,
             mintWithPayment,
             Time.timestamp() + delay
         );
@@ -164,5 +158,102 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
 
         // Assert that the receiver received the token
         assertEq(mockERC721.balanceOf(receiver), 1);
+    }
+
+    function test_grantAccessWithExpiration() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 expiration = uint48(block.timestamp + 1 days);
+        uint48 lastAccess = Time.timestamp() + executor.getGroupDelay(groupId);
+
+        vm.prank(founder);
+        vm.expectEmit(address(executor));
+        emit IExecutorBase.GroupAccessGranted(groupId, account, executionDelay, lastAccess, true);
+        bool newMember = executor.grantAccessWithExpiration(
+            groupId,
+            account,
+            executionDelay,
+            expiration
+        );
+        assertEq(newMember, true);
+
+        // Check access is granted
+        (bool isMember, uint32 delay, bool active) = executor.hasAccess(groupId, account);
+        assertEq(isMember, true);
+        assertEq(delay, executionDelay);
+        assertEq(active, true);
+
+        // Warp past expiration
+        vm.warp(block.timestamp + 2 days);
+
+        // Check access is expired
+        (isMember, delay, active) = executor.hasAccess(groupId, account);
+        assertEq(isMember, true);
+        assertEq(delay, executionDelay);
+        assertEq(active, false);
+    }
+
+    function test_revertWhen_grantAccessWithExpiration_invalidExpiration() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 expiration = uint48(block.timestamp - 1); // Past expiration
+
+        vm.prank(founder);
+        vm.expectRevert(IExecutorBase.InvalidExpiration.selector);
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, expiration);
+    }
+
+    function test_extendExpiration() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 initialExpiration = uint48(block.timestamp + 1 days);
+        uint48 newExpiration = uint48(block.timestamp + 2 days);
+
+        // Grant initial access with expiration
+        vm.startPrank(founder);
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, initialExpiration);
+
+        // Extend expiration
+        vm.expectEmit(address(executor));
+        emit IExecutorBase.GroupExpirationSet(groupId, newExpiration);
+        executor.setGroupExpiration(groupId, newExpiration);
+        vm.stopPrank();
+
+        // Warp past initial expiration but before new expiration
+        vm.warp(block.timestamp + 1.5 days);
+
+        // Check access is still active
+        (, , bool active) = executor.hasAccess(groupId, account);
+        assertEq(active, true);
+    }
+
+    function test_reactivateExpiredGroup() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 initialExpiration = uint48(block.timestamp + 1 days);
+        uint48 newExpiration = uint48(block.timestamp + 3 days);
+
+        // Grant initial access with expiration
+        vm.startPrank(founder);
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, initialExpiration);
+
+        // Warp past expiration
+        vm.warp(block.timestamp + 2 days);
+
+        // Check access is expired
+        (, , bool active) = executor.hasAccess(groupId, account);
+        assertEq(active, false);
+
+        // Reactivate with new expiration
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, newExpiration);
+
+        // Check access is active again
+        (, , active) = executor.hasAccess(groupId, account);
+        assertEq(active, true);
+        vm.stopPrank();
     }
 }

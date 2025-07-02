@@ -39,16 +39,16 @@ func TestSnapshotMigration0002(t *testing.T) {
 		},
 	}
 
-	migratedSnapshot := snapshot_migration_0002(spaceSnap)
+	snapshot_migration_0002(spaceSnap)
 
-	require.Equal(t, 2, len(migratedSnapshot.GetSpaceContent().Channels))
+	require.Equal(t, 2, len(spaceSnap.GetSpaceContent().Channels))
 
-	require.True(t, bytes.Equal(migratedSnapshot.GetSpaceContent().Channels[0].ChannelId, defaultChannelId[:]))
-	require.True(t, bytes.Equal(migratedSnapshot.GetSpaceContent().Channels[1].ChannelId, channelId1[:]))
+	require.True(t, bytes.Equal(spaceSnap.GetSpaceContent().Channels[0].ChannelId, defaultChannelId[:]))
+	require.True(t, bytes.Equal(spaceSnap.GetSpaceContent().Channels[1].ChannelId, channelId1[:]))
 
-	require.True(t, migratedSnapshot.GetSpaceContent().Channels[0].Settings.Autojoin)
-	require.False(t, migratedSnapshot.GetSpaceContent().Channels[1].Settings.Autojoin)
+	require.True(t, spaceSnap.GetSpaceContent().Channels[0].Settings.Autojoin)
+	require.False(t, spaceSnap.GetSpaceContent().Channels[1].Settings.Autojoin)
 
-	require.False(t, migratedSnapshot.GetSpaceContent().Channels[0].Settings.HideUserJoinLeaveEvents)
-	require.False(t, migratedSnapshot.GetSpaceContent().Channels[1].Settings.HideUserJoinLeaveEvents)
+	require.False(t, spaceSnap.GetSpaceContent().Channels[0].Settings.HideUserJoinLeaveEvents)
+	require.False(t, spaceSnap.GetSpaceContent().Channels[1].Settings.HideUserJoinLeaveEvents)
 }

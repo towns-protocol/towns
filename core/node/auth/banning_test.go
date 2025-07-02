@@ -1,24 +1,24 @@
 package auth
 
 import (
+	"math/big"
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBanningCache(t *testing.T) {
-	bannedAddressCache := NewBannedAddressCache(1 * time.Second)
+	bannedAddressCache := NewBannedTokensCache(1 * time.Second)
 
-	require.Len(t, bannedAddressCache.bannedAddresses, 0)
+	require.Len(t, bannedAddressCache.bannedTokens, 0)
 
 	start := time.Now()
 	isBanned, err := bannedAddressCache.IsBanned(
-		[]common.Address{common.HexToAddress("0x1")},
-		func() (map[common.Address]struct{}, error) {
-			return map[common.Address]struct{}{
-				common.HexToAddress("0x1"): {},
+		[]*big.Int{big.NewInt(1)},
+		func() (map[string]struct{}, error) {
+			return map[string]struct{}{
+				big.NewInt(1).String(): {},
 			}, nil
 		},
 	)
@@ -26,7 +26,7 @@ func TestBanningCache(t *testing.T) {
 
 	require.NoError(t, err)
 	require.True(t, isBanned)
-	require.Len(t, bannedAddressCache.bannedAddresses, 1)
+	require.Len(t, bannedAddressCache.bannedTokens, 1)
 
 	// Approximately validate the lastUpdated time
 	require.GreaterOrEqual(t, bannedAddressCache.lastUpdated, start)
@@ -36,10 +36,10 @@ func TestBanningCache(t *testing.T) {
 
 	start = time.Now()
 	isBanned, err = bannedAddressCache.IsBanned(
-		[]common.Address{common.HexToAddress("0x1")},
-		func() (map[common.Address]struct{}, error) {
-			return map[common.Address]struct{}{
-				common.HexToAddress("0x2"): {},
+		[]*big.Int{big.NewInt(1)},
+		func() (map[string]struct{}, error) {
+			return map[string]struct{}{
+				big.NewInt(2).String(): {},
 			}, nil
 		},
 	)
@@ -48,7 +48,7 @@ func TestBanningCache(t *testing.T) {
 
 	require.NoError(t, err)
 	require.False(t, isBanned)
-	require.Len(t, bannedAddressCache.bannedAddresses, 1)
+	require.Len(t, bannedAddressCache.bannedTokens, 1)
 	require.GreaterOrEqual(t, lastUpdated, start)
 	require.GreaterOrEqual(t, end, lastUpdated)
 
@@ -56,10 +56,10 @@ func TestBanningCache(t *testing.T) {
 	// Note: there is a possibility that this could flake if the tests were running slowly,
 	// but this is extremely unlikely.
 	isBanned, err = bannedAddressCache.IsBanned(
-		[]common.Address{common.HexToAddress("0x2")},
-		func() (map[common.Address]struct{}, error) {
-			return map[common.Address]struct{}{
-				common.HexToAddress("0x1"): {},
+		[]*big.Int{big.NewInt(2)},
+		func() (map[string]struct{}, error) {
+			return map[string]struct{}{
+				big.NewInt(1).String(): {},
 			}, nil
 		},
 	)

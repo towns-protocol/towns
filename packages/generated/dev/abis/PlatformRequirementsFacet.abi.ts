@@ -134,7 +134,7 @@ export default [
     "inputs": [],
     "outputs": [
       {
-        "name": "treasuryBps",
+        "name": "protocolBps",
         "type": "uint16",
         "internalType": "uint16"
       },
@@ -266,7 +266,7 @@ export default [
     "name": "setSwapFees",
     "inputs": [
       {
-        "name": "treasuryBps",
+        "name": "protocolBps",
         "type": "uint16",
         "internalType": "uint16"
       },
@@ -420,7 +420,7 @@ export default [
     "name": "PlatformSwapFeesSet",
     "inputs": [
       {
-        "name": "treasuryBps",
+        "name": "protocolBps",
         "type": "uint16",
         "indexed": false,
         "internalType": "uint16"

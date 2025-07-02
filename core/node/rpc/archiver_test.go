@@ -23,6 +23,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -158,7 +159,7 @@ func compareStreamMiniblocks(
 		)
 	}
 
-	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1)
+	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1, false)
 	if err != nil {
 		return err
 	}
@@ -283,6 +284,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
+	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(ctx, nil, node2nodeauth.CertGetter(nil, wallet, tester.btc.ChainId))
 	var nodeRegistry nodes.NodeRegistry
 	nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
@@ -292,6 +294,7 @@ func TestArchiveOneStream(t *testing.T) {
 		bc.ChainMonitor,
 		tester.btc.OnChainConfig,
 		httpClient,
+		httpClientWithCert,
 		nil,
 	)
 	require.NoError(err)
@@ -401,9 +404,10 @@ func TestArchiveOneStream(t *testing.T) {
 func makeTestServerOpts(tester *serviceTester) *ServerStartOpts {
 	listener, _ := tester.makeTestListener()
 	return &ServerStartOpts{
-		RiverChain:      tester.btc.NewWalletAndBlockchain(tester.ctx),
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+		RiverChain:              tester.btc.NewWalletAndBlockchain(tester.ctx),
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
 	}
 }
 

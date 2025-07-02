@@ -44,6 +44,7 @@ export SPACE_FACTORY_ADDRESS="${SPACE_FACTORY_ADDRESS:-}" # not required if usin
 export SPACE_OWNER_ADDRESS="${SPACE_OWNER_ADDRESS:-}" # not required if using deployment in packages/generated/deployments
 export RIVER_CHAIN_ID="${RIVER_CHAIN_ID:-}" # not required if using deployment in packages/generated/deployments
 export RIVER_REGISTRY_ADDRESS="${RIVER_REGISTRY_ADDRESS:-}" # not required if using deployment in packages/generated/deployments
+export APP_REGISTRY_ADDRESS="${APP_REGISTRY_ADDRESS:-}" # not required if using deployment in packages/generated/deployments
 
 # validation
 # if clients per process is greater than clients count, exit

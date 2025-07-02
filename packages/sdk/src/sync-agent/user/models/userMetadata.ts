@@ -4,7 +4,7 @@ import { UserDevice } from '@towns-protocol/encryption'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { makeUserMetadataStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
-import { IStreamStateView } from '../../../streamStateView'
+import { StreamStateView } from '../../../streamStateView'
 import { isDefined } from '../../../check'
 import { Client } from '../../../client'
 
@@ -72,7 +72,7 @@ export class UserMetadata extends PersistedObservable<UserMetadataModel> {
         }
     }
 
-    private initialize(deviceId: string, streamView: IStreamStateView) {
+    private initialize(deviceId: string, streamView: StreamStateView) {
         this.setData({
             initialized: true,
             deviceId,

@@ -128,6 +128,8 @@ interact-any :;
 	forge script scripts/interactions/${contract}.s.sol:${contract} \
 	--ffi --rpc-url ${rpc} --broadcast --verify \
 	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
 	$(if $(verifier),--verifier $(verifier),) \
 	$(if $(verifier-url),--verifier-url $(verifier-url),) \
 	$(if $(etherscan),--etherscan-api-key $(etherscan),) \

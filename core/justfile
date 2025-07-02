@@ -50,6 +50,11 @@ print-env:
 clean: _require_run_env
     @rm -rf ${RUN_BASE}
 
+clear-logs: _require_run_env (_loop-instances "_clear_instance_logs")
+
+_clear_instance_logs $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
+    @rm -rf $INSTANCE_DIR/logs/*
+
 _anvil-start $NAME $PORT $CHAIN_ID:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     mkdir -p ./run_files/anvil
@@ -127,6 +132,7 @@ deploy-contracts: _require_run_env anvils
     echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_APPREGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/appRegistry.json)" >> ${RUN_BASE}/contracts.env
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -154,7 +160,7 @@ config-app-registry: _require_run_env
     INSTANCE_DIR="${INSTANCE_BASE}/app-registry"
     mkdir -p ${INSTANCE_DIR}/{config,logs,certs}
     # Take the next available port after all stream nodes have been assigned.
-    echo "RIVER_PORT=$((${RPC_PORT} + ${NUM_INSTANCES}))" > ${INSTANCE_DIR}/config/config.env
+    echo "RIVER_PORT=$((${APP_REGISTRY_PORT}))" > ${INSTANCE_DIR}/config/config.env
     if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
     ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
     fi
@@ -164,27 +170,7 @@ _remove-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
 
 remove-instances: _require_run_env (_loop-instances "_remove-instance")
 
-just-config-base-chain: _require_run_env
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
-    if [ "${DISABLE_BASE_CHAIN}" != "true" ]; then
-        source ${RUN_BASE}/contracts.env
-        cast send \
-            --rpc-url ${RPC_BASE} \
-            --private-key $LOCAL_PRIVATE_KEY \
-            $RIVER_ENTITLEMENT_CONTRACT_ADDRESS \
-            "registerOperator(address)" \
-            $OPERATOR_ADDRESS > /dev/null
-        cast send \
-            --rpc-url ${RPC_BASE} \
-            --private-key $LOCAL_PRIVATE_KEY \
-            $RIVER_ENTITLEMENT_CONTRACT_ADDRESS \
-            "setOperatorStatus(address,uint8)" \
-            $OPERATOR_ADDRESS \
-            2 > /dev/null
-    fi
-
-config-base-chain: _require_run_env deploy-contracts just-config-base-chain
+config-base-chain: _require_run_env deploy-contracts
 
 # Run build node binary for environment
 [positional-arguments]
@@ -272,6 +258,16 @@ _register-node-base $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
             "registerNode(address)" \
             $NODE_ADDRESS > /dev/null
     fi
+
+# get the contract addresses from the node registry contract deployed to river chain
+get_all_node_addresses: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    source ${RUN_BASE}/contracts.env
+    cast call \
+            --rpc-url ${RPC_RIVER} \
+            $RIVER_REGISTRYCONTRACT_ADDRESS \
+            "getAllNodeAddresses()"
 
 just-register-nodes-base: _require_run_env (_loop-instances-seq "_register-node-base")
 
@@ -588,11 +584,23 @@ _test-from-dir $DIR *args:
         go test {{args}} | yarn exec pino-pretty
     fi
 
+_test-print-report-from-dir $DIR *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    cd $DIR
+    echo "Running go test from $(git rev-parse --show-prefix)"
+    if ! command -v gotestsum >/dev/null 2>&1; then
+        go install gotest.tools/gotestsum@latest
+    fi
+    gotestsum --hide-summary=skipped {{args}}
+
 # Run go tests from current directory
 test *args: (_test-from-dir invocation_directory() args)
 
 # Run all go tests from module root
 test-all *args: (_test-from-dir justfile_directory() "-v" args "./...")
+
+# Run all go tests from module root and print a report at the end
+test-all-report *args: (_test-print-report-from-dir justfile_directory() args "./...")
 
 # Run all go tests from current directory
 t *args: (_test-from-dir invocation_directory() "-v" args "./...")

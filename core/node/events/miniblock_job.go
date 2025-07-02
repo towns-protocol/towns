@@ -25,9 +25,9 @@ type mbJob struct {
 	forceSnapshot bool
 	// quorumNodes is the list of nodes that participate in the stream quorum.
 	quorumNodes []common.Address
-	// syncNodes is the list of nodes that sync the stream into local storage in anticipation
+	// reconcileNodes is the list of nodes that reconcile the stream into local storage in anticipation
 	// of joining the streams quorum.
-	syncNodes []common.Address
+	reconcileNodes []common.Address
 	// replicated is true if the stream is replicated.
 	replicated bool
 	// candidate is the produced miniblock candidate that is attempted to promote to a miniblock.
@@ -73,14 +73,28 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum crypto.BlockNumber)
 		return err
 	}
 
-	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(ctx, j.stream.StreamId(), view.minipool.generation)
+	candidateCount, err := j.cache.params.Storage.GetMiniblockCandidateCount(
+		ctx,
+		j.stream.StreamId(),
+		view.minipool.generation,
+	)
 	if err != nil {
 		return err
 	}
 
 	if skipCandidate(candidateCount, blockNum) {
-		return RiverError(Err_RESOURCE_EXHAUSTED, "mbJob.shouldContinue: candidate production is slowed down",
-			"candidateCount", candidateCount, "blockNum", blockNum, "streamId", j.stream.streamId, "miniblockGeneration", view.minipool.generation)
+		return RiverError(
+			Err_RESOURCE_EXHAUSTED,
+			"mbJob.shouldContinue: candidate production is slowed down",
+			"candidateCount",
+			candidateCount,
+			"blockNum",
+			blockNum,
+			"streamId",
+			j.stream.streamId,
+			"miniblockGeneration",
+			view.minipool.generation,
+		)
 	}
 
 	return nil
@@ -93,7 +107,7 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum crypto.BlockNumbe
 	}
 
 	// miniblock producer creates mbJob's only on nodes that participate in stream quorum.
-	j.quorumNodes, j.syncNodes, _ = j.stream.GetQuorumAndSyncNodesAndIsLocal()
+	j.quorumNodes, j.reconcileNodes, _ = j.stream.GetQuorumAndReconcileNodesAndIsLocal()
 	j.replicated = len(j.quorumNodes) > 1
 
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
@@ -252,9 +266,9 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	}
 
 	if quorumErr != nil {
-		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, sync to catch up.
+		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, reconcile to catch up.
 		if AsRiverError(quorumErr).IsCodeWithBases(Err_MINIBLOCK_TOO_OLD) {
-			j.cache.SubmitSyncStreamTask(j.stream, nil)
+			j.cache.SubmitReconcileStreamTask(j.stream, nil)
 		}
 		return nil, nil, quorumErr
 	}
@@ -299,9 +313,18 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 	}
 
 	events := make([]common.Hash, 0, len(eventCounts))
-	for h, c := range eventCounts {
-		if c >= quorumNum {
-			events = append(events, h)
+
+	// walk over all event hashes again, adding them to the events list if they have quorum.
+	// do it this way to preserve order of events as they were received in a single proposal.
+	// we do not attempt to order events across proposals.
+	for _, p := range proposals {
+		for _, h := range p.eventHashes {
+			if c, ok := eventCounts[h]; ok {
+				if c >= quorumNum {
+					events = append(events, h)
+				}
+				delete(eventCounts, h)
+			}
 		}
 	}
 
@@ -420,7 +443,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	})
 
 	// save the candidate to the nodes that are not in the quorum but participating in the stream.
-	for _, node := range j.syncNodes {
+	for _, node := range j.reconcileNodes {
 		go func() {
 			_ = j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(
 				ctx,
@@ -433,7 +456,8 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 
 	err := qp.Wait()
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
+		logging.FromCtx(ctx).
+			Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
 		return err
 	}
 

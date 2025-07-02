@@ -8,20 +8,18 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 
 // libraries
 import {TippingBase} from "./TippingBase.sol";
-
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
-import {PointsProxyLib} from "src/spaces/facets/points/PointsProxyLib.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
+import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
+import {PointsBase} from "../points/PointsBase.sol";
 
-contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
+contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGuard {
     function __Tipping_init() external onlyInitializing {
         _addInterface(type(ITipping).interfaceId);
     }
@@ -41,12 +39,13 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
             uint256 protocolFee = _payProtocol(msg.sender, tipRequest.amount);
             tipAmount = tipRequest.amount - protocolFee;
 
-            uint256 points = PointsProxyLib.getPoints(
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
                 ITownsPointsBase.Action.Tip,
                 abi.encode(protocolFee)
             );
-
-            PointsProxyLib.mint(msg.sender, points);
+            _mintPoints(airdropDiamond, msg.sender, points);
         }
 
         TippingBase.tip(

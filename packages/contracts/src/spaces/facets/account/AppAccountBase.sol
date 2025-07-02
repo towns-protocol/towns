@@ -10,180 +10,202 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
+import {AppAccountStorage} from "./AppAccountStorage.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
+// contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
-import {HookBase} from "../executor/hooks/HookBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
 // types
-import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest, ManifestExecutionFunction} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorBase, HookBase {
+abstract contract AppAccountBase is
+    IAppAccountBase,
+    IAppRegistryBase,
+    TokenOwnableBase,
+    ExecutorBase
+{
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
+    using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
-    function _installApp(
-        bytes32 appId,
-        uint32 grantDelay,
-        uint32 executionDelay,
-        uint256 allowance,
-        bytes calldata postInstallData
-    ) internal {
+    // Constants for dependency names
+    bytes32 private constant RIVER_AIRDROP = bytes32("RiverAirdrop");
+    bytes32 private constant SPACE_OPERATOR = bytes32("SpaceOperator"); // BaseRegistry
+    bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
+    bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
+
+    uint48 private constant DEFAULT_DURATION = 365 days;
+
+    // External Functions
+    function _onlyRegistry() internal view {
+        if (msg.sender != address(_getAppRegistry())) InvalidCaller.selector.revertWith();
+    }
+
+    function _installApp(bytes32 appId, bytes calldata postInstallData) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
-        // get the module group id from the module registry
-        (
-            address module,
-            ,
-            address[] memory clients,
-            ,
-            ExecutionManifest memory cachedManifest
-        ) = _getApp(appId);
+        // get the app
+        App memory app = _getAppRegistry().getAppById(appId);
+
+        if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
 
         // verify if already installed
-        if (_isGroupActive(appId)) AppAlreadyInstalled.selector.revertWith();
+        if (_isAppInstalled(app.module)) AppAlreadyInstalled.selector.revertWith();
 
-        _verifyManifests(module, cachedManifest);
-        _createGroup(appId);
-
-        uint256 clientsLength = clients.length;
-        for (uint256 i; i < clientsLength; ++i) {
-            _grantGroupAccess({
-                groupId: appId,
-                account: clients[i],
-                grantDelay: grantDelay > 0 ? grantDelay : _getGroupGrantDelay(appId),
-                executionDelay: executionDelay > 0 ? executionDelay : 0
-            });
-        }
+        // set the group status to active
+        _setGroupStatus(app.appId, true, _getAppExpiration(app.appId, app.duration));
+        _addApp(app.module, app.appId);
+        _grantGroupAccess({
+            groupId: app.appId,
+            account: app.client,
+            grantDelay: _getGroupGrantDelay(app.appId),
+            executionDelay: 0
+        });
 
         // Set up execution functions with the same module groupId
-        uint256 executionFunctionsLength = cachedManifest.executionFunctions.length;
+        uint256 executionFunctionsLength = app.manifest.executionFunctions.length;
         for (uint256 i; i < executionFunctionsLength; ++i) {
-            ManifestExecutionFunction memory func = cachedManifest.executionFunctions[i];
+            ManifestExecutionFunction memory func = app.manifest.executionFunctions[i];
 
             // check if the function is a native function
             if (_isInvalidSelector(func.executionSelector)) {
                 UnauthorizedSelector.selector.revertWith();
             }
 
-            _setTargetFunctionGroup(module, func.executionSelector, appId);
+            _setTargetFunctionGroup(app.module, func.executionSelector, app.appId);
 
             if (!func.allowGlobalValidation) {
-                _setTargetFunctionDisabled(module, func.executionSelector, true);
+                _setTargetFunctionDisabled(app.module, func.executionSelector, true);
             }
-        }
-
-        // Set up hooks
-        uint256 executionHooksLength = cachedManifest.executionHooks.length;
-        for (uint256 i; i < executionHooksLength; ++i) {
-            ManifestExecutionHook memory hook = cachedManifest.executionHooks[i];
-            _addHook(
-                module,
-                hook.executionSelector,
-                hook.entityId,
-                hook.isPreHook,
-                hook.isPostHook
-            );
-        }
-
-        // Set the allowance for the module group
-        if (allowance > 0) {
-            if (address(this).balance < allowance) NotEnoughEth.selector.revertWith();
-            _setGroupAllowance(appId, allowance);
         }
 
         // Call module's onInstall if it has install data using LibCall
         // revert if it fails
         if (postInstallData.length > 0) {
             bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (postInstallData));
-            LibCall.callContract(module, 0, callData);
+            LibCall.callContract(app.module, 0, callData);
         }
 
-        emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
+        emit IERC6900Account.ExecutionInstalled(app.module, app.manifest);
     }
 
     function _uninstallApp(bytes32 appId, bytes calldata uninstallData) internal {
-        (address module, , address[] memory clients, , ExecutionManifest memory manifest) = _getApp(
-            appId
-        );
+        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
-        // Remove hooks first
-        uint256 executionHooksLength = manifest.executionHooks.length;
-        for (uint256 i; i < executionHooksLength; ++i) {
-            ManifestExecutionHook memory hook = manifest.executionHooks[i];
-            _removeHook(module, hook.executionSelector, hook.entityId);
-        }
+        App memory app = _getAppRegistry().getAppById(appId);
+
+        if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        if (!_isAppInstalled(app.module)) AppNotInstalled.selector.revertWith();
+
+        _removeApp(app.module);
 
         // Remove function _group mappings
-        uint256 executionFunctionsLength = manifest.executionFunctions.length;
+        uint256 executionFunctionsLength = app.manifest.executionFunctions.length;
         for (uint256 i; i < executionFunctionsLength; ++i) {
-            ManifestExecutionFunction memory func = manifest.executionFunctions[i];
+            ManifestExecutionFunction memory func = app.manifest.executionFunctions[i];
             // Set the group to 0 to remove the mapping
-            _setTargetFunctionGroup(module, func.executionSelector, EMPTY_UID);
+            _setTargetFunctionGroup(app.module, func.executionSelector, EMPTY_UID);
         }
 
         // Revoke module's group access
-        uint256 clientsLength = clients.length;
-        for (uint256 i; i < clientsLength; ++i) {
-            _revokeGroupAccess(appId, clients[i]);
-        }
+        _revokeGroupAccess(app.appId, app.client);
 
         // Call module's onUninstall if uninstall data is provided
         // don't revert if it fails
         bool onUninstallSuccess = true;
         if (uninstallData.length > 0) {
             // solhint-disable-next-line no-empty-blocks
-            try IERC6900Module(module).onUninstall(uninstallData) {} catch {
+            try IERC6900Module(app.module).onUninstall(uninstallData) {} catch {
                 onUninstallSuccess = false;
             }
         }
 
-        emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
+        emit IERC6900Account.ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
-    function _setAppAllowance(bytes32 appId, uint256 allowance) internal {
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        if (!_isGroupActive(appId)) AppNotInstalled.selector.revertWith();
-        _setGroupAllowance(appId, allowance);
+    function _onRenewApp(bytes32 appId, bytes calldata /* data */) internal {
+        // Get the app data to determine the duration
+        App memory app = _getAppRegistry().getAppById(appId);
+        if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+
+        // Calculate the new expiration time (extends current expiration by app duration)
+        uint48 newExpiration = _getAppExpiration(app.appId, app.duration);
+
+        // Update the group expiration
+        _setGroupExpiration(app.appId, newExpiration);
     }
 
-    function _getAppAllowance(bytes32 appId) internal view returns (uint256) {
-        if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
-        if (!_isGroupActive(appId)) AppNotInstalled.selector.revertWith();
-        return _getGroupAllowance(appId);
+    function _onExecute(
+        address target,
+        uint256,
+        bytes calldata data
+    ) internal returns (bytes memory result) {
+        _checkAuthorized(target);
+        (result, ) = _execute(target, 0, data);
     }
 
-    // Getters
-    function _isEntitled(
+    // Internal Functions
+    function _getAppExpiration(
         bytes32 appId,
+        uint48 duration
+    ) internal view returns (uint48 expiration) {
+        uint48 currentExpiration = _getGroupExpiration(appId);
+        if (currentExpiration > block.timestamp) {
+            expiration = currentExpiration + duration;
+        } else {
+            expiration = uint48(block.timestamp) + duration;
+        }
+    }
+
+    function _addApp(address module, bytes32 appId) internal {
+        AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
+        $.installedApps.add(module);
+        $.appIdByApp[module] = appId;
+    }
+
+    function _removeApp(address module) internal {
+        AppAccountStorage.getLayout().installedApps.remove(module);
+        delete AppAccountStorage.getLayout().appIdByApp[module];
+    }
+
+    function _enableApp(address app) internal {
+        bytes32 appId = _getInstalledAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        _setGroupStatus(appId, true);
+    }
+
+    function _disableApp(address app) internal {
+        bytes32 appId = _getInstalledAppId(app);
+        if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        _setGroupStatus(appId, false);
+    }
+
+    function _isEntitled(
+        address module,
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        (, , address[] memory clients, bytes32[] memory permissions, ) = _getApp(appId);
+        App memory app = _getApp(module);
 
-        uint256 clientsLength = clients.length;
-        uint256 permissionsLength = permissions.length;
+        if (app.appId == EMPTY_UID) return false;
 
-        // has to be both in the clients array and the permissions array
-        bool isClient = false;
-        for (uint256 i; i < clientsLength; ++i) {
-            if (clients[i] == client) {
-                isClient = true;
-                break;
-            }
-        }
+        (bool hasClientAccess, , bool isGroupActive) = _hasGroupAccess(app.appId, client);
+        if (!hasClientAccess || !isGroupActive) return false;
 
-        if (!isClient) return false;
-
+        uint256 permissionsLength = app.permissions.length;
         for (uint256 i; i < permissionsLength; ++i) {
-            if (permissions[i] == permission) {
+            if (app.permissions[i] == permission) {
                 return true;
             }
         }
@@ -191,33 +213,34 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         return false;
     }
 
-    function _getApp(
-        bytes32 appId
-    )
-        internal
-        view
-        returns (
-            address module,
-            address owner,
-            address[] memory clients,
-            bytes32[] memory permissions,
-            ExecutionManifest memory manifest
-        )
-    {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        address appRegistry = ms.getDependency("AppRegistry");
-        Attestation memory att = IAppRegistry(appRegistry).getAppById(appId);
-
-        if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
-        if (att.revocationTime != 0) AppRevoked.selector.revertWith();
-
-        (module, owner, clients, permissions, manifest) = abi.decode(
-            att.data,
-            (address, address, address[], bytes32[], ExecutionManifest)
-        );
+    function _getApp(address module) internal view returns (App memory app) {
+        bytes32 appId = _getInstalledAppId(module);
+        if (appId == EMPTY_UID) return app;
+        return _getAppRegistry().getAppById(appId);
     }
 
-    // Checks
+    function _getPlatformRequirements() private view returns (IPlatformRequirements) {
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        return IPlatformRequirements(ms.spaceFactory);
+    }
+
+    function _getAppRegistry() private view returns (IAppRegistry) {
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        return IAppRegistry(ms.getDependency(APP_REGISTRY));
+    }
+
+    function _getApps() internal view returns (address[] memory) {
+        return AppAccountStorage.getLayout().installedApps.values();
+    }
+
+    function _getInstalledAppId(address module) internal view returns (bytes32) {
+        return AppAccountStorage.getLayout().appIdByApp[module];
+    }
+
+    function _isAppInstalled(address module) internal view returns (bool) {
+        return AppAccountStorage.getLayout().installedApps.contains(module);
+    }
+
     function _checkAuthorized(address module) internal view {
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
@@ -225,41 +248,34 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         address factory = ms.spaceFactory;
 
         bytes32[] memory dependencies = new bytes32[](4);
-        dependencies[0] = bytes32("RiverAirdrop");
-        dependencies[1] = bytes32("SpaceOperator"); // BaseRegistry
-        dependencies[2] = bytes32("ModuleRegistry");
-        dependencies[3] = bytes32("AppRegistry");
+        dependencies[0] = RIVER_AIRDROP;
+        dependencies[1] = SPACE_OPERATOR;
+        dependencies[2] = SPACE_OWNER;
+        dependencies[3] = APP_REGISTRY;
         address[] memory deps = ms.getDependencies(dependencies);
 
+        // Check if app is banned
         if (IAppRegistry(deps[3]).isAppBanned(module)) {
             UnauthorizedApp.selector.revertWith(module);
         }
 
-        // Unauthorized targets
-        if (
-            module == factory ||
-            module == deps[0] ||
-            module == deps[1] ||
-            module == deps[2] ||
-            module == deps[3]
-        ) {
+        // Check against unauthorized targets
+        if (_isUnauthorizedTarget(module, factory, deps)) {
             UnauthorizedApp.selector.revertWith(module);
         }
     }
 
-    function _verifyManifests(
+    function _isUnauthorizedTarget(
         address module,
-        ExecutionManifest memory cachedManifest
-    ) internal pure {
-        ExecutionManifest memory moduleManifest = ITownsApp(module).executionManifest();
-
-        // Hash all cached and latest manifests and compare
-        bytes32 moduleManifestHash = keccak256(abi.encode(moduleManifest));
-        bytes32 cachedManifestHash = keccak256(abi.encode(cachedManifest));
-
-        if (moduleManifestHash != cachedManifestHash) {
-            InvalidManifest.selector.revertWith(module);
-        }
+        address factory,
+        address[] memory deps
+    ) private pure returns (bool) {
+        return
+            module == factory ||
+            module == deps[0] || // RiverAirdrop
+            module == deps[1] || // SpaceOperator
+            module == deps[2] || // SpaceOwner
+            module == deps[3]; // AppRegistry
     }
 
     function _isInvalidSelector(bytes4 selector) internal pure returns (bool) {
@@ -281,10 +297,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
             selector == ITownsApp.requiredPermissions.selector;
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Hooks                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
+    // Override Functions
     function _getOwner() internal view virtual override returns (address) {
         return _owner();
     }
@@ -294,11 +307,7 @@ abstract contract AppAccountBase is IAppAccountBase, TokenOwnableBase, ExecutorB
         bytes4 selector,
         uint256 value,
         bytes calldata data
-    ) internal virtual override {
-        _callPreHooks(target, selector, value, data);
-    }
+    ) internal virtual override {}
 
-    function _executePostHooks(address target, bytes4 selector) internal virtual override {
-        _callPostHooks(target, selector);
-    }
+    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }

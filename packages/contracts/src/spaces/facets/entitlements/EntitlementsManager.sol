@@ -44,6 +44,6 @@ contract EntitlementsManager is IEntitlementsManager, EntitlementsManagerBase, E
         address user,
         string calldata permission
     ) external view returns (bool) {
-        return _isEntitledToChannel(channelId, user, permission);
+        return _isEntitledToChannel(channelId, user, bytes32(bytes(permission)));
     }
 }

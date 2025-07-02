@@ -30,7 +30,7 @@ interface SyncedStreamsExtensionDelegate {
     emitClientInitStatus: (status: ClientInitStatus) => void
 }
 
-const MAX_CONCURRENT_FROM_PERSISTENCE = 5
+const MAX_CONCURRENT_FROM_PERSISTENCE = 10
 const MAX_CONCURRENT_FROM_NETWORK = 20
 const concurrencyLimit = pLimit(MAX_CONCURRENT_FROM_NETWORK)
 
@@ -159,10 +159,9 @@ export class SyncedStreamsExtension {
         // then load the rest of the streams after, but it's not!
         // for 300ish streams,loading the rest of the streams after the application has started
         // going takes 30-50 seconds,doing it this way takes 4 seconds
-        const loadedStreams = await this.persistenceStore.loadStreams([
-            ...Array.from(this.highPriorityIds),
-            ...Array.from(this.streamIds),
-        ])
+        const loadedStreams = await this.persistenceStore.loadStreams(
+            Array.from(this.highPriorityIds),
+        )
         const t1 = performance.now()
         this.log('####Performance: loaded streams from persistence!!', t1 - now)
 
@@ -180,6 +179,7 @@ export class SyncedStreamsExtension {
         // wait for 10ms to allow the client to update the status
         const t2 = performance.now()
         this.log('####Performance: loadedHighPriorityStreams!!', t2 - t1)
+        await this.startSync()
         // this is real goofy, it makes the app smooth
         // push on a final task to update the client status and report stats
         this.tasks.unshift(async () => {
@@ -189,7 +189,7 @@ export class SyncedStreamsExtension {
             this.emitClientStatus()
         })
         // freeze the remaining stream ids
-        const streamIds = Array.from(this.streamIds).filter((x) => loadedStreams[x] !== undefined)
+        const streamIds = Array.from(this.streamIds)
         // make a step task that will load the next batch of streams
         const stepTask = async () => {
             if (streamIds.length === 0) {
@@ -203,6 +203,7 @@ export class SyncedStreamsExtension {
                         priorityFromStreamId(b, this.highPriorityIds),
                 )
                 .splice(0, MAX_CONCURRENT_FROM_PERSISTENCE)
+            const loadedStreams = await this.persistenceStore.loadStreams(streamIdsForStep)
             // and then loads MAX_CONCURRENT_STREAMS streams
             await Promise.all(
                 streamIdsForStep.map(async (streamId) => {
@@ -226,14 +227,18 @@ export class SyncedStreamsExtension {
         persistedData: LoadedStream | undefined,
     ) {
         const allowGetStream = this.highPriorityIds.has(streamId)
-        try {
-            await this.delegate.initStream(streamId, allowGetStream, persistedData)
-            this.loadedStreamCount++
-            this.numStreamsLoadedFromCache++
-            this.streamIds.delete(streamId)
-        } catch (err) {
+        if (persistedData === undefined && !allowGetStream) {
             this.streamCountRequiringNetworkAccess++
-            this.logError('Error initializing stream from persistence', streamId, err)
+        } else {
+            try {
+                await this.delegate.initStream(streamId, allowGetStream, persistedData)
+                this.loadedStreamCount++
+                this.numStreamsLoadedFromCache++
+                this.streamIds.delete(streamId)
+            } catch (err) {
+                this.streamCountRequiringNetworkAccess++
+                this.logError('Error initializing stream from persistence', streamId, err)
+            }
         }
         this.emitClientStatus()
     }
@@ -271,12 +276,6 @@ export class SyncedStreamsExtension {
         const task = this.tasks.shift()
         if (task) {
             return task()
-        }
-
-        // Finish everything before starting sync
-        if (this.startSyncRequested) {
-            this.startSyncRequested = false
-            return this.startSync()
         }
     }
 

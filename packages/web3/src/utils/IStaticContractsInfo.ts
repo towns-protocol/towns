@@ -1,4 +1,4 @@
-import DeploymentsJson from '@towns-protocol/generated/config/deployments.json' assert { type: 'json' }
+import DeploymentsJson from '@towns-protocol/generated/config/deployments.json' with { type: 'json' }
 
 import { Address } from '../types/ContractTypes'
 
@@ -10,9 +10,12 @@ export interface BaseChainConfig {
         baseRegistry: Address
         riverAirdrop?: Address
         swapRouter?: Address
+        towns?: Address
+        appRegistry?: Address
         utils: {
             mockNFT?: Address // mockErc721aAddress
             member?: Address // testGatingTokenAddress - For tesing token gating scenarios
+            towns?: Address
         }
     }
     executionClient?: 'geth_dev' | undefined

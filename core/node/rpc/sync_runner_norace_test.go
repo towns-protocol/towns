@@ -14,6 +14,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -251,6 +252,7 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 		tt.btc.DeployerBlockchain.ChainMonitor,
 		tt.btc.OnChainConfig,
 		tt.httpClient(),
+		tt.httpClientWithCert(0),
 		nil,
 	)
 	require.NoError(err, "Error creating node registry for multi-sync runner")
@@ -288,7 +290,7 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 	channelIds := make([]StreamId, testCfg.numChannels)
 	channelHashes := make([]*MiniblockRef, testCfg.numChannels)
 
-	for i := 0; i < testCfg.numChannels; i++ {
+	for i := range testCfg.numChannels {
 		chId, chHash, err := setupTestChannelAndAddToSyncer(
 			ctx,
 			wallet,
@@ -451,6 +453,35 @@ func setupTestChannelAndAddToSyncer(
 	return channelId, channelHash, nil
 }
 
+// Helper function to wait for message delivery across channels
+func waitForMessagesDelivery(
+	require *require.Assertions,
+	eventTrackerMu *sync.Mutex,
+	eventTracker map[StreamId]map[string]int,
+	expectedMessages map[StreamId][]string,
+	timeout time.Duration,
+	pollInterval time.Duration,
+	failMessage string,
+) {
+	require.EventuallyWithT(func(t *assert.CollectT) {
+		eventTrackerMu.Lock()
+		defer eventTrackerMu.Unlock()
+
+		// Check if all channels have received all expected messages
+		for channelId, expectedMsgsSlice := range expectedMessages {
+			messageCounts, ok := eventTracker[channelId]
+			if !ok {
+				t.Errorf("Channel %v not seen yet in tracker", channelId)
+			}
+			for _, expectedMsg := range expectedMsgsSlice {
+				if count, found := messageCounts[expectedMsg]; !found || count == 0 {
+					t.Errorf("Channel %v missing message: '%v'", channelId, expectedMsg)
+				}
+			}
+		}
+	}, timeout, pollInterval, failMessage)
+}
+
 // TestMultiSyncerWithNodeFailures stops nodes one at a time after streams have already started syncing. This
 // tests that the MultiSyncer correctly detects when streams are not syncing and rotates them to new
 // nodes, verifying message delivery after each node failure.
@@ -485,6 +516,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		tt.btc.DeployerBlockchain.ChainMonitor,
 		tt.btc.OnChainConfig,
 		tt.httpClient(),
+		tt.httpClientWithCert(0),
 		nil,
 	)
 	require.NoError(err, "Error creating node registry for multi-sync runner")
@@ -566,84 +598,61 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	}
 
 	// Wait until all first batch messages are received
-	require.Eventually(func() bool {
-		eventTrackerMu.Lock()
-		defer eventTrackerMu.Unlock()
-
-		// Check if all channels have received their first message
-		for channelId, expectedMsgsSlice := range expectedMessages {
-			messageCounts, ok := eventTracker[channelId]
-			if !ok {
-				return false // Channel not yet in tracker
-			}
-			for _, expectedMsg := range expectedMsgsSlice {
-				if count, found := messageCounts[expectedMsg]; !found || count == 0 {
-					return false // Expected message not found or count is zero
-				}
-			}
-		}
-		return true
-	}, 30*time.Second, 100*time.Millisecond, "Not all messages from first batch were received")
+	waitForMessagesDelivery(
+		require,
+		&eventTrackerMu,
+		eventTracker,
+		expectedMessages,
+		30*time.Second,
+		100*time.Millisecond,
+		"Not all messages from first batch were received",
+	)
 
 	// Stop first node to force stream relocation
 	tt.CloseNode(1)
 
 	// Send second batch of messages after first node failure
 	for i, channelId := range channelIds {
-		msg := fmt.Sprintf("msg2-channel%d", i)
-		addMessageToChannelWithRetries(ctx, client0, wallet, msg, channelId, channelHashes[i], require, replFactor)
-		expectedMessages[channelId] = append(expectedMessages[channelId], msg)
+		for j := range 5 {
+			msg := fmt.Sprintf("msg2-round%d-channel%d", j, i)
+			addMessageToChannelWithRetries(ctx, client0, wallet, msg, channelId, channelHashes[i], require, replFactor)
+			expectedMessages[channelId] = append(expectedMessages[channelId], msg)
+		}
 	}
 
 	// Wait until all second batch messages are received
-	require.Eventually(func() bool {
-		eventTrackerMu.Lock()
-		defer eventTrackerMu.Unlock()
-
-		// Check if all channels have received all expected messages
-		for channelId, expectedMsgsSlice := range expectedMessages {
-			messageCounts, ok := eventTracker[channelId]
-			if !ok {
-				return false // Channel not yet in tracker
-			}
-			for _, expectedMsg := range expectedMsgsSlice {
-				if count, found := messageCounts[expectedMsg]; !found || count == 0 {
-					return false // Expected message not found or count is zero
-				}
-			}
-		}
-		return true
-	}, 30*time.Second, 100*time.Millisecond, "Not all messages were received after first node failure")
+	waitForMessagesDelivery(
+		require,
+		&eventTrackerMu,
+		eventTracker,
+		expectedMessages,
+		30*time.Second,
+		100*time.Millisecond,
+		"Not all messages were received after first node failure",
+	)
 
 	// Stop second node to force another stream relocation
 	tt.CloseNode(2)
 
 	// Send third batch of messages after second node failure
 	for i, channelId := range channelIds {
-		msg := fmt.Sprintf("msg3-channel%d", i)
-		addMessageToChannelWithRetries(ctx, client0, wallet, msg, channelId, channelHashes[i], require, replFactor)
-		expectedMessages[channelId] = append(expectedMessages[channelId], msg)
+		for j := range 5 {
+			msg := fmt.Sprintf("msg3-round%d-channel%d", j, i)
+			addMessageToChannelWithRetries(ctx, client0, wallet, msg, channelId, channelHashes[i], require, replFactor)
+			expectedMessages[channelId] = append(expectedMessages[channelId], msg)
+		}
 	}
 
 	// Wait until all third batch messages are received
-	require.Eventually(func() bool {
-		eventTrackerMu.Lock()
-		defer eventTrackerMu.Unlock()
-
-		// Check if all channels have received all expected messages
-		for channelId, expectedMsgsSlice := range expectedMessages {
-			messageCounts, ok := eventTracker[channelId]
-			if !ok {
-				return false // Channel not yet in tracker
-			}
-			for _, expectedMsg := range expectedMsgsSlice {
-				if count, found := messageCounts[expectedMsg]; !found || count == 0 {
-					return false // Expected message not found or count is zero
-				}
-			}
-		}
-		return true
-	}, 15*time.Second, 100*time.Millisecond, "Not all messages were received after second node failure")
+	waitForMessagesDelivery(
+		require,
+		&eventTrackerMu,
+		eventTracker,
+		expectedMessages,
+		30*time.Second,
+		100*time.Millisecond,
+		"Not all messages were received after second node failure",
+	)
 
 	// Shutdown cleanly
 	cancelCollector()

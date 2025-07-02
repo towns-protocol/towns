@@ -215,6 +215,8 @@ func (params *aeParams) canAddEvent() ruleBuilderAE {
 		return params.canAddMediaPayload(payload)
 	case *StreamEvent_MemberPayload:
 		return params.canAddMemberPayload(payload)
+	case *StreamEvent_MetadataPayload:
+		panic("give me callstack")
 	default:
 		return aeBuilder().
 			fail(unknownPayloadType(payload))
@@ -323,10 +325,17 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 			params:         params,
 			userMembership: content.UserMembership,
 		}
-		return aeBuilder().
+		builder := aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsValidNode).
 			check(ru.validUserMembershipTransition).
+			check(ru.validUserMembershipStream).
 			requireParentEvent(ru.parentEventForUserMembership)
+
+		isApp, _ := params.streamView.IsAppUser()
+		if isApp {
+			builder = builder.requireChainAuth(ru.ownerChainAuthForInviter)
+		}
+		return builder
 	case *UserPayload_UserMembershipAction_:
 		ru := &aeUserMembershipActionRules{
 			params: params,
@@ -702,14 +711,28 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 		return false, err
 	}
 	if hasTransaction {
-		return false, RiverError(
-			Err_INVALID_ARGUMENT,
-			"duplicate transaction",
-			"streamId",
-			ru.params.streamView.StreamId(),
-			"transactionHash",
-			ru.transaction.GetReceipt().TransactionHash,
-		)
+		if ru.transaction.GetReceipt() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetReceipt().TransactionHash,
+			)
+		} else if ru.transaction.GetSolanaReceipt().GetTransaction() != nil {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"duplicate transaction",
+				"streamId",
+				ru.params.streamView.StreamId(),
+				"transactionHash",
+				ru.transaction.GetSolanaReceipt().GetTransaction().Signatures,
+			)
+		} else {
+			// should never happen
+			return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
+		}
 	}
 	return true, nil
 }
@@ -998,8 +1021,8 @@ func (ru *aeReceivedBlockchainTransactionRules) receivedBlockchainTransaction_Ch
 		}
 		// make sure that the receiver (in the event emitted from the tipping facet) is one of our wallets
 		return auth.NewChainAuthArgsForIsWalletLinked(
-			userAddress.Bytes(),
-			content.Tip.GetEvent().GetReceiver(),
+			userAddress,
+			common.BytesToAddress(content.Tip.GetEvent().GetReceiver()),
 		), nil
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown received transaction kind for chain auth", "kind", content)
@@ -1155,27 +1178,27 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 	case nil:
 		// no content, verify the receipt.from
 		return auth.NewChainAuthArgsForIsWalletLinked(
-			ru.params.parsedEvent.Event.CreatorAddress,
-			ru.transaction.Receipt.From,
+			common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+			common.BytesToAddress(ru.transaction.Receipt.From),
 		), nil
 	case *BlockchainTransaction_Tip_:
 		// tips can be sent through a bundler, verify the tip sender
 		// as specified in the tip content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
 		return auth.NewChainAuthArgsForIsWalletLinked(
-			ru.params.parsedEvent.Event.CreatorAddress,
-			content.Tip.GetEvent().GetSender(),
+			common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+			common.BytesToAddress(content.Tip.GetEvent().GetSender()),
 		), nil
 	case *BlockchainTransaction_TokenTransfer_:
 		return auth.NewChainAuthArgsForIsWalletLinked(
-			ru.params.parsedEvent.Event.CreatorAddress,
-			content.TokenTransfer.GetSender(),
+			common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+			common.BytesToAddress(content.TokenTransfer.GetSender()),
 		), nil
 	case *BlockchainTransaction_SpaceReview_:
 		// space reviews can be sent through a bundler, verify the space review sender
 		// as specified in the space review content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
 		return auth.NewChainAuthArgsForIsWalletLinked(
-			ru.params.parsedEvent.Event.CreatorAddress,
-			content.SpaceReview.GetEvent().GetUser(),
+			common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+			common.BytesToAddress(content.SpaceReview.GetEvent().GetUser()),
 		), nil
 	default:
 		return nil, RiverError(
@@ -1454,15 +1477,74 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	if err != nil {
 		return nil, err
 	}
-	initiatorId, err := shared.AddressHex(ru.membership.InitiatorAddress)
+	// for joins and invites, require space membership
+	return &DerivedEvent{
+		Payload: events.Make_UserPayload_Membership(
+			MembershipOp_SO_JOIN,
+			*streamParentId,
+			common.BytesToAddress(ru.membership.InitiatorAddress),
+			nil,
+			nil,
+		),
+		StreamId: userStreamId,
+	}, nil
+}
+
+// ownerChainAuthForInviter validates that the inviter on the UserMembership event has space ownership.
+// For apps, we expect the user membership event to be derived from a user membership action posted
+// by the space owner; this authorization is required to ensure that apps are added to spaces or channels
+// directly by space owners.
+func (ru *aeUserMembershipRules) ownerChainAuthForInviter() (*auth.ChainAuthArgs, error) {
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
 	if err != nil {
 		return nil, err
 	}
-	// for joins and invites, require space membership
-	return &DerivedEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil, nil),
-		StreamId: userStreamId,
-	}, nil
+
+	if streamId.Type() == shared.STREAM_SPACE_BIN {
+		return auth.NewChainAuthArgsForSpace(
+			streamId,
+			common.Address(ru.userMembership.Inviter),
+			auth.PermissionOwnership,
+			common.Address{},
+		), nil
+	}
+
+	if streamId.Type() == shared.STREAM_CHANNEL_BIN {
+		return auth.NewChainAuthArgsForChannel(
+			streamId.SpaceID(),
+			streamId,
+			common.Address(ru.userMembership.Inviter),
+			auth.PermissionOwnership,
+			common.Address{},
+		), nil
+	}
+
+	return nil, RiverError(
+		Err_BAD_STREAM_ID,
+		"Invalid stream type for determining ownership",
+	).Tag("streamId", streamId).
+		Tag("inviter", ru.userMembership.Inviter)
+}
+
+// validUserMembershipStream confirms that, if the user stream belongs to an app, the app is
+// being added to acceptible stream types. At this time the protocol does not support app membership
+// in DM and GDM channels. At this time, non-app users are allowed to join streams of all types.
+func (ru *aeUserMembershipRules) validUserMembershipStream() (bool, error) {
+	isAppUser, err := ru.params.streamView.IsAppUser()
+	if err != nil {
+		return false, err
+	}
+
+	if !isAppUser {
+		return true, nil
+	}
+
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
+	if err != nil {
+		return false, err
+	}
+
+	return streamId.Type() != shared.STREAM_DM_CHANNEL_BIN && streamId.Type() != shared.STREAM_GDM_CHANNEL_BIN, nil
 }
 
 func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
@@ -1488,7 +1570,12 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 	if ru.userMembership.Reason != nil && *ru.userMembership.Reason != MembershipReason_MR_NONE {
 		// at this time, the only reasons are for the scrubber so we need to make sure the membership op is leave
 		if ru.userMembership.Op != MembershipOp_SO_LEAVE {
-			return false, RiverError(Err_PERMISSION_DENIED, "reasons should be undefined for non-leave events", "op", ru.userMembership.Op)
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"reasons should be undefined for non-leave events",
+				"op",
+				ru.userMembership.Op,
+			)
 		}
 		// reasons should only be set by the scrubber at this time
 		canAdd, err := ru.params.creatorIsValidNode()
@@ -1497,7 +1584,6 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 		}
 	}
 
-	
 	switch currentMembershipOp {
 	case MembershipOp_SO_INVITE:
 		// from invite only join and leave are valid
@@ -1551,12 +1637,21 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 		initiatorAddress = creatorAddress
 	}
 
+	// Pass along the app address to the stream where the user's membership is changing.
+	lastSnap, err := ru.params.streamView.GetUserSnapshotContent()
+	if err != nil {
+		return nil, err
+	}
+	appAddress := common.BytesToAddress(lastSnap.Inception.AppAddress)
+
 	return &DerivedEvent{
 		Payload: events.Make_MemberPayload_Membership(
 			userMembership.Op,
 			userAddress.Bytes(),
 			initiatorAddress,
 			userMembership.StreamParentId,
+			userMembership.Reason,
+			appAddress,
 		),
 		StreamId: toStreamId,
 	}, nil
@@ -1568,15 +1663,17 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership action event")
 	}
 	action := ru.action
-	inviterId, err := shared.AddressHex(ru.params.parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return nil, err
-	}
 	actionStreamId, err := shared.StreamIdFromBytes(action.StreamId)
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId, nil)
+	payload := events.Make_UserPayload_Membership(
+		action.Op,
+		actionStreamId,
+		common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
+		action.StreamParentId,
+		nil,
+	)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
 	if err != nil {
 		return nil, err
@@ -1590,7 +1687,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs, error) {
 	streamId := ru.params.streamView.StreamId()
 
-	permission, permissionUser, err := ru.getPermissionForMembershipOp()
+	permission, permissionUser, appAddress, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
 	}
@@ -1603,12 +1700,17 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 	// Space joins are a special case as they do not require an entitlement check. We simply
 	// verify that the user is a space member.
 	if ru.membership.Op == MembershipOp_SO_JOIN {
-		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(*streamId, permissionUser)
+		chainAuthArgs = auth.NewChainAuthArgsForIsSpaceMember(
+			*streamId,
+			permissionUser,
+			appAddress,
+		)
 	} else {
 		chainAuthArgs = auth.NewChainAuthArgsForSpace(
 			*streamId,
 			permissionUser,
 			permission,
+			appAddress,
 		)
 	}
 	return chainAuthArgs, nil
@@ -1620,7 +1722,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, err
 	}
 
-	permission, permissionUser, err := ru.getPermissionForMembershipOp()
+	permission, permissionUser, appAddress, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
 	}
@@ -1641,6 +1743,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 			spaceId,
 			permissionUser,
 			permission,
+			appAddress,
 		), nil
 	}
 
@@ -1649,6 +1752,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		*ru.params.streamView.StreamId(),
 		permissionUser,
 		permission,
+		appAddress,
 	)
 
 	return chainAuthArgs, nil
@@ -1662,7 +1766,9 @@ func (params *aeParams) spaceEntitlements(permission auth.Permission) func() (*a
 		if !shared.ValidSpaceStreamId(spaceId) {
 			return nil, RiverError(Err_INVALID_ARGUMENT, "invalid space stream id", "streamId", spaceId)
 		}
-		permissionUser, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
+		permissionUser := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
+
+		appAddress, err := params.streamView.GetMemberAppAddress(permissionUser)
 		if err != nil {
 			return nil, err
 		}
@@ -1671,18 +1777,16 @@ func (params *aeParams) spaceEntitlements(permission auth.Permission) func() (*a
 			*spaceId,
 			permissionUser,
 			permission,
+			appAddress,
 		)
 		return chainAuthArgs, nil
 	}
 }
 
-// retrun a function that can be used to check if a user has a permission for a channel
+// return a function that can be used to check if a user has a permission for a channel
 func (params *aeParams) channelEntitlements(permission auth.Permission) func() (*auth.ChainAuthArgs, error) {
 	return func() (*auth.ChainAuthArgs, error) {
-		userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
-		if err != nil {
-			return nil, err
-		}
+		userId := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 		channelId := *params.streamView.StreamId()
 
 		inception, err := params.streamView.GetChannelInception()
@@ -1695,11 +1799,17 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 			return nil, err
 		}
 
+		appAddress, err := params.streamView.GetMemberAppAddress(userId)
+		if err != nil {
+			return nil, err
+		}
+
 		chainAuthArgs := auth.NewChainAuthArgsForChannel(
 			spaceId,
 			channelId,
 			userId,
 			permission,
+			appAddress,
 		)
 
 		return chainAuthArgs, nil
@@ -1707,10 +1817,7 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 }
 
 func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error) {
-	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return nil, err
-	}
+	userId := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 	userStreamId, err := shared.UserStreamIdFromBytes(params.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return nil, err
@@ -1730,7 +1837,7 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 		Payload: events.Make_UserPayload_Membership(
 			MembershipOp_SO_LEAVE,
 			*channelId,
-			&userId,
+			userId,
 			spaceId[:],
 			nil,
 		),
@@ -1752,31 +1859,26 @@ func (params *aeParams) creatorIsValidNode() (bool, error) {
 	return true, nil
 }
 
-func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, string, error) {
+func (ru *aeMembershipRules) getPermissionForMembershipOp() (permission auth.Permission, permissionUser common.Address, appAddress common.Address, err error) {
 	if ru.membership == nil {
-		return auth.PermissionUndefined, "", RiverError(Err_INVALID_ARGUMENT, "membership is nil")
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
+			Err_INVALID_ARGUMENT,
+			"membership is nil",
+		)
 	}
 	membership := ru.membership
 
-	// todo aellis - don't need these conversions
-	initiatorId, err := shared.AddressHex(ru.membership.InitiatorAddress)
-	if err != nil {
-		return auth.PermissionUndefined, "", err
-	}
+	initiatorId := common.BytesToAddress(ru.membership.InitiatorAddress)
 
-	userAddress := ru.membership.UserAddress
-	userId, err := shared.AddressHex(userAddress)
-	if err != nil {
-		return auth.PermissionUndefined, "", err
-	}
+	userAddress := common.BytesToAddress(ru.membership.UserAddress)
 
-	currentMembership, err := ru.params.streamView.GetMembership(userAddress)
+	currentMembership, err := ru.params.streamView.GetMembership(userAddress.Bytes())
 	if err != nil {
-		return auth.PermissionUndefined, "", err
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, err
 	}
 	if membership.Op == currentMembership {
 		// this could panic, the rule builder should never allow us to get here
-		return auth.PermissionUndefined, "", RiverError(
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 			Err_FAILED_PRECONDITION,
 			"membershipOp should not be the same as currentMembership",
 		)
@@ -1785,43 +1887,59 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
 		if currentMembership == MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, "", RiverError(
+			return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 				Err_FAILED_PRECONDITION,
 				"user is already a member of the channel",
 				"user",
-				userId,
+				userAddress,
 				"initiator",
 				initiatorId,
 			)
 		}
-		return auth.PermissionInvite, initiatorId, nil
+		permission = auth.PermissionInvite
+		permissionUser = initiatorId
 
 	case MembershipOp_SO_JOIN:
-		return auth.PermissionRead, userId, nil
+		permission = auth.PermissionRead
+		permissionUser = userAddress
 
 	case MembershipOp_SO_LEAVE:
 		if currentMembership != MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, "", RiverError(
+			return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
 				Err_FAILED_PRECONDITION,
 				"user is not a member of the channel",
 				"user",
-				userId,
+				userAddress,
 				"initiator",
 				initiatorId,
 			)
 		}
-		if userId != initiatorId {
-			return auth.PermissionModifyBanning, initiatorId, nil
+		if userAddress != initiatorId && !ru.params.isValidNode(initiatorId[:]) {
+			permission = auth.PermissionModifyBanning
+			permissionUser = initiatorId
 		} else {
-			return auth.PermissionUndefined, userId, nil
+			permission = auth.PermissionUndefined
+			permissionUser = userAddress
 		}
 
 	case MembershipOp_SO_UNSPECIFIED:
 		fallthrough
 
 	default:
-		return auth.PermissionUndefined, "", RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
+		return auth.PermissionUndefined, common.Address{}, common.Address{}, RiverError(
+			Err_BAD_EVENT,
+			"Need valid membership op",
+			"op",
+			membership.Op,
+		)
 	}
+
+	// Set appAddress only if the permission user is the membership user address
+	if permissionUser == userAddress {
+		appAddress = common.BytesToAddress(ru.membership.AppAddress)
+	}
+
+	return permission, permissionUser, appAddress, nil
 }
 
 func (ru *aePinRules) validPin() (bool, error) {

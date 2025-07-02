@@ -53,7 +53,7 @@ export default [
         "internalType": "uint16"
       },
       {
-        "name": "collectPosterFeeToSpace",
+        "name": "forwardPosterFee",
         "type": "bool",
         "indexed": false,
         "internalType": "bool"
@@ -63,17 +63,17 @@ export default [
   },
   {
     "type": "error",
-    "name": "SwapFacet__SwapFailed",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "SwapFacet__SwapRouterNotSet",
     "inputs": []
   },
   {
     "type": "error",
     "name": "SwapFacet__TotalFeeTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapFacet__UnexpectedETH",
     "inputs": []
   }
 ] as const

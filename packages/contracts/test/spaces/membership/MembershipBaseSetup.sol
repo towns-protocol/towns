@@ -77,6 +77,7 @@ contract MembershipBaseSetup is
 
     address internal userSpace;
     address internal dynamicSpace;
+    address internal freeSpace;
 
     function setUp() public virtual override {
         super.setUp();
@@ -107,10 +108,16 @@ contract MembershipBaseSetup is
         );
         dynamicSpaceInfo.membership.settings.pricingModule = pricingModule;
 
+        IArchitectBase.SpaceInfo memory freeSpaceInfo = _createEveryoneSpaceInfo("FreeSpace");
+        freeSpaceInfo.membership.settings.freeAllocation = 100;
+        freeSpaceInfo.membership.settings.price = 0;
+        freeSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+
         vm.startPrank(founder);
         // user space is a space where only alice and charlie are allowed along with the founder
         userSpace = CreateSpaceFacet(spaceFactory).createSpace(userSpaceInfo);
         dynamicSpace = CreateSpaceFacet(spaceFactory).createSpace(dynamicSpaceInfo);
+        freeSpace = CreateSpaceFacet(spaceFactory).createSpace(freeSpaceInfo);
         vm.stopPrank();
 
         membership = MembershipFacet(userSpace);
@@ -171,8 +178,7 @@ contract MembershipBaseSetup is
         IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
 
         // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule
-        // entitlements that need to
-        // be checked for the joinSpace permission.
+        // entitlements that need to be checked for the joinSpace permission.
         IRolesBase.CreateEntitlement[]
             memory createEntitlements1 = new IRolesBase.CreateEntitlement[](1);
         IRolesBase.CreateEntitlement[]

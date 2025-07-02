@@ -51,10 +51,10 @@
         "publint": "^0.2.8",
         "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
-        "turbo": "^2.0.12",
+        "turbo": "^2.5.4",
         "typechain": "^8.1.1",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5",
+        "vitest": "^3.2.3",
         "wait-on": "^7.0.1"
     },
     "husky": {
@@ -69,9 +69,6 @@
         "*.{json,yml}": [
             "prettier --write"
         ]
-    },
-    "resolutions": {
-        "jest-worker@^29.5.0": "patch:jest-worker@npm%3A29.5.0#./.yarn/patches/jest-worker-npm-29.5.0-70da3388f1.patch"
     },
     "syncpack": {
         "dependencyTypes": [
@@ -114,6 +111,7 @@
         "protocol",
         "packages/*",
         "packages/workers/*",
+        "packages/examples/*",
         "services/*"
     ],
     "dependencies": {

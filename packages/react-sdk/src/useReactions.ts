@@ -1,4 +1,4 @@
-import { type ReactionsMap, Space, assert } from '@towns-protocol/sdk'
+import { MessageReactions, Space, assert } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { getRoom } from './utils'
@@ -11,7 +11,7 @@ import { getRoom } from './utils'
  */
 export const useReactions = (
     streamId: string,
-    config?: ObservableConfig.FromData<ReactionsMap>,
+    config?: ObservableConfig.FromData<Record<string, MessageReactions>>,
 ) => {
     const sync = useSyncAgent()
     const room = getRoom(sync, streamId)

@@ -98,18 +98,18 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
         return PlatformRequirementsStorage.layout().membershipMinPrice;
     }
 
-    function _setSwapFees(uint16 treasuryBps, uint16 posterBps) internal {
-        if (posterBps > BasisPoints.MAX_BPS || treasuryBps > BasisPoints.MAX_BPS) {
+    function _setSwapFees(uint16 protocolBps, uint16 posterBps) internal {
+        if (posterBps > BasisPoints.MAX_BPS || protocolBps > BasisPoints.MAX_BPS) {
             Platform__InvalidSwapFeeBps.selector.revertWith();
         }
         PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage.layout();
-        ($.swapTreasuryBps, $.swapPosterBps) = (treasuryBps, posterBps);
-        emit PlatformSwapFeesSet(treasuryBps, posterBps);
+        ($.swapProtocolBps, $.swapPosterBps) = (protocolBps, posterBps);
+        emit PlatformSwapFeesSet(protocolBps, posterBps);
     }
 
-    function _getSwapFees() internal view returns (uint16 treasuryBps, uint16 posterBps) {
+    function _getSwapFees() internal view returns (uint16 protocolBps, uint16 posterBps) {
         PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage.layout();
-        return ($.swapTreasuryBps, $.swapPosterBps);
+        return ($.swapProtocolBps, $.swapPosterBps);
     }
 
     function _setRouterWhitelisted(address router, bool whitelisted) internal {

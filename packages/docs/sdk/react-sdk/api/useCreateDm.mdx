@@ -24,6 +24,7 @@ function useCreateDm(
     isError: boolean;
     createDM: (userId: string, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;
@@ -56,6 +57,7 @@ An object containing the `createDM` action and the rest of the action result.
     isError: boolean;
     createDM: (userId: string, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;

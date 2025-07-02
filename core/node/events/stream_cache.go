@@ -65,11 +65,15 @@ type StreamCache struct {
 
 	chainConfig crypto.OnChainConfiguration
 
-	streamCacheSizeGauge     prometheus.Gauge
-	streamCacheUnloadedGauge prometheus.Gauge
-	streamCacheRemoteGauge   prometheus.Gauge
-	loadStreamRecordDuration prometheus.Histogram
-	loadStreamRecordCounter  *infra.StatusCounterVec
+	// prometheusm metrics
+	streamCacheSizeGauge              prometheus.Gauge
+	streamCacheUnloadedGauge          prometheus.Gauge
+	streamCacheRemoteGauge            prometheus.Gauge
+	loadStreamRecordDuration          prometheus.Histogram
+	loadStreamRecordCounter           *infra.StatusCounterVec
+	scheduledGetRecordTasksGauge      prometheus.Gauge
+	scheduledReconciliationTasksGauge prometheus.Gauge
+	retryableReconciliationTasksGauge  prometheus.Gauge
 
 	stoppedMu sync.RWMutex
 	stopped   bool
@@ -77,9 +81,9 @@ type StreamCache struct {
 	scheduledGetRecordTasks      *xsync.Map[StreamId, bool]
 	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
-	onlineSyncWorkerPool *workerpool.WorkerPool
+	onlineReconcileWorkerPool *workerpool.WorkerPool
 
-	retryableReconcilationTasks *retryableReconciliationTasks
+	retryableReconciliationTasks *retryableReconciliationTasks
 
 	mbProducer *miniblockProducer
 }
@@ -111,6 +115,18 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			params.RiverChain.ChainId.String(),
 			params.Wallet.Address.String(),
 		),
+		scheduledGetRecordTasksGauge: params.Metrics.NewGaugeEx(
+			"stream_cache_recon_scheduled_get_record_tasks",
+			"Number of recon tasks scheduled to get stream record",
+		),
+		scheduledReconciliationTasksGauge: params.Metrics.NewGaugeEx(
+			"stream_cache_recon_scheduled_recon_tasks",
+			"Number of recon tasks scheduled",
+		),
+		retryableReconciliationTasksGauge: params.Metrics.NewGaugeEx(
+			"stream_cache_recon_scheduled_recon_retryable_tasks",
+			"Number of recon tasks scheduled for retry",
+		),
 		loadStreamRecordDuration: params.Metrics.NewHistogramEx(
 			"stream_cache_load_duration_seconds",
 			"Load stream record duration",
@@ -121,10 +137,12 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			"Number of stream record loads",
 		),
 		chainConfig:                  params.ChainConfig,
-		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		onlineReconcileWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
-		retryableReconcilationTasks:  newRetryableReconciliationTasks(params.Config.StreamReconciliation.ReconciliationTaskRetryDuration),
+		retryableReconciliationTasks: newRetryableReconciliationTasks(
+			params.Config.StreamReconciliation.ReconciliationTaskRetryDuration,
+		),
 	}
 	s.params.streamCache = s
 	return s
@@ -133,8 +151,8 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) error {
 	s.mbProducer = newMiniblockProducer(ctx, s, opts)
 
-	// schedule sync tasks for all streams that are local to this node.
-	// these tasks sync up the local db with the latest block in the registry.
+	// schedule reconciliation tasks for all streams that are local to this node.
+	// these tasks reconcile the local db with the latest block in the registry.
 	var localStreamResults []*river.StreamWithId
 	err := s.params.Registry.ForAllStreamsOnNode(
 		ctx,
@@ -150,7 +168,7 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 	}
 
 	// load local streams in-memory cache
-	initialSyncWorkerPool := workerpool.New(s.params.Config.StreamReconciliation.InitialWorkerPoolSize)
+	initialReconcileWorkerPool := workerpool.New(s.params.Config.StreamReconciliation.InitialWorkerPoolSize)
 	for _, streamRecord := range localStreamResults {
 		stream := &Stream{
 			params:              s.params,
@@ -161,8 +179,8 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
-			s.submitSyncStreamTaskToPool(
-				initialSyncWorkerPool,
+			s.submitReconcileStreamTaskToPool(
+				initialReconcileWorkerPool,
 				stream,
 				streamRecord,
 			)
@@ -172,7 +190,7 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 	s.appliedBlockNum.Store(uint64(s.params.AppliedBlockNum))
 
 	// Close initial worker pool after all tasks are executed.
-	go initialSyncWorkerPool.StopWait()
+	go initialReconcileWorkerPool.StopWait()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
 	if !s.params.disableCallbacks {
@@ -189,14 +207,18 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		s.stoppedMu.Lock()
 		s.stopped = true
 		s.stoppedMu.Unlock()
-		s.onlineSyncWorkerPool.Stop()
-		initialSyncWorkerPool.Stop()
+		s.onlineReconcileWorkerPool.Stop()
+		initialReconcileWorkerPool.Stop()
 	}()
 
 	return nil
 }
 
 func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.BlockNumber, logs []*types.Log) {
+	s.scheduledGetRecordTasksGauge.Set(float64(s.scheduledGetRecordTasks.Size()))
+	s.scheduledReconciliationTasksGauge.Set(float64(s.scheduledReconciliationTasks.Size()))
+	s.retryableReconciliationTasksGauge.Set(float64(s.retryableReconciliationTasks.Len()))
+
 	streamEvents, errs := s.params.Registry.FilterStreamUpdatedEvents(ctx, logs)
 	// Process parsed stream events even if some failed to parse
 	for _, err := range errs {
@@ -208,12 +230,12 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	wp.Submit(func() {
 		now := time.Now()
 		for {
-			reconTask := s.retryableReconcilationTasks.Peek()
+			reconTask := s.retryableReconciliationTasks.Peek()
 			if reconTask != nil && reconTask.retryAfter.Before(now) {
 				if stream, _ := s.GetStreamNoWait(ctx, reconTask.item.StreamId()); stream != nil {
-					s.SubmitSyncStreamTask(stream, reconTask.item)
+					s.SubmitReconcileStreamTask(stream, reconTask.item)
 				}
-				s.retryableReconcilationTasks.Remove(reconTask)
+				s.retryableReconciliationTasks.Remove(reconTask)
 				continue
 			}
 			break
@@ -380,7 +402,7 @@ func (s *StreamCache) insertEmptyLocalStream(
 		},
 	)
 	if reconcile && !loaded {
-		s.SubmitSyncStreamTask(stream, record)
+		s.SubmitReconcileStreamTask(stream, record)
 	}
 	return stream
 }
@@ -558,7 +580,11 @@ func (s *StreamCache) GetMbCandidateStreams(ctx context.Context) []*Stream {
 	return candidates
 }
 
-func (s *StreamCache) TestMakeMiniblock(ctx context.Context, streamId StreamId, forceSnapshot bool) (*MiniblockRef, error) {
+func (s *StreamCache) TestMakeMiniblock(
+	ctx context.Context,
+	streamId StreamId,
+	forceSnapshot bool,
+) (*MiniblockRef, error) {
 	return s.mbProducer.TestMakeMiniblock(ctx, streamId, forceSnapshot)
 }
 

@@ -9,7 +9,8 @@ import {
 	MediaInfo,
 	MediaInfoSchema,
 } from '@towns-protocol/proto'
-import { Client, encryptAESGCM, streamIdAsString } from '@towns-protocol/sdk'
+import { Client, streamIdAsString } from '@towns-protocol/sdk'
+import { encryptAESGCM } from '@towns-protocol/sdk-crypto'
 import {
 	CreateLegacySpaceParams,
 	ETH_ADDRESS,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -49,7 +50,14 @@ func makeTestSpaceStream(
 	join := makeEnvelopeWithPayload_T(
 		t,
 		userWallet,
-		Make_MemberPayload_Membership(protocol.MembershipOp_SO_JOIN, userAddess, userAddess, nil),
+		Make_MemberPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			userAddess,
+			userAddess,
+			nil,
+			nil,
+			common.Address{},
+		),
 		nil,
 	)
 
@@ -192,6 +200,7 @@ func leaveChannel_T(
 func TestSpaceViewState(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		defaultMinEventsPerSnapshot: 2,
+		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -245,9 +254,11 @@ func TestSpaceViewState(t *testing.T) {
 	// now, turn that block into bytes, then load it back into a view
 	miniblocks, snapshot := stream.getViewLocked().MiniblocksFromLastSnapshot()
 	require.Equal(t, 1, len(miniblocks))
-	require.Nil(t, snapshot)
+	require.NotNil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
+	require.NoError(t, err)
+	snapshotBytes, err := proto.Marshal(snapshot)
 	require.NoError(t, err)
 
 	// load up a brand new view from the latest snapshot result
@@ -255,7 +266,7 @@ func TestSpaceViewState(t *testing.T) {
 	view3, err = MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes},
+				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
 	)
@@ -283,6 +294,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
+		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -313,15 +325,16 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks, snapshot := channelStream.getViewLocked().MiniblocksFromLastSnapshot()
-	require.Nil(t, snapshot)
+	require.NotNil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
+	snapshotBytes, _ := proto.Marshal(snapshot)
 	// create a stream view from the miniblock bytes
 	var streamView *StreamView
 	streamView, err = MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes},
+				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
 	)
@@ -343,6 +356,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
+		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -375,15 +389,16 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks, snapshot := channelStream.getViewLocked().MiniblocksFromLastSnapshot()
-	require.Nil(t, snapshot)
+	require.NotNil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
+	snapshotBytes, _ := proto.Marshal(snapshot)
 	// create a stream view from the miniblock bytes
 	var streamView *StreamView
 	streamView, err = MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes},
+				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
 	)

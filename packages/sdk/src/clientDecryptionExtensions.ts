@@ -1,17 +1,17 @@
+import { GroupEncryptionCrypto, UserDevice } from '@towns-protocol/encryption'
 import {
     BaseDecryptionExtensions,
     DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
     EventSignatureBundle,
-    GroupEncryptionCrypto,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
     KeySolicitationItem,
-    UserDevice,
-} from '@towns-protocol/encryption'
+} from './decryptionExtensions'
+
 import {
     AddEventResponse_Error,
     EncryptedData,
@@ -23,7 +23,7 @@ import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@towns-protocol/web3'
 import { check } from '@towns-protocol/dlog'
-import chunk from 'lodash/chunk'
+import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
 import {
@@ -305,7 +305,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             deviceKey: this.userDevice.deviceKey,
             fallbackKey: this.userDevice.fallbackKey,
             isNewDevice,
-            sessionIds: isNewDevice ? [] : missingSessionIds,
+            sessionIds: missingSessionIds,
         })
         await this.client.makeEventAndAddToStream(streamId, keySolicitation)
     }

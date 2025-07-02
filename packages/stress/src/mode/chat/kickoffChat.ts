@@ -61,10 +61,9 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     )
 
     const mintMembershipForWallet = async (wallet: Wallet, i: number) => {
-        const hasSpaceMembership = await rootClient.spaceDapp.hasSpaceMembership(
-            spaceId,
-            wallet.address,
-        )
+        const hasSpaceMembership = (
+            await rootClient.spaceDapp.getMembershipStatus(spaceId, [wallet.address])
+        ).isMember
         logger.debug({ i, address: wallet.address, hasSpaceMembership }, 'minting membership')
         if (!hasSpaceMembership) {
             const result = await rootClient.spaceDapp.joinSpace(

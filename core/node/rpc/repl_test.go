@@ -160,7 +160,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	require.Eventuallyf(func() bool {
 		stream, err = lastStartedNode.service.cache.GetStreamNoWait(ctx, streamId)
 		if err == nil {
-			if miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1); err == nil {
+			if miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1, true); err == nil {
 				return len(miniBlocks) == len(mbChain)
 			}
 		}
@@ -168,7 +168,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	}, 10*time.Second, 100*time.Millisecond, "catching up with stream failed within reasonable time")
 
 	// verify that loaded miniblocks match with blocks in expected mbChain
-	miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1)
+	miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1, true)
 	require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range miniBlocks {
@@ -286,7 +286,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// same miniblocks after it catches up.
 	stream, err = tt.nodes[opts.numNodes-2].service.cache.GetStreamWaitForLocal(ctx, streamId)
 	require.NoError(err)
-	expectedMiniblocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1)
+	expectedMiniblocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1, true)
 	require.NoError(err)
 
 	require.Eventuallyf(func() bool {
@@ -295,7 +295,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 			return false
 		}
 
-		if receivedMiniblocks, _, err = syncStream.GetMiniblocks(ctx, 0, latestMbNum+1); err == nil {
+		if receivedMiniblocks, _, err = syncStream.GetMiniblocks(ctx, 0, latestMbNum+1, true); err == nil {
 			return len(receivedMiniblocks) == len(expectedMiniblocks)
 		}
 		return false

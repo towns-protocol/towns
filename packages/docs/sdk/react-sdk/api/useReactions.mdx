@@ -14,8 +14,8 @@ import { useReactions } from '@towns-protocol/react-sdk'
 ```ts
 function useReactions(
   streamId: string,
-  config?: ObservableConfig.FromData<ReactionsMap>,
-): ObservableValue<ReactionsMap>
+  config?: ObservableConfig.FromData<Record<string, MessageReactions>>,
+): ObservableValue<Record<string, MessageReactions>>
 ```
 
 **Source:** [useReactions](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useReactions.ts)
@@ -30,7 +30,7 @@ The id of the stream to get the reactions of.
 
 ### config
 
-- **Type:** `ObservableConfig.FromData<ReactionsMap>`
+- **Type:** `ObservableConfig.FromData<Record<string, MessageReactions>>`
 - **Optional**
 
 Configuration options for the observable.
@@ -40,5 +40,5 @@ Configuration options for the observable.
 The reactions of the stream as a map from the message eventId to the reaction.
 
 ```ts
-ObservableValue<ReactionsMap>
+ObservableValue<Record<string, MessageReactions>>
 ```

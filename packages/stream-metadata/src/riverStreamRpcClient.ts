@@ -3,12 +3,12 @@ import {
 	StreamRpcClient,
 	StreamStateView,
 	UnpackEnvelopeOpts,
-	decryptAESGCM,
 	makeStreamRpcClient,
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
 } from '@towns-protocol/sdk'
+import { decryptAESGCM } from '@towns-protocol/sdk-crypto'
 import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
@@ -72,7 +72,7 @@ function streamViewFromUnpackedResponse(
 	streamId: string | Uint8Array,
 	unpackedResponse: ParsedStreamResponse,
 ): StreamStateView {
-	const streamView = new StreamStateView('userId', streamIdAsString(streamId))
+	const streamView = new StreamStateView('userId', streamIdAsString(streamId), undefined)
 	streamView.initialize(
 		unpackedResponse.streamAndCookie.nextSyncCookie,
 		unpackedResponse.streamAndCookie.events,

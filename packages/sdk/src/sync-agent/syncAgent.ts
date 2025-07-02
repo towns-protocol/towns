@@ -92,6 +92,10 @@ export class SyncAgent {
                 highPriorityStreamIds: this.config.highPriorityStreamIds,
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,
                 logId: config.logId,
+                streamOpts: {
+                    useModifySync: true,
+                    useSharedSyncer: true,
+                },
             },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,
@@ -125,7 +129,7 @@ export class SyncAgent {
         // commit the initialization transaction, which triggers onLoaded on the models
         await this.store.commitTransaction()
         this.log('SyncAgent::start: starting river connection')
-        // start thie river connection, this will log us in if the user is already signed up
+        // start this river connection, this will log us in if the user is already signed up
         // it will leave us in a connected state otherwise, see riverConnection.authStatus
         await this.riverConnection.start()
         this.log('SyncAgent::start: river connection started')

@@ -4,6 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IAppRegistry} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
+import {ITownsApp} from "../../ITownsApp.sol";
 
 // types
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -16,10 +18,11 @@ import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBas
 
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
+        address spaceFactory,
         string calldata schema,
         ISchemaResolver resolver
     ) external onlyInitializing {
-        __AppRegistry_init_unchained(schema, resolver);
+        __AppRegistry_init_unchained(spaceFactory, schema, resolver);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -51,21 +54,67 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
 
     /// @notice Register a new app with permissions
     /// @param app The app address to register
-    /// @param clients The list of client addresses that will make calls from this app
+    /// @param client The client address that will make calls from this app
     /// @return versionId The version ID of the registered app
     function registerApp(
-        address app,
-        address[] calldata clients
+        ITownsApp app,
+        address client
     ) external payable nonReentrant returns (bytes32 versionId) {
-        return _registerApp(app, clients);
+        return _registerApp(address(app), client);
     }
 
     /// @notice Remove a app from the registry
     /// @param versionId The app ID to remove
     /// @dev Only the owner of the app can remove it
-    /// @return version The version ID that was removed
-    function removeApp(bytes32 versionId) external nonReentrant returns (bytes32 version) {
-        (, version) = _removeApp(msg.sender, versionId);
+    function removeApp(bytes32 versionId) external nonReentrant {
+        _removeApp(msg.sender, versionId);
+    }
+
+    /// @notice Create an upgradeable simple app contract
+    /// @param params The parameters of the app
+    function createApp(
+        AppParams calldata params
+    ) external payable nonReentrant returns (address app, bytes32 versionId) {
+        return _createApp(params);
+    }
+
+    /// @notice Install an app
+    /// @param app The app address to install
+    /// @param space The space to install the app to
+    /// @param data The data to pass to the app's onInstall function
+    function installApp(
+        ITownsApp app,
+        IAppAccount space,
+        bytes calldata data
+    ) external payable nonReentrant {
+        _onlyAllowed(address(space));
+        return _installApp(address(app), address(space), data);
+    }
+
+    /// @notice Uninstall an app
+    /// @param app The app address to uninstall
+    /// @param account The account to uninstall the app from
+    /// @param data The data to pass to the app's onUninstall function
+    function uninstallApp(
+        ITownsApp app,
+        IAppAccount account,
+        bytes calldata data
+    ) external nonReentrant {
+        _onlyAllowed(address(account));
+        return _uninstallApp(address(app), address(account), data);
+    }
+
+    /// @notice Renew an app
+    /// @param app The app address to renew
+    /// @param account The account to renew the app for
+    /// @param data The data to pass to the app's onRenewApp function
+    function renewApp(
+        ITownsApp app,
+        IAppAccount account,
+        bytes calldata data
+    ) external payable nonReentrant {
+        _onlyAllowed(address(account));
+        _renewApp(address(app), address(account), data);
     }
 
     /// @notice Get the schema structure used for registering modules
@@ -80,18 +129,39 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _getSchemaId();
     }
 
-    /// @notice Get the attestation for a app
-    /// @param versionId The app ID
-    /// @return attestation The attestation
-    function getAppById(bytes32 versionId) external view returns (Attestation memory attestation) {
-        return _getApp(versionId);
+    /// @notice Get the app by ID
+    /// @param appId The app ID
+    /// @return app The app
+    function getAppById(bytes32 appId) external view returns (App memory app) {
+        return _getAppById(appId);
+    }
+
+    /// @notice Get the total price of an app
+    /// @param app The app address
+    /// @return price The price of the app with protocol fee
+    function getAppPrice(address app) external view returns (uint256 price) {
+        return _getAppPrice(app);
+    }
+
+    /// @notice Get the duration of an app
+    /// @param app The app address
+    /// @return duration The duration of the app
+    function getAppDuration(address app) external view returns (uint48 duration) {
+        return _getAppDuration(app);
     }
 
     /// @notice Get the latest version ID for a app
     /// @param app The app address
-    /// @return versionId The version ID of the registered app
+    /// @return appId The version ID of the registered app
     function getLatestAppId(address app) external view returns (bytes32) {
         return _getLatestAppId(app);
+    }
+
+    /// @notice Get the app address associated with a client
+    /// @param client The client address
+    /// @return app The app address
+    function getAppByClient(address client) external view returns (address app) {
+        return _getAppByClient(client);
     }
 
     /// @notice Check if a app is banned

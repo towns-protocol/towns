@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -116,7 +117,13 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Debugw("Adding stream with cookie", "stream", record.streamId, "minipoolGen", record.minipoolGen, "prevMiniblockHash", record.prevMiniblockHash)
+		Debugw("Adding stream with cookie",
+			"stream", record.streamId,
+			"minipoolGen", record.minipoolGen,
+			"prevMiniblockHash", record.prevMiniblockHash,
+			"syncId", ssr.GetSyncId(),
+			"targetNode", ssr.node,
+		)
 	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
@@ -156,6 +163,12 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
+	resetLabelValue := "false"
+	if reset {
+		resetLabelValue = "true"
+	}
+	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": resetLabelValue}).Inc()
+
 	if reset {
 		trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
 		if err != nil {
@@ -172,6 +185,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 			)
 			return
 		}
+		// Assuming each stream experiences a reset when it is first added to tracking, we would
+		// expect the reset to be the first event we see for each stream when tracking it.
 		ssr.metrics.TrackedStreams.With(labels).Inc()
 		record.trackedView = trackedView
 	}
@@ -252,8 +267,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
 	log := logging.FromCtx(ssr.syncCtx)
 	switch update.SyncOp {
-	case protocol.SyncOp_SYNC_DOWN:
-		ssr.relocateStream(shared.StreamId(update.StreamId))
 	case protocol.SyncOp_SYNC_UPDATE:
 		{
 			streamID, err := shared.StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
@@ -283,6 +296,11 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 			}
 			ssr.applyUpdateToStream(update.GetStream(), record)
 		}
+	case protocol.SyncOp_SYNC_DOWN:
+		// Stream relocation is invoked by the remote syncer whenever a SYNC_DOWN is received, via a callback.
+		// We can count sync downs to get a sense of how often streams are relocated due to node unavailability.
+		ssr.metrics.SyncDown.With(prometheus.Labels{"target_node": ssr.node.Hex()}).Inc()
+		return
 	case protocol.SyncOp_SYNC_CLOSE:
 		fallthrough
 	case protocol.SyncOp_SYNC_PONG:
@@ -311,17 +329,15 @@ func (ssr *syncSessionRunner) Run() {
 	streamClient, err := ssr.nodeRegistry.GetStreamServiceClientForAddress(ssr.node)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to create a StreamServiceClient for node").
+			Message("Unable to create a StreamServiceClient for node, closing sync session runner").
 			Tag("node", ssr.node).
-			LogError(logging.FromCtx(ssr.syncCtx)))
+			LogWarn(logging.FromCtx(ssr.syncCtx)))
 
 		ssr.syncStarted.Done()
 		return
 	}
 	syncer, err := client.NewRemoteSyncer(
 		ssr.syncCtx,
-		ssr.cancelSync,
-		"SyncSessionRunner",
 		ssr.node,
 		streamClient,
 		ssr.relocateStream,
@@ -330,9 +346,9 @@ func (ssr *syncSessionRunner) Run() {
 	)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to create a remote syncer for node").
+			Message("Unable to create a remote syncer for node, closing sync session runner").
 			Tag("targetNode", ssr.node).
-			LogError(logging.FromCtx(ssr.syncCtx)))
+			LogWarn(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
 	}
@@ -340,12 +356,25 @@ func (ssr *syncSessionRunner) Run() {
 
 	go ssr.syncer.Run()
 
+	// Track active syncs spawned by the multi sync runner.
+	// There will be a bit of dlay between when the sync is cancelled and it is decremented, but on average these
+	// should be fairly accurate.
+	ssr.metrics.ActiveStreamSyncSessions.Inc()
+	defer ssr.metrics.ActiveStreamSyncSessions.Dec()
+
 	// This runner is now ready for streams to be added
 	ssr.syncStarted.Done()
 
 	var batch []*protocol.SyncStreamsResponse
+	metricsTicker := time.Tick(1 * time.Second)
+
 	for {
 		select {
+		case <-metricsTicker:
+			ssr.mu.Lock()
+			ssr.metrics.StreamsPerSyncSession.Observe(float64(ssr.streamCount))
+			ssr.mu.Unlock()
+
 		// Root context cancelled - this should propogate to the sync context and cause it to stop itself.
 		// We do not re-assign streams in this case because we infer the intent was to close the application.
 		case <-ssr.rootCtx.Done():
@@ -373,7 +402,9 @@ func (ssr *syncSessionRunner) Run() {
 func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	ssr.mu.Lock()
 	rawRecordPtr, ok := ssr.streamRecords.LoadAndDelete(streamID)
-	ssr.streamCount--
+	if ok {
+		ssr.streamCount--
+	}
 
 	// Cancel the remote sync session if all streams have been relocated.
 	if ssr.streamCount <= 0 {
@@ -400,7 +431,8 @@ func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 		return
 	}
 
-	record.remotes.AdvanceStickyPeer(ssr.node)
+	newTarget := record.remotes.AdvanceStickyPeer(ssr.node)
+	log.Debugw("Relocating stream", "oldNode", ssr.node, "newTarget", newTarget)
 	ssr.relocateStreams <- record
 }
 
@@ -414,11 +446,17 @@ func (ssr *syncSessionRunner) GetSyncId() string {
 
 // Close shuts down the runner and relocates all streams.
 func (ssr *syncSessionRunner) Close(err error) {
+	log := logging.FromCtx(ssr.rootCtx)
+
 	ssr.mu.Lock()
+	if ssr.closeErr != nil {
+		defer ssr.mu.Unlock()
+		log.Debugw("syncSessionRunner.Close already called", "existingError", ssr.closeErr, "newError", err)
+		return
+	}
 	ssr.closeErr = err
 	ssr.mu.Unlock()
 
-	log := logging.FromCtx(ssr.rootCtx)
 	if !errors.Is(err, context.Canceled) {
 		log.Errorw(
 			"Sync session was closed due to error",
@@ -511,7 +549,7 @@ type MultiSyncRunner struct {
 
 	// workerPool tracks workers that empty the queue of streams to relocate and place them in
 	// new or existing syncs
-	workerPool workerpool.WorkerPool
+	workerPool *workerpool.WorkerPool
 
 	otelTracer trace.Tracer
 
@@ -570,7 +608,7 @@ func NewMultiSyncRunner(
 		trackedViewConstructor: trackedStreamViewConstructor,
 		streamsToSync:          make(chan (*streamSyncInitRecord), 2048),
 		config:                 streamTrackingConfig,
-		workerPool:             *workerpool.New(streamTrackingConfig.NumWorkers),
+		workerPool:             workerpool.New(streamTrackingConfig.NumWorkers),
 		otelTracer:             otelTracer,
 	}
 }
@@ -650,8 +688,10 @@ func (msr *MultiSyncRunner) addToSync(
 		if sessionRunner, loaded = msr.unfilledSyncs.LoadOrStore(targetNode, runner); !loaded {
 			// If our new runner won the race to be stored for this node, kick off the runner. Streams
 			// are not assignable until the sync session starts.
+			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Inc()
 			go runner.Run()
 			runner.WaitUntilStarted()
+			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Dec()
 		}
 		pool.Release(1)
 	}

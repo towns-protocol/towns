@@ -1,4 +1,4 @@
-import { Space, type TimelineEvents, assert } from '@towns-protocol/sdk'
+import { Space, type TimelineEvent, assert } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { getRoom } from './utils'
@@ -26,7 +26,7 @@ import { useSyncAgent } from './useSyncAgent'
  */
 export const useTimeline = (
     streamId: string,
-    config?: ObservableConfig.FromObservable<TimelineEvents>,
+    config?: ObservableConfig.FromObservable<TimelineEvent[]>,
 ) => {
     const sync = useSyncAgent()
     const room = useMemo(() => getRoom(sync, streamId), [streamId, sync])
