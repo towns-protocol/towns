@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -106,6 +107,7 @@ func MakeTestBlockForUserSettingsStream(
 		t,
 		userWallet,
 		Make_UserSettingsPayload_FullyReadMarkers(&UserSettingsPayload_FullyReadMarkers{}),
+		false,
 		prevBlock.Ref,
 	)
 
@@ -131,9 +133,16 @@ func MakeEvent(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
+	ephemeral bool,
 	prevMiniblock *MiniblockRef,
 ) *ParsedEvent {
-	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblock)
+	var envelope *Envelope
+	var err error
+	if ephemeral {
+		envelope, err = MakeEphemeralEnvelopeWithPayload(wallet, payload, prevMiniblock)
+	} else {
+		envelope, err = MakeEnvelopeWithPayload(wallet, payload, prevMiniblock)
+	}
 	require.NoError(t, err)
 	return parsedEvent(t, envelope)
 }
@@ -145,6 +154,7 @@ func addEventToStream(
 	stream *Stream,
 	data string,
 	prevMiniblock *MiniblockRef,
+	ephemeral bool,
 ) {
 	err := stream.AddEvent(
 		ctx,
@@ -152,6 +162,7 @@ func addEventToStream(
 			t,
 			streamCacheParams.Wallet,
 			Make_MemberPayload_Username(&EncryptedData{Ciphertext: data}),
+			ephemeral,
 			prevMiniblock,
 		),
 	)
@@ -170,6 +181,7 @@ func addEventToView(
 			t,
 			streamCacheParams.Wallet,
 			Make_MemberPayload_Username(&EncryptedData{Ciphertext: data}),
+			false,
 			prevMiniblock,
 		),
 	)
@@ -211,8 +223,8 @@ func mbTest(
 
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
 
 	candidate, err := tt.instances[0].makeAndSaveMbCandidate(ctx, stream, 0)
 	require.NoError(err)
@@ -236,7 +248,7 @@ func mbTest(
 	require.NoError(err)
 
 	if params.addAfterProposal {
-		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref)
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref, false)
 	}
 
 	require.NoError(err)
@@ -250,7 +262,7 @@ func mbTest(
 	require.NoError(err)
 	stats := view2.GetStats()
 	require.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Ref, false)
 
 	view2, err = stream.GetView(ctx)
 	require.NoError(err)
@@ -291,8 +303,8 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 	stream := syncStream
 
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
-	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref, false)
 
 	candidate, err := tt.instances[0].makeMbCandidate(
 		ctx,
@@ -338,8 +350,8 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 	stream := syncStream
 
-	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref)
-	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref, false)
 
 	view = getView(t, ctx, stream)
 	require.Equal(2, view.minipool.size())
@@ -418,4 +430,65 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		view = getView(t, ctx, stream)
 		require.Equal(int64(i*3+4), view.LastBlock().Ref.Num)
 	}
+}
+
+func TestAddEventWithEphemeralEvents(t *testing.T) {
+	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	require := require.New(t)
+	params := tt.instances[0].params
+
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	genesisMb := MakeGenesisMiniblockForSpaceStream(
+		t,
+		params.Wallet,
+		params.Wallet,
+		spaceStreamId,
+		nil,
+	)
+
+	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+
+	subscriber := &testSubscriber{}
+	err := stream.Sub(ctx, view.SyncCookie(tt.instances[0].params.Wallet.Address), subscriber)
+	require.NoError(err)
+
+	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref, true)
+
+	view = getView(t, ctx, stream)
+	require.True(view.minipool.size() == 1, "Storage.WriteEvent should be called for non-ephemeral events")
+
+	// Give some time for notifications to be processed
+	time.Sleep(10 * time.Millisecond)
+	require.Eventually(
+		func() bool {
+			return len(subscriber.receivedUpdates) == 3
+		},
+		10*time.Second,
+		10*time.Millisecond,
+		"Subscriber should receive updates for ephemeral events",
+	)
+
+	// Cleanup
+	stream.Unsub(subscriber)
+}
+
+// testSubscriber is a test implementation of SyncResultReceiver for testing notifications
+type testSubscriber struct {
+	receivedUpdates []*StreamAndCookie
+	receivedErrors  []error
+	streamErrors    []StreamId
+}
+
+func (s *testSubscriber) OnUpdate(sac *StreamAndCookie) {
+	s.receivedUpdates = append(s.receivedUpdates, sac)
+}
+
+func (s *testSubscriber) OnSyncError(err error) {
+	s.receivedErrors = append(s.receivedErrors, err)
+}
+
+func (s *testSubscriber) OnStreamSyncDown(streamID StreamId) {
+	s.streamErrors = append(s.streamErrors, streamID)
 }
