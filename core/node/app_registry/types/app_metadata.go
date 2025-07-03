@@ -60,7 +60,7 @@ var validFileUrlSchemes = map[string]struct{}{
 	"ipfs":  {},
 }
 
-// validFileUrlSchemes defines allowed URL schemes
+// validExternalUrlSchemes defines allowed URL schemes for external URLs.
 var validExternalUrlSchemes = map[string]struct{}{
 	"https": {},
 	"http":  {},

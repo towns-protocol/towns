@@ -841,6 +841,7 @@ func (s *Service) SetAppMetadata(
 	}, nil
 }
 
+// GetAppMetadata does not require authentication.
 func (s *Service) GetAppMetadata(
 	ctx context.Context,
 	req *connect.Request[GetAppMetadataRequest],
@@ -855,7 +856,6 @@ func (s *Service) GetAppMetadata(
 			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetAppMetadata")
 	}
 
-	// For GetAppMetadata, we don't require authentication - this should be publicly readable
 	metadata, err := s.store.GetAppMetadata(ctx, app)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not get app metadata").

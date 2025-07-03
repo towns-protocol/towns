@@ -1039,8 +1039,7 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 		PGAddress(app),
 		string(metadataJSON),
 		// We store the name in a separate column so we can guarantee unique bot diplay names.
-		// Therefore, the name field is removed from the JSON output of the app metadata struct,
-		// and is stored separately in its own column.
+		// The Name field is omitted from the serialized JSON, so there is no duplication here.
 		metadata.Name,
 	)
 	if err != nil {
@@ -1108,7 +1107,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		return nil, AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to unmarshal app metadata from JSON")
 	}
-	// Set the Name field from the display_name column
+	// Set the Name field from the display_name column.
 	metadata.Name = displayName
 
 	return &metadata, nil
