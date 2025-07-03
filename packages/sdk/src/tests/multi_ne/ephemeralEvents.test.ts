@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeTestClient, waitFor } from '../testUtils'
+import { createEventDecryptedPromise, makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from '../../types'
 import { hexToBytes } from 'ethereum-cryptography/utils'
@@ -66,5 +66,27 @@ describe('ephemeralEvents', () => {
         await bob.makeEventAndAddToStream(streamId, fulfillmentEvent, {
             ephemeral: true,
         })
+    })
+
+    test('should handle ephemeral key exchange', async () => {
+        const alice = await makeInitAndStartClient()
+        const bob = await makeInitAndStartClient()
+        const { streamId } = await alice.createDMChannel(bob.userId)
+
+        await waitFor(() => {
+            return alice.streams.get(streamId)?.view.membershipContent.joined.size === 2
+        })
+
+        await waitFor(() => {
+            return bob.streams.get(streamId)?.view.membershipContent.joined.size === 2
+        })
+
+        await alice.sendMessage(streamId, 'hello')
+
+        const bobEventDecryptedPromise = createEventDecryptedPromise(bob, 'hello')
+        await expect(Promise.all([bobEventDecryptedPromise])).resolves.not.toThrow()
+
+        console.log('BOB', bob.streams.get(streamId)?.view.timeline)
+        console.log('ALICE', alice.streams.get(streamId)?.view.timeline)
     })
 })
