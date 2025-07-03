@@ -59,6 +59,7 @@ export const _impl_makeEvent_impl_ = async (
     prevMiniblockHash?: Uint8Array,
     prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
+    ephemeral?: boolean,
 ): Promise<Envelope> => {
     const streamEvent = create(StreamEventSchema, {
         creatorAddress: context.creatorAddress,
@@ -68,6 +69,7 @@ export const _impl_makeEvent_impl_ = async (
         payload,
         createdAtEpochMs: BigInt(Date.now()),
         tags,
+        ephemeral,
     })
     if (context.delegateSig !== undefined) {
         streamEvent.delegateSig = context.delegateSig
@@ -87,6 +89,7 @@ export const makeEvent = async (
     prevMiniblockHash?: Uint8Array,
     prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
+    ephemeral?: boolean,
 ): Promise<Envelope> => {
     // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
     const pl = payload // todo check this
@@ -108,7 +111,7 @@ export const makeEvent = async (
         check(prevMiniblockNum >= 0, 'prevMiniblockNum should be non-negative', Err.BAD_PAYLOAD)
     }
 
-    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags)
+    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags, ephemeral)
 }
 
 export const makeEvents = async (
@@ -343,6 +346,7 @@ export function makeParsedEvent(
         hashStr: bin_toHexString(hash),
         signature,
         creatorUserId: userIdFromAddress(event.creatorAddress),
+        ephemeral: event.ephemeral,
     } satisfies ParsedEvent
 }
 

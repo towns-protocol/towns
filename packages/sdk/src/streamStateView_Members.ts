@@ -99,12 +99,13 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     constructor(
         streamId: string,
+        currentUserId: string,
         private streamMemberIdsView: StreamMemberIdsView,
     ) {
         super()
         this.streamId = streamId
         this.solicitHelper = new StreamStateView_Members_Solicitations(streamId)
-        this.memberMetadata = new StreamStateView_MemberMetadata(streamId)
+        this.memberMetadata = new StreamStateView_MemberMetadata(streamId, currentUserId)
     }
 
     // initialization
