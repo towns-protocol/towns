@@ -30,7 +30,7 @@ describe('ephemeralEvents', () => {
         clients = []
     })
 
-    test('should handle ephemeral event (scaffold)', async () => {
+    test('should allow ephemeral key fulfillments', async () => {
         const alice = await makeInitAndStartClient()
         const bob = await makeInitAndStartClient()
         const { streamId } = await alice.createDMChannel(bob.userId)
