@@ -42,8 +42,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
     private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
     private unpackEnvelopeOpts?: { disableSignatureValidation?: boolean }
-    // how long to wait for an ephemeral solicitation to be fulfilled before converting to non-ephemeral
-    // (sending a solicitation again, but this time non-ephemeral)
 
     constructor(
         private readonly client: Client,
