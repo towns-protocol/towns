@@ -44,7 +44,6 @@ import {
     isUserStreamId,
     isUserInboxStreamId,
     isMetadataStreamId,
-    userIdFromAddress,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
