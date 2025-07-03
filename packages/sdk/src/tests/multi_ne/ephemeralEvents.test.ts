@@ -102,7 +102,8 @@ describe('ephemeralEvents', () => {
         await stream.waitForMembership(MembershipOp.SO_INVITE)
         await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
 
-        // Wait for ephemeral solicitation
+        // Wait for ephemeral and non-ephemeral solicitation
+        // [true, false] indicates that chuck sent two solicitation events, one ephemeral and one non-ephemeral
         await waitFor(() => solicitationEphemeralTypes.length === 2)
         expect(solicitationEphemeralTypes).toEqual([true, false])
     })
