@@ -2802,15 +2802,6 @@ export class Client
         this.streams.setHighPriorityStreams(streamIds)
     }
 
-    public setEphemeralTimeoutMs(timeoutMs: number) {
-        this.logCall('setEphemeralTimeoutMs', timeoutMs)
-        if (this.decryptionExtensions && 'setEphemeralTimeoutMs' in this.decryptionExtensions) {
-            ;(this.decryptionExtensions as ClientDecryptionExtensions).setEphemeralTimeoutMs(
-                timeoutMs,
-            )
-        }
-    }
-
     public async ensureOutboundSession(
         streamId: string,
         opts: { awaitInitialShareSession: boolean },

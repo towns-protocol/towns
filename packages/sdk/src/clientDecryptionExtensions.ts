@@ -44,7 +44,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private unpackEnvelopeOpts?: { disableSignatureValidation?: boolean }
     // how long to wait for an ephemeral solicitation to be fulfilled before converting to non-ephemeral
     // (sending a solicitation again, but this time non-ephemeral)
-    private ephemeralTimeoutMs: number = 30000 // Default 30 seconds
 
     constructor(
         private readonly client: Client,
@@ -155,10 +154,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
-    }
-
-    public setEphemeralTimeoutMs(timeoutMs: number): void {
-        this.ephemeralTimeoutMs = timeoutMs
     }
 
     public hasStream(streamId: string): boolean {

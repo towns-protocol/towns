@@ -169,7 +169,7 @@ describe('ClientDecryptionExtensions', () => {
         // in this case, we want to make sure that the solicitation is sent as non-ephemeral
         // so that bob can see the solicitation and share keys,
         // otherwise we'd need to wait for the ephemeral timeout to expire
-        alice1.setEphemeralTimeoutMs(10)
+        alice1['decryptionExtensions']!.ephemeralTimeoutMs = 100
 
         await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
         await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys

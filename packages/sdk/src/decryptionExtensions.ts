@@ -241,6 +241,7 @@ export abstract class BaseDecryptionExtensions {
     public readonly entitlementDelegate: EntitlementsDelegate
     public readonly userDevice: UserDevice
     public readonly userId: string
+    public ephemeralTimeoutMs: number = 30000 // Default 30 seconds
 
     public constructor(
         emitter: TypedEmitter<DecryptionEvents>,

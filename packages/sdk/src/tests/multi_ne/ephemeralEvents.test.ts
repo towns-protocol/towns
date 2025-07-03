@@ -78,7 +78,7 @@ describe('ephemeralEvents', () => {
         const chuck = await makeInitAndStartClient()
 
         // Set a short timeout for testing
-        chuck.setEphemeralTimeoutMs(100) // 100ms instead of 30s
+        chuck['decryptionExtensions']!.ephemeralTimeoutMs = 100
 
         const { streamId } = await alice.createGDMChannel([bob.userId, charlie.userId])
 
