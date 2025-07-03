@@ -216,9 +216,10 @@ export abstract class BaseDecryptionExtensions {
     protected ownEphemeralSolicitations = new Map<
         string,
         {
-            item: KeySolicitationItem
-            sentAt: number
-            converted: boolean
+            deviceKey: string
+            fallbackKey: string
+            isNewDevice: boolean
+            missingSessionIds: string[]
             timerId?: NodeJS.Timeout
         }
     >() // key: streamId

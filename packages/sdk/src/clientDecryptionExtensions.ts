@@ -318,31 +318,18 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         if (ephemeral) {
             // Track own ephemeral solicitation with timer
-            const item: KeySolicitationItem = {
-                streamId,
-                fromUserId: this.userId,
-                fromUserAddress: new Uint8Array(), // Will be filled when we receive the event back
-                solicitation: {
-                    deviceKey: this.userDevice.deviceKey,
-                    fallbackKey: this.userDevice.fallbackKey,
-                    isNewDevice,
-                    sessionIds: missingSessionIds,
-                },
-                respondAfter: Date.now(),
-                sigBundle: {} as any, // Will be filled when we receive the event back
-                hashStr: '', // Will be filled when we receive the event back
+            const item = {
+                deviceKey: this.userDevice.deviceKey,
+                fallbackKey: this.userDevice.fallbackKey,
+                isNewDevice,
+                missingSessionIds,
             }
 
             const timerId = setTimeout(() => {
                 void this.convertEphemeralToNonEphemeral(streamId)
             }, 30000) // 30 seconds
 
-            this.ownEphemeralSolicitations.set(streamId, {
-                item,
-                sentAt: Date.now(),
-                converted: false,
-                timerId,
-            })
+            this.ownEphemeralSolicitations.set(streamId, { ...item, timerId })
         }
 
         await this.client.makeEventAndAddToStream(streamId, keySolicitation, { ephemeral })
@@ -395,11 +382,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     private async convertEphemeralToNonEphemeral(streamId: string): Promise<void> {
         const ephemeral = this.ownEphemeralSolicitations.get(streamId)
-        if (!ephemeral || ephemeral.converted) {
+        if (!ephemeral) {
             return
         }
 
-        ephemeral.converted = true
         if (ephemeral.timerId) {
             clearTimeout(ephemeral.timerId)
         }
@@ -409,8 +395,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         // Send non-ephemeral solicitation
         await this.sendKeySolicitation({
             streamId,
-            isNewDevice: ephemeral.item.solicitation.isNewDevice,
-            missingSessionIds: ephemeral.item.solicitation.sessionIds,
+            isNewDevice: ephemeral.isNewDevice,
+            missingSessionIds: ephemeral.missingSessionIds,
             ephemeral: false,
         })
 
