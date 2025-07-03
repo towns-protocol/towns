@@ -2165,6 +2165,12 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required")
 	}
 
+	// if the fulfillment is ephemeral, the node has no idea that the ephemeral key solicitation this fulfillment is fulfilling
+	// exists or not — so we need to allow it
+	if ru.params.parsedEvent.Event.Ephemeral {
+		return true, nil
+	}
+
 	// loop over solicitations, see if the device key exists
 	for _, solicitation := range solicitations {
 		if solicitation.DeviceKey == ru.fulfillment.DeviceKey {
