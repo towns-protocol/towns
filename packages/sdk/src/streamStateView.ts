@@ -218,6 +218,7 @@ export class StreamStateView {
         this.prevSnapshotMiniblockNum = 0n
         this.membershipContent = new StreamStateView_Members(
             streamId,
+            userId,
             this.streamsView.streamMemberIds,
         )
     }
