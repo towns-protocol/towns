@@ -329,7 +329,14 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 void this.convertEphemeralToNonEphemeral(streamId)
             }, 30000) // 30 seconds
 
-            this.ownEphemeralSolicitations.set(streamId, { ...item, timerId })
+            const existing = this.ownEphemeralSolicitations.get(streamId) || []
+            existing.push({ 
+                ...item, 
+                missingSessionIds: new Set(item.missingSessionIds),
+                timerId, 
+                timestamp: Date.now() 
+            })
+            this.ownEphemeralSolicitations.set(streamId, existing)
         }
 
         await this.client.makeEventAndAddToStream(streamId, keySolicitation, { ephemeral })
@@ -381,26 +388,46 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     }
 
     private async convertEphemeralToNonEphemeral(streamId: string): Promise<void> {
-        const ephemeral = this.ownEphemeralSolicitations.get(streamId)
-        if (!ephemeral) {
+        const solicitations = this.ownEphemeralSolicitations.get(streamId)
+        if (!solicitations || solicitations.length === 0) {
             return
         }
 
-        if (ephemeral.timerId) {
-            clearTimeout(ephemeral.timerId)
+        // Clear all timers for this stream's ephemeral solicitations
+        for (const solicitation of solicitations) {
+            if (solicitation.timerId) {
+                clearTimeout(solicitation.timerId)
+            }
         }
 
-        this.log.info('converting ephemeral solicitation to non-ephemeral', streamId)
+        // Combine all missing session IDs from all ephemeral solicitations
+        const allMissingSessionIds = new Set<string>()
+        let isNewDevice = false
+        
+        for (const solicitation of solicitations) {
+            solicitation.missingSessionIds.forEach(sessionId => {
+                allMissingSessionIds.add(sessionId)
+            })
+            if (solicitation.isNewDevice) {
+                isNewDevice = true
+            }
+        }
 
-        // Send non-ephemeral solicitation
-        await this.sendKeySolicitation({
-            streamId,
-            isNewDevice: ephemeral.isNewDevice,
-            missingSessionIds: ephemeral.missingSessionIds,
-            ephemeral: false,
+        // Remove all ephemeral solicitations for this stream
+        this.ownEphemeralSolicitations.delete(streamId)
+
+        this.log.info('converting all ephemeral solicitations to non-ephemeral', streamId, {
+            count: solicitations.length,
+            totalSessionIds: allMissingSessionIds.size,
         })
 
-        this.ownEphemeralSolicitations.delete(streamId)
+        // Send combined non-ephemeral solicitation
+        await this.sendKeySolicitation({
+            streamId,
+            isNewDevice,
+            missingSessionIds: Array.from(allMissingSessionIds).sort(),
+            ephemeral: false,
+        })
     }
 
     public getPriorityForStream(

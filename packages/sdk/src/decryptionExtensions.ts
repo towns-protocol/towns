@@ -215,14 +215,15 @@ export abstract class BaseDecryptionExtensions {
     private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
     protected ownEphemeralSolicitations = new Map<
         string,
-        {
+        Array<{
             deviceKey: string
             fallbackKey: string
             isNewDevice: boolean
-            missingSessionIds: string[]
+            missingSessionIds: Set<string>
             timerId?: NodeJS.Timeout
-        }
-    >() // key: streamId
+            timestamp: number
+        }>
+    >() // key: streamId, value: array of solicitations
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
     private delayMs: number = 1
@@ -505,9 +506,11 @@ export abstract class BaseDecryptionExtensions {
         this._onStopFn?.()
         this._onStopFn = undefined
         // Clean up ephemeral solicitation timers
-        for (const ephemeral of this.ownEphemeralSolicitations.values()) {
-            if (ephemeral.timerId) {
-                clearTimeout(ephemeral.timerId)
+        for (const solicitations of this.ownEphemeralSolicitations.values()) {
+            for (const solicitation of solicitations) {
+                if (solicitation.timerId) {
+                    clearTimeout(solicitation.timerId)
+                }
             }
         }
         this.ownEphemeralSolicitations.clear()
@@ -851,22 +854,8 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
-        // Check if we already have an ephemeral solicitation for this stream
-        const existingEphemeral = this.ownEphemeralSolicitations.get(streamId)
-        if (existingEphemeral && !existingEphemeral.converted) {
-            // Merge session IDs if we have an existing ephemeral solicitation
-            const mergedSessionIds = Array.from(
-                new Set([...existingEphemeral.item.solicitation.sessionIds, ...missingSessionIds]),
-            ).sort()
-            existingEphemeral.item.solicitation.sessionIds = mergedSessionIds
-            this.log.debug(
-                'updated existing ephemeral solicitation',
-                streamId,
-                'sessionIds:',
-                mergedSessionIds.length,
-            )
-            return
-        }
+        // Don't check for existing ephemeral solicitations - create a new one
+        // The user might have multiple ephemeral solicitations in flight
 
         const solicitedEvents = this.getKeySolicitations(streamId)
         const existingKeyRequest = solicitedEvents.find(
@@ -1017,29 +1006,38 @@ export abstract class BaseDecryptionExtensions {
 
     processEphemeralKeyFulfillment(event: KeyFulfilmentData) {
         if (event.deviceKey === this.userDevice.deviceKey) {
-            const ephemeral = this.ownEphemeralSolicitations.get(event.streamId)
-            if (ephemeral) {
-                // Remove fulfilled session IDs
-                const remainingSessionIds = ephemeral.missingSessionIds.filter(
-                    (id) => !event.sessionIds.includes(id),
-                )
+            const solicitations = this.ownEphemeralSolicitations.get(event.streamId)
+            if (solicitations) {
+                // Process each solicitation and remove those that are fully fulfilled
+                const remainingSolicitations = solicitations.filter((solicitation) => {
+                    // Remove fulfilled session IDs from the set
+                    event.sessionIds.forEach(id => {
+                        solicitation.missingSessionIds.delete(id)
+                    })
 
-                if (remainingSessionIds.length === 0) {
-                    // All sessions fulfilled, cancel timer and remove
-                    if (ephemeral.timerId) {
-                        clearTimeout(ephemeral.timerId)
+                    if (solicitation.missingSessionIds.size === 0) {
+                        // All sessions fulfilled, cancel timer
+                        if (solicitation.timerId) {
+                            clearTimeout(solicitation.timerId)
+                        }
+                        this.log.debug('ephemeral solicitation fully fulfilled', event.streamId)
+                        return false // Remove this solicitation
+                    } else {
+                        // Still has remaining session IDs
+                        this.log.debug(
+                            'ephemeral solicitation partially fulfilled',
+                            event.streamId,
+                            'remaining:',
+                            solicitation.missingSessionIds.size,
+                        )
+                        return true // Keep this solicitation
                     }
+                })
+
+                if (remainingSolicitations.length === 0) {
                     this.ownEphemeralSolicitations.delete(event.streamId)
-                    this.log.debug('ephemeral solicitation fully fulfilled', event.streamId)
                 } else {
-                    // Update with remaining session IDs
-                    ephemeral.missingSessionIds = remainingSessionIds
-                    this.log.debug(
-                        'ephemeral solicitation partially fulfilled',
-                        event.streamId,
-                        'remaining:',
-                        remainingSessionIds.length,
-                    )
+                    this.ownEphemeralSolicitations.set(event.streamId, remainingSolicitations)
                 }
             }
         }
