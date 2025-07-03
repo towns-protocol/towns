@@ -408,6 +408,7 @@ export class Client
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
         this.on('streamInitialized', (s) => void this.onStreamInitialized(s))
+        this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
@@ -1709,6 +1710,52 @@ export class Client
             }
         }
         void scrollbackUntilContentFound()
+    }
+
+    private onStreamUpToDate = (streamId: string): void => {
+        // we're migrating away from the old megolm based encryption to the new `grpaes` encryption,
+        // this is to avoid too many active crypto sessions active in the same stream
+        // this function will:
+        // - check if the user's username is encrypted with the old algorithm
+        // - check if the user has a hybrid session ready to go (hasHybridSession)
+        // - re-encrypt the username with the new algorithm
+
+        const updateUsernameEncryptionIfNeeded = async () => {
+            if (!isSpaceStreamId(streamId)) {
+                return
+            }
+
+            const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
+            if (!hasHybridSession) {
+                return
+            }
+
+            const stream = this.stream(streamId)
+            if (!stream) {
+                return
+            }
+            const currentUsernameEncryptedData =
+                stream.view.membershipContent.memberMetadata.usernames.currentUsernameEncryptedData
+
+            if (
+                !currentUsernameEncryptedData ||
+                currentUsernameEncryptedData.algorithm ===
+                    (GroupEncryptionAlgorithmId.HybridGroupEncryption as string)
+            ) {
+                return
+            }
+            const currentUsername = stream.view.membershipContent.memberMetadata.usernames.info(
+                this.userId,
+            )
+
+            if (!currentUsername || currentUsername.username.length === 0) {
+                return
+            }
+
+            await this.setUsername(streamId, currentUsername.username)
+        }
+
+        void updateUsernameEncryptionIfNeeded()
     }
 
     startSync() {
