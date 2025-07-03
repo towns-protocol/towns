@@ -703,6 +703,15 @@ export class Bot<
     }
 
     /**
+     * Get the channel properties for a channel
+     * @param channelId - The id of the channel
+     * @returns The channel properties
+     */
+    async getChannelSettings(channelId: string) {
+        return this.client.getChannelSettings(channelId)
+    }
+
+    /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
      */
@@ -1018,6 +1027,14 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         }
     }
 
+    const getChannelSettings = async (channelId: string) => {
+        const stream = await client.getStream(channelId)
+        if (stream.snapshot.content.case === 'channelContent') {
+            return stream.snapshot.content.value.inception?.channelSettings
+        }
+        return
+    }
+
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1049,6 +1066,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         decryptSessions,
         hasAdminPermission,
         checkPermission,
+        getChannelSettings,
     }
 }
 
