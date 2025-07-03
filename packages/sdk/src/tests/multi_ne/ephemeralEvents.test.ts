@@ -70,8 +70,8 @@ describe('ephemeralEvents', () => {
     })
 
     test('should convert ephemeral to non-ephemeral after timeout', async () => {
-        // this needs to be a GDM, because we need to test that the ephemeral solicitation is converted to non-ephemeral
-        // after the timeout. in a DM, the clients would send keys to each other directly, so no solicitation would be sent
+        // let's use a GDM to allow people to join after stream creation. we need to test that the ephemeral
+        // solicitation is converted to non-ephemeral after the timeout.
         const alice = await makeInitAndStartClient()
         const bob = await makeInitAndStartClient()
         const charlie = await makeInitAndStartClient()
@@ -109,8 +109,6 @@ describe('ephemeralEvents', () => {
     })
 
     test('should handle ephemeral key exchange', async () => {
-        // this needs to be a GDM, because we need to test that the ephemeral solicitation is converted to non-ephemeral
-        // after the timeout. in a DM, the clients would send keys to each other directly, so no solicitation would be sent
         const alice = await makeInitAndStartClient()
         const bob = await makeInitAndStartClient()
         const charlie = await makeInitAndStartClient()
