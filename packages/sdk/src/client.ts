@@ -260,6 +260,8 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
+    private pendingUsernames: Map<string, string> = new Map()
+    private pendingUsernameTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
     constructor(
         signerContext: SignerContext,
@@ -1241,29 +1243,81 @@ export class Client
         )
     }
 
-    async setUsername(streamId: string, username: string) {
+    async setUsername(
+        streamId: string,
+        username: string,
+        force: boolean = false,
+        options?: {
+            largeGroupThreshold?: number // default: 100
+            delayMs?: number // default: 60000 (60 seconds)
+        },
+    ) {
         check(isDefined(this.cryptoBackend))
+        check(username.length > 0, 'username cannot be empty')
+
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
-        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
-            streamId,
-            new TextEncoder().encode(username),
-            this.defaultGroupEncryptionAlgorithm,
-        )
-        encryptedData.checksum = usernameChecksum(username, streamId)
+
+        // Clear any existing timeout first
+        const existingTimeout = this.pendingUsernameTimeouts.get(streamId)
+        if (existingTimeout) {
+            clearTimeout(existingTimeout)
+            this.pendingUsernameTimeouts.delete(streamId)
+        }
+
+        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username, this)
+
+        // be very careful about setting a username for a large group, we don't want to inject
+        // more sessions than needed into the group. unless a session has been received in 60 seconds,
+        // we will force set the username.
+        const memberCount = stream.view.membershipContent.joined.size
+        const hasHybridSession = (await this.cryptoBackend?.hasHybridSession?.(streamId)) ?? false
+
+        const largeGroupThreshold = options?.largeGroupThreshold ?? 100
+        const delayMs = options?.delayMs ?? 60000
+
+        if (memberCount > largeGroupThreshold && !hasHybridSession && !force) {
+            this.pendingUsernames.set(streamId, username)
+            const timeout = setTimeout(() => {
+                void this.setUsername(streamId, username, true, options)
+            }, delayMs)
+            this.pendingUsernameTimeouts.set(streamId, timeout)
+            return
+        }
+
+        // Clean up pending state
+        this.pendingUsernames.delete(streamId)
+        this.pendingUsernameTimeouts.delete(streamId)
+
         try {
+            const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+                streamId,
+                new TextEncoder().encode(username),
+                this.defaultGroupEncryptionAlgorithm,
+            )
+            encryptedData.checksum = usernameChecksum(username, streamId)
+
             await this.makeEventAndAddToStream(
                 streamId,
                 make_MemberPayload_Username(encryptedData),
-                {
-                    method: 'username',
-                },
+                { method: 'username' },
             )
         } catch (err) {
             stream.view.getMemberMetadata().usernames.resetLocalUsername(this.userId)
+            // Clean up pending state on error
+            this.pendingUsernames.delete(streamId)
+            this.pendingUsernameTimeouts.delete(streamId)
             throw err
         }
+    }
+
+    async setPendingUsernames() {
+        await Promise.all(
+            Array.from(this.pendingUsernames.entries()).map(([streamId, pendingUsername]) => {
+                this.pendingUsernames.delete(streamId)
+                return this.setUsername(streamId, pendingUsername)
+            }),
+        )
     }
 
     async setEnsAddress(streamId: string, walletAddress: string | Uint8Array) {
