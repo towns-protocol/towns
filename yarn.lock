@@ -9675,15 +9675,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.17.10":
-  version: 20.19.4
-  resolution: "@types/node@npm:20.19.4"
-  dependencies:
-    undici-types: ~6.21.0
-  checksum: affe7c1d01d3067c2e1ef923a7970ed047124c6b50573e6d1191d8cd824992b460514b4d90a389a87632e1ea64a99d8998946343d0d8ecb38b302cacf172f0d8
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:^20.2.5":
   version: 20.17.47
   resolution: "@types/node@npm:20.17.47"
@@ -29079,7 +29070,7 @@ __metadata:
   dependencies:
     "@types/cross-spawn": ^6.0.6
     "@types/minimist": ^1.2.5
-    "@types/node": ^20.17.10
+    "@types/node": ^20.14.8
     "@types/prompts": ^2.4.9
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -30019,13 +30010,6 @@ __metadata:
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: de51f1b447d22571cf155dfe14ff6d12c5bdaec237c765085b439c38ca8518fc360e88c70f99469162bf2e14188a7b0bcb06e1ed2dc031042b984b0bb9544017
-  languageName: node
-  linkType: hard
-
-"undici-types@npm:~6.21.0":
-  version: 6.21.0
-  resolution: "undici-types@npm:6.21.0"
-  checksum: 46331c7d6016bf85b3e8f20c159d62f5ae471aba1eb3dc52fff35a0259d58dcc7d592d4cc4f00c5f9243fa738a11cfa48bd20203040d4a9e6bc25e807fab7ab3
   languageName: node
   linkType: hard
 
