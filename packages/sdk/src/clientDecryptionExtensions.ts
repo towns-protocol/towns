@@ -461,23 +461,23 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
             return 1
         }
+        // space that we're currently viewing
+        if (highPriorityIds.has(streamId)) {
+            return 2
+        }
         // if you're getting updates for this stream, decrypt them so that you see unread messages
         if (recentStreamIds.has(streamId)) {
-            return 2
+            return 3
         }
         // channels in the space we're currently viewing
         if (isChannel) {
             const spaceId = spaceIdFromChannelId(streamId)
             if (highPriorityIds.has(spaceId)) {
-                return 3
+                return 4
             }
         }
         // dms
         if (isDmOrGdm) {
-            return 4
-        }
-        // space that we're currently viewing
-        if (highPriorityIds.has(streamId)) {
             return 5
         }
         // then other channels,
