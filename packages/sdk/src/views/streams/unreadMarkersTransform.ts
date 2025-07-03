@@ -24,7 +24,7 @@ export function unreadMarkersTransform(
     prev: Input,
     state?: UnreadMarkersModel,
 ): UnreadMarkersModel {
-    console.log('unreadMarkersTransform', value, prev, state)
+    //console.log('unreadMarkersTransform', value, prev, state)
 
     state = state ?? { markers: {} }
 

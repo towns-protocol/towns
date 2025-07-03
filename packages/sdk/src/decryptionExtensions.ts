@@ -197,6 +197,7 @@ class QueueRunner {
                 this.timeoutId = undefined
                 this.inProgress = undefined
                 this.streamId = undefined
+                this.tag = undefined
                 setTimeout(() => this.checkStartTicking?.())
             })
     }
@@ -598,6 +599,7 @@ export abstract class BaseDecryptionExtensions {
             !Object.values(this.mainQueues).find((q) => q.length > 0) &&
             this.streamQueues.isEmpty()
         ) {
+            this.log.debug('no more work to do, setting status to done')
             this.setStatus(DecryptionStatus.done)
             return
         }
@@ -763,7 +765,9 @@ export abstract class BaseDecryptionExtensions {
             }
         }
 
-        this.setStatus(DecryptionStatus.idle)
+        if (this.allQueueRunners.every((x) => !x.inProgress)) {
+            this.setStatus(DecryptionStatus.idle)
+        }
     }
 
     /**
@@ -1136,6 +1140,8 @@ export abstract class BaseDecryptionExtensions {
                         solicitation.fromUserId,
                         'remaining:',
                         remainingSessionIds.length,
+                        'respondingIn',
+                        Date.now() - solicitation.respondAfter,
                     )
                     return true
                 }
