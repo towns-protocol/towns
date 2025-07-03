@@ -330,11 +330,11 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }, 30000) // 30 seconds
 
             const existing = this.ownEphemeralSolicitations.get(streamId) || []
-            existing.push({ 
-                ...item, 
+            existing.push({
+                ...item,
                 missingSessionIds: new Set(item.missingSessionIds),
-                timerId, 
-                timestamp: Date.now() 
+                timerId,
+                timestamp: Date.now(),
             })
             this.ownEphemeralSolicitations.set(streamId, existing)
         }
@@ -403,9 +403,9 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         // Combine all missing session IDs from all ephemeral solicitations
         const allMissingSessionIds = new Set<string>()
         let isNewDevice = false
-        
+
         for (const solicitation of solicitations) {
-            solicitation.missingSessionIds.forEach(sessionId => {
+            solicitation.missingSessionIds.forEach((sessionId) => {
                 allMissingSessionIds.add(sessionId)
             })
             if (solicitation.isNewDevice) {

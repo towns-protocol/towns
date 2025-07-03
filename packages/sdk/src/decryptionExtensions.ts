@@ -950,13 +950,7 @@ export abstract class BaseDecryptionExtensions {
         if (allSessions.length === 0) {
             return
         }
-        console.log(
-            'sending key fulfillment',
-            item.streamId,
-            item.fromUserId,
-            item.fromUserAddress,
-            item.ephemeral,
-        )
+
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,

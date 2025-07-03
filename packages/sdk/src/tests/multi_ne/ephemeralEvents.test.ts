@@ -76,6 +76,16 @@ describe('ephemeralEvents', () => {
         const chuck = await makeInitAndStartClient()
         const { streamId } = await alice.createGDMChannel([bob.userId, charlie.userId])
 
+        const ephemeralSolicitations: boolean[] = []
+        alice.on('newKeySolicitation', (_, __, ___, ____, _____, ______, ephemeral) => {
+            ephemeralSolicitations.push(ephemeral ?? false)
+        })
+
+        const ephemeralFulfillments: boolean[] = []
+        alice.on('ephemeralKeyFulfillment', (_) => {
+            ephemeralFulfillments.push(true)
+        })
+
         await waitFor(() => {
             return alice.streams.get(streamId)?.view.membershipContent.joined.size === 3
         })
@@ -88,5 +98,8 @@ describe('ephemeralEvents', () => {
         const chuckEventDecryptedPromise = createEventDecryptedPromise(chuck, 'hello')
         await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
+
+        expect(ephemeralSolicitations).toEqual([true])
+        expect(ephemeralFulfillments).toEqual([true])
     })
 })
