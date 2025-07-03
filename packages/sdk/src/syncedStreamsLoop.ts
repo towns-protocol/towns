@@ -464,7 +464,18 @@ export class SyncedStreamsLoop {
                             }
                         }
                     } catch (err) {
-                        this.logError('syncLoop error', err)
+                        this.logError(
+                            {
+                                syncId: this.syncId,
+                                nodeUrl: this.rpcClient.url,
+                                syncState: this.syncState,
+                                streamOpts: this.streamOpts,
+                                syncStartedAt: this.syncStartedAt,
+                                duration: performance.now() - this.syncStartedAt,
+                            },
+                            'syncLoop error',
+                            err,
+                        )
                         await this.attemptRetry()
                     }
                 }
