@@ -1,7 +1,7 @@
 import { eq } from 'ponder'
-import { ponder } from 'ponder:registry'
+import { ponder, type Context } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { getLatestBlockNumber } from './utils'
+import { getLatestBlockNumber, handleStakeToSpace, handleRedelegation } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -262,8 +262,8 @@ ponder.on('SwapRouter:SwapRouterInitialized', async ({ event, context }) => {
     }
 })
 
+// Event handlers remain the same but now use properly typed context
 ponder.on('BaseRegistry:Stake', async ({ event, context }) => {
-    // Get block number
     const blockNumber = event.block.number
 
     try {
@@ -279,58 +279,43 @@ ponder.on('BaseRegistry:Stake', async ({ event, context }) => {
                 amount: event.args.amount,
                 createdAt: blockNumber,
             })
+
+            await handleStakeToSpace(
+                context,
+                event.args.delegatee as `0x${string}`,
+                event.args.amount,
+            )
         }
     } catch (error) {
         console.error(`Error processing StakingRewards:Stake at blockNumber ${blockNumber}:`, error)
     }
 })
 
-ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
-    // Get block number
-    const blockNumber = event.block.number
-
-    try {
-        const existing = await context.db.sql.query.stakers.findFirst({
-            where: eq(schema.stakers.depositId, event.args.depositId),
-        })
-        if (!existing) {
-            await context.db.insert(schema.stakers).values({
-                depositId: event.args.depositId,
-                owner: event.args.owner,
-                delegatee: event.args.delegatee,
-                beneficiary: event.args.beneficiary,
-                amount: event.args.amount,
-                createdAt: blockNumber,
-            })
-        }
-    } catch (error) {
-        console.error(`Error processing RiverAirdrop:Stake at blockNumber ${blockNumber}:`, error)
-    }
-})
-
 ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
-    // Get block number
     const blockNumber = event.block.number
 
     try {
-        // Find existing stake record by depositId
+        if (event.args.amount <= 0n) {
+            console.warn(`Invalid increase amount: ${event.args.amount}`)
+            return
+        }
+
         const existingStake = await context.db.sql.query.stakers.findFirst({
             where: eq(schema.stakers.depositId, event.args.depositId),
         })
 
         if (existingStake) {
-            // Update existing stake amount
             await context.db.sql
                 .update(schema.stakers)
                 .set({
-                    amount: (existingStake.amount ?? 0n) + event.args.amount, // Add new amount to existing
+                    amount: (existingStake.amount ?? 0n) + event.args.amount,
                     createdAt: blockNumber,
                 })
                 .where(eq(schema.stakers.depositId, event.args.depositId))
-        } else {
-            console.warn(
-                `No existing stake found for depositId ${event.args.depositId} in IncreaseStake event`,
-            )
+
+            if (existingStake.delegatee) {
+                await handleStakeToSpace(context, existingStake.delegatee, event.args.amount)
+            }
         }
     } catch (error) {
         console.error(
@@ -341,17 +326,26 @@ ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
 })
 
 ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
-    // Get block number
     const blockNumber = event.block.number
 
     try {
-        // Find existing stake record by depositId
         const existingStake = await context.db.sql.query.stakers.findFirst({
             where: eq(schema.stakers.depositId, event.args.depositId),
         })
 
         if (existingStake) {
-            // Update delegatee
+            // Add check for unnecessary redelegation
+            if (existingStake.delegatee === event.args.delegatee) {
+                console.warn(`Redelegation to same delegatee: ${event.args.delegatee}`)
+                return
+            }
+            await handleRedelegation(
+                context,
+                existingStake.delegatee,
+                event.args.delegatee as `0x${string}`,
+                existingStake.amount ?? 0n,
+            )
+
             await context.db.sql
                 .update(schema.stakers)
                 .set({
@@ -359,10 +353,6 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
                     createdAt: blockNumber,
                 })
                 .where(eq(schema.stakers.depositId, event.args.depositId))
-        } else {
-            console.warn(
-                `No existing stake found for depositId ${event.args.depositId} in Redelegate event`,
-            )
         }
     } catch (error) {
         console.error(
@@ -373,21 +363,22 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
 })
 
 ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
-    // Get block number
     const blockNumber = event.block.number
 
     try {
-        // Find existing stake record by depositId
         const existingStake = await context.db.sql.query.stakers.findFirst({
             where: eq(schema.stakers.depositId, event.args.depositId),
         })
 
         if (existingStake && existingStake.amount !== null) {
+            const withdrawAmount = event.args.amount
             const newAmount =
-                existingStake.amount - event.args.amount > 0n
-                    ? existingStake.amount - event.args.amount
-                    : 0n
-            // Update existing stake amount by subtracting the withdrawn amount
+                existingStake.amount >= withdrawAmount ? existingStake.amount - withdrawAmount : 0n
+
+            if (existingStake.delegatee) {
+                await handleStakeToSpace(context, existingStake.delegatee, -withdrawAmount)
+            }
+
             await context.db.sql
                 .update(schema.stakers)
                 .set({
@@ -395,10 +386,6 @@ ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
                     createdAt: blockNumber,
                 })
                 .where(eq(schema.stakers.depositId, event.args.depositId))
-        } else {
-            console.warn(
-                `No existing stake found for depositId ${event.args.depositId} in Withdraw event`,
-            )
         }
     } catch (error) {
         console.error(
@@ -457,5 +444,33 @@ ponder.on('BaseRegistry:OperatorStatusChanged', async ({ event, context }) => {
             `Error processing BaseRegistry:OperatorStatusChanged at blockNumber ${blockNumber}:`,
             error,
         )
+    }
+})
+
+ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
+    const blockNumber = event.block.number
+
+    try {
+        const existing = await context.db.sql.query.stakers.findFirst({
+            where: eq(schema.stakers.depositId, event.args.depositId),
+        })
+        if (!existing) {
+            await context.db.insert(schema.stakers).values({
+                depositId: event.args.depositId,
+                owner: event.args.owner,
+                delegatee: event.args.delegatee,
+                beneficiary: event.args.beneficiary,
+                amount: event.args.amount,
+                createdAt: blockNumber,
+            })
+
+            await handleStakeToSpace(
+                context,
+                event.args.delegatee as `0x${string}`,
+                event.args.amount,
+            )
+        }
+    } catch (error) {
+        console.error(`Error processing RiverAirdrop:Stake at blockNumber ${blockNumber}:`, error)
     }
 })

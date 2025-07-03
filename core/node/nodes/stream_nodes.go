@@ -14,8 +14,8 @@ type StreamNodes interface {
 	// GetQuorumNodes returns all nodes in the same order as in contract that participate in the streams quorum.
 	GetQuorumNodes() []common.Address
 
-	// GetSyncNodes returns the nodes that don't take part in the quorum but sync the stream in local storage.
-	GetSyncNodes() []common.Address
+	// GetReconcileNodes returns the nodes that don't take part in the quorum but reconcile the stream in local storage.
+	GetReconcileNodes() []common.Address
 
 	// IsLocalInQuorum returns an indication if the local node is part of the quorum.
 	IsLocalInQuorum() bool
@@ -23,12 +23,12 @@ type StreamNodes interface {
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
 	GetRemotesAndIsLocal() ([]common.Address, bool)
 
-	// GetQuorumAndSyncNodesAndIsLocal returns
+	// GetQuorumAndReconcileNodesAndIsLocal returns
 	// quorumNodes - a list of nodes that participate in the stream quorum
-	// syncNodes - a list nodes that sync the stream into local storage but don't participate in quorum (yet)
+	// reconcileNodes - a list nodes that reconcile the stream into local storage but don't participate in quorum (yet)
 	// isLocal - boolean, whether the stream is hosted on this node
-	// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
-	GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool)
+	// GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
+	GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool)
 
 	// GetStickyPeer returns the current sticky peer.
 	// If there are no remote nodes, it returns an empty address.
@@ -43,7 +43,7 @@ type StreamNodes interface {
 	ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address)
 
 	// Reset the list of nodes to the given nodes and local node. The nodes in range Nodes[0:replicationFactor] take
-	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that sync the stream into local
+	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that reconcile the stream into local
 	// storage but don't take part in quorum.
 	Reset(replicationFactor int, nodes []common.Address, localNode common.Address)
 }
@@ -58,8 +58,8 @@ type StreamNodesWithoutLock struct {
 	// quorumNodes contains all streams nodes that participate in the streams quorum in the same order as the contract.
 	quorumNodes []common.Address
 
-	// syncNodes contains the nodes that sync the stream into local storage but don't take part in quorum.
-	syncNodes []common.Address
+	// reconcileNodes contains the nodes that reconcile the stream into local storage but don't take part in quorum.
+	reconcileNodes []common.Address
 
 	// remotes are all nodes except the local node.
 	// remotes are shuffled to avoid the same node being selected as the sticky peer.
@@ -80,7 +80,7 @@ func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Add
 	}
 
 	s.quorumNodes = slices.Clone(nodes[:replicationFactor])
-	s.syncNodes = slices.Clone(nodes[replicationFactor:])
+	s.reconcileNodes = slices.Clone(nodes[replicationFactor:])
 	s.isLocal = slices.Contains(nodes, localNode)
 
 	localIndex := slices.Index(s.quorumNodes, localNode)
@@ -108,8 +108,8 @@ func (s *StreamNodesWithoutLock) GetQuorumNodes() []common.Address {
 	return s.quorumNodes
 }
 
-func (s *StreamNodesWithoutLock) GetSyncNodes() []common.Address {
-	return s.syncNodes
+func (s *StreamNodesWithoutLock) GetReconcileNodes() []common.Address {
+	return s.reconcileNodes
 }
 
 func (s *StreamNodesWithoutLock) IsLocalInQuorum() bool {
@@ -120,8 +120,8 @@ func (s *StreamNodesWithoutLock) GetRemotesAndIsLocal() ([]common.Address, bool)
 	return s.remotes, s.isLocal
 }
 
-func (s *StreamNodesWithoutLock) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
-	return s.quorumNodes, s.syncNodes, s.isLocal
+func (s *StreamNodesWithoutLock) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	return s.quorumNodes, s.reconcileNodes, s.isLocal
 }
 
 func (s *StreamNodesWithoutLock) IsLocal() bool {
@@ -186,24 +186,24 @@ func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	return slices.Clone(r), l
 }
 
-// GetQuorumAndSyncNodesAndIsLocal returns
+// GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
-// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
-func (s *StreamNodesWithLock) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+// GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
+func (s *StreamNodesWithLock) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	qn, sn, l := s.n.GetQuorumAndSyncNodesAndIsLocal()
-	return slices.Clone(qn), slices.Clone(sn), l
+	qn, rn, l := s.n.GetQuorumAndReconcileNodesAndIsLocal()
+	return slices.Clone(qn), slices.Clone(rn), l
 }
 
-func (s *StreamNodesWithLock) GetSyncNodes() []common.Address {
+func (s *StreamNodesWithLock) GetReconcileNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.n.GetSyncNodes()
+	return s.n.GetReconcileNodes()
 }
 
 func (s *StreamNodesWithLock) IsLocalInQuorum() bool {

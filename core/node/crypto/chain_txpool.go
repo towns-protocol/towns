@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"sync/atomic"
@@ -17,13 +18,14 @@ import (
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -301,10 +303,22 @@ func (pool *pendingTransactionPool) closeTx(
 
 	pool.pendingTxCount.Add(-1)
 	pool.processedTxCount.Add(1)
-	pool.transactionTotalInclusionDuration.Observe(time.Since(ptx.firstSubmit).Seconds())
-	pool.transactionInclusionDuration.Observe(time.Since(ptx.lastSubmit).Seconds())
+	took := time.Since(ptx.firstSubmit)
+	pool.transactionTotalInclusionDuration.Observe(took.Seconds())
+	pool.transactionInclusionDuration.Observe(took.Seconds())
 	pool.transactionsProcessed.With(prometheus.Labels{"status": status}).Inc()
 	pool.transactionsPending.Add(-1)
+
+	if took >= 15*time.Second {
+		log.Warnw("Transaction took too long to be included in the chain",
+			"name", ptx.name,
+			"executedHash", ptx.executedHash.Load(),
+			"took", took,
+			"hashes", ptx.txHashes,
+			"firstSubmit", ptx.firstSubmit,
+			"lastSubmit", ptx.lastSubmit,
+		)
+	}
 }
 
 func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context, head *types.Header) {
@@ -640,7 +654,12 @@ func (tx *txPoolPendingTransaction) Wait(ctx context.Context) (*types.Receipt, e
 	var span trace.Span
 	if tx.tracer != nil {
 		ctx, span = tx.tracer.Start(ctx, "pending_tx_wait",
-			trace.WithAttributes(attribute.String("function", tx.name)))
+			trace.WithAttributes(
+				attribute.String("function", tx.name),
+				attribute.String("tx", fmt.Sprintf("%s", tx.tx.Hash())),
+				attribute.Int64("nonce", int64(tx.tx.Nonce())),
+			),
+		)
 		defer span.End()
 	}
 
