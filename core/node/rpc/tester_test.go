@@ -600,6 +600,9 @@ func (r *receivedStreamUpdates) ForEachEvent(
 	t *testing.T,
 	op func(e *ParsedEvent) bool,
 ) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if r == nil {
 		return
 	}
