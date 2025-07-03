@@ -8678,7 +8678,7 @@ __metadata:
     fake-indexeddb: ^4.0.1
     hono: ^4.7.11
     jsonwebtoken: ^9.0.2
-    typed-emitter: ^2.1.0
+    nanoevents: ^9.1.0
     typescript: ^5.8.2
     viem: ^2.29.3
     vitest: ^3.2.3
@@ -23063,6 +23063,13 @@ __metadata:
     object-assign: ^4.0.1
     thenify-all: ^1.0.0
   checksum: 8427de0ece99a07e9faed3c0c6778820d7543e3776f9a84d22cf0ec0a8eb65f6e9aee9c9d353ff9a105ff62d33a9463c6ca638974cc652ee8140cd1e35951c87
+  languageName: node
+  linkType: hard
+
+"nanoevents@npm:^9.1.0":
+  version: 9.1.0
+  resolution: "nanoevents@npm:9.1.0"
+  checksum: 77abbc15c4efc15518a0075b604e5db045e5d6184f4d08892c771928a84f53b1dd46138902213f66e8a9989e6c930168ca6441b80ff9098aec83c01a782bd42b
   languageName: node
   linkType: hard
 

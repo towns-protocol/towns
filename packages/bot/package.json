@@ -31,7 +31,7 @@
         "ethers": "^5.7.2",
         "fake-indexeddb": "^4.0.1",
         "jsonwebtoken": "^9.0.2",
-        "typed-emitter": "^2.1.0",
+        "nanoevents": "^9.1.0",
         "viem": "^2.29.3"
     },
     "peerDependencies": {
