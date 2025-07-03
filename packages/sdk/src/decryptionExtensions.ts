@@ -1011,7 +1011,7 @@ export abstract class BaseDecryptionExtensions {
                 // Process each solicitation and remove those that are fully fulfilled
                 const remainingSolicitations = solicitations.filter((solicitation) => {
                     // Remove fulfilled session IDs from the set
-                    event.sessionIds.forEach(id => {
+                    event.sessionIds.forEach((id) => {
                         solicitation.missingSessionIds.delete(id)
                     })
 
@@ -1042,17 +1042,46 @@ export abstract class BaseDecryptionExtensions {
             }
         }
 
-        // if this is a fulfillment for another user, we need to cancel any pending responses to their solicitation
+        // Cancel any pending ephemeral solicitations to prevent over-fulfilling
         const streamQueue = this.streamQueues.getQueue(event.streamId)
-        const pendingSolicitations = streamQueue.ephemeralKeySolicitations.filter(
-            (x) => x.solicitation.deviceKey === event.deviceKey,
+
+        const before = streamQueue.ephemeralKeySolicitations.length
+        // Remove solicitations that are completely fulfilled
+        streamQueue.ephemeralKeySolicitations = streamQueue.ephemeralKeySolicitations.filter(
+            (solicitation) => {
+                // Check if all requested sessions are fulfilled by this fulfillment
+                const remainingSessionIds = solicitation.solicitation.sessionIds.filter(
+                    (id) => !event.sessionIds.includes(id),
+                )
+
+                if (remainingSessionIds.length === 0) {
+                    // All sessions fulfilled, remove this solicitation to prevent duplicate responses
+                    this.log.debug(
+                        'cancelling fully fulfilled ephemeral solicitation',
+                        event.streamId,
+                        solicitation.fromUserId,
+                        'device:',
+                        solicitation.solicitation.deviceKey,
+                    )
+                    return false
+                } else {
+                    // Update with remaining session IDs
+                    solicitation.solicitation.sessionIds = remainingSessionIds
+                    this.log.debug(
+                        'partially fulfilled ephemeral solicitation',
+                        event.streamId,
+                        solicitation.fromUserId,
+                        'remaining:',
+                        remainingSessionIds.length,
+                    )
+                    return true
+                }
+            },
         )
-        for (const solicitation of pendingSolicitations) {
-            console.log(
-                'cancelling pending ephemeral solicitation',
-                event.streamId,
-                solicitation.fromUserId,
-            )
+
+        const after = streamQueue.ephemeralKeySolicitations.length
+        if (after < before) {
+            streamQueue.sortEphemeralKeySolicitations()
         }
     }
 

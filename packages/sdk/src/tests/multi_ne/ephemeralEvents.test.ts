@@ -85,10 +85,8 @@ describe('ephemeralEvents', () => {
 
         const stream = await chuck.waitForStream(streamId)
         await stream.waitForMembership(MembershipOp.SO_INVITE)
-
-        await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
-
         const chuckEventDecryptedPromise = createEventDecryptedPromise(chuck, 'hello')
+        await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
     })
 })
