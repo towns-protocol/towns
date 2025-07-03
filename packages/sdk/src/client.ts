@@ -352,6 +352,7 @@ export class Client
                 opts.notifications.url,
                 opts.notifications.store,
                 opts.notifications.rpcOptions,
+                this.streamsView,
             )
         }
 

@@ -8,9 +8,7 @@ type Stats struct {
 
 // GetStats returns the current statistics of the subscription manager.
 func (m *Manager) GetStats() Stats {
-	m.sLock.Lock()
-	syncingStreamsCount := len(m.subscriptions)
-	m.sLock.Unlock()
+	syncingStreamsCount, _ := m.registry.GetStats()
 	return Stats{
 		BufferSize:          m.messages.Len(),
 		SyncingStreamsCount: syncingStreamsCount,
