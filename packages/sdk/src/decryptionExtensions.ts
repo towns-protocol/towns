@@ -118,16 +118,24 @@ export interface DecryptionSessionError {
 class StreamTasks {
     encryptedContent = new Array<EncryptedContentItem>()
     keySolicitations = new Array<KeySolicitationItem>()
+    ephemeralKeySolicitations = new Array<KeySolicitationItem>()
     isMissingKeys = false
     keySolicitationsNeedsSort = false
+    ephemeralKeySolicitationsNeedsSort = false
     sortKeySolicitations() {
         this.keySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
         this.keySolicitationsNeedsSort = false
     }
+    sortEphemeralKeySolicitations() {
+        this.ephemeralKeySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
+        this.ephemeralKeySolicitationsNeedsSort = false
+    }
+
     isEmpty() {
         return (
             this.encryptedContent.length === 0 &&
             this.keySolicitations.length === 0 &&
+            this.ephemeralKeySolicitations.length === 0 &&
             !this.isMissingKeys
         )
     }
@@ -397,12 +405,14 @@ export abstract class BaseDecryptionExtensions {
                 fromUserId,
                 fromUserAddress,
                 solicitation: keySolicitation,
-                respondAfter: Date.now(), // Respond immediately
+                respondAfter:
+                    Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                 sigBundle,
                 hashStr: eventHashStr,
                 ephemeral: true,
-            }
-            this.mainQueues.ephemeralTasks.push(() => this.processKeySolicitation(item))
+            } satisfies KeySolicitationItem
+            this.streamQueues.getQueue(streamId).ephemeralKeySolicitations.push(item)
+            this.streamQueues.getQueue(streamId).ephemeralKeySolicitationsNeedsSort = true
             this.checkStartTicking()
             return
         }
@@ -619,12 +629,6 @@ export abstract class BaseDecryptionExtensions {
             return priorityTask()
         }
 
-        const ephemeralTask = this.mainQueues.ephemeralTasks.shift()
-        if (ephemeralTask) {
-            this.setStatus(DecryptionStatus.working)
-            return ephemeralTask()
-        }
-
         // update any new group sessions
         const session = this.mainQueues.newGroupSession.shift()
         if (session) {
@@ -654,6 +658,21 @@ export abstract class BaseDecryptionExtensions {
                 this.setStatus(DecryptionStatus.working)
                 streamQueue.isMissingKeys = false
                 return this.processMissingKeys(streamId)
+            }
+
+            if (streamQueue.ephemeralKeySolicitationsNeedsSort) {
+                streamQueue.sortEphemeralKeySolicitations()
+            }
+            const ephemeralKeySolicitation = dequeueUpToDate(
+                streamQueue.ephemeralKeySolicitations,
+                now,
+                (x) => x.respondAfter,
+                this.upToDateStreams,
+            )
+
+            if (ephemeralKeySolicitation) {
+                this.setStatus(DecryptionStatus.working)
+                return this.processKeySolicitation(ephemeralKeySolicitation)
             }
 
             if (streamQueue.keySolicitationsNeedsSort) {
@@ -941,6 +960,13 @@ export abstract class BaseDecryptionExtensions {
         if (allSessions.length === 0) {
             return
         }
+        console.log(
+            'sending key fulfillment',
+            item.streamId,
+            item.fromUserId,
+            item.fromUserAddress,
+            item.ephemeral,
+        )
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,
@@ -985,6 +1011,49 @@ export abstract class BaseDecryptionExtensions {
                 sessions,
                 algorithm,
             })
+        }
+    }
+
+    async processEphemeralKeyFulfillment(event: KeyFulfilmentData): Promise<void> {
+        if (event.deviceKey === this.userDevice.deviceKey) {
+            const ephemeral = this.ownEphemeralSolicitations.get(event.streamId)
+            if (ephemeral && !ephemeral.converted) {
+                // Remove fulfilled session IDs
+                const remainingSessionIds = ephemeral.item.solicitation.sessionIds.filter(
+                    (id) => !event.sessionIds.includes(id),
+                )
+
+                if (remainingSessionIds.length === 0) {
+                    // All sessions fulfilled, cancel timer and remove
+                    if (ephemeral.timerId) {
+                        clearTimeout(ephemeral.timerId)
+                    }
+                    this.ownEphemeralSolicitations.delete(event.streamId)
+                    this.log.debug('ephemeral solicitation fully fulfilled', event.streamId)
+                } else {
+                    // Update with remaining session IDs
+                    ephemeral.item.solicitation.sessionIds = remainingSessionIds
+                    this.log.debug(
+                        'ephemeral solicitation partially fulfilled',
+                        event.streamId,
+                        'remaining:',
+                        remainingSessionIds.length,
+                    )
+                }
+            }
+        }
+
+        // if this is a fulfillment for another user, we need to cancel any pending responses to their solicitation
+        const streamQueue = this.streamQueues.getQueue(event.streamId)
+        const pendingSolicitations = streamQueue.ephemeralKeySolicitations.filter(
+            (x) => x.solicitation.deviceKey === event.deviceKey,
+        )
+        for (const solicitation of pendingSolicitations) {
+            console.log(
+                'cancelling pending ephemeral solicitation',
+                event.streamId,
+                solicitation.fromUserId,
+            )
         }
     }
 

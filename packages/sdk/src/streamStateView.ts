@@ -51,7 +51,7 @@ import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { DecryptionSessionError } from './decryptionExtensions'
+import { DecryptionSessionError, KeyFulfilmentData } from './decryptionExtensions'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './views/models/timelineTypes'
@@ -373,15 +373,12 @@ export class StreamStateView {
                 break
             case 'keyFulfillment': {
                 const fulfillment = payload.value.content.value
-                const userId = userIdFromAddress(fulfillment.userAddress)
-                encryptionEmitter?.emit(
-                    'ephemeralKeyFulfillment',
-                    this.streamId,
-                    event.hashStr,
-                    userId,
-                    fulfillment.deviceKey,
-                    fulfillment.sessionIds,
-                )
+                encryptionEmitter?.emit('ephemeralKeyFulfillment', {
+                    streamId: this.streamId,
+                    userAddress: fulfillment.userAddress,
+                    deviceKey: fulfillment.deviceKey,
+                    sessionIds: fulfillment.sessionIds,
+                } satisfies KeyFulfilmentData)
                 break
             }
             case undefined:

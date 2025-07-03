@@ -124,14 +124,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         }
 
-        const onEphemeralKeyFulfillment = (
-            streamId: string,
-            eventHashStr: string,
-            userId: string,
-            deviceKey: string,
-            sessionIds: string[],
-        ) => {
-            this.processEphemeralKeyFulfillment(streamId, userId, deviceKey, sessionIds)
+        const onEphemeralKeyFulfillment = (event: KeyFulfilmentData) => {
+            this.processEphemeralKeyFulfillment(event)
         }
 
         client.on('streamUpToDate', onStreamUpToDate)
@@ -397,45 +391,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if (!this.isMobileSafariBackgrounded) {
             this.checkStartTicking()
         }
-    }
-
-    private processEphemeralKeyFulfillment(
-        streamId: string,
-        userId: string,
-        deviceKey: string,
-        sessionIds: string[],
-    ): void {
-        // If this is a fulfillment for our own solicitation
-        if (userId === this.userId) {
-            const ephemeral = this.ownEphemeralSolicitations.get(streamId)
-            if (ephemeral && !ephemeral.converted) {
-                // Remove fulfilled session IDs
-                const remainingSessionIds = ephemeral.item.solicitation.sessionIds.filter(
-                    (id) => !sessionIds.includes(id),
-                )
-
-                if (remainingSessionIds.length === 0) {
-                    // All sessions fulfilled, cancel timer and remove
-                    if (ephemeral.timerId) {
-                        clearTimeout(ephemeral.timerId)
-                    }
-                    this.ownEphemeralSolicitations.delete(streamId)
-                    this.log.debug('ephemeral solicitation fully fulfilled', streamId)
-                } else {
-                    // Update with remaining session IDs
-                    ephemeral.item.solicitation.sessionIds = remainingSessionIds
-                    this.log.debug(
-                        'ephemeral solicitation partially fulfilled',
-                        streamId,
-                        'remaining:',
-                        remainingSessionIds.length,
-                    )
-                }
-            }
-        }
-
-        // TODO: Cancel any pending responses to ephemeral solicitations from other users
-        // This would require tracking which ephemeral solicitations we're planning to respond to
     }
 
     private async convertEphemeralToNonEphemeral(streamId: string): Promise<void> {

@@ -6,6 +6,7 @@ import { createEventDecryptedPromise, makeTestClient, waitFor } from '../testUti
 import { Client } from '../../client'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from '../../types'
 import { hexToBytes } from 'ethereum-cryptography/utils'
+import { MembershipOp } from '@towns-protocol/proto'
 
 // Scaffold for ephemeral events tests
 
@@ -71,22 +72,23 @@ describe('ephemeralEvents', () => {
     test('should handle ephemeral key exchange', async () => {
         const alice = await makeInitAndStartClient()
         const bob = await makeInitAndStartClient()
-        const { streamId } = await alice.createDMChannel(bob.userId)
+        const charlie = await makeInitAndStartClient()
+        const chuck = await makeInitAndStartClient()
+        const { streamId } = await alice.createGDMChannel([bob.userId, charlie.userId])
 
         await waitFor(() => {
-            return alice.streams.get(streamId)?.view.membershipContent.joined.size === 2
-        })
-
-        await waitFor(() => {
-            return bob.streams.get(streamId)?.view.membershipContent.joined.size === 2
+            return alice.streams.get(streamId)?.view.membershipContent.joined.size === 3
         })
 
         await alice.sendMessage(streamId, 'hello')
+        await alice.inviteUser(streamId, chuck.userId)
 
-        const bobEventDecryptedPromise = createEventDecryptedPromise(bob, 'hello')
-        await expect(Promise.all([bobEventDecryptedPromise])).resolves.not.toThrow()
+        const stream = await chuck.waitForStream(streamId)
+        await stream.waitForMembership(MembershipOp.SO_INVITE)
 
-        console.log('BOB', bob.streams.get(streamId)?.view.timeline)
-        console.log('ALICE', alice.streams.get(streamId)?.view.timeline)
+        await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
+
+        const chuckEventDecryptedPromise = createEventDecryptedPromise(chuck, 'hello')
+        await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
     })
 })
