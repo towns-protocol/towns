@@ -6,7 +6,7 @@
     "type": "module",
     "main": "src/index.ts",
     "scripts": {
-        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx --env-file=.env src/index.ts",
+        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx --watch --env-file=.env src/index.ts",
         "build": "tsc",
         "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx src/index.ts",
         "clean": "rm -rf dist",
