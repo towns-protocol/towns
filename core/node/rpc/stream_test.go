@@ -299,7 +299,8 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	// ensure that the ephemeral message is not included in the stream
 	clients.listen(channelId, [][]string{{nonEphemeralMessage}})
 
-	tt.nodes[0].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
+	_, err = tt.nodes[0].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
+	require.NoError(err)
 
 	// ensure that the ephemeral message is not included in miniblocks as stored in storage
 	ephemeralEventHash := common.BytesToHash(ephemeralEnvelope.Hash)
