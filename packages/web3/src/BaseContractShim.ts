@@ -5,6 +5,7 @@ import { Abi } from 'abitype'
 import { TransactionOpts } from './types/ContractTypes'
 import { wrapTransaction } from './space-dapp/wrapTransaction'
 import { readRetryWrapper } from './readContractRetryer'
+import { BASE_MAINNET, BASE_SEPOLIA, LOCALHOST_CHAIN_ID } from './utils/Web3Constants'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
@@ -25,8 +26,11 @@ export class BaseContractShim<
     public readonly provider: ethers.providers.Provider
     public readonly connect: Connect<T_CONTRACT>
     public readonly abi: Abi
+    private _network?: ethers.providers.Network
+    private _networkPromise?: Promise<ethers.providers.Network>
     private contractInterface?: T_CONTRACT['interface']
     private readContract?: T_CONTRACT
+    private readContractWithRetry?: T_CONTRACT
     private writeContract?: T_CONTRACT
 
     constructor(
@@ -39,6 +43,25 @@ export class BaseContractShim<
         this.provider = provider
         this.connect = connect
         this.abi = abi
+        void this.getNetwork()
+    }
+
+    public async getNetwork(): Promise<ethers.providers.Network | undefined> {
+        if (this._network) {
+            return this._network
+        }
+
+        if (!this._networkPromise) {
+            this._networkPromise = this.provider.getNetwork()
+        }
+
+        try {
+            this._network = await this._networkPromise
+        } catch (error) {
+            this._networkPromise = undefined
+            logger.error('Failed to fetch network info:', error)
+        }
+        return this._network
     }
 
     public get interface(): T_CONTRACT['interface'] {
@@ -55,7 +78,25 @@ export class BaseContractShim<
             this.readContract = this.connect(this.address, this.provider)
             this.contractInterface = this.readContract.interface
         }
-        return readRetryWrapper(this.readContract)
+
+        if (!this._network) {
+            void this.getNetwork()
+        }
+
+        // if network is already resolved, use the appropriate contract version
+        if (this._network) {
+            // calling river chain, especially in tests, may expect a quick failure - i.e. stream doesn't exist
+            // the failed/limited calls are happening on base
+            const baseNetworks = [BASE_MAINNET, BASE_SEPOLIA, LOCALHOST_CHAIN_ID]
+            if (baseNetworks.includes(this._network.chainId)) {
+                if (!this.readContractWithRetry) {
+                    this.readContractWithRetry = readRetryWrapper(this.readContract)
+                }
+                return this.readContractWithRetry
+            }
+        }
+
+        return this.readContract
     }
 
     public write(signer: ethers.Signer): T_CONTRACT {
