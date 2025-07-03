@@ -407,7 +407,8 @@ export abstract class BaseDecryptionExtensions {
                 fromUserAddress,
                 solicitation: keySolicitation,
                 respondAfter:
-                    Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    Date.now() +
+                    this.getRespondDelayMSForEphemeralKeySolicitation(streamId, fromUserId),
                 sigBundle,
                 hashStr: eventHashStr,
                 ephemeral: true,
@@ -1079,6 +1080,13 @@ export abstract class BaseDecryptionExtensions {
      * can be overridden to add a delay to the key solicitation response
      */
     public getRespondDelayMSForKeySolicitation(_streamId: string, _userId: string): number {
+        return 0
+    }
+
+    public getRespondDelayMSForEphemeralKeySolicitation(
+        _streamId: string,
+        _userId: string,
+    ): number {
         return 0
     }
 

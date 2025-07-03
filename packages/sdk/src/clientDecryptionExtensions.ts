@@ -209,6 +209,14 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         return waitTime * multiplier
     }
 
+    /**
+     * Override the default implementation — ephemeral solicitations should be delayed less
+     * than non-ephemeral solicitations
+     */
+    public getRespondDelayMSForEphemeralKeySolicitation(streamId: string, userId: string): number {
+        return this.getRespondDelayMSForKeySolicitation(streamId, userId) / 2
+    }
+
     public async isUserEntitledToKeyExchange(
         streamId: string,
         userId: string,
