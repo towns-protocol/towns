@@ -60,6 +60,7 @@ export interface ParsedEvent {
     hashStr: string
     signature: Uint8Array | undefined
     creatorUserId: string
+    ephemeral: boolean
 }
 
 export interface ParsedSnapshot {

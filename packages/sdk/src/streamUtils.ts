@@ -87,6 +87,7 @@ export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent 
         hashStr: bin_toHexString(event.hash),
         signature: event.signature,
         creatorUserId: event.creatorUserId,
+        ephemeral: false, // Persisted events are never ephemeral
     }
 }
 

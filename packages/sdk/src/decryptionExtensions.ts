@@ -85,6 +85,7 @@ export interface KeySolicitationItem {
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
     hashStr: string
+    ephemeral?: boolean
 }
 
 export interface KeySolicitationData {
@@ -117,16 +118,24 @@ export interface DecryptionSessionError {
 class StreamTasks {
     encryptedContent = new Array<EncryptedContentItem>()
     keySolicitations = new Array<KeySolicitationItem>()
+    ephemeralKeySolicitations = new Array<KeySolicitationItem>()
     isMissingKeys = false
     keySolicitationsNeedsSort = false
+    ephemeralKeySolicitationsNeedsSort = false
     sortKeySolicitations() {
         this.keySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
         this.keySolicitationsNeedsSort = false
     }
+    sortEphemeralKeySolicitations() {
+        this.ephemeralKeySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
+        this.ephemeralKeySolicitationsNeedsSort = false
+    }
+
     isEmpty() {
         return (
             this.encryptedContent.length === 0 &&
             this.keySolicitations.length === 0 &&
+            this.ephemeralKeySolicitations.length === 0 &&
             !this.isMissingKeys
         )
     }
@@ -203,6 +212,17 @@ export abstract class BaseDecryptionExtensions {
     private highPriorityIds: Set<string> = new Set()
     private recentStreamIds: string[] = []
     private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
+    protected ownEphemeralSolicitations = new Map<
+        string,
+        Array<{
+            deviceKey: string
+            fallbackKey: string
+            isNewDevice: boolean
+            missingSessionIds: Set<string>
+            timerId?: NodeJS.Timeout
+            timestamp: number
+        }>
+    >() // key: streamId, value: array of solicitations
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
     private delayMs: number = 1
@@ -221,6 +241,7 @@ export abstract class BaseDecryptionExtensions {
     public readonly entitlementDelegate: EntitlementsDelegate
     public readonly userDevice: UserDevice
     public readonly userId: string
+    public ephemeralTimeoutMs: number = 30000 // Default 30 seconds
 
     public constructor(
         emitter: TypedEmitter<DecryptionEvents>,
@@ -270,9 +291,11 @@ export abstract class BaseDecryptionExtensions {
     public abstract isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string }
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
     public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
-    public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
+    public abstract sendKeySolicitation(
+        args: KeySolicitationData & { ephemeral?: boolean },
+    ): Promise<void>
     public abstract sendKeyFulfillment(
-        args: KeyFulfilmentData,
+        args: KeyFulfilmentData & { ephemeral?: boolean },
     ): Promise<{ error?: AddEventResponse_Error }>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
     public abstract shouldPauseTicking(): boolean
@@ -370,11 +393,35 @@ export abstract class BaseDecryptionExtensions {
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
+        ephemeral: boolean = false,
     ): void {
         if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
             //this.log.debug('ignoring key solicitation for our own device')
             return
         }
+
+        // Ephemeral solicatitions are prioritized over non-ephemeral solicitations
+        // notice that the delay is calculated differently for ephemeral solicitations
+        if (ephemeral) {
+            const item: KeySolicitationItem = {
+                streamId,
+                fromUserId,
+                fromUserAddress,
+                solicitation: keySolicitation,
+                respondAfter:
+                    Date.now() +
+                    this.getRespondDelayMSForEphemeralKeySolicitation(streamId, fromUserId),
+                sigBundle,
+                hashStr: eventHashStr,
+                ephemeral: true,
+            } satisfies KeySolicitationItem
+            this.streamQueues.getQueue(streamId).ephemeralKeySolicitations.push(item)
+            this.streamQueues.getQueue(streamId).ephemeralKeySolicitationsNeedsSort = true
+            this.checkStartTicking()
+            return
+        }
+
+        // Non-ephemeral solicitation handling (existing logic)
         const streamQueue = this.streamQueues.getQueue(streamId)
         const selectedQueue =
             fromUserId === this.userId
@@ -460,6 +507,15 @@ export abstract class BaseDecryptionExtensions {
     public async stop(): Promise<void> {
         this._onStopFn?.()
         this._onStopFn = undefined
+        // Clean up ephemeral solicitation timers
+        for (const solicitations of this.ownEphemeralSolicitations.values()) {
+            for (const solicitation of solicitations) {
+                if (solicitation.timerId) {
+                    clearTimeout(solicitation.timerId)
+                }
+            }
+        }
+        this.ownEphemeralSolicitations.clear()
         // let the subclass override and do any custom shutdown tasks
         await this.onStop()
         await this.stopTicking()
@@ -608,6 +664,21 @@ export abstract class BaseDecryptionExtensions {
                 this.setStatus(DecryptionStatus.working)
                 streamQueue.isMissingKeys = false
                 return this.processMissingKeys(streamId)
+            }
+
+            if (streamQueue.ephemeralKeySolicitationsNeedsSort) {
+                streamQueue.sortEphemeralKeySolicitations()
+            }
+            const ephemeralKeySolicitation = dequeueUpToDate(
+                streamQueue.ephemeralKeySolicitations,
+                now,
+                (x) => x.respondAfter,
+                this.upToDateStreams,
+            )
+
+            if (ephemeralKeySolicitation) {
+                this.setStatus(DecryptionStatus.working)
+                return this.processKeySolicitation(ephemeralKeySolicitation)
             }
 
             if (streamQueue.keySolicitationsNeedsSort) {
@@ -784,6 +855,7 @@ export abstract class BaseDecryptionExtensions {
             this.log.debug('processing missing keys', streamId, 'user is not member of stream')
             return
         }
+
         const solicitedEvents = this.getKeySolicitations(streamId)
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
@@ -803,17 +875,19 @@ export abstract class BaseDecryptionExtensions {
         const isNewDevice = knownSessionIds.length === 0
 
         this.log.debug(
-            'requesting keys',
+            'requesting keys (ephemeral)',
             streamId,
             'isNewDevice',
             isNewDevice,
             'sessionIds:',
             missingSessionIds.length,
         )
+        // Send ephemeral solicitation first
         await this.sendKeySolicitation({
             streamId,
             isNewDevice,
             missingSessionIds,
+            ephemeral: true,
         })
     }
 
@@ -875,6 +949,7 @@ export abstract class BaseDecryptionExtensions {
         if (allSessions.length === 0) {
             return
         }
+
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,
@@ -884,6 +959,7 @@ export abstract class BaseDecryptionExtensions {
                 .map((x) => x.sessionId)
                 .filter((x) => requestedSessionIds.has(x))
                 .sort(),
+            ephemeral: item.ephemeral,
         })
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
@@ -921,10 +997,98 @@ export abstract class BaseDecryptionExtensions {
         }
     }
 
+    processEphemeralKeyFulfillment(event: KeyFulfilmentData) {
+        if (event.deviceKey === this.userDevice.deviceKey) {
+            const solicitations = this.ownEphemeralSolicitations.get(event.streamId)
+            if (solicitations) {
+                // Process each solicitation and remove those that are fully fulfilled
+                const remainingSolicitations = solicitations.filter((solicitation) => {
+                    // Remove fulfilled session IDs from the set
+                    event.sessionIds.forEach((id) => {
+                        solicitation.missingSessionIds.delete(id)
+                    })
+
+                    if (solicitation.missingSessionIds.size === 0) {
+                        // All sessions fulfilled, cancel timer
+                        if (solicitation.timerId) {
+                            clearTimeout(solicitation.timerId)
+                        }
+                        this.log.debug('ephemeral solicitation fully fulfilled', event.streamId)
+                        return false // Remove this solicitation
+                    } else {
+                        // Still has remaining session IDs
+                        this.log.debug(
+                            'ephemeral solicitation partially fulfilled',
+                            event.streamId,
+                            'remaining:',
+                            solicitation.missingSessionIds.size,
+                        )
+                        return true // Keep this solicitation
+                    }
+                })
+
+                if (remainingSolicitations.length === 0) {
+                    this.ownEphemeralSolicitations.delete(event.streamId)
+                } else {
+                    this.ownEphemeralSolicitations.set(event.streamId, remainingSolicitations)
+                }
+            }
+        }
+
+        // Cancel any pending ephemeral solicitations to prevent over-fulfilling
+        const streamQueue = this.streamQueues.getQueue(event.streamId)
+
+        const before = streamQueue.ephemeralKeySolicitations.length
+        // Remove solicitations that are completely fulfilled
+        streamQueue.ephemeralKeySolicitations = streamQueue.ephemeralKeySolicitations.filter(
+            (solicitation) => {
+                // Check if all requested sessions are fulfilled by this fulfillment
+                const remainingSessionIds = solicitation.solicitation.sessionIds.filter(
+                    (id) => !event.sessionIds.includes(id),
+                )
+
+                if (remainingSessionIds.length === 0) {
+                    // All sessions fulfilled, remove this solicitation to prevent duplicate responses
+                    this.log.debug(
+                        'cancelling fully fulfilled ephemeral solicitation',
+                        event.streamId,
+                        solicitation.fromUserId,
+                        'device:',
+                        solicitation.solicitation.deviceKey,
+                    )
+                    return false
+                } else {
+                    // Update with remaining session IDs
+                    solicitation.solicitation.sessionIds = remainingSessionIds
+                    this.log.debug(
+                        'partially fulfilled ephemeral solicitation',
+                        event.streamId,
+                        solicitation.fromUserId,
+                        'remaining:',
+                        remainingSessionIds.length,
+                    )
+                    return true
+                }
+            },
+        )
+
+        const after = streamQueue.ephemeralKeySolicitations.length
+        if (after < before) {
+            streamQueue.sortEphemeralKeySolicitations()
+        }
+    }
+
     /**
      * can be overridden to add a delay to the key solicitation response
      */
     public getRespondDelayMSForKeySolicitation(_streamId: string, _userId: string): number {
+        return 0
+    }
+
+    public getRespondDelayMSForEphemeralKeySolicitation(
+        _streamId: string,
+        _userId: string,
+    ): number {
         return 0
     }
 
