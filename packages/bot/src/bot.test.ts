@@ -712,6 +712,12 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
     })
 
+    it('should be able to get channel settings', async () => {
+        const settings = await bot.getChannelSettings(channelId)
+        expect(settings).toBeDefined()
+        expect(settings?.autojoin).toBe(true)
+    })
+
     it.fails(
         'onEventRevoke (FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS) should be triggered when a message that mentions the bot is revoked',
         async () => {
