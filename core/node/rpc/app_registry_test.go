@@ -532,7 +532,7 @@ func registerWebhook(
 }
 
 func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
-	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 3})
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 3, enableRiverLogs: false})
 	tester.StartBotServices()
 	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
 
@@ -557,13 +557,19 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		"Update Success (app wallet signer)": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
-			metadata:             validMetadata,
+			metadata: &protocol.AppMetadata{
+				Name:        "Updated Test App 1",
+				Description: validMetadata.Description,
+				ImageUrl:    validMetadata.ImageUrl,
+				AvatarUrl:   validMetadata.AvatarUrl,
+				ExternalUrl: validMetadata.ExternalUrl,
+			},
 		},
 		"Update Success (owner wallet signer)": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: ownerWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Owner Updated App",
+				Name:        "Owner Updated App 2",
 				Description: "Updated by owner wallet",
 				ImageUrl:    "https://owner.example.com/image.png",
 				AvatarUrl:   "https://owner.example.com/avatar.png",
@@ -597,6 +603,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
 				Description: "",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			expectedErr: "metadata description is required",
@@ -610,7 +617,18 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				ImageUrl:    "",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
-			expectedErr: "metadata image_url must be a valid URL",
+			expectedErr: "metadata image_url validation failed",
+		},
+		"Failure: invalid image URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid image URL",
+				ImageUrl:    "invalid-url",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata image_url validation failed",
 		},
 		"Failure: missing avatar URL": {
 			appId:                appWallet.Address[:],
@@ -618,59 +636,169 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
 				Description: "Missing avatar URL",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "",
 			},
-			expectedErr: "metadata avatar_url is required",
+			expectedErr: "metadata avatar_url validation failed",
 		},
-		"Failure: invalid avatar URL": {
+		"Failure: invalid avatar URL format": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
-				Description: "Invalid avatar URL",
-				AvatarUrl:   "not-a-valid-url",
+				Description: "Invalid avatar URL format",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "not-a-url",
 			},
-			expectedErr: "metadata avatar_url must be a valid URL",
+			expectedErr: "metadata avatar_url validation failed",
 		},
-		// "Failure: invalid image URL": {
-		// 	appId:                appWallet.Address[:],
-		// 	authenticatingWallet: appWallet,
-		// 	metadata: &protocol.AppMetadata{
-		// 		Name:        "Test App",
-		// 		Description: "Invalid image URL",
-		// 		ImageUrl:    "invalid-url",
-		// 		AvatarUrl:   "https://example.com/avatar.png",
-		// 	},
-		// 	expectedErr: "metadata image_url must be a valid URL",
-		// },
-		// "Failure: invalid external URL": {
-		// 	appId:                appWallet.Address[:],
-		// 	authenticatingWallet: appWallet,
-		// 	metadata: &protocol.AppMetadata{
-		// 		Name:        "Test App",
-		// 		Description: "Invalid external URL",
-		// 		AvatarUrl:   "https://example.com/avatar.png",
-		// 		ExternalUrl: stringPtr("not-valid-url"),
-		// 	},
-		// 	expectedErr: "metadata external_url must be a valid URL",
-		// },
-		// "Failure: unregistered app": {
-		// 	appId:                unregisteredAppWallet.Address[:],
-		// 	authenticatingWallet: unregisteredAppWallet,
-		// 	metadata:             validMetadata,
-		// 	expectedErr:          "app is not registered",
-		// },
-		// "Failure: missing authentication": {
-		// 	appId:       appWallet.Address[:],
-		// 	metadata:    validMetadata,
-		// 	expectedErr: "missing session token",
-		// },
-		// "Failure: unauthorized user": {
-		// 	appId:                appWallet.Address[:],
-		// 	authenticatingWallet: unregisteredAppWallet,
-		// 	metadata:             validMetadata,
-		// 	expectedErr:          "authenticated user must be app or owner",
-		// },
+		"Failure: avatar URL invalid scheme": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Avatar URL with invalid scheme",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "ftp://example.com/avatar.png",
+			},
+			expectedErr: "metadata avatar_url validation failed",
+		},
+		"Failure: avatar URL missing file path": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Avatar URL missing file path",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/",
+			},
+			expectedErr: "metadata avatar_url validation failed",
+		},
+		"Failure: avatar URL invalid file extension": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Avatar URL with invalid extension",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.txt",
+			},
+			expectedErr: "metadata avatar_url validation failed",
+		},
+		"Failure: image URL invalid scheme": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Image URL with invalid scheme",
+				ImageUrl:    "ftp://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata image_url validation failed",
+		},
+		"Failure: image URL missing file path": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Image URL missing file path",
+				ImageUrl:    "https://example.com/",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata image_url validation failed",
+		},
+		"Failure: image URL invalid file extension": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Image URL with invalid extension",
+				ImageUrl:    "https://example.com/image.txt",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata image_url validation failed",
+		},
+		"Success: IPFS scheme avatar": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "IPFS Avatar App 1",
+				Description: "App with IPFS avatar",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "ipfs://QmHashExample/avatar.png",
+			},
+		},
+		"Success: IPFS scheme image": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "IPFS Image App 1",
+				Description: "App with IPFS image",
+				ImageUrl:    "ipfs://QmHashExample/image.jpg",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+		},
+		"Success: HTTP scheme URLs": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "HTTP URLs App",
+				Description: "App with HTTP URLs",
+				ImageUrl:    "http://example.com/image.jpeg",
+				AvatarUrl:   "http://example.com/avatar.gif",
+			},
+		},
+		"Success: various file extensions": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Various Extensions App",
+				Description: "App with various supported extensions",
+				ImageUrl:    "https://example.com/image.webp",
+				AvatarUrl:   "https://example.com/avatar.svg",
+			},
+		},
+		"Failure: invalid external URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid external URL",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				ExternalUrl: stringPtr("not-valid-url"),
+			},
+			expectedErr: "URL must have a valid external URL scheme",
+		},
+		"Failure: invalid external URL schema": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App",
+				Description: "Invalid external URL",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				ExternalUrl: stringPtr("ssh://external-url"),
+			},
+			expectedErr: "URL must have a valid external URL scheme",
+		},
+		"Failure: unregistered app": {
+			appId:                unregisteredAppWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			metadata:             validMetadata,
+			expectedErr:          "app is not registered",
+		},
+		"Failure: missing authentication": {
+			appId:       appWallet.Address[:],
+			metadata:    validMetadata,
+			expectedErr: "missing session token",
+		},
+		"Failure: unauthorized user": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			metadata:             validMetadata,
+			expectedErr:          "authenticated user must be app or owner",
+		},
 	}
 
 	for name, tc := range tests {
@@ -1520,11 +1648,18 @@ func TestAppRegistry_Register(t *testing.T) {
 	ownerWallet := tester.botCredentials[0].ownerWallet
 	appWallet := tester.botCredentials[0].botWallet
 
+	// Create additional app wallets for success test cases
+	appWallet2 := safeNewWallet(tester.ctx, tester.require)
+
 	var unregisteredApp common.Address
 	_, err := rand.Read(unregisteredApp[:])
 	tester.require.NoError(err)
 
 	tester.BotNodeClient(0, testClientOpts{}).createUserStreamsWithEncryptionDevice()
+
+	// Create user streams for the second app wallet as well
+	_, _, err = createUserInboxStream(tester.ctx, appWallet2, tester.NodeClient(0, testClientOpts{}).client, nil)
+	tester.require.NoError(err)
 
 	tests := map[string]struct {
 		appId                []byte
@@ -1534,18 +1669,24 @@ func TestAppRegistry_Register(t *testing.T) {
 		expectedErr          string
 	}{
 		"Success": {
-			appId:                appWallet.Address[:],
-			ownerId:              ownerWallet.Address[:],
-			metadata:             testAppMetadata(),
-			authenticatingWallet: ownerWallet,
-		},
-		"Success with minimal metadata": {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Minimal App",
+				Name:        "Test Bot App Success 1",
+				Description: testAppMetadata().Description,
+				ImageUrl:    testAppMetadata().ImageUrl,
+				AvatarUrl:   testAppMetadata().AvatarUrl,
+				ExternalUrl: testAppMetadata().ExternalUrl,
+			},
+			authenticatingWallet: ownerWallet,
+		},
+		"Success with minimal metadata": {
+			appId:   appWallet2.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Minimal App Success 2",
 				Description: "Minimal app description",
-				ImageUrl:    "",
+				ImageUrl:    "https://example.com/minimal-image.png",
 				AvatarUrl:   "https://example.com/minimal-avatar.png",
 				ExternalUrl: nil,
 			},
@@ -1578,6 +1719,7 @@ func TestAppRegistry_Register(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "",
 				Description: "Missing name",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			authenticatingWallet: ownerWallet,
@@ -1589,6 +1731,7 @@ func TestAppRegistry_Register(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
 				Description: "",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			authenticatingWallet: ownerWallet,
@@ -1600,10 +1743,11 @@ func TestAppRegistry_Register(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
 				Description: "Missing avatar URL",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "",
 			},
 			authenticatingWallet: ownerWallet,
-			expectedErr:          "metadata avatar_url is required",
+			expectedErr:          "metadata avatar_url validation failed",
 		},
 		"Invalid metadata - invalid avatar URL": {
 			appId:   appWallet.Address[:],
@@ -1611,10 +1755,11 @@ func TestAppRegistry_Register(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
 				Description: "Invalid avatar URL",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "not-a-valid-url",
 			},
 			authenticatingWallet: ownerWallet,
-			expectedErr:          "metadata avatar_url must be a valid URL",
+			expectedErr:          "metadata avatar_url validation failed",
 		},
 		"Invalid metadata - invalid image URL": {
 			appId:   appWallet.Address[:],
@@ -1626,7 +1771,7 @@ func TestAppRegistry_Register(t *testing.T) {
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			authenticatingWallet: ownerWallet,
-			expectedErr:          "metadata image_url must be a valid URL",
+			expectedErr:          "metadata image_url validation failed",
 		},
 		"Invalid metadata - invalid external URL": {
 			appId:   appWallet.Address[:],
@@ -1634,6 +1779,7 @@ func TestAppRegistry_Register(t *testing.T) {
 			metadata: &protocol.AppMetadata{
 				Name:        "Test App",
 				Description: "Invalid external URL",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
 				ExternalUrl: stringPtr("not-valid-url"),
 			},
@@ -1687,7 +1833,12 @@ func TestAppRegistry_Register(t *testing.T) {
 				getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
 				tester.require.NoError(err)
 				tester.require.NotNil(getResp)
-				tester.require.Equal(tc.metadata, getResp.Msg.GetMetadata())
+				// Compare each field in metadata individually for better error messages
+				tester.require.Equal(tc.metadata.Name, getResp.Msg.GetMetadata().GetName())
+				tester.require.Equal(tc.metadata.Description, getResp.Msg.GetMetadata().GetDescription())
+				tester.require.Equal(tc.metadata.ImageUrl, getResp.Msg.GetMetadata().GetImageUrl())
+				tester.require.Equal(tc.metadata.AvatarUrl, getResp.Msg.GetMetadata().GetAvatarUrl())
+				tester.require.Equal(tc.metadata.GetExternalUrl(), getResp.Msg.GetMetadata().GetExternalUrl())
 			} else {
 				tester.require.Nil(resp)
 				tester.require.ErrorContains(err, tc.expectedErr)

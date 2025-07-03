@@ -814,6 +814,7 @@ func (s *Service) SetAppMetadata(
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
 			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
 	}
+	logging.FromCtx(ctx).Infow("meta", "meta", metadata)
 
 	appInfo, err := s.store.GetAppInfo(ctx, app)
 	if err != nil {

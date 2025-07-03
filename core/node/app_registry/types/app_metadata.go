@@ -2,6 +2,7 @@ package types
 
 import (
 	"net/url"
+	"strings"
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -52,6 +53,88 @@ func StorageToProtocolAppMetadata(metadata AppMetadata) *protocol.AppMetadata {
 	}
 }
 
+// validFileUrlSchemes defines allowed URL schemes for image files.
+var validFileUrlSchemes = map[string]struct{}{
+	"https": {},
+	"http":  {},
+	"ipfs":  {},
+}
+
+// validFileUrlSchemes defines allowed URL schemes
+var validExternalUrlSchemes = map[string]struct{}{
+	"https": {},
+	"http":  {},
+}
+
+// validExtensions defines allowed file extensions
+var validExtensions = map[string]struct{}{
+	"png":  {},
+	"jpg":  {},
+	"jpeg": {},
+	"gif":  {},
+	"webp": {},
+	"svg":  {},
+}
+
+func ValidateImageFileUrl(urlStr string) error {
+	if urlStr == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
+	}
+
+	parsedUrl, err := url.Parse(urlStr)
+	if err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
+			Tag("url", urlStr)
+	}
+
+	// Check if scheme is valid
+	if _, schemeOk := validFileUrlSchemes[parsedUrl.Scheme]; !schemeOk {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid scheme (https, http, or ipfs)").
+			Tag("url", urlStr).
+			Tag("scheme", parsedUrl.Scheme)
+	}
+
+	// Check if path exists
+	if parsedUrl.Path == "" || parsedUrl.Path == "/" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid path to a file").
+			Tag("url", urlStr)
+	}
+
+	// Extract file extension from path
+	path := parsedUrl.Path
+	lastDot := strings.LastIndex(path, ".")
+	if lastDot == -1 || lastDot == len(path)-1 {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must point to a file with a valid extension").
+			Tag("url", urlStr)
+	}
+
+	extension := strings.ToLower(path[lastDot+1:])
+	if _, extOk := validExtensions[extension]; !extOk {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must point to a file with a supported extension (png, jpg, jpeg, gif, webp, svg)").
+			Tag("url", urlStr).
+			Tag("extension", extension)
+	}
+
+	return nil
+}
+
+func ValidateExternalUrl(urlStr string) error {
+	parsedUrl, err := url.Parse(urlStr)
+	if err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
+			Tag("url", urlStr)
+	}
+
+	// Check if scheme is valid
+	if _, schemeOk := validExternalUrlSchemes[parsedUrl.Scheme]; !schemeOk {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid external URL scheme").
+			Tag("url", urlStr).
+			Tag("scheme", parsedUrl.Scheme)
+	}
+
+	return nil
+}
+
 // ValidateAppMetadata validates app metadata and returns an error if validation fails
 func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 	if metadata == nil {
@@ -66,25 +149,22 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata description is required")
 	}
 
-	if metadata.GetAvatarUrl() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url must be a valid URL")
+	imageUrl := metadata.GetImageUrl()
+	if err := ValidateImageFileUrl(imageUrl); err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
+			Tag("image_url", imageUrl)
 	}
 
-	if _, err := url.Parse(metadata.GetAvatarUrl()); err != nil {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url must be a valid URL")
-	}
-
-	if metadata.GetAvatarUrl() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata image_url must be a valid URL")
-	}
-
-	if _, err := url.Parse(metadata.GetImageUrl()); err != nil {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata image_url must be a valid URL")
+	avatarUrl := metadata.GetAvatarUrl()
+	if err := ValidateImageFileUrl(avatarUrl); err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
+			Tag("avatar_url", avatarUrl)
 	}
 
 	if externalUrl := metadata.GetExternalUrl(); externalUrl != "" {
-		if _, err := url.Parse(externalUrl); err != nil {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL")
+		if err := ValidateExternalUrl(externalUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
+				Tag("external_url", metadata.GetExternalUrl())
 		}
 	}
 
