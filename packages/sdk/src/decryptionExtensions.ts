@@ -204,7 +204,6 @@ export abstract class BaseDecryptionExtensions {
     private _status: DecryptionStatus = DecryptionStatus.initializing
     private mainQueues = {
         priorityTasks: new Array<() => Promise<void>>(),
-        ephemeralTasks: new Array<() => Promise<void>>(),
         newGroupSession: new Array<NewGroupSessionItem>(),
         ownKeySolicitations: new Array<KeySolicitationItem>(),
     }
