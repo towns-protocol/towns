@@ -85,6 +85,7 @@ export interface KeySolicitationItem {
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
     hashStr: string
+    ephemeral?: boolean
 }
 
 export interface KeySolicitationData {
@@ -195,6 +196,7 @@ export abstract class BaseDecryptionExtensions {
     private _status: DecryptionStatus = DecryptionStatus.initializing
     private mainQueues = {
         priorityTasks: new Array<() => Promise<void>>(),
+        ephemeralTasks: new Array<() => Promise<void>>(),
         newGroupSession: new Array<NewGroupSessionItem>(),
         ownKeySolicitations: new Array<KeySolicitationItem>(),
     }
@@ -203,6 +205,15 @@ export abstract class BaseDecryptionExtensions {
     private highPriorityIds: Set<string> = new Set()
     private recentStreamIds: string[] = []
     private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
+    protected ownEphemeralSolicitations = new Map<
+        string,
+        {
+            item: KeySolicitationItem
+            sentAt: number
+            converted: boolean
+            timerId?: NodeJS.Timeout
+        }
+    >() // key: streamId
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
     private delayMs: number = 1
@@ -270,9 +281,11 @@ export abstract class BaseDecryptionExtensions {
     public abstract isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string }
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
     public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
-    public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
+    public abstract sendKeySolicitation(
+        args: KeySolicitationData & { ephemeral?: boolean },
+    ): Promise<void>
     public abstract sendKeyFulfillment(
-        args: KeyFulfilmentData,
+        args: KeyFulfilmentData & { ephemeral?: boolean },
     ): Promise<{ error?: AddEventResponse_Error }>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
     public abstract shouldPauseTicking(): boolean
@@ -376,6 +389,25 @@ export abstract class BaseDecryptionExtensions {
             //this.log.debug('ignoring key solicitation for our own device')
             return
         }
+
+        if (ephemeral) {
+            // Handle others' ephemeral solicitations - respond immediately
+            const item: KeySolicitationItem = {
+                streamId,
+                fromUserId,
+                fromUserAddress,
+                solicitation: keySolicitation,
+                respondAfter: Date.now(), // Respond immediately
+                sigBundle,
+                hashStr: eventHashStr,
+                ephemeral: true,
+            }
+            this.mainQueues.ephemeralTasks.push(() => this.processKeySolicitation(item))
+            this.checkStartTicking()
+            return
+        }
+
+        // Non-ephemeral solicitation handling (existing logic)
         const streamQueue = this.streamQueues.getQueue(streamId)
         const selectedQueue =
             fromUserId === this.userId
@@ -461,6 +493,13 @@ export abstract class BaseDecryptionExtensions {
     public async stop(): Promise<void> {
         this._onStopFn?.()
         this._onStopFn = undefined
+        // Clean up ephemeral solicitation timers
+        for (const ephemeral of this.ownEphemeralSolicitations.values()) {
+            if (ephemeral.timerId) {
+                clearTimeout(ephemeral.timerId)
+            }
+        }
+        this.ownEphemeralSolicitations.clear()
         // let the subclass override and do any custom shutdown tasks
         await this.onStop()
         await this.stopTicking()
@@ -791,6 +830,24 @@ export abstract class BaseDecryptionExtensions {
             this.log.debug('processing missing keys', streamId, 'user is not member of stream')
             return
         }
+
+        // Check if we already have an ephemeral solicitation for this stream
+        const existingEphemeral = this.ownEphemeralSolicitations.get(streamId)
+        if (existingEphemeral && !existingEphemeral.converted) {
+            // Merge session IDs if we have an existing ephemeral solicitation
+            const mergedSessionIds = Array.from(
+                new Set([...existingEphemeral.item.solicitation.sessionIds, ...missingSessionIds]),
+            ).sort()
+            existingEphemeral.item.solicitation.sessionIds = mergedSessionIds
+            this.log.debug(
+                'updated existing ephemeral solicitation',
+                streamId,
+                'sessionIds:',
+                mergedSessionIds.length,
+            )
+            return
+        }
+
         const solicitedEvents = this.getKeySolicitations(streamId)
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
@@ -810,17 +867,19 @@ export abstract class BaseDecryptionExtensions {
         const isNewDevice = knownSessionIds.length === 0
 
         this.log.debug(
-            'requesting keys',
+            'requesting keys (ephemeral)',
             streamId,
             'isNewDevice',
             isNewDevice,
             'sessionIds:',
             missingSessionIds.length,
         )
+        // Send ephemeral solicitation first
         await this.sendKeySolicitation({
             streamId,
             isNewDevice,
             missingSessionIds,
+            ephemeral: true,
         })
     }
 
@@ -891,6 +950,7 @@ export abstract class BaseDecryptionExtensions {
                 .map((x) => x.sessionId)
                 .filter((x) => requestedSessionIds.has(x))
                 .sort(),
+            ephemeral: item.ephemeral,
         })
 
         // if the key fulfillment failed, someone else already sent a key fulfillment

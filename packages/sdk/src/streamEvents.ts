@@ -41,6 +41,7 @@ export type StreamEncryptionEvents = {
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
+        ephemeral?: boolean,
     ) => void
     updatedKeySolicitation: (
         streamId: string,
@@ -61,6 +62,13 @@ export type StreamEncryptionEvents = {
         sigBundle: EventSignatureBundle,
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
+    ephemeralKeyFulfillment: (
+        streamId: string,
+        eventHashStr: string,
+        userId: string,
+        deviceKey: string,
+        sessionIds: string[],
+    ) => void
 }
 
 export type SyncedStreamEvents = {

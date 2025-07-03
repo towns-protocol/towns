@@ -46,12 +46,6 @@ describe('ephemeralEvents', () => {
             ephemeral: true,
         })
 
-        const stream = await alice.waitForStream(streamId)
-
-        await waitFor(() => {
-            return stream.view.ephemeralEvents.size == 1
-        })
-
         // before actually fulfilling the key solicitation, this event tells everyone that is listening, that bob fulfilled alice's key solicitation
         const fulfillmentEvent = make_MemberPayload_KeyFulfillment({
             userAddress: hexToBytes(bob.userId),

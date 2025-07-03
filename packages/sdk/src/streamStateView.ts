@@ -20,6 +20,7 @@ import {
     isConfirmedEvent,
     isLocalEvent,
     makeRemoteTimelineEvent,
+    getEventSignature,
 } from './types'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
@@ -43,6 +44,7 @@ import {
     isUserStreamId,
     isUserInboxStreamId,
     isMetadataStreamId,
+    userIdFromAddress,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
@@ -66,7 +68,6 @@ export class StreamStateView {
     readonly streamsView: StreamsView
     readonly contentKind: SnapshotCaseType
     readonly minipoolEvents = new Map<string, StreamTimelineEvent>()
-    readonly ephemeralEvents = new Map<string, ParsedEvent>()
 
     prevMiniblockHash?: Uint8Array
     prevMiniblockNum?: bigint
@@ -318,7 +319,6 @@ export class StreamStateView {
         for (const parsedEvent of minipoolEvents) {
             if (parsedEvent.ephemeral) {
                 this.processEphemeralEvent(parsedEvent, encryptionEmitter)
-                this.ephemeralEvents.set(parsedEvent.hashStr, parsedEvent)
                 continue
             }
             const existingEvent = this.minipoolEvents.get(parsedEvent.hashStr)
@@ -365,18 +365,30 @@ export class StreamStateView {
                     this.streamId,
                     event.hashStr,
                     event.creatorUserId,
-                    event.creatorUserAddress,
-                    payload.value.content,
-                    getEventSignature(event.remoteEvent),
-                    encryptionEmitter,
+                    event.event.creatorAddress,
+                    payload.value.content.value,
+                    getEventSignature(event),
+                    true, // ephemeral flag
                 )
                 break
-            case 'keyFulfillment':
+            case 'keyFulfillment': {
+                const fulfillment = payload.value.content.value
+                const userId = userIdFromAddress(fulfillment.userAddress)
+                encryptionEmitter?.emit(
+                    'ephemeralKeyFulfillment',
+                    this.streamId,
+                    event.hashStr,
+                    userId,
+                    fulfillment.deviceKey,
+                    fulfillment.sessionIds,
+                )
                 break
+            }
             case undefined:
                 break
             default:
-                logNever(payload.value.content)
+                // Other member payload types are not handled for ephemeral events
+                break
         }
     }
 

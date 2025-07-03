@@ -124,6 +124,16 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         }
 
+        const onEphemeralKeyFulfillment = (
+            streamId: string,
+            eventHashStr: string,
+            userId: string,
+            deviceKey: string,
+            sessionIds: string[],
+        ) => {
+            this.processEphemeralKeyFulfillment(streamId, userId, deviceKey, sessionIds)
+        }
+
         client.on('streamUpToDate', onStreamUpToDate)
         client.on('newGroupSessions', onNewGroupSessions)
         client.on('newEncryptedContent', onNewEncryptedContent)
@@ -133,6 +143,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('streamNewUserJoined', onMembershipChange)
         client.on('streamInitialized', onStreamInitialized)
         client.on('streamSyncActive', onStreamSyncActive)
+        client.on('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
 
         this._onStopFn = () => {
             client.off('streamUpToDate', onStreamUpToDate)
@@ -144,6 +155,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('streamNewUserJoined', onMembershipChange)
             client.off('streamInitialized', onStreamInitialized)
             client.off('streamSyncActive', onStreamSyncActive)
+            client.off('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
     }
@@ -301,14 +313,45 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         streamId,
         isNewDevice,
         missingSessionIds,
-    }: KeySolicitationData): Promise<void> {
+        ephemeral = false,
+    }: KeySolicitationData & { ephemeral?: boolean }): Promise<void> {
         const keySolicitation = make_MemberPayload_KeySolicitation({
             deviceKey: this.userDevice.deviceKey,
             fallbackKey: this.userDevice.fallbackKey,
             isNewDevice,
             sessionIds: missingSessionIds,
         })
-        await this.client.makeEventAndAddToStream(streamId, keySolicitation)
+
+        if (ephemeral) {
+            // Track own ephemeral solicitation with timer
+            const item: KeySolicitationItem = {
+                streamId,
+                fromUserId: this.userId,
+                fromUserAddress: new Uint8Array(), // Will be filled when we receive the event back
+                solicitation: {
+                    deviceKey: this.userDevice.deviceKey,
+                    fallbackKey: this.userDevice.fallbackKey,
+                    isNewDevice,
+                    sessionIds: missingSessionIds,
+                },
+                respondAfter: Date.now(),
+                sigBundle: {} as any, // Will be filled when we receive the event back
+                hashStr: '', // Will be filled when we receive the event back
+            }
+
+            const timerId = setTimeout(() => {
+                void this.convertEphemeralToNonEphemeral(streamId)
+            }, 30000) // 30 seconds
+
+            this.ownEphemeralSolicitations.set(streamId, {
+                item,
+                sentAt: Date.now(),
+                converted: false,
+                timerId,
+            })
+        }
+
+        await this.client.makeEventAndAddToStream(streamId, keySolicitation, { ephemeral })
     }
 
     public async sendKeyFulfillment({
@@ -316,7 +359,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         userAddress,
         deviceKey,
         sessionIds,
-    }: KeyFulfilmentData): Promise<{ error?: AddEventResponse_Error }> {
+        ephemeral = false,
+    }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: AddEventResponse_Error }> {
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
@@ -325,6 +369,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         const { error } = await this.client.makeEventAndAddToStream(streamId, fulfillment, {
             optional: true,
+            ephemeral,
         })
         return { error }
     }
@@ -352,6 +397,69 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if (!this.isMobileSafariBackgrounded) {
             this.checkStartTicking()
         }
+    }
+
+    private processEphemeralKeyFulfillment(
+        streamId: string,
+        userId: string,
+        deviceKey: string,
+        sessionIds: string[],
+    ): void {
+        // If this is a fulfillment for our own solicitation
+        if (userId === this.userId) {
+            const ephemeral = this.ownEphemeralSolicitations.get(streamId)
+            if (ephemeral && !ephemeral.converted) {
+                // Remove fulfilled session IDs
+                const remainingSessionIds = ephemeral.item.solicitation.sessionIds.filter(
+                    (id) => !sessionIds.includes(id),
+                )
+
+                if (remainingSessionIds.length === 0) {
+                    // All sessions fulfilled, cancel timer and remove
+                    if (ephemeral.timerId) {
+                        clearTimeout(ephemeral.timerId)
+                    }
+                    this.ownEphemeralSolicitations.delete(streamId)
+                    this.log.debug('ephemeral solicitation fully fulfilled', streamId)
+                } else {
+                    // Update with remaining session IDs
+                    ephemeral.item.solicitation.sessionIds = remainingSessionIds
+                    this.log.debug(
+                        'ephemeral solicitation partially fulfilled',
+                        streamId,
+                        'remaining:',
+                        remainingSessionIds.length,
+                    )
+                }
+            }
+        }
+
+        // TODO: Cancel any pending responses to ephemeral solicitations from other users
+        // This would require tracking which ephemeral solicitations we're planning to respond to
+    }
+
+    private async convertEphemeralToNonEphemeral(streamId: string): Promise<void> {
+        const ephemeral = this.ownEphemeralSolicitations.get(streamId)
+        if (!ephemeral || ephemeral.converted) {
+            return
+        }
+
+        ephemeral.converted = true
+        if (ephemeral.timerId) {
+            clearTimeout(ephemeral.timerId)
+        }
+
+        this.log.info('converting ephemeral solicitation to non-ephemeral', streamId)
+
+        // Send non-ephemeral solicitation
+        await this.sendKeySolicitation({
+            streamId,
+            isNewDevice: ephemeral.item.solicitation.isNewDevice,
+            missingSessionIds: ephemeral.item.solicitation.sessionIds,
+            ephemeral: false,
+        })
+
+        this.ownEphemeralSolicitations.delete(streamId)
     }
 
     public getPriorityForStream(
