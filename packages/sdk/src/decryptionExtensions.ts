@@ -399,8 +399,9 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
+        // Ephemeral solicatitions are prioritized over non-ephemeral solicitations
+        // notice that the delay is calculated differently for ephemeral solicitations
         if (ephemeral) {
-            // Handle others' ephemeral solicitations - respond immediately
             const item: KeySolicitationItem = {
                 streamId,
                 fromUserId,
