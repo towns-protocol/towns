@@ -195,7 +195,11 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
      * Override the default implementation to use the number of members in the stream
      * to determine the delay time.
      */
-    public getRespondDelayMSForKeySolicitation(streamId: string, userId: string): number {
+    public getRespondDelayMSForKeySolicitation(
+        streamId: string,
+        userId: string,
+        opts: { ephemeral: boolean },
+    ): number {
         const multiplier = userId === this.userId ? 0.5 : 1
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -203,15 +207,14 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
         //this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
-        return waitTime * multiplier
-    }
-
-    /**
-     * Override the default implementation — ephemeral solicitations should be delayed less
-     * than non-ephemeral solicitations
-     */
-    public getRespondDelayMSForEphemeralKeySolicitation(streamId: string, userId: string): number {
-        return this.getRespondDelayMSForKeySolicitation(streamId, userId) / 2
+        const delay = waitTime * multiplier
+        if (opts.ephemeral) {
+            if (userId === this.userId) {
+                return 0
+            }
+            return delay / 2
+        }
+        return delay
     }
 
     public async isUserEntitledToKeyExchange(

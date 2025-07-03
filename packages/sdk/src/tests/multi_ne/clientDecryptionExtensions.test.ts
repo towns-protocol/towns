@@ -191,7 +191,7 @@ describe('ClientDecryptionExtensions', () => {
         ).resolves.not.toThrow()
     })
 
-    test('shareKeysInMultipleStreamsToSameDevice', async () => {
+    test.only('shareKeysInMultipleStreamsToSameDevice', async () => {
         const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
 

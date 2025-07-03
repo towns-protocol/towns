@@ -118,24 +118,17 @@ export interface DecryptionSessionError {
 class StreamTasks {
     encryptedContent = new Array<EncryptedContentItem>()
     keySolicitations = new Array<KeySolicitationItem>()
-    ephemeralKeySolicitations = new Array<KeySolicitationItem>()
     isMissingKeys = false
     keySolicitationsNeedsSort = false
-    ephemeralKeySolicitationsNeedsSort = false
     sortKeySolicitations() {
         this.keySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
         this.keySolicitationsNeedsSort = false
-    }
-    sortEphemeralKeySolicitations() {
-        this.ephemeralKeySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
-        this.ephemeralKeySolicitationsNeedsSort = false
     }
 
     isEmpty() {
         return (
             this.encryptedContent.length === 0 &&
             this.keySolicitations.length === 0 &&
-            this.ephemeralKeySolicitations.length === 0 &&
             !this.isMissingKeys
         )
     }
@@ -206,6 +199,7 @@ export abstract class BaseDecryptionExtensions {
         priorityTasks: new Array<() => Promise<void>>(),
         newGroupSession: new Array<NewGroupSessionItem>(),
         ownKeySolicitations: new Array<KeySolicitationItem>(),
+        ephemeralKeySolicitations: new Array<KeySolicitationItem>(),
     }
     private streamQueues = new StreamQueues()
     private upToDateStreams = new Set<string>()
@@ -376,7 +370,10 @@ export abstract class BaseDecryptionExtensions {
                     fromUserAddress,
                     solicitation: keySolicitation,
                     respondAfter:
-                        Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                        Date.now() +
+                        this.getRespondDelayMSForKeySolicitation(streamId, fromUserId, {
+                            ephemeral: false,
+                        }),
                     sigBundle,
                     hashStr: eventHashStr,
                 } satisfies KeySolicitationItem)
@@ -400,33 +397,13 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
-        // Ephemeral solicatitions are prioritized over non-ephemeral solicitations
-        // notice that the delay is calculated differently for ephemeral solicitations
-        if (ephemeral) {
-            const item: KeySolicitationItem = {
-                streamId,
-                fromUserId,
-                fromUserAddress,
-                solicitation: keySolicitation,
-                respondAfter:
-                    Date.now() +
-                    this.getRespondDelayMSForEphemeralKeySolicitation(streamId, fromUserId),
-                sigBundle,
-                hashStr: eventHashStr,
-                ephemeral: true,
-            } satisfies KeySolicitationItem
-            this.streamQueues.getQueue(streamId).ephemeralKeySolicitations.push(item)
-            this.streamQueues.getQueue(streamId).ephemeralKeySolicitationsNeedsSort = true
-            this.checkStartTicking()
-            return
-        }
-
         // Non-ephemeral solicitation handling (existing logic)
         const streamQueue = this.streamQueues.getQueue(streamId)
-        const selectedQueue =
-            fromUserId === this.userId
-                ? this.mainQueues.ownKeySolicitations
-                : streamQueue.keySolicitations
+        const selectedQueue = ephemeral
+            ? this.mainQueues.ephemeralKeySolicitations
+            : fromUserId === this.userId
+              ? this.mainQueues.ownKeySolicitations
+              : streamQueue.keySolicitations
 
         const index = selectedQueue.findIndex(
             (x) =>
@@ -444,9 +421,11 @@ export abstract class BaseDecryptionExtensions {
                 fromUserAddress,
                 solicitation: keySolicitation,
                 respondAfter:
-                    Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    Date.now() +
+                    this.getRespondDelayMSForKeySolicitation(streamId, fromUserId, { ephemeral }),
                 sigBundle,
                 hashStr: eventHashStr,
+                ephemeral,
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
@@ -647,6 +626,20 @@ export abstract class BaseDecryptionExtensions {
             this.setStatus(DecryptionStatus.working)
             return this.processKeySolicitation(ownSolicitation)
         }
+
+        this.mainQueues.ephemeralKeySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
+        const ephemeralSolicitation = dequeueUpToDate(
+            this.mainQueues.ephemeralKeySolicitations,
+            now,
+            (x) => x.respondAfter,
+            this.upToDateStreams,
+        )
+        if (ephemeralSolicitation) {
+            this.log.debug(' processing ephemeral key solicitation')
+            this.setStatus(DecryptionStatus.working)
+            return this.processKeySolicitation(ephemeralSolicitation)
+        }
+
         const streamIds = this.streamQueues.getStreamIds()
         streamIds.sort((a, b) => this.compareStreamIds(a, b))
 
@@ -664,21 +657,6 @@ export abstract class BaseDecryptionExtensions {
                 this.setStatus(DecryptionStatus.working)
                 streamQueue.isMissingKeys = false
                 return this.processMissingKeys(streamId)
-            }
-
-            if (streamQueue.ephemeralKeySolicitationsNeedsSort) {
-                streamQueue.sortEphemeralKeySolicitations()
-            }
-            const ephemeralKeySolicitation = dequeueUpToDate(
-                streamQueue.ephemeralKeySolicitations,
-                now,
-                (x) => x.respondAfter,
-                this.upToDateStreams,
-            )
-
-            if (ephemeralKeySolicitation) {
-                this.setStatus(DecryptionStatus.working)
-                return this.processKeySolicitation(ephemeralKeySolicitation)
             }
 
             if (streamQueue.keySolicitationsNeedsSort) {
@@ -945,6 +923,7 @@ export abstract class BaseDecryptionExtensions {
             requestedCount: item.solicitation.sessionIds.length,
             replyIds: replySessionIds.length,
             sessions: allSessions.length,
+            ephemeral: item.ephemeral,
         })
         if (allSessions.length === 0) {
             return
@@ -1036,9 +1015,8 @@ export abstract class BaseDecryptionExtensions {
         }
 
         // Cancel any pending ephemeral solicitations to prevent over-fulfilling
-        const streamQueue = this.streamQueues.getQueue(event.streamId)
+        const streamQueue = this.mainQueues
 
-        const before = streamQueue.ephemeralKeySolicitations.length
         // Remove solicitations that are completely fulfilled
         streamQueue.ephemeralKeySolicitations = streamQueue.ephemeralKeySolicitations.filter(
             (solicitation) => {
@@ -1071,23 +1049,15 @@ export abstract class BaseDecryptionExtensions {
                 }
             },
         )
-
-        const after = streamQueue.ephemeralKeySolicitations.length
-        if (after < before) {
-            streamQueue.sortEphemeralKeySolicitations()
-        }
     }
 
     /**
      * can be overridden to add a delay to the key solicitation response
      */
-    public getRespondDelayMSForKeySolicitation(_streamId: string, _userId: string): number {
-        return 0
-    }
-
-    public getRespondDelayMSForEphemeralKeySolicitation(
+    public getRespondDelayMSForKeySolicitation(
         _streamId: string,
         _userId: string,
+        _opts: { ephemeral: boolean },
     ): number {
         return 0
     }
