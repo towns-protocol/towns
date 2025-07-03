@@ -854,9 +854,6 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
-        // Don't check for existing ephemeral solicitations - create a new one
-        // The user might have multiple ephemeral solicitations in flight
-
         const solicitedEvents = this.getKeySolicitations(streamId)
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,

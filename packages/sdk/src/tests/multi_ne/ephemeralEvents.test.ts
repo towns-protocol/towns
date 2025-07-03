@@ -69,7 +69,47 @@ describe('ephemeralEvents', () => {
         })
     })
 
+    test('should convert ephemeral to non-ephemeral after timeout', async () => {
+        // this needs to be a GDM, because we need to test that the ephemeral solicitation is converted to non-ephemeral
+        // after the timeout. in a DM, the clients would send keys to each other directly, so no solicitation would be sent
+        const alice = await makeInitAndStartClient()
+        const bob = await makeInitAndStartClient()
+        const charlie = await makeInitAndStartClient()
+        const chuck = await makeInitAndStartClient()
+
+        // Set a short timeout for testing
+        chuck.setEphemeralTimeoutMs(100) // 100ms instead of 30s
+
+        const { streamId } = await alice.createGDMChannel([bob.userId, charlie.userId])
+
+        await waitFor(() => {
+            return alice.streams.get(streamId)?.view.membershipContent.joined.size === 3
+        })
+
+        const solicitationEphemeralTypes: boolean[] = []
+        chuck.on('newKeySolicitation', (_, __, ___, ____, _____, ______, ephemeral) => {
+            solicitationEphemeralTypes.push(ephemeral ?? false)
+        })
+
+        // Send a message that will trigger ephemeral key solicitation
+        await alice.sendMessage(streamId, 'test message')
+        await alice.inviteUser(streamId, chuck.userId)
+        await alice.stop()
+        await bob.stop()
+        await charlie.stop()
+
+        const stream = await chuck.waitForStream(streamId)
+        await stream.waitForMembership(MembershipOp.SO_INVITE)
+        await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
+
+        // Wait for ephemeral solicitation
+        await waitFor(() => solicitationEphemeralTypes.length === 2)
+        expect(solicitationEphemeralTypes).toEqual([true, false])
+    })
+
     test('should handle ephemeral key exchange', async () => {
+        // this needs to be a GDM, because we need to test that the ephemeral solicitation is converted to non-ephemeral
+        // after the timeout. in a DM, the clients would send keys to each other directly, so no solicitation would be sent
         const alice = await makeInitAndStartClient()
         const bob = await makeInitAndStartClient()
         const charlie = await makeInitAndStartClient()

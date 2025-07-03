@@ -83,6 +83,7 @@ import {
     makeSessionKeys,
     type BaseDecryptionExtensions,
 } from './decryptionExtensions'
+import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -170,7 +171,6 @@ import {
     usernameChecksum,
 } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
-import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import {
     PersistenceStore,
     IPersistenceStore,
@@ -2800,6 +2800,15 @@ export class Client
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
         this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
+    }
+
+    public setEphemeralTimeoutMs(timeoutMs: number) {
+        this.logCall('setEphemeralTimeoutMs', timeoutMs)
+        if (this.decryptionExtensions && 'setEphemeralTimeoutMs' in this.decryptionExtensions) {
+            ;(this.decryptionExtensions as ClientDecryptionExtensions).setEphemeralTimeoutMs(
+                timeoutMs,
+            )
+        }
     }
 
     public async ensureOutboundSession(

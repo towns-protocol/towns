@@ -42,6 +42,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
     private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
     private unpackEnvelopeOpts?: { disableSignatureValidation?: boolean }
+    private ephemeralTimeoutMs: number = 30000 // Default 30 seconds
 
     constructor(
         private readonly client: Client,
@@ -152,6 +153,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
+    }
+
+    public setEphemeralTimeoutMs(timeoutMs: number): void {
+        this.ephemeralTimeoutMs = timeoutMs
     }
 
     public hasStream(streamId: string): boolean {
@@ -327,7 +332,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
             const timerId = setTimeout(() => {
                 void this.convertEphemeralToNonEphemeral(streamId)
-            }, 30000) // 30 seconds
+            }, this.ephemeralTimeoutMs)
 
             const existing = this.ownEphemeralSolicitations.get(streamId) || []
             existing.push({
