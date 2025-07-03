@@ -1015,12 +1015,12 @@ export abstract class BaseDecryptionExtensions {
         }
     }
 
-    async processEphemeralKeyFulfillment(event: KeyFulfilmentData): Promise<void> {
+    processEphemeralKeyFulfillment(event: KeyFulfilmentData) {
         if (event.deviceKey === this.userDevice.deviceKey) {
             const ephemeral = this.ownEphemeralSolicitations.get(event.streamId)
-            if (ephemeral && !ephemeral.converted) {
+            if (ephemeral) {
                 // Remove fulfilled session IDs
-                const remainingSessionIds = ephemeral.item.solicitation.sessionIds.filter(
+                const remainingSessionIds = ephemeral.missingSessionIds.filter(
                     (id) => !event.sessionIds.includes(id),
                 )
 
@@ -1033,7 +1033,7 @@ export abstract class BaseDecryptionExtensions {
                     this.log.debug('ephemeral solicitation fully fulfilled', event.streamId)
                 } else {
                     // Update with remaining session IDs
-                    ephemeral.item.solicitation.sessionIds = remainingSessionIds
+                    ephemeral.missingSessionIds = remainingSessionIds
                     this.log.debug(
                         'ephemeral solicitation partially fulfilled',
                         event.streamId,
