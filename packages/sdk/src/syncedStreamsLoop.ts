@@ -464,7 +464,18 @@ export class SyncedStreamsLoop {
                             }
                         }
                     } catch (err) {
-                        this.logError('syncLoop error', err)
+                        this.logError(
+                            {
+                                syncId: this.syncId,
+                                nodeUrl: this.rpcClient.url,
+                                syncState: this.syncState,
+                                streamOpts: this.streamOpts,
+                                syncStartedAt: this.syncStartedAt,
+                                duration: performance.now() - this.syncStartedAt,
+                            },
+                            'syncLoop error',
+                            err,
+                        )
                         await this.attemptRetry()
                     }
                 }
@@ -832,7 +843,17 @@ export class SyncedStreamsLoop {
                                 this.streamSyncStalled = setTimeout(() => {
                                     if (this.syncStartedAt) {
                                         const duration = performance.now() - this.syncStartedAt
-                                        this.logError(`sync timed out after ${duration}ms`)
+                                        this.logError(
+                                            {
+                                                syncId: this.syncId,
+                                                nodeUrl: this.rpcClient.url,
+                                                syncState: this.syncState,
+                                                streamOpts: this.streamOpts,
+                                                syncStartedAt: this.syncStartedAt,
+                                                duration,
+                                            },
+                                            `sync timed out after ${duration}ms`,
+                                        )
                                         this.clientEmitter.emit('streamSyncTimedOut', {
                                             duration,
                                         })
