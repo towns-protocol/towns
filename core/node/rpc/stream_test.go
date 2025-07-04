@@ -248,7 +248,21 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 }
 
 func TestEphemeralMessageInChat(t *testing.T) {
-	tt := newServiceTesterForReplication(t)
+	// tt := newServiceTesterForReplication(t)
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{
+			numNodes:          4,
+			replicationFactor: 3,
+			start:             true,
+			btcParams: &crypto.TestParams{
+				AutoMine:         true,
+				AutoMineInterval: 200 * time.Millisecond,
+				MineOnTx:         false,
+			},
+		},
+	)
+
 	require := tt.require
 
 	clients := tt.newTestClients(tt.opts.replicationFactor, testClientOpts{enableSync: true})
@@ -305,19 +319,30 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	// ensure that the ephemeral message is not included in miniblocks as stored in storage
 	ephemeralEventHash := common.BytesToHash(ephemeralEnvelope.Hash)
 	for i := 0; i < len(tt.nodes); i++ {
-		tt.require.NoError(tt.nodes[i].service.storage.ReadMiniblocksByStream(tt.ctx, channelId, false, func(mbBytes []byte, _ int64, snBytes []byte) error {
-			var mb protocol.Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
-				return err
-			}
+		tt.require.NoError(
+			tt.nodes[i].service.storage.ReadMiniblocksByStream(
+				tt.ctx,
+				channelId,
+				false,
+				func(mbBytes []byte, _ int64, snBytes []byte) error {
+					var mb protocol.Miniblock
+					if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+						return err
+					}
 
-			for _, env := range mb.GetEvents() {
-				parsedEvent, err := events.ParseEvent(env)
-				require.NoError(err)
-				tt.require.NotEqual(ephemeralEventHash, parsedEvent.Hash, "ephemeral message should not be in miniblock")
-			}
+					for _, env := range mb.GetEvents() {
+						parsedEvent, err := events.ParseEvent(env)
+						require.NoError(err)
+						tt.require.NotEqual(
+							ephemeralEventHash,
+							parsedEvent.Hash,
+							"ephemeral message should not be in miniblock",
+						)
+					}
 
-			return nil
-		}))
+					return nil
+				},
+			),
+		)
 	}
 }
