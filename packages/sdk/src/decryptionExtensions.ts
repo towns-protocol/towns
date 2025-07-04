@@ -1020,6 +1020,10 @@ export abstract class BaseDecryptionExtensions {
         // Remove solicitations that are completely fulfilled
         streamQueue.ephemeralKeySolicitations = streamQueue.ephemeralKeySolicitations.filter(
             (solicitation) => {
+                if (solicitation.solicitation.deviceKey !== event.deviceKey) {
+                    return true // not the same device, keep it
+                }
+
                 // Check if all requested sessions are fulfilled by this fulfillment
                 const remainingSessionIds = solicitation.solicitation.sessionIds.filter(
                     (id) => !event.sessionIds.includes(id),
