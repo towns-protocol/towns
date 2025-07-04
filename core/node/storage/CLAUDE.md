@@ -80,39 +80,104 @@ This section documents the patterns and conventions for writing tests in the sto
 
 ### Test Setup Pattern
 
-All storage tests follow a consistent setup pattern using helper functions:
+All storage tests follow a consistent setup pattern using helper functions specific to each storage type:
 
 ```go
 func TestYourFeature(t *testing.T) {
-    params := setupAppRegistryStorageTest(t)  // or setupStorageTest for general storage
+    params := setupStreamStorageTest(t)  // or setupAppRegistryStorageTest, etc.
     t.Cleanup(params.closer)
     
     require := require.New(t)
-    store := params.pgAppRegistryStore
+    store := params.pgStreamStore  // or pgAppRegistryStore, etc.
     
     // Your test logic here
 }
 ```
 
-### Key Test Helpers
+### Key Test Setup Functions
 
-#### `setupAppRegistryStorageTest(t *testing.T)`
-- Creates a test database with prefix "b_" for app registry tests
-- Returns `testAppRegistryStoreParams` containing:
+#### Stream Storage Tests
+
+##### `setupStreamStorageTest(t *testing.T)`
+- Creates a test database with default prefix "tst" for stream store tests
+- Returns `testStreamStoreParams` containing:
   - `ctx`: Test context
-  - `pgAppRegistryStore`: The store instance
+  - `pgStreamStore`: The stream store instance
   - `schema`: Database schema name
   - `config`: Database configuration
-  - `closer`: Cleanup function (must be called with `t.Cleanup`)
+  - `closer`: Cleanup function (combines store close, DB cleanup, and context cancel)
+  - `schemaDeleter`: Separate function to delete schema (for manual cleanup)
+  - `ctxCloser`: Separate function to cancel context (for manual cleanup)
   - `exitSignal`: Channel for signaling exit
+- Configures stream-specific settings:
+  - Ephemeral stream TTL (10 minutes)
+  - Miniblock trimming settings
+  - Snapshot intervals (110 miniblocks)
 
-#### `safeAddress(t *testing.T)`
-- Generates a random Ethereum address for testing
+#### App Registry Storage Tests
+
+##### `setupAppRegistryStorageTest(t *testing.T)`
+- Creates a test database with prefix "b_" for app registry tests
+- Returns `testAppRegistryStoreParams` containing similar fields as stream store
+- Uses simpler configuration without stream-specific settings
+
+#### Notification Storage Tests
+
+##### `prepareNotificationsDB(ctx context.Context)`
+- Creates a test database with default prefix "tst" for notification store tests
+- Returns the store instance and a cleanup function
+- Simpler setup pattern without params struct
+
+#### Archive Storage Tests
+
+Archive tests use the general stream storage setup since they work with stream stores.
+
+### Common Test Utilities
+
+#### `NewTestStreamStore(ctx context.Context)`
+- Utility for creating a simplified test stream store
+- Found in `test_pg_stream_store.go`
+- Provides helper methods for common stream operations
+
+#### Address Generation
+- `safeAddress(t *testing.T)` - Generates random Ethereum addresses for testing
 - Ensures no address collisions in tests
 
-#### `testAppMetadataWithName(name string)`
-- Creates test metadata with a given name and default values for other fields
-- Useful for tests that need consistent metadata
+#### Test Data Helpers
+- `testAppMetadataWithName(name string)` - Creates app metadata with default values
+- `testutils.FakeStreamId(streamType)` - Generates test stream IDs
+- Stream type constants: `STREAM_CHANNEL_BIN`, `STREAM_SPACE_BIN`, etc.
+
+### Database Configuration
+
+#### Configuration Functions (from `dbtestutils` package)
+
+1. **`ConfigureDB(ctx context.Context)`**
+   - Default behavior: generates schema with prefix "tst" + random hex
+   - Used by most storage tests
+
+2. **`ConfigureDbWithPrefix(ctx context.Context, prefix string)`**
+   - Allows custom prefix for schema names
+   - Currently used with "b_" prefix for app registry tests
+
+3. **`ConfigureDbWithSchemaName(ctx context.Context, dbSchemaName string)`**
+   - Allows specifying exact schema name
+   - Used internally by the other functions
+
+#### Database Schema Prefixes
+- `"tst"` - Default prefix for stream, notification, and migration tests
+- `"b_"` - Specific prefix for app registry tests
+
+### Test Configuration Patterns
+
+All test setups follow these patterns:
+1. Create test context with `test.NewTestContext()`
+2. Configure database with appropriate prefix
+3. Adjust connection pool (reduce from 1000 to 10 connections)
+4. Set startup delay to 2ms for faster tests
+5. Create pgx pool with validation
+6. Initialize store with test-specific configuration
+7. Return params struct with cleanup functions
 
 ### Common Test Patterns
 
