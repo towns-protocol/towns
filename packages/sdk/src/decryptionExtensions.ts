@@ -276,6 +276,7 @@ export abstract class BaseDecryptionExtensions {
     private started: boolean = false
     private numRecentStreamIds: number = 5
     private emitter: TypedEmitter<DecryptionEvents>
+    private checkStartTimeoutId?: NodeJS.Timeout
 
     protected _onStopFn?: () => void
     protected log: {
@@ -638,9 +639,16 @@ export abstract class BaseDecryptionExtensions {
                 this.log.info(`runners: ${runners.map((x) => x.toString()).join(', ')}`)
             }
         }
+
+        // it's possible that we're not doing work, but we have more things to do but "respondAfter" hasn't been reached
+        clearTimeout(this.checkStartTimeoutId)
+        this.checkStartTimeoutId = setTimeout(() => {
+            this.checkStartTicking()
+        }, 100)
     }
 
     private async stopTicking() {
+        clearTimeout(this.checkStartTimeoutId)
         for (const queueRunner of this.allQueueRunners) {
             await queueRunner.stop()
         }
@@ -652,25 +660,25 @@ export abstract class BaseDecryptionExtensions {
 
         // update the priority queue
         if (this.mainQueueRunners.priority.inProgress) {
-            return
+            return // if the main queue is in progress, don't do anything else
         }
 
         const priorityTask = this.mainQueues.priorityTasks.shift()
         if (priorityTask) {
             this.setStatus(DecryptionStatus.updating)
             this.mainQueueRunners.priority.run(priorityTask())
-            return
+            return // if the priority queue is in progress, don't do anything else
         }
 
         // update any new group sessions
         if (this.mainQueueRunners.newGroupSessions.inProgress) {
-            return
+            return // if the new group sessions queue is in progress, don't do anything else
         }
         const session = this.mainQueues.newGroupSession.shift()
         if (session) {
             this.setStatus(DecryptionStatus.working)
             this.mainQueueRunners.newGroupSessions.run(this.processNewGroupSession(session))
-            return
+            return // if the new group sessions queue is in progress, don't do anything else
         }
 
         // run the rest of the processes in parallel
@@ -686,21 +694,23 @@ export abstract class BaseDecryptionExtensions {
         }
 
         if (!this.mainQueueRunners.ephemeralKeySolicitations.inProgress) {
-            this.mainQueues.ephemeralKeySolicitations.sort(
-                (a, b) => a.respondAfter - b.respondAfter,
-            )
-            const ephemeralSolicitation = dequeueUpToDate(
-                this.mainQueues.ephemeralKeySolicitations,
-                now,
-                (x) => x.respondAfter,
-                this.upToDateStreams,
-            )
-            if (ephemeralSolicitation) {
-                this.log.debug(' processing ephemeral key solicitation')
-                this.setStatus(DecryptionStatus.working)
-                this.mainQueueRunners.ephemeralKeySolicitations.run(
-                    this.processKeySolicitation(ephemeralSolicitation),
+            if (this.mainQueues.ephemeralKeySolicitations.length > 0) {
+                this.mainQueues.ephemeralKeySolicitations.sort(
+                    (a, b) => a.respondAfter - b.respondAfter,
                 )
+                const ephemeralSolicitation = dequeueUpToDate(
+                    this.mainQueues.ephemeralKeySolicitations,
+                    now,
+                    (x) => x.respondAfter,
+                    this.upToDateStreams,
+                )
+                if (ephemeralSolicitation) {
+                    this.log.debug(' processing ephemeral key solicitation')
+                    this.setStatus(DecryptionStatus.working)
+                    this.mainQueueRunners.ephemeralKeySolicitations.run(
+                        this.processKeySolicitation(ephemeralSolicitation),
+                    )
+                }
             }
         }
 
@@ -862,6 +872,7 @@ export abstract class BaseDecryptionExtensions {
         try {
             await this.decryptGroupEvent(item.streamId, item.eventId, item.kind, item.encryptedData)
         } catch (err) {
+            this.log.debug('processEncryptedContentItem error', err, 'item:', item)
             const sessionNotFound = isSessionNotFoundError(err)
 
             this.onDecryptionError(item, {
@@ -894,7 +905,14 @@ export abstract class BaseDecryptionExtensions {
                 const streamQueue = this.streamQueues.getQueue(streamId)
                 streamQueue.isMissingKeys = true
             } else {
-                this.log.info('failed to decrypt', err, 'streamId', item.streamId)
+                this.log.info(
+                    'failed to decrypt',
+                    err,
+                    'eventId',
+                    item.eventId,
+                    'streamId',
+                    item.streamId,
+                )
             }
         }
     }
