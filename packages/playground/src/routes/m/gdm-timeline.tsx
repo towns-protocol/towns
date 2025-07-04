@@ -1,6 +1,6 @@
 import { useGdm, useMemberList, useSyncAgent, useTimeline } from '@towns-protocol/react-sdk'
 import { useParams } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { Timeline } from '@/components/blocks/timeline'
 import { shortenAddress } from '@/utils/address'
 
@@ -11,8 +11,8 @@ export const GdmTimelineRoute = () => {
     const { data: members } = useMemberList(gdmStreamId!)
     const sync = useSyncAgent()
 
-    const formatMemberNames = () => {
-        if (!members.initialized || members.userIds.length === 0) {
+    const formatMemberNames = useCallback(() => {
+        if (!members?.initialized || members.userIds.length === 0) {
             return 'Group Chat'
         }
 
@@ -41,7 +41,7 @@ export const GdmTimelineRoute = () => {
             const remainingCount = otherUserIds.length - 2
             return `${firstName}, ${secondName} and ${remainingCount} other${remainingCount > 1 ? 's' : ''}`
         }
-    }
+    }, [members, sync, gdmStreamId])
 
     useEffect(() => {
         if (gdm && gdm.initialized) {
