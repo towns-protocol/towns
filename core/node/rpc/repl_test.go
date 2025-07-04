@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
@@ -517,7 +518,7 @@ func TestStreamReconciliationTaskRescheduling(t *testing.T) {
 
 func TestStreamReconciliationFromUnreplicated(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 3, replicationFactor: 1, start: true})
-	//ctx := tt.ctx
+	// ctx := tt.ctx
 	require := tt.require
 
 	tt.btc.SetConfigValue(

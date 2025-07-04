@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -375,10 +376,10 @@ func TestMakeMetadataSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := MetadataStreamIdFromShard(0)
 	inception := make_Metadata_Inception(t, wallet, streamId)
-	
+
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Verify the snapshot content is correctly set up
 	metadataContent := snapshot.Content.(*Snapshot_MetadataContent)
 	require.NotNil(t, metadataContent)
@@ -393,18 +394,19 @@ func TestUpdateMetadataSnapshot_NewStream(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
-	
+
 	// Create metadata stream snapshot
 	inception := make_Metadata_Inception(t, wallet, metadataStreamId)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Create a NewStream event
 	testStreamId := UserStreamIdFromAddr(wallet.Address)
-	genesisMiniblockHash := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef").Bytes()
+	genesisMiniblockHash := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef").
+		Bytes()
 	nodes := [][]byte{wallet.Address.Bytes(), common.HexToAddress("0x1234").Bytes()}
 	replicationFactor := int64(2)
-	
+
 	// Convert data to proper types
 	genesisHash := common.BytesToHash(genesisMiniblockHash)
 	nodeAddresses := make([]common.Address, len(nodes))
@@ -421,15 +423,15 @@ func TestUpdateMetadataSnapshot_NewStream(t *testing.T) {
 		replicationFactor,
 		nil,
 	)
-	
+
 	// Update snapshot with NewStream event
 	err = Update_Snapshot(snapshot, newStreamEvent, 0, 1)
 	require.NoError(t, err)
-	
+
 	// Verify the stream was added to the snapshot
 	metadataContent := snapshot.Content.(*Snapshot_MetadataContent)
 	require.Len(t, metadataContent.MetadataContent.Streams, 1)
-	
+
 	streamRecord := metadataContent.MetadataContent.Streams[0]
 	assert.Equal(t, testStreamId[:], streamRecord.StreamId)
 	assert.Equal(t, genesisMiniblockHash, streamRecord.LastMiniblockHash)
@@ -443,18 +445,18 @@ func TestUpdateMetadataSnapshot_LastMiniblockUpdate(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
-	
+
 	// Create metadata stream snapshot with an existing stream
 	inception := make_Metadata_Inception(t, wallet, metadataStreamId)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Add a stream first
 	testStreamId := UserStreamIdFromAddr(wallet.Address)
 	genesisMiniblockHash := []byte("test_genesis_hash")
 	nodes := [][]byte{wallet.Address.Bytes()}
 	replicationFactor := int64(1)
-	
+
 	// Convert data to proper types
 	genesisHash := common.BytesToHash(genesisMiniblockHash)
 	nodeAddresses := make([]common.Address, len(nodes))
@@ -471,14 +473,14 @@ func TestUpdateMetadataSnapshot_LastMiniblockUpdate(t *testing.T) {
 		replicationFactor,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, newStreamEvent, 0, 1)
 	require.NoError(t, err)
-	
+
 	// Now update the stream's last miniblock
 	newMiniblockHash := common.HexToHash("0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321").Bytes()
 	newMiniblockNum := int64(5)
-	
+
 	// Convert data to proper types
 	newHash := common.BytesToHash(newMiniblockHash)
 
@@ -490,14 +492,14 @@ func TestUpdateMetadataSnapshot_LastMiniblockUpdate(t *testing.T) {
 		newMiniblockNum,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, updateEvent, 0, 2)
 	require.NoError(t, err)
-	
+
 	// Verify the stream record was updated
 	metadataContent := snapshot.Content.(*Snapshot_MetadataContent)
 	require.Len(t, metadataContent.MetadataContent.Streams, 1)
-	
+
 	streamRecord := metadataContent.MetadataContent.Streams[0]
 	assert.Equal(t, testStreamId[:], streamRecord.StreamId)
 	assert.Equal(t, newMiniblockHash, streamRecord.LastMiniblockHash)
@@ -512,18 +514,19 @@ func TestUpdateMetadataSnapshot_PlacementUpdate(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
-	
+
 	// Create metadata stream snapshot with an existing stream
 	inception := make_Metadata_Inception(t, wallet, metadataStreamId)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Add a stream first
 	testStreamId := UserStreamIdFromAddr(wallet.Address)
-	genesisMiniblockHash := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef").Bytes()
+	genesisMiniblockHash := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef").
+		Bytes()
 	originalNodes := [][]byte{wallet.Address.Bytes()}
 	originalReplicationFactor := int64(1)
-	
+
 	// Convert data to proper types
 	genesisHash := common.BytesToHash(genesisMiniblockHash)
 	originalNodeAddresses := make([]common.Address, len(originalNodes))
@@ -540,10 +543,10 @@ func TestUpdateMetadataSnapshot_PlacementUpdate(t *testing.T) {
 		originalReplicationFactor,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, newStreamEvent, 0, 1)
 	require.NoError(t, err)
-	
+
 	// Now update the stream's placement
 	newNodes := [][]byte{
 		wallet.Address.Bytes(),
@@ -551,7 +554,7 @@ func TestUpdateMetadataSnapshot_PlacementUpdate(t *testing.T) {
 		common.HexToAddress("0x5678").Bytes(),
 	}
 	newReplicationFactor := int64(3)
-	
+
 	// Convert data to proper types
 	newNodeAddresses := make([]common.Address, len(newNodes))
 	for i, node := range newNodes {
@@ -566,14 +569,14 @@ func TestUpdateMetadataSnapshot_PlacementUpdate(t *testing.T) {
 		newReplicationFactor,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, placementUpdateEvent, 0, 2)
 	require.NoError(t, err)
-	
+
 	// Verify the stream record was updated
 	metadataContent := snapshot.Content.(*Snapshot_MetadataContent)
 	require.Len(t, metadataContent.MetadataContent.Streams, 1)
-	
+
 	streamRecord := metadataContent.MetadataContent.Streams[0]
 	assert.Equal(t, testStreamId[:], streamRecord.StreamId)
 	assert.Equal(t, newNodes, streamRecord.Nodes)
@@ -588,25 +591,27 @@ func TestUpdateMetadataSnapshot_MultipleStreams(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
-	
+
 	// Create metadata stream snapshot
 	inception := make_Metadata_Inception(t, wallet, metadataStreamId)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Add multiple streams
 	streamIds := []StreamId{
 		UserStreamIdFromAddr(wallet.Address),
 		UserStreamIdFromAddr(common.HexToAddress("0x1234")),
 		UserStreamIdFromAddr(common.HexToAddress("0x5678")),
 	}
-	
+
 	for i, streamId := range streamIds {
 		// Create unique hashes for each stream
-		genesisHash := common.HexToHash(fmt.Sprintf("0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef%02d", i))
+		genesisHash := common.HexToHash(
+			fmt.Sprintf("0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef%02d", i),
+		)
 		nodes := [][]byte{common.HexToAddress("0xaaaa").Bytes()}
 		replicationFactor := int64(1)
-		
+
 		// Convert data to proper types
 		nodeAddresses := make([]common.Address, len(nodes))
 		for j, node := range nodes {
@@ -622,20 +627,20 @@ func TestUpdateMetadataSnapshot_MultipleStreams(t *testing.T) {
 			replicationFactor,
 			nil,
 		)
-		
+
 		err = Update_Snapshot(snapshot, newStreamEvent, 0, int64(i+1))
 		require.NoError(t, err)
 	}
-	
+
 	// Verify all streams were added and are sorted
 	metadataContent := snapshot.Content.(*Snapshot_MetadataContent)
 	require.Len(t, metadataContent.MetadataContent.Streams, 3)
-	
+
 	// Verify streams are sorted by StreamId
 	for i := 0; i < len(metadataContent.MetadataContent.Streams)-1; i++ {
 		current := metadataContent.MetadataContent.Streams[i].StreamId
 		next := metadataContent.MetadataContent.Streams[i+1].StreamId
-		assert.True(t, len(current) == len(next) && string(current) < string(next), 
+		assert.True(t, len(current) == len(next) && string(current) < string(next),
 			"Streams should be sorted by StreamId")
 	}
 }
@@ -647,12 +652,12 @@ func TestUpdateMetadataSnapshot_InceptionFails(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
-	
+
 	// Create metadata stream snapshot
 	inception := make_Metadata_Inception(t, wallet, metadataStreamId)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Try to update with inception - should fail
 	err = Update_Snapshot(snapshot, inception, 0, 1)
 	assert.Error(t, err)
@@ -664,18 +669,18 @@ func TestUpdateMetadataSnapshot_WrongSnapshotType(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	userStreamId := UserStreamIdFromAddr(wallet.Address)
-	
+
 	// Create user stream snapshot (not metadata)
 	inception := make_User_Inception(wallet, userStreamId, t)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Try to update with metadata payload - should fail
 	testStreamId := UserStreamIdFromAddr(common.HexToAddress("0x1234"))
 	genesisMiniblockHash := []byte("test_genesis_hash")
 	nodes := [][]byte{wallet.Address.Bytes()}
 	replicationFactor := int64(1)
-	
+
 	// Convert data to proper types
 	genesisHash := common.BytesToHash(genesisMiniblockHash)
 	nodeAddresses := make([]common.Address, len(nodes))
@@ -692,7 +697,7 @@ func TestUpdateMetadataSnapshot_WrongSnapshotType(t *testing.T) {
 		replicationFactor,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, newStreamEvent, 0, 1)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "snapshot is not a metadata snapshot")
@@ -703,17 +708,17 @@ func TestUpdateMetadataSnapshot_StreamNotFound(t *testing.T) {
 	defer cancel()
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
-	
+
 	// Create metadata stream snapshot (empty)
 	inception := make_Metadata_Inception(t, wallet, metadataStreamId)
 	snapshot, err := Make_GenesisSnapshot([]*ParsedEvent{inception})
 	require.NoError(t, err)
-	
+
 	// Try to update a stream that doesn't exist - should fail
 	nonExistentStreamId := UserStreamIdFromAddr(common.HexToAddress("0x9999"))
 	newMiniblockHash := []byte("new_hash")
 	newMiniblockNum := int64(5)
-	
+
 	// Convert data to proper types
 	newHash := common.BytesToHash(newMiniblockHash)
 
@@ -725,15 +730,15 @@ func TestUpdateMetadataSnapshot_StreamNotFound(t *testing.T) {
 		newMiniblockNum,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, updateEvent, 0, 1)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "Could not find stream record for LastMiniblockUpdate")
-	
+
 	// Try placement update on non-existent stream - should also fail
 	newNodes := [][]byte{wallet.Address.Bytes()}
 	newReplicationFactor := int64(1)
-	
+
 	// Convert data to proper types
 	newNodeAddresses := make([]common.Address, len(newNodes))
 	for i, node := range newNodes {
@@ -748,7 +753,7 @@ func TestUpdateMetadataSnapshot_StreamNotFound(t *testing.T) {
 		newReplicationFactor,
 		nil,
 	)
-	
+
 	err = Update_Snapshot(snapshot, placementUpdateEvent, 0, 2)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "Could not find stream record for PlacementUpdate")
@@ -761,19 +766,19 @@ func TestFindStreamRecord(t *testing.T) {
 	streamId1 := UserStreamIdFromAddr(common.HexToAddress("0x1111"))
 	streamId2 := UserStreamIdFromAddr(common.HexToAddress("0x2222"))
 	streamId3 := UserStreamIdFromAddr(common.HexToAddress("0x3333"))
-	
+
 	streams := []*StreamRecord{
 		{StreamId: streamId1[:], LastMiniblockNum: 1},
 		{StreamId: streamId2[:], LastMiniblockNum: 2},
 		{StreamId: streamId3[:], LastMiniblockNum: 3},
 	}
-	
+
 	// Test finding existing streams
 	found, err := findStreamRecord(streams, streamId2[:])
 	require.NoError(t, err)
 	assert.Equal(t, streamId2[:], found.StreamId)
 	assert.Equal(t, int64(2), found.LastMiniblockNum)
-	
+
 	// Test finding non-existent stream
 	nonExistentStreamId := UserStreamIdFromAddr(common.HexToAddress("0x9999"))
 	_, err = findStreamRecord(streams, nonExistentStreamId[:])
@@ -784,28 +789,28 @@ func TestInsertStreamRecord(t *testing.T) {
 	// Create initial stream records
 	streamId1 := UserStreamIdFromAddr(common.HexToAddress("0x1111"))
 	streamId3 := UserStreamIdFromAddr(common.HexToAddress("0x3333"))
-	
+
 	streams := []*StreamRecord{
 		{StreamId: streamId1[:], LastMiniblockNum: 1},
 		{StreamId: streamId3[:], LastMiniblockNum: 3},
 	}
-	
+
 	// Insert a stream in the middle
 	streamId2 := UserStreamIdFromAddr(common.HexToAddress("0x2222"))
 	newStream := &StreamRecord{StreamId: streamId2[:], LastMiniblockNum: 2}
-	
+
 	streams = insertStreamRecord(streams, newStream)
-	
+
 	// Verify the stream was inserted and array is still sorted
 	require.Len(t, streams, 3)
 	assert.Equal(t, streamId1[:], streams[0].StreamId)
 	assert.Equal(t, streamId2[:], streams[1].StreamId)
 	assert.Equal(t, streamId3[:], streams[2].StreamId)
-	
+
 	// Insert duplicate (should replace)
 	duplicateStream := &StreamRecord{StreamId: streamId2[:], LastMiniblockNum: 22}
 	streams = insertStreamRecord(streams, duplicateStream)
-	
+
 	// Should still have 3 streams, but middle one updated
 	require.Len(t, streams, 3)
 	assert.Equal(t, int64(22), streams[1].LastMiniblockNum)

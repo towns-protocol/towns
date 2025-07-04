@@ -84,7 +84,10 @@ func (r *registry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
 
 // AddStreamToSubscription adds a stream to a subscription
 // Returns true if the given stream must be added to the main syncer set
-func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool) {
+func (r *registry) AddStreamToSubscription(
+	syncID string,
+	streamID StreamId,
+) (shouldAddToRemote bool, shouldBackfill bool) {
 	r.sLock.Lock()
 	defer r.sLock.Unlock()
 

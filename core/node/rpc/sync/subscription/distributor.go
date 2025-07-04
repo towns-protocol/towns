@@ -111,7 +111,11 @@ func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStre
 }
 
 // sendMessageToSubscription sends a message to a specific subscription with proper filtering
-func (d *distributor) sendMessageToSubscription(streamID StreamId, msg *SyncStreamsResponse, subscription *Subscription) {
+func (d *distributor) sendMessageToSubscription(
+	streamID StreamId,
+	msg *SyncStreamsResponse,
+	subscription *Subscription,
+) {
 	// Handle SYNC_UPDATE special logic
 	if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 		// Skip if subscription is still initializing

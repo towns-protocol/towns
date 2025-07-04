@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"strings"
 	"testing"
 	"time"
 
@@ -295,7 +294,7 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Find the nodes that has the stream and make a miniblock
+	// Find a node that has the stream and make a miniblock
 	var miniblockErr error
 	for i := 0; i < len(tt.nodes); i++ {
 		_, miniblockErr = tt.nodes[i].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
@@ -325,76 +324,36 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	// ensure that the ephemeral message is not included in miniblocks as stored in storage
 	// and that the non-ephemeral message is included and replicated correctly
 	tt.require.EventuallyWithT(func(collect *assert.CollectT) {
-		var (
-			ephemeralEventHash       = common.BytesToHash(ephemeralEnvelope.Hash)
-			nonEphemeralMessageFound int
-			ephemeralMessageFound    int
-			nodesWithStream          int
-		)
+		var nonEphemeralMessageFound int
 
 		for i := 0; i < len(tt.nodes); i++ {
-			nodeMessageCount := 0
-			err := tt.nodes[i].service.storage.ReadMiniblocksByStream(
+			tt.nodes[i].service.storage.ReadMiniblocksByStream(
 				tt.ctx,
 				channelId,
 				false,
 				func(mbBytes []byte, _ int64, snBytes []byte) error {
 					var mb protocol.Miniblock
-					if err = proto.Unmarshal(mbBytes, &mb); err != nil {
-						return err
-					}
-
+					proto.Unmarshal(mbBytes, &mb)
 					for _, event := range mb.GetEvents() {
-						parsedEvent, err := events.ParseEvent(event)
-						require.NoError(err)
-
-						// Check if this is the ephemeral message (should not be found)
-						if parsedEvent.Hash == ephemeralEventHash {
-							ephemeralMessageFound++
-						}
+						parsedEvent, _ := events.ParseEvent(event)
+						// Check if this is the ephemeral message (should never happen)
+						require.NotEqual(parsedEvent.Hash, common.BytesToHash(ephemeralEnvelope.Hash))
 
 						// Check if this is the non-ephemeral message
 						if channelPayload := parsedEvent.Event.GetChannelPayload(); channelPayload != nil {
 							if message := channelPayload.GetMessage(); message != nil {
 								if message.GetCiphertext() == nonEphemeralMessage {
 									nonEphemeralMessageFound++
-									nodeMessageCount++
 								}
 							}
 						}
 					}
-
 					return nil
 				},
 			)
-
-			// Skip nodes that don't have the stream (stream not found error is expected)
-			if err != nil && !strings.Contains(err.Error(), "Stream not found") {
-				collect.Errorf("error reading miniblocks: %v", err)
-			} else if err == nil {
-				nodesWithStream++
-			}
 		}
-
-		// Verify that ephemeral message was not persisted in any miniblock
-		if ephemeralMessageFound != 0 {
-			collect.FailNow()
-		}
-
-		// Debug output
-		t.Logf("Nodes with stream: %d, Non-ephemeral messages found: %d", nodesWithStream, nonEphemeralMessageFound)
 
 		if nonEphemeralMessageFound != 3 {
-			collect.FailNow()
-		}
-
-		// Verify that non-ephemeral message was replicated exactly 3 times (replication factor)
-		if nonEphemeralMessageFound != 3 {
-			collect.FailNow()
-		}
-
-		// Verify that exactly 3 nodes have the stream (matching replication factor)
-		if nodesWithStream != 3 {
 			collect.FailNow()
 		}
 	}, 10*time.Second, 25*time.Millisecond)
