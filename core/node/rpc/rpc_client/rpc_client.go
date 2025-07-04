@@ -25,10 +25,7 @@ func NewRpcClient(wallet *crypto.Wallet, client protocolconnect.StreamServiceCli
 	}
 }
 
-func (c *RpcClient) CreateMetadataStream(
-	ctx context.Context,
-	streamId StreamId,
-) (*connect.Response[CreateStreamResponse], error) {
+func (c *RpcClient) CreateMetadataStream(ctx context.Context, streamId StreamId) (*connect.Response[CreateStreamResponse], error) {
 	inception, err := MakeEnvelopeWithPayload(
 		c.wallet,
 		Make_MetadataPayload_Inception(streamId, nil),

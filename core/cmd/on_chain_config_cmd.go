@@ -433,8 +433,7 @@ func init() {
 		RunE:  setOnChainConfigFromCSV,
 	}
 	setCsvCmd.Flags().Bool("force", false, "Force setting even if name is unknown or there is type mismatch")
-	setCsvCmd.Flags().
-		BoolP("dry-run", "n", false, "Dry run the command without submitting transactions, print hex values")
+	setCsvCmd.Flags().BoolP("dry-run", "n", false, "Dry run the command without submitting transactions, print hex values")
 	onChainConfigCmd.AddCommand(setCsvCmd)
 
 	onChainConfigCmd.AddCommand(&cobra.Command{

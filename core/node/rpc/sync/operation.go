@@ -218,8 +218,7 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").
-					Observe(float64(sub.Messages.Len()))
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(sub.Messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
@@ -417,17 +416,7 @@ func (syncOp *StreamSyncOperation) ModifySync(
 		syncOp.metrics.syncingStreamsPerOpHistogram.
 			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
 			Observe(float64(syncOp.syncingStreamsCount.Add(
-				int64(
-					len(
-						req.Msg.GetAddStreams(),
-					) - len(
-						resp.Msg.GetAdds(),
-					) - len(
-						req.Msg.GetRemoveStreams(),
-					) + len(
-						resp.Msg.GetRemovals(),
-					),
-				),
+				int64(len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())),
 			)))
 	}
 

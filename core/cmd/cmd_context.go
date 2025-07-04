@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -180,10 +179,7 @@ func (cc *cmdContext) getHttpClient() (*http.Client, error) {
 	return httpClient, nil
 }
 
-func (cc *cmdContext) getStubForStream(
-	streamID StreamId,
-	preferredNode common.Address,
-) (StreamServiceClient, *river.StreamWithId, *river.Node, error) {
+func (cc *cmdContext) getStubForStream(streamID StreamId, preferredNode common.Address) (StreamServiceClient, *river.StreamWithId, *river.Node, error) {
 	ctx, cancel := context.WithTimeout(cc.ctx, 30*time.Second)
 	defer cancel()
 
@@ -229,8 +225,7 @@ func (cc *cmdContext) getStream(streamId StreamId, stub StreamServiceClient) (*S
 }
 
 func addBlockFlag(cmd *cobra.Command) {
-	cmd.Flags().
-		Int64("block", 0, "Blockchain block number to use, 0 for latest block, negative for relative to latest block")
+	cmd.Flags().Int64("block", 0, "Blockchain block number to use, 0 for latest block, negative for relative to latest block")
 }
 
 func addNumberFlag(cmd *cobra.Command) {

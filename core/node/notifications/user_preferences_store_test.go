@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/stretchr/testify/require"
-
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -19,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/stretchr/testify/require"
 )
 
 func prepareNotificationsDB(ctx context.Context) (*storage.PostgresNotificationStore, func()) {
@@ -254,24 +253,8 @@ func subscribeAPN(req *require.Assertions, ctx context.Context, store *storage.P
 	_, err = rand.Read(deviceToken2[:])
 	req.NoError(err)
 
-	req.NoError(
-		store.AddAPNSubscription(
-			ctx,
-			wallet.Address,
-			deviceToken1[:],
-			env1,
-			NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
-		),
-	)
-	req.NoError(
-		store.AddAPNSubscription(
-			ctx,
-			wallet.Address,
-			deviceToken2[:],
-			env2,
-			NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
-		),
-	)
+	req.NoError(store.AddAPNSubscription(ctx, wallet.Address, deviceToken1[:], env1, NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2))
+	req.NoError(store.AddAPNSubscription(ctx, wallet.Address, deviceToken2[:], env2, NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2))
 
 	subs, err := store.GetAPNSubscriptions(ctx, wallet.Address)
 	req.NoError(err)

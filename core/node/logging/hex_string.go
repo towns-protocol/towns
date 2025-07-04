@@ -56,7 +56,7 @@ func formatHexString(s string) (first string, middle string, last string, trunca
 	if hex {
 		if hasPrefix {
 			if len(s) > (shortenHexChars + 2) {
-				return s[:(2 + shortenHexCharsPartLen)], "..", s[len(s)-shortenHexCharsPartLen:], true
+				return s[:(2+shortenHexCharsPartLen)], "..", s[len(s)-shortenHexCharsPartLen:], true
 			}
 		} else {
 			if len(s) > shortenHexChars {

@@ -93,7 +93,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	// Create a second miniblock with the current events
 	alice.makeMiniblock(spaceId, false, -1)
 
-	// Add more events for the second miniblock
+	// Add more events for the second miniblock  
 	addMemberEvent(&MemberPayload{
 		Content: &MemberPayload_EnsAddress{
 			EnsAddress: make([]byte, 20), // Valid Ethereum address length (20 bytes)
@@ -113,18 +113,14 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err := alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-
+	
 	// Count total events across all miniblocks
 	totalEvents := 0
 	for _, mb := range getMbResp.Msg.Miniblocks {
 		totalEvents += len(mb.Events)
 		require.False(mb.Partial) // Should not be partial when no filter applied
 	}
-	require.Equal(
-		8,
-		totalEvents,
-		"Should have 8 events total (space inception + membership + 6 test events across 2 miniblocks)",
-	)
+	require.Equal(8, totalEvents, "Should have 8 events total (space inception + membership + 6 test events across 2 miniblocks)")
 
 	// Test case 2: Filter out key_solicitation events
 	getMbReq.ExclusionFilter = []*EventFilter{
@@ -135,7 +131,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-
+	
 	// Count filtered events and check partial flags
 	filteredEvents := 0
 	hasPartialMiniblock := false
@@ -149,7 +145,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 		if mb.Partial {
 			hasPartialMiniblock = true
 		}
-
+		
 		for _, envelope := range mb.Events {
 			var streamEvent StreamEvent
 			err := proto.Unmarshal(envelope.Event, &streamEvent)
@@ -174,11 +170,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 		}
 	}
 
-	require.Equal(
-		5,
-		filteredEvents,
-		"Should have 5 events after filtering out key_solicitation (space inception + membership + username + display_name + ens_address)",
-	)
+	require.Equal(5, filteredEvents, "Should have 5 events after filtering out key_solicitation (space inception + membership + username + display_name + ens_address)")
 	require.True(hasPartialMiniblock, "Should have at least one partial miniblock")
 	require.True(foundInception, "Should find inception event")
 	require.True(foundMembership, "Should find membership event")
@@ -194,7 +186,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-
+	
 	// Count events after filtering all member payloads
 	filteredEvents = 0
 	hasPartialMiniblock = false
@@ -204,11 +196,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 			hasPartialMiniblock = true
 		}
 	}
-	require.Equal(
-		1,
-		filteredEvents,
-		"Should have 1 event after filtering out all member payloads (just space inception)",
-	)
+	require.Equal(1, filteredEvents, "Should have 1 event after filtering out all member payloads (just space inception)")
 	require.True(hasPartialMiniblock, "Should have at least one partial miniblock")
 
 	// Test case 4: Filter that doesn't match anything
@@ -220,7 +208,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-
+	
 	// Count events with no filtering
 	filteredEvents = 0
 	hasPartialMiniblock = false
@@ -242,21 +230,21 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-
+	
 	// Count events and verify both miniblocks are present
 	filteredEvents = 0
 	miniblockCount := 0
 	partialMiniblockCount := 0
 	foundDisplayName := false
 	foundEnsAddress := false
-
+	
 	for _, mb := range getMbResp.Msg.Miniblocks {
 		miniblockCount++
 		filteredEvents += len(mb.Events)
 		if mb.Partial {
 			partialMiniblockCount++
 		}
-
+		
 		for _, envelope := range mb.Events {
 			var streamEvent StreamEvent
 			err := proto.Unmarshal(envelope.Event, &streamEvent)
@@ -272,14 +260,10 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 			}
 		}
 	}
-
+	
 	require.GreaterOrEqual(miniblockCount, 2, "Should have at least 2 miniblocks")
 	require.Equal(7, filteredEvents, "Should have 7 events after filtering out ens_address events")
-	require.Equal(
-		1,
-		partialMiniblockCount,
-		"Should have 1 partial miniblock (the one containing the ens_address event)",
-	)
+	require.Equal(1, partialMiniblockCount, "Should have 1 partial miniblock (the one containing the ens_address event)")
 	require.True(foundDisplayName, "Should find display_name event")
 	require.False(foundEnsAddress, "Should NOT find ens_address events")
 
@@ -296,7 +280,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	}
 	getMbResp, err = alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-
+	
 	// Count events and verify multiple filters work together
 	filteredEvents = 0
 	hasPartialMiniblock = false
@@ -306,13 +290,13 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 	foundDisplayName = false
 	foundKeySolicitation = false
 	foundEnsAddress = false
-
+	
 	for _, mb := range getMbResp.Msg.Miniblocks {
 		filteredEvents += len(mb.Events)
 		if mb.Partial {
 			hasPartialMiniblock = true
 		}
-
+		
 		for _, envelope := range mb.Events {
 			var streamEvent StreamEvent
 			err := proto.Unmarshal(envelope.Event, &streamEvent)
@@ -342,12 +326,8 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 			}
 		}
 	}
-
-	require.Equal(
-		4,
-		filteredEvents,
-		"Should have 4 events after filtering out key_solicitation AND display_name (space inception + membership + username + ens_address)",
-	)
+	
+	require.Equal(4, filteredEvents, "Should have 4 events after filtering out key_solicitation AND display_name (space inception + membership + username + ens_address)")
 	require.True(hasPartialMiniblock, "Should have at least one partial miniblock when multiple filters are applied")
 	require.True(foundInception, "Should find inception event")
 	require.True(foundMembership, "Should find membership event")
