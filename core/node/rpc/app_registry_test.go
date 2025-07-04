@@ -1642,6 +1642,126 @@ func TestAppRegistry_RotateSecret(t *testing.T) {
 	}
 }
 
+func TestAppRegistry_ValidateBotName(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 2, enableRiverLogs: false})
+	tester.StartBotServices()
+
+	// Register a bot in order to create a bot with an existing name
+	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	existingBotWallet, _ := tester.BotWallets(0)
+
+	// Get the existing bot's metadata to discover its name
+	getMetadataResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
+		Msg: &protocol.GetAppMetadataRequest{
+			AppId: existingBotWallet.Address[:],
+		},
+	})
+	tester.require.NoError(err)
+	existingBotName := getMetadataResp.Msg.Metadata.Name
+
+	tests := map[string]struct {
+		name              string
+		expectAvailable   bool
+		expectErrMessage  string
+	}{
+		"Available name": {
+			name:            "UniqueNewBotName",
+			expectAvailable: true,
+		},
+		"Existing name": {
+			name:             existingBotName,
+			expectAvailable:  false,
+			expectErrMessage: "name is already taken",
+		},
+		"Empty name": {
+			name:             "",
+			expectAvailable:  false,
+			expectErrMessage: "name cannot be empty",
+		},
+		"Different case of existing name": {
+			name:            strings.ToUpper(existingBotName),
+			expectAvailable: true, // Expect case-sensitive name uniqueness
+		},
+		"Name with spaces": {
+			name:            "Bot With Spaces",
+			expectAvailable: true,
+		},
+		"Very long name": {
+			name:            strings.Repeat("a", 200),
+			expectAvailable: true,
+		},
+	}
+
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			resp, err := tester.appRegistryClient.ValidateBotName(tester.ctx, &connect.Request[protocol.ValidateBotNameRequest]{
+				Msg: &protocol.ValidateBotNameRequest{
+					Name: tt.name,
+				},
+			})
+
+			// ValidateBotName should never return an error, only indicate availability
+			tester.require.NoError(err)
+			tester.require.NotNil(resp)
+			tester.require.NotNil(resp.Msg)
+
+			assert.Equal(t, tt.expectAvailable, resp.Msg.IsAvailable)
+			
+			if tt.expectErrMessage != "" {
+				assert.Equal(t, tt.expectErrMessage, resp.Msg.ErrorMessage)
+			} else {
+				assert.Empty(t, resp.Msg.ErrorMessage)
+			}
+		})
+	}
+
+	// Test concurrent name validation
+	t.Run("Concurrent validation", func(t *testing.T) {
+		var wg sync.WaitGroup
+		numConcurrent := 10
+		baseName := "ConcurrentBot"
+
+		for i := 0; i < numConcurrent; i++ {
+			wg.Add(1)
+			go func(index int) {
+				defer wg.Done()
+				
+				resp, err := tester.appRegistryClient.ValidateBotName(tester.ctx, &connect.Request[protocol.ValidateBotNameRequest]{
+					Msg: &protocol.ValidateBotNameRequest{
+						Name: fmt.Sprintf("%s%d", baseName, index),
+					},
+				})
+				
+				assert.NoError(t, err)
+				assert.True(t, resp.Msg.IsAvailable)
+			}(i)
+		}
+		
+		wg.Wait()
+	})
+
+	// Test that validation doesn't require authentication
+	t.Run("No authentication required", func(t *testing.T) {
+		// Create a client without authentication
+		httpClient := tester.serviceTester.httpClient()
+		serviceAddr := "https://" + tester.appRegistryService.listener.Addr().String()
+		unauthClient := protocolconnect.NewAppRegistryServiceClient(
+			httpClient,
+			serviceAddr,
+		)
+
+		resp, err := unauthClient.ValidateBotName(tester.ctx, &connect.Request[protocol.ValidateBotNameRequest]{
+			Msg: &protocol.ValidateBotNameRequest{
+				Name: "TestWithoutAuth",
+			},
+		})
+
+		// Should succeed without authentication
+		tester.require.NoError(err)
+		tester.require.True(resp.Msg.IsAvailable)
+	})
+}
+
 func TestAppRegistry_Register(t *testing.T) {
 	tester := NewAppRegistryServiceTester(t, nil)
 

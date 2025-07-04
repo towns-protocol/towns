@@ -868,3 +868,46 @@ func (s *Service) GetAppMetadata(
 		},
 	}, nil
 }
+
+// ValidateBotName does not require authentication.
+func (s *Service) ValidateBotName(
+	ctx context.Context,
+	req *connect.Request[ValidateBotNameRequest],
+) (
+	*connect.Response[ValidateBotNameResponse],
+	error,
+) {
+	// Validate input
+	if req.Msg.Name == "" {
+		return &connect.Response[ValidateBotNameResponse]{
+			Msg: &ValidateBotNameResponse{
+				IsAvailable:  false,
+				ErrorMessage: "name cannot be empty",
+			},
+		}, nil
+	}
+
+	// Check if name is already taken using the existing display name check
+	isAvailable, err := s.store.IsDisplayNameAvailable(ctx, req.Msg.Name)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("failed to check bot name availability").
+			Tag("name", req.Msg.Name).
+			Func("ValidateBotName")
+	}
+
+	if !isAvailable {
+		return &connect.Response[ValidateBotNameResponse]{
+			Msg: &ValidateBotNameResponse{
+				IsAvailable:  false,
+				ErrorMessage: "name is already taken",
+			},
+		}, nil
+	}
+
+	return &connect.Response[ValidateBotNameResponse]{
+		Msg: &ValidateBotNameResponse{
+			IsAvailable: true,
+		},
+	}, nil
+}

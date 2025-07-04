@@ -1342,3 +1342,94 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 		appInfo,
 	)
 }
+
+func TestIsDisplayNameAvailable(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app1 := safeAddress(t)
+	app2 := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Test that a name is available before any app is created
+	available, err := store.IsDisplayNameAvailable(params.ctx, "UniqueBotName")
+	require.NoError(err)
+	require.True(available, "Name should be available when no apps exist")
+
+	// Create an app with a specific name
+	metadata1 := types.AppMetadata{
+		Name:        "ExistingBot",
+		Description: "First bot",
+		ImageUrl:    "https://example.com/bot1.png",
+		AvatarUrl:   "https://example.com/avatar1.png",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app1,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		metadata1,
+		secret,
+	)
+	require.NoError(err)
+
+	// Test that the same name is not available
+	available, err = store.IsDisplayNameAvailable(params.ctx, "ExistingBot")
+	require.NoError(err)
+	require.False(available, "Name should not be available when already taken")
+
+	// Test that a different name is available
+	available, err = store.IsDisplayNameAvailable(params.ctx, "DifferentBot")
+	require.NoError(err)
+	require.True(available, "Different name should be available")
+
+	// Create another app with a different name
+	metadata2 := types.AppMetadata{
+		Name:        "SecondBot",
+		Description: "Second bot",
+		ImageUrl:    "https://example.com/bot2.png",
+		AvatarUrl:   "https://example.com/avatar2.png",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		metadata2,
+		secret,
+	)
+	require.NoError(err)
+
+	// Verify both names are not available
+	available, err = store.IsDisplayNameAvailable(params.ctx, "ExistingBot")
+	require.NoError(err)
+	require.False(available)
+
+	available, err = store.IsDisplayNameAvailable(params.ctx, "SecondBot")
+	require.NoError(err)
+	require.False(available)
+
+	// Test empty name - storage layer just checks DB, returns true since no app has empty name
+	// The service layer is responsible for validating that empty names are not acceptable
+	available, err = store.IsDisplayNameAvailable(params.ctx, "")
+	require.NoError(err)
+	require.True(available, "Storage layer returns true for empty name (no DB entry), service layer handles validation")
+
+	// Test case sensitivity (assuming the implementation is case-sensitive based on the unique constraint)
+	available, err = store.IsDisplayNameAvailable(params.ctx, "existingbot")
+	require.NoError(err)
+	require.True(available, "Lowercase version should be available if implementation is case-sensitive")
+
+	available, err = store.IsDisplayNameAvailable(params.ctx, "EXISTINGBOT")
+	require.NoError(err)
+	require.True(available, "Uppercase version should be available if implementation is case-sensitive")
+}

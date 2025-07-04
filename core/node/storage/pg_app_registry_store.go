@@ -184,6 +184,12 @@ type (
 			ctx context.Context,
 			app common.Address,
 		) (*types.AppMetadata, error)
+
+		// IsDisplayNameAvailable checks if a display name is available (case-sensitive)
+		IsDisplayNameAvailable(
+			ctx context.Context,
+			displayName string,
+		) (bool, error)
 	}
 )
 
@@ -1111,4 +1117,30 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	metadata.Name = displayName
 
 	return &metadata, nil
+}
+
+func (s *PostgresAppRegistryStore) IsDisplayNameAvailable(
+	ctx context.Context,
+	displayName string,
+) (bool, error) {
+	var exists bool
+	err := s.txRunner(
+		ctx,
+		"IsDisplayNameAvailable",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return tx.QueryRow(
+				ctx,
+				"SELECT EXISTS(SELECT 1 FROM app_registry WHERE display_name = $1)",
+				displayName,
+			).Scan(&exists)
+		},
+		nil,
+		"displayName", displayName,
+	)
+	if err != nil {
+		return false, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to check display name availability")
+	}
+	return !exists, nil
 }

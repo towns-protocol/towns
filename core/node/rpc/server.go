@@ -854,6 +854,7 @@ func (s *Service) initAppRegistryHandlers() error {
 		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
 		"/river.AppRegistryService/GetStatus",
 		"/river.AppRegistryService/GetAppMetadata",
+		"/river.AppRegistryService/ValidateBotName",
 	)
 	if err != nil {
 		return err

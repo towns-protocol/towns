@@ -297,3 +297,11 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
 	}
 }
+
+// IsDisplayNameAvailable checks if a display name is available for use
+func (q *CachedEncryptedMessageQueue) IsDisplayNameAvailable(
+	ctx context.Context,
+	displayName string,
+) (bool, error) {
+	return q.store.IsDisplayNameAvailable(ctx, displayName)
+}
