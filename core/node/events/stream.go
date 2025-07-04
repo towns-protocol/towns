@@ -752,6 +752,26 @@ func (s *Stream) addEventLocked(
 		logging.FromCtx(ctx).Warnw("Stream.addEventLocked: adding event with relaxed duplicate check", "error", err)
 	}
 
+	newSV := oldSV
+	if !event.Event.Ephemeral {
+		newSV, err = s.addEventToMinipoolAndStorageLocked(ctx, event, oldSV, envelopeBytes)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
+	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
+
+	return newSV, nil
+}
+
+func (s *Stream) addEventToMinipoolAndStorageLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	oldSV *StreamView,
+	envelopeBytes []byte,
+) (*StreamView, error) {
 	// Check if event can be added before writing to storage.
 	newSV, err := oldSV.copyAndAddEvent(event)
 	if err != nil {
@@ -787,10 +807,6 @@ func (s *Stream) addEventLocked(
 	}
 
 	s.setViewLocked(newSV)
-	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
-
-	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
-
 	return newSV, nil
 }
 

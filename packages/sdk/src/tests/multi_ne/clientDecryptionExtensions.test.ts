@@ -164,6 +164,13 @@ describe('ClientDecryptionExtensions', () => {
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
+
+        // By default, clients will send an ephemeral solicitation first
+        // in this case, we want to make sure that the solicitation is sent as non-ephemeral
+        // so that bob can see the solicitation and share keys,
+        // otherwise we'd need to wait for the ephemeral timeout to expire
+        alice1['decryptionExtensions']!.ephemeralTimeoutMs = 100
+
         await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
         await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
