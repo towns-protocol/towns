@@ -41,14 +41,28 @@ func TestBlockchain(t *testing.T) {
 	nodeAddr2 := bc2.Wallet.Address
 	nodeUrl2 := "http://node2.node"
 
-	tx1, err := tc.OperatorForNodeIndex(ctx, 0).TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
-	})
+	tx1, err := tc.OperatorForNodeIndex(
+		ctx,
+		0,
+	).TxPool.Submit(
+		ctx,
+		"RegisterNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
+		},
+	)
 	require.NoError(err)
 
-	tx2, err := tc.OperatorForNodeIndex(ctx, 1).TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		return tc.NodeRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
-	})
+	tx2, err := tc.OperatorForNodeIndex(
+		ctx,
+		1,
+	).TxPool.Submit(
+		ctx,
+		"RegisterNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
+		},
+	)
 	require.NoError(err)
 
 	firstBlockNum, err := tc.Client().BlockNumber(ctx)
@@ -78,9 +92,16 @@ func TestBlockchain(t *testing.T) {
 	assert.Equal(nodeUrl2, nodes[1].Url)
 
 	// Can't add the same node twice
-	tx1, err = tc.OperatorForNodeIndex(ctx, 0).TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
-	})
+	tx1, err = tc.OperatorForNodeIndex(
+		ctx,
+		0,
+	).TxPool.Submit(
+		ctx,
+		"RegisterNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
+		},
+	)
 	// Looks like this is a difference for simulated backend:
 	// this error should be know only after the transaction is mined - i.e. after Commit call.
 	require.Nil(tx1)

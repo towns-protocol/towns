@@ -290,16 +290,23 @@ func (s *Service) getEphemeralStreamMbHash(
 		defer cancel()
 
 		var hash []byte
-		err := s.storage.ReadMiniblocksByIds(ctx, streamId, []int64{num}, true, func(data []byte, seqNum int64, _ []byte) error {
-			var mb Miniblock
-			if err := proto.Unmarshal(data, &mb); err != nil {
-				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
-			}
-			hash = mb.GetHeader().GetHash()
-			return nil
-		})
+		err := s.storage.ReadMiniblocksByIds(
+			ctx,
+			streamId,
+			[]int64{num},
+			true,
+			func(data []byte, seqNum int64, _ []byte) error {
+				var mb Miniblock
+				if err := proto.Unmarshal(data, &mb); err != nil {
+					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+				}
+				hash = mb.GetHeader().GetHash()
+				return nil
+			},
+		)
 		if err != nil {
-			logging.FromCtx(ctx).Errorw("Failed to read genesis miniblock from store to re-create ephemeral stream creation cookie", "streamId", streamId, "error", err)
+			logging.FromCtx(ctx).
+				Errorw("Failed to read genesis miniblock from store to re-create ephemeral stream creation cookie", "streamId", streamId, "error", err)
 		} else if len(hash) > 0 {
 			return hash, nil
 		}
@@ -308,7 +315,8 @@ func (s *Service) getEphemeralStreamMbHash(
 	for _, addr := range remotes {
 		client, err := s.nodeRegistry.GetNodeToNodeClientForAddress(addr)
 		if err != nil {
-			logging.FromCtx(ctx).Errorw("Failed to get node client for address", "address", addr, "streamId", streamId, "error", err)
+			logging.FromCtx(ctx).
+				Errorw("Failed to get node client for address", "address", addr, "streamId", streamId, "error", err)
 			continue
 		}
 
@@ -320,7 +328,8 @@ func (s *Service) getEphemeralStreamMbHash(
 		}))
 		if err != nil {
 			cancel()
-			logging.FromCtx(ctx).Errorw("Failed to get genesis miniblock from remote to re-create ephemeral stream creation cookie", "address", addr, "streamId", streamId, "error", err)
+			logging.FromCtx(ctx).
+				Errorw("Failed to get genesis miniblock from remote to re-create ephemeral stream creation cookie", "address", addr, "streamId", streamId, "error", err)
 			continue
 		}
 

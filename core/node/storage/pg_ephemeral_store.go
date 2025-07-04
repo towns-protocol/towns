@@ -178,7 +178,10 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	miniblock *WriteMiniblockData,
 ) error {
 	// Query to insert a new ephemeral miniblock
-	query := s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4);", streamId)
+	query := s.sqlForStream(
+		"INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4);",
+		streamId,
+	)
 
 	// Lock the ephemeral stream to ensure that the stream exists and is ephemeral.
 	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
@@ -295,7 +298,10 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 
 	// Last miniblock number must be equal to the number of chunks + 1.
 	if seqNum != int(inception.GetChunkCount()) {
-		return common.Hash{}, RiverError(Err_INTERNAL, "The ephemeral stream can not be normalized due to missing miniblocks")
+		return common.Hash{}, RiverError(
+			Err_INTERNAL,
+			"The ephemeral stream can not be normalized due to missing miniblocks",
+		)
 	}
 
 	// Remove ephemeral flag from the given stream.

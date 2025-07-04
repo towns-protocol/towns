@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/core/types"
-	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"math"
 	"net/http"
 	"os"
@@ -15,6 +12,10 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/core/types"
+	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum"
@@ -67,7 +68,15 @@ func printStreamCsv(strm *river.StreamWithId) {
 		nodeAddresses = append(nodeAddresses, node.Hex())
 	}
 	nodeList := strings.Join(nodeAddresses, ",")
-	fmt.Printf("%s,%s,%d,%t,%d,%s\n", strm.StreamId().String(), strm.LastMbHash().Hex(), strm.LastMbNum(), strm.IsSealed(), strm.ReplicationFactor(), nodeList)
+	fmt.Printf(
+		"%s,%s,%d,%t,%d,%s\n",
+		strm.StreamId().String(),
+		strm.LastMbHash().Hex(),
+		strm.LastMbNum(),
+		strm.IsSealed(),
+		strm.ReplicationFactor(),
+		nodeList,
+	)
 }
 
 func printStream(opts *streamDumpOpts, i int64, strm *river.StreamWithId) {
@@ -77,7 +86,14 @@ func printStream(opts *streamDumpOpts, i int64, strm *river.StreamWithId) {
 
 	if !opts.csv {
 		s := fmt.Sprintf("%4d %s", i-1, strm.StreamId().String())
-		fmt.Printf("%-69s %4d, %s %t %d\n", s, strm.LastMbNum(), strm.LastMbHash().Hex(), strm.IsSealed(), strm.ReplicationFactor())
+		fmt.Printf(
+			"%-69s %4d, %s %t %d\n",
+			s,
+			strm.LastMbNum(),
+			strm.LastMbHash().Hex(),
+			strm.IsSealed(),
+			strm.ReplicationFactor(),
+		)
 		for _, node := range strm.Nodes() {
 			fmt.Printf("        %s\n", node.Hex())
 		}
@@ -140,7 +156,13 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 
 		if opts.time && curI%50000 == 0 {
 			elapsed := time.Since(startTime)
-			fmt.Fprintf(os.Stderr, "Received %d streams in %s (%.1f streams/s)\n", curI, elapsed, float64(curI)/elapsed.Seconds())
+			fmt.Fprintf(
+				os.Stderr,
+				"Received %d streams in %s (%.1f streams/s)\n",
+				curI,
+				elapsed,
+				float64(curI)/elapsed.Seconds(),
+			)
 		}
 		return true
 	}
@@ -282,7 +304,12 @@ func validateStream(
 	}
 	if verbose {
 		for i, ev := range evs {
-			fmt.Printf("          Event %4d: %s %s\n", i, ev.Hash.Hex(), time.UnixMilli(ev.Event.CreatedAtEpochMs).Local().Format(time.RFC3339))
+			fmt.Printf(
+				"          Event %4d: %s %s\n",
+				i,
+				ev.Hash.Hex(),
+				time.UnixMilli(ev.Event.CreatedAtEpochMs).Local().Format(time.RFC3339),
+			)
 			fmt.Printf(
 				"                        %s creator: %s type: %s %s\n",
 				ev.MiniblockRef,
@@ -637,7 +664,12 @@ func eventsDump(cmd *cobra.Command, cfg *config.Config) error {
 				continue
 			}
 
-			parsed, err := cc.registryContract.ParseEvent(ctx, cc.registryContract.StreamRegistry.BoundContract(), cc.registryContract.StreamEventInfo, &log)
+			parsed, err := cc.registryContract.ParseEvent(
+				ctx,
+				cc.registryContract.StreamRegistry.BoundContract(),
+				cc.registryContract.StreamEventInfo,
+				&log,
+			)
 			if err != nil {
 				fmt.Printf("Error parsing event: %d %d %s\n", log.BlockNumber, log.Index, err)
 				continue
@@ -913,7 +945,10 @@ func runRegistryUpdateStream(args []string, cfg *config.Config) error {
 	}
 
 	if replFactor > int64(len(nodes)) {
-		return RiverError(Err_INVALID_ARGUMENT, "stream replication factor must be less than or equal to the number of nodes")
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"stream replication factor must be less than or equal to the number of nodes",
+		)
 	}
 
 	blockchain, err := crypto.NewBlockchain(
@@ -957,7 +992,6 @@ func runRegistryUpdateStream(args []string, cfg *config.Config) error {
 				},
 			})
 		})
-
 	if err != nil {
 		return err
 	}

@@ -53,7 +53,10 @@ func TestDbLocking(t *testing.T) {
 
 	require.Equal(pgx.ReadCommitted, params.pgStreamStore.isolationLevel)
 
-	tx1, err := conn1.BeginTx(ctx, pgx.TxOptions{IsoLevel: params.pgStreamStore.isolationLevel, AccessMode: pgx.ReadWrite})
+	tx1, err := conn1.BeginTx(
+		ctx,
+		pgx.TxOptions{IsoLevel: params.pgStreamStore.isolationLevel, AccessMode: pgx.ReadWrite},
+	)
 	require.NoError(err)
 	defer rollbackTx(ctx, tx1)
 
@@ -61,7 +64,10 @@ func TestDbLocking(t *testing.T) {
 	require.NoError(err)
 	defer conn2.Release()
 
-	tx2, err := conn2.BeginTx(ctx, pgx.TxOptions{IsoLevel: params.pgStreamStore.isolationLevel, AccessMode: pgx.ReadWrite})
+	tx2, err := conn2.BeginTx(
+		ctx,
+		pgx.TxOptions{IsoLevel: params.pgStreamStore.isolationLevel, AccessMode: pgx.ReadWrite},
+	)
 	require.NoError(err)
 	defer rollbackTx(ctx, tx2)
 

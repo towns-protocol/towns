@@ -18,6 +18,7 @@ import (
 	"github.com/sideshow/apns2"
 	payload2 "github.com/sideshow/apns2/payload"
 	"github.com/sideshow/apns2/token"
+
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -32,24 +33,24 @@ type (
 		// VAPID protocol to authenticate the message.
 		SendWebPushNotification(
 			ctx context.Context,
-		// subscription object as returned by the browser on enabling subscriptions.
+			// subscription object as returned by the browser on enabling subscriptions.
 			subscription *webpush.Subscription,
-		// event hash
+			// event hash
 			eventHash common.Hash,
-		// payload of the message
+			// payload of the message
 			payload []byte,
 		) (expired bool, err error)
 
 		// SendApplePushNotification sends a push notification to the iOS app
 		SendApplePushNotification(
 			ctx context.Context,
-		// sub APN
+			// sub APN
 			sub *types.APNPushSubscription,
-		// event hash
+			// event hash
 			eventHash common.Hash,
-		// payload is sent to the APP
+			// payload is sent to the APP
 			payload *payload2.Payload,
-		// payloadIncludesStreamEvent is true if the payload includes the stream event
+			// payloadIncludesStreamEvent is true if the payload includes the stream event
 			payloadIncludesStreamEvent bool,
 		) (bool, int, error)
 	}

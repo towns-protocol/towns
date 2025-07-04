@@ -511,7 +511,12 @@ func (s *PostgresStreamStore) CreateStreamStorage(
 	genesisMiniblock *WriteMiniblockData,
 ) error {
 	if len(genesisMiniblock.Data) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "genesis miniblock data is empty", "streamId", streamId).Func("pg.CreateStreamStorage")
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"genesis miniblock data is empty",
+			"streamId",
+			streamId,
+		).Func("pg.CreateStreamStorage")
 	}
 	err := s.txRunner(
 		ctx,
@@ -882,7 +887,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	}
 
 	var envelopes [][]byte
-	var expectedGeneration = seqNum + 1
+	expectedGeneration := seqNum + 1
 	var expectedSlot int64 = -1
 
 	// Scan variables
@@ -1087,7 +1092,10 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	miniblocksRow, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", snapshotField),
+			fmt.Sprintf(
+				"SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num",
+				snapshotField,
+			),
 			streamId,
 		),
 		fromInclusive,
@@ -1169,7 +1177,10 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num", snapshotField),
+			fmt.Sprintf(
+				"SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num",
+				snapshotField,
+			),
 			streamId,
 		),
 		streamId,
@@ -1239,7 +1250,10 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			fmt.Sprintf("SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num", snapshotField),
+			fmt.Sprintf(
+				"SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num",
+				snapshotField,
+			),
 			streamId,
 		),
 		streamId,
@@ -1267,8 +1281,16 @@ func (s *PostgresStreamStore) WriteMiniblockCandidate(
 	miniblock *WriteMiniblockData,
 ) error {
 	if len(miniblock.Data) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "miniblock data is empty",
-			"streamId", streamId, "blockHash", miniblock.Hash, "blockNumber", miniblock.Number).Func("pg.WriteMiniblockCandidate")
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"miniblock data is empty",
+			"streamId",
+			streamId,
+			"blockHash",
+			miniblock.Hash,
+			"blockNumber",
+			miniblock.Number,
+		).Func("pg.WriteMiniblockCandidate")
 	}
 	return s.txRunner(
 		ctx,
@@ -2286,7 +2308,10 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 			streamID,
 		).Scan(&blockdataLength)
 		if err != nil {
-			return 0, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("failed to check miniblock data integrity")
+			return 0, WrapRiverError(
+				Err_MINIBLOCKS_STORAGE_FAILURE,
+				err,
+			).Message("failed to check miniblock data integrity")
 		}
 
 		if blockdataLength == 0 {
