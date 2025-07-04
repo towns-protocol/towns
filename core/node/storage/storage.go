@@ -71,6 +71,22 @@ type (
 		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
 		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
 
+		// ReinitializeStreamStorage initialized or reinitializes storage for the given stream.
+		// If updateExisting is false and stream is present in storage, returns an error.
+		// If updateExisting is true and stream is not present in storage, creates a new stream.
+		// If updateExisting is true and stream is present in storage, updates the stream.
+		// If existing stream is updated, minipool is reset to empty and generation number is set to the last miniblock number + 1.
+		// If existing stream is updated, number of the last provided miniblock should exceed the last miniblock in storage.
+		// If existing stream is updated, existing miniblock candidates are deleted.
+		// miniblocks numbers should be continuous and in the ascending order.
+		ReinitializeStreamStorage(
+			ctx context.Context,
+			streamId StreamId,
+			miniblocks []*WriteMiniblockData,
+			lastSnapshotMiniblockNum int64,
+			updateExisting bool,
+		) error
+
 		// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
 		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
 
