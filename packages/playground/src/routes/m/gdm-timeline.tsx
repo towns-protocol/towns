@@ -1,6 +1,6 @@
 import { useGdm, useMemberList, useSyncAgent, useTimeline } from '@towns-protocol/react-sdk'
 import { useParams } from 'react-router-dom'
-import { useEffect, useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Timeline } from '@/components/blocks/timeline'
 import { shortenAddress } from '@/utils/address'
 
