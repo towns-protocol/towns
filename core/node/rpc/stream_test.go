@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -248,10 +249,22 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 }
 
 func TestEphemeralMessageInChat(t *testing.T) {
-	tt := newServiceTesterForReplication(t)
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{
+			numNodes:          4,
+			replicationFactor: 3,
+			start:             true,
+			btcParams: &crypto.TestParams{
+				AutoMine:         true,
+				AutoMineInterval: 200 * time.Millisecond,
+				MineOnTx:         false,
+			},
+		},
+	)
 	require := tt.require
 
-	clients := tt.newTestClients(tt.opts.replicationFactor, testClientOpts{enableSync: true})
+	clients := tt.newTestClients(4, testClientOpts{enableSync: true})
 	alice := clients[0]
 
 	// let alice create a channel and let all clients join
@@ -299,25 +312,76 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	// ensure that the ephemeral message is not included in the stream
 	clients.listen(channelId, [][]string{{nonEphemeralMessage}})
 
-	_, err = tt.nodes[0].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
-	require.NoError(err)
+	// Find the nodes that has the stream and make a miniblock
+	var miniblockErr error
+	for i := 0; i < len(tt.nodes); i++ {
+		_, miniblockErr = tt.nodes[i].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
+		if miniblockErr == nil {
+			break
+		}
+	}
+	require.NoError(miniblockErr)
 
 	// ensure that the ephemeral message is not included in miniblocks as stored in storage
+	// and that the non-ephemeral message is included and replicated correctly
 	ephemeralEventHash := common.BytesToHash(ephemeralEnvelope.Hash)
+	nonEphemeralMessageFound := 0
+	ephemeralMessageFound := 0
+	nodesWithStream := 0
+
 	for i := 0; i < len(tt.nodes); i++ {
-		tt.require.NoError(tt.nodes[i].service.storage.ReadMiniblocksByStream(tt.ctx, channelId, false, func(mbBytes []byte, _ int64, snBytes []byte) error {
-			var mb protocol.Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
-				return err
-			}
+		nodeMessageCount := 0
+		err := tt.nodes[i].service.storage.ReadMiniblocksByStream(
+			tt.ctx,
+			channelId,
+			false,
+			func(mbBytes []byte, _ int64, snBytes []byte) error {
+				var mb protocol.Miniblock
+				if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+					return err
+				}
 
-			for _, env := range mb.GetEvents() {
-				parsedEvent, err := events.ParseEvent(env)
-				require.NoError(err)
-				tt.require.NotEqual(ephemeralEventHash, parsedEvent.Hash, "ephemeral message should not be in miniblock")
-			}
+				for _, event := range mb.GetEvents() {
+					parsedEvent, err := events.ParseEvent(event)
+					require.NoError(err)
 
-			return nil
-		}))
+					// Check if this is the ephemeral message (should not be found)
+					if parsedEvent.Hash == ephemeralEventHash {
+						ephemeralMessageFound++
+					}
+
+					// Check if this is the non-ephemeral message
+					if channelPayload := parsedEvent.Event.GetChannelPayload(); channelPayload != nil {
+						if message := channelPayload.GetMessage(); message != nil {
+							if message.GetCiphertext() == nonEphemeralMessage {
+								nonEphemeralMessageFound++
+								nodeMessageCount++
+							}
+						}
+					}
+				}
+
+				return nil
+			},
+		)
+
+		// Skip nodes that don't have the stream (stream not found error is expected)
+		if err != nil && !strings.Contains(err.Error(), "Stream not found") {
+			tt.require.NoError(err)
+		} else if err == nil {
+			nodesWithStream++
+		}
 	}
+
+	// Verify that ephemeral message was not persisted in any miniblock
+	tt.require.Equal(0, ephemeralMessageFound, "ephemeral message should not be found in any miniblock")
+
+	// Debug output
+	t.Logf("Nodes with stream: %d, Non-ephemeral messages found: %d", nodesWithStream, nonEphemeralMessageFound)
+
+	// Verify that non-ephemeral message was replicated exactly 3 times (replication factor)
+	tt.require.Equal(3, nonEphemeralMessageFound, "non-ephemeral message should be replicated exactly 3 times")
+
+	// Verify that exactly 3 nodes have the stream (matching replication factor)
+	tt.require.Equal(3, nodesWithStream, "exactly 3 nodes should have the stream")
 }
