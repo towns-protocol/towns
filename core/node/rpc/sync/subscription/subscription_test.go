@@ -58,8 +58,7 @@ func TestSubscription_Modify(t *testing.T) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
-				})).
-					Return(nil)
+				})).Return(nil)
 			},
 		},
 		{
@@ -83,8 +82,7 @@ func TestSubscription_Modify(t *testing.T) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID2).Return(false, true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
-				})).
-					Return(nil)
+				})).Return(nil)
 			},
 		},
 		{
@@ -108,8 +106,7 @@ func TestSubscription_Modify(t *testing.T) {
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID1).Return(true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 1 && len(req.ToBackfill) == 0
-				})).
-					Return(nil)
+				})).Return(nil)
 			},
 		},
 		{
@@ -160,8 +157,7 @@ func TestSubscription_Modify(t *testing.T) {
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2).Return(true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 1 && len(req.ToBackfill) == 0
-				})).
-					Return(nil)
+				})).Return(nil)
 			},
 		},
 		{
@@ -186,8 +182,7 @@ func TestSubscription_Modify(t *testing.T) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(false, true)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
-				})).
-					Return(nil)
+				})).Return(nil)
 			},
 		},
 		{

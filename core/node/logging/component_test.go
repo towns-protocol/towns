@@ -21,20 +21,8 @@ func TestParseLogLevels(t *testing.T) {
 		{"", logging.LogLevels{logging.Default: zapcore.InfoLevel}, false},
 		{"info", logging.LogLevels{logging.Default: zapcore.InfoLevel}, false},
 		{"debug", logging.LogLevels{logging.Default: zapcore.DebugLevel}, false},
-		{
-			"warn,miniblock=debug",
-			logging.LogLevels{logging.Default: zapcore.WarnLevel, logging.Miniblock: zapcore.DebugLevel},
-			false,
-		},
-		{
-			"warn,miniblock=debug,rpc=info",
-			logging.LogLevels{
-				logging.Default:   zapcore.WarnLevel,
-				logging.Miniblock: zapcore.DebugLevel,
-				logging.Rpc:       zapcore.InfoLevel,
-			},
-			false,
-		},
+		{"warn,miniblock=debug", logging.LogLevels{logging.Default: zapcore.WarnLevel, logging.Miniblock: zapcore.DebugLevel}, false},
+		{"warn,miniblock=debug,rpc=info", logging.LogLevels{logging.Default: zapcore.WarnLevel, logging.Miniblock: zapcore.DebugLevel, logging.Rpc: zapcore.InfoLevel}, false},
 		{",", nil, true},
 		{"warn,", nil, true},
 		{"warn,,miniblock=debug,rpc=info", nil, true},

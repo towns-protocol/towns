@@ -74,12 +74,7 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 				require.NoError(c, err)
 
 				require.EqualValues(c, quorumNodes, stream.GetQuorumNodes(), "quorum nodes mismatch in quorum node")
-				require.EqualValues(
-					c,
-					reconcileNodes,
-					stream.GetReconcileNodes(),
-					"reconcile nodes mismatch in quorum node",
-				)
+				require.EqualValues(c, reconcileNodes, stream.GetReconcileNodes(), "reconcile nodes mismatch in quorum node")
 			}
 		})
 
@@ -96,12 +91,7 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 					stream.GetQuorumNodes(),
 					"quorum nodes mismatch in reconcile streams test",
 				)
-				require.EqualValues(
-					c,
-					reconcileNodes,
-					stream.GetReconcileNodes(),
-					"reconcile nodes mismatch in reconcile streams test",
-				)
+				require.EqualValues(c, reconcileNodes, stream.GetReconcileNodes(), "reconcile nodes mismatch in reconcile streams test")
 
 				// Test stream is not returned if RiverAllowNoQuorum is not set
 				testClient := tt.testClientForUrl(node.url)
@@ -140,12 +130,7 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 				require.NoError(c, err)
 
 				require.EqualValues(c, quorumNodes, stream.GetQuorumNodes(), "quorum nodes mismatch in unplaced node")
-				require.EqualValues(
-					c,
-					reconcileNodes,
-					stream.GetReconcileNodes(),
-					"reconcile nodes mismatch in unplaced node",
-				)
+				require.EqualValues(c, reconcileNodes, stream.GetReconcileNodes(), "reconcile nodes mismatch in unplaced node")
 
 				view, err := stream.GetViewIfLocal(tt.ctx)
 				require.NoError(c, err)

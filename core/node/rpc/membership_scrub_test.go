@@ -274,11 +274,7 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"error in chain auth should result in no booted users": {
-			mockChainAuth: NewMockChainAuth(
-				false,
-				auth.EntitlementResultReason_NONE,
-				fmt.Errorf("this error should not cause a user to be booted"),
-			),
+			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_NONE, fmt.Errorf("this error should not cause a user to be booted")),
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"false or error result for individual users": {

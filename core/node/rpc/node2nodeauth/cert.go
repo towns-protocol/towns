@@ -32,8 +32,10 @@ const (
 	certIssuer  = "towns.com"
 )
 
-// certExtOID is the OID of the custom node-2-node client certificate extension.
-var certExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
+var (
+	// certExtOID is the OID of the custom node-2-node client certificate extension.
+	certExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
+)
 
 // IsValidNodeFunc is a function type that checks if the given address is a valid node.
 // It returns an error if the address is not valid or not registered in the node registry.
@@ -44,10 +46,7 @@ type IsValidNodeFunc func(addr common.Address) error
 // Since the given certificate is required for the internode service (set of handlers) only, the RequireCertMiddleware
 // middleware is used to ensure that the certificate is already present on the internode request. This function is
 // applicable for both internode and stream services, but the certificate is provided for the internode service only.
-func VerifyPeerCertificate(
-	logger *logging.Log,
-	verifyNode IsValidNodeFunc,
-) func([][]byte, [][]*x509.Certificate) error {
+func VerifyPeerCertificate(logger *logging.Log, verifyNode IsValidNodeFunc) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
 		for _, raw := range rawCerts {
 			cert, err := x509.ParseCertificate(raw)
@@ -104,11 +103,7 @@ func verifyCert(logger *logging.Log, verifyNode IsValidNodeFunc, cert *x509.Cert
 	for _, ext := range cert.Extensions {
 		if ext.Id.Equal(certExtOID) {
 			if _, err := asn1.Unmarshal(ext.Value, &certExt); err != nil {
-				return AsRiverError(
-					err,
-					Err_UNAUTHENTICATED,
-				).Message("Failed to unmarshal extra extension").
-					LogError(logger)
+				return AsRiverError(err, Err_UNAUTHENTICATED).Message("Failed to unmarshal extra extension").LogError(logger)
 			}
 			found = true
 			break
@@ -214,12 +209,8 @@ func createCert(logger *logging.Log, wallet *crypto.Wallet, riverChainId *big.In
 			Organization: []string{certIssuer},
 			CommonName:   fmt.Sprintf(certNameFmt, riverChainId, wallet.Address.Hex()),
 		},
-		NotBefore: time.Now().
-			Add(-certDurationBuffer),
-		// Add a small buffer to avoid issues with time differences
-		NotAfter: time.Now().
-			Add(certTTL + certDurationBuffer),
-		// Add a small buffer to avoid issues with time differences
+		NotBefore:       time.Now().Add(-certDurationBuffer),          // Add a small buffer to avoid issues with time differences
+		NotAfter:        time.Now().Add(certTTL + certDurationBuffer), // Add a small buffer to avoid issues with time differences
 		KeyUsage:        x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		ExtraExtensions: []pkix.Extension{{Id: certExtOID, Value: extensionValue}},

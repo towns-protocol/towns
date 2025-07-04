@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -135,18 +134,8 @@ func (si *streamInfo) validateEventMbRefs() error {
 				"event", event.Hash.Hex(), "miniblock", event.MiniblockRef.Hash.Hex())
 		}
 		if event.MiniblockRef.Num != -1 && mb.Ref.Num != event.MiniblockRef.Num {
-			return RiverError(
-				Err_INTERNAL,
-				"Event has miniblock reference to wrong miniblock",
-				"event",
-				event.Hash.Hex(),
-				"miniblock",
-				event.MiniblockRef.Hash.Hex(),
-				"expected",
-				event.MiniblockRef.Num,
-				"got",
-				mb.Ref.Num,
-			)
+			return RiverError(Err_INTERNAL, "Event has miniblock reference to wrong miniblock",
+				"event", event.Hash.Hex(), "miniblock", event.MiniblockRef.Hash.Hex(), "expected", event.MiniblockRef.Num, "got", mb.Ref.Num)
 		}
 	}
 	return nil

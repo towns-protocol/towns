@@ -106,11 +106,7 @@ func GetHttp2LocalhostTLSClient(ctx context.Context, cfg *config.Config) (*http.
 	return GetHttp2LocalhostTLSClientWithCert(ctx, cfg, nil)
 }
 
-func GetHttp2LocalhostTLSClientWithCert(
-	_ context.Context,
-	_ *config.Config,
-	getCert http_client.GetClientCertFunc,
-) (*http.Client, error) {
+func GetHttp2LocalhostTLSClientWithCert(_ context.Context, _ *config.Config, getCert http_client.GetClientCertFunc) (*http.Client, error) {
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{

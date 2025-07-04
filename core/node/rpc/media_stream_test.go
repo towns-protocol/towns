@@ -32,7 +32,7 @@ func TestCreateMediaStream(t *testing.T) {
 		initialEvents := make([]*protocol.Envelope, 1, 2)
 
 		// Create inception event
-		trueVal := true
+		var trueVal = true
 		initialEvents[0], err = events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
@@ -69,7 +69,7 @@ func TestCreateMediaStream(t *testing.T) {
 		mediaStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
 		// Create inception event
-		trueVal := true
+		var trueVal = true
 		inception, err := events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
@@ -142,7 +142,7 @@ func TestCreateMediaStream(t *testing.T) {
 		mediaStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
 		// Create inception event
-		trueVal := true
+		var trueVal = true
 		inception, err := events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
