@@ -102,7 +102,7 @@ The node can be run in notifications mode to listen to updates on all streams in
 
 The node can be run in app registry mode to listen to updates on all streams in the network and forward events from those streams to all bot users in the stream according to their message fowarding preferences.
 
-### Archive mode
+#### Archive mode
 
 The node can be run in archive mode to listen to the stream registry for the creation of new streams, and to query the network for miniblocks for each stream, in order to maintain backup copies of all stream data on the network. Running a node in archive mode will also cause it to maintain a list of corrupt streams, which are streams that either have a corruption detected in the miniblocks stored for the stream, or streams that are persistently unavailable on every node on the network where they are hosted.
 
