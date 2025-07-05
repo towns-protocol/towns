@@ -122,9 +122,6 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
         address swapRouter = _validateSwapPrerequisites();
 
-        // take snapshot of balance before Permit2 transfer for refund calculation
-        uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
-
         // execute swap through the router with permit
         uint256 protocolFee;
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit(
@@ -138,9 +135,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         // no approval reset needed since Permit2 handles token transfers
         _afterSwap(params, amountOut, protocolFee, poster);
 
-        // handle refunds of unconsumed input tokens
-        // for Permit2, tokens are ERC20 only (no ETH support)
-        _handleRefunds(params.tokenIn, tokenInBalanceBefore);
+        // Note: SwapRouter already handles refunds to permit.owner, so no additional refund needed
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
