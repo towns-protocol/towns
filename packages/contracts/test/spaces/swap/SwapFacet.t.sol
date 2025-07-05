@@ -411,6 +411,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         uint256 expectedAmountOut = amountOut - protocolFee - posterFee;
 
+        // determine the actual poster to use based on configuration
+        address actualPoster = forwardPosterFee ? poster_ : everyoneSpace;
+
         vm.expectEmit(everyoneSpace);
         emit SwapExecuted(
             recipient,
@@ -418,11 +421,11 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             params.tokenOut,
             params.amountIn,
             expectedAmountOut,
-            poster_ // original poster used in event
+            actualPoster // actual poster used in event
         );
 
         vm.prank(caller);
-        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, poster_);
+        uint256 actualAmountOut = swapFacet.executeSwap(params, routerParams, actualPoster);
 
         // verify fee distribution based on configuration
         if (!forwardPosterFee) {
@@ -440,9 +443,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
                 0,
                 "Space should not receive poster fee"
             );
-            if (poster_ != address(0)) {
+            if (actualPoster != address(0)) {
                 assertEq(
-                    params.tokenOut.balanceOf(poster_),
+                    params.tokenOut.balanceOf(actualPoster),
                     posterFee,
                     "Poster should receive fee"
                 );
@@ -637,7 +640,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         (uint256 amountInAfterFees, , uint256 posterFee) = swapRouter.getETHInputFees(
             maxAmountIn,
             address(swapFacet),
-            POSTER
+            everyoneSpace
         );
 
         // actualAmountIn must be less than amountInAfterFees (what goes to router)
@@ -667,7 +670,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 userBalanceBefore = caller.balance;
 
         vm.prank(caller);
-        swapFacet.executeSwap{value: maxAmountIn}(params, routerParams, POSTER);
+        swapFacet.executeSwap{value: maxAmountIn}(params, routerParams, everyoneSpace);
 
         // Verify refund: user should get back unconsumed ETH but not poster fee
         uint256 expectedRefund = amountInAfterFees - actualAmountIn;
@@ -987,6 +990,78 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         // verify no leftover tokens in SwapFacet
         assertEq(token0.balanceOf(everyoneSpace), 0, "No token0 should remain in SwapFacet");
+    }
+
+    function test_executeSwapWithPermit_revertWhen_invalidPosterInput(
+        address invalidPoster
+    ) external givenMembership(user) {
+        vm.assume(invalidPoster != everyoneSpace);
+
+        // configure poster fee to go to space (forwardPosterFee=false)
+        vm.prank(founder);
+        swapFacet.setSwapFeeConfig(POSTER_BPS, false);
+
+        vm.prank(user);
+        vm.expectRevert(SwapFacet__InvalidPosterInput.selector);
+        swapFacet.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            invalidPoster
+        );
+    }
+
+    function test_executeSwapWithPermit_posterFeeToSpace(
+        uint256 privateKey,
+        uint16 posterBps
+    ) external givenMembership(user) {
+        posterBps = uint16(bound(posterBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+        vm.assume(owner != feeRecipient && owner != everyoneSpace);
+
+        // configure poster fee to go to space (forwardPosterFee=false)
+        vm.prank(founder);
+        swapFacet.setSwapFeeConfig(posterBps, false);
+
+        ExactInputParams memory params = defaultInputParams;
+        params.recipient = user;
+
+        // must use space address as poster when forwardPosterFee=false
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(swapRouter),
+            0,
+            block.timestamp + 1 hours,
+            params,
+            defaultRouterParams,
+            everyoneSpace
+        );
+
+        token0.mint(owner, DEFAULT_AMOUNT_IN);
+        vm.prank(owner);
+        token0.approve(PERMIT2, DEFAULT_AMOUNT_IN);
+
+        vm.prank(user);
+        swapFacet.executeSwapWithPermit(params, defaultRouterParams, permitParams, everyoneSpace);
+
+        // verify fee distribution - space should receive poster fee
+        uint256 actualPosterBps = posterBps == 0 ? POSTER_BPS : posterBps;
+        uint256 expectedPosterFee = BasisPoints.calculate(DEFAULT_AMOUNT_OUT, actualPosterBps);
+        assertEq(
+            token1.balanceOf(everyoneSpace),
+            expectedPosterFee,
+            "Space should receive poster fee"
+        );
+
+        // verify protocol fee
+        uint256 expectedProtocolFee = BasisPoints.calculate(DEFAULT_AMOUNT_OUT, PROTOCOL_BPS);
+        assertEq(
+            token1.balanceOf(feeRecipient),
+            expectedProtocolFee,
+            "Protocol fee should be sent to fee recipient"
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -389,6 +389,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapFacet__InvalidPosterInput",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapFacet__SwapRouterNotSet",
     "inputs": []
   },
