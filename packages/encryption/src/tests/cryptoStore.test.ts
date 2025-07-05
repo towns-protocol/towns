@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { CryptoStore } from '../cryptoStore'
+import { createCryptoStore, type CryptoStore } from '../cryptoStore'
 import { EncryptionDelegate } from '../encryptionDelegate'
 import { EncryptionDevice } from '../encryptionDevice'
 import { UserDevice } from '../olmLib'
@@ -13,7 +13,7 @@ describe('ClientStoreTests', () => {
     beforeEach(() => {
         const name = nanoid()
         const userId = nanoid()
-        store = new CryptoStore(name, userId)
+        store = createCryptoStore(name, userId)
     })
 
     it('Add devices to store', async () => {
@@ -113,7 +113,7 @@ describe('EncryptionDevice import/export', () => {
     let delegate: EncryptionDelegate
 
     beforeEach(async () => {
-        store = new CryptoStore('test', userId)
+        store = createCryptoStore('test', userId)
         await store.initialize()
         delegate = new EncryptionDelegate()
         device = new EncryptionDevice(delegate, store)
