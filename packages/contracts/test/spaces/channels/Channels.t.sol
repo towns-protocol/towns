@@ -372,4 +372,59 @@ contract ChannelsTest is BaseSetup, IEntitlementBase, IChannelBase {
         vm.prank(founder);
         IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
     }
+
+    function test_createChannelAsBot() public {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.AddRemoveChannels));
+        address app = _createTestApp(permissions);
+        _installAppOnEveryoneSpace(app);
+
+        bytes32 channelId = "my-cool-channel";
+        string memory channelMetadata = "Metadata";
+
+        vm.prank(appClient);
+        IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
+
+        // check if channel exists
+        IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(channelId);
+        assertEq(_channel.id, channelId);
+        assertEq(_channel.metadata, channelMetadata);
+        assertEq(_channel.disabled, false);
+        assertEq(_channel.roleIds.length, 0);
+    }
+
+    function test_createChannel_reverts_when_app_is_not_entitled() public {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.Read));
+        address app = _createTestApp(permissions);
+
+        bytes32 channelId = "my-cool-channel";
+        string memory channelMetadata = "Metadata";
+
+        _installAppOnEveryoneSpace(app);
+
+        vm.prank(appClient);
+        vm.expectRevert(Entitlement__NotAllowed.selector);
+        IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
+    }
+
+    function test_createChannel_reverts_when_app_is_uninstalled() public {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.AddRemoveChannels));
+        address app = _createTestApp(permissions);
+
+        bytes32 channelId = "my-cool-channel";
+        string memory channelMetadata = "Metadata";
+
+        _installAppOnEveryoneSpace(app);
+
+        vm.prank(appClient);
+        IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
+
+        _uninstallAppOnEveryoneSpace(app);
+
+        vm.prank(appClient);
+        vm.expectRevert(Entitlement__NotAllowed.selector);
+        IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
+    }
 }
