@@ -995,7 +995,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
     function test_executeSwapWithPermit_revertWhen_invalidPosterInput(
         address invalidPoster
     ) external givenMembership(user) {
-        vm.assume(invalidPoster != everyoneSpace && invalidPoster != address(0));
+        vm.assume(invalidPoster != everyoneSpace);
 
         // configure poster fee to go to space (forwardPosterFee=false)
         vm.prank(founder);
