@@ -247,6 +247,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // require explicit recipient
         if (params.recipient == address(0)) SwapRouter__RecipientRequired.selector.revertWith();
 
+        // prevent swaps where tokenIn and tokenOut are the same
+        if (params.tokenIn == params.tokenOut) SwapRouter__SameToken.selector.revertWith();
+
         // only allow whitelisted routers
         if (!_isRouterWhitelisted(routerParams.router)) {
             SwapRouter__InvalidRouter.selector.revertWith();
