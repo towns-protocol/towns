@@ -248,10 +248,22 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 }
 
 func TestEphemeralMessageInChat(t *testing.T) {
-	tt := newServiceTesterForReplication(t)
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{
+			numNodes:          4,
+			replicationFactor: 3,
+			start:             true,
+			btcParams: &crypto.TestParams{
+				AutoMine:         true,
+				AutoMineInterval: 200 * time.Millisecond,
+				MineOnTx:         false,
+			},
+		},
+	)
 	require := tt.require
 
-	clients := tt.newTestClients(tt.opts.replicationFactor, testClientOpts{enableSync: true})
+	clients := tt.newTestClients(tt.opts.numNodes, testClientOpts{enableSync: true})
 	alice := clients[0]
 
 	// let alice create a channel and let all clients join
@@ -282,6 +294,16 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	)
 	require.NoError(err)
 
+	// Find a node that has the stream and make a miniblock
+	var miniblockErr error
+	for i := 0; i < len(tt.nodes); i++ {
+		_, miniblockErr = tt.nodes[i].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
+		if miniblockErr == nil {
+			break
+		}
+	}
+	require.NoError(miniblockErr)
+
 	// ensure that all clients got both the non and ephemeral message through sync in the correct order
 	require.EventuallyWithT(func(collect *assert.CollectT) {
 		for _, client := range clients {
@@ -299,25 +321,40 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	// ensure that the ephemeral message is not included in the stream
 	clients.listen(channelId, [][]string{{nonEphemeralMessage}})
 
-	_, err = tt.nodes[0].service.cache.TestMakeMiniblock(tt.ctx, channelId, false)
-	require.NoError(err)
-
 	// ensure that the ephemeral message is not included in miniblocks as stored in storage
-	ephemeralEventHash := common.BytesToHash(ephemeralEnvelope.Hash)
-	for i := 0; i < len(tt.nodes); i++ {
-		tt.require.NoError(tt.nodes[i].service.storage.ReadMiniblocksByStream(tt.ctx, channelId, false, func(mbBytes []byte, _ int64, snBytes []byte) error {
-			var mb protocol.Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
-				return err
-			}
+	// and that the non-ephemeral message is included and replicated correctly
+	tt.require.EventuallyWithT(func(collect *assert.CollectT) {
+		var nonEphemeralMessageFound int
 
-			for _, env := range mb.GetEvents() {
-				parsedEvent, err := events.ParseEvent(env)
-				require.NoError(err)
-				tt.require.NotEqual(ephemeralEventHash, parsedEvent.Hash, "ephemeral message should not be in miniblock")
-			}
+		for i := 0; i < len(tt.nodes); i++ {
+			tt.nodes[i].service.storage.ReadMiniblocksByStream(
+				tt.ctx,
+				channelId,
+				false,
+				func(mbBytes []byte, _ int64, snBytes []byte) error {
+					var mb protocol.Miniblock
+					proto.Unmarshal(mbBytes, &mb)
+					for _, event := range mb.GetEvents() {
+						parsedEvent, _ := events.ParseEvent(event)
+						// Check if this is the ephemeral message (should never happen)
+						require.NotEqual(parsedEvent.Hash, common.BytesToHash(ephemeralEnvelope.Hash))
 
-			return nil
-		}))
-	}
+						// Check if this is the non-ephemeral message
+						if channelPayload := parsedEvent.Event.GetChannelPayload(); channelPayload != nil {
+							if message := channelPayload.GetMessage(); message != nil {
+								if message.GetCiphertext() == nonEphemeralMessage {
+									nonEphemeralMessageFound++
+								}
+							}
+						}
+					}
+					return nil
+				},
+			)
+		}
+
+		if nonEphemeralMessageFound != 3 {
+			collect.FailNow()
+		}
+	}, 10*time.Second, 25*time.Millisecond)
 }
