@@ -20,7 +20,7 @@ Once you've installed Anvil you can proceed to setup your environment as follows
 
 ```bash
 # clone monorepo
-git clone https://github.com/HereNotThere/harmony.git
+git clone https://github.com/towns-protocol/towns.git
 
 # Pin Foundry to specific version
 ./scripts/foundry-up.sh
@@ -36,15 +36,15 @@ brew install libusb
 
 ### Deploy StreamRegistry Contract
 
-With anvil running, we can deploy the [StreamRegistry](https://github.com/HereNotThere/harmony/blob/main/contracts/src/river/registry/StreamRegistry.sol) contract.
+With anvil running, we can deploy the [StreamRegistry](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/river/registry/StreamRegistry.sol) contract.
 
-The easiest way to do so is by using the helper script, `deploy-river-registry.sh` found under `/harmony/scripts`. This script uses a `make` target that uses `forge` to run the deployer script, which is a solidity file that inherits from the `Deployer` abstract contract (see [Deployer.s.sol](https://github.com/HereNotThere/harmony/blob/main/contracts/scripts/common/Deployer.s.sol)).
+The easiest way to do so is by using the helper script, `deploy-river-registry.sh` found under `/towns/scripts`. This script uses a `make` target that uses `forge` to run the deployer script, which is a solidity file that inherits from the `Deployer` abstract contract (see [Deployer.s.sol](https://github.com/towns-protocol/towns/blob/main/packages/contracts/scripts/common/Deployer.s.sol)).
 
 ```bash
 ./scripts/deploy-river-registry.sh
 
 # use cast and jq to test deployed contract. 0 should be returned since there are no streams registered yet.
 CONTRACT=$(cat ./packages/generated/localhost/addresses/streamRegistry.json | jq -r '.address')
-➜  harmony git:(main) ✗ cast call $CONTRACT "getStreamsLength()(uint256)" --rpc-url http://localhost:8546
+➜  towns git:(main) ✗ cast call $CONTRACT "getStreamsLength()(uint256)" --rpc-url http://localhost:8546
 0
 ```
