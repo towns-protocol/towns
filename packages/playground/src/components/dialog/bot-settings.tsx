@@ -3,11 +3,13 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { type Address } from 'viem'
 import { useMutation } from '@tanstack/react-query'
-import { AppRegistryService } from '@towns-protocol/sdk'
+import { AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
 import { bin_fromHexString } from '@towns-protocol/dlog'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
+import { useMemo } from 'react'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import {
@@ -40,8 +42,6 @@ const appSettingsFormSchema = z.object({
     forwardSetting: z.nativeEnum(ForwardSettingValue),
 })
 
-const APP_REGISTRY_URL = 'https://localhost:6170'
-
 type WebhookFormSchema = z.infer<typeof webhookFormSchema>
 type AppSettingsFormSchema = z.infer<typeof appSettingsFormSchema>
 
@@ -70,6 +70,11 @@ export const BotSettingsDialog = ({
 
     const signer = useEthersSigner()
     const { address: signerAddress } = useAccount()
+    const { env: currentEnv } = useAgentConnection()
+    const appRegistryUrl = useMemo(
+        () => (currentEnv ? getAppRegistryUrl(currentEnv) : ''),
+        [currentEnv],
+    )
 
     const registerWebhookMutation = useMutation({
         mutationFn: async ({ webhookUrl }: WebhookFormSchema) => {
@@ -80,7 +85,7 @@ export const BotSettingsDialog = ({
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 signerAddress,
                 signer,
-                APP_REGISTRY_URL,
+                appRegistryUrl,
             )
             await appRegistryRpcClient.registerWebhook({
                 appId: bin_fromHexString(appClientId),
@@ -101,7 +106,7 @@ export const BotSettingsDialog = ({
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 signerAddress,
                 signer,
-                APP_REGISTRY_URL,
+                appRegistryUrl,
             )
             await appRegistryRpcClient.setAppSettings({
                 appId: bin_fromHexString(appClientId),
