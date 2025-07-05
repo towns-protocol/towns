@@ -34,8 +34,7 @@ import {
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
-import EventEmitter from 'node:events'
-import TypedEmitter from 'typed-emitter'
+import { createNanoEvents, type Emitter } from 'nanoevents'
 import {
     type ChannelMessage_Post_Attachment,
     type ChannelMessage_Post_Mention,
@@ -219,17 +218,15 @@ type BasePayload = {
     eventId: string
 }
 
-export class Bot<
-    HonoEnv extends Env = BlankEnv,
-> extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
+export class Bot<HonoEnv extends Env = BlankEnv> {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
+    private readonly emitter: Emitter<BotEvents> = createNanoEvents()
 
     constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
-        super()
         this.client = clientV2
         this.botId = clientV2.userId
         this.viemClient = viemClient
@@ -342,7 +339,7 @@ export class Bot<
                     continue
                 }
                 this.currentMessageTags = parsed.event.tags
-                this.emit('streamEvent', this.client, {
+                this.emitter.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
@@ -375,7 +372,7 @@ export class Bot<
                             }
                             await this.handleChannelMessage(streamId, parsed, channelMessage)
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
-                            this.emit('eventRevoke', this.client, {
+                            this.emitter.emit('eventRevoke', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
@@ -402,7 +399,7 @@ export class Bot<
                             // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
                             if (!isChannel) continue
                             if (membership.op === MembershipOp.SO_JOIN) {
-                                this.emit('channelJoin', this.client, {
+                                this.emitter.emit('channelJoin', this.client, {
                                     userId: userIdFromAddress(membership.userAddress),
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -410,7 +407,7 @@ export class Bot<
                                 })
                             }
                             if (membership.op === MembershipOp.SO_LEAVE) {
-                                this.emit('channelLeave', this.client, {
+                                this.emitter.emit('channelLeave', this.client, {
                                     userId: userIdFromAddress(membership.userAddress),
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -456,22 +453,22 @@ export class Bot<
                     }
 
                     if (replyId) {
-                        this.emit('reply', this.client, forwardPayload)
+                        this.emitter.emit('reply', this.client, forwardPayload)
                     } else if (threadId) {
-                        this.emit('threadMessage', this.client, {
+                        this.emitter.emit('threadMessage', this.client, {
                             ...forwardPayload,
                             threadId,
                         })
                     } else if (hasBotMention) {
-                        this.emit('mentioned', this.client, forwardPayload)
+                        this.emitter.emit('mentioned', this.client, forwardPayload)
                     } else {
-                        this.emit('message', this.client, forwardPayload)
+                        this.emitter.emit('message', this.client, forwardPayload)
                     }
                 }
                 break
             }
             case 'reaction': {
-                this.emit('reaction', this.client, {
+                this.emitter.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -484,7 +481,7 @@ export class Bot<
             case 'edit': {
                 // TODO: framework doesnt handle non-text edits
                 if (payload.value.post?.content.case !== 'text') break
-                this.emit('messageEdit', this.client, {
+                this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -495,7 +492,7 @@ export class Bot<
                 break
             }
             case 'redaction': {
-                this.emit('redaction', this.client, {
+                this.emitter.emit('redaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -594,46 +591,46 @@ export class Bot<
      * This is triggered for all messages, including direct messages and group messages.
      */
     onMessage(fn: BotEvents['message']) {
-        this.on('message', fn)
+        this.emitter.on('message', fn)
     }
 
     onRedaction(fn: BotEvents['redaction']) {
-        this.on('redaction', fn)
+        this.emitter.on('redaction', fn)
     }
 
     /**
      * Triggered when a message gets edited
      */
     onMessageEdit(fn: BotEvents['messageEdit']) {
-        this.on('messageEdit', fn)
+        this.emitter.on('messageEdit', fn)
     }
 
     /**
      * Triggered when someone mentions the bot in a message
      */
     onMentioned(fn: BotEvents['mentioned']) {
-        this.on('mentioned', fn)
+        this.emitter.on('mentioned', fn)
     }
 
     /**
      * Triggered when someone replies to a message
      */
     onReply(fn: BotEvents['reply']) {
-        this.on('reply', fn)
+        this.emitter.on('reply', fn)
     }
 
     /**
      * Triggered when someone reacts to a message
      */
     onReaction(fn: BotEvents['reaction']) {
-        this.on('reaction', fn)
+        this.emitter.on('reaction', fn)
     }
 
     /**
      * Triggered when a message is revoked by a moderator
      */
     onEventRevoke(fn: BotEvents['eventRevoke']) {
-        this.on('eventRevoke', fn)
+        this.emitter.on('eventRevoke', fn)
     }
 
     /**
@@ -641,29 +638,29 @@ export class Bot<
      * TODO: impl
      */
     onTip(fn: BotEvents['tip']) {
-        this.on('tip', fn)
+        this.emitter.on('tip', fn)
     }
 
     /**
      * Triggered when someone joins a channel
      */
     onChannelJoin(fn: BotEvents['channelJoin']) {
-        this.on('channelJoin', fn)
+        this.emitter.on('channelJoin', fn)
     }
 
     /**
      * Triggered when someone leaves a channel
      */
     onChannelLeave(fn: BotEvents['channelLeave']) {
-        this.on('channelLeave', fn)
+        this.emitter.on('channelLeave', fn)
     }
 
     onStreamEvent(fn: BotEvents['streamEvent']) {
-        this.on('streamEvent', fn)
+        this.emitter.on('streamEvent', fn)
     }
 
     onThreadMessage(fn: BotEvents['threadMessage']) {
-        this.on('threadMessage', fn)
+        this.emitter.on('threadMessage', fn)
     }
 
     // onSlashCommand(command: Commands, fn: (client: BotActions, opts: BasePayload) => void) {
