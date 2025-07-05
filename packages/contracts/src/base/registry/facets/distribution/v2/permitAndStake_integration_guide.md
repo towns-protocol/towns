@@ -15,13 +15,7 @@ The `permitAndStake` function allows users to approve and stake tokens in a sing
 
 Before using `permitAndStake`, ensure:
 
-1. **Towns Token Approval**: The user must have approved the Permit2 contract to spend their Towns tokens:
-
-   ```solidity
-   // Towns token has infinite approval to Permit2 by default
-   // If not, users need to call:
-   townsToken.approve(PERMIT2_ADDRESS, type(uint256).max);
-   ```
+1. **Towns Token Approval**: No pre-approval needed. The Towns token gives Permit2 infinite allowance by default, so users can directly call `permitAndStake` without any prior approval transactions.
 
 2. **Permit2 Deployment**: Permit2 is deployed at the deterministic address `0x000000000022D473030F116dDEE9F6B43aC78BA3` on all networks.
 
@@ -257,9 +251,6 @@ try {
   } else if (error.message.includes('InvalidNonce')) {
     // Nonce already used or invalid
     console.error('Invalid nonce, generate a new one');
-  } else if (error.message.includes('InsufficientAllowance')) {
-    // User hasn't approved Permit2
-    console.error('Please approve Permit2 first');
   }
 }
 ```
