@@ -8698,7 +8698,7 @@ __metadata:
     "@openzeppelin/merkle-tree": ^1.0.8
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
-    "@towns-protocol/diamond": ^0.5.4
+    "@towns-protocol/diamond": ^0.5.5
     "@towns-protocol/prettier-config": "workspace:^"
     "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
     "@wagmi/cli": ^2.2.0
@@ -8712,15 +8712,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/diamond@npm:^0.5.4":
-  version: 0.5.4
-  resolution: "@towns-protocol/diamond@npm:0.5.4"
+"@towns-protocol/diamond@npm:^0.5.5":
+  version: 0.5.5
+  resolution: "@towns-protocol/diamond@npm:0.5.5"
   dependencies:
     "@openzeppelin/contracts": ^5.3.0
     "@prb/test": ^0.6.4
     forge-std: "github:foundry-rs/forge-std#v1.9.7"
     solady: ^0.1.14
-  checksum: d1215edd76d69e80b95d0a987373837fd7d92471e8835f4bc41b742b39a84653bedc3d2f74d8e4a784cd8d18de01596117f46c4c22ce2faf664535ae57f9f8d4
+  checksum: e2d1773e10da9baa4f5b7332d374160e2235b792a56553a791b67f3807b6a9dcec7d84d6f31fa6a7af3a517bd561f974ec8775079c70469bbe27de988e342f5d
   languageName: node
   linkType: hard
 
