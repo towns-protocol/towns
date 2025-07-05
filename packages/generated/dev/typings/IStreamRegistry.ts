@@ -93,6 +93,20 @@ export type SetStreamReplicationFactorStructOutput = [
   number
 ] & { streamId: string; nodes: string[]; replicationFactor: number };
 
+export type UpdateStreamStruct = {
+  streamId: PromiseOrValue<BytesLike>;
+  nodes: PromiseOrValue<string>[];
+  replicationFactor: PromiseOrValue<BigNumberish>;
+  checksum: PromiseOrValue<BytesLike>;
+};
+
+export type UpdateStreamStructOutput = [string, string[], number, string] & {
+  streamId: string;
+  nodes: string[];
+  replicationFactor: number;
+  checksum: string;
+};
+
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
     "addStream(bytes32,bytes32,(bytes32,uint64,uint64,uint64,address[]))": FunctionFragment;
@@ -109,6 +123,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": FunctionFragment;
     "setStreamReplicationFactor((bytes32,address[],uint8)[])": FunctionFragment;
     "syncNodesOnStreams(uint256,uint256)": FunctionFragment;
+    "updateStreams((bytes32,address[],uint8,bytes32)[])": FunctionFragment;
   };
 
   getFunction(
@@ -127,6 +142,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
       | "setStreamLastMiniblockBatch"
       | "setStreamReplicationFactor"
       | "syncNodesOnStreams"
+      | "updateStreams"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -194,6 +210,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
     functionFragment: "syncNodesOnStreams",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "updateStreams",
+    values: [UpdateStreamStruct[]]
+  ): string;
 
   decodeFunctionResult(functionFragment: "addStream", data: BytesLike): Result;
   decodeFunctionResult(
@@ -240,6 +260,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "syncNodesOnStreams",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateStreams",
     data: BytesLike
   ): Result;
 
@@ -385,6 +409,11 @@ export interface IStreamRegistry extends BaseContract {
       stop: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    updateStreams(
+      requests: UpdateStreamStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   addStream(
@@ -465,6 +494,11 @@ export interface IStreamRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  updateStreams(
+    requests: UpdateStreamStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     addStream(
       streamId: PromiseOrValue<BytesLike>,
@@ -541,6 +575,11 @@ export interface IStreamRegistry extends BaseContract {
     syncNodesOnStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updateStreams(
+      requests: UpdateStreamStruct[],
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -647,6 +686,11 @@ export interface IStreamRegistry extends BaseContract {
       stop: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    updateStreams(
+      requests: UpdateStreamStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -725,6 +769,11 @@ export interface IStreamRegistry extends BaseContract {
     syncNodesOnStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateStreams(
+      requests: UpdateStreamStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
