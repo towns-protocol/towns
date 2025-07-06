@@ -24,6 +24,7 @@ library DeployStreamRegistry {
         arr.p(IStreamRegistry.placeStreamOnNode.selector);
         arr.p(IStreamRegistry.removeStreamFromNode.selector);
         arr.p(IStreamRegistry.setStreamReplicationFactor.selector);
+        arr.p(IStreamRegistry.updateStreams.selector);
         arr.p(IStreamRegistry.getStreamCount.selector);
         arr.p(IStreamRegistry.getPaginatedStreams.selector);
         arr.p(IStreamRegistry.isStream.selector);

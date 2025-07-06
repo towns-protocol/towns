@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {SetMiniblock, SetStreamReplicationFactor, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
+import {SetMiniblock, SetStreamReplicationFactor, UpdateStream, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -114,6 +114,13 @@ interface IStreamRegistry is IStreamRegistryBase {
      * nodes participate in reaching quorum. The remaining nodes only sync the stream data.
      */
     function setStreamReplicationFactor(SetStreamReplicationFactor[] calldata requests) external;
+
+    /**
+     * @notice Update the stream record.
+     * @param requests list with streams to update
+     * @dev Only callable by nodes that are participating in the stream.
+     */
+    function updateStreams(UpdateStream[] calldata requests) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
