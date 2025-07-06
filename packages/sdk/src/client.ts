@@ -79,6 +79,7 @@ import {
 } from '@towns-protocol/encryption'
 import {
     DecryptionEvents,
+    DecryptionExtensionsOptions,
     EntitlementsDelegate,
     makeSessionKeys,
     type BaseDecryptionExtensions,
@@ -209,6 +210,7 @@ export type ClientOptions = {
         store?: INotificationStore
         rpcOptions?: RpcOptions
     }
+    decryptionExtensionsOpts?: DecryptionExtensionsOptions
 }
 
 type SendChannelMessageOptions = {
@@ -2832,6 +2834,7 @@ export class Client
             this.userDeviceKey(),
             this.opts?.unpackEnvelopeOpts,
             this.logId,
+            this.opts?.decryptionExtensionsOpts ?? { sendEphemeralKeySolicitations: true },
         )
     }
 
