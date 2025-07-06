@@ -1,0 +1,52 @@
+{
+    "name": "towns-bot",
+    "version": "0.0.268",
+    "description": "CLI for creating and managing Towns Protocol bot projects",
+    "keywords": [
+        "towns",
+        "protocol",
+        "bot",
+        "cli",
+        "scaffold"
+    ],
+    "author": "Towns Protocol",
+    "bin": "index.js",
+    "engines": {
+        "node": "^18.0.0 || >=20.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "index.js",
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "watch": "tsup --watch",
+        "dev": "tsx src/index.ts",
+        "lint": "eslint src --ext .ts",
+        "lint:fix": "eslint src --ext .ts --fix"
+    },
+    "devDependencies": {
+        "@types/cross-spawn": "^6.0.6",
+        "@types/minimist": "^1.2.5",
+        "@types/node": "^20.14.8",
+        "@types/prompts": "^2.4.9",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "eslint": "^8.57.1",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-import-x": "^4.10.2",
+        "tsup": "^8.3.5",
+        "tsx": "^4.7.1",
+        "typescript": "^5.8.2"
+    },
+    "dependencies": {
+        "cross-spawn": "^7.0.5",
+        "jsonc-parser": "^3.3.1",
+        "minimist": "^1.2.8",
+        "picocolors": "^1.1.1",
+        "prompts": "^2.4.2"
+    }
+}

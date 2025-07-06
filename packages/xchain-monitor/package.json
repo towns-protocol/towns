@@ -1,7 +1,7 @@
 {
     "name": "@towns-protocol/xchain-monitor",
     "type": "module",
-    "version": "0.0.264",
+    "version": "0.0.268",
     "packageManager": "yarn@3.8.0",
     "main": "dist/index.js",
     "publishConfig": {

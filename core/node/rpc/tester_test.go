@@ -40,8 +40,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
+	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -603,6 +603,9 @@ func (r *receivedStreamUpdates) ForEachEvent(
 	if r == nil {
 		return
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	for _, update := range r.updates {
 		stream := update.GetStream()
