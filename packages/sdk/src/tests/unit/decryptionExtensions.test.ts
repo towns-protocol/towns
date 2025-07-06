@@ -286,7 +286,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         const upToDateStreams = new Set<string>()
         const logId = shortenHexString(userId)
         super(client, crypto, entitlementDelegate, userDevice, userId, upToDateStreams, logId, {
-            sendEphemeralKeySolicitations: true,
+            enableEphemeralKeySolicitations: true,
         })
         this._upToDateStreams = upToDateStreams
         this.client = client

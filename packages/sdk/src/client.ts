@@ -2834,7 +2834,7 @@ export class Client
             this.userDeviceKey(),
             this.opts?.unpackEnvelopeOpts,
             this.logId,
-            this.opts?.decryptionExtensionsOpts ?? { sendEphemeralKeySolicitations: true },
+            this.opts?.decryptionExtensionsOpts ?? { enableEphemeralKeySolicitations: true },
         )
     }
 

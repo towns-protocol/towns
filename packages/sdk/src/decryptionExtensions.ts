@@ -219,7 +219,7 @@ class QueueRunner {
 }
 
 export interface DecryptionExtensionsOptions {
-    sendEphemeralKeySolicitations: boolean
+    enableEphemeralKeySolicitations: boolean
 }
 
 /**
@@ -980,7 +980,7 @@ export abstract class BaseDecryptionExtensions {
             streamId,
             isNewDevice,
             missingSessionIds,
-            ephemeral: this.opts.sendEphemeralKeySolicitations,
+            ephemeral: this.opts.enableEphemeralKeySolicitations,
         })
     }
 
