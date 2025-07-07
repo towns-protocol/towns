@@ -61,8 +61,10 @@ err := s.txRunner(ctx, "WriteMiniblocks", pgx.ReadWrite, func(ctx context.Contex
 
 ### Consistency Guarantees
 
-- **Stream Locking**: PostgreSQL advisory locks ensure single-writer per stream
-- **Row Locking**: `FOR UPDATE`/`FOR SHARE` for concurrent access control
+- **Stream Locking**: Use `lockStream` method for proper row-level locking
+  - `lockStream(ctx, tx, streamId, true)` for write operations (uses `FOR UPDATE`)
+  - `lockStream(ctx, tx, streamId, false)` for read operations (uses `FOR SHARE`)
+- **Row Locking**: Always lock streams when performing updates to prevent concurrent modifications
 - **Atomic Batches**: Miniblock writes are atomic using `COPY FROM`
 - **Consistency Checks**: Extensive validation throughout write paths
 
@@ -73,6 +75,7 @@ err := s.txRunner(ctx, "WriteMiniblocks", pgx.ReadWrite, func(ctx context.Contex
 3. Use appropriate access modes (ReadOnly vs ReadWrite)
 4. Handle context cancellation properly (disabled for writes)
 5. Add transaction tags for debugging
+6. Extract transaction logic into separate `*Tx` methods for better organization and testability
 
 ## Testing Approach
 
@@ -139,6 +142,22 @@ for _, block := range blocks {
 ```go
 err := storage.CreateStreamStorage(ctx, streamId, registryAddr)
 ```
+
+### Reinitializing a Stream
+
+```go
+// Create new or update existing stream with miniblocks
+err := storage.ReinitializeStreamStorage(ctx, streamId, miniblocks, lastSnapshotNum, updateExisting)
+```
+
+Key behaviors:
+- If stream doesn't exist: creates it (regardless of `updateExisting` value)
+- If stream exists and `updateExisting=false`: returns error
+- If stream exists and `updateExisting=true`: 
+  - Only adds new miniblocks (preserves existing ones)
+  - Supports overlapping ranges (existing blocks unchanged)
+  - Resets minipool and deletes candidates
+  - Uses row locking to prevent concurrent updates
 
 ### Writing Events
 
