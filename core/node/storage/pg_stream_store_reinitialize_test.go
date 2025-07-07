@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -698,4 +699,85 @@ func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
 	err = store.ReinitializeStreamStorage(ctx, streamId, miniblocks, 0, true)
 	require.Error(err)
 	require.Contains(err.Error(), "stream exists but has no miniblocks")
+}
+
+func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	tests := []struct {
+		name                     string
+		miniblocks               []*WriteMiniblockData
+		lastSnapshotMiniblockNum int64
+		expectedError            string
+	}{
+		{
+			name: "snapshot position has no snapshot",
+			miniblocks: []*WriteMiniblockData{
+				{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
+				{Number: 1, Data: []byte("mb1")}, // No snapshot
+				{Number: 2, Data: []byte("mb2")},
+			},
+			lastSnapshotMiniblockNum: 1, // Points to miniblock without snapshot
+			expectedError:            "miniblock at snapshot position has no snapshot",
+		},
+		{
+			name: "snapshot position has empty snapshot",
+			miniblocks: []*WriteMiniblockData{
+				{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
+				{Number: 1, Data: []byte("mb1"), Snapshot: []byte{}}, // Empty snapshot
+				{Number: 2, Data: []byte("mb2")},
+			},
+			lastSnapshotMiniblockNum: 1,
+			expectedError:            "miniblock at snapshot position has no snapshot",
+		},
+		{
+			name: "valid snapshot position",
+			miniblocks: []*WriteMiniblockData{
+				{Number: 0, Data: []byte("mb0")},
+				{Number: 1, Data: []byte("mb1"), Snapshot: []byte("snapshot1")},
+				{Number: 2, Data: []byte("mb2")},
+			},
+			lastSnapshotMiniblockNum: 1,
+			expectedError:            "", // No error expected
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Use a different stream ID for each test
+			testStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+			
+			err := store.ReinitializeStreamStorage(ctx, testStreamId, tt.miniblocks, tt.lastSnapshotMiniblockNum, false)
+			if tt.expectedError != "" {
+				require.Error(err)
+				require.Contains(err.Error(), tt.expectedError)
+			} else {
+				require.NoError(err)
+			}
+		})
+	}
+}
+
+func TestReinitializeStreamStorage_IntegerOverflow(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Test with miniblock number at MaxInt64
+	miniblocks := []*WriteMiniblockData{
+		{Number: math.MaxInt64 - 1, Data: []byte("mb"), Snapshot: []byte("snapshot")},
+		{Number: math.MaxInt64, Data: []byte("mb at max")},
+	}
+
+	err := store.ReinitializeStreamStorage(ctx, streamId, miniblocks, math.MaxInt64 - 1, false)
+	require.Error(err)
+	require.Contains(err.Error(), "miniblock number overflow")
 }

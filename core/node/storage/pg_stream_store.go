@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strings"
@@ -2352,6 +2353,24 @@ func (s *PostgresStreamStore) ReinitializeStreamStorage(
 			"firstMiniblockNum", firstMbNum,
 			"lastMiniblockNum", lastMbNum).Func("ReinitializeStreamStorage")
 	}
+	
+	// Validate that the specified miniblock actually has a snapshot
+	foundSnapshot := false
+	for _, mb := range miniblocks {
+		if mb.Number == lastSnapshotMiniblockNum {
+			if len(mb.Snapshot) == 0 {
+				return RiverError(Err_INVALID_ARGUMENT, "miniblock at snapshot position has no snapshot",
+					"miniblockNum", lastSnapshotMiniblockNum).Func("ReinitializeStreamStorage")
+			}
+			foundSnapshot = true
+			break
+		}
+	}
+	if !foundSnapshot {
+		// This shouldn't happen if continuity check passed, but be defensive
+		return RiverError(Err_INTERNAL, "snapshot miniblock not found in provided miniblocks",
+			"lastSnapshotMiniblockNum", lastSnapshotMiniblockNum).Func("ReinitializeStreamStorage")
+	}
 
 	// Execute in transaction
 	return s.txRunner(
@@ -2523,7 +2542,12 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	}
 
 	// Create new minipool with generation = last miniblock + 1
-	newGeneration := miniblocks[len(miniblocks)-1].Number + 1
+	lastMiniblockNum := miniblocks[len(miniblocks)-1].Number
+	if lastMiniblockNum == math.MaxInt64 {
+		return RiverError(Err_INVALID_ARGUMENT, "miniblock number overflow",
+			"lastMiniblockNum", lastMiniblockNum).Func("ReinitializeStreamStorage")
+	}
+	newGeneration := lastMiniblockNum + 1
 	_, err = tx.Exec(ctx,
 		s.sqlForStream("INSERT INTO {{minipools}} (stream_id, generation, slot_num, envelope) VALUES ($1, $2, $3, $4)", streamId),
 		streamId, newGeneration, -1, []byte{})
