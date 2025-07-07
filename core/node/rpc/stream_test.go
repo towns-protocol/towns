@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -264,35 +263,35 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	require := tt.require
 
 	clients := tt.newTestClients(tt.opts.numNodes, testClientOpts{enableSync: true})
-	alice := clients[0]
 
-	// let alice create a channel and let all clients join
-	spaceId, _ := alice.createSpace()
+	spaceId, _ := clients[0].createSpace()
 	channelId, _ := clients.createChannelAndJoin(spaceId)
 
-	// add a non-ephemeral message that must be included in the stream
-	nonEphemeralMessage := "This is a message that should be persisted!"
-	alice.say(channelId, nonEphemeralMessage)
+	// Each client sends an ephemeral message to test all routing permutations
+	var ephemeralMessages []string
 
-	// add a ephemeral message that must not be included in the stream
-	ephemeralMessage := "This is an ephemeral message that should not be persisted!"
-	aliceView := alice.getLastMiniblockHash(channelId)
-	ephemeralEnvelope, err := events.MakeEphemeralEnvelopeWithPayload(
-		alice.wallet,
-		events.Make_ChannelPayload_Message(ephemeralMessage),
-		&shared.MiniblockRef{Hash: aliceView.Hash, Num: aliceView.Num},
-	)
-	require.NoError(err)
+	for i, client := range clients {
+		ephemeralMessage := fmt.Sprintf("Ephemeral message from client %d", i)
+		ephemeralMessages = append(ephemeralMessages, ephemeralMessage)
 
-	// Add the ephemeral message to the channel
-	_, err = alice.client.AddEvent(
-		tt.ctx,
-		connect.NewRequest(&protocol.AddEventRequest{
-			StreamId: channelId[:],
-			Event:    ephemeralEnvelope,
-		}),
-	)
-	require.NoError(err)
+		clientView := client.getLastMiniblockHash(channelId)
+		ephemeralEnvelope, err := events.MakeEphemeralEnvelopeWithPayload(
+			client.wallet,
+			events.Make_ChannelPayload_Message(ephemeralMessage),
+			&shared.MiniblockRef{Hash: clientView.Hash, Num: clientView.Num},
+		)
+		require.NoError(err)
+
+		// Add the ephemeral message to the channel
+		_, err = client.client.AddEvent(
+			tt.ctx,
+			connect.NewRequest(&protocol.AddEventRequest{
+				StreamId: channelId[:],
+				Event:    ephemeralEnvelope,
+			}),
+		)
+		require.NoError(err)
+	}
 
 	// Find a node that has the stream and make a miniblock
 	var miniblockErr error
@@ -304,57 +303,25 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	}
 	require.NoError(miniblockErr)
 
-	// ensure that all clients got both the non and ephemeral message through sync in the correct order
+	// ensure that all clients got all 4 ephemeral messages through sync
 	require.EventuallyWithT(func(collect *assert.CollectT) {
-		for _, client := range clients {
+		for clientIdx, client := range clients {
 			syncedMessages := client.getAllSyncedMessages(channelId)
-			if len(syncedMessages) != 2 {
-				collect.Errorf("synced messages must contain both non-ephemeral and ephemeral messages")
-			} else if syncedMessages[0].message != nonEphemeralMessage {
-				collect.Errorf("synced messages must contain the non-ephemeral message as first event")
-			} else if syncedMessages[1].message != ephemeralMessage {
-				collect.Errorf("synced messages must contain the ephemeral message as second event")
+			if len(syncedMessages) != tt.opts.numNodes {
+				collect.Errorf("client %d: expected 4 messages, got %d", clientIdx, len(syncedMessages))
+				return
+			}
+
+			// Check that all 4 ephemeral messages were received
+			for i, expectedMessage := range ephemeralMessages {
+				if syncedMessages[i].message != expectedMessage {
+					collect.Errorf("client %d: expected message %d to be '%s', got '%s'",
+						clientIdx, i, expectedMessage, syncedMessages[i].message)
+				}
 			}
 		}
 	}, 20*time.Second, 25*time.Millisecond)
 
-	// ensure that the ephemeral message is not included in the stream
-	clients.listen(channelId, [][]string{{nonEphemeralMessage}})
-
-	// ensure that the ephemeral message is not included in miniblocks as stored in storage
-	// and that the non-ephemeral message is included and replicated correctly
-	tt.require.EventuallyWithT(func(collect *assert.CollectT) {
-		var nonEphemeralMessageFound int
-
-		for i := 0; i < len(tt.nodes); i++ {
-			tt.nodes[i].service.storage.ReadMiniblocksByStream(
-				tt.ctx,
-				channelId,
-				false,
-				func(mbBytes []byte, _ int64, snBytes []byte) error {
-					var mb protocol.Miniblock
-					proto.Unmarshal(mbBytes, &mb)
-					for _, event := range mb.GetEvents() {
-						parsedEvent, _ := events.ParseEvent(event)
-						// Check if this is the ephemeral message (should never happen)
-						require.NotEqual(parsedEvent.Hash, common.BytesToHash(ephemeralEnvelope.Hash))
-
-						// Check if this is the non-ephemeral message
-						if channelPayload := parsedEvent.Event.GetChannelPayload(); channelPayload != nil {
-							if message := channelPayload.GetMessage(); message != nil {
-								if message.GetCiphertext() == nonEphemeralMessage {
-									nonEphemeralMessageFound++
-								}
-							}
-						}
-					}
-					return nil
-				},
-			)
-		}
-
-		if nonEphemeralMessageFound != 3 {
-			collect.FailNow()
-		}
-	}, 10*time.Second, 25*time.Millisecond)
+	// ensure that ephemeral messages are not persisted in storage
+	clients.listen(channelId, [][]string{})
 }
