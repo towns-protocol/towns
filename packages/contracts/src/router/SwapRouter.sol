@@ -247,6 +247,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // require explicit recipient
         if (params.recipient == address(0)) SwapRouter__RecipientRequired.selector.revertWith();
 
+        // prevent swaps where tokenIn and tokenOut are the same
+        if (params.tokenIn == params.tokenOut) SwapRouter__SameToken.selector.revertWith();
+
         // only allow whitelisted routers
         if (!_isRouterWhitelisted(routerParams.router)) {
             SwapRouter__InvalidRouter.selector.revertWith();
@@ -286,9 +289,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
                 // tokens are already in the contract, just approve the router
                 params.tokenIn.safeApprove(routerParams.approveTarget, actualAmountIn);
             } else {
-                // for native token, the value should be sent with the transaction
-                if (msg.value != params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
-
                 // calculate and collect fees before the swap for ETH input
                 (value, protocolFee, ) = _collectFees(
                     CurrencyTransfer.NATIVE_TOKEN,
@@ -414,8 +414,8 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param token The token to check
     /// @return uint256 The balance
     function _getBalance(address token) internal view returns (uint256) {
-        if (token == CurrencyTransfer.NATIVE_TOKEN) return address(this).balance;
-        return token.balanceOf(address(this));
+        if (token != CurrencyTransfer.NATIVE_TOKEN) return token.balanceOf(address(this));
+        return address(this).balance;
     }
 
     /// @notice Calculates swap fees and the amount after fees
