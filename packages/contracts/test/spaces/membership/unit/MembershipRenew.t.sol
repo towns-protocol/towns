@@ -8,6 +8,7 @@ import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol"
 //interfaces
 import {IERC5643Base} from "src/diamond/facets/token/ERC5643/IERC5643.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
@@ -78,7 +79,10 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
 
         _renewMembershipWithValue(alice, tokenId, renewalPrice);
 
+        uint256 points = _getPoints(renewalPrice);
+
         assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(IERC20(riverAirdrop).balanceOf(alice), points);
     }
 
     function test_renewPaidMembership()
@@ -92,13 +96,16 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
 
         uint256 tokenId = _getAliceTokenId();
         uint256 renewalPrice = _getRenewalPrice(tokenId);
+        uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
 
         _renewMembershipWithValue(alice, tokenId, renewalPrice);
 
         uint256 protocolFee = _calculateProtocolFee(renewalPrice);
+        uint256 points = _getPoints(renewalPrice);
 
         assertEq(protocol.balance, protocolBalance + protocolFee);
         assertEq(address(membership).balance, spaceBalance + renewalPrice - protocolFee);
+        assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
     }
 
     function test_renewPaidMembershipWithRefund()
@@ -109,10 +116,14 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     {
         uint256 tokenId = _getAliceTokenId();
         uint256 renewalPrice = _getRenewalPrice(tokenId);
+        uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
+
+        uint256 points = _getPoints(renewalPrice);
 
         _renewMembershipWithValue(alice, tokenId, renewalPrice + EXTRA_ETHER);
 
         assertEq(alice.balance, EXTRA_ETHER);
+        assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
     }
 
     function test_renewPaidMembershipByOtherUser()
