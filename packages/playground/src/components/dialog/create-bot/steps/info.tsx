@@ -50,7 +50,7 @@ export const InfoStep = () => {
     return (
         <div className="space-y-4">
             <FormField
-                control={control as never}
+                control={control}
                 name="name"
                 render={({ field }) => (
                     <FormItem>
@@ -63,7 +63,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="description"
                 render={({ field }) => (
                     <FormItem>
@@ -76,7 +76,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="imageUrl"
                 render={({ field }) => (
                     <FormItem>
@@ -89,7 +89,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="avatarUrl"
                 render={({ field }) => (
                     <FormItem>
@@ -102,7 +102,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="installPrice"
                 render={({ field }) => (
                     <FormItem>
@@ -115,7 +115,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="membershipDuration"
                 render={({ field }) => (
                     <FormItem>
