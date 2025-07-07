@@ -190,9 +190,8 @@ describe('Bot', { sequential: true }, () => {
             metadata: {
                 name: BOT_NAME,
                 description: BOT_DESCRIPTION,
-                avatarUrl:
-                    'https://pbs.twimg.com/profile_images/1079865413620715527/d0dHeLsr_400x400.jpg',
-                imageUrl: 'https://i.pinimg.com/736x/ae/48/ab/ae48abc0b298e36b66f5b6127363c5d0.jpg',
+                avatarUrl: 'https://placehold.co/64x64.png',
+                imageUrl: 'https://placehold.co/600x600.png',
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
