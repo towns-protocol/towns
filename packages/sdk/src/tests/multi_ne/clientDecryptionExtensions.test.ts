@@ -28,7 +28,7 @@ describe('ClientDecryptionExtensions', () => {
 
     const sendMessage = async (client: Client, streamId: string, body: string) => {
         await client.waitForStream(streamId)
-        await client.sendMessage(streamId, body)
+        return await client.sendMessage(streamId, body)
     }
 
     const getDecryptedChannelMessages = (stream: Stream): string[] => {
@@ -201,8 +201,10 @@ describe('ClientDecryptionExtensions', () => {
         const channel2StreamId = makeUniqueChannelStreamId(spaceId)
         await bob1.createChannel(spaceId, 'channel1', '', channel1StreamId)
         await bob1.createChannel(spaceId, 'channel2', '', channel2StreamId)
-        await sendMessage(bob1, channel1StreamId, 'hello channel 1')
-        await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+        const event1 = await sendMessage(bob1, channel1StreamId, 'hello channel 1')
+        log('hello channel 1 eventId', event1.eventId)
+        const event2 = await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+        log('hello channel 2 eventId', event2.eventId)
 
         await expect(alice1.joinStream(spaceId)).resolves.not.toThrow()
         await expect(alice1.joinStream(channel1StreamId)).resolves.not.toThrow()
@@ -211,9 +213,11 @@ describe('ClientDecryptionExtensions', () => {
         // wait for the message to arrive and decrypt
         await expect(
             waitForMessages(alice1, channel1StreamId, ['hello channel 1']),
+            `waiting for ${event1.eventId}`,
         ).resolves.not.toThrow()
         await expect(
             waitForMessages(alice1, channel2StreamId, ['hello channel 2']),
+            `waiting for ${event2.eventId}`,
         ).resolves.not.toThrow()
 
         // stop bob to simplify test
