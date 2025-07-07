@@ -285,10 +285,24 @@ func TestReinitializeStreamStorage_ExistenceChecks(t *testing.T) {
 	require.Error(err)
 	require.Contains(err.Error(), "stream already exists")
 
-	// Test 2: Try to update when stream doesn't exist and updateExisting=true
+	// Test 2: When stream doesn't exist, it should create it regardless of updateExisting
 	err = store.ReinitializeStreamStorage(ctx, nonExistingStreamId, miniblocks, 0, true)
-	require.Error(err)
-	require.Contains(err.Error(), "stream not found")
+	require.NoError(err) // Should succeed and create the stream
+	
+	// Verify the stream was created
+	result, err := store.ReadStreamFromLastSnapshot(ctx, nonExistingStreamId, 10)
+	require.NoError(err)
+	require.Len(result.Miniblocks, 1)
+	
+	// Test 3: When stream doesn't exist and updateExisting=false, it should still create it
+	anotherStreamId := testutils.FakeStreamId(STREAM_USER_INBOX_BIN)
+	err = store.ReinitializeStreamStorage(ctx, anotherStreamId, miniblocks, 0, false)
+	require.NoError(err) // Should succeed and create the stream
+	
+	// Verify this stream was also created
+	result, err = store.ReadStreamFromLastSnapshot(ctx, anotherStreamId, 10)
+	require.NoError(err)
+	require.Len(result.Miniblocks, 1)
 }
 
 func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {

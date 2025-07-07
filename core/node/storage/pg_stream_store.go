@@ -2393,12 +2393,11 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	}
 
 	// Handle existence checks
-	if !updateExisting && exists {
+	// If stream exists and updateExisting is false, return error
+	if exists && !updateExisting {
 		return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId).Func("ReinitializeStreamStorage")
 	}
-	if updateExisting && !exists {
-		return RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId).Func("ReinitializeStreamStorage")
-	}
+	// If stream doesn't exist, we create it (regardless of updateExisting value)
 
 	// If updating existing stream, validate that new miniblocks exceed existing ones
 	if exists && updateExisting {
