@@ -55,8 +55,6 @@ import {
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
     InfoResponse,
-    PayloadCaseType,
-    ContentCaseType,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -162,7 +160,9 @@ import {
     SolanaTransactionReceipt,
     isSolanaTransactionReceipt,
     ParsedEvent,
+    ExclusionFilter,
 } from './types'
+import { applyExclusionFilterToMiniblocks } from './streamUtils'
 
 import debug from 'debug'
 import { Stream } from './stream'
@@ -2391,7 +2391,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
-        exclusionFilter?: { payload: PayloadCaseType; content: ContentCaseType }[],
+        exclusionFilter?: ExclusionFilter,
         opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
@@ -2413,9 +2413,15 @@ export class Client
             this.logError('error getting miniblocks', error)
         }
 
+        // Apply exclusion filtering to cached miniblocks if filters are provided
+        const filteredCachedMiniblocks =
+            exclusionFilter && exclusionFilter.length > 0
+                ? applyExclusionFilterToMiniblocks(cachedMiniblocks, exclusionFilter)
+                : cachedMiniblocks
+
         if (toExclusive === fromInclusive) {
             return {
-                miniblocks: cachedMiniblocks,
+                miniblocks: filteredCachedMiniblocks,
                 terminus: toExclusive === 0n,
             }
         }
@@ -2440,7 +2446,7 @@ export class Client
 
         return {
             terminus: terminus,
-            miniblocks: [...miniblocks, ...cachedMiniblocks],
+            miniblocks: [...miniblocks, ...filteredCachedMiniblocks],
         }
     }
 
