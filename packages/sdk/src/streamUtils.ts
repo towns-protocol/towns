@@ -270,8 +270,11 @@ export function matchesEventFilter(
     contentType: string,
     filter: { payload: PayloadCaseType | '*'; content: ContentCaseType | '*' },
 ): boolean {
+    // Convert filter payload to snake_case for comparison
+    const filterPayloadType = filter.payload === '*' ? '*' : snakeCase(filter.payload)
+
     // Check payload type match
-    if (filter.payload !== '*' && filter.payload !== payloadType) {
+    if (filterPayloadType !== '*' && filterPayloadType !== payloadType) {
         return false
     }
 
@@ -280,5 +283,7 @@ export function matchesEventFilter(
         return true
     }
 
-    return filter.content === contentType
+    // Convert filter content to snake_case for comparison
+    const filterContentType = snakeCase(filter.content)
+    return filterContentType === contentType
 }
