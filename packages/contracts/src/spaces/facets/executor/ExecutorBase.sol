@@ -398,24 +398,19 @@ abstract contract ExecutorBase is IExecutorBase {
         // Run pre hooks before execution
         _executePreHooks($, target, selector, value, data);
 
-        // Mark the target and selector as authorized
-        bytes32 executionIdBefore = $.executionId;
-
-        // Set the executionId for the target and selector
+        // Set the executionId for the target and selector using transient storage
         bytes32 executionId = _hashExecutionId(target, selector);
-        $.executionId = executionId;
-        $.targets[target].executionId = executionId;
+        ExecutorStorage.setTransientExecutionId(executionId);
+        ExecutorStorage.setTargetExecutionId(target, executionId);
 
         // Call the target
-
         result = LibCall.callContract(target, value, data);
 
         // Run post hooks after execution (will run even if execution fails)
         _executePostHooks($, target, selector);
 
-        // Reset the executionId
-        $.executionId = executionIdBefore;
-        $.targets[target].executionId = executionIdBefore;
+        // Clear transient storage to prevent composability issues
+        ExecutorStorage.clearTransientStorage(target);
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
@@ -430,16 +425,9 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param target The target contract.
     /// @return True if currently executing.
     function _isTargetExecuting(address target) internal view returns (bool) {
-        if (
-            ExecutorStorage.getLayout().executionId == 0 ||
-            ExecutorStorage.getLayout().targets[target].executionId == 0
-        ) {
-            return false;
-        }
-
-        return
-            ExecutorStorage.getLayout().targets[target].executionId ==
-            ExecutorStorage.getLayout().executionId;
+        bytes32 globalId = ExecutorStorage.getTransientExecutionId();
+        bytes32 targetId = ExecutorStorage.getTargetExecutionId(target);
+        return globalId != 0 && targetId != 0 && targetId == globalId;
     }
 
     /// @notice Computes a unique hash for an operation.
@@ -540,7 +528,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param selector The function selector.
     /// @return True if currently executing.
     function _isExecuting(address target, bytes4 selector) private view returns (bool) {
-        return ExecutorStorage.getLayout().executionId == _hashExecutionId(target, selector);
+        return ExecutorStorage.getTransientExecutionId() == _hashExecutionId(target, selector);
     }
 
     /// @dev Computes a unique hash for the execution context.
