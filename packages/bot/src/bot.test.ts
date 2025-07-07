@@ -56,7 +56,9 @@ describe('Bot', { sequential: true }, () => {
 
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
+
     let bot: Bot
+    let botClientUserId: string
     let spaceId: string
     let channelId: string
     let botWallet: ethers.Wallet
@@ -151,9 +153,10 @@ describe('Bot', { sequential: true }, () => {
         )
         await expect(botClient.initializeUser({ appAddress })).resolves.toBeDefined()
 
-        await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
+        botClientUserId = botClient.userId
+        await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClientUserId))
         await bobClient.riverConnection.call((client) =>
-            client.joinUser(channelId, botClient.userId),
+            client.joinUser(channelId, botClientUserId),
         )
         const addResult = await botClient.uploadDeviceKeys()
         expect(addResult).toBeDefined()
@@ -546,7 +549,7 @@ describe('Bot', { sequential: true }, () => {
             .getSpace(spaceId)
             .createChannel('test-channel', bob.signer)
         await bobClient.riverConnection.call((client) =>
-            client.joinUser(channelId, botClientAddress),
+            client.joinUser(channelId, botClientUserId),
         )
         const { eventId } = await bot.sendMessage(channelId, 'hello')
         const channel = bobClient.spaces.getSpace(spaceId).getChannel(channelId)
