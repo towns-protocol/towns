@@ -427,7 +427,7 @@ abstract contract ExecutorBase is IExecutorBase {
     function _isTargetExecuting(address target) internal view returns (bool) {
         bytes32 globalId = ExecutorStorage.getTransientExecutionId();
         bytes32 targetId = ExecutorStorage.getTargetExecutionId(target);
-        return globalId != 0 && targetId != 0 && targetId == globalId;
+        return globalId != 0 && targetId == globalId;
     }
 
     /// @notice Computes a unique hash for an operation.

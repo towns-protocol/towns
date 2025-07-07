@@ -15,7 +15,7 @@ src = "src" # The path to the contract sources relative to the root of the proje
 test = "test" # The path to the test contract sources relative to the root of the project.
 extra_output = ["abi", "bin"]
 extra_output_files = ["abi", "bin"]
-ignored_error_codes = [2394]
+
 
 
 # Test settings
