@@ -25,6 +25,7 @@ import {PrepayBase} from "../../prepay/PrepayBase.sol";
 import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
 import {RolesBase} from "../../roles/RolesBase.sol";
 import {MembershipBase} from "../MembershipBase.sol";
+import {ERC721ABase} from "../../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -41,7 +42,8 @@ abstract contract MembershipJoin is
     EntitlementGatedBase,
     Entitled,
     PrepayBase,
-    PointsBase
+    PointsBase,
+    ERC721ABase
 {
     using CustomRevert for bytes4;
 
