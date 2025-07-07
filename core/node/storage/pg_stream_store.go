@@ -2407,7 +2407,7 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 		}
 
 		// Get the last existing miniblock number
-		// Use COALESCE to handle the case where stream exists but has no miniblocks
+		// Using *int64 to detect NULL when stream has no miniblocks
 		var lastExistingMiniblockNum *int64
 		err := tx.QueryRow(ctx, s.sqlForStream("SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId).
 			Scan(&lastExistingMiniblockNum)
