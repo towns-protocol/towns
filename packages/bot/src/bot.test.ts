@@ -540,4 +540,19 @@ describe('Bot', { sequential: true }, () => {
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
     })
+
+    it('user should be able to read old bot messages', async () => {
+        const channelId = await bobClient.spaces
+            .getSpace(spaceId)
+            .createChannel('test-channel', bob.signer)
+        await bobClient.riverConnection.call((client) =>
+            client.joinUser(channelId, botClientAddress),
+        )
+        const { eventId } = await bot.sendMessage(channelId, 'hello')
+        const channel = bobClient.spaces.getSpace(spaceId).getChannel(channelId)
+        await channel.join()
+        await expect(
+            channel.timeline.events.when((events) => events.some((e) => e.eventId === eventId)),
+        ).resolves.not.toThrow()
+    })
 })
