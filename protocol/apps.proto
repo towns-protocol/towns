@@ -206,6 +206,18 @@ message AppServiceResponse {
     }
 }
 
+// SlashCommand represents a command that the bot supports.
+message SlashCommand {
+    // name is the command name (e.g., "help", "search").
+    // Must be 1-32 characters, contain only letters, numbers, and underscores,
+    // and start with a letter.
+    string name = 1;
+
+    // description is a short description of what the command does.
+    // Must be 1-256 characters.
+    string description = 2;
+}
+
 message AppMetadata {
     // name is used as the display name of the bot.
     string name = 1;
@@ -219,6 +231,10 @@ message AppMetadata {
 
     // avatar_url is an image URL with an acceptable schema and file extension.
     string avatar_url = 5;
+
+    // slash_commands is a list of commands the bot supports.
+    // Maximum of 25 commands per bot.
+    repeated SlashCommand slash_commands = 6;
 }
 
 // Set app metadata

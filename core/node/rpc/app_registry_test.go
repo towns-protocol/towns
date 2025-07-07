@@ -74,6 +74,31 @@ func appMetadataForBot(address []byte) *protocol.AppMetadata {
 		Description: fmt.Sprintf("Bot description - %x", address),
 		ImageUrl:    fmt.Sprintf("http://image.com/%x/image.png", address),
 		AvatarUrl:   fmt.Sprintf("http://image.com/%x/avatar.png", address),
+		SlashCommands: []*protocol.SlashCommand{
+			{Name: "help", Description: "Get help with bot commands"},
+			{Name: "status", Description: "Check bot status"},
+		},
+	}
+}
+
+// assertAppMetadataEqual compares two AppMetadata instances and asserts they are equal
+func assertAppMetadataEqual(t *testing.T, expected, actual *protocol.AppMetadata) {
+	require := require.New(t)
+	require.NotNil(actual, "actual metadata should not be nil")
+	require.NotNil(expected, "expected metadata should not be nil")
+	
+	require.Equal(expected.GetName(), actual.GetName(), "metadata name mismatch")
+	require.Equal(expected.GetDescription(), actual.GetDescription(), "metadata description mismatch")
+	require.Equal(expected.GetImageUrl(), actual.GetImageUrl(), "metadata image_url mismatch")
+	require.Equal(expected.GetAvatarUrl(), actual.GetAvatarUrl(), "metadata avatar_url mismatch")
+	require.Equal(expected.GetExternalUrl(), actual.GetExternalUrl(), "metadata external_url mismatch")
+	
+	// Compare slash commands
+	require.Equal(len(expected.GetSlashCommands()), len(actual.GetSlashCommands()), "slash command count mismatch")
+	for i, expectedCmd := range expected.GetSlashCommands() {
+		actualCmd := actual.GetSlashCommands()[i]
+		require.Equal(expectedCmd.GetName(), actualCmd.GetName(), "slash command name mismatch at index %d", i)
+		require.Equal(expectedCmd.GetDescription(), actualCmd.GetDescription(), "slash command description mismatch at index %d", i)
 	}
 }
 
@@ -799,6 +824,213 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			metadata:             validMetadata,
 			expectedErr:          "authenticated user must be app or owner",
 		},
+		"Success: valid slash commands": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Commands",
+				Description: "App with valid slash commands",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help with bot commands"},
+					{Name: "search", Description: "Search for content"},
+					{Name: "config", Description: "Configure settings"},
+				},
+			},
+		},
+		"Failure: invalid command name with special characters": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Invalid Command",
+				Description: "App with invalid command name",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help-me", Description: "Invalid name with hyphen"},
+				},
+			},
+			expectedErr: "command name must contain only letters, numbers, and underscores",
+		},
+		"Failure: duplicate command names": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Duplicate Commands",
+				Description: "App with duplicate command names",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help"},
+					{Name: "help", Description: "Also get help"},
+				},
+			},
+			expectedErr: "duplicate command name",
+		},
+		"Failure: too many commands": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Too Many Commands",
+				Description: "App exceeding command limit",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: func() []*protocol.SlashCommand {
+					commands := make([]*protocol.SlashCommand, 26)
+					for i := 0; i < 26; i++ {
+						commands[i] = &protocol.SlashCommand{
+							Name:        fmt.Sprintf("command%d", i),
+							Description: fmt.Sprintf("Description for command %d", i),
+						}
+					}
+					return commands
+				}(),
+			},
+			expectedErr: "cannot have more than 25 slash commands",
+		},
+		"Failure: empty command description": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Empty Description",
+				Description: "App with command missing description",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: ""},
+				},
+			},
+			expectedErr: "command description is required",
+		},
+		"Failure: command name too long": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Long Command Name",
+				Description: "App with command name exceeding limit",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "thiscommandnameiswaytoolongandexceedsthemaximumlength", Description: "Too long"},
+				},
+			},
+			expectedErr: "command name must not exceed 32 characters",
+		},
+		"Failure: command name starts with number": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Invalid Command Start",
+				Description: "App with command starting with number",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "1help", Description: "Starts with number"},
+				},
+			},
+			expectedErr: "command name must start with a letter",
+		},
+		"Success: empty slash commands array": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:          "App without Commands",
+				Description:   "App with no slash commands",
+				ImageUrl:      "https://example.com/image.png",
+				AvatarUrl:     "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{},
+			},
+		},
+		"Success: maximum length command name and description": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Max Length Commands",
+				Description: "Testing maximum lengths",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{
+						Name:        strings.Repeat("a", 32),  // Exactly 32 characters
+						Description: strings.Repeat("b", 256), // Exactly 256 characters
+					},
+				},
+			},
+		},
+		"Success: unicode in command descriptions": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Unicode Commands",
+				Description: "Testing unicode in descriptions",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help 🚀 with émojis and 中文"},
+					{Name: "status", Description: "Check status 📊 with various symbols ♠♣♥♦"},
+				},
+			},
+		},
+		"Success: case-sensitive command names": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Case Sensitive Commands",
+				Description: "Testing case sensitivity",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Lowercase help"},
+					{Name: "Help", Description: "Uppercase Help"},
+					{Name: "HELP", Description: "All caps HELP"},
+				},
+			},
+		},
+		"Success: valid alphanumeric command names": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Alphanumeric Commands",
+				Description: "Testing valid command names",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help123", Description: "Command with numbers"},
+					{Name: "test_command_2", Description: "Command with underscores and numbers"},
+					{Name: "UPPERCASE", Description: "All uppercase command"},
+					{Name: "mixedCase123", Description: "Mixed case with numbers"},
+				},
+			},
+		},
+		"Failure: command description too long": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Too Long Description",
+				Description: "Testing description length limit",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "test", Description: strings.Repeat("x", 257)}, // One over the limit
+				},
+			},
+			expectedErr: "command description must not exceed 256 characters",
+		},
+		"Failure: command name with underscore prefix": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Name:        "App with Underscore Prefix",
+				Description: "Testing invalid underscore prefix",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "_private", Description: "Command starting with underscore"},
+				},
+			},
+			expectedErr: "command name must start with a letter",
+		},
 	}
 
 	for name, tc := range tests {
@@ -828,11 +1060,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
 				tester.require.NoError(err)
 				tester.require.NotNil(getResp)
-				tester.require.Equal(tc.metadata.Name, getResp.Msg.GetMetadata().GetName())
-				tester.require.Equal(tc.metadata.Description, getResp.Msg.GetMetadata().GetDescription())
-				tester.require.Equal(tc.metadata.ImageUrl, getResp.Msg.GetMetadata().GetImageUrl())
-				tester.require.Equal(tc.metadata.AvatarUrl, getResp.Msg.GetMetadata().GetAvatarUrl())
-				tester.require.Equal(tc.metadata.ExternalUrl, getResp.Msg.GetMetadata().ExternalUrl)
+				assertAppMetadataEqual(t, tc.metadata, getResp.Msg.GetMetadata())
 			} else {
 				tester.require.Nil(resp)
 				tester.require.ErrorContains(err, tc.expectedErr)
@@ -1919,6 +2147,59 @@ func TestAppRegistry_Register(t *testing.T) {
 			metadata:    testAppMetadata(),
 			expectedErr: "missing session token",
 		},
+		"Invalid metadata - invalid slash command name": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App Invalid Command",
+				Description: "Test app with invalid command",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help!", Description: "Invalid command name"},
+				},
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "command name must contain only letters, numbers, and underscores",
+		},
+		"Invalid metadata - duplicate slash commands": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App Duplicate Commands",
+				Description: "Test app with duplicate commands",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "ping", Description: "Ping command"},
+					{Name: "ping", Description: "Another ping command"},
+				},
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "duplicate command name",
+		},
+		"Invalid metadata - too many slash commands": {
+			appId:   appWallet.Address[:],
+			ownerId: ownerWallet.Address[:],
+			metadata: &protocol.AppMetadata{
+				Name:        "Test App Many Commands",
+				Description: "Test app with too many commands",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+				SlashCommands: func() []*protocol.SlashCommand {
+					commands := make([]*protocol.SlashCommand, 26)
+					for i := 0; i < 26; i++ {
+						commands[i] = &protocol.SlashCommand{
+							Name:        fmt.Sprintf("cmd%d", i),
+							Description: fmt.Sprintf("Command %d", i),
+						}
+					}
+					return commands
+				}(),
+			},
+			authenticatingWallet: ownerWallet,
+			expectedErr:          "cannot have more than 25 slash commands",
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -1953,12 +2234,8 @@ func TestAppRegistry_Register(t *testing.T) {
 				getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
 				tester.require.NoError(err)
 				tester.require.NotNil(getResp)
-				// Compare each field in metadata individually for better error messages
-				tester.require.Equal(tc.metadata.Name, getResp.Msg.GetMetadata().GetName())
-				tester.require.Equal(tc.metadata.Description, getResp.Msg.GetMetadata().GetDescription())
-				tester.require.Equal(tc.metadata.ImageUrl, getResp.Msg.GetMetadata().GetImageUrl())
-				tester.require.Equal(tc.metadata.AvatarUrl, getResp.Msg.GetMetadata().GetAvatarUrl())
-				tester.require.Equal(tc.metadata.GetExternalUrl(), getResp.Msg.GetMetadata().GetExternalUrl())
+				// Verify metadata was stored correctly
+				assertAppMetadataEqual(t, tc.metadata, getResp.Msg.GetMetadata())
 			} else {
 				tester.require.Nil(resp)
 				tester.require.ErrorContains(err, tc.expectedErr)

@@ -38,8 +38,13 @@ func testAppMetadataWithName(name string) types.AppMetadata {
 		ImageUrl:    "https://example.com/image.png",
 		ExternalUrl: "",
 		AvatarUrl:   "https://example.com/avatar.png",
+		SlashCommands: []types.SlashCommand{
+			{Name: "help", Description: "Get help with bot commands"},
+			{Name: "status", Description: "Check bot status"},
+		},
 	}
 }
+
 
 type testAppRegistryStoreParams struct {
 	ctx                context.Context
@@ -1188,6 +1193,11 @@ func TestSetAppMetadata(t *testing.T) {
 		ImageUrl:    "https://example.com/updated-image.png",
 		AvatarUrl:   "https://example.com/updated-avatar.png",
 		ExternalUrl: "https://external.example.com",
+		SlashCommands: []types.SlashCommand{
+			{Name: "help", Description: "Updated help command"},
+			{Name: "search", Description: "Search for content"},
+			{Name: "config", Description: "Configure settings"},
+		},
 	}
 
 	err = store.SetAppMetadata(params.ctx, app, updatedMetadata)
@@ -1230,6 +1240,35 @@ func TestSetAppMetadata(t *testing.T) {
 	require.Error(err)
 	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 	require.ErrorContains(err, "another app with the same name already exists")
+
+	// Test updating slash commands - remove all commands
+	metadataNoCommands := updatedMetadata
+	metadataNoCommands.SlashCommands = []types.SlashCommand{}
+	err = store.SetAppMetadata(params.ctx, app, metadataNoCommands)
+	require.NoError(err)
+
+	// Verify no slash commands
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Empty(appInfo.Metadata.SlashCommands)
+
+	// Test updating with many slash commands (storage layer doesn't validate count)
+	manyCommands := make([]types.SlashCommand, 30)
+	for i := 0; i < 30; i++ {
+		manyCommands[i] = types.SlashCommand{
+			Name:        fmt.Sprintf("command%d", i),
+			Description: fmt.Sprintf("Description for command %d", i),
+		}
+	}
+	metadataWithManyCommands := updatedMetadata
+	metadataWithManyCommands.SlashCommands = manyCommands
+	err = store.SetAppMetadata(params.ctx, app, metadataWithManyCommands)
+	require.NoError(err) // Storage layer doesn't validate, just stores
+
+	// Verify all commands were stored
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Len(appInfo.Metadata.SlashCommands, 30)
 }
 
 func TestGetAppMetadata(t *testing.T) {
