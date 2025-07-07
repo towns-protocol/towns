@@ -56,6 +56,10 @@ describe('Bot', { sequential: true }, () => {
 
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
+
+    const BOT_NAME = 'bot-witness-of-infinity'
+    const BOT_DESCRIPTION = 'I shall witness everything'
+
     let bot: Bot
     let spaceId: string
     let channelId: string
@@ -106,7 +110,7 @@ describe('Bot', { sequential: true }, () => {
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
-            'bot-witness-of-infinity',
+            BOT_NAME,
             [...Object.values(Permission)], // all permissions
             botClientAddress,
             ethers.utils.parseEther('0.01').toBigInt(),
@@ -183,6 +187,13 @@ describe('Bot', { sequential: true }, () => {
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
             appId: bin_fromHexString(botClientAddress),
             appOwnerId: bin_fromHexString(bob.userId),
+            metadata: {
+                name: BOT_NAME,
+                description: BOT_DESCRIPTION,
+                avatarUrl:
+                    'https://pbs.twimg.com/profile_images/1079865413620715527/d0dHeLsr_400x400.jpg',
+                imageUrl: 'https://i.pinimg.com/736x/ae/48/ab/ae48abc0b298e36b66f5b6127363c5d0.jpg',
+            },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
         expect(jwtSecretBase64).toBeDefined()
