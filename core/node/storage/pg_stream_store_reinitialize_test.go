@@ -1,10 +1,12 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -662,4 +664,38 @@ func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
 	// Verify minipool generation is set to last miniblock + 1
 	err = store.WriteEvent(ctx, streamId, 6, 0, []byte("test event"))
 	require.NoError(err)
+}
+
+func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Manually create a stream without miniblocks (violates invariant)
+	err := store.txRunner(
+		ctx,
+		"CreateStreamWithoutMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			_, err := tx.Exec(ctx,
+				"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, false)",
+				streamId)
+			return err
+		},
+		nil,
+	)
+	require.NoError(err)
+
+	// Try to update the stream - should detect the invariant violation
+	miniblocks := []*WriteMiniblockData{
+		{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
+		{Number: 1, Data: []byte("mb1")},
+	}
+	err = store.ReinitializeStreamStorage(ctx, streamId, miniblocks, 0, true)
+	require.Error(err)
+	require.Contains(err.Error(), "stream exists but has no miniblocks")
 }
