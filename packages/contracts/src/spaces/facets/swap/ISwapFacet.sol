@@ -17,6 +17,9 @@ interface ISwapFacetBase {
     /// @notice Error thrown when ETH is sent with permit swap (not supported)
     error SwapFacet__UnexpectedETH();
 
+    /// @notice Error thrown when poster address is invalid for the current fee configuration
+    error SwapFacet__InvalidPosterInput();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
