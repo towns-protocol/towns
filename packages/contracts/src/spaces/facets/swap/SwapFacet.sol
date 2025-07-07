@@ -111,6 +111,8 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     }
 
     /// @inheritdoc ISwapFacet
+    /// @dev Permit is forwarded directly to SwapRouter which handles all token operations,
+    /// e.g. Permit2 transfers, approvals, refunds
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
@@ -132,10 +134,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         );
 
         // post-swap processing (points minting and events)
-        // no approval reset needed since Permit2 handles token transfers
         _afterSwap(params, amountOut, protocolFee, poster);
-
-        // Note: SwapRouter already handles refunds to permit.owner, so no additional refund needed
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
