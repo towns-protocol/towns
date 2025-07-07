@@ -262,7 +262,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "AppUpdated(address,bytes32)": EventFragment;
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "Banned(address,uint256)": EventFragment;
     "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
     "DefaultBpsFeeUpdated(uint256)": EventFragment;
     "EntitlementCheckResultPosted(bytes32,uint8)": EventFragment;
@@ -292,7 +291,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "PartnerRegistered(address)": EventFragment;
     "PartnerRemoved(address)": EventFragment;
     "PartnerUpdated(address)": EventFragment;
-    "Paused(address)": EventFragment;
     "PermissionsAddedToChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsRemovedFromChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsUpdatedForChannelRole(address,uint256,bytes32)": EventFragment;
@@ -310,8 +308,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "TargetFunctionDisabledSet(address,bytes4,bool)": EventFragment;
     "TargetFunctionGroupSet(address,bytes4,bytes32)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
-    "Unbanned(address,uint256)": EventFragment;
-    "Unpaused(address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "AppBanned"): EventFragment;
@@ -325,7 +321,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "AppUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "DefaultBpsFeeUpdated"): EventFragment;
   getEvent(
@@ -361,7 +356,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "PartnerRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PartnerRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PartnerUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "PermissionsAddedToChannelRole"
   ): EventFragment;
@@ -385,8 +379,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "TargetFunctionDisabledSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TargetFunctionGroupSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
 
 export interface AppBannedEventObject {
@@ -507,14 +499,6 @@ export type ApprovalForAllEvent = TypedEvent<
 >;
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
-
-export interface BannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
-
-export type BannedEventFilter = TypedEventFilter<BannedEvent>;
 
 export interface ConsecutiveTransferEventObject {
   fromTokenId: BigNumber;
@@ -848,13 +832,6 @@ export type PartnerUpdatedEvent = TypedEvent<
 
 export type PartnerUpdatedEventFilter = TypedEventFilter<PartnerUpdatedEvent>;
 
-export interface PausedEventObject {
-  account: string;
-}
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
-
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
 export interface PermissionsAddedToChannelRoleEventObject {
   updater: string;
   roleId: BigNumber;
@@ -1056,24 +1033,6 @@ export type TransferEvent = TypedEvent<
 >;
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
-
-export interface UnbannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type UnbannedEvent = TypedEvent<
-  [string, BigNumber],
-  UnbannedEventObject
->;
-
-export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
-}
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
-
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface MembershipFacet extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -1439,15 +1398,6 @@ export interface MembershipFacet extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "Banned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-    Banned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-
     "ConsecutiveTransfer(uint256,uint256,address,address)"(
       fromTokenId?: PromiseOrValue<BigNumberish> | null,
       toTokenId?: null,
@@ -1679,9 +1629,6 @@ export interface MembershipFacet extends BaseContract {
       account?: PromiseOrValue<string> | null
     ): PartnerUpdatedEventFilter;
 
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
-
     "PermissionsAddedToChannelRole(address,uint256,bytes32)"(
       updater?: PromiseOrValue<string> | null,
       roleId?: PromiseOrValue<BigNumberish> | null,
@@ -1834,18 +1781,6 @@ export interface MembershipFacet extends BaseContract {
       to?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): TransferEventFilter;
-
-    "Unbanned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-    Unbanned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
   };
 
   estimateGas: {
