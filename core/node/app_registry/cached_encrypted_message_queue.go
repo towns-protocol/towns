@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/hashicorp/golang-lru/arc/v2"
 
 	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/base"
@@ -35,7 +37,19 @@ type SessionMessages struct {
 type CachedEncryptedMessageQueue struct {
 	store         storage.AppRegistryStore
 	appDispatcher *AppDispatcher
-	appIdCache    sync.Map
+	// the appIdCache stores forward settings for each app. These are used
+	// to determine whether or not to forward to each app in a channel whenever
+	// a new message is received.
+	appIdCache sync.Map
+
+	// metadataCache stores app metadata with TTL to reduce database queries.
+	metadataCache *arc.ARCCache[string, *metadataCacheEntry]
+}
+
+// metadataCacheEntry holds cached metadata with a timestamp for TTL validation
+type metadataCacheEntry struct {
+	metadata  *types.AppMetadata
+	timestamp time.Time
 }
 
 type ForwardState struct {
@@ -48,9 +62,17 @@ func NewCachedEncryptedMessageQueue(
 	store storage.AppRegistryStore,
 	appDispatcher *AppDispatcher,
 ) (*CachedEncryptedMessageQueue, error) {
+	// Initialize metadata cache with 50,000 max entries
+	metadataCache, err := arc.NewARC[string, *metadataCacheEntry](50000)
+	if err != nil {
+		return nil, base.AsRiverError(err, protocol.Err_INTERNAL).
+			Message("Unable to create metadata cache")
+	}
+
 	queue := &CachedEncryptedMessageQueue{
 		appDispatcher: appDispatcher,
 		store:         store,
+		metadataCache: metadataCache,
 	}
 	return queue, nil
 }
@@ -66,7 +88,20 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	fs := &ForwardState{}
 	fs.Settings.Store(&settings)
 	q.appIdCache.Store(app, fs)
-	return q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
+	
+	err := q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
+	if err != nil {
+		return err
+	}
+	
+	// Pre-warm metadata cache for newly created app
+	cacheKey := app.String()
+	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
+		metadata:  &metadata,
+		timestamp: time.Now(),
+	})
+	
+	return nil
 }
 
 func (q *CachedEncryptedMessageQueue) RotateSharedSecret(
@@ -128,14 +163,53 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	app common.Address,
 	metadata types.AppMetadata,
 ) error {
-	return q.store.SetAppMetadata(ctx, app, metadata)
+	err := q.store.SetAppMetadata(ctx, app, metadata)
+	if err != nil {
+		return err
+	}
+	
+	// Invalidate cache on successful update
+	cacheKey := app.String()
+	q.metadataCache.Remove(cacheKey)
+	
+	// Pre-populate with new value
+	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
+		metadata:  &metadata,
+		timestamp: time.Now(),
+	})
+	
+	return nil
 }
 
 func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
 ) (*types.AppMetadata, error) {
-	return q.store.GetAppMetadata(ctx, app)
+	cacheKey := app.String()
+	
+	// Check cache with TTL validation (15 seconds)
+	if entry, exists := q.metadataCache.Get(cacheKey); exists {
+		if time.Since(entry.timestamp) < 15*time.Second {
+			// Cache hit with valid TTL
+			return entry.metadata, nil
+		}
+		// Expired entry, remove it
+		q.metadataCache.Remove(cacheKey)
+	}
+	
+	// Cache miss or expired, fetch from store
+	metadata, err := q.store.GetAppMetadata(ctx, app)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Cache the result
+	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
+		metadata:  metadata,
+		timestamp: time.Now(),
+	})
+	
+	return metadata, nil
 }
 
 func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
