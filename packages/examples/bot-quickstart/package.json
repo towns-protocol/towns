@@ -6,7 +6,7 @@
     "type": "module",
     "main": "src/index.ts",
     "scripts": {
-        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx --env-file=.env src/index.ts",
+        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx --watch --env-file=.env src/index.ts",
         "build": "tsc",
         "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx src/index.ts",
         "clean": "rm -rf dist",
@@ -16,7 +16,8 @@
     "dependencies": {
         "@connectrpc/connect-node": "^2.0.0",
         "@hono/node-server": "^1.14.0",
-        "@towns-protocol/bot": "workspace:^"
+        "@towns-protocol/bot": "workspace:^",
+        "hono": "^4.7.11"
     },
     "devDependencies": {
         "@types/node": "^20.14.8",

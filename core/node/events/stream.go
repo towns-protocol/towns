@@ -144,7 +144,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	s.mu.Unlock()
-	s.params.streamCache.SubmitSyncStreamTask(s, nil)
+	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
 	// Wait for reconciliation to complete.
 	backoff := BackoffTracker{
@@ -752,6 +752,26 @@ func (s *Stream) addEventLocked(
 		logging.FromCtx(ctx).Warnw("Stream.addEventLocked: adding event with relaxed duplicate check", "error", err)
 	}
 
+	newSV := oldSV
+	if !event.Event.Ephemeral {
+		newSV, err = s.addEventToMinipoolAndStorageLocked(ctx, event, oldSV, envelopeBytes)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
+	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
+
+	return newSV, nil
+}
+
+func (s *Stream) addEventToMinipoolAndStorageLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	oldSV *StreamView,
+	envelopeBytes []byte,
+) (*StreamView, error) {
 	// Check if event can be added before writing to storage.
 	newSV, err := oldSV.copyAndAddEvent(event)
 	if err != nil {
@@ -787,10 +807,6 @@ func (s *Stream) addEventLocked(
 	}
 
 	s.setViewLocked(newSV)
-	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
-
-	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
-
 	return newSV, nil
 }
 
@@ -1129,7 +1145,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 			})
 			if err != nil {
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-					s.params.streamCache.SubmitSyncStreamTask(s, nil)
+					s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 				} else {
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
@@ -1161,16 +1177,16 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	return slices.Clone(r), l
 }
 
-// GetQuorumAndSyncNodesAndIsLocal returns
+// GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
-// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
-func (s *Stream) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+// GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
+func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	qn, sn, l := s.nodesLocked.GetQuorumAndSyncNodesAndIsLocal()
+	qn, sn, l := s.nodesLocked.GetQuorumAndReconcileNodesAndIsLocal()
 	return slices.Clone(qn), slices.Clone(sn), l
 }
 
@@ -1206,11 +1222,11 @@ func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode 
 	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
 }
 
-func (s *Stream) GetSyncNodes() []common.Address {
+func (s *Stream) GetReconcileNodes() []common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.nodesLocked.GetSyncNodes()
+	return s.nodesLocked.GetReconcileNodes()
 }
 
 func (s *Stream) IsLocalInQuorum() bool {

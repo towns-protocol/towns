@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.259",
+    "version": "0.0.269",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -30,10 +30,12 @@
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2",
         "fake-indexeddb": "^4.0.1",
-        "hono": "^4.7.11",
         "jsonwebtoken": "^9.0.2",
         "typed-emitter": "^2.1.0",
         "viem": "^2.29.3"
+    },
+    "peerDependencies": {
+        "hono": "^4.7.11"
     },
     "devDependencies": {
         "@types/jsonwebtoken": "^9.0.9",
@@ -44,6 +46,7 @@
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
         "eslint-plugin-tsdoc": "^0.3.0",
+        "hono": "^4.7.11",
         "typescript": "^5.8.2",
         "vitest": "^3.2.3"
     },

@@ -8682,6 +8682,8 @@ __metadata:
     typescript: ^5.8.2
     viem: ^2.29.3
     vitest: ^3.2.3
+  peerDependencies:
+    hono: ^4.7.11
   languageName: unknown
   linkType: soft
 
@@ -8798,6 +8800,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     tsx: ^4.7.1
     typescript: ^5.8.2
   languageName: unknown
@@ -8816,6 +8819,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     tsx: ^4.7.1
     typescript: ^5.8.2
   languageName: unknown
@@ -8834,6 +8838,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
     openai: ^5.7.0
     tsx: ^4.7.1
     typescript: ^5.8.2
@@ -29058,6 +29063,32 @@ __metadata:
   checksum: 952c29e2a85d7123239b5cfdd889a0dde47ab0497f0913d70588f19c53f7e0b5327c95f4651e413c74b785147f9637b17410ac8c846d5d4a20a5a33eb6dc3a45
   languageName: node
   linkType: hard
+
+"towns-bot@workspace:packages/towns-bot-cli":
+  version: 0.0.0-use.local
+  resolution: "towns-bot@workspace:packages/towns-bot-cli"
+  dependencies:
+    "@types/cross-spawn": ^6.0.6
+    "@types/minimist": ^1.2.5
+    "@types/node": ^20.14.8
+    "@types/prompts": ^2.4.9
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    cross-spawn: ^7.0.5
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    jsonc-parser: ^3.3.1
+    minimist: ^1.2.8
+    picocolors: ^1.1.1
+    prompts: ^2.4.2
+    tsup: ^8.3.5
+    tsx: ^4.7.1
+    typescript: ^5.8.2
+  bin:
+    towns-bot: index.js
+  languageName: unknown
+  linkType: soft
 
 "towns-protocol@workspace:.":
   version: 0.0.0-use.local

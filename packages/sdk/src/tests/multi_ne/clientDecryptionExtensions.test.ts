@@ -10,7 +10,7 @@ import { Stream } from '../../stream'
 import { DecryptionSessionError } from '../../decryptionExtensions'
 import { makeUniqueChannelStreamId } from '../../id'
 import { SyncState } from '../../syncedStreamsLoop'
-import { RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -28,7 +28,7 @@ describe('ClientDecryptionExtensions', () => {
 
     const sendMessage = async (client: Client, streamId: string, body: string) => {
         await client.waitForStream(streamId)
-        await client.sendMessage(streamId, body)
+        return await client.sendMessage(streamId, body)
     }
 
     const getDecryptedChannelMessages = (stream: Stream): string[] => {
@@ -164,6 +164,13 @@ describe('ClientDecryptionExtensions', () => {
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
+
+        // By default, clients will send an ephemeral solicitation first
+        // in this case, we want to make sure that the solicitation is sent as non-ephemeral
+        // so that bob can see the solicitation and share keys,
+        // otherwise we'd need to wait for the ephemeral timeout to expire
+        alice1['decryptionExtensions']!.ephemeralTimeoutMs = 100
+
         await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
         await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
@@ -194,8 +201,10 @@ describe('ClientDecryptionExtensions', () => {
         const channel2StreamId = makeUniqueChannelStreamId(spaceId)
         await bob1.createChannel(spaceId, 'channel1', '', channel1StreamId)
         await bob1.createChannel(spaceId, 'channel2', '', channel2StreamId)
-        await sendMessage(bob1, channel1StreamId, 'hello channel 1')
-        await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+        const event1 = await sendMessage(bob1, channel1StreamId, 'hello channel 1')
+        log('hello channel 1 eventId', event1.eventId)
+        const event2 = await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+        log('hello channel 2 eventId', event2.eventId)
 
         await expect(alice1.joinStream(spaceId)).resolves.not.toThrow()
         await expect(alice1.joinStream(channel1StreamId)).resolves.not.toThrow()
@@ -204,9 +213,11 @@ describe('ClientDecryptionExtensions', () => {
         // wait for the message to arrive and decrypt
         await expect(
             waitForMessages(alice1, channel1StreamId, ['hello channel 1']),
+            `waiting for ${event1.eventId}`,
         ).resolves.not.toThrow()
         await expect(
             waitForMessages(alice1, channel2StreamId, ['hello channel 2']),
+            `waiting for ${event2.eventId}`,
         ).resolves.not.toThrow()
 
         // stop bob to simplify test

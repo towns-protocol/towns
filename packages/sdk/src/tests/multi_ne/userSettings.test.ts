@@ -5,7 +5,7 @@
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { check } from '@towns-protocol/dlog'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 describe('userSettingsTests', () => {
     let clients: Client[] = []

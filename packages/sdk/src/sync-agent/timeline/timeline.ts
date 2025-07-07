@@ -6,7 +6,7 @@ import {
     MessageTips,
     ThreadStatsData,
     type TimelineEvent,
-} from './models/timeline-types'
+} from '../../views/models/timelineTypes'
 import type { RiverConnection } from '../river-connection/riverConnection'
 import { Observable } from '../../observable/observable'
 import { TimelinesMap, TimelinesViewModel } from '../../views/streams/timelinesModel'

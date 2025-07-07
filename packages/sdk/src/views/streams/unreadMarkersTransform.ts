@@ -1,7 +1,7 @@
 import { FullyReadMarker } from '@towns-protocol/proto'
 import { TimelinesViewModel } from './timelinesModel'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '../../id'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, TimelineEvent } from '../models/timelineTypes'
 import { check, dlogger } from '@towns-protocol/dlog'
 
 const console = dlogger('csb:unreadMarkersTransform')
@@ -24,7 +24,7 @@ export function unreadMarkersTransform(
     prev: Input,
     state?: UnreadMarkersModel,
 ): UnreadMarkersModel {
-    console.log('unreadMarkersTransform', value, prev, state)
+    //console.log('unreadMarkersTransform', value, prev, state)
 
     state = state ?? { markers: {} }
 

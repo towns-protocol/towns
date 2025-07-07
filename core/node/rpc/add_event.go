@@ -96,7 +96,7 @@ func (s *Service) ensureStreamIsUpToDate(
 
 		retryCount++
 		if retryCount == 5 { // schedules task after 100ms + 200ms + 400ms + 800ms = 1500ms
-			s.cache.SubmitSyncStreamTask(localStream, nil)
+			s.cache.SubmitReconcileStreamTask(localStream, nil)
 		}
 
 		if err := backoff.Wait(ctx, RiverError(Err_BAD_BLOCK_NUMBER, "Stream out-of-sync",

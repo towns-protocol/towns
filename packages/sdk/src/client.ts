@@ -79,10 +79,12 @@ import {
 } from '@towns-protocol/encryption'
 import {
     DecryptionEvents,
+    DecryptionExtensionsOptions,
     EntitlementsDelegate,
     makeSessionKeys,
     type BaseDecryptionExtensions,
 } from './decryptionExtensions'
+import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -170,7 +172,6 @@ import {
     usernameChecksum,
 } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
-import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import {
     PersistenceStore,
     IPersistenceStore,
@@ -191,6 +192,8 @@ import {
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
+import { NotificationsClient, INotificationStore } from './notificationsClient'
+import { RpcOptions } from './rpcCommon'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -202,6 +205,12 @@ export type ClientOptions = {
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
     streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
+    notifications?: {
+        url: string
+        store?: INotificationStore
+        rpcOptions?: RpcOptions
+    }
+    decryptionExtensionsOpts?: DecryptionExtensionsOptions
 }
 
 type SendChannelMessageOptions = {
@@ -224,6 +233,7 @@ export class Client
     readonly streams: SyncedStreams
     readonly streamsView: StreamsView
     readonly logId: string
+    readonly notifications?: NotificationsClient
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -252,6 +262,8 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
+    private pendingUsernames: Map<string, string> = new Map()
+    private pendingUsernameTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
     constructor(
         signerContext: SignerContext,
@@ -337,6 +349,17 @@ export class Client
             this.logId,
         )
 
+        // Initialize notifications client if options are provided
+        if (opts?.notifications) {
+            this.notifications = new NotificationsClient(
+                signerContext,
+                opts.notifications.url,
+                opts.notifications.store,
+                opts.notifications.rpcOptions,
+                this.streamsView,
+            )
+        }
+
         this.logCall('new Client')
     }
 
@@ -387,6 +410,7 @@ export class Client
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
         this.on('streamInitialized', (s) => void this.onStreamInitialized(s))
+        this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
@@ -1222,29 +1246,81 @@ export class Client
         )
     }
 
-    async setUsername(streamId: string, username: string) {
+    async setUsername(
+        streamId: string,
+        username: string,
+        force: boolean = false,
+        options?: {
+            largeGroupThreshold?: number // default: 100
+            delayMs?: number // default: 60000 (60 seconds)
+        },
+    ) {
         check(isDefined(this.cryptoBackend))
+        check(username.length > 0, 'username cannot be empty')
+
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
-        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
-            streamId,
-            new TextEncoder().encode(username),
-            this.defaultGroupEncryptionAlgorithm,
-        )
-        encryptedData.checksum = usernameChecksum(username, streamId)
+
+        // Clear any existing timeout first
+        const existingTimeout = this.pendingUsernameTimeouts.get(streamId)
+        if (existingTimeout) {
+            clearTimeout(existingTimeout)
+            this.pendingUsernameTimeouts.delete(streamId)
+        }
+
+        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username, this)
+
+        // be very careful about setting a username for a large group, we don't want to inject
+        // more sessions than needed into the group. unless a session has been received in 60 seconds,
+        // we will force set the username.
+        const memberCount = stream.view.membershipContent.joined.size
+        const hasHybridSession = (await this.cryptoBackend?.hasHybridSession?.(streamId)) ?? false
+
+        const largeGroupThreshold = options?.largeGroupThreshold ?? 100
+        const delayMs = options?.delayMs ?? 60000
+
+        if (memberCount > largeGroupThreshold && !hasHybridSession && !force) {
+            this.pendingUsernames.set(streamId, username)
+            const timeout = setTimeout(() => {
+                void this.setUsername(streamId, username, true, options)
+            }, delayMs)
+            this.pendingUsernameTimeouts.set(streamId, timeout)
+            return
+        }
+
+        // Clean up pending state
+        this.pendingUsernames.delete(streamId)
+        this.pendingUsernameTimeouts.delete(streamId)
+
         try {
+            const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+                streamId,
+                new TextEncoder().encode(username),
+                this.defaultGroupEncryptionAlgorithm,
+            )
+            encryptedData.checksum = usernameChecksum(username, streamId)
+
             await this.makeEventAndAddToStream(
                 streamId,
                 make_MemberPayload_Username(encryptedData),
-                {
-                    method: 'username',
-                },
+                { method: 'username' },
             )
         } catch (err) {
             stream.view.getMemberMetadata().usernames.resetLocalUsername(this.userId)
+            // Clean up pending state on error
+            this.pendingUsernames.delete(streamId)
+            this.pendingUsernameTimeouts.delete(streamId)
             throw err
         }
+    }
+
+    async setPendingUsernames() {
+        await Promise.all(
+            Array.from(this.pendingUsernames.entries()).map(([streamId, pendingUsername]) => {
+                this.pendingUsernames.delete(streamId)
+                return this.setUsername(streamId, pendingUsername)
+            }),
+        )
     }
 
     async setEnsAddress(streamId: string, walletAddress: string | Uint8Array) {
@@ -1636,6 +1712,52 @@ export class Client
             }
         }
         void scrollbackUntilContentFound()
+    }
+
+    private onStreamUpToDate = (streamId: string): void => {
+        // we're migrating away from the old megolm based encryption to the new `grpaes` encryption,
+        // this is to avoid too many active crypto sessions active in the same stream
+        // this function will:
+        // - check if the user's username is encrypted with the old algorithm
+        // - check if the user has a hybrid session ready to go (hasHybridSession)
+        // - re-encrypt the username with the new algorithm
+
+        const updateUsernameEncryptionIfNeeded = async () => {
+            if (!isSpaceStreamId(streamId)) {
+                return
+            }
+
+            const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
+            if (!hasHybridSession) {
+                return
+            }
+
+            const stream = this.stream(streamId)
+            if (!stream) {
+                return
+            }
+            const currentUsernameEncryptedData =
+                stream.view.membershipContent.memberMetadata.usernames.currentUsernameEncryptedData
+
+            if (
+                !currentUsernameEncryptedData ||
+                currentUsernameEncryptedData.algorithm ===
+                    (GroupEncryptionAlgorithmId.HybridGroupEncryption as string)
+            ) {
+                return
+            }
+            const currentUsername = stream.view.membershipContent.memberMetadata.usernames.info(
+                this.userId,
+            )
+
+            if (!currentUsername || currentUsername.username.length === 0) {
+                return
+            }
+
+            await this.setUsername(streamId, currentUsername.username)
+        }
+
+        void updateUsernameEncryptionIfNeeded()
     }
 
     startSync() {
@@ -2497,6 +2619,7 @@ export class Client
             cleartext?: Uint8Array
             optional?: boolean
             tags?: PlainMessage<Tags>
+            ephemeral?: boolean
         } = {},
     ): Promise<{ eventId: string; error?: AddEventResponse_Error }> {
         // TODO: filter this.logged payload for PII reasons
@@ -2532,6 +2655,8 @@ export class Client
             options.localId,
             options.cleartext,
             options.tags,
+            undefined, // retryCount
+            options.ephemeral,
         )
         return { eventId, error }
     }
@@ -2546,6 +2671,7 @@ export class Client
         cleartext?: Uint8Array,
         tags?: PlainMessage<Tags>,
         retryCount?: number,
+        ephemeral?: boolean,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
@@ -2555,6 +2681,7 @@ export class Client
             prevMiniblockHash,
             prevMiniblockNum,
             tags,
+            ephemeral,
         )
         const eventId = bin_toHexString(event.hash)
         if (localId) {
@@ -2598,6 +2725,7 @@ export class Client
                     cleartext,
                     tags,
                     (retryCount ?? 0) + 1,
+                    ephemeral,
                 )
             }
 
@@ -2706,6 +2834,7 @@ export class Client
             this.userDeviceKey(),
             this.opts?.unpackEnvelopeOpts,
             this.logId,
+            this.opts?.decryptionExtensionsOpts ?? { enableEphemeralKeySolicitations: true },
         )
     }
 
@@ -2858,9 +2987,21 @@ export class Client
         const toDevicesEntries = Object.entries(toDevices)
         const promises = toDevicesEntries.map(async ([userId, deviceKeys]) => {
             try {
+                if (deviceKeys.length === 0) {
+                    // means we failed to download the device keys, we should enqueue a retry
+                    this.logInfo(
+                        'encryptAndShareGroupSessions: no device keys to send',
+                        inStreamId,
+                        userId,
+                    )
+                    return
+                }
                 const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    // if you only have one device this is a valid state
+                    if (userId !== this.userId) {
+                        this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    }
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
