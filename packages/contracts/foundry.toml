@@ -16,6 +16,8 @@ test = "test" # The path to the test contract sources relative to the root of th
 extra_output = ["abi", "bin"]
 extra_output_files = ["abi", "bin"]
 
+
+
 # Test settings
 fuzz = { runs = 256 } # The amount of fuzz runs to perform for each fuzz test case.
 cache_path = "cache" # The path to the cache, relative to the root of the project.
