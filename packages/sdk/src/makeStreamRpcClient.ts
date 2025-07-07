@@ -1,8 +1,9 @@
 import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
-import { Snapshot, StreamService } from '@towns-protocol/proto'
+import { ContentCaseType, PayloadCaseType, Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
+import { snakeCase } from 'lodash-es'
 import {
     DEFAULT_RETRY_PARAMS,
     getRetryDelayMs,
@@ -79,7 +80,7 @@ export async function getMiniblocks(
     fromInclusive: bigint,
     toExclusive: bigint,
     omitSnapshots: boolean,
-    exclusionFilter: { payload: string, content: string }[] | undefined,
+    exclusionFilter: { payload: PayloadCaseType; content: ContentCaseType }[] | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ): Promise<{
     miniblocks: ParsedMiniblock[]
@@ -135,7 +136,7 @@ async function fetchMiniblocksFromRpc(
     fromInclusive: bigint,
     toExclusive: bigint,
     omitSnapshots: boolean,
-    exclusionFilter: { payload: string, content: string }[] | undefined,
+    exclusionFilter: { payload: PayloadCaseType; content: ContentCaseType }[] | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ) {
     const response = await client.getMiniblocks({
@@ -143,7 +144,11 @@ async function fetchMiniblocksFromRpc(
         fromInclusive,
         toExclusive,
         omitSnapshots,
-        exclusionFilter: exclusionFilter ?? [],
+        exclusionFilter:
+            exclusionFilter?.map(({ payload, content }) => ({
+                payload: snakeCase(payload),
+                content: snakeCase(content),
+            })) ?? [],
     })
 
     const miniblocks: ParsedMiniblock[] = []
