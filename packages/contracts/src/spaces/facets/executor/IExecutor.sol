@@ -15,6 +15,8 @@ struct Target {
     mapping(bytes4 selector => bool disabled) disabledFunctions;
     // Whether the target is disabled.
     bool disabled;
+    // Execution ID for the target.
+    bytes32 executionId;
 }
 
 struct Access {
@@ -262,6 +264,13 @@ interface IExecutor is IExecutorBase {
      * @return The scheduled timepoint, or 0 if not scheduled or expired
      */
     function getScheduleTimepoint(bytes32 id) external view returns (uint48);
+
+    /**
+     * @notice Checks if a target is currently executing
+     * @param target The target contract address
+     * @return True if the target is currently executing
+     */
+    function onExecution(address target) external view returns (bool);
 
     /**
      * @notice Hashes an operation

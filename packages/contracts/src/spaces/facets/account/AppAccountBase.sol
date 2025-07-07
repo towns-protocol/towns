@@ -301,13 +301,4 @@ abstract contract AppAccountBase is
     function _getOwner() internal view virtual override returns (address) {
         return _owner();
     }
-
-    function _executePreHooks(
-        address target,
-        bytes4 selector,
-        uint256 value,
-        bytes calldata data
-    ) internal virtual override {}
-
-    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }

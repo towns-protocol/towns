@@ -151,6 +151,15 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     }
 
     /// @inheritdoc IExecutor
+    function onExecution(address target) external view returns (bool) {
+        if (!_isTargetExecuting(target)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// @inheritdoc IExecutor
     function hashOperation(
         address caller,
         address target,
@@ -170,15 +179,4 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
 
     /// @dev Internal function to check if a target is authorized
     function _checkAuthorized(address target) internal virtual {}
-
-    /// @dev Hook called before execution
-    function _executePreHooks(
-        address target,
-        bytes4 selector,
-        uint256 value,
-        bytes calldata data
-    ) internal virtual override {}
-
-    /// @dev Hook called after execution
-    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }
