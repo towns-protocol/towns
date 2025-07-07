@@ -179,6 +179,7 @@ export class UnauthenticatedClient {
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        exclusionFilter?: { payload: string, content: string }[],
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         if (toExclusive === fromInclusive) {
             return {
@@ -193,6 +194,7 @@ export class UnauthenticatedClient {
             fromInclusive,
             toExclusive,
             true,
+            exclusionFilter,
             this.unpackEnvelopeOpts,
         )
 

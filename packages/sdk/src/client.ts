@@ -2389,6 +2389,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        exclusionFilter?: { payload: string, content: string }[],
         opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
@@ -2423,6 +2424,7 @@ export class Client
             fromInclusive,
             toExclusive,
             true,
+            exclusionFilter,
             this.opts?.unpackEnvelopeOpts,
         )
 
@@ -2471,7 +2473,21 @@ export class Client
             })
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = stream.view.prevSnapshotMiniblockNum
-            const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive)
+            const response = await this.getMiniblocks(
+              streamId,
+              fromInclusive,
+              toExclusive,
+              [{
+                payload: 'member_payload',
+                content: 'membership'
+              },{
+                payload: 'member_payload',
+                content: 'key_solicitation'
+              },{
+                payload: 'member_payload',
+                content: 'key_fulfillment'
+              }],
+            )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
 
@@ -2564,6 +2580,7 @@ export class Client
                 this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
+                undefined,
                 { skipPersistence: true },
             )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))

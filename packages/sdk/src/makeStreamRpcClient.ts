@@ -79,6 +79,7 @@ export async function getMiniblocks(
     fromInclusive: bigint,
     toExclusive: bigint,
     omitSnapshots: boolean,
+    exclusionFilter: { payload: string, content: string }[] | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ): Promise<{
     miniblocks: ParsedMiniblock[]
@@ -97,6 +98,7 @@ export async function getMiniblocks(
             currentFromInclusive,
             toExclusive,
             omitSnapshots,
+            exclusionFilter,
             unpackEnvelopeOpts,
         )
 
@@ -133,6 +135,7 @@ async function fetchMiniblocksFromRpc(
     fromInclusive: bigint,
     toExclusive: bigint,
     omitSnapshots: boolean,
+    exclusionFilter: { payload: string, content: string }[] | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ) {
     const response = await client.getMiniblocks({
@@ -140,6 +143,7 @@ async function fetchMiniblocksFromRpc(
         fromInclusive,
         toExclusive,
         omitSnapshots,
+        exclusionFilter: exclusionFilter ?? [],
     })
 
     const miniblocks: ParsedMiniblock[] = []
