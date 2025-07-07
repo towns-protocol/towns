@@ -20,8 +20,11 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowDown } from 'lucide-react'
+import type { IAppRegistryBase } from '@towns-protocol/generated/dev/typings/IAppRegistry'
 import { cn } from '@/utils'
 import { getNativeEmojiFromName } from '@/utils/emojis'
+import { useSpaceInstalledApps } from '@/hooks/useSpaceInstalledApps'
+import { useAppMetadata } from '@/hooks/useAppMetadata'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -81,6 +84,7 @@ export const Timeline = ({
         kind: 'reply' | 'thread'
     } | null>(null)
     const { scrollback, isPending } = useScrollback(streamId)
+    const { data: installedApps = [] } = useSpaceInstalledApps(streamId)
 
     return (
         <div className="grid grid-rows-[auto,1fr,auto] gap-2">
@@ -105,6 +109,7 @@ export const Timeline = ({
                                         event={event}
                                         thread={threads?.[event.eventId]}
                                         setOpts={setOpts}
+                                        installedApps={installedApps}
                                     />
                                 )
                             }
@@ -233,22 +238,17 @@ const Message = ({
     streamId,
     thread,
     setOpts,
+    installedApps = [],
 }: {
     event: TimelineEvent
     thread: TimelineEvent[] | undefined
     streamId: string
     setOpts: (opts: { eventId: string; senderId: string; kind: 'reply' | 'thread' }) => void
+    installedApps?: IAppRegistryBase.AppStructOutput[]
 }) => {
     const sync = useSyncAgent()
-    const preferSpaceMember = isChannelStreamId(streamId)
-        ? spaceIdFromChannelId(streamId)
-        : streamId
+    const isBot = installedApps.some((app) => app.client === event.sender.id)
 
-    const { username, displayName } = useMember({
-        streamId: preferSpaceMember,
-        userId: event.sender.id,
-    })
-    const prettyDisplayName = displayName || username
     const isMyMessage = event.sender.id === sync.userId
     const { reactions, onReact } = useMessageReaction(streamId, event.eventId)
     const { redact } = useRedact(streamId)
@@ -260,19 +260,18 @@ const Message = ({
 
     return (
         <div className="flex w-full gap-3.5">
-            <Avatar className="size-9 shadow" userId={event.sender.id} />
+            <Avatar className="size-9 shadow" userId={event.sender.id} isBot={isBot} />
             <div className="flex flex-col gap-2">
+                {isBot ? (
+                    <BotInfo userId={event.sender.id} />
+                ) : (
+                    <UserInfo
+                        userId={event.sender.id}
+                        isMyMessage={isMyMessage}
+                        streamId={streamId}
+                    />
+                )}
                 <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1">
-                        <span
-                            className={cn(
-                                'font-semibold',
-                                isMyMessage ? 'text-sky-500' : 'text-purple-500',
-                            )}
-                        >
-                            {prettyDisplayName || event.sender.id}
-                        </span>
-                    </div>
                     {replyId ? (
                         <div className="text-xs text-muted-foreground">
                             ↪️ Replying to eventId: {event.eventId}
@@ -466,5 +465,43 @@ const ReplyingTo = ({ streamId, senderId }: { streamId: string; senderId: string
         <span>
             Replying to <strong>{prettyDisplayName}</strong>
         </span>
+    )
+}
+
+const UserInfo = ({
+    userId,
+    isMyMessage,
+    streamId,
+}: {
+    userId: string
+    isMyMessage: boolean
+    streamId: string
+}) => {
+    const preferSpaceMember = isChannelStreamId(streamId)
+        ? spaceIdFromChannelId(streamId)
+        : streamId
+    const { username, displayName } = useMember({
+        streamId: preferSpaceMember,
+        userId,
+    })
+    const prettyDisplayName = displayName || username
+    return (
+        <div className="flex items-center gap-1">
+            <span className={cn('font-semibold', isMyMessage ? 'text-sky-500' : 'text-purple-500')}>
+                {prettyDisplayName || userId}
+            </span>
+        </div>
+    )
+}
+
+const BotInfo = ({ userId }: { userId: string }) => {
+    const { data: metadata } = useAppMetadata(userId)
+    return (
+        <div className="flex items-center gap-2">
+            <span className="font-semibold text-blue-600">{metadata?.name}</span>
+            <div className="flex items-center justify-center rounded-full bg-blue-500 px-1.5 py-0.5">
+                <span className="text-xs font-medium text-white">BOT</span>
+            </div>
+        </div>
     )
 }

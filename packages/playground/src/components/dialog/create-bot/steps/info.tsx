@@ -18,6 +18,8 @@ export const infoSchema = z.object({
     installPrice: z.string().min(1, { message: 'Install price is required' }),
     membershipDuration: z.string().min(1, { message: 'Membership duration is required' }),
     permissions: z.array(z.nativeEnum(Permission)).min(1, { message: 'Select at least one' }),
+    imageUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
+    avatarUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
 })
 
 const membershipDurationOptions = [
@@ -68,6 +70,32 @@ export const InfoStep = () => {
                         <FormLabel>Description</FormLabel>
                         <FormControl>
                             <Input placeholder="Optional description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={control as never}
+                name="imageUrl"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Image URL</FormLabel>
+                        <FormControl>
+                            <Input placeholder="https://example.com/bot-image.png" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={control as never}
+                name="avatarUrl"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Avatar URL</FormLabel>
+                        <FormControl>
+                            <Input placeholder="https://example.com/bot-avatar.png" {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
