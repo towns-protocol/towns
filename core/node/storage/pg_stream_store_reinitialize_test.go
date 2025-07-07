@@ -178,13 +178,13 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 			expectedError:            "miniblocks cannot be empty",
 		},
 		{
-			name: "miniblock numbers not starting from 0",
+			name: "invalid snapshot number below range",
 			miniblocks: []*WriteMiniblockData{
-				{Number: 1, Data: []byte("mb1")},
-				{Number: 2, Data: []byte("mb2")},
+				{Number: 5, Data: []byte("mb5")},
+				{Number: 6, Data: []byte("mb6")},
 			},
-			lastSnapshotMiniblockNum: 0,
-			expectedError:            "miniblock numbers must be continuous starting from 0",
+			lastSnapshotMiniblockNum: 4, // Below the range [5,6]
+			expectedError:            "invalid snapshot miniblock number",
 		},
 		{
 			name: "non-continuous miniblock numbers",
@@ -193,7 +193,7 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 				{Number: 2, Data: []byte("mb2")}, // Skipped 1
 			},
 			lastSnapshotMiniblockNum: 0,
-			expectedError:            "miniblock numbers must be continuous starting from 0",
+			expectedError:            "miniblock numbers must be continuous",
 		},
 		{
 			name: "empty miniblock data",
@@ -558,4 +558,41 @@ func TestReinitializeStreamStorage_MinipoolGeneration(t *testing.T) {
 			require.NoError(err)
 		})
 	}
+}
+
+func TestReinitializeStreamStorage_NonZeroStart(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Test miniblocks starting from non-zero
+	miniblocks := []*WriteMiniblockData{
+		{Number: 10, Data: []byte("mb10"), Snapshot: []byte("snapshot10")},
+		{Number: 11, Data: []byte("mb11")},
+		{Number: 12, Data: []byte("mb12")},
+		{Number: 13, Data: []byte("mb13"), Snapshot: []byte("snapshot13")},
+	}
+
+	// Create stream with miniblocks starting from 10
+	err := store.ReinitializeStreamStorage(ctx, streamId, miniblocks, 13, false)
+	require.NoError(err)
+
+	// Verify stream was created correctly
+	allMiniblocks, err := store.ReadMiniblocks(ctx, streamId, 10, 14, false)
+	require.NoError(err)
+	require.Len(allMiniblocks, 4)
+
+	// Verify miniblock numbers
+	for i, mb := range allMiniblocks {
+		require.Equal(int64(10+i), mb.Number)
+		require.Equal(miniblocks[i].Data, mb.Data)
+	}
+
+	// Verify minipool generation is set to last miniblock + 1
+	err = store.WriteEvent(ctx, streamId, 14, 0, []byte("test event"))
+	require.NoError(err)
 }

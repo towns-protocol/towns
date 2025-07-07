@@ -2331,11 +2331,12 @@ func (s *PostgresStreamStore) ReinitializeStreamStorage(
 		return RiverError(Err_INVALID_ARGUMENT, "miniblocks cannot be empty").Func("ReinitializeStreamStorage")
 	}
 
-	// Validate miniblock numbers are continuous and start from 0
+	// Validate miniblock numbers are continuous
+	firstMbNum := miniblocks[0].Number
 	for i, mb := range miniblocks {
-		if mb.Number != int64(i) {
-			return RiverError(Err_INVALID_ARGUMENT, "miniblock numbers must be continuous starting from 0",
-				"expected", i, "got", mb.Number).Func("ReinitializeStreamStorage")
+		if mb.Number != firstMbNum+int64(i) {
+			return RiverError(Err_INVALID_ARGUMENT, "miniblock numbers must be continuous",
+				"expected", firstMbNum+int64(i), "got", mb.Number).Func("ReinitializeStreamStorage")
 		}
 		if len(mb.Data) == 0 {
 			return RiverError(Err_INVALID_ARGUMENT, "miniblock data cannot be empty",
@@ -2344,10 +2345,12 @@ func (s *PostgresStreamStore) ReinitializeStreamStorage(
 	}
 
 	// Validate snapshot miniblock number
-	if lastSnapshotMiniblockNum < 0 || lastSnapshotMiniblockNum >= int64(len(miniblocks)) {
+	lastMbNum := miniblocks[len(miniblocks)-1].Number
+	if lastSnapshotMiniblockNum < firstMbNum || lastSnapshotMiniblockNum > lastMbNum {
 		return RiverError(Err_INVALID_ARGUMENT, "invalid snapshot miniblock number",
 			"lastSnapshotMiniblockNum", lastSnapshotMiniblockNum,
-			"miniblocksCount", len(miniblocks)).Func("ReinitializeStreamStorage")
+			"firstMiniblockNum", firstMbNum,
+			"lastMiniblockNum", lastMbNum).Func("ReinitializeStreamStorage")
 	}
 
 	// Execute in transaction
@@ -2356,100 +2359,121 @@ func (s *PostgresStreamStore) ReinitializeStreamStorage(
 		"ReinitializeStreamStorage",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			// Check if stream exists
-			var exists bool
-			err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM es WHERE stream_id = $1)", streamId).
-				Scan(&exists)
-			if err != nil {
-				return err
-			}
-
-			// Handle existence checks
-			if !updateExisting && exists {
-				return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId).Func("ReinitializeStreamStorage")
-			}
-			if updateExisting && !exists {
-				return RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId).Func("ReinitializeStreamStorage")
-			}
-
-			// If updating existing stream, validate that new miniblocks exceed existing ones
-			if exists && updateExisting {
-				var lastExistingMiniblockNum int64
-				err := tx.QueryRow(ctx, s.sqlForStream("SELECT COALESCE(MAX(seq_num), -1) FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId).
-					Scan(&lastExistingMiniblockNum)
-				if err != nil {
-					return err
-				}
-
-				lastNewMiniblockNum := miniblocks[len(miniblocks)-1].Number
-				if lastNewMiniblockNum <= lastExistingMiniblockNum {
-					return RiverError(Err_INVALID_ARGUMENT, "last new miniblock must exceed last existing miniblock",
-						"lastExisting", lastExistingMiniblockNum,
-						"lastNew", lastNewMiniblockNum).Func("ReinitializeStreamStorage")
-				}
-
-				// Delete existing miniblock candidates
-				_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{miniblock_candidates}} WHERE stream_id = $1", streamId), streamId)
-				if err != nil {
-					return err
-				}
-
-				// Delete existing minipool
-				_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{minipools}} WHERE stream_id = $1", streamId), streamId)
-				if err != nil {
-					return err
-				}
-
-				// Delete existing miniblocks (for reinitialize)
-				_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Insert or update stream record
-			if exists {
-				// Update existing stream
-				_, err := tx.Exec(ctx,
-					"UPDATE es SET latest_snapshot_miniblock = $2 WHERE stream_id = $1",
-					streamId, lastSnapshotMiniblockNum)
-				if err != nil {
-					return err
-				}
-			} else {
-				// Create new stream
-				_, err := tx.Exec(ctx,
-					"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, $2, true, false)",
-					streamId, lastSnapshotMiniblockNum)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Insert miniblocks
-			for _, mb := range miniblocks {
-				_, err := tx.Exec(ctx,
-					s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4)", streamId),
-					streamId, mb.Number, mb.Data, mb.Snapshot)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Create new minipool with generation = last miniblock + 1
-			newGeneration := miniblocks[len(miniblocks)-1].Number + 1
-			_, err = tx.Exec(ctx,
-				s.sqlForStream("INSERT INTO {{minipools}} (stream_id, generation, slot_num, envelope) VALUES ($1, $2, $3, $4)", streamId),
-				streamId, newGeneration, -1, []byte{})
-			if err != nil {
-				return err
-			}
-
-			return nil
+			return s.reinitializeStreamStorageTx(
+				ctx,
+				tx,
+				streamId,
+				miniblocks,
+				lastSnapshotMiniblockNum,
+				updateExisting,
+			)
 		},
 		nil,
 		"streamId", streamId,
+		"lastSnapshotMiniblockNum", lastSnapshotMiniblockNum,
+		"miniblocksCount", len(miniblocks),
+		"updateExisting", updateExisting,
 	)
+}
+
+func (s *PostgresStreamStore) reinitializeStreamStorageTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+	lastSnapshotMiniblockNum int64,
+	updateExisting bool,
+) error {
+	// Check if stream exists
+	var exists bool
+	err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM es WHERE stream_id = $1)", streamId).
+		Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	// Handle existence checks
+	if !updateExisting && exists {
+		return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId).Func("ReinitializeStreamStorage")
+	}
+	if updateExisting && !exists {
+		return RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId).Func("ReinitializeStreamStorage")
+	}
+
+	// If updating existing stream, validate that new miniblocks exceed existing ones
+	if exists && updateExisting {
+		var lastExistingMiniblockNum int64
+		err := tx.QueryRow(ctx, s.sqlForStream("SELECT COALESCE(MAX(seq_num), -1) FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId).
+			Scan(&lastExistingMiniblockNum)
+		if err != nil {
+			return err
+		}
+
+		lastNewMiniblockNum := miniblocks[len(miniblocks)-1].Number
+		if lastNewMiniblockNum <= lastExistingMiniblockNum {
+			return RiverError(Err_INVALID_ARGUMENT, "last new miniblock must exceed last existing miniblock",
+				"lastExisting", lastExistingMiniblockNum,
+				"lastNew", lastNewMiniblockNum).Func("ReinitializeStreamStorage")
+		}
+
+		// Delete existing miniblock candidates
+		_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{miniblock_candidates}} WHERE stream_id = $1", streamId), streamId)
+		if err != nil {
+			return err
+		}
+
+		// Delete existing minipool
+		_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{minipools}} WHERE stream_id = $1", streamId), streamId)
+		if err != nil {
+			return err
+		}
+
+		// Delete existing miniblocks (for reinitialize)
+		_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Insert or update stream record
+	if exists {
+		// Update existing stream
+		_, err := tx.Exec(ctx,
+			"UPDATE es SET latest_snapshot_miniblock = $2 WHERE stream_id = $1",
+			streamId, lastSnapshotMiniblockNum)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Create new stream
+		_, err := tx.Exec(ctx,
+			"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, $2, true, false)",
+			streamId, lastSnapshotMiniblockNum)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Insert miniblocks
+	for _, mb := range miniblocks {
+		_, err := tx.Exec(ctx,
+			s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4)", streamId),
+			streamId, mb.Number, mb.Data, mb.Snapshot)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create new minipool with generation = last miniblock + 1
+	newGeneration := miniblocks[len(miniblocks)-1].Number + 1
+	_, err = tx.Exec(ctx,
+		s.sqlForStream("INSERT INTO {{minipools}} (stream_id, generation, slot_num, envelope) VALUES ($1, $2, $3, $4)", streamId),
+		streamId, newGeneration, -1, []byte{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getCurrentNodeProcessInfo(currentSchemaName string) string {
