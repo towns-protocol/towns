@@ -79,7 +79,9 @@ type (
 		// - if updateExisting is true, updates the stream.
 		//
 		// If existing stream is updated, minipool is reset to empty and generation number is set to the last miniblock number + 1.
-		// If existing stream is updated, number of the last provided miniblock should exceed the last miniblock in storage.
+		// If existing stream is updated, number of the last provided miniblock should exceed the last miniblock in storage;
+		// only new miniblocks are added to the stream, existing miniblocks are left as is,
+		// miniblocks range may overlap existing miniblocks.
 		// If existing stream is updated, existing miniblock candidates are deleted.
 		// miniblocks numbers should be continuous and in the ascending order.
 		// miniblocks numbers may start from non-zero value.

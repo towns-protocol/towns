@@ -2397,10 +2397,15 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	if exists && !updateExisting {
 		return RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId).Func("ReinitializeStreamStorage")
 	}
-	// If stream doesn't exist, we create it (regardless of updateExisting value)
 
-	// If updating existing stream, validate that new miniblocks exceed existing ones
-	if exists && updateExisting {
+	// If updating existing stream, lock it and validate
+	if exists {
+		// Lock the stream for update
+		if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
+			return err
+		}
+
+		// Get the last existing miniblock number
 		var lastExistingMiniblockNum int64
 		err := tx.QueryRow(ctx, s.sqlForStream("SELECT COALESCE(MAX(seq_num), -1) FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId).
 			Scan(&lastExistingMiniblockNum)
@@ -2426,12 +2431,6 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 		if err != nil {
 			return err
 		}
-
-		// Delete existing miniblocks (for reinitialize)
-		_, err = tx.Exec(ctx, s.sqlForStream("DELETE FROM {{miniblocks}} WHERE stream_id = $1", streamId), streamId)
-		if err != nil {
-			return err
-		}
 	}
 
 	// Insert or update stream record
@@ -2454,12 +2453,50 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	}
 
 	// Insert miniblocks
-	for _, mb := range miniblocks {
-		_, err := tx.Exec(ctx,
-			s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4)", streamId),
-			streamId, mb.Number, mb.Data, mb.Snapshot)
+	if exists {
+		// When updating, only insert miniblocks that don't already exist
+		// Get existing miniblock numbers in the range
+		firstNewMb := miniblocks[0].Number
+		lastNewMb := miniblocks[len(miniblocks)-1].Number
+		
+		rows, err := tx.Query(ctx,
+			s.sqlForStream("SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num <= $3", streamId),
+			streamId, firstNewMb, lastNewMb)
 		if err != nil {
 			return err
+		}
+		defer rows.Close()
+		
+		// Build a set of existing miniblock numbers
+		existingMbs := make(map[int64]bool)
+		for rows.Next() {
+			var seqNum int64
+			if err := rows.Scan(&seqNum); err != nil {
+				return err
+			}
+			existingMbs[seqNum] = true
+		}
+		
+		// Only insert miniblocks that don't exist
+		for _, mb := range miniblocks {
+			if !existingMbs[mb.Number] {
+				_, err := tx.Exec(ctx,
+					s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4)", streamId),
+					streamId, mb.Number, mb.Data, mb.Snapshot)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		// When creating new stream, insert all miniblocks
+		for _, mb := range miniblocks {
+			_, err := tx.Exec(ctx,
+				s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4)", streamId),
+				streamId, mb.Number, mb.Data, mb.Snapshot)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

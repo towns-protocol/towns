@@ -87,71 +87,75 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	err := store.CreateStreamStorage(ctx, streamId, genesisMb)
 	require.NoError(err)
 
-	// Add some events to minipool
-	err = store.WriteEvent(ctx, streamId, 1, 0, []byte("event 1"))
-	require.NoError(err)
-	err = store.WriteEvent(ctx, streamId, 1, 1, []byte("event 2"))
+	// Write a miniblock to extend the stream
+	err = store.WriteMiniblocks(ctx, streamId, 
+		[]*WriteMiniblockData{{Number: 1, Data: []byte("miniblock 1")}},
+		2, [][]byte{}, 1, 0)
 	require.NoError(err)
 
 	// Add miniblock candidates
 	candidate := &WriteMiniblockData{
-		Number: 1,
+		Number: 2,
 		Hash:   common.HexToHash("0xc1"),
-		Data:   []byte("candidate 1"),
+		Data:   []byte("candidate 2"),
 	}
 	err = store.WriteMiniblockCandidate(ctx, streamId, candidate)
 	require.NoError(err)
 
-	// Prepare new miniblocks for reinitialization
+	// Prepare new miniblocks for reinitialization (extending the stream)
 	newMiniblocks := []*WriteMiniblockData{
-		{
-			Number:   0,
-			Hash:     common.HexToHash("0x01"),
-			Data:     []byte("new genesis miniblock"),
-			Snapshot: []byte("new genesis snapshot"),
-		},
 		{
 			Number:   1,
 			Hash:     common.HexToHash("0x02"),
-			Data:     []byte("new miniblock 1"),
-			Snapshot: []byte("new snapshot 1"),
+			Data:     []byte("new miniblock 1 - should be ignored"),
 		},
 		{
 			Number: 2,
 			Hash:   common.HexToHash("0x03"),
 			Data:   []byte("new miniblock 2"),
+			Snapshot: []byte("new snapshot 2"),
+		},
+		{
+			Number: 3,
+			Hash:   common.HexToHash("0x04"),
+			Data:   []byte("new miniblock 3"),
 		},
 	}
 
 	// Update existing stream
-	err = store.ReinitializeStreamStorage(ctx, streamId, newMiniblocks, 1, true)
+	err = store.ReinitializeStreamStorage(ctx, streamId, newMiniblocks, 2, true)
 	require.NoError(err)
 
 	// Verify stream was updated
 	result, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
-	// When requesting 10 miniblocks with only 3 total (0,1,2) and snapshot at 1,
-	// it returns all miniblocks from 0 to ensure snapshot is included
-	require.Len(result.Miniblocks, 3) // Returns all miniblocks 0, 1, 2
-	require.Equal(1, result.SnapshotMiniblockOffset) // Snapshot (miniblock 1) is at offset 1
-	require.Empty(result.MinipoolEnvelopes) // Minipool should be reset
-
-	// Verify miniblocks were replaced with new data
-	for i, mb := range result.Miniblocks {
-		require.Equal(newMiniblocks[i].Number, mb.Number)
-		require.Equal(newMiniblocks[i].Data, mb.Data)
-		require.Equal(newMiniblocks[i].Snapshot, mb.Snapshot)
-	}
+	// With last snapshot at 2, should return from miniblock 2 onwards
+	require.GreaterOrEqual(len(result.Miniblocks), 2) // At least miniblocks 2 and 3
+	
+	// Find miniblock 0 to verify it wasn't changed
+	mb0, err := store.ReadMiniblocks(ctx, streamId, 0, 1, false)
+	require.NoError(err)
+	require.Len(mb0, 1)
+	require.Equal([]byte("genesis miniblock"), mb0[0].Data) // Original data preserved
+	
+	// Verify only new miniblocks 2 and 3 were added (0 and 1 already existed)
+	allMbs, err := store.ReadMiniblocks(ctx, streamId, 0, 4, false)
+	require.NoError(err)
+	require.Len(allMbs, 4) // 0, 1, 2, 3
+	require.Equal([]byte("genesis miniblock"), allMbs[0].Data)
+	require.Equal([]byte("miniblock 1"), allMbs[1].Data) // Original miniblock 1
+	require.Equal([]byte("new miniblock 2"), allMbs[2].Data)
+	require.Equal([]byte("new miniblock 3"), allMbs[3].Data)
 
 	// Verify old minipool events were deleted and new generation marker exists
 	debugData, err := store.DebugReadStreamData(ctx, streamId)
 	require.NoError(err)
 	require.Len(debugData.Events, 1) // Only generation marker
-	require.Equal(int64(3), debugData.Events[0].Generation)
+	require.Equal(int64(4), debugData.Events[0].Generation) // Last miniblock is 3, so generation is 4
 	require.Equal(int64(-1), debugData.Events[0].Slot)
 
 	// Verify miniblock candidates were deleted
-	mbCandidateCount, err := store.GetMiniblockCandidateCount(ctx, streamId, 1)
+	mbCandidateCount, err := store.GetMiniblockCandidateCount(ctx, streamId, 2)
 	require.NoError(err)
 	require.Equal(0, mbCandidateCount)
 }
@@ -608,5 +612,54 @@ func TestReinitializeStreamStorage_NonZeroStart(t *testing.T) {
 
 	// Verify minipool generation is set to last miniblock + 1
 	err = store.WriteEvent(ctx, streamId, 14, 0, []byte("test event"))
+	require.NoError(err)
+}
+
+func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Create initial stream with miniblocks 0-3
+	initialMiniblocks := []*WriteMiniblockData{
+		{Number: 0, Data: []byte("original mb0"), Snapshot: []byte("snapshot0")},
+		{Number: 1, Data: []byte("original mb1")},
+		{Number: 2, Data: []byte("original mb2")},
+		{Number: 3, Data: []byte("original mb3")},
+	}
+	err := store.ReinitializeStreamStorage(ctx, streamId, initialMiniblocks, 0, false)
+	require.NoError(err)
+
+	// Update with overlapping range (2-5), existing 2-3 should remain unchanged
+	updateMiniblocks := []*WriteMiniblockData{
+		{Number: 2, Data: []byte("new mb2 - should be ignored")},
+		{Number: 3, Data: []byte("new mb3 - should be ignored")},
+		{Number: 4, Data: []byte("new mb4")},
+		{Number: 5, Data: []byte("new mb5"), Snapshot: []byte("snapshot5")},
+	}
+	err = store.ReinitializeStreamStorage(ctx, streamId, updateMiniblocks, 5, true)
+	require.NoError(err)
+
+	// Verify all miniblocks
+	allMiniblocks, err := store.ReadMiniblocks(ctx, streamId, 0, 6, false)
+	require.NoError(err)
+	require.Len(allMiniblocks, 6)
+
+	// Verify original miniblocks 0-3 are unchanged
+	require.Equal([]byte("original mb0"), allMiniblocks[0].Data)
+	require.Equal([]byte("original mb1"), allMiniblocks[1].Data)
+	require.Equal([]byte("original mb2"), allMiniblocks[2].Data) // Not overwritten
+	require.Equal([]byte("original mb3"), allMiniblocks[3].Data) // Not overwritten
+
+	// Verify new miniblocks 4-5 were added
+	require.Equal([]byte("new mb4"), allMiniblocks[4].Data)
+	require.Equal([]byte("new mb5"), allMiniblocks[5].Data)
+
+	// Verify minipool generation is set to last miniblock + 1
+	err = store.WriteEvent(ctx, streamId, 6, 0, []byte("test event"))
 	require.NoError(err)
 }
