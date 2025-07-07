@@ -152,11 +152,7 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
 
     /// @inheritdoc IExecutor
     function onExecution(address target) external view returns (bool) {
-        if (!_isTargetExecuting(target)) {
-            return false;
-        }
-
-        return true;
+        return _isTargetExecuting(target);
     }
 
     /// @inheritdoc IExecutor
