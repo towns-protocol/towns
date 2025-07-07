@@ -54,6 +54,8 @@ import {
     EncryptedDataSchema,
     type EncryptedData,
     Tags,
+    type SnapshotCaseType,
+    type Snapshot,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -67,6 +69,7 @@ import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
 } from '@towns-protocol/encryption'
+
 import {
     createClient as createViemClient,
     http,
@@ -1083,12 +1086,24 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }
     }
 
-    const getChannelSettings = async (channelId: string) => {
-        const stream = await client.getStream(channelId)
-        if (stream.snapshot.content.case === 'channelContent') {
-            return stream.snapshot.content.value.inception?.channelSettings
+    const getChannelSettings = async (channelId: string) =>
+        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
+
+    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
+        Snapshot['content'],
+        { case: TCase }
+    >['value']
+
+    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
+        streamId: string,
+        snapshotCase: TCase,
+        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
+    ): Promise<TResult | undefined> => {
+        const stream = await client.getStream(streamId)
+        if (stream.snapshot.content.case === snapshotCase) {
+            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
         }
-        return
+        return undefined
     }
 
     return {
@@ -1125,5 +1140,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         /** @deprecated Not planned for now */
         getUserData,
         getChannelSettings,
+        getFromSnapshot,
     }
 }
