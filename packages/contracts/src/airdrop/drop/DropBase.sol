@@ -20,14 +20,6 @@ abstract contract DropBase is IDropFacetBase {
     /*                          SETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _setRewardsDistribution(address rewardsDistribution) internal {
-        if (rewardsDistribution == address(0)) {
-            DropFacet__RewardsDistributionNotSet.selector.revertWith();
-        }
-
-        _getLayout().rewardsDistribution = rewardsDistribution;
-    }
-
     function _addClaimCondition(DropGroup.ClaimCondition calldata newCondition) internal {
         (uint48 existingStartId, uint48 existingCount) = _getStartIdAndCount();
         uint48 newConditionId = existingStartId + existingCount;
@@ -131,8 +123,46 @@ abstract contract DropBase is IDropFacetBase {
         }
     }
 
+    function _verifyLockDuration(uint48 lockDuration) internal view {
+        DropStorage.Layout storage self = _getLayout();
+        if (lockDuration < self.minLockDuration)
+            DropFacet__InvalidLockDuration.selector.revertWith();
+        if (lockDuration > self.maxLockDuration)
+            DropFacet__InvalidLockDuration.selector.revertWith();
+    }
+
     function _approveClaimToken(address token, uint256 amount) internal {
         token.safeApprove(_getLayout().rewardsDistribution, amount);
+    }
+
+    /// @notice Applies lock-to-boost penalty reduction based on lock duration
+    /// @param claimed The claimed storage for the user
+    /// @param amount The amount of tokens to claim
+    /// @param penaltyBps The penalty in basis points
+    /// @param maxLockDuration The maximum lock duration
+    /// @param lockDuration The actual lock duration
+    /// @return remaining The remaining amount after penalty reduction
+    function _lockToBoost(
+        DropGroup.Claimed storage claimed,
+        uint256 amount,
+        uint16 penaltyBps,
+        uint48 maxLockDuration,
+        uint48 lockDuration
+    ) internal returns (uint256 remaining) {
+        // linear decrease of penaltyBps according to lockDuration
+        penaltyBps = uint16(
+            (uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration
+        );
+
+        remaining = amount;
+        if (penaltyBps != 0) {
+            unchecked {
+                uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+                remaining = amount - penaltyAmount;
+            }
+        }
+        // store timestamp of claim and lockDuration
+        (claimed.lockStart, claimed.lockDuration) = (uint48(block.timestamp), lockDuration);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

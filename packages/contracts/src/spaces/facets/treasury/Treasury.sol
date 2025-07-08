@@ -23,7 +23,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         _addInterface(type(IERC1155Receiver).interfaceId);
     }
 
-    ///@inheritdoc ITreasury
+    /// @inheritdoc ITreasury
     function withdraw(address account) external onlyOwner nonReentrant {
         if (account == address(0)) {
             CustomRevert.revertWith(IMembershipBase.Membership__InvalidAddress.selector);
@@ -48,7 +48,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
     /*                           Hooks                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    ///@inheritdoc ITreasury
+    /// @inheritdoc ITreasury
     function onERC721Received(
         address,
         address,
@@ -58,7 +58,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         return this.onERC721Received.selector;
     }
 
-    ///@inheritdoc ITreasury
+    /// @inheritdoc ITreasury
     function onERC1155Received(
         address,
         address,
@@ -69,7 +69,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         return this.onERC1155Received.selector;
     }
 
-    ///@inheritdoc ITreasury
+    /// @inheritdoc ITreasury
     function onERC1155BatchReceived(
         address,
         address,

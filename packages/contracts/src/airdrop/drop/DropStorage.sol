@@ -13,6 +13,8 @@ library DropStorage {
         uint48 conditionStartId;
         uint48 conditionCount;
         mapping(uint256 groupId => DropGroup.Layout) groupById;
+        uint48 minLockDuration;
+        uint48 maxLockDuration;
     }
 
     function getLayout() internal pure returns (Layout storage l) {

@@ -197,12 +197,13 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[wallet]);
 
-        uint256 deadline = block.timestamp + 100;
-        bytes memory signature = _signStake(operator, wallet, walletKey, deadline);
+        uint48 lockDuration = 30 days;
 
         vm.prank(caller);
+        // Calculate expected amount after penalty reduction
+        uint256 expectedAmount = _calculateExpectedAmountAfterPenalty(amount, 5000, lockDuration);
         vm.expectEmit(address(dropFacet));
-        emit DropFacet_Claimed_And_Staked(conditionId, caller, wallet, amount);
+        emit DropFacet_Claimed_And_Staked(conditionId, caller, wallet, expectedAmount);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
@@ -212,8 +213,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: proof
             }),
             operator,
-            deadline,
-            signature
+            lockDuration
         );
         _;
     }
@@ -562,9 +562,14 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     {
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
         uint256 depositId = dropFacet.getDepositIdByWallet(bob, conditionId);
-        uint256 depositAmount = amounts[treeIndex[bob]];
+        uint256 depositAmount = _calculateExpectedAmountAfterPenalty(
+            amounts[treeIndex[bob]],
+            5000,
+            30 days
+        );
 
-        assertEq(rewardsDistribution.stakedByDepositor(bob), depositAmount);
+        // Verify that the correct amount was staked (reduced due to penalty)
+        assertEq(rewardsDistribution.stakedByDepositor(address(dropFacet)), depositAmount);
 
         // move time forward
         vm.warp(block.timestamp + timeLapse);
@@ -575,12 +580,18 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 claimReward = rewardsDistribution.claimReward(bob, bob);
         _verifyClaim(bob, bob, claimReward, currentReward);
 
+        // Wait for lock period to expire and unlock the stake
+        vm.warp(block.timestamp + 30 days);
+
+        vm.prank(bob);
+        dropFacet.unlockStake(conditionId);
+
         vm.prank(bob);
         rewardsDistribution.initiateWithdraw(depositId);
-        uint256 lockCooldown = towns.lockExpiration(
+        uint256 lockExpiration = towns.lockExpiration(
             rewardsDistribution.delegationProxyById(depositId)
         );
-        vm.warp(lockCooldown);
+        vm.warp(lockExpiration);
 
         vm.prank(bob);
         rewardsDistribution.withdraw(depositId);
@@ -612,8 +623,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: new bytes32[](0)
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -639,8 +649,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: new bytes32[](0)
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -667,8 +676,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: new bytes32[](0)
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -699,8 +707,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: proof
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -731,8 +738,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: proof
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -763,8 +769,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: proof
             }),
             operator,
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
 
         vm.expectRevert(DropFacet__AlreadyClaimed.selector);
@@ -777,8 +782,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: proof
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -799,8 +803,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 proof: new bytes32[](0)
             }),
             address(1),
-            block.timestamp + 100,
-            new bytes(0)
+            30 days
         );
     }
 
@@ -1284,5 +1287,24 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             reward,
             "expected reward"
         );
+    }
+
+    function _calculateExpectedAmountAfterPenalty(
+        uint256 amount,
+        uint16 penaltyBps,
+        uint48 lockDuration
+    ) internal pure returns (uint256) {
+        uint48 maxLockDuration = 180 days;
+        // linear decrease of penaltyBps according to lockDuration
+        penaltyBps = uint16(
+            (uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration
+        );
+        
+        uint256 remaining = amount;
+        if (penaltyBps != 0) {
+            uint256 penaltyAmount = (amount * penaltyBps) / 10000;
+            remaining = amount - penaltyAmount;
+        }
+        return remaining;
     }
 }

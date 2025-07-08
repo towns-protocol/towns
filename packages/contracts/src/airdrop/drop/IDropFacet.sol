@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
 import {DropClaim} from "./DropClaim.sol";
 import {DropGroup} from "./DropGroup.sol";
 
-// libraries
-
-// contracts
-
 interface IDropFacetBase {
-    // =============================================================
-    //                           Events
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     event DropFacet_Claimed_WithPenalty(
         uint256 indexed conditionId,
         address indexed claimer,
@@ -37,9 +33,12 @@ interface IDropFacetBase {
         DropGroup.ClaimCondition condition
     );
 
-    // =============================================================
-    //                           Errors
-    // =============================================================
+    event DropFacet_StakeUnlocked(uint256 indexed conditionId, address indexed account);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     error DropFacet__NoActiveClaimCondition();
     error DropFacet__MerkleRootNotSet();
     error DropFacet__QuantityMustBeGreaterThanZero();
@@ -54,6 +53,8 @@ interface IDropFacetBase {
     error DropFacet__CurrencyNotSet();
     error DropFacet__RewardsDistributionNotSet();
     error DropFacet__InsufficientBalance();
+    error DropFacet__InvalidLockDuration();
+    error DropFacet__StakeNotUnlocked();
 }
 
 interface IDropFacet is IDropFacetBase {
@@ -82,18 +83,20 @@ interface IDropFacet is IDropFacetBase {
         uint16 expectedPenaltyBps
     ) external returns (uint256);
 
-    /// @notice Claims tokens and stakes them in the staking contract
+    /// @notice Claims tokens and stakes them with lock duration for penalty reduction
     /// @param req The claim request
     /// @param delegatee The address of the delegatee
-    /// @param deadline The deadline for the transaction
-    /// @param signature The signature of the delegatee
-    /// @return The amount of tokens claimed
+    /// @param lockDuration The lock duration in seconds
+    /// @return The amount of tokens claimed after penalty reduction
     function claimAndStake(
         DropClaim.Claim calldata req,
         address delegatee,
-        uint256 deadline,
-        bytes calldata signature
+        uint48 lockDuration
     ) external returns (uint256);
+
+    /// @notice Unlocks a staked claim after the lock period expires
+    /// @param conditionId The ID of the claim condition
+    function unlockStake(uint256 conditionId) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
@@ -122,6 +125,12 @@ interface IDropFacet is IDropFacetBase {
         address account,
         uint256 conditionId
     ) external view returns (uint256);
+
+    /// @notice Gets the unlock time for a staked claim
+    /// @param account The address of the wallet
+    /// @param conditionId The ID of the claim condition
+    /// @return The timestamp when the stake can be unlocked
+    function getUnlockTime(address account, uint256 conditionId) external view returns (uint256);
 
     /// @notice Gets the deposit ID of a specific wallet for a given condition
     /// @param account The address of the wallet to check

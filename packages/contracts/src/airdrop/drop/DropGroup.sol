@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IDropFacetBase} from "./IDropFacet.sol";
 
 // libraries
+import {BasisPoints} from "../../utils/libraries/BasisPoints.sol";
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 
 // contracts
@@ -23,9 +24,13 @@ library DropGroup {
     /// @notice A struct representing a claimed drop
     /// @param amount The amount of tokens claimed
     /// @param depositId The deposit ID of the claim
+    /// @param lockStart The timestamp when the lock started
+    /// @param lockDuration The duration of the lock in seconds
     struct Claimed {
         uint256 amount;
         uint256 depositId;
+        uint48 lockStart;
+        uint48 lockDuration;
     }
 
     /// @notice A struct representing a claim condition
@@ -108,4 +113,5 @@ library DropGroup {
             IDropFacetBase.DropFacet__ClaimHasEnded.selector.revertWith();
         }
     }
+
 }
