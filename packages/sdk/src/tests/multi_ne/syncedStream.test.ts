@@ -92,40 +92,28 @@ describe('syncedStream', () => {
         // check that the events are the same
         await waitFor(() => {
             // Filter Alice's events and adjust event numbers to account for filtered events
-            let shift = 0n
             const aliceEvents = aliceStream.view.timeline
-                /*.map((e) => {
-                    if (e.content?.kind === RiverTimelineEvent.StreamMembership) {
-                        // Skip this event but increment shift to account for the gap
-                        shift += 1n
-                        return null
-                    } else {
-                        // Use original event number minus the accumulated shift
-                        return {
-                            eventId: e.eventId,
-                            kind: getFallbackContent('', e.content),
-                            eventNumber: (e.confirmedEventNum ?? e.eventNum) - shift,
-                        }
-                    }
-                })
-                .filter((e): e is NonNullable<typeof e> => e !== null)*/
-                .map((e) => ({
-                  eventId: e.eventId,
-                  kind: getFallbackContent('', e.content),
-                  content: e.content,
-                  eventNumber: e.confirmedEventNum ?? e.eventNum,
-                }))
                 .filter((e) => e.content?.kind !== RiverTimelineEvent.StreamMembership)
-                .sort((a, b) => Number(a.eventNumber - b.eventNumber))
-
-            const bobEvents = bobStreamFresh.view.timeline
+                .sort((a, b) =>
+                    Number(
+                        (a.confirmedEventNum ?? a.eventNum) - (b.confirmedEventNum ?? b.eventNum),
+                    ),
+                )
                 .map((e) => ({
                     eventId: e.eventId,
                     kind: getFallbackContent('', e.content),
-                    content: e.content,
-                    eventNumber: e.confirmedEventNum ?? e.eventNum,
                 }))
-                .sort((a, b) => Number(a.eventNumber - b.eventNumber))
+
+            const bobEvents = bobStreamFresh.view.timeline
+                .sort((a, b) =>
+                    Number(
+                        (a.confirmedEventNum ?? a.eventNum) - (b.confirmedEventNum ?? b.eventNum),
+                    ),
+                )
+                .map((e) => ({
+                    eventId: e.eventId,
+                    kind: getFallbackContent('', e.content),
+                }))
 
             expect(bobEvents).toStrictEqual(aliceEvents)
         })
