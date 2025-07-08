@@ -8,6 +8,7 @@ import { genShortId } from '../../id'
 import { getFallbackContent } from '../../views/models/timelineEvent'
 import { StreamStateView } from '../../streamStateView'
 import { dlog } from '@towns-protocol/dlog'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('test:syncedStream')
 
@@ -91,6 +92,7 @@ describe('syncedStream', () => {
         // check that the events are the same
         await waitFor(() => {
             const aliceEvents = aliceStream.view.timeline
+                .filter((e) => e.content?.kind !== RiverTimelineEvent.StreamMembership)
                 .map((e) => ({
                     eventId: e.eventId,
                     kind: getFallbackContent('', e.content),
