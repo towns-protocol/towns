@@ -106,7 +106,10 @@ func TestCreateMediaStream(t *testing.T) {
 			StreamId: mediaStreamId[:],
 		}))
 		tt.require.NoError(err)
-		tt.require.Equal(firstCc, csResp.Msg.NextCreationCookie)
+		tt.require.Equal(firstCc.StreamId, csResp.Msg.NextCreationCookie.StreamId)
+		tt.require.Equal(firstCc.PrevMiniblockHash, csResp.Msg.NextCreationCookie.PrevMiniblockHash)
+		tt.require.Equal(firstCc.MiniblockNum, csResp.Msg.NextCreationCookie.MiniblockNum)
+		tt.require.Equal(firstCc.Nodes, csResp.Msg.NextCreationCookie.Nodes)
 
 		// Add the rest of the media chunks
 		cc := csResp.Msg.NextCreationCookie

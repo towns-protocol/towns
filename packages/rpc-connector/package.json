@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/rpc-connector",
-    "version": "0.0.263",
+    "version": "0.0.270",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "publishConfig": {

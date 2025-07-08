@@ -25,6 +25,8 @@ import { DmAndGdmModel, dmsAndGdmsTransform } from './transforms/dmsAndGdmsTrans
 import { StreamMemberIdsView } from './streams/streamMemberIds'
 import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTransform'
 import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
+import { NotificationSettings } from './streams/notificationSettings'
+import { SpaceUnreadsModel, spaceUnreadsTransform } from './transforms/spaceUnreadsTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -35,6 +37,7 @@ class Consts {
 
 // a view of all the streams
 export class StreamsView {
+    readonly notificationSettings: NotificationSettings
     readonly streamStatus: StreamStatus
     readonly streamMemberIds: StreamMemberIdsView
     readonly spaceStreams: SpaceStreamsView
@@ -59,6 +62,7 @@ export class StreamsView {
         dmsAndGdms: Observable<DmAndGdmModel[]>
         dmsAndGdmsUnreadIds: Observable<Set<string>>
         blockedUserIds: Observable<Set<string>>
+        spaceUnreads: Observable<SpaceUnreadsModel>
     }
 
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
@@ -68,6 +72,7 @@ export class StreamsView {
         const userMetadataStreamId = userId !== '' ? makeUserMetadataStreamId(userId) : ''
         const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
 
+        this.notificationSettings = new NotificationSettings()
         this.streamStatus = new StreamStatus()
         this.streamMemberIds = new StreamMemberIdsView()
         this.userSettingsStreams = new UserSettingsStreamsView()
@@ -138,6 +143,14 @@ export class StreamsView {
 
         const myBlockedUserIds = myRemoteUserBlocks.map(blockedUserIdsTransform)
 
+        const mySpaceUnreads = combine({
+            notificationSettings: this.notificationSettings.map((x) => x.settings),
+            timelinesView: throttledTimelinesView,
+            myUnreadMarkers: unreadMarkers,
+        })
+            .throttle(250)
+            .map(spaceUnreadsTransform)
+
         ///
         this.my = {
             userId: myUserId,
@@ -152,6 +165,7 @@ export class StreamsView {
             dmsAndGdms: myDmsAndGdms,
             dmsAndGdmsUnreadIds: myDmsAndGdmsUnreadIds,
             blockedUserIds: myBlockedUserIds,
+            spaceUnreads: mySpaceUnreads,
         }
     }
 }

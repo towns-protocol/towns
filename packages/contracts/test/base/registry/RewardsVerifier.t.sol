@@ -18,6 +18,30 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     Towns internal towns;
     IRewardsDistribution internal rewardsDistributionFacet;
 
+    struct StateSnapshot {
+        uint256 operatorEarningPower;
+        uint256 beneficiaryEarningPower;
+        uint256 depositorStaked;
+        uint256 totalStaked;
+        uint256 operatorVotes;
+    }
+
+    function takeSnapshot(
+        address depositor,
+        address delegatee,
+        address beneficiary
+    ) internal view returns (StateSnapshot memory snapshot) {
+        snapshot.operatorEarningPower = rewardsDistributionFacet
+            .treasureByBeneficiary(delegatee)
+            .earningPower;
+        snapshot.beneficiaryEarningPower = rewardsDistributionFacet
+            .treasureByBeneficiary(beneficiary)
+            .earningPower;
+        snapshot.depositorStaked = rewardsDistributionFacet.stakedByDepositor(depositor);
+        snapshot.totalStaked = rewardsDistributionFacet.stakingState().totalStaked;
+        snapshot.operatorVotes = towns.getVotes(delegatee);
+    }
+
     function verifyStake(
         address depositor,
         uint256 depositId,
@@ -26,10 +50,33 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
         uint256 commissionRate,
         address beneficiary
     ) internal view {
+        // Create a "zero state" snapshot for clean environment verification
+        StateSnapshot memory zeroSnapshot;
+
+        verifyStakeWithSnapshot(
+            depositor,
+            depositId,
+            amount,
+            delegatee,
+            commissionRate,
+            beneficiary,
+            zeroSnapshot
+        );
+    }
+
+    function verifyStakeWithSnapshot(
+        address depositor,
+        uint256 depositId,
+        uint96 amount,
+        address delegatee,
+        uint256 commissionRate,
+        address beneficiary,
+        StateSnapshot memory beforeSnapshot
+    ) internal view {
         if (depositor != address(rewardsDistributionFacet)) {
             assertEq(
                 rewardsDistributionFacet.stakedByDepositor(depositor),
-                amount,
+                beforeSnapshot.depositorStaked + amount,
                 "stakedByDepositor"
             );
         }
@@ -44,26 +91,27 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
             deposit.commissionEarningPower,
             (amount * commissionRate) / 10_000,
             1,
-            "commissionEarningPower"
+            "deposit.commissionEarningPower"
         );
 
         assertEq(
             deposit.commissionEarningPower +
                 rewardsDistributionFacet.treasureByBeneficiary(beneficiary).earningPower,
-            amount,
+            beforeSnapshot.beneficiaryEarningPower + amount,
             "earningPower"
         );
 
+        // Verify operator earning power increased by commission amount
         assertEq(
             rewardsDistributionFacet.treasureByBeneficiary(delegatee).earningPower,
-            deposit.commissionEarningPower,
-            "commissionEarningPower"
+            beforeSnapshot.operatorEarningPower + deposit.commissionEarningPower,
+            "delegatee commissionEarningPower delta"
         );
 
         address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
         if (proxy != address(0)) {
             assertEq(towns.delegates(proxy), delegatee, "proxy delegatee");
-            assertEq(towns.getVotes(delegatee), amount, "votes");
+            assertEq(towns.getVotes(delegatee), beforeSnapshot.operatorVotes + amount, "votes");
         }
     }
 
