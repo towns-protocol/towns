@@ -1,5 +1,6 @@
 import debug from 'debug'
 import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
+import { PayloadCaseType, ContentCaseType } from '@towns-protocol/proto'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream } from './sign'
@@ -179,6 +180,7 @@ export class UnauthenticatedClient {
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        exclusionFilter?: { payload: PayloadCaseType; content: ContentCaseType }[],
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         if (toExclusive === fromInclusive) {
             return {
@@ -193,6 +195,7 @@ export class UnauthenticatedClient {
             fromInclusive,
             toExclusive,
             true,
+            exclusionFilter,
             this.unpackEnvelopeOpts,
         )
 

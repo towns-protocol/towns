@@ -30,6 +30,22 @@ var (
 	testSecretHexString2 = "202122232425262728292a2b2c2d2e2f101112131415161718191a1b1c1d1e1f"
 )
 
+// Helper function to create test metadata
+func testAppMetadataWithName(name string) types.AppMetadata {
+	return types.AppMetadata{
+		Name:        name,
+		Description: "A test application",
+		ImageUrl:    "https://example.com/image.png",
+		ExternalUrl: "",
+		AvatarUrl:   "https://example.com/avatar.png",
+		SlashCommands: []types.SlashCommand{
+			{Name: "help", Description: "Get help with bot commands"},
+			{Name: "status", Description: "Check bot status"},
+		},
+	}
+}
+
+
 type testAppRegistryStoreParams struct {
 	ctx                context.Context
 	pgAppRegistryStore *storage.PostgresAppRegistryStore
@@ -109,6 +125,7 @@ func TestGetSessionKey(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("app"),
 		secret,
 	)
 	require.NoError(err)
@@ -193,6 +210,7 @@ func TestUpdateSettings(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("app"),
 		secret,
 	)
 	require.NoError(err)
@@ -204,6 +222,7 @@ func TestUpdateSettings(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
+			Metadata:        testAppMetadataWithName("app"),
 		},
 		info,
 	)
@@ -222,6 +241,7 @@ func TestUpdateSettings(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
+			Metadata:        testAppMetadataWithName("app"),
 			Settings:        types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
 		},
 		info,
@@ -258,6 +278,7 @@ func TestRegisterWebhook(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("app"),
 		secret,
 	)
 	require.NoError(err)
@@ -269,6 +290,7 @@ func TestRegisterWebhook(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
+			Metadata:        testAppMetadataWithName("app"),
 		},
 		info,
 	)
@@ -284,6 +306,7 @@ func TestRegisterWebhook(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
+			Metadata:        testAppMetadataWithName("app"),
 			WebhookUrl:      webhook,
 			EncryptionDevice: storage.EncryptionDevice{
 				DeviceKey:   deviceKey,
@@ -306,6 +329,7 @@ func TestRegisterWebhook(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
+			Metadata:        testAppMetadataWithName("app"),
 			WebhookUrl:      webhook2,
 			EncryptionDevice: storage.EncryptionDevice{
 				DeviceKey:   deviceKey2,
@@ -318,11 +342,13 @@ func TestRegisterWebhook(t *testing.T) {
 	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 
+	// Confirm that device keys must be unique.
 	err = store.CreateApp(
 		params.ctx,
 		owner,
 		app2,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		testAppMetadataWithName("app2"),
 		secret,
 	)
 	require.NoError(err)
@@ -358,29 +384,47 @@ func TestCreateApp(t *testing.T) {
 		owner,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		testAppMetadataWithName("app"),
 		secret,
 	)
 	require.NoError(err)
 
+	// apps are uniquely keyed by address.
 	err = store.CreateApp(
 		params.ctx,
 		owner2,
 		app,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		testAppMetadataWithName("app 2"),
 		secret,
 	)
 	require.ErrorContains(err, "app already exists")
 	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
-	// Fine to have multiple apps per owner
+	// Fine to have multiple apps per owner, with different display names for each bot.
 	err = store.CreateApp(
 		params.ctx,
 		owner,
 		app2,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		testAppMetadataWithName("app 2"),
 		secret2,
 	)
 	require.NoError(err)
+
+	// Test creating an app with duplicate display name should fail
+	app4 := safeAddress(t)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app4,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		testAppMetadataWithName("app"), // Same display name as first app
+		secret,
+	)
+	require.Error(err)
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
+	require.ErrorContains(err, "another app with the same name already exists")
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
@@ -389,6 +433,7 @@ func TestCreateApp(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
+			Metadata:        testAppMetadataWithName("app"),
 			Settings: types.AppSettings{
 				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
 			},
@@ -403,6 +448,7 @@ func TestCreateApp(t *testing.T) {
 			App:             app2,
 			Owner:           owner,
 			EncryptedSecret: secret2,
+			Metadata:        testAppMetadataWithName("app 2"),
 			Settings: types.AppSettings{
 				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 			},
@@ -437,7 +483,7 @@ func TestRotateSecret(t *testing.T) {
 
 	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret)
+	}, testAppMetadataWithName("app"), secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -501,7 +547,7 @@ func TestPublishSessionKeys(t *testing.T) {
 
 	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret)
+	}, testAppMetadataWithName("app"), secret)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/callme"
@@ -594,12 +640,12 @@ func TestGetSendableApps(t *testing.T) {
 
 	require.NoError(store.CreateApp(params.ctx, owner, app, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret))
+	}, testAppMetadataWithName("app"), secret))
 	require.NoError(store.RegisterWebhook(params.ctx, app, sApp.WebhookUrl, sApp.DeviceKey, "fallbackKey"))
 
 	require.NoError(store.CreateApp(params.ctx, owner2, app2, types.AppSettings{
 		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-	}, secret2))
+	}, testAppMetadataWithName("app2"), secret2))
 	require.NoError(store.RegisterWebhook(params.ctx, app2, sApp2.WebhookUrl, sApp2.DeviceKey, "fallbackKey2"))
 
 	sendableApps, err := store.GetSendableApps(params.ctx, []common.Address{})
@@ -698,6 +744,7 @@ func TestEnqueueMessages(t *testing.T) {
 		types.AppSettings{
 			ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
 		},
+		testAppMetadataWithName("app0"),
 		secrets[0],
 	)
 	require.NoError(err)
@@ -772,6 +819,7 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Register apps and webhooks for apps 2 through 5, to have all device keys registered
 	for i := range 4 {
+		appMetadata := testAppMetadataWithName(fmt.Sprintf("app %d", i+1))
 		require.NoError(
 			store.CreateApp(
 				params.ctx,
@@ -780,6 +828,7 @@ func TestEnqueueMessages(t *testing.T) {
 				types.AppSettings{
 					ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
 				},
+				appMetadata,
 				secrets[i+1],
 			),
 		)
@@ -1103,4 +1152,323 @@ func TestEnqueueMessages(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetAppMetadata(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with initial metadata
+	initialMetadata := testAppMetadataWithName("app")
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		initialMetadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Verify initial metadata
+	appInfo, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(initialMetadata, appInfo.Metadata)
+
+	// Update metadata
+	updatedMetadata := types.AppMetadata{
+		Name:        "Updated App Name",
+		Description: "Updated description for the app",
+		ImageUrl:    "https://example.com/updated-image.png",
+		AvatarUrl:   "https://example.com/updated-avatar.png",
+		ExternalUrl: "https://external.example.com",
+		SlashCommands: []types.SlashCommand{
+			{Name: "help", Description: "Updated help command"},
+			{Name: "search", Description: "Search for content"},
+			{Name: "config", Description: "Configure settings"},
+		},
+	}
+
+	err = store.SetAppMetadata(params.ctx, app, updatedMetadata)
+	require.NoError(err)
+
+	// Verify updated metadata
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(updatedMetadata, appInfo.Metadata)
+
+	// Test setting metadata for non-existent app
+	err = store.SetAppMetadata(params.ctx, unregisteredApp, updatedMetadata)
+	require.Error(err)
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+	require.ErrorContains(err, "app was not found in registry")
+
+	// Setting metadata with duplicate display name should fail
+	// First, create another app.
+	app2 := safeAddress(t)
+	app2Metadata := types.AppMetadata{
+		Name:        "App 2",
+		Description: "A second test application",
+		ImageUrl:    "https://example.com/second-image.png",
+		AvatarUrl:   "https://example.com/second-avatar.png",
+		ExternalUrl: "https://second.example.com",
+	}
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		app2Metadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Next, try to update app2's display name to match app's display name.
+	app2Metadata.Name = updatedMetadata.Name
+	err = store.SetAppMetadata(params.ctx, app2, app2Metadata)
+	require.Error(err)
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
+	require.ErrorContains(err, "another app with the same name already exists")
+
+	// Test updating slash commands - remove all commands
+	metadataNoCommands := updatedMetadata
+	metadataNoCommands.SlashCommands = []types.SlashCommand{}
+	err = store.SetAppMetadata(params.ctx, app, metadataNoCommands)
+	require.NoError(err)
+
+	// Verify no slash commands
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Empty(appInfo.Metadata.SlashCommands)
+
+	// Test updating with many slash commands (storage layer doesn't validate count)
+	manyCommands := make([]types.SlashCommand, 30)
+	for i := 0; i < 30; i++ {
+		manyCommands[i] = types.SlashCommand{
+			Name:        fmt.Sprintf("command%d", i),
+			Description: fmt.Sprintf("Description for command %d", i),
+		}
+	}
+	metadataWithManyCommands := updatedMetadata
+	metadataWithManyCommands.SlashCommands = manyCommands
+	err = store.SetAppMetadata(params.ctx, app, metadataWithManyCommands)
+	require.NoError(err) // Storage layer doesn't validate, just stores
+
+	// Verify all commands were stored
+	appInfo, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Len(appInfo.Metadata.SlashCommands, 30)
+}
+
+func TestGetAppMetadata(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with metadata
+	originalMetadata := types.AppMetadata{
+		Name:        "My Test App",
+		Description: "This is a test application for unit testing",
+		ImageUrl:    "https://example.com/my-image.png",
+		AvatarUrl:   "https://example.com/my-avatar.png",
+		ExternalUrl: "https://my-external-site.com",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		originalMetadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Test getting metadata for existing app
+	metadata, err := store.GetAppMetadata(params.ctx, app)
+	require.NoError(err)
+	require.NotNil(metadata)
+	require.Equal(originalMetadata, *metadata)
+
+	// Test getting metadata for non-existent app
+	metadata, err = store.GetAppMetadata(params.ctx, unregisteredApp)
+	require.Error(err)
+	require.Nil(metadata)
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+	require.ErrorContains(err, "app is not registered")
+}
+
+func TestAppMetadataInGetAppInfo(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with comprehensive metadata
+	metadata := types.AppMetadata{
+		Name:        "Comprehensive Test App",
+		Description: "This app tests all metadata fields integration with AppInfo",
+		ImageUrl:    "https://example.com/comprehensive-image.jpg",
+		AvatarUrl:   "https://example.com/comprehensive-avatar.jpg",
+		ExternalUrl: "https://comprehensive-test.com",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		metadata,
+		secret,
+	)
+	require.NoError(err)
+
+	// Register a webhook to have full AppInfo
+	deviceKey := "comprehensive-device-key"
+	fallbackKey := "comprehensive-fallback-key"
+	webhookUrl := "https://webhook.example.com/comprehensive"
+
+	err = store.RegisterWebhook(params.ctx, app, webhookUrl, deviceKey, fallbackKey)
+	require.NoError(err)
+
+	// Get full app info and verify all fields including metadata
+	appInfo, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+			Settings: types.AppSettings{
+				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+			},
+			Metadata:   metadata,
+			WebhookUrl: webhookUrl,
+			EncryptionDevice: storage.EncryptionDevice{
+				DeviceKey:   deviceKey,
+				FallbackKey: fallbackKey,
+			},
+		},
+		appInfo,
+	)
+}
+
+func TestIsDisplayNameAvailable(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app1 := safeAddress(t)
+	app2 := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Test that a name is available before any app is created
+	available, err := store.IsDisplayNameAvailable(params.ctx, "UniqueBotName")
+	require.NoError(err)
+	require.True(available, "Name should be available when no apps exist")
+
+	// Create an app with a specific name
+	metadata1 := types.AppMetadata{
+		Name:        "ExistingBot",
+		Description: "First bot",
+		ImageUrl:    "https://example.com/bot1.png",
+		AvatarUrl:   "https://example.com/avatar1.png",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app1,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		metadata1,
+		secret,
+	)
+	require.NoError(err)
+
+	// Test that the same name is not available
+	available, err = store.IsDisplayNameAvailable(params.ctx, "ExistingBot")
+	require.NoError(err)
+	require.False(available, "Name should not be available when already taken")
+
+	// Test that a different name is available
+	available, err = store.IsDisplayNameAvailable(params.ctx, "DifferentBot")
+	require.NoError(err)
+	require.True(available, "Different name should be available")
+
+	// Create another app with a different name
+	metadata2 := types.AppMetadata{
+		Name:        "SecondBot",
+		Description: "Second bot",
+		ImageUrl:    "https://example.com/bot2.png",
+		AvatarUrl:   "https://example.com/avatar2.png",
+	}
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		metadata2,
+		secret,
+	)
+	require.NoError(err)
+
+	// Verify both names are not available
+	available, err = store.IsDisplayNameAvailable(params.ctx, "ExistingBot")
+	require.NoError(err)
+	require.False(available)
+
+	available, err = store.IsDisplayNameAvailable(params.ctx, "SecondBot")
+	require.NoError(err)
+	require.False(available)
+
+	// Test empty name - storage layer just checks DB, returns true since no app has empty name
+	// The service layer is responsible for validating that empty names are not acceptable
+	available, err = store.IsDisplayNameAvailable(params.ctx, "")
+	require.NoError(err)
+	require.True(available, "Storage layer returns true for empty name (no DB entry), service layer handles validation")
+
+	// Test case sensitivity (assuming the implementation is case-sensitive based on the unique constraint)
+	available, err = store.IsDisplayNameAvailable(params.ctx, "existingbot")
+	require.NoError(err)
+	require.True(available, "Lowercase version should be available if implementation is case-sensitive")
+
+	available, err = store.IsDisplayNameAvailable(params.ctx, "EXISTINGBOT")
+	require.NoError(err)
+	require.True(available, "Uppercase version should be available if implementation is case-sensitive")
 }
