@@ -72,10 +72,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
     function test_getAppSchema() external view {
         string memory schema = registry.getAppSchema();
-        assertEq(
-            schema,
-            "address app, address owner, address client, bytes32[] permissions, ExecutionManifest manifest, uint48 duration"
-        );
+        assertEq(schema, "address app, address client");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
