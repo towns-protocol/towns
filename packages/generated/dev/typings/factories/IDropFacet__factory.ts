@@ -99,14 +99,9 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "deadline",
-        type: "uint256",
-        internalType: "uint256",
-      },
-      {
-        name: "signature",
-        type: "bytes",
-        internalType: "bytes",
+        name: "lockDuration",
+        type: "uint48",
+        internalType: "uint48",
       },
     ],
     outputs: [
@@ -338,6 +333,30 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getUnlockTime",
+    inputs: [
+      {
+        name: "account",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "conditionId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "setClaimConditions",
     inputs: [
       {
@@ -381,6 +400,19 @@ const _abi = [
             internalType: "bytes32",
           },
         ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "unlockStake",
+    inputs: [
+      {
+        name: "conditionId",
+        type: "uint256",
+        internalType: "uint256",
       },
     ],
     outputs: [],
@@ -561,6 +593,25 @@ const _abi = [
     anonymous: false,
   },
   {
+    type: "event",
+    name: "DropFacet_StakeUnlocked",
+    inputs: [
+      {
+        name: "conditionId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "account",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
     type: "error",
     name: "DropFacet__AlreadyClaimed",
     inputs: [],
@@ -602,6 +653,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "DropFacet__InvalidLockDuration",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "DropFacet__InvalidProof",
     inputs: [],
   },
@@ -623,6 +679,11 @@ const _abi = [
   {
     type: "error",
     name: "DropFacet__RewardsDistributionNotSet",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "DropFacet__StakeNotUnlocked",
     inputs: [],
   },
   {

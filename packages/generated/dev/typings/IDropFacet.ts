@@ -84,14 +84,16 @@ export declare namespace DropClaim {
 export interface IDropFacetInterface extends utils.Interface {
   functions: {
     "addClaimCondition((address,uint40,uint40,uint16,uint256,uint256,bytes32))": FunctionFragment;
-    "claimAndStake((uint256,address,uint256,uint256,bytes32[]),address,uint256,bytes)": FunctionFragment;
+    "claimAndStake((uint256,address,uint256,uint256,bytes32[]),address,uint48)": FunctionFragment;
     "claimWithPenalty((uint256,address,uint256,uint256,bytes32[]),uint16)": FunctionFragment;
     "getActiveClaimConditionId()": FunctionFragment;
     "getClaimConditionById(uint256)": FunctionFragment;
     "getClaimConditions()": FunctionFragment;
     "getDepositIdByWallet(address,uint256)": FunctionFragment;
     "getSupplyClaimedByWallet(address,uint256)": FunctionFragment;
+    "getUnlockTime(address,uint256)": FunctionFragment;
     "setClaimConditions((address,uint40,uint40,uint16,uint256,uint256,bytes32)[])": FunctionFragment;
+    "unlockStake(uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -104,7 +106,9 @@ export interface IDropFacetInterface extends utils.Interface {
       | "getClaimConditions"
       | "getDepositIdByWallet"
       | "getSupplyClaimedByWallet"
+      | "getUnlockTime"
       | "setClaimConditions"
+      | "unlockStake"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -116,8 +120,7 @@ export interface IDropFacetInterface extends utils.Interface {
     values: [
       DropClaim.ClaimStruct,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
+      PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
@@ -145,8 +148,16 @@ export interface IDropFacetInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getUnlockTime",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setClaimConditions",
     values: [DropGroup.ClaimConditionStruct[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "unlockStake",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(
@@ -182,7 +193,15 @@ export interface IDropFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getUnlockTime",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setClaimConditions",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "unlockStake",
     data: BytesLike
   ): Result;
 
@@ -191,6 +210,7 @@ export interface IDropFacetInterface extends utils.Interface {
     "DropFacet_ClaimConditionsUpdated(uint256,tuple[])": EventFragment;
     "DropFacet_Claimed_And_Staked(uint256,address,address,uint256)": EventFragment;
     "DropFacet_Claimed_WithPenalty(uint256,address,address,uint256)": EventFragment;
+    "DropFacet_StakeUnlocked(uint256,address)": EventFragment;
   };
 
   getEvent(
@@ -205,6 +225,7 @@ export interface IDropFacetInterface extends utils.Interface {
   getEvent(
     nameOrSignatureOrTopic: "DropFacet_Claimed_WithPenalty"
   ): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "DropFacet_StakeUnlocked"): EventFragment;
 }
 
 export interface DropFacet_ClaimConditionAddedEventObject {
@@ -259,6 +280,18 @@ export type DropFacet_Claimed_WithPenaltyEvent = TypedEvent<
 export type DropFacet_Claimed_WithPenaltyEventFilter =
   TypedEventFilter<DropFacet_Claimed_WithPenaltyEvent>;
 
+export interface DropFacet_StakeUnlockedEventObject {
+  conditionId: BigNumber;
+  account: string;
+}
+export type DropFacet_StakeUnlockedEvent = TypedEvent<
+  [BigNumber, string],
+  DropFacet_StakeUnlockedEventObject
+>;
+
+export type DropFacet_StakeUnlockedEventFilter =
+  TypedEventFilter<DropFacet_StakeUnlockedEvent>;
+
 export interface IDropFacet extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
@@ -294,8 +327,7 @@ export interface IDropFacet extends BaseContract {
     claimAndStake(
       req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
-      deadline: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
+      lockDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -328,8 +360,19 @@ export interface IDropFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getUnlockTime(
+      account: PromiseOrValue<string>,
+      conditionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     setClaimConditions(
       conditions: DropGroup.ClaimConditionStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    unlockStake(
+      conditionId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -342,8 +385,7 @@ export interface IDropFacet extends BaseContract {
   claimAndStake(
     req: DropClaim.ClaimStruct,
     delegatee: PromiseOrValue<string>,
-    deadline: PromiseOrValue<BigNumberish>,
-    signature: PromiseOrValue<BytesLike>,
+    lockDuration: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -376,8 +418,19 @@ export interface IDropFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getUnlockTime(
+    account: PromiseOrValue<string>,
+    conditionId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   setClaimConditions(
     conditions: DropGroup.ClaimConditionStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  unlockStake(
+    conditionId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -390,8 +443,7 @@ export interface IDropFacet extends BaseContract {
     claimAndStake(
       req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
-      deadline: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
+      lockDuration: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -424,8 +476,19 @@ export interface IDropFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getUnlockTime(
+      account: PromiseOrValue<string>,
+      conditionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     setClaimConditions(
       conditions: DropGroup.ClaimConditionStruct[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    unlockStake(
+      conditionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -474,6 +537,15 @@ export interface IDropFacet extends BaseContract {
       account?: PromiseOrValue<string> | null,
       amount?: null
     ): DropFacet_Claimed_WithPenaltyEventFilter;
+
+    "DropFacet_StakeUnlocked(uint256,address)"(
+      conditionId?: PromiseOrValue<BigNumberish> | null,
+      account?: PromiseOrValue<string> | null
+    ): DropFacet_StakeUnlockedEventFilter;
+    DropFacet_StakeUnlocked(
+      conditionId?: PromiseOrValue<BigNumberish> | null,
+      account?: PromiseOrValue<string> | null
+    ): DropFacet_StakeUnlockedEventFilter;
   };
 
   estimateGas: {
@@ -485,8 +557,7 @@ export interface IDropFacet extends BaseContract {
     claimAndStake(
       req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
-      deadline: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
+      lockDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -517,8 +588,19 @@ export interface IDropFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getUnlockTime(
+      account: PromiseOrValue<string>,
+      conditionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     setClaimConditions(
       conditions: DropGroup.ClaimConditionStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    unlockStake(
+      conditionId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -532,8 +614,7 @@ export interface IDropFacet extends BaseContract {
     claimAndStake(
       req: DropClaim.ClaimStruct,
       delegatee: PromiseOrValue<string>,
-      deadline: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
+      lockDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -568,8 +649,19 @@ export interface IDropFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getUnlockTime(
+      account: PromiseOrValue<string>,
+      conditionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     setClaimConditions(
       conditions: DropGroup.ClaimConditionStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unlockStake(
+      conditionId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

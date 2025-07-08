@@ -103,6 +103,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
   functions: {
     "__RewardsDistribution_init(address,address,uint256)": FunctionFragment;
     "changeBeneficiary(uint256,address)": FunctionFragment;
+    "changeDepositOwner(uint256,address)": FunctionFragment;
     "claimReward(address,address)": FunctionFragment;
     "currentReward(address)": FunctionFragment;
     "currentRewardPerTokenAccumulated()": FunctionFragment;
@@ -135,6 +136,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "__RewardsDistribution_init"
       | "changeBeneficiary"
+      | "changeDepositOwner"
       | "claimReward"
       | "currentReward"
       | "currentRewardPerTokenAccumulated"
@@ -173,6 +175,10 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "changeBeneficiary",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "changeDepositOwner",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -313,6 +319,10 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "changeDepositOwner",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "claimReward",
     data: BytesLike
   ): Result;
@@ -410,6 +420,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
 
   events: {
     "ChangeBeneficiary(uint256,address)": EventFragment;
+    "ChangeDepositOwner(uint256,address,address)": EventFragment;
     "ClaimReward(address,address,uint256)": EventFragment;
     "ClaimerSet(address,address)": EventFragment;
     "CrossDomainMessengerSet(address)": EventFragment;
@@ -436,6 +447,7 @@ export interface RewardsDistributionV2Interface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "ChangeBeneficiary"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ChangeDepositOwner"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimReward"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimerSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "CrossDomainMessengerSet"): EventFragment;
@@ -474,6 +486,19 @@ export type ChangeBeneficiaryEvent = TypedEvent<
 
 export type ChangeBeneficiaryEventFilter =
   TypedEventFilter<ChangeBeneficiaryEvent>;
+
+export interface ChangeDepositOwnerEventObject {
+  depositId: BigNumber;
+  oldOwner: string;
+  newOwner: string;
+}
+export type ChangeDepositOwnerEvent = TypedEvent<
+  [BigNumber, string, string],
+  ChangeDepositOwnerEventObject
+>;
+
+export type ChangeDepositOwnerEventFilter =
+  TypedEventFilter<ChangeDepositOwnerEvent>;
 
 export interface ClaimRewardEventObject {
   beneficiary: string;
@@ -775,6 +800,12 @@ export interface RewardsDistributionV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    changeDepositOwner(
+      depositId: PromiseOrValue<BigNumberish>,
+      newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     claimReward(
       beneficiary: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
@@ -942,6 +973,12 @@ export interface RewardsDistributionV2 extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  changeDepositOwner(
+    depositId: PromiseOrValue<BigNumberish>,
+    newOwner: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   claimReward(
     beneficiary: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
@@ -1095,6 +1132,12 @@ export interface RewardsDistributionV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    changeDepositOwner(
+      depositId: PromiseOrValue<BigNumberish>,
+      newOwner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     claimReward(
       beneficiary: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
@@ -1244,6 +1287,17 @@ export interface RewardsDistributionV2 extends BaseContract {
       depositId?: PromiseOrValue<BigNumberish> | null,
       newBeneficiary?: PromiseOrValue<string> | null
     ): ChangeBeneficiaryEventFilter;
+
+    "ChangeDepositOwner(uint256,address,address)"(
+      depositId?: PromiseOrValue<BigNumberish> | null,
+      oldOwner?: PromiseOrValue<string> | null,
+      newOwner?: PromiseOrValue<string> | null
+    ): ChangeDepositOwnerEventFilter;
+    ChangeDepositOwner(
+      depositId?: PromiseOrValue<BigNumberish> | null,
+      oldOwner?: PromiseOrValue<string> | null,
+      newOwner?: PromiseOrValue<string> | null
+    ): ChangeDepositOwnerEventFilter;
 
     "ClaimReward(address,address,uint256)"(
       beneficiary?: PromiseOrValue<string> | null,
@@ -1457,6 +1511,12 @@ export interface RewardsDistributionV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    changeDepositOwner(
+      depositId: PromiseOrValue<BigNumberish>,
+      newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     claimReward(
       beneficiary: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
@@ -1606,6 +1666,12 @@ export interface RewardsDistributionV2 extends BaseContract {
     changeBeneficiary(
       depositId: PromiseOrValue<BigNumberish>,
       newBeneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    changeDepositOwner(
+      depositId: PromiseOrValue<BigNumberish>,
+      newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
