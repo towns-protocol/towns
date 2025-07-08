@@ -313,6 +313,8 @@ func TestReinitializeStreamStorage_ExistenceChecks(t *testing.T) {
 }
 
 func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
+	// Test that ReinitializeStreamStorage deletes miniblock candidates
+	// up to the last new miniblock number when updating an existing stream
 	params := setupStreamStorageTest(t)
 	require := require.New(t)
 	ctx := params.ctx
@@ -351,22 +353,26 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	}
 	require.Equal(3, candidateCount)
 
-	// Reinitialize stream
+	// Reinitialize stream - must extend beyond existing miniblock 0
 	newMiniblocks := []*WriteMiniblockData{
-		{Number: 0, Data: []byte("new genesis"), Snapshot: []byte("new snapshot")},
-		{Number: 1, Data: []byte("new miniblock 1")},
+		{Number: 1, Data: []byte("new miniblock 1"), Snapshot: []byte("snapshot 1")},
+		{Number: 2, Data: []byte("new miniblock 2")},
 	}
-	err = store.ReinitializeStreamStorage(ctx, streamId, newMiniblocks, 0, true)
+	err = store.ReinitializeStreamStorage(ctx, streamId, newMiniblocks, 1, true)
 	require.NoError(err)
 
-	// Verify all candidates were deleted
-	candidateCount = 0
-	for i := int64(0); i < 5; i++ {
-		count, err := store.GetMiniblockCandidateCount(ctx, streamId, i)
-		require.NoError(err)
-		candidateCount += count
-	}
-	require.Equal(0, candidateCount)
+	// Verify candidates up to miniblock 2 were deleted, but candidate 3 remains
+	count1, err := store.GetMiniblockCandidateCount(ctx, streamId, 1)
+	require.NoError(err)
+	require.Equal(0, count1, "candidate 1 should be deleted")
+	
+	count2, err := store.GetMiniblockCandidateCount(ctx, streamId, 2)
+	require.NoError(err)
+	require.Equal(0, count2, "candidate 2 should be deleted")
+	
+	count3, err := store.GetMiniblockCandidateCount(ctx, streamId, 3)
+	require.NoError(err)
+	require.Equal(1, count3, "candidate 3 should remain")
 }
 
 func TestReinitializeStreamStorage_TransactionRollback(t *testing.T) {
