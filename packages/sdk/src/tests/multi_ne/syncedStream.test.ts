@@ -94,7 +94,7 @@ describe('syncedStream', () => {
             // Filter Alice's events and adjust event numbers to account for filtered events
             let shift = 0n
             const aliceEvents = aliceStream.view.timeline
-                .map((e) => {
+                /*.map((e) => {
                     if (e.content?.kind === RiverTimelineEvent.StreamMembership) {
                         // Skip this event but increment shift to account for the gap
                         shift += 1n
@@ -108,13 +108,21 @@ describe('syncedStream', () => {
                         }
                     }
                 })
-                .filter((e): e is NonNullable<typeof e> => e !== null)
+                .filter((e): e is NonNullable<typeof e> => e !== null)*/
+                .map((e) => ({
+                  eventId: e.eventId,
+                  kind: getFallbackContent('', e.content),
+                  content: e.content,
+                  eventNumber: e.confirmedEventNum ?? e.eventNum,
+                }))
+                .filter((e) => e.content?.kind !== RiverTimelineEvent.StreamMembership)
                 .sort((a, b) => Number(a.eventNumber - b.eventNumber))
 
             const bobEvents = bobStreamFresh.view.timeline
                 .map((e) => ({
                     eventId: e.eventId,
                     kind: getFallbackContent('', e.content),
+                    content: e.content,
                     eventNumber: e.confirmedEventNum ?? e.eventNum,
                 }))
                 .sort((a, b) => Number(a.eventNumber - b.eventNumber))
