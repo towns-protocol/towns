@@ -39,6 +39,8 @@ import {
     BlockchainTransaction,
     ChannelMessageSchema,
     MembershipReason,
+    PayloadCaseType,
+    ContentCaseType,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/dlog'
@@ -48,6 +50,9 @@ import { addressFromUserId, streamIdAsBytes } from './id'
 import { DecryptionSessionError, EventSignatureBundle } from './decryptionExtensions'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
+
+export type ExclusionFilter = { payload: PayloadCaseType | '*'; content: ContentCaseType | '*' }[]
+
 export interface LocalEvent {
     localId: string
     channelMessage: ChannelMessage
@@ -207,6 +212,7 @@ export interface ParsedMiniblock {
     hash: Uint8Array
     header: MiniblockHeader
     events: ParsedEvent[]
+    partial?: boolean
 }
 
 export interface ParsedStreamAndCookie {

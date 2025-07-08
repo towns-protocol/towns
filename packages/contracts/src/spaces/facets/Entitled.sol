@@ -17,13 +17,15 @@ import {MembershipStorage} from "./membership/MembershipStorage.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {BanningBase} from "./banning/BanningBase.sol";
+import {AppAccountBase} from "./account/AppAccountBase.sol";
 
 abstract contract Entitled is
     IEntitlementBase,
     TokenOwnableBase,
     PausableBase,
     BanningBase,
-    ERC721ABase
+    ERC721ABase,
+    AppAccountBase
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -82,8 +84,19 @@ abstract contract Entitled is
     }
 
     function _validatePermission(string memory permission) internal view {
-        if (_owner() == msg.sender || (!_paused() && _isEntitledToSpace(msg.sender, permission)))
-            return;
+        // Owner always has permission
+        if (_owner() == msg.sender) return;
+
+        // Check if not paused and user has permission
+        if (!_paused()) {
+            bytes32 permissionHash = bytes32(bytes(permission));
+
+            // Check space entitlements
+            if (_isEntitledToSpace(msg.sender, permission)) return;
+
+            // Check bot entitlements
+            if (_isBotEntitled(msg.sender, permissionHash)) return;
+        }
 
         CustomRevert.revertWith(Entitlement__NotAllowed.selector);
     }
@@ -130,5 +143,15 @@ abstract contract Entitled is
         }
         wallets[linkedWalletsLength] = rootKey;
         return wallets;
+    }
+
+    function _isBotEntitled(address client, bytes32 permission) internal view returns (bool) {
+        // Early return if client is zero address
+        if (client == address(0)) return false;
+
+        address app = _getAppRegistry().getAppByClient(client);
+        if (app == address(0)) return false;
+
+        return _isAppEntitled(app, client, permission);
     }
 }

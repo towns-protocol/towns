@@ -18,6 +18,7 @@ import {EntitlementsManager} from "src/spaces/facets/entitlements/EntitlementsMa
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 import {MembershipToken} from "src/spaces/facets/membership/token/MembershipToken.sol";
 import {Roles} from "src/spaces/facets/roles/Roles.sol";
+import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 
 // helpers
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
@@ -111,5 +112,43 @@ contract BanningTest is BaseSetup, IRolesBase, IMembershipBase {
         vm.prank(wallet);
         vm.expectRevert(Membership__Banned.selector);
         membershipToken.transferFrom(wallet, recipient, tokenId);
+    }
+
+    function test_banAsBot(
+        address wallet
+    ) external assumeEOA(wallet) givenWalletHasJoinedSpace(wallet) {
+        vm.assume(wallet != founder);
+
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.ModifyBanning));
+        address app = _createTestApp(permissions);
+        _installAppOnEveryoneSpace(app);
+
+        uint256[] memory tokenIds = queryable.tokensOfOwner(wallet);
+        uint256 tokenId = tokenIds[0];
+
+        vm.prank(appClient);
+        banning.ban(tokenId);
+
+        assertTrue(banning.isBanned(tokenId));
+        assertFalse(manager.isEntitledToSpace(wallet, Permissions.Read));
+    }
+
+    function test_banAsBot_reverts_when_app_is_not_entitled(
+        address wallet
+    ) external assumeEOA(wallet) givenWalletHasJoinedSpace(wallet) {
+        vm.assume(wallet != founder);
+
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32(bytes(Permissions.Read));
+        address app = _createTestApp(permissions);
+        _installAppOnEveryoneSpace(app);
+
+        uint256[] memory tokenIds = queryable.tokensOfOwner(wallet);
+        uint256 tokenId = tokenIds[0];
+
+        vm.prank(appClient);
+        vm.expectRevert(IEntitlementBase.Entitlement__NotAllowed.selector);
+        banning.ban(tokenId);
     }
 }

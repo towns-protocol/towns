@@ -237,6 +237,7 @@ export const unpackMiniblock = async (
         hash: miniblock.header.hash,
         header: header.event.payload.value,
         events: [...events, header],
+        partial: miniblock.partial,
     }
 }
 

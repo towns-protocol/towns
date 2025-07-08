@@ -10,13 +10,6 @@ const bot = await makeTownsBot(
     process.env.RIVER_ENV,
 )
 
-bot.onChannelJoin(async (handler, { channelId, userId }) => {
-    if (userId === bot.botId) {
-        await handler.setUsername(channelId, 'quickstart-bot')
-        await handler.setDisplayName(channelId, 'Quickstart Bot')
-    }
-})
-
 bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
     if (userId === bot.botId) return
 

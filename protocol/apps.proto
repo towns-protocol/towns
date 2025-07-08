@@ -14,12 +14,28 @@ import "protocol.proto";
 // Err_UNAUTHENTICATED (code=16) is returned.
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
+
+    // Webhook status / registration.
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+    rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+    // App settings management.
     rpc SetAppSettings(SetAppSettingsRequest) returns (SetAppSettingsResponse);
     rpc GetAppSettings(GetAppSettingsRequest) returns (GetAppSettingsResponse);
+
+    // App metadata management.
+    rpc SetAppMetadata(SetAppMetadataRequest) returns (SetAppMetadataResponse);
+    rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
+
+    // RotateSecret allows the bot owner to rotate the shared secret the app registry
+    // service uses to authorize itself to the bot when making webhook calls.
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
-    rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+    // GetSession allows the bot owner to query for specific session keys.
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+
+    // ValidateBotName checks if a bot name is available for use.
+    rpc ValidateBotName(ValidateBotNameRequest) returns (ValidateBotNameResponse);
 }
 
 // ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
@@ -51,11 +67,13 @@ message RegisterRequest {
     bytes app_owner_id = 2;
 
     AppSettings settings = 3;
+
+    AppMetadata metadata = 4;
 }
 
 message RegisterResponse {
     // The shared secret used to sign the jwt the app registry will use to authenticate to the
-    // app service. This secret should be exactly 32 bytes.
+    // app service. This secret will be exactly 32 bytes.
     bytes hs256_shared_secret = 1;
 }
 
@@ -186,6 +204,64 @@ message AppServiceResponse {
         InitializeResponse initialize = 101;
         StatusResponse status = 102;
     }
+}
+
+// SlashCommand represents a command that the bot supports.
+message SlashCommand {
+    // name is the command name (e.g., "help", "search").
+    // Must be 1-32 characters, contain only letters, numbers, and underscores,
+    // and start with a letter.
+    string name = 1;
+
+    // description is a short description of what the command does.
+    // Must be 1-256 characters.
+    string description = 2;
+}
+
+message AppMetadata {
+    // name is used as the display name of the bot.
+    string name = 1;
+
+    string description = 2;
+
+    // image_url is an image URL with an acceptable schema and file extension.
+    string image_url = 3;
+
+    optional string external_url = 4;
+
+    // avatar_url is an image URL with an acceptable schema and file extension.
+    string avatar_url = 5;
+
+    // slash_commands is a list of commands the bot supports.
+    // Maximum of 25 commands per bot.
+    repeated SlashCommand slash_commands = 6;
+}
+
+// Set app metadata
+message SetAppMetadataRequest {
+    bytes app_id = 1;
+    AppMetadata metadata = 2;
+}
+
+message SetAppMetadataResponse {}
+
+// Get app metadata
+message GetAppMetadataRequest {
+    bytes app_id = 1;
+}
+
+message GetAppMetadataResponse {
+    AppMetadata metadata = 1;
+}
+
+// Validate bot name
+message ValidateBotNameRequest {
+    string name = 1;
+}
+
+message ValidateBotNameResponse {
+    bool is_available = 1;
+    string error_message = 2;
 }
 
 
