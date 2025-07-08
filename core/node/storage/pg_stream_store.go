@@ -1046,7 +1046,10 @@ func (s *PostgresStreamStore) WritePrecedingMiniblocks(
 	miniblocks []*WriteMiniblockData,
 ) error {
 	if len(miniblocks) == 0 {
-		return nil // Nothing to do
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"miniblocks cannot be empty",
+		)
 	}
 
 	// Validate miniblocks are continuous and in ascending order
@@ -1129,17 +1132,16 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 	if err != nil {
 		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to query existing miniblocks")
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var num int64
-		if err := rows.Scan(&num); err != nil {
-			return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to scan miniblock number")
-		}
-		existingNums[num] = true
-	}
-	if err := rows.Err(); err != nil {
-		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to iterate miniblock numbers")
+	// Use ForEachRow pattern from reinitializeStreamStorageTx
+	var seqNum int64
+	seqNumArgs := []any{&seqNum}
+	_, err = pgx.ForEachRow(rows, seqNumArgs, func() error {
+		existingNums[seqNum] = true
+		return nil
+	})
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to iterate existing miniblocks")
 	}
 
 	// Prepare miniblocks to insert (skip existing ones)

@@ -333,9 +333,11 @@ func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 	err := store.ReinitializeStreamStorage(ctx, streamId, miniblocks, 0, false)
 	require.NoError(err)
 
-	// Empty list should succeed with no-op
+	// Empty list should return error
 	err = store.WritePrecedingMiniblocks(ctx, streamId, []*WriteMiniblockData{})
-	require.NoError(err)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_INVALID_ARGUMENT))
+	require.Contains(err.Error(), "miniblocks cannot be empty")
 }
 
 func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
