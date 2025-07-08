@@ -30,8 +30,13 @@ func (r *StreamView) GetMemberSnapshotContent() (*protocol.MemberPayload_Snapsho
 }
 
 func (r *StreamView) GetMemberAppAddress(userId common.Address) (common.Address, error) {
-	// App addresses are only stored in membership evenpts, not in snapshot members
-	// Look through all events to find the app address for the specified user
+	// First check the snapshot for the app address
+	member, _ := findMember(r.snapshot.Members.Joined, userId.Bytes())
+	if member != nil && member.AppAddress != nil && len(member.AppAddress) > 0 {
+		return common.BytesToAddress(member.AppAddress), nil
+	}
+
+	// If not in snapshot, check events after the snapshot
 	var appAddress common.Address
 	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
@@ -49,8 +54,8 @@ func (r *StreamView) GetMemberAppAddress(userId common.Address) (common.Address,
 		return true, nil
 	}
 
-	// Start from beginning to find the app address for the specified user
-	err := r.forEachEvent(0, updateFn)
+	// Only search events after the snapshot
+	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
 	if err != nil {
 		return common.Address{}, err
 	}
