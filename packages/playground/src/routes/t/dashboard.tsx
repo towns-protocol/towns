@@ -14,7 +14,7 @@ import {
 } from '@towns-protocol/react-sdk'
 import { suspend } from 'suspend-react'
 import { Myself } from '@towns-protocol/sdk'
-import { DoorOpenIcon, DownloadIcon, PlusIcon, SettingsIcon } from 'lucide-react'
+import { DoorOpenIcon, DownloadIcon, PlusIcon, SettingsIcon, TrashIcon } from 'lucide-react'
 import type { BotInfo } from '@towns-protocol/web3'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,7 @@ import { CreateBotDialog } from '@/components/dialog/create-bot'
 import { useAllBots } from '@/hooks/useAllBots'
 import { BotInstallDialog } from '@/components/dialog/bot-install'
 import { BotSettingsDialog } from '@/components/dialog/bot-settings'
+import { BotDeleteDialog } from '@/components/dialog/bot-delete-dialog'
 
 export const DashboardRoute = () => {
     const navigate = useNavigate()
@@ -355,11 +356,20 @@ const NoSuspenseDmInfo = ({
 const BotCard = ({ bot }: { bot: BotInfo }) => {
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [installOpen, setInstallOpen] = useState(false)
+    const [deleteOpen, setDeleteOpen] = useState(false)
 
     return (
         <div className="flex items-center justify-between gap-3">
             <p className="font-mono text-sm font-medium">{shortenAddress(bot.app.client)}</p>
             <div className="flex items-center gap-2">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => setDeleteOpen(true)}
+                >
+                    <TrashIcon className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
                     <SettingsIcon className="h-4 w-4" />
                 </Button>
@@ -378,6 +388,11 @@ const BotCard = ({ bot }: { bot: BotInfo }) => {
                 appClientId={bot.app.client}
                 open={installOpen}
                 onOpenChange={setInstallOpen}
+            />
+            <BotDeleteDialog
+                appAddress={bot.app.module}
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
             />
         </div>
     )

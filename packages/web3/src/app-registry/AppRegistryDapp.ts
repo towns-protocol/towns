@@ -190,12 +190,12 @@ export class AppRegistryDapp {
             ...appRegisteredEvents.map((event) => event.args.uid),
         ])
 
-        const ownerApps: BotInfo[] = []
+        const ownerApps: Map<string, BotInfo> = new Map()
         for (const appId of allAppIds) {
             try {
                 const app = await this.shim.read.getAppById(appId)
                 if (app.owner.toLowerCase() === targetOwner.toLowerCase()) {
-                    ownerApps.push({
+                    ownerApps.set(appId, {
                         appId: appId as Address,
                         app: {
                             client: app.client as Address,
@@ -217,6 +217,17 @@ export class AppRegistryDapp {
             }
         }
 
-        return ownerApps
+        const appUnregisteredEvents = await this.shim.read.queryFilter(
+            this.shim.read.filters.AppUnregistered(),
+            fromBlock,
+        )
+        for (const event of appUnregisteredEvents) {
+            const appIdToRemove = event.args.uid
+            if (ownerApps.has(appIdToRemove)) {
+                ownerApps.delete(appIdToRemove)
+            }
+        }
+
+        return Array.from(ownerApps.values())
     }
 }
