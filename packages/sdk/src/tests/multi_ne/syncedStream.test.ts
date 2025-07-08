@@ -8,7 +8,6 @@ import { genShortId } from '../../id'
 import { getFallbackContent } from '../../views/models/timelineEvent'
 import { StreamStateView } from '../../streamStateView'
 import { dlog } from '@towns-protocol/dlog'
-import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('test:syncedStream')
 
@@ -91,30 +90,20 @@ describe('syncedStream', () => {
 
         // check that the events are the same
         await waitFor(() => {
-            // Filter Alice's events and adjust event numbers to account for filtered events
             const aliceEvents = aliceStream.view.timeline
-                .filter((e) => e.content?.kind !== RiverTimelineEvent.StreamMembership)
-                .sort((a, b) =>
-                    Number(
-                        (a.confirmedEventNum ?? a.eventNum) - (b.confirmedEventNum ?? b.eventNum),
-                    ),
-                )
                 .map((e) => ({
                     eventId: e.eventId,
                     kind: getFallbackContent('', e.content),
+                    eventNumber: e.confirmedEventNum ?? e.eventNum,
                 }))
-
+                .sort((a, b) => Number(a.eventNumber - b.eventNumber))
             const bobEvents = bobStreamFresh.view.timeline
-                .sort((a, b) =>
-                    Number(
-                        (a.confirmedEventNum ?? a.eventNum) - (b.confirmedEventNum ?? b.eventNum),
-                    ),
-                )
                 .map((e) => ({
                     eventId: e.eventId,
                     kind: getFallbackContent('', e.content),
+                    eventNumber: e.confirmedEventNum ?? e.eventNum,
                 }))
-
+                .sort((a, b) => Number(a.eventNumber - b.eventNumber))
             expect(bobEvents).toStrictEqual(aliceEvents)
         })
 

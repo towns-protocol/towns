@@ -213,6 +213,7 @@ export type ClientOptions = {
         rpcOptions?: RpcOptions
     }
     decryptionExtensionsOpts?: DecryptionExtensionsOptions
+    excludeEventsInScrollback?: ExclusionFilter
 }
 
 type SendChannelMessageOptions = {
@@ -225,6 +226,21 @@ type SendBlockchainTransactionOptions = {
     disableTags?: boolean // if true, tags will not be added to the message
 }
 
+const defaultExcludeEventsInScrollback: ExclusionFilter = [
+    {
+        payload: 'memberPayload',
+        content: 'membership',
+    },
+    {
+        payload: 'memberPayload',
+        content: 'keySolicitation',
+    },
+    {
+        payload: 'memberPayload',
+        content: 'keyFulfillment',
+    },
+]
+
 export class Client
     extends (EventEmitter as new () => TypedEmitter<ClientEvents>)
     implements IGroupEncryptionClient
@@ -236,6 +252,7 @@ export class Client
     readonly streamsView: StreamsView
     readonly logId: string
     readonly notifications?: NotificationsClient
+    readonly excludeEventsInScrollback?: ExclusionFilter
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -360,6 +377,11 @@ export class Client
                 opts.notifications.rpcOptions,
                 this.streamsView,
             )
+        }
+
+        this.excludeEventsInScrollback = defaultExcludeEventsInScrollback
+        if (opts?.excludeEventsInScrollback !== undefined) {
+            this.excludeEventsInScrollback = opts.excludeEventsInScrollback
         }
 
         this.logCall('new Client')
@@ -2481,20 +2503,12 @@ export class Client
             })
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = stream.view.prevSnapshotMiniblockNum
-            const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive, [
-                {
-                    payload: 'memberPayload',
-                    content: 'membership',
-                },
-                {
-                    payload: 'memberPayload',
-                    content: 'keySolicitation',
-                },
-                {
-                    payload: 'memberPayload',
-                    content: 'keyFulfillment',
-                },
-            ])
+            const response = await this.getMiniblocks(
+                streamId,
+                fromInclusive,
+                toExclusive,
+                this.excludeEventsInScrollback,
+            )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
 
