@@ -66,12 +66,9 @@ func (r *registry) RemoveSubscription(syncID string) {
 // GetSubscriptionsForStream returns all subscriptions for a given stream
 func (r *registry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
 	r.sLock.RLock()
-	subs, ok := r.subscriptionsByStream[streamID]
-	r.sLock.RUnlock()
-	if !ok {
-		return nil
-	}
-	return slices.Clone(subs)
+	defer r.sLock.RUnlock()
+
+	return slices.Clone(r.subscriptionsByStream[streamID])
 }
 
 // GetSubscriptionByID returns a subscription by its sync ID
