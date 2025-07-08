@@ -22,6 +22,7 @@ import { CreateSpace } from '@/components/form/space/create'
 import { JoinSpace } from '@/components/form/space/join'
 import { Avatar } from '@/components/ui/avatar'
 import { shortenAddress } from '@/utils/address'
+import { useAppMetadata } from '@/hooks/useAppMetadata'
 import {
     Dialog,
     DialogContent,
@@ -355,10 +356,28 @@ const NoSuspenseDmInfo = ({
 const BotCard = ({ bot }: { bot: BotInfo }) => {
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [installOpen, setInstallOpen] = useState(false)
+    const { data: metadata, isLoading } = useAppMetadata(bot.app.client)
+    const displayName = metadata?.name || shortenAddress(bot.app.client)
 
     return (
         <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-sm font-medium">{shortenAddress(bot.app.client)}</p>
+            <div className="flex items-center gap-3">
+                <Avatar
+                    isBot
+                    userId={bot.app.client}
+                    className="h-10 w-10 rounded-full border border-neutral-200"
+                />
+                <div>
+                    <p className="text-sm font-medium">{displayName}</p>
+                    {metadata?.description && (
+                        <p className="text-xs text-muted-foreground">
+                            {metadata.description.substring(0, 40)}
+                            {metadata.description.length > 40 && '...'}
+                        </p>
+                    )}
+                    {isLoading && <p className="text-xs text-muted-foreground">Loading...</p>}
+                </div>
+            </div>
             <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
                     <SettingsIcon className="h-4 w-4" />
