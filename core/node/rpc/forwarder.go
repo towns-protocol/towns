@@ -450,23 +450,24 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	// TODO: smarter remote select? random?
-	// TODO: retry?
-	firstRemote := stream.GetStickyPeer()
-	logging.FromCtx(ctx).Debugw("Forwarding request", "nodeAddress", firstRemote)
-	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
-	if err != nil {
-		return nil, err
-	}
+	return utils.PeerNodeRequestWithRetries(
+		ctx,
+		stream,
+		func(ctx context.Context, stub StreamServiceClient, addr common.Address) (*connect.Response[AddEventResponse], error) {
+			logging.FromCtx(ctx).Debugw("Forwarding request", "nodeAddress", addr)
 
-	newReq := copyRequestForForwarding(s, req)
-	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
-	ret, err := stub.AddEvent(ctx, newReq)
-	if err != nil {
-		stream.AdvanceStickyPeer(firstRemote)
-		return nil, err
-	}
-	return connect.NewResponse(ret.Msg), nil
+			newReq := copyRequestForForwarding(s, req)
+			newReq.Header().Set(RiverToNodeHeader, addr.Hex())
+
+			ret, err := stub.AddEvent(ctx, newReq)
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		s.config.Network.NumRetries,
+		s.nodeRegistry,
+	)
 }
 
 func (s *Service) AddMediaEvent(

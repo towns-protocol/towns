@@ -453,7 +453,7 @@ waitLoop:
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
-				func(ctx context.Context, stub protocolconnect.StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+				func(ctx context.Context, stub protocolconnect.StreamServiceClient, _ common.Address) (*connect.Response[GetStreamResponse], error) {
 					ret, err := stub.GetStream(
 						ctx,
 						&connect.Request[GetStreamRequest]{
@@ -573,7 +573,7 @@ waitLoop:
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
-				func(ctx context.Context, stub protocolconnect.StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+				func(ctx context.Context, stub protocolconnect.StreamServiceClient, _ common.Address) (*connect.Response[GetStreamResponse], error) {
 					ret, err := stub.GetStream(
 						ctx,
 						&connect.Request[GetStreamRequest]{
