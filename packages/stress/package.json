@@ -25,7 +25,7 @@
         "@towns-protocol/web3": "workspace:^",
         "esbuild-plugin-pino": "^2.2.0",
         "ethers": "^5.7.2",
-        "fake-indexeddb": "^4.0.1",
+        "fake-indexeddb": "^6.0.1",
         "ioredis": "^5.3.2",
         "pino": "^8.17.1",
         "pino-pretty": "^13.0.0"
@@ -40,7 +40,6 @@
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
         "eslint-plugin-jest": "^27.2.3",
-        "fake-indexeddb": "^4.0.1",
         "typed-emitter": "^2.1.0",
         "typescript": "^5.8.2",
         "vitest": "^3.2.3"
