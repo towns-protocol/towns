@@ -8,4 +8,6 @@ export interface BotFormData {
     membershipDuration: string
     botKind: 'simple' | 'contract'
     contractAddress?: Address
+    imageUrl?: string
+    avatarUrl?: string
 }

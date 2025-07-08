@@ -18,6 +18,8 @@ export const infoSchema = z.object({
     installPrice: z.string().min(1, { message: 'Install price is required' }),
     membershipDuration: z.string().min(1, { message: 'Membership duration is required' }),
     permissions: z.array(z.nativeEnum(Permission)).min(1, { message: 'Select at least one' }),
+    imageUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
+    avatarUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
 })
 
 const membershipDurationOptions = [
@@ -48,7 +50,7 @@ export const InfoStep = () => {
     return (
         <div className="space-y-4">
             <FormField
-                control={control as never}
+                control={control}
                 name="name"
                 render={({ field }) => (
                     <FormItem>
@@ -61,7 +63,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="description"
                 render={({ field }) => (
                     <FormItem>
@@ -74,7 +76,33 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
+                name="imageUrl"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Image URL</FormLabel>
+                        <FormControl>
+                            <Input placeholder="https://example.com/bot-image.png" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={control}
+                name="avatarUrl"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Avatar URL</FormLabel>
+                        <FormControl>
+                            <Input placeholder="https://example.com/bot-avatar.png" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={control}
                 name="installPrice"
                 render={({ field }) => (
                     <FormItem>
@@ -87,7 +115,7 @@ export const InfoStep = () => {
                 )}
             />
             <FormField
-                control={control as never}
+                control={control}
                 name="membershipDuration"
                 render={({ field }) => (
                     <FormItem>

@@ -26,14 +26,6 @@ const bot = await makeTownsBot(
     process.env.RIVER_ENV,
 )
 
-bot.onChannelJoin(async (h, { channelId, userId }) => {
-    console.log(`🧵 user ${shortId(userId)} joined channel ${shortId(channelId)}`)
-    if (userId === bot.botId) {
-        await h.setUsername(channelId, 'thread-ai-bot')
-        await h.setDisplayName(channelId, 'Thread AI Bot')
-    }
-})
-
 bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
     console.log(`🧵 new thread: user ${shortId(userId)} sent message:`, message)
     const newThreadId = eventId
