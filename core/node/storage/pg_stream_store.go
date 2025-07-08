@@ -1104,17 +1104,16 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to get last miniblock number")
 	}
 
-	// Validate that all miniblocks are preceding the last miniblock
-	for i, mb := range miniblocks {
-		if mb.Number >= lastMiniblockNum {
-			return RiverError(
-				Err_INVALID_ARGUMENT,
-				"Miniblock number must be less than last miniblock in storage",
-				"miniblockNum", mb.Number,
-				"lastMiniblockNum", lastMiniblockNum,
-				"index", i,
-			)
-		}
+	// Validate that miniblocks are preceding the last miniblock in storage
+	// Since miniblocks are already validated to be continuous, we only need to check the last one
+	lastInputMiniblockNum := miniblocks[len(miniblocks)-1].Number
+	if lastInputMiniblockNum >= lastMiniblockNum {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"Miniblock numbers must be less than last miniblock in storage",
+			"lastInputMiniblockNum", lastInputMiniblockNum,
+			"lastMiniblockNum", lastMiniblockNum,
+		)
 	}
 
 	// Get existing miniblock numbers to determine which ones to skip
