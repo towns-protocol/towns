@@ -1038,6 +1038,148 @@ func (s *PostgresStreamStore) writeEventTx(
 	return nil
 }
 
+// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
+// This is used for backfilling gaps in the miniblock sequence during reconciliation.
+func (s *PostgresStreamStore) WritePrecedingMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+) error {
+	return s.txRunner(
+		ctx,
+		"WritePrecedingMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writePrecedingMiniblocksTx(ctx, tx, streamId, miniblocks)
+		},
+		nil,
+		"streamId", streamId,
+		"miniblocksCount", len(miniblocks),
+	)
+}
+
+func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+) error {
+	if len(miniblocks) == 0 {
+		return nil // Nothing to do
+	}
+
+	// Lock the stream for update
+	exists, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+	if exists == 0 {
+		return RiverError(Err_NOT_FOUND, "Stream not found", "streamId", streamId)
+	}
+
+	// Get the last miniblock number in storage
+	var lastMiniblockNum int64
+	err = tx.QueryRow(
+		ctx,
+		s.sqlForStream("SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1", streamId),
+		streamId,
+	).Scan(&lastMiniblockNum)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to get last miniblock number")
+	}
+
+	// Validate that all miniblocks are preceding the last miniblock
+	for i, mb := range miniblocks {
+		if mb.Number >= lastMiniblockNum {
+			return RiverError(
+				Err_INVALID_ARGUMENT,
+				"Miniblock number must be less than last miniblock in storage",
+				"miniblockNum", mb.Number,
+				"lastMiniblockNum", lastMiniblockNum,
+				"index", i,
+			)
+		}
+	}
+
+	// Validate miniblocks are continuous and in ascending order
+	for i := 1; i < len(miniblocks); i++ {
+		if miniblocks[i].Number != miniblocks[i-1].Number+1 {
+			return RiverError(
+				Err_INVALID_ARGUMENT,
+				"Miniblocks must be continuous",
+				"expectedNum", miniblocks[i-1].Number+1,
+				"actualNum", miniblocks[i].Number,
+				"index", i,
+			)
+		}
+	}
+
+	// Get existing miniblock numbers to determine which ones to skip
+	existingNums := make(map[int64]bool)
+	rows, err := tx.Query(
+		ctx,
+		s.sqlForStream(
+			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num <= $3",
+			streamId,
+		),
+		streamId,
+		miniblocks[0].Number,
+		miniblocks[len(miniblocks)-1].Number,
+	)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to query existing miniblocks")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var num int64
+		if err := rows.Scan(&num); err != nil {
+			return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to scan miniblock number")
+		}
+		existingNums[num] = true
+	}
+	if err := rows.Err(); err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to iterate miniblock numbers")
+	}
+
+	// Prepare miniblocks to insert (skip existing ones)
+	var toInsert []*WriteMiniblockData
+	for _, mb := range miniblocks {
+		if !existingNums[mb.Number] {
+			toInsert = append(toInsert, mb)
+		}
+	}
+
+	if len(toInsert) == 0 {
+		return nil // All miniblocks already exist
+	}
+
+	// Bulk insert new miniblocks
+	rows2D := make([][]interface{}, len(toInsert))
+	for i, mb := range toInsert {
+		rows2D[i] = []interface{}{
+			streamId,
+			mb.Number,
+			mb.Data,
+			mb.Snapshot,
+		}
+	}
+
+	_, err = tx.CopyFrom(
+		ctx,
+		pgx.Identifier{s.sqlForStream("{{miniblocks}}", streamId)},
+		[]string{"stream_id", "seq_num", "blockdata", "snapshot"},
+		pgx.CopyFromRows(rows2D),
+	)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Failed to insert miniblocks").
+			Tag("count", len(toInsert))
+	}
+
+	return nil
+}
+
 // ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 // Supported consistency checks:
 // 1. There are no gaps in miniblocks sequence
