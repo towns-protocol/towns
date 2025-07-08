@@ -14,7 +14,7 @@ const ONE_MINUTE_MS = 60 * ONE_SECOND_MS
 const ONE_HOUR_MS = 60 * ONE_MINUTE_MS
 const ONE_DAY_MS = 24 * ONE_HOUR_MS
 
-export const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 10 * ONE_DAY_MS
+export const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 5 * ONE_DAY_MS
 
 export function createCryptoStore(databaseName: string, userId: string): CryptoStore {
     if (isBrowser) {
