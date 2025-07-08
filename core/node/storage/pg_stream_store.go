@@ -1045,6 +1045,23 @@ func (s *PostgresStreamStore) WritePrecedingMiniblocks(
 	streamId StreamId,
 	miniblocks []*WriteMiniblockData,
 ) error {
+	if len(miniblocks) == 0 {
+		return nil // Nothing to do
+	}
+
+	// Validate miniblocks are continuous and in ascending order
+	for i := 1; i < len(miniblocks); i++ {
+		if miniblocks[i].Number != miniblocks[i-1].Number+1 {
+			return RiverError(
+				Err_INVALID_ARGUMENT,
+				"Miniblocks must be continuous",
+				"expectedNum", miniblocks[i-1].Number+1,
+				"actualNum", miniblocks[i].Number,
+				"index", i,
+			)
+		}
+	}
+
 	return s.txRunner(
 		ctx,
 		"WritePrecedingMiniblocks",
@@ -1064,10 +1081,6 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 	streamId StreamId,
 	miniblocks []*WriteMiniblockData,
 ) error {
-	if len(miniblocks) == 0 {
-		return nil // Nothing to do
-	}
-
 	// Lock the stream for update
 	exists, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
@@ -1096,19 +1109,6 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 				"Miniblock number must be less than last miniblock in storage",
 				"miniblockNum", mb.Number,
 				"lastMiniblockNum", lastMiniblockNum,
-				"index", i,
-			)
-		}
-	}
-
-	// Validate miniblocks are continuous and in ascending order
-	for i := 1; i < len(miniblocks); i++ {
-		if miniblocks[i].Number != miniblocks[i-1].Number+1 {
-			return RiverError(
-				Err_INVALID_ARGUMENT,
-				"Miniblocks must be continuous",
-				"expectedNum", miniblocks[i-1].Number+1,
-				"actualNum", miniblocks[i].Number,
 				"index", i,
 			)
 		}

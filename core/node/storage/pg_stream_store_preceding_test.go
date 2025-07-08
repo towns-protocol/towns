@@ -263,24 +263,31 @@ func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 	store := params.pgStreamStore
 	ctx := params.ctx
 
-	// Create a stream
+	// Create a stream with initial block
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	miniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*WriteMiniblockData{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
 			Data:     []byte("genesis"),
 			Snapshot: []byte("snapshot0"),
 		},
+	}
+
+	err := store.ReinitializeStreamStorage(ctx, streamId, initialMiniblocks, 0, false)
+	require.NoError(err)
+	
+	// Add block 10 with gap using updateExisting
+	additionalMiniblocks := []*WriteMiniblockData{
 		{
 			Number:   10,
 			Hash:     common.BytesToHash([]byte("block10")),
 			Data:     []byte("block10"),
-			Snapshot: nil,
+			Snapshot: []byte("snapshot10"),
 		},
 	}
-
-	err := store.ReinitializeStreamStorage(ctx, streamId, miniblocks, 0, false)
+	
+	err = store.ReinitializeStreamStorage(ctx, streamId, additionalMiniblocks, 10, true)
 	require.NoError(err)
 
 	// Try to backfill with non-continuous blocks
