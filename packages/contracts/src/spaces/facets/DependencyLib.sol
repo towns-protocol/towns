@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
+import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -35,13 +36,11 @@ library DependencyLib {
         return registry.getLatestImplementation(dependencyName);
     }
 
-    /**
-     * @notice Retrieves the latest implementation addresses for multiple dependency names.
-     * @dev Batch resolves dependencies using the Implementation Registry associated with the space factory.
-     * @param ms The MembershipStorage layout containing the spaceFactory address.
-     * @param deps An array of keccak256 hashes of dependency names to resolve.
-     * @return An array of addresses corresponding to the latest implementations for each dependency.
-     */
+    ///@notice Retrieves the latest implementation addresses for multiple dependency names.
+    ///@dev Batch resolves dependencies using the Implementation Registry associated with the space factory.
+    ///@param ms The MembershipStorage layout containing the spaceFactory address.
+    ///@param deps An array of keccak256 hashes of dependency names to resolve.
+    ///@return An array of addresses corresponding to the latest implementations for each dependency.
     function getDependencies(
         MembershipStorage.Layout storage ms,
         bytes32[] memory deps
@@ -53,5 +52,12 @@ library DependencyLib {
             dependencies[i] = registry.getLatestImplementation(deps[i]);
         }
         return dependencies;
+    }
+
+    /// @notice Retrieves the latest implementation address for the App Registry dependency.
+    /// @dev Convenience method to get the App Registry implementation from the registry.
+    /// @return The address of the latest App Registry implementation.
+    function getAppRegistry() internal view returns (IAppRegistry) {
+        return IAppRegistry(getDependency(MembershipStorage.layout(), APP_REGISTRY));
     }
 }
