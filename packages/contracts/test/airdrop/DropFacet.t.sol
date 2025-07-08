@@ -1299,7 +1299,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         penaltyBps = uint16(
             (uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration
         );
-        
+
         uint256 remaining = amount;
         if (penaltyBps != 0) {
             uint256 penaltyAmount = (amount * penaltyBps) / 10000;

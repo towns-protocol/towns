@@ -107,7 +107,11 @@ interface IRewardsDistributionBase {
     /// @param depositId The ID of the deposit
     /// @param oldOwner The address of the previous owner
     /// @param newOwner The address of the new owner
-    event ChangeDepositOwner(uint256 indexed depositId, address indexed oldOwner, address indexed newOwner);
+    event ChangeDepositOwner(
+        uint256 indexed depositId,
+        address indexed oldOwner,
+        address indexed newOwner
+    );
 
     /// @notice Emitted when the withdrawal of a deposit is initiated
     /// @param owner The address of the depositor

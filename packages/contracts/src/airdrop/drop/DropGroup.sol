@@ -113,5 +113,4 @@ library DropGroup {
             IDropFacetBase.DropFacet__ClaimHasEnded.selector.revertWith();
         }
     }
-
 }
