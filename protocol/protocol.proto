@@ -186,6 +186,7 @@ message MemberPayload {
             map<string, uint64> tips_received = 10; // tips received by this user: map<currency, amount>
             map<string, uint64> tips_sent_count = 11; // total tips sent by this user: map<currency, amount>
             map<string, uint64> tips_received_count = 12; // total tips received by this user: map<currency, amount>
+            optional bytes app_address = 13;
         }
         
         repeated Member joined = 1;

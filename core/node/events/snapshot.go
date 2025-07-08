@@ -653,11 +653,13 @@ func update_Snapshot_Member(
 	case *MemberPayload_Membership_:
 		switch content.Membership.Op {
 		case MembershipOp_SO_JOIN:
-			snapshot.Joined = insertMember(snapshot.Joined, &MemberPayload_Snapshot_Member{
+			member := &MemberPayload_Snapshot_Member{
 				UserAddress:  content.Membership.UserAddress,
 				MiniblockNum: miniblockNum,
 				EventNum:     eventNum,
-			})
+				AppAddress:   content.Membership.AppAddress,
+			}
+			snapshot.Joined = insertMember(snapshot.Joined, member)
 			return nil
 		case MembershipOp_SO_LEAVE:
 			snapshot.Joined = removeMember(snapshot.Joined, content.Membership.UserAddress)
