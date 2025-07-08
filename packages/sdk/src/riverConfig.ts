@@ -1,3 +1,15 @@
+declare global {
+    interface ImportMetaEnv {
+        readonly VITE_RIVER_ENV: string
+        readonly VITE_BASE_CHAIN_RPC_URL: string
+        readonly VITE_RIVER_CHAIN_RPC_URL: string
+    }
+
+    interface ImportMeta {
+        readonly env: ImportMetaEnv
+    }
+}
+
 import {
     Address,
     BaseChainConfig,
@@ -12,6 +24,9 @@ import { check } from '@towns-protocol/dlog'
 function getEnvironmentId(): string {
     if (typeof process === 'object') {
         return process.env.RIVER_ENV || 'local_multi'
+    }
+    if (typeof import.meta === 'object' && 'env' in import.meta) {
+        return import.meta.env.VITE_RIVER_ENV || 'local_multi'
     }
     return 'local_multi'
 }
@@ -30,6 +45,10 @@ function getBaseRpcUrlForChain(chainId: number): string {
             return process.env.BASE_CHAIN_RPC_URL
         }
     }
+    if (typeof import.meta === 'object' && 'env' in import.meta) {
+        return import.meta.env.VITE_BASE_CHAIN_RPC_URL
+    }
+
     switch (chainId) {
         case 31337:
             return 'http://localhost:8545'
@@ -47,6 +66,9 @@ function getRiverRpcUrlForChain(chainId: number): string {
         if (process.env.RIVER_CHAIN_RPC_URL) {
             return process.env.RIVER_CHAIN_RPC_URL
         }
+    }
+    if (typeof import.meta === 'object' && 'env' in import.meta) {
+        return import.meta.env.VITE_RIVER_CHAIN_RPC_URL
     }
     switch (chainId) {
         case 31338:
