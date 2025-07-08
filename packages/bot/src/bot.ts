@@ -28,6 +28,7 @@ import {
     make_MemberPayload_DisplayName,
     make_UserMetadataPayload_ProfileImage,
     spaceIdFromChannelId,
+    type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -673,8 +674,11 @@ export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
     appPrivateDataBase64: string,
     jwtSecretBase64: string,
     env: Parameters<typeof makeRiverConfig>[0],
-    baseRpcUrl?: string,
+    opts: {
+        baseRpcUrl?: string
+    } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
+    const { baseRpcUrl, ...clientOpts } = opts
     const { privateKey, encryptionDevice } = fromBinary(
         AppPrivateDataSchema,
         bin_fromBase64(appPrivateDataBase64),
@@ -693,6 +697,7 @@ export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
         encryptionDevice: {
             fromExportedDevice: encryptionDevice,
         },
+        ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
     return new Bot<HonoEnv>(client, viemClient, jwtSecretBase64)
 }
