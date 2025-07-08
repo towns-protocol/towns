@@ -52,7 +52,11 @@ describe('syncedStream', () => {
         logTimeline('alice', aliceStream.view)
 
         // later, Bob returns
-        const bob2 = await makeTestClient({ context: bob.signerContext, deviceId: bobDeviceId })
+        const bob2 = await makeTestClient({
+            context: bob.signerContext,
+            deviceId: bobDeviceId,
+            excludeEventsInScrollback: [],
+        })
         await bob2.initializeUser()
         bob2.startSync()
 
