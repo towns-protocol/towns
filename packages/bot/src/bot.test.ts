@@ -56,7 +56,9 @@ describe('Bot', { sequential: true }, () => {
 
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
+
     let bot: Bot
+    let botClientUserId: string
     let spaceId: string
     let channelId: string
     let botWallet: ethers.Wallet
@@ -151,9 +153,10 @@ describe('Bot', { sequential: true }, () => {
         )
         await expect(botClient.initializeUser({ appAddress })).resolves.toBeDefined()
 
-        await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
+        botClientUserId = botClient.userId
+        await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClientUserId))
         await bobClient.riverConnection.call((client) =>
-            client.joinUser(channelId, botClient.userId),
+            client.joinUser(channelId, botClientUserId),
         )
         const addResult = await botClient.uploadDeviceKeys()
         expect(addResult).toBeDefined()
@@ -539,5 +542,20 @@ describe('Bot', { sequential: true }, () => {
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
+
+    it('user should be able to read old bot messages', async () => {
+        const channelId = await bobClient.spaces
+            .getSpace(spaceId)
+            .createChannel('test-channel', bob.signer)
+        await bobClient.riverConnection.call((client) =>
+            client.joinUser(channelId, botClientUserId),
+        )
+        const { eventId } = await bot.sendMessage(channelId, 'hello')
+        const channel = bobClient.spaces.getSpace(spaceId).getChannel(channelId)
+        await channel.join()
+        await expect(
+            channel.timeline.events.when((events) => events.some((e) => e.eventId === eventId)),
+        ).resolves.not.toThrow()
     })
 })
