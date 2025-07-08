@@ -1,5 +1,3 @@
-// Crypto Store uses IndexedDB, so we need to import fake-indexeddb/auto
-import 'fake-indexeddb/auto'
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 
 import {
