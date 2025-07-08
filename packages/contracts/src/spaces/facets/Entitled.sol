@@ -14,12 +14,13 @@ import {MembershipStorage} from "./membership/MembershipStorage.sol";
 import {ERC721AStorage} from "../../diamond/facets/token/ERC721A/ERC721AStorage.sol";
 import {BanningStorage} from "./banning/BanningStorage.sol";
 import {PausableStorage} from "@towns-protocol/diamond/src/facets/pausable/PausableStorage.sol";
+import {AppAccountStorage} from "./account/AppAccountStorage.sol";
+import {DependencyLib} from "./DependencyLib.sol";
 
 // contracts
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
-import {AppAccountBase} from "./account/AppAccountBase.sol";
 
-abstract contract Entitled is IEntitlementBase, TokenOwnableBase, AppAccountBase {
+abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -144,9 +145,9 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase, AppAccountBase
         // Early return if client is zero address
         if (client == address(0)) return false;
 
-        address app = _getAppRegistry().getAppByClient(client);
+        address app = DependencyLib.getAppRegistry().getAppByClient(client);
         if (app == address(0)) return false;
 
-        return _isAppEntitled(app, client, permission);
+        return AppAccountStorage.isAppEntitled(app, client, permission);
     }
 }
