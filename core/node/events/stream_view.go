@@ -982,27 +982,60 @@ func (r *StreamView) GetResetStreamAndCookie(addr common.Address) *StreamAndCook
 }
 
 func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(addr common.Address, numPrecedingMiniblocks int64) *StreamAndCookie {
+	// Validate input to prevent negative values
+	if numPrecedingMiniblocks < 0 {
+		numPrecedingMiniblocks = 0
+	}
+	
 	// Calculate how many miniblocks to include before the snapshot
 	startIndex := r.snapshotIndex
+	
 	if numPrecedingMiniblocks > 0 && r.snapshotIndex > 0 {
-		// Calculate the target start index
-		targetStartIndex := r.snapshotIndex - int(numPrecedingMiniblocks)
-		if targetStartIndex < 0 {
-			targetStartIndex = 0
+		// Prevent overflow by checking if numPrecedingMiniblocks is larger than max int
+		// or larger than the snapshot index itself
+		maxPreceding := int64(r.snapshotIndex)
+		if numPrecedingMiniblocks > maxPreceding {
+			// Can't go before the first block
+			startIndex = 0
+		} else {
+			// Safe to subtract since we know numPrecedingMiniblocks <= r.snapshotIndex
+			startIndex = r.snapshotIndex - int(numPrecedingMiniblocks)
 		}
-		startIndex = targetStartIndex
+	}
+	
+	// Ensure startIndex is within bounds
+	if startIndex < 0 {
+		startIndex = 0
+	}
+	if startIndex >= len(r.blocks) {
+		startIndex = len(r.blocks) - 1
+		if startIndex < 0 {
+			startIndex = 0
+		}
+	}
+	
+	// Calculate capacity safely
+	capacity := len(r.blocks) - startIndex
+	if capacity < 0 {
+		capacity = 0
 	}
 	
 	// Get miniblocks starting from the calculated index
-	miniblocks := make([]*Miniblock, 0, len(r.blocks)-startIndex)
+	miniblocks := make([]*Miniblock, 0, capacity)
 	for i := startIndex; i < len(r.blocks); i++ {
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
 	
 	// Get the snapshot envelope
 	var snapshot *Envelope
-	if r.snapshotIndex < len(r.blocks) {
+	if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) {
 		snapshot = r.blocks[r.snapshotIndex].Snapshot
+	}
+	
+	// Calculate snapshot index in the result safely
+	snapshotIndexInResult := int64(0)
+	if r.snapshotIndex >= startIndex {
+		snapshotIndexInResult = int64(r.snapshotIndex - startIndex)
 	}
 	
 	return &StreamAndCookie{
@@ -1011,6 +1044,6 @@ func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(addr common.
 		Miniblocks:             miniblocks,
 		Snapshot:               snapshot,
 		SyncReset:              true,
-		SnapshotMiniblockIndex: int64(r.snapshotIndex - startIndex),
+		SnapshotMiniblockIndex: snapshotIndexInResult,
 	}
 }

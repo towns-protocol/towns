@@ -458,4 +458,34 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	assert.Equal(t, int64(2), streamAndCookie5.SnapshotMiniblockIndex) // Still at index 2 (all available)
 	assert.Equal(t, 5, len(streamAndCookie5.Miniblocks)) // All blocks included
 	assert.NotNil(t, streamAndCookie5.Snapshot)
+	
+	// Test edge cases for overflow/underflow protection
+	
+	// Test with negative number of preceding blocks
+	streamAndCookie6 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, -5)
+	assert.Equal(t, int64(0), streamAndCookie6.SnapshotMiniblockIndex) // Should be treated as 0
+	assert.Equal(t, 3, len(streamAndCookie6.Miniblocks)) // Same as no preceding blocks
+	assert.NotNil(t, streamAndCookie6.Snapshot)
+	
+	// Test with very large number (potential overflow)
+	streamAndCookie7 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, int64(^uint64(0)>>1)) // Max int64
+	assert.Equal(t, int64(2), streamAndCookie7.SnapshotMiniblockIndex) // Should handle gracefully
+	assert.Equal(t, 5, len(streamAndCookie7.Miniblocks)) // All blocks included
+	assert.NotNil(t, streamAndCookie7.Snapshot)
+	
+	// Test with empty view (edge case)
+	emptyView, err := MakeStreamView(
+		&storage.ReadStreamFromLastSnapshotResult{
+			Miniblocks: []*storage.MiniblockDescriptor{
+				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 0},
+			},
+			SnapshotMiniblockOffset: 0,
+		},
+	)
+	assert.NoError(t, err)
+	
+	streamAndCookie8 := emptyView.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 5)
+	assert.Equal(t, int64(0), streamAndCookie8.SnapshotMiniblockIndex)
+	assert.Equal(t, 1, len(streamAndCookie8.Miniblocks))
+	assert.NotNil(t, streamAndCookie8.Snapshot)
 }
