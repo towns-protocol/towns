@@ -46,9 +46,8 @@ library ExecutorStorage {
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Group Access                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/ function getGroup(
-        bytes32 groupId
-    ) internal view returns (Group storage) {
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function getGroup(bytes32 groupId) internal view returns (Group storage) {
         return getLayout().groups[groupId];
     }
 
