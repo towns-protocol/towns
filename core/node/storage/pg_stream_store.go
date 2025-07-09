@@ -1085,12 +1085,9 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 	miniblocks []*WriteMiniblockData,
 ) error {
 	// Lock the stream for update
-	exists, err := s.lockStream(ctx, tx, streamId, true)
+	_, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
-	}
-	if exists == 0 {
-		return RiverError(Err_NOT_FOUND, "Stream not found", "streamId", streamId)
 	}
 
 	// Get the last miniblock number in storage
