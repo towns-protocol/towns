@@ -945,7 +945,6 @@ func (r *StreamView) GetStreamSince(
 		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		// Fall back to reset with default number of preceding miniblocks from config
 		return r.GetResetStreamAndCookie(addr), nil
 	}
 
