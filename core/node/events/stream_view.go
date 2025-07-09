@@ -946,7 +946,7 @@ func (r *StreamView) GetStreamSince(
 			"stream", r.streamId, "error", err.Error())
 
 		// Fall back to reset with default number of preceding miniblocks from config
-		return r.GetResetStreamAndCookieWithPrecedingMiniblocks(addr, 0), nil
+		return r.GetResetStreamAndCookie(addr), nil
 	}
 
 	// append events from blocks
@@ -972,24 +972,26 @@ func (r *StreamView) GetStreamSince(
 func (r *StreamView) GetResetStreamAndCookie(addr common.Address) *StreamAndCookie {
 	mbs, sn := r.MiniblocksFromLastSnapshot()
 	return &StreamAndCookie{
-		Events:                 r.MinipoolEnvelopes(),
-		NextSyncCookie:         r.SyncCookie(addr),
-		Miniblocks:             mbs,
-		Snapshot:               sn,
-		SyncReset:              true,
-		SnapshotMiniblockIndex: 0, // MiniblocksFromLastSnapshot returns blocks starting from snapshot, so index is always 0
+		Events:         r.MinipoolEnvelopes(),
+		NextSyncCookie: r.SyncCookie(addr),
+		Miniblocks:     mbs,
+		Snapshot:       sn,
+		SyncReset:      true,
 	}
 }
 
-func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(addr common.Address, numPrecedingMiniblocks int64) *StreamAndCookie {
+func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(
+	addr common.Address,
+	numPrecedingMiniblocks int64,
+) *StreamAndCookie {
 	// Validate input to prevent negative values
 	if numPrecedingMiniblocks < 0 {
 		numPrecedingMiniblocks = 0
 	}
-	
+
 	// Calculate how many miniblocks to include before the snapshot
 	startIndex := r.snapshotIndex
-	
+
 	if numPrecedingMiniblocks > 0 && r.snapshotIndex > 0 {
 		// Prevent overflow by checking if numPrecedingMiniblocks is larger than max int
 		// or larger than the snapshot index itself
@@ -1002,7 +1004,7 @@ func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(addr common.
 			startIndex = r.snapshotIndex - int(numPrecedingMiniblocks)
 		}
 	}
-	
+
 	// Ensure startIndex is within bounds
 	if startIndex < 0 {
 		startIndex = 0
@@ -1013,31 +1015,31 @@ func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(addr common.
 			startIndex = 0
 		}
 	}
-	
+
 	// Calculate capacity safely
 	capacity := len(r.blocks) - startIndex
 	if capacity < 0 {
 		capacity = 0
 	}
-	
+
 	// Get miniblocks starting from the calculated index
 	miniblocks := make([]*Miniblock, 0, capacity)
 	for i := startIndex; i < len(r.blocks); i++ {
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
-	
+
 	// Get the snapshot envelope
 	var snapshot *Envelope
 	if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) {
 		snapshot = r.blocks[r.snapshotIndex].Snapshot
 	}
-	
+
 	// Calculate snapshot index in the result safely
 	snapshotIndexInResult := int64(0)
 	if r.snapshotIndex >= startIndex {
 		snapshotIndexInResult = int64(r.snapshotIndex - startIndex)
 	}
-	
+
 	return &StreamAndCookie{
 		Events:                 r.MinipoolEnvelopes(),
 		NextSyncCookie:         r.SyncCookie(addr),
