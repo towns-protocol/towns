@@ -364,3 +364,89 @@ func TestMbHashConstraints(t *testing.T) {
 	require.Error(err)
 	require.EqualValues(AsRiverError(err).Code, Err_MINIBLOCK_TOO_NEW)
 }
+
+func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	
+	userWallet, _ := crypto.NewWallet(ctx)
+	nodeWallet, _ := crypto.NewWallet(ctx)
+	
+	streamId := UserStreamIdFromAddr(userWallet.Address)
+	
+	// Create a stream with multiple miniblocks
+	inception, err := MakeEnvelopeWithPayload(
+		userWallet,
+		Make_UserPayload_Inception(streamId, nil),
+		nil,
+	)
+	assert.NoError(t, err)
+	
+	join, err := MakeEnvelopeWithPayload(
+		userWallet,
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		nil,
+	)
+	assert.NoError(t, err)
+	
+	// Create genesis miniblock with snapshot
+	genesisEvents := []*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)}
+	miniblockHeader0, err := Make_GenesisMiniblockHeader(genesisEvents)
+	assert.NoError(t, err)
+	miniblockHeaderProto0, err := MakeEnvelopeWithPayload(
+		userWallet,
+		Make_MiniblockHeader(miniblockHeader0),
+		nil,
+	)
+	assert.NoError(t, err)
+	
+	// Get the snapshot from the genesis header
+	snapshot0 := miniblockHeader0.GetSnapshot()
+	assert.NotNil(t, snapshot0)
+	snapshotBytes0, err := proto.Marshal(snapshot0)
+	assert.NoError(t, err)
+	
+	miniblockProto0 := &Miniblock{
+		Header: miniblockHeaderProto0,
+		Events: []*Envelope{inception, join},
+	}
+	miniblockProtoBytes0, err := proto.Marshal(miniblockProto0)
+	assert.NoError(t, err)
+	
+	// Test case 1: Snapshot at index 0
+	view1, err := MakeStreamView(
+		&storage.ReadStreamFromLastSnapshotResult{
+			Miniblocks: []*storage.MiniblockDescriptor{
+				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 0},
+			},
+			SnapshotMiniblockOffset: 0,
+		},
+	)
+	assert.NoError(t, err)
+	
+	streamAndCookie1 := view1.GetResetStreamAndCookie(nodeWallet.Address)
+	assert.Equal(t, int64(0), streamAndCookie1.SnapshotMiniblockIndex)
+	assert.Equal(t, 1, len(streamAndCookie1.Miniblocks))
+	assert.NotNil(t, streamAndCookie1.Snapshot)
+	assert.True(t, streamAndCookie1.SyncReset)
+	
+	// Test case 2: Create multiple miniblocks with snapshot at different position
+	// For simplicity, let's reuse the genesis miniblock data but pretend they are different blocks
+	view2, err := MakeStreamView(
+		&storage.ReadStreamFromLastSnapshotResult{
+			Miniblocks: []*storage.MiniblockDescriptor{
+				{Data: miniblockProtoBytes0, Number: 0},
+				{Data: miniblockProtoBytes0, Number: 1},
+				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 2},
+				{Data: miniblockProtoBytes0, Number: 3},
+			},
+			SnapshotMiniblockOffset: 2,
+		},
+	)
+	assert.NoError(t, err)
+	
+	streamAndCookie2 := view2.GetResetStreamAndCookie(nodeWallet.Address)
+	assert.Equal(t, int64(2), streamAndCookie2.SnapshotMiniblockIndex)
+	assert.Equal(t, 4, len(streamAndCookie2.Miniblocks))
+	assert.NotNil(t, streamAndCookie2.Snapshot)
+}
