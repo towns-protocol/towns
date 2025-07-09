@@ -270,6 +270,27 @@ library StakingRewards {
         _increaseEarningPower(self, deposit, newTreasure, amount, delegatee, commissionRate);
     }
 
+    /// @notice Changes the owner of a deposit
+    function changeDepositOwner(
+        Layout storage self,
+        Deposit storage deposit,
+        address newOwner
+    ) internal {
+        if (newOwner == address(0)) StakingRewards__InvalidAddress.selector.revertWith();
+
+        address oldOwner = deposit.owner;
+        uint96 amount = deposit.amount;
+
+        // Update stakedByDepositor mappings
+        unchecked {
+            self.stakedByDepositor[oldOwner] -= amount;
+            self.stakedByDepositor[newOwner] += amount;
+        }
+
+        // Update the deposit owner
+        deposit.owner = newOwner;
+    }
+
     /// @notice Withdraws the full amount from a deposit and marks it for pending withdrawal
     function withdraw(Layout storage self, Deposit storage deposit) internal returns (uint96) {
         updateGlobalReward(self);

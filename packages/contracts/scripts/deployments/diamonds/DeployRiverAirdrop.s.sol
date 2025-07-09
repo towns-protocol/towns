@@ -29,6 +29,8 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
 
     address private BASE_REGISTRY;
     address private SPACE_FACTORY;
+    uint48 public minLockDuration = 30 days;
+    uint48 public maxLockDuration = 180 days;
 
     DeployFacet private facetHelper = new DeployFacet();
 
@@ -112,7 +114,7 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployDropFacet.selectors()),
             facet,
-            DeployDropFacet.makeInitData(getBaseRegistry())
+            DeployDropFacet.makeInitData(getBaseRegistry(), minLockDuration, maxLockDuration)
         );
 
         facet = facetHelper.getDeployedAddress("TownsPoints");
@@ -156,7 +158,11 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
                 addFacet(
                     makeCut(facet, FacetCutAction.Add, DeployDropFacet.selectors()),
                     facet,
-                    DeployDropFacet.makeInitData(getBaseRegistry())
+                    DeployDropFacet.makeInitData(
+                        getBaseRegistry(),
+                        minLockDuration,
+                        maxLockDuration
+                    )
                 );
             } else if (facetName.eq("TownsPoints")) {
                 addFacet(

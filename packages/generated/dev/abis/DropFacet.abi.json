@@ -7,6 +7,16 @@
         "name": "rewardsDistribution",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "minLockDuration",
+        "type": "uint48",
+        "internalType": "uint48"
+      },
+      {
+        "name": "maxLockDuration",
+        "type": "uint48",
+        "internalType": "uint48"
       }
     ],
     "outputs": [],
@@ -104,14 +114,9 @@
         "internalType": "address"
       },
       {
-        "name": "deadline",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "signature",
-        "type": "bytes",
-        "internalType": "bytes"
+        "name": "lockDuration",
+        "type": "uint48",
+        "internalType": "uint48"
       }
     ],
     "outputs": [
@@ -343,6 +348,30 @@
   },
   {
     "type": "function",
+    "name": "getUnlockTime",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "conditionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "setClaimConditions",
     "inputs": [
       {
@@ -386,6 +415,19 @@
             "internalType": "bytes32"
           }
         ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "unlockStake",
+    "inputs": [
+      {
+        "name": "conditionId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -567,6 +609,25 @@
   },
   {
     "type": "event",
+    "name": "DropFacet_StakeUnlocked",
+    "inputs": [
+      {
+        "name": "conditionId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Initialized",
     "inputs": [
       {
@@ -665,6 +726,11 @@
   },
   {
     "type": "error",
+    "name": "DropFacet__InvalidLockDuration",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "DropFacet__InvalidProof",
     "inputs": []
   },
@@ -686,6 +752,11 @@
   {
     "type": "error",
     "name": "DropFacet__RewardsDistributionNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DropFacet__StakeNotUnlocked",
     "inputs": []
   },
   {

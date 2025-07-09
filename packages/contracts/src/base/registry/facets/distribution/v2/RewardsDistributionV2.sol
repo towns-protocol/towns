@@ -196,6 +196,22 @@ contract RewardsDistributionV2 is
     }
 
     /// @inheritdoc IRewardsDistribution
+    function changeDepositOwner(uint256 depositId, address newOwner) external {
+        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
+        StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
+        address oldOwner = deposit.owner;
+        _revertIfNotDepositOwner(oldOwner);
+
+        // Update deposits by depositor mappings
+        ds.depositsByDepositor[oldOwner].remove(depositId);
+        ds.depositsByDepositor[newOwner].add(depositId);
+
+        ds.staking.changeDepositOwner(deposit, newOwner);
+
+        emit ChangeDepositOwner(depositId, oldOwner, newOwner);
+    }
+
+    /// @inheritdoc IRewardsDistribution
     function initiateWithdraw(uint256 depositId) external returns (uint96 amount) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];

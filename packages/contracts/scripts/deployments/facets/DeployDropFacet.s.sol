@@ -15,15 +15,17 @@ library DeployDropFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(9);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(11);
         arr.p(DropFacet.claimWithPenalty.selector);
         arr.p(DropFacet.claimAndStake.selector);
+        arr.p(DropFacet.unlockStake.selector);
         arr.p(DropFacet.setClaimConditions.selector);
         arr.p(DropFacet.addClaimCondition.selector);
         arr.p(DropFacet.getActiveClaimConditionId.selector);
         arr.p(DropFacet.getClaimConditionById.selector);
         arr.p(DropFacet.getSupplyClaimedByWallet.selector);
         arr.p(DropFacet.getDepositIdByWallet.selector);
+        arr.p(DropFacet.getUnlockTime.selector);
         arr.p(DropFacet.getClaimConditions.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
@@ -39,11 +41,19 @@ library DeployDropFacet {
         return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function makeInitData(address stakingContract) internal pure returns (bytes memory) {
-        return abi.encodeCall(DropFacet.__DropFacet_init, (stakingContract));
+    function makeInitData(
+        address stakingContract,
+        uint48 minLockDuration,
+        uint48 maxLockDuration
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(
+                DropFacet.__DropFacet_init,
+                (stakingContract, minLockDuration, maxLockDuration)
+            );
     }
 
     function deploy() internal returns (address) {
-        return LibDeploy.deployCode("DropFacet.sol", "");
+        return LibDeploy.deployCode("DropFacet", "");
     }
 }
