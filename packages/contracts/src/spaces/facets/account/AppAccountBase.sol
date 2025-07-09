@@ -10,7 +10,6 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
@@ -36,14 +35,8 @@ abstract contract AppAccountBase is
     ExecutorBase
 {
     using CustomRevert for bytes4;
-    using DependencyLib for MembershipStorage.Layout;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
-
-    // Constants for dependency names
-    bytes32 private constant RIVER_AIRDROP = bytes32("RiverAirdrop");
-    bytes32 private constant SPACE_OPERATOR = bytes32("SpaceOperator"); // BaseRegistry
-    bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
-    bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
+    using DependencyLib for MembershipStorage.Layout;
 
     uint48 private constant DEFAULT_DURATION = 365 days;
 
@@ -191,7 +184,7 @@ abstract contract AppAccountBase is
         _setGroupStatus(appId, false);
     }
 
-    function _isEntitled(
+    function _isAppEntitled(
         address module,
         address client,
         bytes32 permission
@@ -219,14 +212,8 @@ abstract contract AppAccountBase is
         return _getAppRegistry().getAppById(appId);
     }
 
-    function _getPlatformRequirements() private view returns (IPlatformRequirements) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        return IPlatformRequirements(ms.spaceFactory);
-    }
-
-    function _getAppRegistry() private view returns (IAppRegistry) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        return IAppRegistry(ms.getDependency(APP_REGISTRY));
+    function _getAppRegistry() internal view returns (IAppRegistry) {
+        return IAppRegistry(MembershipStorage.layout().getDependency(DependencyLib.APP_REGISTRY));
     }
 
     function _getApps() internal view returns (address[] memory) {
@@ -248,10 +235,10 @@ abstract contract AppAccountBase is
         address factory = ms.spaceFactory;
 
         bytes32[] memory dependencies = new bytes32[](4);
-        dependencies[0] = RIVER_AIRDROP;
-        dependencies[1] = SPACE_OPERATOR;
-        dependencies[2] = SPACE_OWNER;
-        dependencies[3] = APP_REGISTRY;
+        dependencies[0] = DependencyLib.RIVER_AIRDROP;
+        dependencies[1] = DependencyLib.SPACE_OPERATOR;
+        dependencies[2] = DependencyLib.SPACE_OWNER;
+        dependencies[3] = DependencyLib.APP_REGISTRY;
         address[] memory deps = ms.getDependencies(dependencies);
 
         // Check if app is banned
@@ -301,13 +288,4 @@ abstract contract AppAccountBase is
     function _getOwner() internal view virtual override returns (address) {
         return _owner();
     }
-
-    function _executePreHooks(
-        address target,
-        bytes4 selector,
-        uint256 value,
-        bytes calldata data
-    ) internal virtual override {}
-
-    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }

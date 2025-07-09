@@ -16,6 +16,8 @@ test = "test" # The path to the test contract sources relative to the root of th
 extra_output = ["abi", "bin"]
 extra_output_files = ["abi", "bin"]
 
+
+
 # Test settings
 fuzz = { runs = 256 } # The amount of fuzz runs to perform for each fuzz test case.
 cache_path = "cache" # The path to the cache, relative to the root of the project.
@@ -30,7 +32,6 @@ fs_permissions = [
   { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
 ] # Configures permissions for cheatcodes that touch the filesystem
 gas_reports = ["*"] # The contracts to print gas reports for.
-no_match_contract = "Fork"
 
 [rpc_endpoints]
 mainnet = "${ETH_RPC_URL}"

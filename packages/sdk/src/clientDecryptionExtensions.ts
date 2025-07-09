@@ -1,6 +1,7 @@
 import { GroupEncryptionCrypto, UserDevice } from '@towns-protocol/encryption'
 import {
     BaseDecryptionExtensions,
+    DecryptionExtensionsOptions,
     DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
@@ -51,6 +52,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         userDevice: UserDevice,
         unpackEnvelopeOpts: { disableSignatureValidation?: boolean } | undefined,
         logId: string,
+        opts: DecryptionExtensionsOptions,
     ) {
         const upToDateStreams = new Set<string>()
         client.streams.getStreams().forEach((stream) => {
@@ -59,7 +61,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         })
 
-        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId)
+        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId, opts)
 
         this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {

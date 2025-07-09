@@ -9,7 +9,7 @@ export const TypeStep = () => {
     return (
         <div className="space-y-4">
             <FormField
-                control={control as never}
+                control={control}
                 name="botKind"
                 render={({ field }) => (
                     <FormItem>
@@ -39,7 +39,7 @@ export const TypeStep = () => {
             />
             {kind === 'contract' && (
                 <FormField
-                    control={control as never}
+                    control={control}
                     name="contractAddress"
                     render={({ field }) => (
                         <FormItem>

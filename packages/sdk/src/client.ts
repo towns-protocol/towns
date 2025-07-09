@@ -79,6 +79,7 @@ import {
 } from '@towns-protocol/encryption'
 import {
     DecryptionEvents,
+    DecryptionExtensionsOptions,
     EntitlementsDelegate,
     makeSessionKeys,
     type BaseDecryptionExtensions,
@@ -159,7 +160,9 @@ import {
     SolanaTransactionReceipt,
     isSolanaTransactionReceipt,
     ParsedEvent,
+    ExclusionFilter,
 } from './types'
+import { applyExclusionFilterToMiniblocks } from './streamUtils'
 
 import debug from 'debug'
 import { Stream } from './stream'
@@ -209,6 +212,8 @@ export type ClientOptions = {
         store?: INotificationStore
         rpcOptions?: RpcOptions
     }
+    decryptionExtensionsOpts?: DecryptionExtensionsOptions
+    excludeEventsInScrollback?: ExclusionFilter
 }
 
 type SendChannelMessageOptions = {
@@ -221,6 +226,21 @@ type SendBlockchainTransactionOptions = {
     disableTags?: boolean // if true, tags will not be added to the message
 }
 
+const defaultExcludeEventsInScrollback: ExclusionFilter = [
+    {
+        payload: 'memberPayload',
+        content: 'membership',
+    },
+    {
+        payload: 'memberPayload',
+        content: 'keySolicitation',
+    },
+    {
+        payload: 'memberPayload',
+        content: 'keyFulfillment',
+    },
+]
+
 export class Client
     extends (EventEmitter as new () => TypedEmitter<ClientEvents>)
     implements IGroupEncryptionClient
@@ -232,6 +252,7 @@ export class Client
     readonly streamsView: StreamsView
     readonly logId: string
     readonly notifications?: NotificationsClient
+    readonly excludeEventsInScrollback?: ExclusionFilter
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -356,6 +377,11 @@ export class Client
                 opts.notifications.rpcOptions,
                 this.streamsView,
             )
+        }
+
+        this.excludeEventsInScrollback = defaultExcludeEventsInScrollback
+        if (opts?.excludeEventsInScrollback !== undefined) {
+            this.excludeEventsInScrollback = opts.excludeEventsInScrollback
         }
 
         this.logCall('new Client')
@@ -2387,6 +2413,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        exclusionFilter?: ExclusionFilter,
         opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
@@ -2408,9 +2435,15 @@ export class Client
             this.logError('error getting miniblocks', error)
         }
 
+        // Apply exclusion filtering to cached miniblocks if filters are provided
+        const filteredCachedMiniblocks =
+            exclusionFilter && exclusionFilter.length > 0
+                ? applyExclusionFilterToMiniblocks(cachedMiniblocks, exclusionFilter)
+                : cachedMiniblocks
+
         if (toExclusive === fromInclusive) {
             return {
-                miniblocks: cachedMiniblocks,
+                miniblocks: filteredCachedMiniblocks,
                 terminus: toExclusive === 0n,
             }
         }
@@ -2421,6 +2454,7 @@ export class Client
             fromInclusive,
             toExclusive,
             true,
+            exclusionFilter,
             this.opts?.unpackEnvelopeOpts,
         )
 
@@ -2434,7 +2468,7 @@ export class Client
 
         return {
             terminus: terminus,
-            miniblocks: [...miniblocks, ...cachedMiniblocks],
+            miniblocks: [...miniblocks, ...filteredCachedMiniblocks],
         }
     }
 
@@ -2469,7 +2503,12 @@ export class Client
             })
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = stream.view.prevSnapshotMiniblockNum
-            const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive)
+            const response = await this.getMiniblocks(
+                streamId,
+                fromInclusive,
+                toExclusive,
+                this.excludeEventsInScrollback,
+            )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
 
@@ -2562,6 +2601,7 @@ export class Client
                 this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
+                undefined,
                 { skipPersistence: true },
             )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
@@ -2832,6 +2872,7 @@ export class Client
             this.userDeviceKey(),
             this.opts?.unpackEnvelopeOpts,
             this.logId,
+            this.opts?.decryptionExtensionsOpts ?? { enableEphemeralKeySolicitations: true },
         )
     }
 

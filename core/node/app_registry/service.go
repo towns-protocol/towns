@@ -382,6 +382,13 @@ func (s *Service) Register(
 		)
 	}
 
+	// Validate metadata
+	metadata := req.Msg.GetMetadata()
+	if err := types.ValidateAppMetadata(metadata); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("Register")
+	}
+
 	// Generate a secret, encrypt it, and store the app record in pg.
 	appSecret, err := genHS256SharedSecret()
 	if err != nil {
@@ -397,7 +404,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error validating app contract address in user stream")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), encrypted); err != nil {
+	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), types.ProtocolToStorageAppMetadata(metadata), encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
@@ -453,7 +460,7 @@ waitLoop:
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
-				func(ctx context.Context, stub protocolconnect.StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+				func(ctx context.Context, stub protocolconnect.StreamServiceClient, _ common.Address) (*connect.Response[GetStreamResponse], error) {
 					ret, err := stub.GetStream(
 						ctx,
 						&connect.Request[GetStreamRequest]{
@@ -573,7 +580,7 @@ waitLoop:
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
-				func(ctx context.Context, stub protocolconnect.StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+				func(ctx context.Context, stub protocolconnect.StreamServiceClient, _ common.Address) (*connect.Response[GetStreamResponse], error) {
 					ret, err := stub.GetStream(
 						ctx,
 						&connect.Request[GetStreamRequest]{
@@ -783,6 +790,124 @@ func (s *Service) GetStatus(
 			IsRegistered:  true,
 			ValidResponse: true,
 			Status:        status,
+		},
+	}, nil
+}
+
+func (s *Service) SetAppMetadata(
+	ctx context.Context,
+	req *connect.Request[SetAppMetadataRequest],
+) (
+	*connect.Response[SetAppMetadataResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetAppMetadata")
+	}
+
+	// Validate metadata
+	metadata := req.Msg.GetMetadata()
+	if err := types.ValidateAppMetadata(metadata); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
+	}
+	logging.FromCtx(ctx).Infow("meta", "meta", metadata)
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetAppMetadata")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
+	}
+
+	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
+		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Unable to update app metadata").
+			Tag("appId", app).
+			Tag("userId", userId).
+			Func("SetAppMetadata")
+	}
+
+	return &connect.Response[SetAppMetadataResponse]{
+		Msg: &SetAppMetadataResponse{},
+	}, nil
+}
+
+// GetAppMetadata does not require authentication.
+func (s *Service) GetAppMetadata(
+	ctx context.Context,
+	req *connect.Request[GetAppMetadataRequest],
+) (
+	*connect.Response[GetAppMetadataResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetAppMetadata")
+	}
+
+	metadata, err := s.store.GetAppMetadata(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not get app metadata").
+			Tag("appId", app).Func("GetAppMetadata")
+	}
+
+	return &connect.Response[GetAppMetadataResponse]{
+		Msg: &GetAppMetadataResponse{
+			Metadata: types.StorageToProtocolAppMetadata(*metadata),
+		},
+	}, nil
+}
+
+// ValidateBotName does not require authentication.
+func (s *Service) ValidateBotName(
+	ctx context.Context,
+	req *connect.Request[ValidateBotNameRequest],
+) (
+	*connect.Response[ValidateBotNameResponse],
+	error,
+) {
+	// Validate input
+	if req.Msg.Name == "" {
+		return &connect.Response[ValidateBotNameResponse]{
+			Msg: &ValidateBotNameResponse{
+				IsAvailable:  false,
+				ErrorMessage: "name cannot be empty",
+			},
+		}, nil
+	}
+
+	// Check if name is already taken using the existing display name check
+	isAvailable, err := s.store.IsDisplayNameAvailable(ctx, req.Msg.Name)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("failed to check bot name availability").
+			Tag("name", req.Msg.Name).
+			Func("ValidateBotName")
+	}
+
+	if !isAvailable {
+		return &connect.Response[ValidateBotNameResponse]{
+			Msg: &ValidateBotNameResponse{
+				IsAvailable:  false,
+				ErrorMessage: "name is already taken",
+			},
+		}, nil
+	}
+
+	return &connect.Response[ValidateBotNameResponse]{
+		Msg: &ValidateBotNameResponse{
+			IsAvailable: true,
 		},
 	}, nil
 }

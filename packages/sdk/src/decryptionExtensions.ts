@@ -218,6 +218,10 @@ class QueueRunner {
     }
 }
 
+export interface DecryptionExtensionsOptions {
+    enableEphemeralKeySolicitations: boolean
+}
+
 /**
  *
  * Responsibilities:
@@ -299,6 +303,7 @@ export abstract class BaseDecryptionExtensions {
         userId: string,
         upToDateStreams: Set<string>,
         inLogId: string,
+        private opts: DecryptionExtensionsOptions,
     ) {
         this.emitter = emitter
         this.crypto = crypto
@@ -975,7 +980,7 @@ export abstract class BaseDecryptionExtensions {
             streamId,
             isNewDevice,
             missingSessionIds,
-            ephemeral: true,
+            ephemeral: this.opts.enableEphemeralKeySolicitations,
         })
     }
 

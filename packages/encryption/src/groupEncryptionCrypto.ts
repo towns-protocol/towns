@@ -6,7 +6,6 @@ import {
     UserDevice,
 } from './olmLib'
 
-import { CryptoStore } from './cryptoStore'
 import {
     DecryptionAlgorithm,
     DecryptionError,
@@ -20,6 +19,7 @@ import { EncryptionDelegate } from './encryptionDelegate'
 import { check, dlog } from '@towns-protocol/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
 import { HybridGroupDecryption } from './hybridGroupDecryption'
+import type { CryptoStore } from './cryptoStore'
 
 const log = dlog('csb:encryption:groupEncryptionCrypto')
 
