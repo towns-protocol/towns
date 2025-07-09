@@ -768,7 +768,7 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	ctx context.Context,
 	streamId StreamId,
-	numToRead int,
+	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	var ret *ReadStreamFromLastSnapshotResult
 	if err := s.txRunner(
@@ -777,7 +777,7 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numToRead)
+			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numPrecedingMiniblocks)
 			return err
 		},
 		nil,
@@ -792,7 +792,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	numToRead int,
+	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	snapshotMiniblockIndex, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
@@ -812,8 +812,8 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		return nil, WrapRiverError(Err_INTERNAL, err).Message("db inconsistency: failed to get last miniblock index")
 	}
 
-	numToRead = max(1, numToRead)
-	startSeqNum := max(0, lastMiniblockIndex-int64(numToRead-1))
+	numPrecedingMiniblocks = max(1, numPrecedingMiniblocks)
+	startSeqNum := max(0, lastMiniblockIndex-int64(numPrecedingMiniblocks-1))
 	startSeqNum = min(startSeqNum, snapshotMiniblockIndex)
 
 	miniblocksRow, err := tx.Query(

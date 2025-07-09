@@ -166,7 +166,7 @@ func (s *Service) getStreamImpl(
 		nodeAddress := common.BytesToAddress(req.Msg.SyncCookie.GetNodeAddress())
 		if nodeAddress == s.wallet.Address {
 			if view != nil {
-				return s.localGetStream(ctx, view, req.Msg.SyncCookie)
+				return s.localGetStream(ctx, view, req.Msg.SyncCookie, req.Msg.NumberOfPrecedingMiniblocks)
 			} else {
 				return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
 					Func("service.getStreamImpl").
@@ -188,7 +188,7 @@ func (s *Service) getStreamImpl(
 	}
 
 	if view != nil {
-		if resp, err := s.localGetStream(ctx, view, req.Msg.SyncCookie); err == nil {
+		if resp, err := s.localGetStream(ctx, view, req.Msg.SyncCookie, req.Msg.NumberOfPrecedingMiniblocks); err == nil {
 			return resp, nil
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get stream from local node, falling back to remotes",

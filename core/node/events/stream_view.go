@@ -971,10 +971,11 @@ func (r *StreamView) GetStreamSince(
 func (r *StreamView) GetResetStreamAndCookie(addr common.Address) *StreamAndCookie {
 	mbs, sn := r.MiniblocksFromLastSnapshot()
 	return &StreamAndCookie{
-		Events:         r.MinipoolEnvelopes(),
-		NextSyncCookie: r.SyncCookie(addr),
-		Miniblocks:     mbs,
-		Snapshot:       sn,
-		SyncReset:      true,
+		Events:                 r.MinipoolEnvelopes(),
+		NextSyncCookie:         r.SyncCookie(addr),
+		Miniblocks:             mbs,
+		Snapshot:               sn,
+		SyncReset:              true,
+		SnapshotMiniblockIndex: int64(r.snapshotIndex),
 	}
 }

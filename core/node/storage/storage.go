@@ -102,13 +102,13 @@ type (
 		CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
 
 		// ReadStreamFromLastSnapshot reads last stream miniblocks and guarantees that last snapshot miniblock is included.
-		// It attempts to read at least numToRead miniblocks, but may return less if there are not enough miniblocks in storage,
+		// It attempts to read at least numPrecedingMiniblocks miniblocks before the snapshot, but may return less if there are not enough miniblocks in storage,
 		// or more, if there are more miniblocks since the last snapshot.
 		// Also returns minipool envelopes for the current minipool.
 		ReadStreamFromLastSnapshot(
 			ctx context.Context,
 			streamId StreamId,
-			numToRead int,
+			numPrecedingMiniblocks int,
 		) (*ReadStreamFromLastSnapshotResult, error)
 
 		// NormalizeEphemeralStream normalizes the given ephemeral stream.
