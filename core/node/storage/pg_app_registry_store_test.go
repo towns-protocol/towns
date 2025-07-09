@@ -46,7 +46,6 @@ func testAppMetadataWithName(name string) types.AppMetadata {
 	}
 }
 
-
 type testAppRegistryStoreParams struct {
 	ctx                context.Context
 	pgAppRegistryStore *storage.PostgresAppRegistryStore
@@ -1269,13 +1268,13 @@ func TestSetAppMetadata(t *testing.T) {
 	require.Error(err)
 	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 	require.ErrorContains(err, "another app with the same username already exists")
-	
+
 	// Test 2: Update app2's display name to match app's display name - should succeed
-	app2Metadata.Username = "app2" // Reset to original username
+	app2Metadata.Username = "app2"                         // Reset to original username
 	app2Metadata.DisplayName = updatedMetadata.DisplayName // Same display name as app
 	err = store.SetAppMetadata(params.ctx, app2, app2Metadata)
 	require.NoError(err, "Should be able to set duplicate display name")
-	
+
 	// Verify both apps have the same display name but different usernames
 	appInfo1, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)

@@ -216,7 +216,7 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		if err := validateSlashCommand(cmd); err != nil {
 			return err
 		}
-		
+
 		cmdName := cmd.GetName()
 		if commandNames[cmdName] {
 			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
@@ -233,19 +233,19 @@ func validateSlashCommandName(name string) error {
 	if name == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name is required")
 	}
-	
+
 	if len(name) > 32 {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must not exceed 32 characters").
 			Tag("name", name).
 			Tag("length", len(name))
 	}
-	
+
 	// Check if name starts with a letter
 	if len(name) > 0 && !((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')) {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must start with a letter").
 			Tag("name", name)
 	}
-	
+
 	// Check if name contains only letters, numbers, and underscores
 	for i, ch := range name {
 		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_') {
@@ -254,7 +254,7 @@ func validateSlashCommandName(name string) error {
 				Tag("invalidCharAt", i)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -263,24 +263,24 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 	if cmd == nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "slash command cannot be nil")
 	}
-	
+
 	// Validate name
 	if err := validateSlashCommandName(cmd.GetName()); err != nil {
 		return err
 	}
-	
+
 	// Validate description
 	description := cmd.GetDescription()
 	if description == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command description is required").
 			Tag("commandName", cmd.GetName())
 	}
-	
+
 	if len(description) > 256 {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command description must not exceed 256 characters").
 			Tag("commandName", cmd.GetName()).
 			Tag("descriptionLength", len(description))
 	}
-	
+
 	return nil
 }
