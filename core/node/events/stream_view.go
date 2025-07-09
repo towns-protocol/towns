@@ -945,7 +945,8 @@ func (r *StreamView) GetStreamSince(
 		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return r.GetResetStreamAndCookie(addr), nil
+		// Fall back to reset with default number of preceding miniblocks from config
+		return r.GetResetStreamAndCookieWithPrecedingMiniblocks(addr, 0), nil
 	}
 
 	// append events from blocks
@@ -976,6 +977,40 @@ func (r *StreamView) GetResetStreamAndCookie(addr common.Address) *StreamAndCook
 		Miniblocks:             mbs,
 		Snapshot:               sn,
 		SyncReset:              true,
-		SnapshotMiniblockIndex: int64(r.snapshotIndex),
+		SnapshotMiniblockIndex: 0, // MiniblocksFromLastSnapshot returns blocks starting from snapshot, so index is always 0
+	}
+}
+
+func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(addr common.Address, numPrecedingMiniblocks int64) *StreamAndCookie {
+	// Calculate how many miniblocks to include before the snapshot
+	startIndex := r.snapshotIndex
+	if numPrecedingMiniblocks > 0 && r.snapshotIndex > 0 {
+		// Calculate the target start index
+		targetStartIndex := r.snapshotIndex - int(numPrecedingMiniblocks)
+		if targetStartIndex < 0 {
+			targetStartIndex = 0
+		}
+		startIndex = targetStartIndex
+	}
+	
+	// Get miniblocks starting from the calculated index
+	miniblocks := make([]*Miniblock, 0, len(r.blocks)-startIndex)
+	for i := startIndex; i < len(r.blocks); i++ {
+		miniblocks = append(miniblocks, r.blocks[i].Proto)
+	}
+	
+	// Get the snapshot envelope
+	var snapshot *Envelope
+	if r.snapshotIndex < len(r.blocks) {
+		snapshot = r.blocks[r.snapshotIndex].Snapshot
+	}
+	
+	return &StreamAndCookie{
+		Events:                 r.MinipoolEnvelopes(),
+		NextSyncCookie:         r.SyncCookie(addr),
+		Miniblocks:             miniblocks,
+		Snapshot:               snapshot,
+		SyncReset:              true,
+		SnapshotMiniblockIndex: int64(r.snapshotIndex - startIndex),
 	}
 }

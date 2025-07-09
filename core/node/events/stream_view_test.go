@@ -413,40 +413,49 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	miniblockProtoBytes0, err := proto.Marshal(miniblockProto0)
 	assert.NoError(t, err)
 	
-	// Test case 1: Snapshot at index 0
-	view1, err := MakeStreamView(
-		&storage.ReadStreamFromLastSnapshotResult{
-			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 0},
-			},
-			SnapshotMiniblockOffset: 0,
-		},
-	)
-	assert.NoError(t, err)
-	
-	streamAndCookie1 := view1.GetResetStreamAndCookie(nodeWallet.Address)
-	assert.Equal(t, int64(0), streamAndCookie1.SnapshotMiniblockIndex)
-	assert.Equal(t, 1, len(streamAndCookie1.Miniblocks))
-	assert.NotNil(t, streamAndCookie1.Snapshot)
-	assert.True(t, streamAndCookie1.SyncReset)
-	
-	// Test case 2: Create multiple miniblocks with snapshot at different position
-	// For simplicity, let's reuse the genesis miniblock data but pretend they are different blocks
-	view2, err := MakeStreamView(
+	// Test case 1: Create view with multiple miniblocks
+	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockProtoBytes0, Number: 0},
 				{Data: miniblockProtoBytes0, Number: 1},
-				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 2},
+				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 2}, // Snapshot at index 2
 				{Data: miniblockProtoBytes0, Number: 3},
+				{Data: miniblockProtoBytes0, Number: 4},
 			},
 			SnapshotMiniblockOffset: 2,
 		},
 	)
 	assert.NoError(t, err)
 	
-	streamAndCookie2 := view2.GetResetStreamAndCookie(nodeWallet.Address)
-	assert.Equal(t, int64(2), streamAndCookie2.SnapshotMiniblockIndex)
-	assert.Equal(t, 4, len(streamAndCookie2.Miniblocks))
+	// Test GetResetStreamAndCookie (old method - should always return 0)
+	streamAndCookie1 := view.GetResetStreamAndCookie(nodeWallet.Address)
+	assert.Equal(t, int64(0), streamAndCookie1.SnapshotMiniblockIndex) // Always 0 with old method
+	assert.Equal(t, 3, len(streamAndCookie1.Miniblocks)) // Only blocks from snapshot onwards
+	assert.NotNil(t, streamAndCookie1.Snapshot)
+	assert.True(t, streamAndCookie1.SyncReset)
+	
+	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with 0 preceding blocks
+	streamAndCookie2 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 0)
+	assert.Equal(t, int64(0), streamAndCookie2.SnapshotMiniblockIndex) // 0 when no preceding blocks requested
+	assert.Equal(t, 3, len(streamAndCookie2.Miniblocks)) // Blocks from snapshot onwards
 	assert.NotNil(t, streamAndCookie2.Snapshot)
+	
+	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with 1 preceding block
+	streamAndCookie3 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 1)
+	assert.Equal(t, int64(1), streamAndCookie3.SnapshotMiniblockIndex) // Snapshot now at index 1
+	assert.Equal(t, 4, len(streamAndCookie3.Miniblocks)) // One extra block before snapshot
+	assert.NotNil(t, streamAndCookie3.Snapshot)
+	
+	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with 2 preceding blocks
+	streamAndCookie4 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 2)
+	assert.Equal(t, int64(2), streamAndCookie4.SnapshotMiniblockIndex) // Snapshot now at index 2
+	assert.Equal(t, 5, len(streamAndCookie4.Miniblocks)) // All blocks included
+	assert.NotNil(t, streamAndCookie4.Snapshot)
+	
+	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with more blocks than available
+	streamAndCookie5 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 10)
+	assert.Equal(t, int64(2), streamAndCookie5.SnapshotMiniblockIndex) // Still at index 2 (all available)
+	assert.Equal(t, 5, len(streamAndCookie5.Miniblocks)) // All blocks included
+	assert.NotNil(t, streamAndCookie5.Snapshot)
 }
