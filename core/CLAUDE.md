@@ -117,7 +117,8 @@ Before committing any Go code changes:
    - Or format all files in a package: `go fmt ./node/rpc/...`
 
 2. **Run the linter**: Use the provided linter script to check code quality
-   - From the `/core` directory: `./lint.sh ./path/to/file.go`
+   - From the `/core` directory: `./lint.sh`
+   - This lints all Go code in the entire core directory
    - The linter runs both `golangci-lint` and `staticcheck`
    - Fix any issues reported before committing
 
