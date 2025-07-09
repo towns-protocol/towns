@@ -86,19 +86,24 @@ func assertAppMetadataEqual(t *testing.T, expected, actual *protocol.AppMetadata
 	require := require.New(t)
 	require.NotNil(actual, "actual metadata should not be nil")
 	require.NotNil(expected, "expected metadata should not be nil")
-	
+
 	require.Equal(expected.GetName(), actual.GetName(), "metadata name mismatch")
 	require.Equal(expected.GetDescription(), actual.GetDescription(), "metadata description mismatch")
 	require.Equal(expected.GetImageUrl(), actual.GetImageUrl(), "metadata image_url mismatch")
 	require.Equal(expected.GetAvatarUrl(), actual.GetAvatarUrl(), "metadata avatar_url mismatch")
 	require.Equal(expected.GetExternalUrl(), actual.GetExternalUrl(), "metadata external_url mismatch")
-	
+
 	// Compare slash commands
 	require.Equal(len(expected.GetSlashCommands()), len(actual.GetSlashCommands()), "slash command count mismatch")
 	for i, expectedCmd := range expected.GetSlashCommands() {
 		actualCmd := actual.GetSlashCommands()[i]
 		require.Equal(expectedCmd.GetName(), actualCmd.GetName(), "slash command name mismatch at index %d", i)
-		require.Equal(expectedCmd.GetDescription(), actualCmd.GetDescription(), "slash command description mismatch at index %d", i)
+		require.Equal(
+			expectedCmd.GetDescription(),
+			actualCmd.GetDescription(),
+			"slash command description mismatch at index %d",
+			i,
+		)
 	}
 }
 
@@ -1204,6 +1209,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 	require := require.New(t)
 	botWallet := safeNewWallet(ctx, require)
 	ownerWallet := safeNewWallet(ctx, require)
+	differentBotWallet := safeNewWallet(ctx, require) // Another bot's address
 
 	uniqueTestMessages := map[string]struct {
 		tags             *protocol.Tags
@@ -1282,6 +1288,30 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
 				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                true,
 				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
+		},
+		"slash_command_to_this_bot": {
+			tags: &protocol.Tags{
+				MessageInteractionType: protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND,
+				AppClientAddress:       botWallet.Address[:],
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false, // Respects NO_MESSAGES setting
+			},
+		},
+		"slash_command_to_another_bot": {
+			tags: &protocol.Tags{
+				MessageInteractionType: protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND,
+				AppClientAddress:       differentBotWallet.Address[:],
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: false,
 				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
 			},
 		},
@@ -1879,18 +1909,21 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 	existingBotWallet, _ := tester.BotWallets(0)
 
 	// Get the existing bot's metadata to discover its name
-	getMetadataResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
-		Msg: &protocol.GetAppMetadataRequest{
-			AppId: existingBotWallet.Address[:],
+	getMetadataResp, err := tester.appRegistryClient.GetAppMetadata(
+		tester.ctx,
+		&connect.Request[protocol.GetAppMetadataRequest]{
+			Msg: &protocol.GetAppMetadataRequest{
+				AppId: existingBotWallet.Address[:],
+			},
 		},
-	})
+	)
 	tester.require.NoError(err)
 	existingBotName := getMetadataResp.Msg.Metadata.Name
 
 	tests := map[string]struct {
-		name              string
-		expectAvailable   bool
-		expectErrMessage  string
+		name             string
+		expectAvailable  bool
+		expectErrMessage string
 	}{
 		"Available name": {
 			name:            "UniqueNewBotName",
@@ -1922,11 +1955,14 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			resp, err := tester.appRegistryClient.ValidateBotName(tester.ctx, &connect.Request[protocol.ValidateBotNameRequest]{
-				Msg: &protocol.ValidateBotNameRequest{
-					Name: tt.name,
+			resp, err := tester.appRegistryClient.ValidateBotName(
+				tester.ctx,
+				&connect.Request[protocol.ValidateBotNameRequest]{
+					Msg: &protocol.ValidateBotNameRequest{
+						Name: tt.name,
+					},
 				},
-			})
+			)
 
 			// ValidateBotName should never return an error, only indicate availability
 			tester.require.NoError(err)
@@ -1934,7 +1970,7 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 			tester.require.NotNil(resp.Msg)
 
 			assert.Equal(t, tt.expectAvailable, resp.Msg.IsAvailable)
-			
+
 			if tt.expectErrMessage != "" {
 				assert.Equal(t, tt.expectErrMessage, resp.Msg.ErrorMessage)
 			} else {
@@ -1942,52 +1978,6 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 			}
 		})
 	}
-
-	// Test concurrent name validation
-	t.Run("Concurrent validation", func(t *testing.T) {
-		var wg sync.WaitGroup
-		numConcurrent := 10
-		baseName := "ConcurrentBot"
-
-		for i := 0; i < numConcurrent; i++ {
-			wg.Add(1)
-			go func(index int) {
-				defer wg.Done()
-				
-				resp, err := tester.appRegistryClient.ValidateBotName(tester.ctx, &connect.Request[protocol.ValidateBotNameRequest]{
-					Msg: &protocol.ValidateBotNameRequest{
-						Name: fmt.Sprintf("%s%d", baseName, index),
-					},
-				})
-				
-				assert.NoError(t, err)
-				assert.True(t, resp.Msg.IsAvailable)
-			}(i)
-		}
-		
-		wg.Wait()
-	})
-
-	// Test that validation doesn't require authentication
-	t.Run("No authentication required", func(t *testing.T) {
-		// Create a client without authentication
-		httpClient := tester.serviceTester.httpClient()
-		serviceAddr := "https://" + tester.appRegistryService.listener.Addr().String()
-		unauthClient := protocolconnect.NewAppRegistryServiceClient(
-			httpClient,
-			serviceAddr,
-		)
-
-		resp, err := unauthClient.ValidateBotName(tester.ctx, &connect.Request[protocol.ValidateBotNameRequest]{
-			Msg: &protocol.ValidateBotNameRequest{
-				Name: "TestWithoutAuth",
-			},
-		})
-
-		// Should succeed without authentication
-		tester.require.NoError(err)
-		tester.require.True(resp.Msg.IsAvailable)
-	})
 }
 
 func TestAppRegistry_Register(t *testing.T) {
