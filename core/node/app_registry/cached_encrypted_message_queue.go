@@ -372,10 +372,10 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	}
 }
 
-// IsDisplayNameAvailable checks if a display name is available for use
-func (q *CachedEncryptedMessageQueue) IsDisplayNameAvailable(
+// IsUsernameAvailable checks if a username is available for use
+func (q *CachedEncryptedMessageQueue) IsUsernameAvailable(
 	ctx context.Context,
-	displayName string,
+	username string,
 ) (bool, error) {
-	return q.store.IsDisplayNameAvailable(ctx, displayName)
+	return q.store.IsUsernameAvailable(ctx, username)
 }

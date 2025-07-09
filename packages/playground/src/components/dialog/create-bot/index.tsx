@@ -264,7 +264,8 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 appId: bin_fromHexString(botWallet.address),
                 appOwnerId: bin_fromHexString(user.id),
                 metadata: {
-                    name,
+                    username: name,
+                    displayName: name,
                     description,
                     imageUrl: imageUrl || '',
                     avatarUrl: avatarUrl || '',

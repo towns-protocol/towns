@@ -14,15 +14,16 @@ type SlashCommand struct {
 }
 
 type AppMetadata struct {
-	// We omit the name property from the JSON serialization of the app metadata object because
-	// we store the name in a separate column so that we can performantly guarantee uniqueness
-	// between bot display names.
-	Name          string         `json:"-"`
+	// We omit the username property from the JSON serialization of the app metadata object because
+	// we store the username in a separate column so that we can performantly guarantee uniqueness
+	// between bot usernames.
+	Username      string         `json:"-"`
 	Description   string         `json:"description"`
 	ImageUrl      string         `json:"image_url"`
 	ExternalUrl   string         `json:"external_url,omitempty"`
 	AvatarUrl     string         `json:"avatar_url"`
 	SlashCommands []SlashCommand `json:"slash_commands,omitempty"`
+	DisplayName   string         `json:"display_name"`
 }
 
 func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
@@ -47,12 +48,13 @@ func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
 	}
 
 	return AppMetadata{
-		Name:          metadata.GetName(),
+		Username:      metadata.GetUsername(),
 		Description:   metadata.GetDescription(),
 		ImageUrl:      metadata.GetImageUrl(),
 		ExternalUrl:   externalUrl,
 		AvatarUrl:     metadata.GetAvatarUrl(),
 		SlashCommands: slashCommands,
+		DisplayName:   metadata.GetDisplayName(),
 	}
 }
 
@@ -72,12 +74,13 @@ func StorageToProtocolAppMetadata(metadata AppMetadata) *protocol.AppMetadata {
 	}
 
 	return &protocol.AppMetadata{
-		Name:          metadata.Name,
+		Username:      metadata.Username,
 		Description:   metadata.Description,
 		ImageUrl:      metadata.ImageUrl,
 		ExternalUrl:   externalUrl,
 		AvatarUrl:     metadata.AvatarUrl,
 		SlashCommands: slashCommands,
+		DisplayName:   metadata.DisplayName,
 	}
 }
 
@@ -169,8 +172,12 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
 	}
 
-	if metadata.GetName() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata name is required")
+	if metadata.GetUsername() == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata username is required")
+	}
+
+	if metadata.GetDisplayName() == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata display_name is required")
 	}
 
 	if metadata.GetDescription() == "" {
