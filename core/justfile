@@ -165,6 +165,17 @@ config-app-registry: _require_run_env
     ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
     fi
 
+config-notifications: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    INSTANCE_DIR="${INSTANCE_BASE}/notifications"
+    mkdir -p ${INSTANCE_DIR}/{config,logs,certs}
+    # Use the notification service port from env file
+    echo "RIVER_PORT=$((${NOTIFICATION_SERVICE_PORT}))" > ${INSTANCE_DIR}/config/config.env
+    if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
+    ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
+    fi
+
 _remove-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     @rm -rf ${INSTANCE_DIR}
 
@@ -339,6 +350,21 @@ start-app-registry: _require_run_env
         ${RUN_ARGS} \
         > ./logs/tty.stdout.log 2> ./logs/tty.stderr.log &
 
+start-notifications: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    echo "Running start-notifications with args $@"
+    source ${ENV_FILE}
+    RUN_ARGS=${RUN_ARGS:-}
+    RUN_CMD=${RUN_CMD:-notifications}
+    cd ${INSTANCE_BASE}/notifications
+    ../bin/river_node ${RUN_CMD} \
+        --config ../common.yaml \
+        --config ../contracts.env \
+        --config ../notifications/config.yaml \
+        --config config/config.env \
+        ${RUN_ARGS} \
+        > ./logs/tty.stdout.log 2> ./logs/tty.stderr.log &
+
 _stop-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
@@ -358,6 +384,15 @@ stop-app-registry: _require_run_env
     source ${INSTANCE_BASE}/app-registry/config/config.env
     ../scripts/kill-on-port.sh ${RIVER_PORT} app-registry
 
+stop-notifications: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    echo "Running stop-notifications with args $@"
+    source ${ENV_FILE}
+    if [ ! -f "${INSTANCE_BASE}/notifications/config/config.env" ]; then
+        exit 0
+    fi
+    source ${INSTANCE_BASE}/notifications/config/config.env
+    ../scripts/kill-on-port.sh ${RIVER_PORT} notifications
 
 # Stop all nodes
 stop: _require_run_env (_loop-instances "_stop-node")
@@ -374,6 +409,14 @@ wait-app-registry: _require_run_env
     echo "Running wait-app-registry with args $@"
     source ${ENV_FILE}
     source ${INSTANCE_BASE}/app-registry/config/config.env
+    cd ..
+    yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
+
+wait-notifications: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    echo "Running wait-notifications with args $@"
+    source ${ENV_FILE}
+    source ${INSTANCE_BASE}/notifications/config/config.env
     cd ..
     yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
 
@@ -395,6 +438,13 @@ tail-app-registry-logs: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/app-registry/logs/tty.*.log)
+    tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
+
+tail-notifications-logs: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/notifications/logs/tty.*.log)
     tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
 
 # Tail logs from all instances starting with 10 last lines
@@ -476,6 +526,12 @@ run-app-registry: _require_run_env start-app-registry wait-app-registry _wait-ct
 start-and-wait-app-registry: _require_run_env start-app-registry wait-app-registry
 
 run-app-registry-and-tail: _require_run_env start-app-registry wait-app-registry tail-app-registry-logs stop-app-registry
+
+run-notifications: _require_run_env start-notifications wait-notifications _wait-ctrl-c stop-notifications
+
+start-and-wait-notifications: _require_run_env start-notifications wait-notifications
+
+run-notifications-and-tail: _require_run_env start-notifications wait-notifications tail-notifications-logs stop-notifications
 
 # Start nodes in foreground tailing logs, config and build should be run before
 run-and-tail: _require_run_env _start-all _wait-all tail-logs stop
