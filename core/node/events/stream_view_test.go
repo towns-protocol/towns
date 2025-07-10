@@ -221,24 +221,15 @@ func TestLoad(t *testing.T) {
 	// test copy and apply block
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)
-	// create a new block
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
-		userWallet,
-		Make_MiniblockHeader(miniblockHeader),
-		view.LastBlock().Ref,
-	)
-	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), mbCandidate.snapshot)
-	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
-	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)
+	newSV1, newEvents, err := view.copyAndApplyBlock(mbCandidate, cfg)
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV1.blocks), 2) // we should have both blocks in memory
 	assert.Empty(t, newEvents)
 
 	// with 0 generations (0 in memory block history)
 	cfg.RecencyConstraintsGen = 0
-	newSV2, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)
+	newSV2, newEvents, err := view.copyAndApplyBlock(mbCandidate, cfg)
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV2.blocks), 1) // we should only have the latest block in memory
 	assert.Empty(t, newEvents)

@@ -49,9 +49,8 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
-		sn := miniblock.GetSnapshot()
-		if sn != nil {
-			snapshot = sn
+		if miniblock.Snapshot != nil {
+			snapshot = miniblock.Snapshot
 			snapshotIndex = i
 		}
 	}
@@ -109,22 +108,28 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
-	lastMiniblockNumber := int64(-1)
-	for i, binMiniblock := range stream.Miniblocks {
-		opts := NewParsedMiniblockInfoOpts()
-		// Ignore block number of first block, but enforce afterward
+	var snapshot *Snapshot
+	var snapshotIndex int
+	opts := NewParsedMiniblockInfoOpts().WithApplyOnlyMatchingSnapshot()
+	for i, mbProto := range stream.Miniblocks {
+		// Make sure block numbers are consecutive.
 		if i > 0 {
-			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
+			opts = opts.WithExpectedBlockNumber(miniblocks[0].Ref.Num + int64(i))
 		}
-		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
+
+		miniblock, err := NewMiniblockInfoFromProto(mbProto, stream.Snapshot, opts)
 		if err != nil {
 			return nil, err
 		}
-		lastMiniblockNumber = miniblock.Header().MiniblockNum
+
+		if miniblock.Snapshot != nil {
+			snapshot = miniblock.Snapshot
+			snapshotIndex = i
+		}
+
 		miniblocks[i] = miniblock
 	}
 
-	snapshot := miniblocks[0].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -160,7 +165,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
-		snapshotIndex: 0,
+		snapshotIndex: snapshotIndex,
 	}, nil
 }
 
@@ -351,7 +356,7 @@ func (r *StreamView) makeMiniblockCandidate(
 	eventNumOffset := last.Header().EventNumOffset + int64(len(last.Events())) + 1 // +1 for header
 	nextMiniblockNum := last.Header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
-	if last.Header().IsSnapshot() {
+	if last.Snapshot != nil {
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 
@@ -488,8 +493,8 @@ func (r *StreamView) copyAndApplyBlock(
 	var startIndex int
 	var snapshotIndex int
 	var snapshot *Snapshot
-	if header.IsSnapshot() {
-		snapshot = miniblock.GetSnapshot()
+	if miniblock.Snapshot != nil {
+		snapshot = miniblock.Snapshot
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
@@ -629,7 +634,7 @@ func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snap
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
 	if len(miniblocks) > 0 {
-		snapshot = r.blocks[r.snapshotIndex].Snapshot
+		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
 	}
 	return
 }
@@ -655,7 +660,7 @@ func (r *StreamView) shouldSnapshot(cfg *crypto.OnChainSettings) bool {
 	// count the events in blocks since the last snapshot
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if block.Header().IsSnapshot() {
+		if block.Snapshot != nil {
 			break
 		}
 		count += len(block.Events())
@@ -826,7 +831,7 @@ func (r *StreamView) GetStats() StreamViewStats {
 
 	for _, block := range r.blocks {
 		stats.EventsInMiniblocks += len(block.Events()) + 1 // +1 for header
-		if block.Header().IsSnapshot() {
+		if block.Snapshot != nil {
 			stats.SnapshotsInMiniblocks++
 		}
 	}
