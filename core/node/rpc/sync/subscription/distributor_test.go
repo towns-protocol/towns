@@ -87,8 +87,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				sub1 := createTestSubscription("test-sync-1")
 				sub2 := createTestSubscription("test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
-				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", StreamId{1, 2, 3, 4}).Return(false)
-				mockReg.On("RemoveStreamFromSubscription", "test-sync-2", StreamId{1, 2, 3, 4}).Return(false)
+				mockReg.On("OnStreamDown", StreamId{1, 2, 3, 4}).Return(false)
 			},
 		},
 		{

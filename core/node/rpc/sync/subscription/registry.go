@@ -15,6 +15,7 @@ type Registry interface {
 	GetSubscriptionByID(syncID string) (*Subscription, bool)
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
 	RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool)
+	OnStreamDown(streamID StreamId)
 	GetStats() (streamCount, subscriptionCount int)
 	CancelAll(err error)
 }
@@ -122,6 +123,13 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 	}
 	r.sLock.Unlock()
 	return
+}
+
+// OnStreamDown is called when a stream goes down
+func (r *registry) OnStreamDown(streamID StreamId) {
+	r.sLock.Lock()
+	delete(r.subscriptionsByStream, streamID)
+	r.sLock.Unlock()
 }
 
 // GetStats returns statistics about the registry

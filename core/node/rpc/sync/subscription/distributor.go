@@ -39,9 +39,7 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 
 	// Handle SYNC_DOWN by removing stream from registry
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		for _, sub := range subscriptions {
-			d.registry.RemoveStreamFromSubscription(sub.syncID, streamID)
-		}
+		d.registry.OnStreamDown(streamID)
 	}
 
 	// Send message to all subscriptions
