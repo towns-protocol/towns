@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -70,10 +71,20 @@ func (s *localSyncer) Address() common.Address {
 }
 
 func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "legacyLocalSyncer::modify",
+			trace.WithAttributes(
+				attribute.Int("toBackfill", len(request.GetBackfillStreams().GetStreams())),
+				attribute.Int("toAdd", len(request.GetAddStreams())),
+				attribute.Int("toRemove", len(request.GetRemoveStreams()))))
+		defer span.End()
+	}
+
 	var resp ModifySyncResponse
 
 	for _, cookie := range request.GetAddStreams() {
-		if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
+		if err := s.addStream(ctx, cookie); err != nil {
 			rvrErr := AsRiverError(err)
 			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
 				StreamId: cookie.GetStreamId(),
@@ -119,7 +130,16 @@ func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
 	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 }
 
-func (s *localSyncer) addStream(ctx context.Context, streamID StreamId, cookie *SyncCookie) error {
+func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
+	streamID := StreamId(cookie.GetStreamId())
+
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::addStream",
+			trace.WithAttributes(attribute.String("streamID", streamID.String())))
+		defer span.End()
+	}
+
 	s.activeStreamsMu.Lock()
 	defer s.activeStreamsMu.Unlock()
 
