@@ -18,4 +18,5 @@ library RiverConfigValues {
     bytes32 public constant MEDIA_CHUNK_SIZE = keccak256("stream.media.maxchunksize");
     bytes32 public constant MEDIA_CHUNK_COUNT = keccak256("stream.media.maxchunkcount");
     bytes32 public constant ENABLE_NODE_2_NODE_AUTH = keccak256("server.enablenode2nodeauth");
+    bytes32 public constant MB_RECENCY_CHECK = keccak256("stream.recencyconstraints.ageseconds");
 }

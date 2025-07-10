@@ -218,6 +218,24 @@ type (
 			envelope []byte,
 		) error
 
+		// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
+		// This is used for backfilling gaps in the miniblock sequence during reconciliation.
+		// 
+		// Requirements:
+		// - miniblocks must be continuous (no gaps)
+		// - all miniblock numbers must be less than the last miniblock in storage
+		// - overlapping miniblocks are skipped (not overwritten)
+		// - does not modify minipool
+		// - does not update latest_snapshot_miniblock
+		// 
+		// This function is designed for reconciliation processes that need to fill gaps
+		// in the miniblock sequence without affecting the current stream state.
+		WritePrecedingMiniblocks(
+			ctx context.Context,
+			streamId StreamId,
+			miniblocks []*WriteMiniblockData,
+		) error
+
 		// DebugReadStreamData returns details for debugging about the stream.
 		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
 

@@ -9,6 +9,7 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 import {IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
 import {DropClaim} from "src/airdrop/drop/DropClaim.sol";
@@ -142,6 +143,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         vm.prank(caller);
         vm.expectEmit(address(dropFacet));
         emit DropFacet_Claimed_WithPenalty(conditionId, caller, wallet, expectedAmount);
+        emit IERC20.Transfer(wallet, address(0), expectedAmount);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,

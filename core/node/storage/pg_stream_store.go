@@ -1038,6 +1038,146 @@ func (s *PostgresStreamStore) writeEventTx(
 	return nil
 }
 
+// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
+// This is used for backfilling gaps in the miniblock sequence during reconciliation.
+func (s *PostgresStreamStore) WritePrecedingMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+) error {
+	if len(miniblocks) == 0 {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"miniblocks cannot be empty",
+		)
+	}
+
+	// Validate miniblocks are continuous and in ascending order
+	for i := 1; i < len(miniblocks); i++ {
+		if miniblocks[i].Number != miniblocks[i-1].Number+1 {
+			return RiverError(
+				Err_INVALID_ARGUMENT,
+				"Miniblocks must be continuous",
+				"expectedNum", miniblocks[i-1].Number+1,
+				"actualNum", miniblocks[i].Number,
+				"index", i,
+			)
+		}
+	}
+
+	return s.txRunner(
+		ctx,
+		"WritePrecedingMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writePrecedingMiniblocksTx(ctx, tx, streamId, miniblocks)
+		},
+		nil,
+		"streamId", streamId,
+		"miniblocksCount", len(miniblocks),
+	)
+}
+
+func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+) error {
+	// Lock the stream for update
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Get the last miniblock number in storage
+	var lastMiniblockNum int64
+	err = tx.QueryRow(
+		ctx,
+		s.sqlForStream("SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1", streamId),
+		streamId,
+	).Scan(&lastMiniblockNum)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to get last miniblock number")
+	}
+
+	// Validate that miniblocks are preceding the last miniblock in storage
+	// Since miniblocks are already validated to be continuous, we only need to check the last one
+	lastInputMiniblockNum := miniblocks[len(miniblocks)-1].Number
+	if lastInputMiniblockNum >= lastMiniblockNum {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"Miniblock numbers must be less than last miniblock in storage",
+			"lastInputMiniblockNum", lastInputMiniblockNum,
+			"lastMiniblockNum", lastMiniblockNum,
+		)
+	}
+
+	// Get existing miniblock numbers to determine which ones to skip
+	existingNums := make(map[int64]bool)
+	rows, err := tx.Query(
+		ctx,
+		s.sqlForStream(
+			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num <= $3",
+			streamId,
+		),
+		streamId,
+		miniblocks[0].Number,
+		miniblocks[len(miniblocks)-1].Number,
+	)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to query existing miniblocks")
+	}
+
+	// Use ForEachRow pattern from reinitializeStreamStorageTx
+	var seqNum int64
+	seqNumArgs := []any{&seqNum}
+	_, err = pgx.ForEachRow(rows, seqNumArgs, func() error {
+		existingNums[seqNum] = true
+		return nil
+	})
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to iterate existing miniblocks")
+	}
+
+	// Prepare miniblocks to insert (skip existing ones)
+	var toInsert []*WriteMiniblockData
+	for _, mb := range miniblocks {
+		if !existingNums[mb.Number] {
+			toInsert = append(toInsert, mb)
+		}
+	}
+
+	if len(toInsert) == 0 {
+		return nil // All miniblocks already exist
+	}
+
+	// Bulk insert new miniblocks
+	rows2D := make([][]interface{}, len(toInsert))
+	for i, mb := range toInsert {
+		rows2D[i] = []interface{}{
+			streamId,
+			mb.Number,
+			mb.Data,
+			mb.Snapshot,
+		}
+	}
+
+	_, err = tx.CopyFrom(
+		ctx,
+		pgx.Identifier{s.sqlForStream("{{miniblocks}}", streamId)},
+		[]string{"stream_id", "seq_num", "blockdata", "snapshot"},
+		pgx.CopyFromRows(rows2D),
+	)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Failed to insert miniblocks").
+			Tag("count", len(toInsert))
+	}
+
+	return nil
+}
+
 // ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 // Supported consistency checks:
 // 1. There are no gaps in miniblocks sequence
