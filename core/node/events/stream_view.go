@@ -1026,10 +1026,10 @@ func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
 
-	// Get the snapshot envelope
+	// Get the snapshot envelope if present
 	var snapshot *Envelope
 	if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) {
-		snapshot = r.blocks[r.snapshotIndex].Snapshot
+		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
 	}
 
 	// Calculate snapshot index in the result safely
