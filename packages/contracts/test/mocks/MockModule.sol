@@ -5,12 +5,17 @@ import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, M
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 // contracts
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 
-contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
+contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, ITownsApp {
+    bytes4 private constant INVALID_SIGNATURE = 0xffffffff;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -102,6 +107,49 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
         emit MockFunctionWithParamsCalled(msg.sender, msg.value, param);
     }
 
+    function mockValidateSignature(
+        bytes calldata signature,
+        bytes32 structHash
+    ) external view returns (bytes4) {
+        bytes4 magicValue = _validateSignature(signature, structHash, msg.sender);
+        if (magicValue == INVALID_SIGNATURE) {
+            revert("Invalid signature");
+        }
+        return magicValue;
+    }
+
+    function _validateSignature(
+        bytes calldata signature,
+        bytes32 structHash,
+        address owner
+    ) internal view returns (bytes4) {
+        // Try to extract the nested signature data (last 2 bytes should contain length)
+        bool isNestedSignature;
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Check if signature has the nested format by looking at the last 2 bytes
+            // which should contain the contentsDescription length
+            if gt(signature.length, 0x42) {
+                // 0x42 = minimum length for nested format
+                let c := shr(240, calldataload(add(signature.offset, sub(signature.length, 2))))
+                // Verify the signature has valid nested format
+                isNestedSignature := and(gt(signature.length, add(0x42, c)), gt(c, 0))
+            }
+        }
+
+        bytes32 hash;
+        if (isNestedSignature) {
+            // Use validator's domain for nested signatures
+            bytes32 domainSeparator = EIP712Facet(owner).DOMAIN_SEPARATOR();
+            hash = MessageHashUtils.toTypedDataHash(domainSeparator, structHash);
+        } else {
+            // Use app's domain for regular signatures
+            hash = _hashTypedDataV4(structHash);
+        }
+
+        return IERC1271(owner).isValidSignature(hash, signature);
+    }
+
     function preExecutionHook(
         uint32,
         address,
@@ -138,7 +186,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     }
 
     function executionManifest() external pure virtual returns (ExecutionManifest memory) {
-        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](3);
         ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
 
         executionFunctions[0] = ManifestExecutionFunction({
@@ -160,6 +208,12 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
             allowGlobalValidation: true
         });
 
+        executionFunctions[2] = ManifestExecutionFunction({
+            executionSelector: this.mockValidateSignature.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
         bytes4[] memory interfaceIds;
 
         return
@@ -176,6 +230,10 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
             interfaceId == type(IERC6900Module).interfaceId ||
             interfaceId == type(ITownsApp).interfaceId ||
             interfaceId == type(IERC173).interfaceId;
+    }
+
+    function _domainNameAndVersion() internal pure override returns (string memory, string memory) {
+        return ("MockModule", "1");
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}
