@@ -10,10 +10,8 @@ import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.
 
 // contracts
 
-/**
- * @title DependencyLib
- * @dev Library for resolving contract dependencies via the Implementation Registry. Used for retrieving the latest implementation addresses for named dependencies within a space.
- */
+///@title DependencyLib
+///@dev Library for resolving contract dependencies via the Implementation Registry. Used for retrieving the latest implementation addresses for named dependencies within a space.
 library DependencyLib {
     // Constants for dependency names
     bytes32 internal constant RIVER_AIRDROP = bytes32("RiverAirdrop");
@@ -21,13 +19,11 @@ library DependencyLib {
     bytes32 internal constant SPACE_OWNER = bytes32("Space Owner");
     bytes32 internal constant APP_REGISTRY = bytes32("AppRegistry");
 
-    /**
-     * @notice Retrieves the latest implementation address for a given dependency name.
-     * @dev Looks up the dependency in the Implementation Registry associated with the space factory.
-     * @param ms The MembershipStorage layout containing the spaceFactory address.
-     * @param dependencyName The keccak256 hash of the dependency name to resolve.
-     * @return The address of the latest implementation for the specified dependency.
-     */
+    /// @notice Retrieves the latest implementation address for a given dependency name.
+    /// @dev Looks up the dependency in the Implementation Registry associated with the space factory.
+    /// @param ms The MembershipStorage layout containing the spaceFactory address.
+    /// @param dependencyName The keccak256 hash of the dependency name to resolve.
+    /// @return The address of the latest implementation for the specified dependency.
     function getDependency(
         MembershipStorage.Layout storage ms,
         bytes32 dependencyName
