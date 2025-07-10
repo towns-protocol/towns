@@ -91,6 +91,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 	subLogger := m.log.With("syncId", syncID)
 
 	sub := &Subscription{
+		globalCtx:           m.globalCtx,
 		log:                 subLogger,
 		ctx:                 ctx,
 		cancel:              cancel,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -27,6 +28,8 @@ type SyncerSet interface {
 type Subscription struct {
 	// Messages is the channel for the subscription messages
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	// globalCtx is the global context of the node
+	globalCtx context.Context
 	// log is the logger for this stream sync operation
 	log *logging.Log
 	// ctx is the context of the sync operation
@@ -58,7 +61,16 @@ func (s *Subscription) Close() {
 	s.closed.Store(true)
 	s.Messages.Close()
 	// Remove the subscription from the registry
-	s.registry.RemoveSubscription(s.syncID)
+	if streamsToRemove := s.registry.RemoveSubscription(s.syncID); len(streamsToRemove) > 0 {
+		ctx, cancel := context.WithTimeout(s.globalCtx, time.Second*5)
+		if err := s.syncers.Modify(ctx, client.ModifyRequest{
+			ToRemove:               streamsToRemove,
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
+		}); err != nil {
+			s.log.Errorw("Failed to drop streams from common syncer set", "error", err)
+		}
+		cancel()
+	}
 }
 
 // isClosed returns true if the subscription is closed, false otherwise.
@@ -174,7 +186,7 @@ func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) e
 			ToRemove:               [][]byte{streamID[:]},
 			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 		}); err != nil {
-			s.log.Errorw("Failed to drop stream from common syncer set", "streamId", streamID, "err", err)
+			s.log.Errorw("Failed to drop stream from common syncer set", "streamId", streamID, "error", err)
 		}
 	}
 	s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})

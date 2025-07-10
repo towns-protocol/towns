@@ -35,8 +35,9 @@ func (m *mockRegistry) AddSubscription(sub *Subscription) {
 	m.Called(sub)
 }
 
-func (m *mockRegistry) RemoveSubscription(syncID string) {
-	m.Called(syncID)
+func (m *mockRegistry) RemoveSubscription(syncID string) (streamsToRemove [][]byte) {
+	args := m.Called(syncID)
+	return args.Get(0).([][]byte)
 }
 
 func (m *mockRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
