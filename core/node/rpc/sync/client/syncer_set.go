@@ -571,20 +571,12 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie) (common.Address, bool) {
 	streamID := StreamId(cookie.GetStreamId())
 
-	// 1. Try node from cookie first
-	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
-		selectedNode := common.BytesToAddress(addrRaw)
-		if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
-			return selectedNode, true
-		}
-	}
-
 	stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
 	if err != nil {
 		return common.Address{}, false
 	}
 
-	// 2. Try local node if stream is local
+	// 1. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
 	if isLocal {
 		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
@@ -592,7 +584,17 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 		}
 	}
 
-	// 3. Try remote nodes
+	// 2. Try node from cookie then, and make sure the specified node is actually a stream node
+	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
+		selectedNode := common.BytesToAddress(addrRaw)
+		if slices.Contains(remotes, selectedNode) {
+			if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
+				return selectedNode, true
+			}
+		}
+	}
+
+	// 3. Try the rest of remote nodes finally
 	if len(remotes) > 0 {
 		selectedNode := stream.GetStickyPeer()
 		for range remotes {
