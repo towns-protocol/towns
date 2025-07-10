@@ -564,7 +564,7 @@ abstract contract ERC721ABase is IERC721ABase {
     //                       APPROVAL OPERATIONS
     // =============================================================
     function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
-        return ERC721AStorage.ownerOf(_startTokenId(), tokenId);
+        return ERC721AStorage.ownerAt(_startTokenId(), tokenId);
     }
 
     /**

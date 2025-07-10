@@ -55,7 +55,7 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase, AppAccountBase
 
             // check if banned
             for (uint256 j; j < bannedTokensLen; ++j) {
-                if (ERC721AStorage.ownerOf(MEMBERSHIP_START_TOKEN_ID, bannedTokens[j]) == wallet) {
+                if (ERC721AStorage.ownerAt(MEMBERSHIP_START_TOKEN_ID, bannedTokens[j]) == wallet) {
                     return false;
                 }
             }

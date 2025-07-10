@@ -65,7 +65,7 @@ library ERC721AStorage {
         return layout()._packedAddressData[owner] & _BITMASK_ADDRESS_DATA_ENTRY;
     }
 
-    function ownerOf(uint256 startTokenId, uint256 tokenId) internal view returns (address) {
+    function ownerAt(uint256 startTokenId, uint256 tokenId) internal view returns (address) {
         return address(uint160(packedOwnershipOf(startTokenId, tokenId)));
     }
 
