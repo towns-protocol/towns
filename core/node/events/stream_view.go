@@ -35,8 +35,12 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	snapshotIndex := -1
+	var snapshot *Snapshot
+	firstMbNum := streamData.Miniblocks[0].Number
+	opts := NewParsedMiniblockInfoOpts()
 	for i, mb := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromDescriptor(mb)
+		opts = opts.WithExpectedBlockNumber(firstMbNum + int64(i))
+		miniblock, err := NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
 		if err != nil {
 			return nil, AsRiverError(
 				err,
@@ -45,17 +49,13 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
-		if snapshotIndex == -1 && miniblock.Header().IsSnapshot() {
+		snapshot = miniblock.GetSnapshot()
+		if snapshot != nil {
 			snapshotIndex = i
 		}
 	}
 
 	if snapshotIndex == -1 {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
-	}
-
-	snapshot := miniblocks[snapshotIndex].GetSnapshot()
-	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
