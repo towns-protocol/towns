@@ -119,7 +119,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	for _, streamID := range request.GetRemoveStreams() {
 		syncStream, found := s.activeStreams[StreamId(streamID)]
 		if found {
-			syncStream.Unsub(s)
+			go syncStream.Unsub(s)
 			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
