@@ -4,7 +4,6 @@ import (
 	"context"
 	"slices"
 	"sync/atomic"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -61,16 +60,7 @@ func (s *Subscription) Close() {
 	s.closed.Store(true)
 	s.Messages.Close()
 	// Remove the subscription from the registry
-	if streamsToRemove := s.registry.RemoveSubscription(s.syncID); len(streamsToRemove) > 0 {
-		ctx, cancel := context.WithTimeout(s.globalCtx, time.Second*5)
-		if err := s.syncers.Modify(ctx, client.ModifyRequest{
-			ToRemove:               streamsToRemove,
-			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
-		}); err != nil {
-			s.log.Errorw("Failed to drop streams from common syncer set", "error", err)
-		}
-		cancel()
-	}
+	s.registry.RemoveSubscription(s.syncID)
 }
 
 // isClosed returns true if the subscription is closed, false otherwise.
@@ -116,7 +106,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
 			req.AddingFailureHandler(status)
-			_ = s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
+			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
 		},
 		RemovingFailureHandler: req.RemovingFailureHandler,
 	}
@@ -136,11 +126,7 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Handle streams that the clients wants to unsubscribe from.
 	for _, toRemove := range req.ToRemove {
-		removeFromRemote := s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(toRemove))
-		if removeFromRemote {
-			// The given stream must be removed from the main syncer set
-			modifiedReq.ToRemove = append(modifiedReq.ToRemove, toRemove)
-		}
+		s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(toRemove))
 	}
 
 	if len(implicitBackfills) > 0 {
@@ -180,15 +166,8 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 }
 
 // DebugDropStream drops the given stream from the subscription.
-func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	if remove := s.registry.RemoveStreamFromSubscription(s.syncID, streamID); remove {
-		if err := s.syncers.Modify(ctx, client.ModifyRequest{
-			ToRemove:               [][]byte{streamID[:]},
-			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
-		}); err != nil {
-			s.log.Errorw("Failed to drop stream from common syncer set", "streamId", streamID, "error", err)
-		}
-	}
+func (s *Subscription) DebugDropStream(_ context.Context, streamID StreamId) error {
+	s.registry.RemoveStreamFromSubscription(s.syncID, streamID)
 	s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	return nil
 }

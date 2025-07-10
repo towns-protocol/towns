@@ -101,8 +101,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	assert.Equal(t, SyncOp_SYNC_UPDATE, receivedMsgs[0].GetSyncOp())
 
 	// Step 7: Test stream removal
-	shouldRemoveFromRemote := env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
-	assert.True(t, shouldRemoveFromRemote) // Last subscription for this stream
+	env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
 
 	// Verify stream is no longer associated
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -203,8 +202,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	assert.Len(t, env.registry.GetSubscriptionsForStream(streamID), 2)
 
 	// Test removing one subscription - should not remove from remote
-	shouldRemoveFromRemote := env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
-	assert.False(t, shouldRemoveFromRemote) // Other subscription still has this stream
+	env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
 
 	// Verify remaining subscription still has the stream
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -212,8 +210,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	assert.Equal(t, "test-sync-2", subscriptions[0].syncID)
 
 	// Remove second subscription - should remove from remote
-	shouldRemoveFromRemote = env.registry.RemoveStreamFromSubscription("test-sync-2", streamID)
-	assert.True(t, shouldRemoveFromRemote) // No more subscriptions for this stream
+	env.registry.RemoveStreamFromSubscription("test-sync-2", streamID)
 
 	// Verify stream is gone
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)

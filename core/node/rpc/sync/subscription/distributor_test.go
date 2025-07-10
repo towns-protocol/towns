@@ -68,7 +68,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				sub := createTestSubscription("test-sync-1")
 				sub.Close() // Mark as closed
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub}).Maybe()
-				mockReg.On("RemoveSubscription", "test-sync-1").Return(nil)
+				mockReg.On("RemoveSubscription", "test-sync-1")
 			},
 		},
 		{

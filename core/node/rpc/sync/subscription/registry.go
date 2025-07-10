@@ -10,12 +10,13 @@ import (
 // Registry defines the contract for managing subscription lifecycle
 type Registry interface {
 	AddSubscription(sub *Subscription)
-	RemoveSubscription(syncID string) (streamsToRemove [][]byte)
+	RemoveSubscription(syncID string)
 	GetSubscriptionsForStream(streamID StreamId) []*Subscription
 	GetSubscriptionByID(syncID string) (*Subscription, bool)
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
-	RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool)
+	RemoveStreamFromSubscription(syncID string, streamID StreamId)
 	OnStreamDown(streamID StreamId)
+	CleanupUnusedStreams(func(streamIds [][]byte))
 	GetStats() (streamCount, subscriptionCount int)
 	CancelAll(err error)
 }
@@ -46,7 +47,7 @@ func (r *registry) AddSubscription(sub *Subscription) {
 }
 
 // RemoveSubscription removes a subscription from the registry
-func (r *registry) RemoveSubscription(syncID string) (streamsToRemove [][]byte) {
+func (r *registry) RemoveSubscription(syncID string) {
 	r.sLock.Lock()
 
 	delete(r.subscriptionsByID, syncID)
@@ -58,7 +59,6 @@ func (r *registry) RemoveSubscription(syncID string) (streamsToRemove [][]byte) 
 		})
 		if len(r.subscriptionsByStream[streamID]) == 0 {
 			delete(r.subscriptionsByStream, streamID)
-			streamsToRemove = append(streamsToRemove, streamID[:])
 		}
 	}
 
@@ -112,7 +112,7 @@ func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (sh
 
 // RemoveStreamFromSubscription removes a stream from a subscription
 // Returns true if the given stream must be removed from the main syncer set
-func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool) {
+func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId) {
 	r.sLock.Lock()
 	r.subscriptionsByStream[streamID] = slices.DeleteFunc(
 		r.subscriptionsByStream[streamID],
@@ -121,7 +121,7 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 		},
 	)
 
-	if shouldRemoveFromRemote = len(r.subscriptionsByStream[streamID]) == 0; shouldRemoveFromRemote {
+	if len(r.subscriptionsByStream[streamID]) == 0 {
 		delete(r.subscriptionsByStream, streamID)
 	}
 	r.sLock.Unlock()
@@ -153,5 +153,20 @@ func (r *registry) CancelAll(err error) {
 	}
 	r.subscriptionsByID = make(map[string]*Subscription)
 	r.subscriptionsByStream = make(map[StreamId][]*Subscription)
+	r.sLock.Unlock()
+}
+
+// CleanupUnusedStreams removes unused streams from the syncer set.
+func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
+	r.sLock.Lock()
+	streamIds := make([][]byte, 0)
+	for streamID, subs := range r.subscriptionsByStream {
+		if len(subs) == 0 {
+			streamIds = append(streamIds, streamID[:])
+		}
+	}
+	if len(streamIds) > 0 {
+		cb(streamIds)
+	}
 	r.sLock.Unlock()
 }

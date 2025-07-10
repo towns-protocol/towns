@@ -347,9 +347,7 @@ func TestRegistry_RemoveStreamFromSubscription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := tt.setup(t)
 
-			shouldRemoveFromRemote := reg.RemoveStreamFromSubscription(tt.syncID, tt.streamID)
-
-			assert.Equal(t, tt.expectRemoveFromRemote, shouldRemoveFromRemote)
+			reg.RemoveStreamFromSubscription(tt.syncID, tt.streamID)
 
 			// Verify stream was removed from subscription
 			subscriptions := reg.GetSubscriptionsForStream(tt.streamID)
