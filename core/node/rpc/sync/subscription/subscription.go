@@ -27,8 +27,6 @@ type SyncerSet interface {
 type Subscription struct {
 	// Messages is the channel for the subscription messages
 	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	// globalCtx is the global context of the node
-	globalCtx context.Context
 	// log is the logger for this stream sync operation
 	log *logging.Log
 	// ctx is the context of the sync operation
