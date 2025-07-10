@@ -62,6 +62,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address[] internal nodes;
 
     address internal deployer;
+
+    uint256 internal founderPrivateKey;
     address internal founder;
     address internal space;
     address internal everyoneSpace;
@@ -183,7 +185,10 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         vm.stopPrank();
 
         // create a new space
-        founder = makeAddr("founder");
+        founderPrivateKey = boundPrivateKey(_randomUint256());
+        founder = vm.addr(founderPrivateKey);
+        vm.label(founder, "founder");
+
         appDeveloper = makeAddr("appDeveloper");
         appClient = makeAddr("appClient");
 
