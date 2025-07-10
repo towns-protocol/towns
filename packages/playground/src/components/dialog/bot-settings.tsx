@@ -9,7 +9,7 @@ import { bin_fromHexString } from '@towns-protocol/dlog'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
-import { useSyncAgent } from '@towns-protocol/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { getAppMetadataQueryKey, useAppMetadata } from '@/hooks/useAppMetadata'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -64,7 +64,6 @@ export const BotSettingsDialog = ({
     open: boolean
     onOpenChange: (open: boolean) => void
 }) => {
-    const sync = useSyncAgent()
     const { data: metadata, isLoading: isLoadingMetadata } = useAppMetadata(appClientId)
     const queryClient = useQueryClient()
     const webhookForm = useForm<WebhookFormSchema>({
@@ -107,6 +106,8 @@ export const BotSettingsDialog = ({
 
     const signer = useEthersSigner()
     const { address: signerAddress } = useAccount()
+    const { env: currentEnv } = useAgentConnection()
+    const appRegistryUrl = currentEnv ? getAppRegistryUrl(currentEnv) : ''
 
     const registerWebhookMutation = useMutation({
         mutationFn: async ({ webhookUrl }: WebhookFormSchema) => {
@@ -117,7 +118,7 @@ export const BotSettingsDialog = ({
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 signerAddress,
                 signer,
-                getAppRegistryUrl(sync.config.riverConfig.environmentId),
+                appRegistryUrl,
             )
             await appRegistryRpcClient.registerWebhook({
                 appId: bin_fromHexString(appClientId),
@@ -138,7 +139,7 @@ export const BotSettingsDialog = ({
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 signerAddress,
                 signer,
-                getAppRegistryUrl(sync.config.riverConfig.environmentId),
+                appRegistryUrl,
             )
             await appRegistryRpcClient.setAppSettings({
                 appId: bin_fromHexString(appClientId),
@@ -161,7 +162,7 @@ export const BotSettingsDialog = ({
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 signerAddress,
                 signer,
-                getAppRegistryUrl(sync.config.riverConfig.environmentId),
+                appRegistryUrl,
             )
             await appRegistryRpcClient.setAppMetadata({
                 appId: bin_fromHexString(appClientId),
