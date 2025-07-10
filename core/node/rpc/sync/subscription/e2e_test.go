@@ -291,7 +291,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	}
 	assert.Len(t, receivedMsgs, 0) // No messages should be delivered after SYNC_DOWN
 
-	// Test 4: Backfill message (should NOT be delivered after SYNC_DOWN)
+	// Test 4: Backfill message (should be delivered even after SYNC_DOWN)
 	backfillMsg := &SyncStreamsResponse{
 		SyncOp: SyncOp_SYNC_UPDATE,
 		Stream: &StreamAndCookie{
@@ -307,7 +307,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	receivedMsgs = sub.Messages.GetBatch(nil)
-	assert.Len(t, receivedMsgs, 0) // No messages should be delivered after SYNC_DOWN
+	assert.Len(t, receivedMsgs, 1)
 }
 
 // TestE2E_ErrorHandlingAndRecovery tests error scenarios
