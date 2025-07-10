@@ -34,15 +34,9 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
-	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
 	for i, mb := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{
-			Number:   lastMiniblockNumber + 1,
-			Data:     mb.Data,
-			Hash:     mb.Hash,
-			Snapshot: mb.Snapshot,
-		})
+		miniblock, err := NewMiniblockInfoFromDescriptor(mb)
 		if err != nil {
 			return nil, AsRiverError(
 				err,
@@ -51,7 +45,6 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
-		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		if snapshotIndex == -1 && miniblock.Header().IsSnapshot() {
 			snapshotIndex = i
 		}

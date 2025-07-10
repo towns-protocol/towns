@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
@@ -286,7 +287,8 @@ func TestMbHashConstraints(t *testing.T) {
 
 	genMb := MakeGenesisMiniblockForUserSettingsStream(t, userWallet, nodeWallet, streamId)
 	mbDescriptors = append(mbDescriptors, &storage.MiniblockDescriptor{
-		Data: toBytes(t, genMb),
+		Number: genMb.Header().MiniblockNum,
+		Data:   toBytes(t, genMb),
 	})
 	mbs = append(mbs, genMb)
 
@@ -294,7 +296,8 @@ func TestMbHashConstraints(t *testing.T) {
 	for range 10 {
 		mb := MakeTestBlockForUserSettingsStream(t, userWallet, nodeWallet, prevMb)
 		mbDescriptors = append(mbDescriptors, &storage.MiniblockDescriptor{
-			Data: toBytes(t, mb),
+			Number: mb.Header().MiniblockNum,
+			Data:   toBytes(t, mb),
 		})
 		mbs = append(mbs, mb)
 		prevMb = mb
@@ -374,7 +377,7 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	
 	streamId := UserStreamIdFromAddr(userWallet.Address)
 	
-	// Create a stream with multiple miniblocks
+	// Create a genesis miniblock using the helper function
 	inception, err := MakeEnvelopeWithPayload(
 		userWallet,
 		Make_UserPayload_Inception(streamId, nil),
@@ -389,44 +392,109 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	
-	// Create genesis miniblock with snapshot
 	genesisEvents := []*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)}
-	miniblockHeader0, err := Make_GenesisMiniblockHeader(genesisEvents)
+	genesisMb, err := MakeGenesisMiniblock(userWallet, genesisEvents)
 	assert.NoError(t, err)
-	miniblockHeaderProto0, err := MakeEnvelopeWithPayload(
+	
+	// Parse the genesis miniblock to extract info
+	genesisParsed, err := NewMiniblockInfoFromProto(genesisMb, nil, NewParsedMiniblockInfoOpts())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), genesisParsed.Header().MiniblockNum)
+	
+	// For testing, we'll create blocks without snapshots except at position 2
+	// This requires creating new events that don't have the snapshot flag
+	
+	// For this test, we need to create miniblocks where only block 2 has a snapshot
+	// So we'll create a custom block 0 without a snapshot
+	header0 := &MiniblockHeader{
+		MiniblockNum: int64(0),
+		Timestamp:    genesisParsed.Header().GetTimestamp(),
+		EventHashes:  genesisParsed.Header().GetEventHashes(),
+		Content: &MiniblockHeader_None{
+			None: &emptypb.Empty{},
+		},
+		// No snapshot for block 0
+	}
+	
+	headerProto0, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_MiniblockHeader(miniblockHeader0),
+		Make_MiniblockHeader(header0),
 		nil,
 	)
 	assert.NoError(t, err)
 	
-	// Get the snapshot from the genesis header
-	snapshot0 := miniblockHeader0.GetSnapshot()
-	assert.NotNil(t, snapshot0)
-	snapshotBytes0, err := proto.Marshal(snapshot0)
-	assert.NoError(t, err)
-	
-	miniblockProto0 := &Miniblock{
-		Header: miniblockHeaderProto0,
+	miniblock0 := &Miniblock{
+		Header: headerProto0,
 		Events: []*Envelope{inception, join},
 	}
-	miniblockProtoBytes0, err := proto.Marshal(miniblockProto0)
+	
+	miniblockProtoBytes0, err := proto.Marshal(miniblock0)
 	assert.NoError(t, err)
+	
+	// Create miniblocks for positions 1-4
+	var miniblockBytes [][]byte
+	miniblockBytes = append(miniblockBytes, miniblockProtoBytes0) // Block 0 without snapshot
+	
+	// Variable to store snapshot data
+	var snapshotBytes2 []byte
+	
+	for i := 1; i < 5; i++ {
+		header := &MiniblockHeader{
+			MiniblockNum: int64(i),
+			Timestamp:    genesisParsed.Header().GetTimestamp(),
+			EventHashes:  genesisParsed.Header().GetEventHashes(),
+			Content: &MiniblockHeader_None{
+				None: &emptypb.Empty{},
+			},
+		}
+		
+		// Add snapshot at position 2
+		var snapshotData []byte
+		if i == 2 {
+			header.Snapshot = genesisParsed.Header().GetSnapshot()
+			snapshotEnv, err := MakeSnapshotEnvelope(userWallet, header.Snapshot)
+			assert.NoError(t, err)
+			snapshotData, err = proto.Marshal(snapshotEnv)
+			assert.NoError(t, err)
+		}
+		
+		headerProto, err := MakeEnvelopeWithPayload(
+			userWallet,
+			Make_MiniblockHeader(header),
+			nil,
+		)
+		assert.NoError(t, err)
+		
+		miniblock := &Miniblock{
+			Header: headerProto,
+			Events: []*Envelope{inception, join},
+		}
+		
+		miniblockProtoBytes, err := proto.Marshal(miniblock)
+		assert.NoError(t, err)
+		miniblockBytes = append(miniblockBytes, miniblockProtoBytes)
+		
+		// Store snapshot data for block 2
+		if i == 2 {
+			snapshotBytes2 = snapshotData
+		}
+	}
 	
 	// Test case 1: Create view with multiple miniblocks
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes0, Number: 0},
-				{Data: miniblockProtoBytes0, Number: 1},
-				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 2}, // Snapshot at index 2
-				{Data: miniblockProtoBytes0, Number: 3},
-				{Data: miniblockProtoBytes0, Number: 4},
+				{Data: miniblockBytes[0], Number: 0},
+				{Data: miniblockBytes[1], Number: 1},
+				{Data: miniblockBytes[2], Snapshot: snapshotBytes2, Number: 2}, // Snapshot at index 2
+				{Data: miniblockBytes[3], Number: 3},
+				{Data: miniblockBytes[4], Number: 4},
 			},
 			SnapshotMiniblockOffset: 2,
 		},
 	)
 	assert.NoError(t, err)
+	
 	
 	// Test GetResetStreamAndCookie (old method - should always return 0)
 	streamAndCookie1 := view.GetResetStreamAndCookie(nodeWallet.Address)
@@ -474,10 +542,18 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	assert.NotNil(t, streamAndCookie7.Snapshot)
 	
 	// Test with empty view (edge case)
+	// Use the actual genesis miniblock which has a snapshot
+	genesisMbBytes, err := proto.Marshal(genesisMb)
+	assert.NoError(t, err)
+	genesisSnapshotEnv, err := MakeSnapshotEnvelope(userWallet, genesisParsed.Header().GetSnapshot())
+	assert.NoError(t, err)
+	snapshotBytes0, err := proto.Marshal(genesisSnapshotEnv)
+	assert.NoError(t, err)
+	
 	emptyView, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes0, Snapshot: snapshotBytes0, Number: 0},
+				{Data: genesisMbBytes, Snapshot: snapshotBytes0, Number: 0},
 			},
 			SnapshotMiniblockOffset: 0,
 		},

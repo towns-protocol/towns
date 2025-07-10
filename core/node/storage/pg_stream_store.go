@@ -799,22 +799,12 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		return nil, err
 	}
 
-	var lastMiniblockIndex int64
-	if err = tx.
-		QueryRow(
-			ctx,
-			s.sqlForStream(
-				"SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1",
-				streamId,
-			),
-			streamId).
-		Scan(&lastMiniblockIndex); err != nil {
-		return nil, WrapRiverError(Err_INTERNAL, err).Message("db inconsistency: failed to get last miniblock index")
-	}
 
-	numPrecedingMiniblocks = max(1, numPrecedingMiniblocks)
-	startSeqNum := max(0, lastMiniblockIndex-int64(numPrecedingMiniblocks-1))
-	startSeqNum = min(startSeqNum, snapshotMiniblockIndex)
+	// Calculate the starting sequence number to read numPrecedingMiniblocks before the snapshot
+	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
+	if startSeqNum < 0 {
+		startSeqNum = 0
+	}
 
 	miniblocksRow, err := tx.Query(
 		ctx,

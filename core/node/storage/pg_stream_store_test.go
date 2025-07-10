@@ -1287,7 +1287,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 14)
 	require.NoError(err)
-	requireSnapshotResult(t, streamData, 1, mbs[1:], lastEvents)
+	requireSnapshotResult(t, streamData, 2, mbs, lastEvents)
 
 	mb := dataMaker.mb(15, true)
 	mbs = append(mbs, mb)
@@ -1302,7 +1302,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 6)
 	require.NoError(err)
-	requireSnapshotResult(t, streamData, 5, mbs[10:], lastEvents)
+	requireSnapshotResult(t, streamData, 6, mbs[9:], lastEvents)
 }
 
 func TestReadStreamFromLastSnapshotWithPrecedingMiniblocks(t *testing.T) {
@@ -1375,19 +1375,21 @@ func TestReadStreamFromLastSnapshotWithPrecedingMiniblocks(t *testing.T) {
 	require.Equal(int64(8), streamData.Miniblocks[0].Number)
 	require.Equal(int64(11), streamData.Miniblocks[3].Number) // Snapshot at index 3
 	
-	// Test 3: Request 10 preceding miniblocks (should get all available)
+	// Test 3: Request 10 preceding miniblocks (should get 10 blocks before snapshot)
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
-	require.Equal(11, streamData.SnapshotMiniblockOffset) // All 11 blocks before snapshot
-	require.Equal(17, len(streamData.Miniblocks)) // All 17 blocks
-	require.Equal(int64(0), streamData.Miniblocks[0].Number)
-	require.Equal(int64(11), streamData.Miniblocks[11].Number) // Snapshot at index 11
+	require.Equal(10, streamData.SnapshotMiniblockOffset) // 10 blocks before snapshot (blocks 1-10)
+	require.Equal(16, len(streamData.Miniblocks)) // Blocks 1-16 (missing block 0)
+	require.Equal(int64(1), streamData.Miniblocks[0].Number) // Starts at block 1
+	require.Equal(int64(11), streamData.Miniblocks[10].Number) // Snapshot at index 10
 	
-	// Test 4: Request more preceding miniblocks than available
+	// Test 4: Request more preceding miniblocks than available (should get all 11 blocks before snapshot)
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 20)
 	require.NoError(err)
-	require.Equal(11, streamData.SnapshotMiniblockOffset) // Still only 11 blocks before snapshot
-	require.Equal(17, len(streamData.Miniblocks)) // All 17 blocks
+	require.Equal(11, streamData.SnapshotMiniblockOffset) // All 11 blocks before snapshot (blocks 0-10)
+	require.Equal(17, len(streamData.Miniblocks)) // All 17 blocks (0-16)
+	require.Equal(int64(0), streamData.Miniblocks[0].Number) // Starts at block 0
+	require.Equal(int64(11), streamData.Miniblocks[11].Number) // Snapshot at index 11
 }
 
 func TestQueryPlan(t *testing.T) {
