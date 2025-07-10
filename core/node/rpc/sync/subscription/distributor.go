@@ -44,33 +44,19 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 
 	// Send message to all subscriptions
 	var wg sync.WaitGroup
-	var toRemove []string
-
 	for _, subscription := range subscriptions {
-		if subscription.isClosed() {
-			if msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-				toRemove = append(toRemove, subscription.syncID)
-			}
-			continue
-		}
-
 		wg.Add(1)
 		go func(subscription *Subscription) {
-			defer wg.Done()
 			d.sendMessageToSubscription(streamID, &SyncStreamsResponse{
 				SyncId:   msg.GetSyncId(),
 				SyncOp:   msg.GetSyncOp(),
 				Stream:   msg.GetStream(),
 				StreamId: msg.GetStreamId(),
 			}, subscription)
+			wg.Done()
 		}(subscription)
 	}
 	wg.Wait()
-
-	// Clean up closed subscriptions
-	for _, syncID := range toRemove {
-		d.registry.RemoveSubscription(syncID)
-	}
 }
 
 // DistributeBackfillMessage distributes a backfill message to a specific subscription
@@ -81,21 +67,8 @@ func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStre
 
 	targetSyncID := msg.GetTargetSyncIds()[0]
 	subscription, exists := d.registry.GetSubscriptionByID(targetSyncID)
-	if !exists || subscription.isClosed() {
+	if !exists {
 		return
-	}
-
-	// Check if the subscription is still associated with this stream
-	subscriptions := d.registry.GetSubscriptionsForStream(streamID)
-	found := false
-	for _, sub := range subscriptions {
-		if sub.syncID == targetSyncID {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return // Subscription is no longer associated with this stream
 	}
 
 	// Remove the target sync ID from the message
@@ -105,7 +78,7 @@ func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStre
 	subscription.Send(msg)
 
 	// Mark stream as no longer initializing and store backfill events
-	if _, found = subscription.initializingStreams.LoadAndDelete(streamID); found {
+	if _, found := subscription.initializingStreams.LoadAndDelete(streamID); found {
 		hashes := d.extractBackfillHashes(msg)
 		subscription.backfillEvents.Store(streamID, hashes)
 	}
@@ -115,7 +88,7 @@ func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStre
 func (d *distributor) sendMessageToSubscription(streamID StreamId, msg *SyncStreamsResponse, subscription *Subscription) {
 	// Handle SYNC_UPDATE special logic
 	if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-		// Skip if subscription is still initializing
+		// Skip if subscription is still initializing, should be completed by DistributeBackfillMessage
 		if _, found := subscription.initializingStreams.Load(streamID); found {
 			return
 		}
