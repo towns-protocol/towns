@@ -576,21 +576,22 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 		return common.Address{}, false
 	}
 
-	// 1. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
-	if isLocal {
-		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
-			return ss.localNodeAddress, true
-		}
-	}
 
-	// 2. Try node from cookie then, and make sure the specified node is actually a stream node
+	// 1. Try node from cookie
 	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
 		selectedNode := common.BytesToAddress(addrRaw)
-		if slices.Contains(remotes, selectedNode) {
+		if slices.Contains(remotes, selectedNode) || (isLocal && selectedNode == ss.localNodeAddress) {
 			if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
 				return selectedNode, true
 			}
+		}
+	}
+
+	// 2. Try local node if stream is local
+	if isLocal {
+		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
+			return ss.localNodeAddress, true
 		}
 	}
 
