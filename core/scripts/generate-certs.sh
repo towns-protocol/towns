@@ -18,8 +18,8 @@ if [ ! -d "$OUTPUT_DIR" ]; then
 fi
 
 # Variables
-CA_KEY_PATH=~/river-ca-key.pem
-CA_CERT_PATH=~/river-ca-cert.pem
+CA_KEY_PATH=~/towns-ca-key.pem
+CA_CERT_PATH=~/towns-ca-cert.pem
 SERVER_KEY_PATH="$OUTPUT_DIR/key.pem"
 SERVER_CERT_PATH="$OUTPUT_DIR/cert.pem"
 CSR_PATH="$OUTPUT_DIR/csr.pem"
@@ -63,7 +63,7 @@ fi
 
 # Generate server key and CSR
 openssl req -newkey rsa:2048 -nodes -keyout $SERVER_KEY_PATH -out $CSR_PATH \
-    -subj "/C=US/ST=Some-State/L=Some-City/O=Some-Organization/OU=Some-Unit/CN=river/emailAddress=${email}" \
+    -subj "/C=US/ST=Some-State/L=Some-City/O=Some-Organization/OU=Some-Unit/CN=towns/emailAddress=${email}" \
     -reqexts SAN \
     -config <(cat "$OPENSSL_CNF_PATH" <(printf "\n[SAN]\nsubjectAltName=DNS:localhost,IP:127.0.0.1"))
 

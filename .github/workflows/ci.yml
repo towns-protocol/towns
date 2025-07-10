@@ -293,13 +293,13 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Setup River CA for testing certificates
+            - name: Setup Towns CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/towns-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
               working-directory: core
@@ -440,13 +440,13 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Setup River CA for testing certificates
+            - name: Setup Towns CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/towns-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
               run: just RUN_ENV=multi config-and-start
@@ -589,13 +589,13 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Setup River CA for testing certificates
+            - name: Setup Towns CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/towns-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
               run: just RUN_ENV=multi config-and-start
@@ -709,7 +709,7 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Setup River CA for testing certificates
+            - name: Setup Towns CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
 
