@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/trace"
@@ -65,7 +67,11 @@ func (s *localSyncer) Address() common.Address {
 func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
 	if s.otelTracer != nil {
 		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "localSyncer::modify")
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::modify",
+			trace.WithAttributes(
+				attribute.Int("toBackfill", len(request.GetBackfillStreams().GetStreams())),
+				attribute.Int("toAdd", len(request.GetAddStreams())),
+				attribute.Int("toRemove", len(request.GetRemoveStreams()))))
 		defer span.End()
 	}
 
