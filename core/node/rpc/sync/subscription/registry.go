@@ -63,8 +63,6 @@ func (r *registry) RemoveSubscription(syncID string) {
 	}
 
 	r.sLock.Unlock()
-
-	return
 }
 
 // GetSubscriptionsForStream returns all subscriptions for a given stream
@@ -125,7 +123,6 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 		delete(r.subscriptionsByStream, streamID)
 	}
 	r.sLock.Unlock()
-	return
 }
 
 // OnStreamDown is called when a stream goes down
