@@ -9,10 +9,20 @@ import { CryptoStoreIndexedDb } from './CryptoStoreIndexedDb'
 import { CryptoStoreInMemory } from './CryptoStoreInMemory'
 import { isBrowser } from '@towns-protocol/dlog'
 
+<<<<<<< HEAD
 // TODO: Increase this time to 10 days or something.
 // Its 15 min right now so we can catch any issues with the expiration time.
 export const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000
 
+=======
+const ONE_SECOND_MS = 1000
+const ONE_MINUTE_MS = 60 * ONE_SECOND_MS
+const ONE_HOUR_MS = 60 * ONE_MINUTE_MS
+const ONE_DAY_MS = 24 * ONE_HOUR_MS
+
+export const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 5 * ONE_DAY_MS
+
+>>>>>>> g/07-06-move_partial_functionality_of_721_to_storage_lib
 export function createCryptoStore(databaseName: string, userId: string): CryptoStore {
     if (isBrowser) {
         return new CryptoStoreIndexedDb(databaseName, userId)

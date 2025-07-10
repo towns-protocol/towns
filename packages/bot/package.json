@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.270",
+    "version": "0.0.271",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -30,7 +30,7 @@
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2",
         "jsonwebtoken": "^9.0.2",
-        "typed-emitter": "^2.1.0",
+        "nanoevents": "^9.1.0",
         "viem": "^2.29.3"
     },
     "peerDependencies": {

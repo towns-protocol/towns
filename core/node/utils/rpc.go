@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -77,7 +78,7 @@ func UncancelContextWithTimeout(
 func PeerNodeRequestWithRetries[T any](
 	ctx context.Context,
 	nodes StreamNodes,
-	makeStubRequest func(ctx context.Context, stub StreamServiceClient) (*connect.Response[T], error),
+	makeStubRequest func(ctx context.Context, stub StreamServiceClient, addr common.Address) (*connect.Response[T], error),
 	numRetries int,
 	nodeRegistry NodeRegistry,
 ) (*connect.Response[T], error) {
@@ -109,7 +110,7 @@ func PeerNodeRequestWithRetries[T any](
 				Tag("address", peer)
 		}
 
-		resp, err = makeStubRequest(ctx, stub)
+		resp, err = makeStubRequest(ctx, stub, peer)
 
 		if err == nil {
 			return resp, nil
@@ -148,4 +149,71 @@ func PeerNodeRequestWithRetries[T any](
 		Message("All retries failed").
 		Tag("numRetries", numRetries).
 		Tag("lastPeer", nodes.GetStickyPeer())
+}
+
+// PeerNodeStreamingResponseWithRetries makes a request with a streaming server response to remote nodes, retrying
+// in the event of unavailable nodes.
+func PeerNodeStreamingResponseWithRetries(
+	ctx context.Context,
+	nodes StreamNodes,
+	makeStubRequest func(ctx context.Context, stub StreamServiceClient) (hasStreamed bool, err error),
+	numRetries int,
+	nodeRegistry NodeRegistry,
+) error {
+	remotes, _ := nodes.GetRemotesAndIsLocal()
+	if len(remotes) <= 0 {
+		return RiverError(Err_INTERNAL, "Cannot make peer node requests: no nodes available").
+			Func("PeerNodeStreamingResponseWithRetries")
+	}
+
+	var stub StreamServiceClient
+	var err error
+	var hasStreamed bool
+
+	if numRetries <= 0 {
+		numRetries = 1
+	}
+
+	// Do not make more than one request to a single node
+	numRetries = min(numRetries, len(remotes))
+
+	for retry := 0; retry < numRetries; retry++ {
+		peer := nodes.GetStickyPeer()
+		stub, err = nodeRegistry.GetStreamServiceClientForAddress(peer)
+		if err != nil {
+			return AsRiverError(err).
+				Func("PeerNodeStreamingResponseWithRetries").
+				Message("Could not get stream service client for address").
+				Tag("address", peer)
+		}
+
+		// The stub request handles streaming the entire response.
+		hasStreamed, err = makeStubRequest(ctx, stub)
+
+		if err == nil {
+			return nil
+		}
+
+		// TODO: fix to same logic as peerNodeRequestWithRetries.
+		if IsConnectNetworkError(err) && !hasStreamed {
+			// Mark peer as unavailable.
+			nodes.AdvanceStickyPeer(peer)
+		} else {
+			return AsRiverError(err).
+				Message("makeStubRequest failed").
+				Func("PeerNodeStreamingResponseWithRetries").
+				Tag("hasStreamed", hasStreamed).
+				Tag("retry", retry).
+				Tag("numRetries", numRetries)
+		}
+	}
+	// If all requests fail, return the last error.
+	if err != nil {
+		return AsRiverError(err).
+			Func("PeerNodeStreamingResponseWithRetries").
+			Message("All retries failed").
+			Tag("numRetries", numRetries)
+	}
+
+	return nil
 }

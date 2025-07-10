@@ -130,7 +130,7 @@ func TestCreateMediaStream(t *testing.T) {
 				CreationCookie: cc,
 				Last:           i == chunks-1,
 			}))
-			tt.require.NoError(err)
+			tt.require.NoError(err, i)
 
 			mb.Hash = common.BytesToHash(aeResp.Msg.CreationCookie.PrevMiniblockHash)
 			mb.Num++
