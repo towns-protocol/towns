@@ -55,9 +55,7 @@ library AppAccountStorage {
 
         uint256 permissionsLength = app.permissions.length;
         for (uint256 i; i < permissionsLength; ++i) {
-            if (app.permissions[i] == permission) {
-                return true;
-            }
+            if (app.permissions[i] == permission) return true;
         }
 
         return false;
