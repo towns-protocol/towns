@@ -73,7 +73,7 @@ type StreamCache struct {
 	loadStreamRecordCounter           *infra.StatusCounterVec
 	scheduledGetRecordTasksGauge      prometheus.Gauge
 	scheduledReconciliationTasksGauge prometheus.Gauge
-	retryableReconciliationTasksGauge  prometheus.Gauge
+	retryableReconciliationTasksGauge prometheus.Gauge
 
 	stoppedMu sync.RWMutex
 	stopped   bool
@@ -137,7 +137,7 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			"Number of stream record loads",
 		),
 		chainConfig:                  params.ChainConfig,
-		onlineReconcileWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		onlineReconcileWorkerPool:    workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 		retryableReconciliationTasks: newRetryableReconciliationTasks(
@@ -178,11 +178,13 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		}
 		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId(), stream)
+
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitReconcileStreamTaskToPool(
 				initialReconcileWorkerPool,
 				stream,
 				streamRecord,
+				true,
 			)
 		}
 	}
