@@ -49,13 +49,14 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
-		snapshot = miniblock.GetSnapshot()
-		if snapshot != nil {
+		sn := miniblock.GetSnapshot()
+		if sn != nil {
+			snapshot = sn
 			snapshotIndex = i
 		}
 	}
 
-	if snapshotIndex == -1 {
+	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
