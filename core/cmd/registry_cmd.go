@@ -237,19 +237,16 @@ func validateStream(
 
 	fmt.Printf("      Miniblocks: %d\n", len(stream.Miniblocks))
 	var lastBlock *MiniblockRef
+	opts := events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true).WithApplyOnlyMatchingSnapshot()
 	for i, mb := range stream.Miniblocks {
-		info, err := events.NewMiniblockInfoFromProto(
-			mb, stream.GetSnapshotByMiniblockIndex(i),
-			events.NewParsedMiniblockInfoOpts().
-				WithDoNotParseEvents(true),
-		)
+		info, err := events.NewMiniblockInfoFromProto(mb, stream.Snapshot, opts)
 		if err != nil {
 			return err
 		}
 		lastBlock = info.Ref
 		header := info.Header()
 		var snapshot string
-		if header.IsSnapshot() {
+		if info.Snapshot != nil {
 			snapshot = "snapshot"
 		}
 		fmt.Printf(
