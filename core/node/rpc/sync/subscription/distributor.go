@@ -5,8 +5,6 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -59,10 +57,15 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 		}
 
 		wg.Add(1)
-		go func(msg *SyncStreamsResponse, subscription *Subscription) {
+		go func(subscription *Subscription) {
 			defer wg.Done()
-			d.sendMessageToSubscription(streamID, msg, subscription)
-		}(proto.CloneOf(msg), subscription)
+			d.sendMessageToSubscription(streamID, &SyncStreamsResponse{
+				SyncId:   msg.GetSyncId(),
+				SyncOp:   msg.GetSyncOp(),
+				Stream:   msg.GetStream(),
+				StreamId: msg.GetStreamId(),
+			}, subscription)
+		}(subscription)
 	}
 	wg.Wait()
 
