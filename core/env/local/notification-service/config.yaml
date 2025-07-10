@@ -1,0 +1,27 @@
+# Notification service specific configuration
+# Inherits common settings from ../common/common.yaml
+
+# Override HTTPS setting for local development
+disableHttps: true
+
+# Metrics configuration - using different port to avoid conflicts
+metrics:
+    port: 4143
+
+# Notification service specific settings
+notifications:
+    # Run in simulation mode for development/testing
+    simulate: true
+    
+    # How long push notification subscriptions are valid
+    subscriptionExpirationDuration: 720h  # 30 days
+    
+    # Authentication configuration
+    authentication:
+        challengeTimeout: 30s
+        sessionToken:
+            lifetime: 30m
+            key:
+                algorithm: HS256
+                # This is a development key - should be different in production
+                key: 'c69b1973792ad59bebb96a2ab1639aafc0c1e229a1c2138d91834f0f6953a544'
