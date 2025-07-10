@@ -4,10 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -85,27 +84,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 		go func(cookie *SyncCookie) {
 			defer wg.Done()
 
-			stream, err := s.streamCache.GetStreamNoWait(ctx, StreamId(cookie.GetStreamId()))
-			if err != nil {
-				rvrErr := AsRiverError(err)
-				backfillsLock.Lock()
-				resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-				backfillsLock.Unlock()
-				return
-			}
-
-			err = stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
-				s.sendResponse(&SyncStreamsResponse{
-					SyncOp:        SyncOp_SYNC_UPDATE,
-					Stream:        streamAndCookie,
-					TargetSyncIds: request.TargetSyncIDs(),
-				})
-			})
-			if err != nil {
+			if err := s.backfillStream(ctx, cookie, request.TargetSyncIDs()); err != nil {
 				rvrErr := AsRiverError(err)
 				backfillsLock.Lock()
 				resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
@@ -123,7 +102,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 		go func() {
 			defer wg.Done()
 
-			if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
+			if err := s.addStream(ctx, cookie); err != nil {
 				rvrErr := AsRiverError(err)
 				addsLock.Lock()
 				resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
@@ -173,7 +152,40 @@ func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
 	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 }
 
-func (s *localSyncer) addStream(ctx context.Context, streamID StreamId, cookie *SyncCookie) error {
+func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, targetSyncIds []string) error {
+	streamID := StreamId(cookie.GetStreamId())
+
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::backfillStream",
+			trace.WithAttributes(attribute.String("streamID", streamID.String())))
+		defer span.End()
+	}
+
+	stream, err := s.streamCache.GetStreamNoWait(ctx, streamID)
+	if err != nil {
+		return err
+	}
+
+	return stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
+		s.sendResponse(&SyncStreamsResponse{
+			SyncOp:        SyncOp_SYNC_UPDATE,
+			Stream:        streamAndCookie,
+			TargetSyncIds: targetSyncIds,
+		})
+	})
+}
+
+func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
+	streamID := StreamId(cookie.GetStreamId())
+
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::addStream",
+			trace.WithAttributes(attribute.String("streamID", streamID.String())))
+		defer span.End()
+	}
+
 	s.activeStreamsMu.Lock()
 	defer s.activeStreamsMu.Unlock()
 
