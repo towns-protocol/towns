@@ -47,8 +47,6 @@ import {
     type StreamEvent,
     MessageInteractionType,
     type SlashCommand,
-    type SnapshotCaseType,
-    type Snapshot,
 } from '@towns-protocol/proto'
 import { bin_fromBase64, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import {
@@ -65,6 +63,7 @@ import {
     type Client as ViemClient,
     type ContractFunctionArgs,
     type ContractFunctionName,
+    type Prettify,
 } from 'viem'
 import {
     readContract,
@@ -74,6 +73,7 @@ import {
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
+import { SnapshotGetter } from './snapshot-getter'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -220,6 +220,7 @@ export class Bot<
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
+    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
@@ -239,6 +240,7 @@ export class Bot<
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
         this.commands = commands
+        this.snapshot = clientV2.snapshot
     }
 
     async start() {
@@ -706,15 +708,6 @@ export class Bot<
     }
 
     /**
-     * Get the channel properties for a channel
-     * @param channelId - The id of the channel
-     * @returns The channel properties
-     */
-    async getChannelSettings(channelId: string) {
-        return this.client.getChannelSettings(channelId)
-    }
-
-    /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
      */
@@ -1030,26 +1023,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         }
     }
 
-    const getChannelSettings = async (channelId: string) =>
-        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
-
-    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
-        Snapshot['content'],
-        { case: TCase }
-    >['value']
-
-    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
-        streamId: string,
-        snapshotCase: TCase,
-        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
-    ): Promise<TResult | undefined> => {
-        const stream = await client.getStream(streamId)
-        if (stream.snapshot.content.case === snapshotCase) {
-            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
-        }
-        return undefined
-    }
-
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1081,8 +1054,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         decryptSessions,
         hasAdminPermission,
         checkPermission,
-        getChannelSettings,
-        getFromSnapshot,
+        snapshot: SnapshotGetter(client.getStream),
     }
 }
 
