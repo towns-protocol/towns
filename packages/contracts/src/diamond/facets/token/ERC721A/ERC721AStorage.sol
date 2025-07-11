@@ -9,6 +9,12 @@ library ERC721AStorage {
     bytes32 internal constant STORAGE_SLOT =
         0x6569bde4a160c636ea8b8d11acb83a60d7fec0b8f2e09389306cba0e1340df00;
 
+    // Mask of an entry in packed address data.
+    uint256 internal constant _BITMASK_ADDRESS_DATA_ENTRY = (1 << 64) - 1;
+
+    // The bit mask of the `burned` bit in packed ownership.
+    uint256 internal constant _BITMASK_BURNED = 1 << 224;
+
     struct Layout {
         // =============================================================
         //                            STORAGE
@@ -52,5 +58,58 @@ library ERC721AStorage {
         assembly {
             l.slot := slot
         }
+    }
+
+    function balanceOf(address owner) internal view returns (uint256) {
+        if (owner == address(0)) revert IERC721ABase.BalanceQueryForZeroAddress();
+        return layout()._packedAddressData[owner] & _BITMASK_ADDRESS_DATA_ENTRY;
+    }
+
+    function ownerAt(uint256 startTokenId, uint256 tokenId) internal view returns (address) {
+        return address(uint160(packedOwnershipOf(startTokenId, tokenId)));
+    }
+
+    /**
+     * Returns the packed ownership data of `tokenId`.
+     */
+    function packedOwnershipOf(
+        uint256 startTokenId,
+        uint256 tokenId
+    ) internal view returns (uint256 packed) {
+        if (startTokenId <= tokenId) {
+            Layout storage $ = layout();
+
+            packed = $._packedOwnerships[tokenId];
+            // If not burned.
+            if (packed & _BITMASK_BURNED == 0) {
+                // If the data at the starting slot does not exist, start the scan.
+                if (packed == 0) {
+                    if (tokenId >= $._currentIndex) {
+                        revert IERC721ABase.OwnerQueryForNonexistentToken();
+                    }
+                    // Invariant:
+                    // There will always be an initialized ownership slot
+                    // (i.e. `ownership.addr != address(0) && ownership.burned == false`)
+                    // before an unintialized ownership slot
+                    // (i.e. `ownership.addr == address(0) && ownership.burned == false`)
+                    // Hence, `tokenId` will not underflow.
+                    //
+                    // We can directly compare the packed value.
+                    // If the address is zero, packed will be zero.
+                    for (;;) {
+                        unchecked {
+                            packed = $._packedOwnerships[--tokenId];
+                        }
+                        if (packed == 0) continue;
+                        return packed;
+                    }
+                }
+                // Otherwise, the data exists and is not burned. We can skip the scan.
+                // This is possible because we have already achieved the target condition.
+                // This saves 2143 gas on transfers of initialized tokens.
+                return packed;
+            }
+        }
+        revert IERC721ABase.OwnerQueryForNonexistentToken();
     }
 }

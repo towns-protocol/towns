@@ -5,6 +5,8 @@ pragma solidity ^0.8.23;
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // interfaces
+import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
+import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -117,6 +119,49 @@ contract SignerFacetTest is BaseSetup {
         vm.prank(client);
         bytes memory result = appAccount.execute(address(mockModule), 0, data);
         assertEq(bytes4(result), ERC1271_MAGIC_VALUE);
+    }
+
+    function test_signerFacet_replayAttack() external givenAppIsInstalled {
+        // Create a second space with a different owner
+        uint256 secondOwnerPrivateKey = boundPrivateKey(_randomUint256());
+        address secondOwner = vm.addr(secondOwnerPrivateKey);
+
+        IArchitectBase.SpaceInfo memory secondSpaceInfo = _createSpaceInfo("SecondSpace");
+        secondSpaceInfo.membership.settings.pricingModule = pricingModule;
+
+        vm.prank(secondOwner);
+        address secondSpace = ICreateSpace(spaceFactory).createSpace(secondSpaceInfo);
+
+        // Create signature for the first space (everyoneSpace with founder as owner)
+        bytes32 messageHash = keccak256(bytes("message"));
+        bytes memory signature = _createPersonalSignature(
+            founderPrivateKey,
+            messageHash,
+            address(signerFacet)
+        );
+
+        // Signature should be valid for the original space
+        bytes4 magicValue = signerFacet.isValidSignature(messageHash, signature);
+        assertEq(magicValue, ERC1271_MAGIC_VALUE);
+
+        // Signature should NOT be valid for the second space with different owner
+        magicValue = SignerFacet(secondSpace).isValidSignature(messageHash, signature);
+        assertEq(magicValue, INVALID_SIGNATURE);
+
+        // Also test that a signature created for the second space doesn't work on the first
+        bytes memory secondSignature = _createPersonalSignature(
+            secondOwnerPrivateKey,
+            messageHash,
+            secondSpace
+        );
+
+        // Should be valid for second space
+        magicValue = SignerFacet(secondSpace).isValidSignature(messageHash, secondSignature);
+        assertEq(magicValue, ERC1271_MAGIC_VALUE);
+
+        // Should NOT be valid for first space
+        magicValue = signerFacet.isValidSignature(messageHash, secondSignature);
+        assertEq(magicValue, INVALID_SIGNATURE);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

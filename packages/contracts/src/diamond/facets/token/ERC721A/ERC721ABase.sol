@@ -14,9 +14,6 @@ abstract contract ERC721ABase is IERC721ABase {
     //                           CONSTANTS
     // =============================================================
 
-    // Mask of an entry in packed address data.
-    uint256 internal constant _BITMASK_ADDRESS_DATA_ENTRY = (1 << 64) - 1;
-
     // The bit position of `numberMinted` in packed address data.
     uint256 internal constant _BITPOS_NUMBER_MINTED = 64;
 
@@ -31,9 +28,6 @@ abstract contract ERC721ABase is IERC721ABase {
 
     // The bit position of `startTimestamp` in packed ownership.
     uint256 internal constant _BITPOS_START_TIMESTAMP = 160;
-
-    // The bit mask of the `burned` bit in packed ownership.
-    uint256 internal constant _BITMASK_BURNED = 1 << 224;
 
     // The bit position of the `nextInitialized` bit in packed ownership.
     uint256 internal constant _BITPOS_NEXT_INITIALIZED = 225;
@@ -84,8 +78,7 @@ abstract contract ERC721ABase is IERC721ABase {
     }
 
     function _balanceOf(address owner) internal view returns (uint256) {
-        if (owner == address(0)) revert BalanceQueryForZeroAddress();
-        return ERC721AStorage.layout()._packedAddressData[owner] & _BITMASK_ADDRESS_DATA_ENTRY;
+        return ERC721AStorage.balanceOf(owner);
     }
 
     // =============================================================
@@ -135,7 +128,7 @@ abstract contract ERC721ABase is IERC721ABase {
     function _numberMinted(address owner) internal view returns (uint256) {
         return
             (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_MINTED) &
-            _BITMASK_ADDRESS_DATA_ENTRY;
+            ERC721AStorage._BITMASK_ADDRESS_DATA_ENTRY;
     }
 
     /**
@@ -144,7 +137,7 @@ abstract contract ERC721ABase is IERC721ABase {
     function _numberBurned(address owner) internal view returns (uint256) {
         return
             (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_BURNED) &
-            _BITMASK_ADDRESS_DATA_ENTRY;
+            ERC721AStorage._BITMASK_ADDRESS_DATA_ENTRY;
     }
 
     /**
@@ -187,7 +180,7 @@ abstract contract ERC721ABase is IERC721ABase {
      * It gradually moves to O(1) as tokens get transferred around over time.
      */
     function _ownershipOf(uint256 tokenId) internal view virtual returns (TokenOwnership memory) {
-        return _unpackedOwnership(_packedOwnershipOf(tokenId));
+        return _unpackedOwnership(ERC721AStorage.packedOwnershipOf(_startTokenId(), tokenId));
     }
 
     /**
@@ -202,49 +195,11 @@ abstract contract ERC721ABase is IERC721ABase {
      */
     function _initializeOwnershipAt(uint256 index) internal virtual {
         if (ERC721AStorage.layout()._packedOwnerships[index] == 0) {
-            ERC721AStorage.layout()._packedOwnerships[index] = _packedOwnershipOf(index);
+            ERC721AStorage.layout()._packedOwnerships[index] = ERC721AStorage.packedOwnershipOf(
+                _startTokenId(),
+                index
+            );
         }
-    }
-
-    /**
-     * Returns the packed ownership data of `tokenId`.
-     */
-    function _packedOwnershipOf(uint256 tokenId) internal view returns (uint256 packed) {
-        if (_startTokenId() <= tokenId) {
-            ERC721AStorage.Layout storage ds = ERC721AStorage.layout();
-
-            packed = ds._packedOwnerships[tokenId];
-            // If not burned.
-            if (packed & _BITMASK_BURNED == 0) {
-                // If the data at the starting slot does not exist, start the scan.
-                if (packed == 0) {
-                    if (tokenId >= ds._currentIndex) {
-                        revert OwnerQueryForNonexistentToken();
-                    }
-                    // Invariant:
-                    // There will always be an initialized ownership slot
-                    // (i.e. `ownership.addr != address(0) && ownership.burned == false`)
-                    // before an unintialized ownership slot
-                    // (i.e. `ownership.addr == address(0) && ownership.burned == false`)
-                    // Hence, `tokenId` will not underflow.
-                    //
-                    // We can directly compare the packed value.
-                    // If the address is zero, packed will be zero.
-                    for (;;) {
-                        unchecked {
-                            packed = ds._packedOwnerships[--tokenId];
-                        }
-                        if (packed == 0) continue;
-                        return packed;
-                    }
-                }
-                // Otherwise, the data exists and is not burned. We can skip the scan.
-                // This is possible because we have already achieved the target condition.
-                // This saves 2143 gas on transfers of initialized tokens.
-                return packed;
-            }
-        }
-        revert OwnerQueryForNonexistentToken();
     }
 
     /**
@@ -255,7 +210,7 @@ abstract contract ERC721ABase is IERC721ABase {
     ) internal pure returns (TokenOwnership memory ownership) {
         ownership.addr = address(uint160(packed));
         ownership.startTimestamp = uint64(packed >> _BITPOS_START_TIMESTAMP);
-        ownership.burned = packed & _BITMASK_BURNED != 0;
+        ownership.burned = packed & ERC721AStorage._BITMASK_BURNED != 0;
         ownership.extraData = uint24(packed >> _BITPOS_EXTRA_DATA);
     }
 
@@ -302,7 +257,8 @@ abstract contract ERC721ABase is IERC721ABase {
             _startTokenId() <= tokenId &&
             tokenId < ERC721AStorage.layout()._currentIndex && // If
             // within bounds,
-            ERC721AStorage.layout()._packedOwnerships[tokenId] & _BITMASK_BURNED == 0; // and not
+            ERC721AStorage.layout()._packedOwnerships[tokenId] & ERC721AStorage._BITMASK_BURNED ==
+            0; // and not
         // burned.
     }
 
@@ -608,7 +564,7 @@ abstract contract ERC721ABase is IERC721ABase {
     //                       APPROVAL OPERATIONS
     // =============================================================
     function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
-        return address(uint160(_packedOwnershipOf(tokenId)));
+        return ERC721AStorage.ownerAt(_startTokenId(), tokenId);
     }
 
     /**
@@ -686,7 +642,7 @@ abstract contract ERC721ABase is IERC721ABase {
      * Emits a {Transfer} event.
      */
     function _burn(uint256 tokenId, bool approvalCheck) internal virtual {
-        uint256 prevOwnershipPacked = _packedOwnershipOf(tokenId);
+        uint256 prevOwnershipPacked = ERC721AStorage.packedOwnershipOf(_startTokenId(), tokenId);
 
         address from = address(uint160(prevOwnershipPacked));
 
@@ -734,7 +690,7 @@ abstract contract ERC721ABase is IERC721ABase {
             // - `nextInitialized` to `true`.
             ds._packedOwnerships[tokenId] = _packOwnershipData(
                 from,
-                (_BITMASK_BURNED | _BITMASK_NEXT_INITIALIZED) |
+                (ERC721AStorage._BITMASK_BURNED | _BITMASK_NEXT_INITIALIZED) |
                     _nextExtraData(from, address(0), prevOwnershipPacked)
             );
 

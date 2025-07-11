@@ -172,11 +172,7 @@ abstract contract ExecutorBase is IExecutorBase {
         bytes32 groupId,
         address account
     ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
-        Group storage group = _getGroup(groupId);
-        (isMember, executionDelay) = group.hasAccess(account);
-
-        // Check both active status and expiration
-        active = group.active && (group.expiration == 0 || group.expiration > block.timestamp);
+        return ExecutorStorage.hasGroupAccess(groupId, account);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
