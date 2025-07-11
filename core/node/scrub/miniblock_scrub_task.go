@@ -150,7 +150,7 @@ var maxBlocksPerScan = 100
 
 func optsFromPrevMiniblock(prevMb *events.MiniblockInfo) *events.ParsedMiniblockInfoOpts {
 	expectedPrevSnapshotNum := prevMb.Header().PrevSnapshotMiniblockNum
-	if prevMb.Header().IsSnapshot() {
+	if prevMb.Snapshot != nil {
 		expectedPrevSnapshotNum = prevMb.Header().MiniblockNum
 	}
 

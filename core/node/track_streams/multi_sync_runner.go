@@ -202,11 +202,11 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		return
 	}
 
-	for i, block := range streamAndCookie.GetMiniblocks() {
+	for _, block := range streamAndCookie.GetMiniblocks() {
 		if !reset {
 			if err := trackedView.ApplyBlock(
 				block,
-				streamAndCookie.GetSnapshotByMiniblockIndex(i),
+				streamAndCookie.Snapshot,
 			); err != nil {
 				log.Errorw("Unable to apply block", "error", err)
 			}
