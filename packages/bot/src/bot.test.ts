@@ -713,9 +713,9 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('should be able to get channel settings', async () => {
-        const settings = await bot.getChannelSettings(channelId)
-        expect(settings).toBeDefined()
-        expect(settings?.autojoin).toBe(true)
+        const inception = await bot.snapshot.getChannelInception(channelId)
+        expect(inception?.channelSettings).toBeDefined()
+        expect(inception?.channelSettings?.autojoin).toBe(true)
     })
 
     it.fails(
