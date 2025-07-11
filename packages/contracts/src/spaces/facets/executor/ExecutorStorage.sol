@@ -10,10 +10,13 @@ pragma solidity ^0.8.23;
 // types
 import {Group, Schedule, Target} from "./IExecutor.sol";
 import {HookConfig} from "./hooks/IHookBase.sol";
+import {GroupLib} from "./GroupLib.sol";
 
 // contracts
 
 library ExecutorStorage {
+    using GroupLib for Group;
+
     // keccak256(abi.encode(uint256(keccak256("spaces.facets.executor.storage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
         0xb7e2813a9de15ce5ee4c1718778708cd70fd7ee3d196d203c0f40369a8d4a600;
@@ -40,6 +43,28 @@ library ExecutorStorage {
             l.slot := STORAGE_SLOT
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Group Access                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function getGroup(bytes32 groupId) internal view returns (Group storage) {
+        return getLayout().groups[groupId];
+    }
+
+    function hasGroupAccess(
+        bytes32 groupId,
+        address account
+    ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
+        Group storage group = getGroup(groupId);
+        (isMember, executionDelay) = group.hasAccess(account);
+
+        // Check both active status and expiration
+        active = group.active && (group.expiration == 0 || group.expiration > block.timestamp);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   Transient Execution Id                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function getTransientExecutionId() internal view returns (bytes32 id) {
         assembly {
