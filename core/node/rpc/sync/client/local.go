@@ -153,7 +153,8 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 	if s.otelTracer != nil {
 		var span trace.Span
 		ctx, span = s.otelTracer.Start(ctx, "localSyncer::backfillStream",
-			trace.WithAttributes(attribute.String("streamID", streamID.String())))
+			trace.WithAttributes(attribute.String("streamID", streamID.String())),
+			trace.WithAttributes(attribute.StringSlice("targetSyncIds", targetSyncIds)))
 		defer span.End()
 	}
 
@@ -194,7 +195,7 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		return err
 	}
 
-	if err := syncStream.Sub(ctx, cookie, s); err != nil {
+	if err = syncStream.Sub(ctx, cookie, s); err != nil {
 		return err
 	}
 
