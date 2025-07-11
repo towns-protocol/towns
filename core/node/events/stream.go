@@ -293,7 +293,7 @@ func (s *Stream) importMiniblocksLocked(
 		allNewEvents = append(allNewEvents, newEvents...)
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
 		if len(miniblock.Header().GetSnapshotHash()) > 0 {
-			snapshot = miniblock.Snapshot
+			snapshot = miniblock.SnapshotEnvelope
 		}
 	}
 
@@ -381,7 +381,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	newEvents = append(newEvents, info.headerEvent.Envelope)
 	var snapshot *Envelope
 	if len(info.Header().GetSnapshotHash()) > 0 {
-		snapshot = info.Snapshot
+		snapshot = info.SnapshotEnvelope
 	}
 	s.notifySubscribersLocked(newEvents, newSyncCookie, snapshot)
 	return nil

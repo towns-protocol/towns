@@ -50,7 +50,7 @@ func (s *Service) SaveMbCandidate(
 		connect.NewRequest(&SaveMiniblockCandidateRequest{
 			StreamId:  streamId[:],
 			Miniblock: candidate.Proto,
-			Snapshot:  candidate.Snapshot,
+			Snapshot:  candidate.SnapshotEnvelope,
 		}),
 	)
 

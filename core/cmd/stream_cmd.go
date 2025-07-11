@@ -71,18 +71,15 @@ func getStreamFromNode(
 	stream := response.Msg.GetStream()
 	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
 
-	for i, mb := range stream.GetMiniblocks() {
-		info, err := events.NewMiniblockInfoFromProto(
-			mb, stream.GetSnapshotByMiniblockIndex(i),
-			events.NewParsedMiniblockInfoOpts().
-				WithDoNotParseEvents(true),
-		)
+	opt := events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true).WithApplyOnlyMatchingSnapshot()
+	for _, mb := range stream.GetMiniblocks() {
+		info, err := events.NewMiniblockInfoFromProto(mb, stream.Snapshot, opt)
 		if err != nil {
 			return err
 		}
 
 		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
-		if info.Header().IsSnapshot() {
+ 		if info.Snapshot != nil {
 			fmt.Print(" SNAPSHOT")
 		}
 		fmt.Println()

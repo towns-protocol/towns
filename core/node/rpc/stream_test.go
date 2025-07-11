@@ -325,3 +325,77 @@ func TestEphemeralMessageInChat(t *testing.T) {
 	// ensure that ephemeral messages are not persisted in storage
 	clients.listen(channelId, [][]string{})
 }
+
+func TestGetStreamWithPrecedingMiniblocks(t *testing.T) {
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{
+			numNodes: 1,
+			start:    true,
+			btcParams: &crypto.TestParams{
+				AutoMine:         true,
+				AutoMineInterval: 10 * time.Millisecond,
+				MineOnTx:         true,
+			},
+		},
+	)
+	require := tt.require
+	
+	// Create a user and a channel with some messages
+	alice := tt.newTestClient(0, testClientOpts{})
+	_ = alice.createUserStream()
+	spaceId, _ := alice.createSpace()
+	channelId, _, _ := alice.createChannel(spaceId)
+	
+	// Send multiple messages to create several miniblocks
+	for i := 0; i < 20; i++ {
+		alice.say(channelId, fmt.Sprintf("Message %d", i))
+		if i%5 == 4 {
+			// Force miniblock creation every 5 messages
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+	
+	// Wait for miniblocks to be created
+	time.Sleep(500 * time.Millisecond)
+	
+	// Test 1: GetStream without additional preceding miniblocks
+	resp1, err := alice.client.GetStream(tt.ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId:                       channelId[:],
+		NumberOfPrecedingMiniblocks:    0,
+	}))
+	require.NoError(err)
+	require.NotNil(resp1.Msg.Stream)
+	
+	// Store the original snapshot index and miniblock count
+	originalSnapshotIndex := resp1.Msg.Stream.SnapshotMiniblockIndex
+	originalMiniblockCount := len(resp1.Msg.Stream.Miniblocks)
+	
+	// Test 2: GetStream with 3 additional preceding miniblocks
+	resp2, err := alice.client.GetStream(tt.ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId:                       channelId[:],
+		NumberOfPrecedingMiniblocks:    3,
+	}))
+	require.NoError(err)
+	require.NotNil(resp2.Msg.Stream)
+	
+	// Verify we got the same or more miniblocks
+	require.GreaterOrEqual(len(resp2.Msg.Stream.Miniblocks), originalMiniblockCount)
+	
+	// Verify the snapshot index is adjusted if we got more miniblocks
+	if len(resp2.Msg.Stream.Miniblocks) > originalMiniblockCount {
+		additionalBlocks := len(resp2.Msg.Stream.Miniblocks) - originalMiniblockCount
+		require.Equal(originalSnapshotIndex+int64(additionalBlocks), resp2.Msg.Stream.SnapshotMiniblockIndex)
+	}
+	
+	// Test 3: GetStream with a large number of preceding miniblocks
+	resp3, err := alice.client.GetStream(tt.ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId:                       channelId[:],
+		NumberOfPrecedingMiniblocks:    100, // More than available
+	}))
+	require.NoError(err)
+	require.NotNil(resp3.Msg.Stream)
+	
+	// Should get all available miniblocks, but not error
+	require.GreaterOrEqual(len(resp3.Msg.Stream.Miniblocks), originalMiniblockCount)
+}
