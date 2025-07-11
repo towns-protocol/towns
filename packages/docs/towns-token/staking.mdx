@@ -4,7 +4,7 @@ title: Staking
 
 ### Staking Process
 
-The Towns token can be staked on Base to contribute to the security and decentralization of the Towns proof-of-stake network. Any holder of Towns tokens can participate by delegating their tokens to node operators within the ecosystem. Staking can be done directly on the contracts or via an interface at [towns.com/staking](https://towns.com/staking).
+The Towns token can be staked on Base to contribute to the security and decentralization of the Towns proof-of-stake network. Any holder of Towns tokens can participate by delegating their tokens to node operators within the ecosystem. Staking can be done directly on the contracts or via an interface at [towns.com/token](https://towns.com/token).
 
 Rewards for staking are continuously accrued and distributed on a biweekly schedule. Each operator receives rewards proportionally based on the total tokens staked to their node. Operators retain a defined commission, after which the remaining rewards are passed to delegators. Delegators then receive their portion of rewards proportional to the number of tokens they have staked with that operator.
 
@@ -13,9 +13,9 @@ Delegators rewards can be claimed at any time. Upon initiating an unstaking requ
 
 ### Staking Contracts
 
-Staking is handled by the v2 version of the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract.
+Staking is handled by the v2 version of the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol) contract.
 
-External methods from RewardsDistribution can be called from the BaseRegistry diamond contract directly using any ethereum compatible client such as [cast](https://book.getfoundry.sh/cast/).
+External methods from RewardsDistribution can be called from the BaseRegistry diamond contract directly using any ethereum compatible client such as [cast](https://getfoundry.sh/cast/overview/).
 
 The BaseRegistry diamond is deployed on Base (see [contracts](../run/contracts)).
 
@@ -23,9 +23,11 @@ The BaseRegistry diamond is deployed on Base (see [contracts](../run/contracts))
 
 <Warning>Though we illustrate programmatic instructions below, interacting with the staking contract is best performed through the staking site available in [www.towns.com/staking](https://www.towns.com/staking).</Warning>
 
-To stake, the user must call the `stake(uint96 amount, address delegatee, address beneficiary)(uint256 depositIds)` method  of the RewardsDistribution facet from the BaseRegistry diamond contract.
+#### Basic Staking
 
-Users must select a delegatee, for instance an active operator (active operators are listed on [www.towns.com/staking](https://www.towns.com/staking)), to delegate to in order to earn periodic rewards.
+To stake, the user must call the `stake(uint96 amount, address delegatee, address beneficiary)(uint256 depositIds)` method of the RewardsDistribution facet from the BaseRegistry diamond contract.
+
+Users must select a delegatee, for instance an active operator (active operators are listed on [www.towns.com/token](https://www.towns.com/token)), to delegate to in order to earn periodic rewards.
 
 Users must also select a beneficiary, which is the address that will receive the rewards.
 
@@ -35,10 +37,37 @@ To increase the amount of stake, the deposit owner can call `increaseStake(uint2
 
 <Note>Users can switch their delegatee at any time without withdrawing their stake by calling `redelegate(uint256 depositId, address delegatee)`.</Note>
 
+#### Advanced Staking Methods
+
+**Gasless Staking with Permits**
+For users who want to stake without paying gas for token approvals:
+- `permitAndStake(uint96 amount, address delegatee, address beneficiary, uint256 nonce, uint256 deadline, bytes signature)`
+- `permitAndIncreaseStake(uint256 depositId, uint96 amount, uint256 nonce, uint256 deadline, bytes signature)`
+
+**Staking on Behalf of Others**
+Authorized users can stake on behalf of others using:
+- `stakeOnBehalf(uint96 amount, address delegatee, address beneficiary, address owner, uint256 nonce, bytes signature)`
+
+**Managing Your Stakes**
+- `changeBeneficiary(uint256 depositId, address newBeneficiary)` - Change who receives the rewards from a specific deposit
+
+#### Claiming Rewards
+
+Rewards can be claimed at any time using the `claimReward(address beneficiary, address recipient)` method:
+
+**For Regular Stakers:**
+- Call with `beneficiary = your_address` to claim your own staking rewards
+- You can send rewards to any `recipient` address (yourself or someone else)
+
+**For Node Operators:**
+Operators can claim both:
+1. **Their own staking rewards** (if they've staked tokens)
+2. **Commission rewards** from users who delegated to them
+
 
 #### Withdrawing Stake
 
-To withdraw stake, the owner of the depositId should follow the below steps or use the staking site available in [towns.com](https://www.towns.com/staking).
+To withdraw stake, the owner of the depositId should follow the below steps or use the staking site available in [towns.com](https://www.towns.com/token).
 
 1. Call `getDepositsByDepositor(address depositor)` to get the list of depositIds for the depositor.
 2. Call `initiateWithdraw(uint256 depositId)` with the depositId to start the withdrawal process.
