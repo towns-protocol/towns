@@ -57,9 +57,6 @@ func (r *registry) RemoveSubscription(syncID string) {
 		r.subscriptionsByStream[streamID] = slices.DeleteFunc(subs, func(s *Subscription) bool {
 			return s.syncID == syncID
 		})
-		if len(r.subscriptionsByStream[streamID]) == 0 {
-			delete(r.subscriptionsByStream, streamID)
-		}
 	}
 
 	r.sLock.Unlock()
@@ -93,7 +90,7 @@ func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (sh
 	}
 
 	subscriptions, ok := r.subscriptionsByStream[streamID]
-	if !ok || len(subscriptions) == 0 {
+	if !ok {
 		shouldAddToRemote = true
 		r.subscriptionsByStream[streamID] = []*Subscription{sub}
 	} else {
@@ -118,10 +115,6 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 			return sub.syncID == syncID
 		},
 	)
-
-	if len(r.subscriptionsByStream[streamID]) == 0 {
-		delete(r.subscriptionsByStream, streamID)
-	}
 	r.sLock.Unlock()
 }
 
@@ -164,6 +157,9 @@ func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
 	}
 	if len(streamIds) > 0 {
 		cb(streamIds)
+		for _, streamID := range streamIds {
+			delete(r.subscriptionsByStream, StreamId(streamID))
+		}
 	}
 	r.sLock.Unlock()
 }
