@@ -8,11 +8,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -591,8 +590,8 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	// 1. Try node from cookie
 	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
 		selectedNode := common.BytesToAddress(addrRaw)
-		if slices.Contains(remotes, selectedNode) || (isLocal && selectedNode == ss.localNodeAddress) {
-			if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
+		if slices.Contains(remotes, selectedNode) || (isLocal && selectedNode.Cmp(ss.localNodeAddress) == 0) {
+			if _, err = ss.getOrCreateSyncer(selectedNode); err == nil {
 				return selectedNode, true
 			}
 		}
