@@ -93,14 +93,12 @@ func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (sh
 	if !ok {
 		shouldAddToRemote = true
 		r.subscriptionsByStream[streamID] = []*Subscription{sub}
-	} else {
-		if !slices.ContainsFunc(subscriptions, func(s *Subscription) bool {
-			return s.syncID == syncID
-		}) {
-			shouldBackfill = true
-			sub.initializingStreams.Store(streamID, struct{}{})
-			r.subscriptionsByStream[streamID] = append(r.subscriptionsByStream[streamID], sub)
-		}
+	} else if !slices.ContainsFunc(subscriptions, func(s *Subscription) bool {
+		return s.syncID == syncID
+	}) {
+		shouldBackfill = true
+		sub.initializingStreams.Store(streamID, struct{}{})
+		r.subscriptionsByStream[streamID] = append(r.subscriptionsByStream[streamID], sub)
 	}
 	return
 }
@@ -156,7 +154,9 @@ func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
 		}
 	}
 	if len(streamIds) > 0 {
-		cb(streamIds)
+		if cb != nil {
+			cb(streamIds)
+		}
 		for _, streamID := range streamIds {
 			delete(r.subscriptionsByStream, StreamId(streamID))
 		}

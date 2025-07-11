@@ -114,6 +114,8 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	_, exists = env.registry.GetSubscriptionByID("test-sync-1")
 	assert.False(t, exists)
 
+	env.registry.CleanupUnusedStreams(nil)
+
 	// Step 9: Verify stats
 	streamCount, subCount := env.registry.GetStats()
 	assert.Equal(t, 0, streamCount)
@@ -462,6 +464,8 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		t.Logf("After canceling subscription %d, exists in registry: %v", i, exists)
 		assert.False(t, exists, "Subscription %d should be removed", i)
 	}
+
+	env.registry.CleanupUnusedStreams(nil)
 
 	// Final stats check
 	streamCount, subCount = env.registry.GetStats()

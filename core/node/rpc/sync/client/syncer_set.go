@@ -149,8 +149,7 @@ func (ss *SyncerSet) waitForStreamUnlock(ctx context.Context, streamID StreamId)
 // lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks
 func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []StreamId {
 	if ss.otelTracer != nil {
-		var span trace.Span
-		ctx, span = ss.otelTracer.Start(ctx, "localSyncer::lockStreams",
+		_, span := ss.otelTracer.Start(ctx, "localSyncer::lockStreams",
 			trace.WithAttributes(
 				attribute.Int("toAdd", len(req.ToAdd)),
 				attribute.Int("toRemove", len(req.ToRemove))))
