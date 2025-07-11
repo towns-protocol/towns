@@ -98,21 +98,16 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	for _, cookie := range request.GetAddStreams() {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			if err := s.addStream(ctx, cookie); err != nil {
-				rvrErr := AsRiverError(err)
-				addsLock.Lock()
-				resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-				addsLock.Unlock()
-			}
-		}()
+		if err := s.addStream(ctx, cookie); err != nil {
+			rvrErr := AsRiverError(err)
+			addsLock.Lock()
+			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			addsLock.Unlock()
+		}
 	}
 
 	s.activeStreamsMu.Lock()

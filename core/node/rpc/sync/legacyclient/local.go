@@ -153,7 +153,7 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		return err
 	}
 
-	if err := syncStream.Sub(ctx, cookie, s); err != nil {
+	if err = syncStream.Sub(ctx, cookie, s); err != nil {
 		return err
 	}
 
