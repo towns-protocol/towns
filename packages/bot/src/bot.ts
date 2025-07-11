@@ -54,8 +54,6 @@ import {
     EncryptedDataSchema,
     type EncryptedData,
     Tags,
-    type SnapshotCaseType,
-    type Snapshot,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -79,6 +77,7 @@ import {
     type Client as ViemClient,
     type ContractFunctionArgs,
     type ContractFunctionName,
+    type Prettify,
 } from 'viem'
 import {
     readContract,
@@ -89,6 +88,7 @@ import {
 import { base, baseSepolia } from 'viem/chains'
 import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
 import type { BlankEnv } from 'hono/types'
+import { SnapshotGetter } from './snapshot-getter'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -224,6 +224,7 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
+    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents> = createNanoEvents()
@@ -234,6 +235,7 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
         this.viemClient = viemClient
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
+        this.snapshot = clientV2.snapshot
     }
 
     async start() {
@@ -586,15 +588,6 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
         const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
     >(parameters: ReadContractParameters<abi, functionName, args>) {
         return readContract(this.viemClient, parameters)
-    }
-
-    /**
-     * Get the channel properties for a channel
-     * @param channelId - The id of the channel
-     * @returns The channel properties
-     */
-    async getChannelSettings(channelId: string) {
-        return this.client.getChannelSettings(channelId)
     }
 
     /**
@@ -1086,26 +1079,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }
     }
 
-    const getChannelSettings = async (channelId: string) =>
-        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
-
-    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
-        Snapshot['content'],
-        { case: TCase }
-    >['value']
-
-    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
-        streamId: string,
-        snapshotCase: TCase,
-        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
-    ): Promise<TResult | undefined> => {
-        const stream = await client.getStream(streamId)
-        if (stream.snapshot.content.case === snapshotCase) {
-            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
-        }
-        return undefined
-    }
-
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1139,7 +1112,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         setUserProfileImage,
         /** @deprecated Not planned for now */
         getUserData,
-        getChannelSettings,
-        getFromSnapshot,
+        snapshot: SnapshotGetter(client.getStream),
     }
 }
