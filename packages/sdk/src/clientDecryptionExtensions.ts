@@ -363,6 +363,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         sessionIds,
         ephemeral = false,
     }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: AddEventResponse_Error }> {
+        if (sessionIds.length === 0) {
+            this.log.debug('tried to send empty key fulfillment')
+            return {}
+        }
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
