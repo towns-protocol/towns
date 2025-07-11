@@ -396,7 +396,7 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	// This requires creating new events that don't have the snapshot flag
 	
 	// For this test, we need to create miniblocks where only block 2 has a snapshot
-	// So we'll create a custom block 0 without a snapshot
+	// Block 0 will be a genesis block with embedded snapshot (legacy format)
 	header0 := &MiniblockHeader{
 		MiniblockNum: int64(0),
 		Timestamp:    genesisParsed.Header().GetTimestamp(),
@@ -404,7 +404,8 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},
-		// No snapshot for block 0
+		// Genesis blocks use legacy format with embedded snapshot
+		Snapshot: genesisParsed.Header().GetSnapshot(),
 	}
 	
 	headerProto0, err := MakeEnvelopeWithPayload(
@@ -442,11 +443,15 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 		// Add snapshot at position 2
 		var snapshotData []byte
 		if i == 2 {
-			header.Snapshot = genesisParsed.Header().GetSnapshot()
-			snapshotEnv, err := MakeSnapshotEnvelope(userWallet, header.Snapshot)
+			// Create snapshot envelope
+			snapshot := genesisParsed.Header().GetSnapshot()
+			snapshotEnv, err := MakeSnapshotEnvelope(userWallet, snapshot)
 			assert.NoError(t, err)
 			snapshotData, err = proto.Marshal(snapshotEnv)
 			assert.NoError(t, err)
+			
+			// For new format, store hash in header instead of snapshot
+			header.SnapshotHash = snapshotEnv.Hash
 		}
 		
 		headerProto, err := MakeEnvelopeWithPayload(
@@ -533,18 +538,14 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	assert.NotNil(t, streamAndCookie7.Snapshot)
 	
 	// Test with empty view (edge case)
-	// Use the actual genesis miniblock which has a snapshot
+	// Use the actual genesis miniblock which has a snapshot embedded (legacy format)
 	genesisMbBytes, err := proto.Marshal(genesisMb)
-	assert.NoError(t, err)
-	genesisSnapshotEnv, err := MakeSnapshotEnvelope(userWallet, genesisParsed.Header().GetSnapshot())
-	assert.NoError(t, err)
-	snapshotBytes0, err := proto.Marshal(genesisSnapshotEnv)
 	assert.NoError(t, err)
 	
 	emptyView, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: genesisMbBytes, Snapshot: snapshotBytes0, Number: 0},
+				{Data: genesisMbBytes, Number: 0}, // No external snapshot for genesis blocks
 			},
 			SnapshotMiniblockOffset: 0,
 		},
@@ -554,5 +555,6 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	streamAndCookie8 := emptyView.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 5)
 	assert.Equal(t, int64(0), streamAndCookie8.SnapshotMiniblockIndex)
 	assert.Equal(t, 1, len(streamAndCookie8.Miniblocks))
-	assert.NotNil(t, streamAndCookie8.Snapshot)
+	// For genesis blocks with legacy format, snapshot envelope is nil
+	assert.Nil(t, streamAndCookie8.Snapshot)
 }
