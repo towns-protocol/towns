@@ -88,19 +88,19 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	fs := &ForwardState{}
 	fs.Settings.Store(&settings)
 	q.appIdCache.Store(app, fs)
-	
+
 	err := q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
 	if err != nil {
 		return err
 	}
-	
+
 	// Pre-warm metadata cache for newly created app
 	cacheKey := app.String()
 	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
 		metadata:  &metadata,
 		timestamp: time.Now(),
 	})
-	
+
 	return nil
 }
 
@@ -167,17 +167,17 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	if err != nil {
 		return err
 	}
-	
+
 	// Invalidate cache on successful update
 	cacheKey := app.String()
 	q.metadataCache.Remove(cacheKey)
-	
+
 	// Pre-populate with new value
 	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
 		metadata:  &metadata,
 		timestamp: time.Now(),
 	})
-	
+
 	return nil
 }
 
@@ -186,7 +186,7 @@ func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	app common.Address,
 ) (*types.AppMetadata, error) {
 	cacheKey := app.String()
-	
+
 	// Check cache with TTL validation (15 seconds)
 	if entry, exists := q.metadataCache.Get(cacheKey); exists {
 		if time.Since(entry.timestamp) < 15*time.Second {
@@ -196,19 +196,19 @@ func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 		// Expired entry, remove it
 		q.metadataCache.Remove(cacheKey)
 	}
-	
+
 	// Cache miss or expired, fetch from store
 	metadata, err := q.store.GetAppMetadata(ctx, app)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Cache the result
 	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
 		metadata:  metadata,
 		timestamp: time.Now(),
 	})
-	
+
 	return metadata, nil
 }
 
@@ -372,10 +372,10 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	}
 }
 
-// IsDisplayNameAvailable checks if a display name is available for use
-func (q *CachedEncryptedMessageQueue) IsDisplayNameAvailable(
+// IsUsernameAvailable checks if a username is available for use
+func (q *CachedEncryptedMessageQueue) IsUsernameAvailable(
 	ctx context.Context,
-	displayName string,
+	username string,
 ) (bool, error) {
-	return q.store.IsDisplayNameAvailable(ctx, displayName)
+	return q.store.IsUsernameAvailable(ctx, username)
 }

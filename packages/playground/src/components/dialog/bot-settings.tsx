@@ -83,7 +83,7 @@ export const BotSettingsDialog = ({
     const metadataForm = useForm<MetadataFormSchema>({
         resolver: zodResolver(metadataFormSchema),
         defaultValues: {
-            name: metadata?.name || '',
+            name: metadata?.displayName || '',
             description: metadata?.description || '',
             imageUrl: metadata?.imageUrl || '',
             avatarUrl: metadata?.avatarUrl || '',
@@ -95,7 +95,7 @@ export const BotSettingsDialog = ({
     useEffect(() => {
         if (metadata && !isLoadingMetadata && open) {
             metadataForm.reset({
-                name: metadata.name || '',
+                name: metadata.displayName || '',
                 description: metadata.description || '',
                 imageUrl: metadata.imageUrl || '',
                 avatarUrl: metadata.avatarUrl || '',
@@ -167,7 +167,8 @@ export const BotSettingsDialog = ({
             await appRegistryRpcClient.setAppMetadata({
                 appId: bin_fromHexString(appClientId),
                 metadata: {
-                    name: metadataData.name,
+                    username: metadataData.name,
+                    displayName: metadataData.name,
                     description: metadataData.description || '',
                     imageUrl: metadataData.imageUrl || '',
                     avatarUrl: metadataData.avatarUrl || '',

@@ -31,6 +31,7 @@ import {
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import { randomUUID } from 'crypto'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -57,7 +58,7 @@ describe('Bot', { sequential: true }, () => {
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
 
-    const BOT_NAME = 'bot-witness-of-infinity'
+    const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOT_DESCRIPTION = 'I shall witness everything'
 
     let bot: Bot
@@ -110,7 +111,7 @@ describe('Bot', { sequential: true }, () => {
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
-            BOT_NAME,
+            BOT_USERNAME,
             [...Object.values(Permission)], // all permissions
             botClientAddress,
             ethers.utils.parseEther('0.01').toBigInt(),
@@ -188,7 +189,8 @@ describe('Bot', { sequential: true }, () => {
             appId: bin_fromHexString(botClientAddress),
             appOwnerId: bin_fromHexString(bob.userId),
             metadata: {
-                name: BOT_NAME,
+                username: BOT_USERNAME,
+                displayName: 'Bot Witness of Infinity',
                 description: BOT_DESCRIPTION,
                 avatarUrl: 'https://placehold.co/64x64.png',
                 imageUrl: 'https://placehold.co/600x600.png',
