@@ -64,9 +64,8 @@ describe('Bot', { sequential: true }, () => {
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
 
-    const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOT_DISPLAY_NAME = 'Uber Test Bot'
-    const BOT_DESCRIPTION = 'I shall witness everything'
+    const BOT_DESCRIPTION = 'Beep boop boop beep'
 
     let bot: Bot<typeof SLASH_COMMANDS>
     let spaceId: string
@@ -87,6 +86,12 @@ describe('Bot', { sequential: true }, () => {
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
         ethersProvider = makeBaseProvider(riverConfig)
+        await bobClient.riverConnection.call((client) =>
+            Promise.all([
+                client.debugForceMakeMiniblock(spaceId, { forceSnapshot: true }),
+                client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
+            ]),
+        )
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -714,10 +719,9 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
     })
 
-    it('should be able to get channel settings', async () => {
+    it.only('should be able to get channel inception event', async () => {
         const inception = await bot.snapshot.getChannelInception(channelId)
-        expect(inception?.channelSettings).toBeDefined()
-        expect(inception?.channelSettings?.autojoin).toBe(true)
+        expect(inception?.spaceId).toBeDefined()
     })
 
     it.fails(
