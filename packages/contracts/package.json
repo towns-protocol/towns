@@ -1,6 +1,6 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.272",
+  "version": "0.0.273",
   "packageManager": "yarn@3.8.0",
   "installConfig": {
     "hoistingLimits": "dependencies"
