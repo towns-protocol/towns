@@ -899,6 +899,8 @@ message StreamAndCookie {
     bool sync_reset = 4;
     // if non-empty, contains the latest snapshot of the stream
     optional Envelope snapshot = 5;
+    // Index of the snapshot miniblock within the miniblocks array
+    int64 snapshot_miniblock_index = 6;
 }
 
 message Minipool {
@@ -975,6 +977,8 @@ message GetStreamRequest {
     // if a sync cookie is provided, the response will be a delta from the sync cookie
     // or a new sync cookie with sync_reset set to true if the stream has advanced far enough
     SyncCookie sync_cookie = 3;
+    // Number of miniblocks to include before the snapshot to satisfy recency checks
+    int64 number_of_preceding_miniblocks = 4;
 }
 
 message GetStreamResponse {
