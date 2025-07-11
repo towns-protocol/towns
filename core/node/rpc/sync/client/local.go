@@ -75,38 +75,37 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	var resp ModifySyncResponse
-	var backfillsLock sync.Mutex
-	var addsLock sync.Mutex
 	var wg sync.WaitGroup
 
-	for _, cookie := range request.GetBackfillStreams().GetStreams() {
-		wg.Add(1)
-		go func(cookie *SyncCookie) {
-			defer wg.Done()
+	if toBackfill := request.GetBackfillStreams().GetStreams(); len(toBackfill) > 0 {
+		var backfillsLock sync.Mutex
+		for _, cookie := range toBackfill {
+			wg.Add(1)
+			go func(cookie *SyncCookie) {
+				defer wg.Done()
 
-			if err := s.backfillStream(ctx, cookie, request.TargetSyncIDs()); err != nil {
-				rvrErr := AsRiverError(err)
-				backfillsLock.Lock()
-				resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-				backfillsLock.Unlock()
-			}
-		}(cookie)
+				if err := s.backfillStream(ctx, cookie, request.TargetSyncIDs()); err != nil {
+					rvrErr := AsRiverError(err)
+					backfillsLock.Lock()
+					resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
+						StreamId: cookie.GetStreamId(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
+					backfillsLock.Unlock()
+				}
+			}(cookie)
+		}
 	}
 
 	for _, cookie := range request.GetAddStreams() {
 		if err := s.addStream(ctx, cookie); err != nil {
 			rvrErr := AsRiverError(err)
-			addsLock.Lock()
 			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
 				StreamId: cookie.GetStreamId(),
 				Code:     int32(rvrErr.Code),
 				Message:  rvrErr.GetMessage(),
 			})
-			addsLock.Unlock()
 		}
 	}
 
