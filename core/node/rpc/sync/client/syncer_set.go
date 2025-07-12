@@ -633,7 +633,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messages,
-			ss.rmStream,
+			ss.streamID2Syncer.Delete,
 			ss.otelTracer,
 		)
 	} else {
@@ -646,7 +646,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.globalCtx,
 			nodeAddress,
 			client,
-			ss.rmStream,
+			ss.streamID2Syncer.Delete,
 			ss.messages,
 			ss.otelTracer,
 		)
@@ -673,10 +673,6 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 	}()
 
 	return syncer, nil
-}
-
-func (ss *SyncerSet) rmStream(streamID StreamId) {
-	ss.streamID2Syncer.Delete(streamID)
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.

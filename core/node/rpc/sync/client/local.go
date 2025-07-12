@@ -240,7 +240,7 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 func (s *localSyncer) streamUnbsub(streamID StreamId) bool {
 	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
 	if found {
-		syncStream.Unsub(s)
+		go syncStream.Unsub(s)
 		s.unsubStream(syncStream.StreamId())
 	}
 	return found
