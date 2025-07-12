@@ -37,11 +37,6 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 		return
 	}
 
-	// Handle SYNC_DOWN by removing stream from registry
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		d.registry.OnStreamDown(streamID)
-	}
-
 	// Send message to all subscriptions
 	var wg sync.WaitGroup
 	for _, subscription := range subscriptions {
@@ -56,6 +51,12 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 			wg.Done()
 		}(subscription)
 	}
+
+	// Handle SYNC_DOWN by removing stream from registry
+	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+		d.registry.OnStreamDown(streamID)
+	}
+
 	wg.Wait()
 }
 
@@ -66,9 +67,17 @@ func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStre
 	}
 
 	targetSyncID := msg.GetTargetSyncIds()[0]
-	subscription, exists := d.registry.GetSubscriptionByID(targetSyncID)
-	if !exists {
-		return
+
+	// Check if the subscription is still associated with this stream
+	var subscription *Subscription
+	for _, sub := range d.registry.GetSubscriptionsForStream(streamID) {
+		if sub.syncID == targetSyncID {
+			subscription = sub
+			break
+		}
+	}
+	if subscription == nil {
+		return // Subscription is no longer associated with this stream
 	}
 
 	// Remove the target sync ID from the message
