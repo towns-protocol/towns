@@ -106,10 +106,10 @@ func (d *distributor) sendMessageToSubscription(streamID StreamId, msg *SyncStre
 		backfillEvents, _ := subscription.backfillEvents.LoadAndDelete(streamID)
 		if len(backfillEvents) > 0 {
 			msg.Stream = &StreamAndCookie{
-				Events: slices.DeleteFunc(msg.GetStream().GetEvents(), func(e *Envelope) bool {
+				Events: slices.DeleteFunc(slices.Clone(msg.GetStream().GetEvents()), func(e *Envelope) bool {
 					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
 				}),
-				Miniblocks: slices.DeleteFunc(msg.GetStream().GetMiniblocks(), func(mb *Miniblock) bool {
+				Miniblocks: slices.DeleteFunc(slices.Clone(msg.GetStream().GetMiniblocks()), func(mb *Miniblock) bool {
 					return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
 				}),
 				NextSyncCookie: msg.GetStream().GetNextSyncCookie(),
