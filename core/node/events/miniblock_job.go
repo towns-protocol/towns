@@ -413,7 +413,8 @@ func (j *mbJob) gatherRemoteProposals(
 }
 
 func (j *mbJob) saveCandidate(ctx context.Context) error {
-	timeout := 240 * time.Second // TODO: REPLICATION: FIX: make this timeout configurable
+	const defaultCandidateTimeout = 240 * time.Second // TODO: REPLICATION: FIX: make this timeout configurable
+	timeout := defaultCandidateTimeout
 	qp := NewQuorumPool(
 		ctx,
 		NewQuorumPoolOpts().
