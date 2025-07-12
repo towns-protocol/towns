@@ -832,7 +832,7 @@ func (s *Stream) addEventToMinipoolAndStorageLocked(
 func (s *Stream) UpdatesSinceCookie(
 	ctx context.Context,
 	cookie *SyncCookie,
-	cb func(*StreamAndCookie),
+	cb func(*StreamAndCookie) error,
 ) error {
 	if !s.IsLocal() {
 		return RiverError(
@@ -876,9 +876,7 @@ func (s *Stream) UpdatesSinceCookie(
 		return err
 	}
 
-	cb(resp)
-
-	return nil
+	return cb(resp)
 }
 
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.

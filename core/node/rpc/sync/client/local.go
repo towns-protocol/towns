@@ -57,8 +57,8 @@ func newLocalSyncer(
 func (s *localSyncer) Run() {
 	<-s.globalCtx.Done()
 
-	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
-		syncStream.Unsub(s)
+	s.activeStreams.Range(func(streamID StreamId, _ *Stream) bool {
+		s.streamUnbsub(streamID)
 		return true
 	})
 }
@@ -115,10 +115,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 	if len(request.GetRemoveStreams()) > 0 {
 		for _, streamID := range request.GetRemoveStreams() {
-			syncStream, found := s.activeStreams.LoadAndDelete(StreamId(streamID))
-			if found {
-				go syncStream.Unsub(s)
-			}
+			s.streamUnbsub(StreamId(streamID))
 		}
 	}
 
@@ -128,12 +125,10 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	return &resp, false, nil
 }
 
+// DebugDropStream is called to drop a stream from the syncer.
 func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (bool, error) {
-	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
-	if found {
-		syncStream.Unsub(s)
-		s.OnStreamSyncDown(streamID)
-		return false, nil
+	if s.streamUnbsub(streamID) {
+		return false, s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	}
 
 	return false, RiverError(Err_NOT_FOUND, "stream not found").Tag("stream", streamID)
@@ -141,13 +136,14 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
+	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
+		s.streamUnbsub(StreamId(r.GetNextSyncCookie().GetStreamId()))
+	}
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable
 func (s *localSyncer) OnSyncError(error) {
 	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
-		go syncStream.Unsub(s)
 		s.OnStreamSyncDown(streamID)
 		return true
 	})
@@ -156,7 +152,9 @@ func (s *localSyncer) OnSyncError(error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
+		s.streamUnbsub(streamID)
+	}
 }
 
 func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, targetSyncIds []string) error {
@@ -175,8 +173,8 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 		return err
 	}
 
-	return stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) {
-		s.sendResponse(&SyncStreamsResponse{
+	return stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) error {
+		return s.sendResponse(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_UPDATE,
 			Stream:        streamAndCookie,
 			TargetSyncIds: targetSyncIds,
@@ -214,17 +212,37 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
+func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
+	var err error
+
 	select {
 	case <-s.globalCtx.Done():
-		return
-	default:
-		if err := s.messages.AddMessage(msg); err != nil {
-			rvrErr := AsRiverError(err).
+		if s.globalCtx.Err() != nil {
+			err = AsRiverError(s.globalCtx.Err(), Err_CANCELED).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
-			_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
-			s.OnSyncError(err)
 		}
+	default:
+		err = s.messages.AddMessage(msg)
 	}
+
+	if err != nil {
+		rvrErr := AsRiverError(err).
+			Tag("op", msg.GetSyncOp()).
+			Func("localSyncer.sendResponse")
+		_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
+		return rvrErr
+	}
+
+	return nil
+}
+
+// streamUnbsub is called to unsubscribe from a stream.
+func (s *localSyncer) streamUnbsub(streamID StreamId) bool {
+	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
+	if found {
+		syncStream.Unsub(s)
+		s.unsubStream(syncStream.StreamId())
+	}
+	return found
 }
