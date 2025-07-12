@@ -52,7 +52,7 @@ func TestManager_processMessage(t *testing.T) {
 			},
 		},
 	}
-	mockReg.On("GetSubscriptionsForStream", mock.Anything).Return([]*Subscription{}).Maybe()
+	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
 	err := m.processMessage(msg)
 	assert.NoError(t, err)
 	mockReg.AssertExpectations(t)
@@ -62,7 +62,7 @@ func TestManager_processMessage(t *testing.T) {
 		SyncOp:   SyncOp_SYNC_DOWN,
 		StreamId: streamID[:],
 	}
-	mockReg.On("GetSubscriptionsForStream", mock.Anything).Return([]*Subscription{}).Maybe()
+	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
 	err = m.processMessage(msg2)
 	assert.NoError(t, err)
 	mockReg.AssertExpectations(t)

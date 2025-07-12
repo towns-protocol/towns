@@ -14,7 +14,9 @@ type Registry interface {
 	GetSubscriptionsForStream(streamID StreamId) []*Subscription
 	GetSubscriptionByID(syncID string) (*Subscription, bool)
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
-	RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool)
+	RemoveStreamFromSubscription(syncID string, streamID StreamId)
+	OnStreamDown(streamID StreamId)
+	CleanupUnusedStreams(func(streamIds [][]byte))
 	GetStats() (streamCount, subscriptionCount int)
 	CancelAll(err error)
 }
@@ -55,9 +57,6 @@ func (r *registry) RemoveSubscription(syncID string) {
 		r.subscriptionsByStream[streamID] = slices.DeleteFunc(subs, func(s *Subscription) bool {
 			return s.syncID == syncID
 		})
-		if len(r.subscriptionsByStream[streamID]) == 0 {
-			delete(r.subscriptionsByStream, streamID)
-		}
 	}
 
 	r.sLock.Unlock()
@@ -91,24 +90,22 @@ func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (sh
 	}
 
 	subscriptions, ok := r.subscriptionsByStream[streamID]
-	if !ok || len(subscriptions) == 0 {
+	if !ok {
 		shouldAddToRemote = true
 		r.subscriptionsByStream[streamID] = []*Subscription{sub}
-	} else {
-		if !slices.ContainsFunc(subscriptions, func(s *Subscription) bool {
-			return s.syncID == syncID
-		}) {
-			shouldBackfill = true
-			sub.initializingStreams.Store(streamID, struct{}{})
-			r.subscriptionsByStream[streamID] = append(r.subscriptionsByStream[streamID], sub)
-		}
+	} else if !slices.ContainsFunc(subscriptions, func(s *Subscription) bool {
+		return s.syncID == syncID
+	}) {
+		shouldBackfill = true
+		sub.initializingStreams.Store(streamID, struct{}{})
+		r.subscriptionsByStream[streamID] = append(r.subscriptionsByStream[streamID], sub)
 	}
 	return
 }
 
 // RemoveStreamFromSubscription removes a stream from a subscription
 // Returns true if the given stream must be removed from the main syncer set
-func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId) (shouldRemoveFromRemote bool) {
+func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId) {
 	r.sLock.Lock()
 	r.subscriptionsByStream[streamID] = slices.DeleteFunc(
 		r.subscriptionsByStream[streamID],
@@ -116,12 +113,14 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 			return sub.syncID == syncID
 		},
 	)
-
-	if shouldRemoveFromRemote = len(r.subscriptionsByStream[streamID]) == 0; shouldRemoveFromRemote {
-		delete(r.subscriptionsByStream, streamID)
-	}
 	r.sLock.Unlock()
-	return
+}
+
+// OnStreamDown is called when a stream goes down
+func (r *registry) OnStreamDown(streamID StreamId) {
+	r.sLock.Lock()
+	delete(r.subscriptionsByStream, streamID)
+	r.sLock.Unlock()
 }
 
 // GetStats returns statistics about the registry
@@ -142,5 +141,25 @@ func (r *registry) CancelAll(err error) {
 	}
 	r.subscriptionsByID = make(map[string]*Subscription)
 	r.subscriptionsByStream = make(map[StreamId][]*Subscription)
+	r.sLock.Unlock()
+}
+
+// CleanupUnusedStreams removes unused streams from the syncer set.
+func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
+	r.sLock.Lock()
+	streamIds := make([][]byte, 0)
+	for streamID, subs := range r.subscriptionsByStream {
+		if len(subs) == 0 {
+			streamIds = append(streamIds, streamID[:])
+		}
+	}
+	if len(streamIds) > 0 {
+		if cb != nil {
+			cb(streamIds)
+		}
+		for _, streamID := range streamIds {
+			delete(r.subscriptionsByStream, StreamId(streamID))
+		}
+	}
 	r.sLock.Unlock()
 }

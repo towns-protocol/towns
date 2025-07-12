@@ -86,30 +86,6 @@ func TestSubscription_Modify(t *testing.T) {
 			},
 		},
 		{
-			name: "remove stream - should remove from remote",
-			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
-				mockReg := &mockRegistry{}
-				sub := createTestSubscription("test-sync-1")
-				sub.syncers = mockSyncer
-				sub.registry = mockReg
-				return sub, mockSyncer, mockReg
-			},
-			req: client.ModifyRequest{
-				SyncID: "test-sync-1",
-				ToRemove: [][]byte{
-					streamID1[:],
-				},
-				RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
-			},
-			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
-				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID1).Return(true)
-				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
-					return len(req.ToAdd) == 0 && len(req.ToRemove) == 1 && len(req.ToBackfill) == 0
-				})).Return(nil)
-			},
-		},
-		{
 			name: "remove stream - should not remove from remote",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
@@ -154,9 +130,9 @@ func TestSubscription_Modify(t *testing.T) {
 			},
 			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
-				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2).Return(true)
+				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2)
 				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
-					return len(req.ToAdd) == 1 && len(req.ToRemove) == 1 && len(req.ToBackfill) == 0
+					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
 				})).Return(nil)
 			},
 		},
