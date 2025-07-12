@@ -150,3 +150,11 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - Local chains run on ports 8545 (Base) and 8546 (River)
 - PostgreSQL runs on port 5433 for local development
 - HTTPS certificates managed via `generate-certs.sh`
+
+## Git Commit Guidelines
+
+When creating git commits:
+- Write clear, concise commit messages that describe the changes
+- Follow conventional commit format when applicable (feat:, fix:, docs:, etc.)
+- Do NOT mention Claude, AI assistance, or automated generation in commit messages
+- Focus on describing what changed and why, not how it was created
