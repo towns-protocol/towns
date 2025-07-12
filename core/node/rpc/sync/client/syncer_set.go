@@ -633,6 +633,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messages,
+			ss.rmStream,
 			ss.otelTracer,
 		)
 	} else {
