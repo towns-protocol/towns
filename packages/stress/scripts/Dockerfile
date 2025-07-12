@@ -26,7 +26,7 @@ LABEL org.opencontainers.image.name="stress-local"
 
 # Register CA files
 RUN mkdir -p /usr/local/share/ca-certificates && \
-    cp /app/river-ca-cert.pem /usr/local/share/ca-certificates/river-ca.crt && \
+    cp /app/towns-ca-cert.pem /usr/local/share/ca-certificates/towns-ca.crt && \
     update-ca-certificates
 
 # Install uuidgen

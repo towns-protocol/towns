@@ -16,7 +16,7 @@
 
 1. Create `.env.local` files:
 
-1. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+1. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/towns-ca-cert.pem` and `$HOME/towns-ca-key.pem` files.
 
 ## Running everything locally
 
