@@ -67,6 +67,7 @@ import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
 } from '@towns-protocol/encryption'
+
 import {
     createClient as createViemClient,
     http,
@@ -76,6 +77,7 @@ import {
     type Client as ViemClient,
     type ContractFunctionArgs,
     type ContractFunctionName,
+    type Prettify,
 } from 'viem'
 import {
     readContract,
@@ -86,6 +88,7 @@ import {
 import { base, baseSepolia } from 'viem/chains'
 import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
 import type { BlankEnv } from 'hono/types'
+import { SnapshotGetter } from './snapshot-getter'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -221,6 +224,7 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
+    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents> = createNanoEvents()
@@ -231,6 +235,7 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
         this.viemClient = viemClient
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
+        this.snapshot = clientV2.snapshot
     }
 
     async start() {
@@ -1107,5 +1112,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         setUserProfileImage,
         /** @deprecated Not planned for now */
         getUserData,
+        snapshot: SnapshotGetter(client.getStream),
     }
 }
