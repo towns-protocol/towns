@@ -43,6 +43,7 @@
       "group": "Learn",
       "pages": [
         "introduction",
+        "introduction/technical-whitepaper",
         {
           "group": "Towns Smart Contracts",
           "pages": [

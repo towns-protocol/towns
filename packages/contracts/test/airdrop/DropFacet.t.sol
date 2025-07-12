@@ -44,7 +44,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     }
 
     uint256 internal constant TOTAL_TOKEN_AMOUNT = 1000;
-    uint16 internal constant PENALTY_BPS = 5000;
+    uint16 internal constant PENALTY_BPS = 5000; // 50%
 
     MerkleTree internal merkleTree = new MerkleTree();
 
@@ -971,29 +971,10 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     function givenOffChainRoot() internal returns (bytes32) {
         string[] memory cmds = new string[](2);
         cmds[0] = "node";
-        cmds[1] = "contracts/test/airdrop/scripts/index.mjs";
+        cmds[1] = "test/airdrop/scripts/index.mjs";
         bytes memory result = vm.ffi(cmds);
         return abi.decode(result, (bytes32));
     }
-
-    // function test_endToEnd_differentialTestingRoot() external {
-    //   address[] memory _accounts = new address[](4);
-    //   uint256[] memory _amounts = new uint256[](4);
-
-    //   _accounts[0] = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-    //   _amounts[0] = 1 ether;
-    //   _accounts[1] = 0x2FaC60B7bCcEc9b234A2f07448D3B2a045d621B9;
-    //   _amounts[1] = 1 ether;
-    //   _accounts[2] = 0xa9a6512088904fbaD2aA710550B57c29ee0092c4;
-    //   _amounts[2] = 1 ether;
-    //   _accounts[3] = 0x86312a65B491CF25D9D265f6218AB013DaCa5e19;
-    //   _amounts[3] = 1 ether;
-
-    //   bytes32 offChainRoot = givenOffChainRoot();
-    //   (bytes32 onChainRoot, ) = merkleTree.constructTree(_accounts, _amounts);
-
-    //   assertEq(offChainRoot, onChainRoot);
-    // }
 
     // we claim some tokens from the first condition, and then activate the second condition
     // we claim some more tokens from the second condition
@@ -1188,6 +1169,76 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         (bytes32 _root, ) = merkleTree.constructTree(_accounts, _amounts, _points);
 
         assertEq(_root, expectedRoot);
+    }
+
+    function test_e2e_claimWithPenalty() external {
+        uint256 totalAmount = 14 ether;
+        uint16 penaltyBps = 1000; // 10% penalty
+        bytes32 merkleRoot = 0x25a11091a066f7c85124bda81bb17f1fea3d68eee4943b0580b9d2cd33f2a90e;
+
+        // 1. mint tokens to the drop facet
+        vm.prank(bridge);
+        towns.mint(address(dropFacet), totalAmount);
+
+        // 2. set claim conditions
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, merkleRoot, totalAmount);
+        conditions[0].penaltyBps = penaltyBps;
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        // 3. claim with penalty
+        address[] memory accts = new address[](4);
+        uint256[] memory amts = new uint256[](4);
+        uint256[] memory pts = new uint256[](4);
+
+        accts[0] = 0x399897aB71e0d450395de209bEBDAA1632F00414;
+        amts[0] = 2000000000000000000;
+        pts[0] = 1000000000000000000;
+
+        accts[1] = 0x94ada5c41736C7617DdC87e20f8a4D14cff01A6A;
+        amts[1] = 2000000000000000000;
+        pts[1] = 1000000000000000000;
+
+        accts[2] = 0xd5ED99854A53C4cbDF6957C3d1ab027165Bb4332;
+        amts[2] = 2000000000000000000;
+        pts[2] = 2000000000000000000;
+
+        accts[3] = 0xf32A4d7cE3C559924fD0Beb3986d5815C4E033F1;
+        amts[3] = 2000000000000000000;
+        pts[3] = 2000000000000000000;
+
+        // 3. create the merkle tree
+        MerkleTree t = new MerkleTree();
+        (bytes32 _root, bytes32[][] memory _tree) = t.constructTree(accts, amts, pts);
+        assertEq(_root, merkleRoot);
+
+        // 4. verify the claim
+        uint256 aIndex = 0;
+        bytes32[] memory proof = merkleTree.getProof(_tree, aIndex);
+
+        vm.startPrank(space);
+        pointsFacet.mint(accts[0], pts[0]);
+        vm.stopPrank();
+
+        vm.prank(accts[0]);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: 0,
+                account: accts[0],
+                quantity: amts[0],
+                points: pts[0],
+                proof: proof
+            }),
+            penaltyBps
+        );
+
+        uint256 expectedAmount = amts[0] - BasisPoints.calculate(amts[0], penaltyBps);
+
+        assertEq(dropFacet.getSupplyClaimedByWallet(accts[0], 0), expectedAmount);
+        assertEq(towns.balanceOf(address(dropFacet)), totalAmount - expectedAmount);
+        assertEq(pointsFacet.balanceOf(accts[0]), 0);
     }
 
     // =============================================================

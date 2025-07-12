@@ -163,85 +163,32 @@ export interface ChannelsInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "AppBanned(address,bytes32)": EventFragment;
-    "AppCreated(address,bytes32)": EventFragment;
-    "AppInstalled(address,address,bytes32)": EventFragment;
-    "AppRegistered(address,bytes32)": EventFragment;
-    "AppRenewed(address,address,bytes32)": EventFragment;
-    "AppSchemaSet(bytes32)": EventFragment;
-    "AppUninstalled(address,address,bytes32)": EventFragment;
-    "AppUnregistered(address,bytes32)": EventFragment;
-    "AppUpdated(address,bytes32)": EventFragment;
-    "Approval(address,address,uint256)": EventFragment;
-    "ApprovalForAll(address,address,bool)": EventFragment;
-    "Banned(address,uint256)": EventFragment;
     "ChannelCreated(address,bytes32)": EventFragment;
     "ChannelRemoved(address,bytes32)": EventFragment;
     "ChannelRoleAdded(address,bytes32,uint256)": EventFragment;
     "ChannelRoleRemoved(address,bytes32,uint256)": EventFragment;
     "ChannelUpdated(address,bytes32)": EventFragment;
-    "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
-    "GroupAccessGranted(bytes32,address,uint32,uint48,bool)": EventFragment;
-    "GroupAccessRevoked(bytes32,address,bool)": EventFragment;
-    "GroupExpirationSet(bytes32,uint48)": EventFragment;
-    "GroupGrantDelaySet(bytes32,uint32)": EventFragment;
-    "GroupGuardianSet(bytes32,bytes32)": EventFragment;
-    "GroupStatusSet(bytes32,bool)": EventFragment;
     "Initialized(uint32)": EventFragment;
     "InterfaceAdded(bytes4)": EventFragment;
     "InterfaceRemoved(bytes4)": EventFragment;
-    "OperationCanceled(bytes32,uint32)": EventFragment;
-    "OperationExecuted(bytes32,uint32)": EventFragment;
-    "OperationScheduled(bytes32,uint48,uint32)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
-    "Paused(address)": EventFragment;
     "PermissionsAddedToChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsRemovedFromChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsUpdatedForChannelRole(address,uint256,bytes32)": EventFragment;
     "RoleCreated(address,uint256)": EventFragment;
     "RoleRemoved(address,uint256)": EventFragment;
     "RoleUpdated(address,uint256)": EventFragment;
-    "TargetDisabledSet(address,bool)": EventFragment;
-    "TargetFunctionDelaySet(address,uint32,uint32)": EventFragment;
-    "TargetFunctionDisabledSet(address,bytes4,bool)": EventFragment;
-    "TargetFunctionGroupSet(address,bytes4,bytes32)": EventFragment;
-    "Transfer(address,address,uint256)": EventFragment;
-    "Unbanned(address,uint256)": EventFragment;
-    "Unpaused(address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AppBanned"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppCreated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppInstalled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppRegistered"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppRenewed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppSchemaSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppUninstalled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppUnregistered"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AppUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ChannelCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ChannelRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ChannelRoleAdded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ChannelRoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ChannelUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GroupAccessGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GroupAccessRevoked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GroupExpirationSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GroupGrantDelaySet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GroupGuardianSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GroupStatusSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceAdded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceRemoved"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperationCanceled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperationExecuted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperationScheduled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "PermissionsAddedToChannelRole"
   ): EventFragment;
@@ -254,141 +201,7 @@ export interface ChannelsInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TargetDisabledSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TargetFunctionDelaySet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TargetFunctionDisabledSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TargetFunctionGroupSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
-
-export interface AppBannedEventObject {
-  app: string;
-  uid: string;
-}
-export type AppBannedEvent = TypedEvent<[string, string], AppBannedEventObject>;
-
-export type AppBannedEventFilter = TypedEventFilter<AppBannedEvent>;
-
-export interface AppCreatedEventObject {
-  app: string;
-  uid: string;
-}
-export type AppCreatedEvent = TypedEvent<
-  [string, string],
-  AppCreatedEventObject
->;
-
-export type AppCreatedEventFilter = TypedEventFilter<AppCreatedEvent>;
-
-export interface AppInstalledEventObject {
-  app: string;
-  account: string;
-  appId: string;
-}
-export type AppInstalledEvent = TypedEvent<
-  [string, string, string],
-  AppInstalledEventObject
->;
-
-export type AppInstalledEventFilter = TypedEventFilter<AppInstalledEvent>;
-
-export interface AppRegisteredEventObject {
-  app: string;
-  uid: string;
-}
-export type AppRegisteredEvent = TypedEvent<
-  [string, string],
-  AppRegisteredEventObject
->;
-
-export type AppRegisteredEventFilter = TypedEventFilter<AppRegisteredEvent>;
-
-export interface AppRenewedEventObject {
-  app: string;
-  account: string;
-  appId: string;
-}
-export type AppRenewedEvent = TypedEvent<
-  [string, string, string],
-  AppRenewedEventObject
->;
-
-export type AppRenewedEventFilter = TypedEventFilter<AppRenewedEvent>;
-
-export interface AppSchemaSetEventObject {
-  uid: string;
-}
-export type AppSchemaSetEvent = TypedEvent<[string], AppSchemaSetEventObject>;
-
-export type AppSchemaSetEventFilter = TypedEventFilter<AppSchemaSetEvent>;
-
-export interface AppUninstalledEventObject {
-  app: string;
-  account: string;
-  appId: string;
-}
-export type AppUninstalledEvent = TypedEvent<
-  [string, string, string],
-  AppUninstalledEventObject
->;
-
-export type AppUninstalledEventFilter = TypedEventFilter<AppUninstalledEvent>;
-
-export interface AppUnregisteredEventObject {
-  app: string;
-  uid: string;
-}
-export type AppUnregisteredEvent = TypedEvent<
-  [string, string],
-  AppUnregisteredEventObject
->;
-
-export type AppUnregisteredEventFilter = TypedEventFilter<AppUnregisteredEvent>;
-
-export interface AppUpdatedEventObject {
-  app: string;
-  uid: string;
-}
-export type AppUpdatedEvent = TypedEvent<
-  [string, string],
-  AppUpdatedEventObject
->;
-
-export type AppUpdatedEventFilter = TypedEventFilter<AppUpdatedEvent>;
-
-export interface ApprovalEventObject {
-  owner: string;
-  approved: string;
-  tokenId: BigNumber;
-}
-export type ApprovalEvent = TypedEvent<
-  [string, string, BigNumber],
-  ApprovalEventObject
->;
-
-export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
-
-export interface ApprovalForAllEventObject {
-  owner: string;
-  operator: string;
-  approved: boolean;
-}
-export type ApprovalForAllEvent = TypedEvent<
-  [string, string, boolean],
-  ApprovalForAllEventObject
->;
-
-export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
-
-export interface BannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
-
-export type BannedEventFilter = TypedEventFilter<BannedEvent>;
 
 export interface ChannelCreatedEventObject {
   caller: string;
@@ -449,95 +262,6 @@ export type ChannelUpdatedEvent = TypedEvent<
 
 export type ChannelUpdatedEventFilter = TypedEventFilter<ChannelUpdatedEvent>;
 
-export interface ConsecutiveTransferEventObject {
-  fromTokenId: BigNumber;
-  toTokenId: BigNumber;
-  from: string;
-  to: string;
-}
-export type ConsecutiveTransferEvent = TypedEvent<
-  [BigNumber, BigNumber, string, string],
-  ConsecutiveTransferEventObject
->;
-
-export type ConsecutiveTransferEventFilter =
-  TypedEventFilter<ConsecutiveTransferEvent>;
-
-export interface GroupAccessGrantedEventObject {
-  groupId: string;
-  account: string;
-  delay: number;
-  since: number;
-  newMember: boolean;
-}
-export type GroupAccessGrantedEvent = TypedEvent<
-  [string, string, number, number, boolean],
-  GroupAccessGrantedEventObject
->;
-
-export type GroupAccessGrantedEventFilter =
-  TypedEventFilter<GroupAccessGrantedEvent>;
-
-export interface GroupAccessRevokedEventObject {
-  groupId: string;
-  account: string;
-  revoked: boolean;
-}
-export type GroupAccessRevokedEvent = TypedEvent<
-  [string, string, boolean],
-  GroupAccessRevokedEventObject
->;
-
-export type GroupAccessRevokedEventFilter =
-  TypedEventFilter<GroupAccessRevokedEvent>;
-
-export interface GroupExpirationSetEventObject {
-  groupId: string;
-  expiration: number;
-}
-export type GroupExpirationSetEvent = TypedEvent<
-  [string, number],
-  GroupExpirationSetEventObject
->;
-
-export type GroupExpirationSetEventFilter =
-  TypedEventFilter<GroupExpirationSetEvent>;
-
-export interface GroupGrantDelaySetEventObject {
-  groupId: string;
-  delay: number;
-}
-export type GroupGrantDelaySetEvent = TypedEvent<
-  [string, number],
-  GroupGrantDelaySetEventObject
->;
-
-export type GroupGrantDelaySetEventFilter =
-  TypedEventFilter<GroupGrantDelaySetEvent>;
-
-export interface GroupGuardianSetEventObject {
-  groupId: string;
-  guardian: string;
-}
-export type GroupGuardianSetEvent = TypedEvent<
-  [string, string],
-  GroupGuardianSetEventObject
->;
-
-export type GroupGuardianSetEventFilter =
-  TypedEventFilter<GroupGuardianSetEvent>;
-
-export interface GroupStatusSetEventObject {
-  groupId: string;
-  active: boolean;
-}
-export type GroupStatusSetEvent = TypedEvent<
-  [string, boolean],
-  GroupStatusSetEventObject
->;
-
-export type GroupStatusSetEventFilter = TypedEventFilter<GroupStatusSetEvent>;
-
 export interface InitializedEventObject {
   version: number;
 }
@@ -566,43 +290,6 @@ export type InterfaceRemovedEvent = TypedEvent<
 export type InterfaceRemovedEventFilter =
   TypedEventFilter<InterfaceRemovedEvent>;
 
-export interface OperationCanceledEventObject {
-  operationId: string;
-  nonce: number;
-}
-export type OperationCanceledEvent = TypedEvent<
-  [string, number],
-  OperationCanceledEventObject
->;
-
-export type OperationCanceledEventFilter =
-  TypedEventFilter<OperationCanceledEvent>;
-
-export interface OperationExecutedEventObject {
-  operationId: string;
-  nonce: number;
-}
-export type OperationExecutedEvent = TypedEvent<
-  [string, number],
-  OperationExecutedEventObject
->;
-
-export type OperationExecutedEventFilter =
-  TypedEventFilter<OperationExecutedEvent>;
-
-export interface OperationScheduledEventObject {
-  operationId: string;
-  timepoint: number;
-  nonce: number;
-}
-export type OperationScheduledEvent = TypedEvent<
-  [string, number, number],
-  OperationScheduledEventObject
->;
-
-export type OperationScheduledEventFilter =
-  TypedEventFilter<OperationScheduledEvent>;
-
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
   newOwner: string;
@@ -614,13 +301,6 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface PausedEventObject {
-  account: string;
-}
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
-
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
 
 export interface PermissionsAddedToChannelRoleEventObject {
   updater: string;
@@ -693,87 +373,6 @@ export type RoleUpdatedEvent = TypedEvent<
 >;
 
 export type RoleUpdatedEventFilter = TypedEventFilter<RoleUpdatedEvent>;
-
-export interface TargetDisabledSetEventObject {
-  target: string;
-  disabled: boolean;
-}
-export type TargetDisabledSetEvent = TypedEvent<
-  [string, boolean],
-  TargetDisabledSetEventObject
->;
-
-export type TargetDisabledSetEventFilter =
-  TypedEventFilter<TargetDisabledSetEvent>;
-
-export interface TargetFunctionDelaySetEventObject {
-  target: string;
-  newDelay: number;
-  minSetback: number;
-}
-export type TargetFunctionDelaySetEvent = TypedEvent<
-  [string, number, number],
-  TargetFunctionDelaySetEventObject
->;
-
-export type TargetFunctionDelaySetEventFilter =
-  TypedEventFilter<TargetFunctionDelaySetEvent>;
-
-export interface TargetFunctionDisabledSetEventObject {
-  target: string;
-  selector: string;
-  disabled: boolean;
-}
-export type TargetFunctionDisabledSetEvent = TypedEvent<
-  [string, string, boolean],
-  TargetFunctionDisabledSetEventObject
->;
-
-export type TargetFunctionDisabledSetEventFilter =
-  TypedEventFilter<TargetFunctionDisabledSetEvent>;
-
-export interface TargetFunctionGroupSetEventObject {
-  target: string;
-  selector: string;
-  groupId: string;
-}
-export type TargetFunctionGroupSetEvent = TypedEvent<
-  [string, string, string],
-  TargetFunctionGroupSetEventObject
->;
-
-export type TargetFunctionGroupSetEventFilter =
-  TypedEventFilter<TargetFunctionGroupSetEvent>;
-
-export interface TransferEventObject {
-  from: string;
-  to: string;
-  tokenId: BigNumber;
-}
-export type TransferEvent = TypedEvent<
-  [string, string, BigNumber],
-  TransferEventObject
->;
-
-export type TransferEventFilter = TypedEventFilter<TransferEvent>;
-
-export interface UnbannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type UnbannedEvent = TypedEvent<
-  [string, BigNumber],
-  UnbannedEventObject
->;
-
-export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
-}
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
-
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface Channels extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -970,118 +569,6 @@ export interface Channels extends BaseContract {
   };
 
   filters: {
-    "AppBanned(address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppBannedEventFilter;
-    AppBanned(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppBannedEventFilter;
-
-    "AppCreated(address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppCreatedEventFilter;
-    AppCreated(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppCreatedEventFilter;
-
-    "AppInstalled(address,address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      account?: PromiseOrValue<string> | null,
-      appId?: PromiseOrValue<BytesLike> | null
-    ): AppInstalledEventFilter;
-    AppInstalled(
-      app?: PromiseOrValue<string> | null,
-      account?: PromiseOrValue<string> | null,
-      appId?: PromiseOrValue<BytesLike> | null
-    ): AppInstalledEventFilter;
-
-    "AppRegistered(address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppRegisteredEventFilter;
-    AppRegistered(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppRegisteredEventFilter;
-
-    "AppRenewed(address,address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      account?: PromiseOrValue<string> | null,
-      appId?: PromiseOrValue<BytesLike> | null
-    ): AppRenewedEventFilter;
-    AppRenewed(
-      app?: PromiseOrValue<string> | null,
-      account?: PromiseOrValue<string> | null,
-      appId?: PromiseOrValue<BytesLike> | null
-    ): AppRenewedEventFilter;
-
-    "AppSchemaSet(bytes32)"(uid?: null): AppSchemaSetEventFilter;
-    AppSchemaSet(uid?: null): AppSchemaSetEventFilter;
-
-    "AppUninstalled(address,address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      account?: PromiseOrValue<string> | null,
-      appId?: PromiseOrValue<BytesLike> | null
-    ): AppUninstalledEventFilter;
-    AppUninstalled(
-      app?: PromiseOrValue<string> | null,
-      account?: PromiseOrValue<string> | null,
-      appId?: PromiseOrValue<BytesLike> | null
-    ): AppUninstalledEventFilter;
-
-    "AppUnregistered(address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppUnregisteredEventFilter;
-    AppUnregistered(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppUnregisteredEventFilter;
-
-    "AppUpdated(address,bytes32)"(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppUpdatedEventFilter;
-    AppUpdated(
-      app?: PromiseOrValue<string> | null,
-      uid?: null
-    ): AppUpdatedEventFilter;
-
-    "Approval(address,address,uint256)"(
-      owner?: PromiseOrValue<string> | null,
-      approved?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): ApprovalEventFilter;
-    Approval(
-      owner?: PromiseOrValue<string> | null,
-      approved?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): ApprovalEventFilter;
-
-    "ApprovalForAll(address,address,bool)"(
-      owner?: PromiseOrValue<string> | null,
-      operator?: PromiseOrValue<string> | null,
-      approved?: null
-    ): ApprovalForAllEventFilter;
-    ApprovalForAll(
-      owner?: PromiseOrValue<string> | null,
-      operator?: PromiseOrValue<string> | null,
-      approved?: null
-    ): ApprovalForAllEventFilter;
-
-    "Banned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-    Banned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-
     "ChannelCreated(address,bytes32)"(
       caller?: PromiseOrValue<string> | null,
       channelId?: null
@@ -1131,81 +618,6 @@ export interface Channels extends BaseContract {
       channelId?: null
     ): ChannelUpdatedEventFilter;
 
-    "ConsecutiveTransfer(uint256,uint256,address,address)"(
-      fromTokenId?: PromiseOrValue<BigNumberish> | null,
-      toTokenId?: null,
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null
-    ): ConsecutiveTransferEventFilter;
-    ConsecutiveTransfer(
-      fromTokenId?: PromiseOrValue<BigNumberish> | null,
-      toTokenId?: null,
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null
-    ): ConsecutiveTransferEventFilter;
-
-    "GroupAccessGranted(bytes32,address,uint32,uint48,bool)"(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      delay?: null,
-      since?: null,
-      newMember?: null
-    ): GroupAccessGrantedEventFilter;
-    GroupAccessGranted(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      delay?: null,
-      since?: null,
-      newMember?: null
-    ): GroupAccessGrantedEventFilter;
-
-    "GroupAccessRevoked(bytes32,address,bool)"(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      revoked?: null
-    ): GroupAccessRevokedEventFilter;
-    GroupAccessRevoked(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      revoked?: null
-    ): GroupAccessRevokedEventFilter;
-
-    "GroupExpirationSet(bytes32,uint48)"(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      expiration?: null
-    ): GroupExpirationSetEventFilter;
-    GroupExpirationSet(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      expiration?: null
-    ): GroupExpirationSetEventFilter;
-
-    "GroupGrantDelaySet(bytes32,uint32)"(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      delay?: null
-    ): GroupGrantDelaySetEventFilter;
-    GroupGrantDelaySet(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      delay?: null
-    ): GroupGrantDelaySetEventFilter;
-
-    "GroupGuardianSet(bytes32,bytes32)"(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      guardian?: null
-    ): GroupGuardianSetEventFilter;
-    GroupGuardianSet(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      guardian?: null
-    ): GroupGuardianSetEventFilter;
-
-    "GroupStatusSet(bytes32,bool)"(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      active?: null
-    ): GroupStatusSetEventFilter;
-    GroupStatusSet(
-      groupId?: PromiseOrValue<BytesLike> | null,
-      active?: null
-    ): GroupStatusSetEventFilter;
-
     "Initialized(uint32)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
 
@@ -1223,35 +635,6 @@ export interface Channels extends BaseContract {
       interfaceId?: PromiseOrValue<BytesLike> | null
     ): InterfaceRemovedEventFilter;
 
-    "OperationCanceled(bytes32,uint32)"(
-      operationId?: PromiseOrValue<BytesLike> | null,
-      nonce?: null
-    ): OperationCanceledEventFilter;
-    OperationCanceled(
-      operationId?: PromiseOrValue<BytesLike> | null,
-      nonce?: null
-    ): OperationCanceledEventFilter;
-
-    "OperationExecuted(bytes32,uint32)"(
-      operationId?: PromiseOrValue<BytesLike> | null,
-      nonce?: null
-    ): OperationExecutedEventFilter;
-    OperationExecuted(
-      operationId?: PromiseOrValue<BytesLike> | null,
-      nonce?: null
-    ): OperationExecutedEventFilter;
-
-    "OperationScheduled(bytes32,uint48,uint32)"(
-      operationId?: PromiseOrValue<BytesLike> | null,
-      timepoint?: null,
-      nonce?: null
-    ): OperationScheduledEventFilter;
-    OperationScheduled(
-      operationId?: PromiseOrValue<BytesLike> | null,
-      timepoint?: null,
-      nonce?: null
-    ): OperationScheduledEventFilter;
-
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -1260,9 +643,6 @@ export interface Channels extends BaseContract {
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
-
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
 
     "PermissionsAddedToChannelRole(address,uint256,bytes32)"(
       updater?: PromiseOrValue<string> | null,
@@ -1323,71 +703,6 @@ export interface Channels extends BaseContract {
       updater?: PromiseOrValue<string> | null,
       roleId?: PromiseOrValue<BigNumberish> | null
     ): RoleUpdatedEventFilter;
-
-    "TargetDisabledSet(address,bool)"(
-      target?: PromiseOrValue<string> | null,
-      disabled?: null
-    ): TargetDisabledSetEventFilter;
-    TargetDisabledSet(
-      target?: PromiseOrValue<string> | null,
-      disabled?: null
-    ): TargetDisabledSetEventFilter;
-
-    "TargetFunctionDelaySet(address,uint32,uint32)"(
-      target?: PromiseOrValue<string> | null,
-      newDelay?: null,
-      minSetback?: null
-    ): TargetFunctionDelaySetEventFilter;
-    TargetFunctionDelaySet(
-      target?: PromiseOrValue<string> | null,
-      newDelay?: null,
-      minSetback?: null
-    ): TargetFunctionDelaySetEventFilter;
-
-    "TargetFunctionDisabledSet(address,bytes4,bool)"(
-      target?: PromiseOrValue<string> | null,
-      selector?: PromiseOrValue<BytesLike> | null,
-      disabled?: null
-    ): TargetFunctionDisabledSetEventFilter;
-    TargetFunctionDisabledSet(
-      target?: PromiseOrValue<string> | null,
-      selector?: PromiseOrValue<BytesLike> | null,
-      disabled?: null
-    ): TargetFunctionDisabledSetEventFilter;
-
-    "TargetFunctionGroupSet(address,bytes4,bytes32)"(
-      target?: PromiseOrValue<string> | null,
-      selector?: PromiseOrValue<BytesLike> | null,
-      groupId?: PromiseOrValue<BytesLike> | null
-    ): TargetFunctionGroupSetEventFilter;
-    TargetFunctionGroupSet(
-      target?: PromiseOrValue<string> | null,
-      selector?: PromiseOrValue<BytesLike> | null,
-      groupId?: PromiseOrValue<BytesLike> | null
-    ): TargetFunctionGroupSetEventFilter;
-
-    "Transfer(address,address,uint256)"(
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): TransferEventFilter;
-    Transfer(
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): TransferEventFilter;
-
-    "Unbanned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-    Unbanned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
   };
 
   estimateGas: {
