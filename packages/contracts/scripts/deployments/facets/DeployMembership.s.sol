@@ -19,7 +19,8 @@ library DeployMembership {
         arr.p(IMembership.revenue.selector);
 
         // Minting
-        arr.p(IMembership.joinSpace.selector);
+        arr.p(bytes4(keccak256("joinSpace(uint8,bytes)"))); // Unified joinSpace
+        arr.p(bytes4(keccak256("joinSpace(address)"))); // Legacy joinSpace
         arr.p(IMembership.joinSpaceWithReferral.selector);
         arr.p(IMembership.renewMembership.selector);
 
