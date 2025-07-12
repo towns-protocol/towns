@@ -43,7 +43,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
                     return;
                 }
 
-                if (transactionType == IMembership.joinSpace.selector) {
+                if (transactionType == JOIN_SPACE_SELECTOR) {
                     _chargeForJoinSpace(transactionId);
                 } else if (transactionType == IMembership.joinSpaceWithReferral.selector) {
                     _chargeForJoinSpaceWithReferral(transactionId);

@@ -6,29 +6,35 @@ import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
-
-import {MembershipJoin} from "./join/MembershipJoin.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
+import {MembershipJoin} from "./join/MembershipJoin.sol";
 
 contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                            FUNDS                           */
+    /*                            JOIN                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function revenue() external view returns (uint256) {
-        return address(this).balance;
+    function joinSpace(JoinType action, bytes calldata data) external payable nonReentrant {
+        if (action == JoinType.Basic) {
+            address receiver = abi.decode(data, (address));
+            _joinSpace(receiver);
+        } else if (action == JoinType.WithReferral) {
+            (address receiver, ReferralTypes memory referral) = abi.decode(
+                data,
+                (address, ReferralTypes)
+            );
+            _joinSpaceWithReferral(receiver, referral);
+        } else {
+            Membership__InvalidAction.selector.revertWith();
+        }
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                            JOIN                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
     function joinSpace(address receiver) external payable nonReentrant {
@@ -62,12 +68,13 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function getMembershipDuration() external view returns (uint64) {
-        return _getMembershipDuration();
-    }
-
     function setMembershipDuration(uint64 duration) external onlyOwner {
         _setMembershipDuration(duration);
+    }
+
+    /// @inheritdoc IMembership
+    function getMembershipDuration() external view returns (uint64) {
+        return _getMembershipDuration();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -150,7 +157,21 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          CURRENCY                          */
+    /*                            IMAGE                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IMembership
+    function setMembershipImage(string calldata newImage) external onlyOwner {
+        _setMembershipImage(newImage);
+    }
+
+    /// @inheritdoc IMembership
+    function getMembershipImage() external view returns (string memory) {
+        return _getMembershipImage();
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
@@ -158,24 +179,13 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         return _getMembershipCurrency();
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                            IMAGE                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function setMembershipImage(string calldata newImage) external onlyOwner {
-        _setMembershipImage(newImage);
-    }
-
-    function getMembershipImage() external view returns (string memory) {
-        return _getMembershipImage();
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           FACTORY                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @inheritdoc IMembership
     function getSpaceFactory() external view returns (address) {
         return _getSpaceFactory();
+    }
+
+    /// @inheritdoc IMembership
+    function revenue() external view returns (uint256) {
+        return address(this).balance;
     }
 }
