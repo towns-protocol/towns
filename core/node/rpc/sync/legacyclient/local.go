@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/linkdata/deadlock"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -22,12 +22,10 @@ type localSyncer struct {
 	syncStreamCtx      context.Context
 	cancelGlobalSyncOp context.CancelCauseFunc
 
-	streamCache *StreamCache
-	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	localAddr   common.Address
-
-	activeStreamsMu deadlock.Mutex
-	activeStreams   map[StreamId]*Stream
+	streamCache   *StreamCache
+	messages      *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	localAddr     common.Address
+	activeStreams *xsync.Map[StreamId, *Stream]
 
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
@@ -49,7 +47,7 @@ func newLocalSyncer(
 		streamCache:        streamCache,
 		localAddr:          localAddr,
 		messages:           messages,
-		activeStreams:      make(map[StreamId]*Stream),
+		activeStreams:      xsync.NewMap[StreamId, *Stream](),
 		otelTracer:         otelTracer,
 	}
 }
@@ -57,13 +55,10 @@ func newLocalSyncer(
 func (s *localSyncer) Run() {
 	<-s.syncStreamCtx.Done()
 
-	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
-	for streamID, syncStream := range s.activeStreams {
+	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
 		syncStream.Unsub(s)
-		delete(s.activeStreams, streamID)
-	}
+		return true
+	})
 }
 
 func (s *localSyncer) Address() common.Address {
@@ -94,18 +89,14 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 		}
 	}
 
-	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	for _, streamID := range request.GetRemoveStreams() {
-		syncStream, found := s.activeStreams[StreamId(streamID)]
+		syncStream, found := s.activeStreams.LoadAndDelete(StreamId(streamID))
 		if found {
 			syncStream.Unsub(s)
-			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
 
-	return &resp, len(s.activeStreams) == 0, nil
+	return &resp, s.activeStreams.Size() == 0, nil
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
@@ -115,14 +106,12 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 
 // OnSyncError is called when a sync subscription failed unrecoverable
 func (s *localSyncer) OnSyncError(error) {
-	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
-	for streamID, syncStream := range s.activeStreams {
+	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
 		syncStream.Unsub(s)
-		delete(s.activeStreams, streamID)
 		s.OnStreamSyncDown(streamID)
-	}
+		return true
+	})
+	s.activeStreams.Clear()
 }
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
@@ -135,16 +124,13 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 
 	if s.otelTracer != nil {
 		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "localSyncer::addStream",
+		ctx, span = s.otelTracer.Start(ctx, "legacyLocalSyncer::addStream",
 			trace.WithAttributes(attribute.String("streamID", streamID.String())))
 		defer span.End()
 	}
 
-	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	// prevent subscribing multiple times on the same stream
-	if _, found := s.activeStreams[streamID]; found {
+	if _, found := s.activeStreams.Load(streamID); found {
 		return nil
 	}
 
@@ -157,19 +143,15 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		return err
 	}
 
-	s.activeStreams[streamID] = syncStream
+	s.activeStreams.Store(streamID, syncStream)
 
 	return nil
 }
 
 func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (bool, error) {
-	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
-	syncStream, found := s.activeStreams[streamID]
+	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
 	if found {
 		syncStream.Unsub(s)
-		delete(s.activeStreams, streamID)
 		s.OnStreamSyncDown(streamID)
 		return false, nil
 	}
@@ -187,7 +169,7 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 			err := AsRiverError(err).
 				Tag("syncId", s.globalSyncOpID).
 				Tag("op", msg.GetSyncOp()).
-				Func("localSyncer.sendResponse")
+				Func("legacyLocalSyncer.sendResponse")
 
 			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
 
