@@ -2,21 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 // libraries
-
 import {IRiverConfigBase} from "src/river/registry/facets/config/IRiverConfig.sol";
 import {IStreamRegistryBase} from "src/river/registry/facets/stream/IStreamRegistry.sol";
 import {StreamFlags} from "src/river/registry/facets/stream/StreamRegistry.sol";
 import {RiverRegistryErrors} from "src/river/registry/libraries/RegistryErrors.sol";
 import {SetMiniblock, SetStreamReplicationFactor, Stream, StreamWithId} from "src/river/registry/libraries/RegistryStorage.sol";
 
+// contracts
 import {LogUtils} from "test/utils/LogUtils.sol";
-
-// deployments
 import {RiverRegistryBaseSetup} from "test/river/registry/RiverRegistryBaseSetup.t.sol";
 
 contract StreamRegistryTest is

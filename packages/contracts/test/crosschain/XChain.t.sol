@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {Vm} from "forge-std/Vm.sol";
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
-import {IEntitlementGated} from "src/spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementGated, IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 import {IXChain} from "src/base/registry/facets/xchain/IXChain.sol";
 
-//libraries
+// libraries
 import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
 
-//contracts
+// contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {EntitlementTestUtils} from "test/utils/EntitlementTestUtils.sol";
 import {MockEntitlementGated} from "test/mocks/MockEntitlementGated.sol";
-
-import {Vm} from "forge-std/Test.sol";
 
 contract XChainTest is
     IEntitlementGatedBase,

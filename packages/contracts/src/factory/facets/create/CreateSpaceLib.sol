@@ -5,32 +5,32 @@ pragma solidity ^0.8.23;
 import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/IManagedProxy.sol";
 import {IProxyManager} from "@towns-protocol/diamond/src/proxy/manager/IProxyManager.sol";
-import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
-import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IUserEntitlement} from "src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
-import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
-import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
+import {IERC721A} from "../../../diamond/facets/token/ERC721A/IERC721A.sol";
+import {IEntitlement} from "../../../spaces/entitlements/IEntitlement.sol";
+import {IRuleEntitlement} from "../../../spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IUserEntitlement} from "../../../spaces/entitlements/user/IUserEntitlement.sol";
+import {IChannel} from "../../../spaces/facets/channels/IChannel.sol";
+import {IEntitlementsManager} from "../../../spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IMembershipBase} from "../../../spaces/facets/membership/IMembership.sol";
+import {IPrepay} from "../../../spaces/facets/prepay/IPrepay.sol";
+import {IRoles, IRolesBase} from "../../../spaces/facets/roles/IRoles.sol";
+import {IArchitectBase} from "../architect/IArchitect.sol";
 
 // libraries
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {ArchitectStorage} from "src/factory/facets/architect/ArchitectStorage.sol";
-import {ImplementationStorage} from "src/factory/facets/architect/ImplementationStorage.sol";
-import {Permissions} from "src/spaces/facets/Permissions.sol";
+import {Permissions} from "../../../spaces/facets/Permissions.sol";
 import {StringSet} from "../../../utils/libraries/StringSet.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
+import {ArchitectStorage} from "../architect/ArchitectStorage.sol";
+import {ImplementationStorage} from "../architect/ImplementationStorage.sol";
 
 // contracts
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {PricingModulesBase} from "src/factory/facets/architect/pricing/PricingModulesBase.sol";
-import {SpaceProxy} from "src/spaces/facets/proxy/SpaceProxy.sol";
-import {SpaceProxyInitializer} from "src/spaces/facets/proxy/SpaceProxyInitializer.sol";
+import {SpaceProxy} from "../../../spaces/facets/proxy/SpaceProxy.sol";
+import {SpaceProxyInitializer} from "../../../spaces/facets/proxy/SpaceProxyInitializer.sol";
 import {Factory} from "../../../utils/libraries/Factory.sol";
+import {PricingModulesBase} from "../architect/pricing/PricingModulesBase.sol";
 
 library CreateSpaceLib {
     using StringSet for StringSet.Set;
