@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {Vm} from "forge-std/Vm.sol";
 import {IWalletLinkBase} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {WalletLink} from "src/factory/facets/wallet-link/WalletLink.sol";
 
 // libraries
-import {Vm} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 import {WalletLib} from "src/factory/facets/wallet-link/libraries/WalletLib.sol";
