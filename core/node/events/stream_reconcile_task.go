@@ -39,7 +39,7 @@ func (s *StreamCache) submitReconcileStreamTaskToPool(
 	if streamRecord == nil {
 		s.submitGetRecordTask(pool, stream)
 	} else {
-		s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord)
+		s.submitReconciliationTask(pool, stream, streamRecord)
 	}
 }
 
@@ -64,7 +64,7 @@ func (s *StreamCache) submitGetRecordTask(
 	}
 
 	s.submitToPool(pool, func() {
-		s.getRecordTask(s.onlineReconcileWorkerPool, stream)
+		s.getRecordTask(pool, stream)
 	})
 }
 
