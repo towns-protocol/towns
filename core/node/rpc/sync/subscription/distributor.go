@@ -67,17 +67,9 @@ func (d *distributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStre
 	}
 
 	targetSyncID := msg.GetTargetSyncIds()[0]
-
-	// Check if the subscription is still associated with this stream
-	var subscription *Subscription
-	for _, sub := range d.registry.GetSubscriptionsForStream(streamID) {
-		if sub.syncID == targetSyncID {
-			subscription = sub
-			break
-		}
-	}
-	if subscription == nil {
-		return // Subscription is no longer associated with this stream
+	subscription, exists := d.registry.GetSubscriptionByID(targetSyncID)
+	if !exists {
+		return
 	}
 
 	// Remove the target sync ID from the message

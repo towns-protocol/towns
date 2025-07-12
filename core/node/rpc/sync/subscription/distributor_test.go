@@ -53,24 +53,6 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "distribute message to closed subscription - should remove it",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
-			},
-			streamID: StreamId{1, 2, 3, 4},
-			msg: &SyncStreamsResponse{
-				SyncOp:   SyncOp_SYNC_UPDATE,
-				StreamId: []byte{1, 2, 3, 4},
-			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
-				sub.Close() // Mark as closed
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub}).Maybe()
-			},
-		},
-		{
 			name: "distribute SYNC_DOWN message - should remove streams",
 			setup: func() (*distributor, *mockRegistry) {
 				mockReg := &mockRegistry{}
@@ -86,7 +68,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				sub1 := createTestSubscription("test-sync-1")
 				sub2 := createTestSubscription("test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
-				mockReg.On("OnStreamDown", StreamId{1, 2, 3, 4}).Return(false)
+				mockReg.On("OnStreamDown", StreamId{1, 2, 3, 4})
 			},
 		},
 		{
@@ -140,7 +122,7 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
 				sub := createTestSubscription("test-sync-1")
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub}, true)
+				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
 			},
 		},
 		{
@@ -157,7 +139,26 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				TargetSyncIds: []string{"non-existent"},
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{}).Maybe()
+				mockReg.On("GetSubscriptionByID", "non-existent").Return((*Subscription)(nil), false)
+			},
+		},
+		{
+			name: "distribute backfill message to closed subscription",
+			setup: func() (*distributor, *mockRegistry) {
+				mockReg := &mockRegistry{}
+				dis := newDistributor(mockReg, nil)
+				return dis, mockReg
+			},
+			streamID: StreamId{1, 2, 3, 4},
+			msg: &SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				StreamId:      []byte{1, 2, 3, 4},
+				TargetSyncIds: []string{"test-sync-1"},
+			},
+			expectedCalls: func(mockReg *mockRegistry) {
+				sub := createTestSubscription("test-sync-1")
+				sub.Close() // Mark as closed
+				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
 			},
 		},
 		{

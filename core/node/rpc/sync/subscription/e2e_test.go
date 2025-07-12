@@ -309,7 +309,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	receivedMsgs = sub.Messages.GetBatch(nil)
-	assert.Len(t, receivedMsgs, 0)
+	assert.Len(t, receivedMsgs, 1)
 }
 
 // TestE2E_ErrorHandlingAndRecovery tests error scenarios

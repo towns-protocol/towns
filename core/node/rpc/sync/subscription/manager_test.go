@@ -78,7 +78,7 @@ func TestManager_processMessage(t *testing.T) {
 		},
 		TargetSyncIds: []string{"test-sync-id"},
 	}
-	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{sub}).Once()
+	mockReg.On("GetSubscriptionByID", "test-sync-id").Return(sub, true).Once()
 	err = m.processMessage(msg3)
 	assert.NoError(t, err)
 	mockReg.AssertExpectations(t)
