@@ -24,14 +24,6 @@ type mockStreamCache struct {
 	mock.Mock
 }
 
-func (m *mockStreamCache) GetStreamNoWait(ctx context.Context, streamId StreamId) (*Stream, error) {
-	args := m.Called(ctx, streamId)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*Stream), args.Error(1)
-}
-
 func (m *mockStreamCache) GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error) {
 	args := m.Called(ctx, streamId)
 	if args.Get(0) == nil {
@@ -337,7 +329,7 @@ func TestLocalSyncer_Modify_BackfillStreams(t *testing.T) {
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	expectedErr := RiverError(Err_NOT_FOUND, "stream not found")
 
-	streamCache.On("GetStreamNoWait", ctx, streamID).Return(nil, expectedErr)
+	streamCache.On("GetStreamWaitForLocal", ctx, streamID).Return(nil, expectedErr)
 
 	request := &ModifySyncRequest{
 		BackfillStreams: &ModifySyncRequest_Backfill{
@@ -372,7 +364,7 @@ func TestLocalSyncer_Modify_BackfillStreams_Error(t *testing.T) {
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	expectedErr := RiverError(Err_NOT_FOUND, "stream not found")
 
-	streamCache.On("GetStreamNoWait", ctx, streamID).Return(nil, expectedErr)
+	streamCache.On("GetStreamWaitForLocal", ctx, streamID).Return(nil, expectedErr)
 
 	request := &ModifySyncRequest{
 		BackfillStreams: &ModifySyncRequest_Backfill{

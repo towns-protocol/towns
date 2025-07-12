@@ -18,7 +18,6 @@ import (
 )
 
 type streamCache interface {
-	GetStreamNoWait(ctx context.Context, streamId StreamId) (*Stream, error)
 	GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error)
 }
 
@@ -168,7 +167,7 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 		defer span.End()
 	}
 
-	stream, err := s.streamCache.GetStreamNoWait(ctx, streamID)
+	stream, err := s.streamCache.GetStreamWaitForLocal(ctx, streamID)
 	if err != nil {
 		return err
 	}
