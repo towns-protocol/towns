@@ -2475,6 +2475,99 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 	return lowestMiniblock, err
 }
 
+// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers present in storage
+// for the given stream, starting from the specified miniblock number.
+func (s *PostgresStreamStore) GetMiniblockNumberRanges(
+	ctx context.Context,
+	streamId StreamId,
+	startMiniblockNumberInclusive int64,
+) ([][2]int64, error) {
+	var ranges [][2]int64
+	err := s.txRunner(
+		ctx,
+		"GetMiniblockNumberRanges",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, startMiniblockNumberInclusive)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+		"startMiniblockNumberInclusive", startMiniblockNumberInclusive,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ranges, nil
+}
+
+func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	startMiniblockNumberInclusive int64,
+) ([][2]int64, error) {
+	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+		return nil, err
+	}
+
+	// Query all miniblock numbers starting from the given number, ordered by seq_num
+	rows, err := tx.Query(
+		ctx,
+		s.sqlForStream(
+			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 ORDER BY seq_num",
+			streamId,
+		),
+		streamId,
+		startMiniblockNumberInclusive,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Scan all miniblock numbers into a slice
+	var numbers []int64
+	for rows.Next() {
+		var num int64
+		if err := rows.Scan(&num); err != nil {
+			return nil, err
+		}
+		numbers = append(numbers, num)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// If no miniblocks found, return empty slice
+	if len(numbers) == 0 {
+		return [][2]int64{}, nil
+	}
+
+	// Build ranges by detecting gaps
+	var ranges [][2]int64
+	rangeStart := numbers[0]
+	rangeEnd := numbers[0]
+
+	for i := 1; i < len(numbers); i++ {
+		if numbers[i] == rangeEnd+1 {
+			// Continuous sequence, extend current range
+			rangeEnd = numbers[i]
+		} else {
+			// Gap detected, close current range and start new one
+			ranges = append(ranges, [2]int64{rangeStart, rangeEnd})
+			rangeStart = numbers[i]
+			rangeEnd = numbers[i]
+		}
+	}
+
+	// Append the last range
+	ranges = append(ranges, [2]int64{rangeStart, rangeEnd})
+
+	return ranges, nil
+}
+
 func parseAndCheckHasLegacySnapshot(data []byte) bool {
 	mb := &Miniblock{}
 	if err := proto.Unmarshal(data, mb); err != nil {

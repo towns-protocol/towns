@@ -242,6 +242,21 @@ type (
 		// DebugReadStreamStatistics returns statistics for debugging about the stream.
 		DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
 
+		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers 
+		// present in storage for the given stream, starting from the specified miniblock number.
+		// Each range is represented as [fromInclusive, toInclusive].
+		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
+		//
+		// Example: If the stream has miniblocks [0,1,2,5,6,7,10] and startMiniblockNumberInclusive=0,
+		// the result would be: [[0,2], [5,7], [10,10]]
+		//
+		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
+		GetMiniblockNumberRanges(
+			ctx context.Context,
+			streamId StreamId,
+			startMiniblockNumberInclusive int64,
+		) ([][2]int64, error)
+
 		// Close closes the storage.
 		Close(ctx context.Context)
 	}
