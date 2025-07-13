@@ -3,6 +3,8 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {Vm} from "forge-std/Vm.sol";
+import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {IReferralsBase} from "src/spaces/facets/referrals/IReferrals.sol";
 
 // libraries
@@ -11,47 +13,71 @@ import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 
 // contracts
 import {Test} from "forge-std/Test.sol";
+import {StdUtils} from "forge-std/StdUtils.sol";
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
-contract MembershipUnifiedJoinSpaceTest is Test, MembershipBaseSetup {
+contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    UNIFIED ACTION TESTS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_joinSpace_basicAction() external givenMembershipHasPrice {
+    function test_joinSpace_basicAction(uint256 paymentAmount) external givenMembershipHasPrice {
         uint256 membershipFee = membership.getMembershipPrice();
 
-        deal(alice, membershipFee);
+        // Bound payment amount to reasonable range (0 to 10x membership fee)
+        paymentAmount = bound(paymentAmount, 0, membershipFee * 10);
+
+        deal(alice, paymentAmount);
         vm.prank(alice);
 
-        // Test the unified joinSpace method with Action.JoinBasic
+        // Use alice as receiver to avoid entitlement issues
         bytes memory data = abi.encode(alice);
-        membership.joinSpace{value: membershipFee}(JoinType.Basic, data);
 
-        assertEq(membershipToken.balanceOf(alice), 1);
-        assertEq(alice.balance, 0);
+        if (paymentAmount >= membershipFee) {
+            // Should succeed with sufficient payment
+            membership.joinSpace{value: paymentAmount}(JoinType.Basic, data);
+
+            assertEq(membershipToken.balanceOf(alice), 1);
+            assertEq(alice.balance, paymentAmount - membershipFee); // Refund excess
+        } else {
+            // Should revert with insufficient payment
+            vm.expectRevert(Membership__InsufficientPayment.selector);
+            membership.joinSpace{value: paymentAmount}(JoinType.Basic, data);
+        }
     }
 
     function test_joinSpace_basicActionFree() external {
-        // Test without payment when membership is free
+        // Test with actual free space (price = 0, freeAllocation = 100)
+        IMembership freeMembership = IMembership(freeSpace);
+        IERC721A freeMembershipToken = IERC721A(freeSpace);
+
         vm.prank(alice);
         bytes memory data = abi.encode(alice);
-        membership.joinSpace(JoinType.Basic, data);
+        freeMembership.joinSpace(JoinType.Basic, data);
 
-        assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(freeMembershipToken.balanceOf(alice), 1);
     }
 
-    function test_joinSpace_withReferralAction() external givenMembershipHasPrice {
-        uint256 membershipFee = membership.getMembershipPrice();
-        string memory referralCode = "UNIFIED_TEST";
+    function test_joinSpace_withReferralAction(
+        uint16 basisPoints,
+        string memory referralCode
+    ) external givenMembershipHasPrice {
+        // Filter out problematic referral codes early
+        vm.assume(bytes(referralCode).length > 0);
+        vm.assume(bytes(referralCode).length <= 50); // Reasonable length limit
 
-        // Set up referral
+        uint256 membershipFee = membership.getMembershipPrice();
+
+        // Bound basis points to valid range (1-1000, since 0 is not allowed by the referral system)
+        basisPoints = uint16(bound(basisPoints, 1, 1000)); // 0.01% to 10%
+
+        // Set up referral system with fuzzed basis points
         vm.prank(founder);
-        referrals.setMaxBpsFee(1000);
+        referrals.setMaxBpsFee(1000); // 10% max
 
         IReferralsBase.Referral memory referralInfo = IReferralsBase.Referral({
             referralCode: referralCode,
-            basisPoints: 500,
+            basisPoints: basisPoints,
             recipient: charlie
         });
 
@@ -61,7 +87,7 @@ contract MembershipUnifiedJoinSpaceTest is Test, MembershipBaseSetup {
         deal(alice, membershipFee);
         vm.prank(alice);
 
-        // Test the unified joinSpace method with Action.JoinWithReferral
+        // Test the unified joinSpace method with fuzzed referral
         ReferralTypes memory referral = ReferralTypes({
             partner: address(0),
             userReferral: address(0),
@@ -72,17 +98,25 @@ contract MembershipUnifiedJoinSpaceTest is Test, MembershipBaseSetup {
 
         assertEq(membershipToken.balanceOf(alice), 1);
 
-        // Check referral fee was paid to charlie
-        uint256 expectedReferralFee = BasisPoints.calculate(membershipFee, 500);
+        // Check referral fee calculation with fuzzed basis points
+        uint256 expectedReferralFee = BasisPoints.calculate(membershipFee, basisPoints);
         assertEq(charlie.balance, expectedReferralFee);
     }
 
-    function test_joinSpace_withUserReferralAction() external givenMembershipHasPrice {
+    function test_joinSpace_withUserReferralAction(
+        uint16 defaultBpsFee
+    ) external givenMembershipHasPrice {
         uint256 membershipFee = membership.getMembershipPrice();
 
-        // Set up default referral fee
+        // Bound default fee to valid range (1-1000 = 0.01%-10%)
+        defaultBpsFee = uint16(bound(defaultBpsFee, 1, 1000));
+
+        // Use bob as a clean user referral address (he's defined in setup but has no special privileges)
+        address userReferral = bob;
+
+        // Set up default referral fee with fuzzed value
         vm.prank(founder);
-        referrals.setDefaultBpsFee(300); // 3%
+        referrals.setDefaultBpsFee(defaultBpsFee);
 
         deal(alice, membershipFee);
         vm.prank(alice);
@@ -90,7 +124,7 @@ contract MembershipUnifiedJoinSpaceTest is Test, MembershipBaseSetup {
         // Test the unified joinSpace method with user referral
         ReferralTypes memory referral = ReferralTypes({
             partner: address(0),
-            userReferral: bob, // Bob is the referrer
+            userReferral: userReferral,
             referralCode: ""
         });
         bytes memory data = abi.encode(alice, referral);
@@ -98,27 +132,30 @@ contract MembershipUnifiedJoinSpaceTest is Test, MembershipBaseSetup {
 
         assertEq(membershipToken.balanceOf(alice), 1);
 
-        // Check user referral fee was paid to bob
-        uint256 expectedReferralFee = BasisPoints.calculate(membershipFee, 300);
-        assertEq(bob.balance, expectedReferralFee);
+        // Check user referral fee was paid to the referral address
+        uint256 expectedReferralFee = BasisPoints.calculate(membershipFee, defaultBpsFee);
+        assertEq(userReferral.balance, expectedReferralFee);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ERROR HANDLING                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_joinSpace_revertIf_invalidAction() external {
+    function test_joinSpace_revertIf_invalidAction(uint8 invalidEnumValue) external {
+        // Filter out valid enum values early (JoinType has values 0 and 1)
+        vm.assume(invalidEnumValue > 1);
+
         deal(alice, 1 ether);
         vm.prank(alice);
 
-        // Test with invalid action enum value using assembly
+        // Test with fuzzed invalid action enum value
         bytes memory data = abi.encode(alice);
         vm.expectRevert(Membership__InvalidAction.selector);
 
         // Use low-level call to pass invalid enum value
         bytes memory callData = abi.encodeWithSignature(
             "joinSpace(uint8,bytes)",
-            uint8(99), // Invalid enum value
+            invalidEnumValue,
             data
         );
 
@@ -126,12 +163,14 @@ contract MembershipUnifiedJoinSpaceTest is Test, MembershipBaseSetup {
         require(!success, "Expected call to fail");
     }
 
-    function test_joinSpace_revertIf_malformedDataBasic() external {
+    function test_joinSpace_revertIf_malformedDataBasic(bytes memory malformedData) external {
+        // Filter out valid data early (Basic action expects exactly 32 bytes for address)
+        vm.assume(malformedData.length != 32);
+
         deal(alice, 1 ether);
         vm.prank(alice);
 
-        // Test with malformed data for basic action (empty data)
-        bytes memory malformedData = "";
+        // Test with fuzzed malformed data for basic action
         vm.expectRevert();
         membership.joinSpace{value: 1 ether}(JoinType.Basic, malformedData);
     }
