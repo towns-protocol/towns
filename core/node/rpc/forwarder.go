@@ -318,6 +318,11 @@ func (s *Service) getMiniblocksImpl(
 	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
 		if resp, err := s.localGetMiniblocks(ctx, req, stream); err == nil {
 			return resp, nil
+		} else if IsRiverErrorCode(err, Err_MINIBLOCKS_STORAGE_FAILURE) && req.Header().Get(RiverNoForwardHeader) != RiverHeaderTrueValue {
+			// Missing miniblocks locally and this is not a forwarded request, fall back to remotes
+			logging.FromCtx(ctx).Warnw("Missing miniblocks locally, falling back to remotes",
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+			// Fall through to forwarding logic below
 		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes",
 				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)

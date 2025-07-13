@@ -486,5 +486,6 @@ func IsOperationRetriableOnRemotes(err error) bool {
 		protocol.Err_BUFFER_FULL,
 		protocol.Err_STREAM_RECONCILIATION_REQUIRED,
 		protocol.Err_MINIBLOCK_TOO_NEW,
+		protocol.Err_MINIBLOCKS_STORAGE_FAILURE,
 	}, AsRiverError(err).Code)
 }

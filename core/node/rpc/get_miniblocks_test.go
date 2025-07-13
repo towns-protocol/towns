@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"fmt"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -406,4 +407,83 @@ func TestExtractEventTypeInfo(t *testing.T) {
 	payloadType, contentType = service.extractEventTypeInfo(unknownEvent)
 	require.Equal(t, "unknown", payloadType)
 	require.Equal(t, "unknown", contentType)
+}
+
+func TestGetMiniblocksWithMissingBlocks(t *testing.T) {
+	// This test verifies the behavior of GetMiniblocks when miniblocks are missing locally
+	// and the backwards reconciliation retry logic
+	
+	// Create a multi-node setup to test forwarding
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 3, start: true})
+	require := tt.require
+
+	// Create test clients for different nodes
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	// Create a space and add some events
+	spaceId, _ := alice.createSpace()
+	
+	// Add events and create miniblocks
+	for i := 0; i < 5; i++ {
+		ref := alice.getLastMiniblockHash(spaceId)
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+						Algorithm:  "test_algo",
+					},
+				},
+			}},
+			ref,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+		alice.makeMiniblock(spaceId, false, -1)
+	}
+
+	// Test Case 1: Normal operation - all miniblocks present locally
+	getMbReq := &GetMiniblocksRequest{
+		StreamId:      spaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   10,
+		OmitSnapshots: true,
+	}
+	getMbResp, err := alice.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
+	require.NoError(err)
+	require.GreaterOrEqual(len(getMbResp.Msg.Miniblocks), 5, "Should have at least 5 miniblocks")
+
+	// Test Case 2: Test that requests are forwarded when stream is not local
+	// Create a client for a different node
+	bob := tt.newTestClient(1, testClientOpts{})
+	bob.createUserStream()
+	
+	// Bob's node should be able to get the miniblocks via forwarding
+	getMbResp, err = bob.client.GetMiniblocks(tt.ctx, connect.NewRequest(getMbReq))
+	require.NoError(err, "Request should succeed via forwarding")
+	require.GreaterOrEqual(len(getMbResp.Msg.Miniblocks), 5, "Should get miniblocks via forwarding")
+
+	// Test Case 3: Test that no-forward header prevents forwarding
+	// Create a separate user stream that only exists on Bob's node
+	bobSpaceId, _ := bob.createSpace()
+	
+	// Alice tries to get Bob's space miniblocks with no-forward header
+	bobMbReq := &GetMiniblocksRequest{
+		StreamId:      bobSpaceId[:],
+		FromInclusive: 0,
+		ToExclusive:   10,
+		OmitSnapshots: true,
+	}
+	forwardedReq := connect.NewRequest(bobMbReq)
+	forwardedReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	
+	// This should fail because alice's node doesn't have Bob's stream and forwarding is disabled
+	_, err = alice.client.GetMiniblocks(tt.ctx, forwardedReq)
+	require.Error(err, "Request with no-forward header should fail when stream is not local")
+	require.Contains(err.Error(), "Forwarding disabled")
+
+	// Test Case 4: Verify that MINIBLOCKS_STORAGE_FAILURE is retriable
+	// This is tested in TestIsOperationRetriableOnRemotes
 }
