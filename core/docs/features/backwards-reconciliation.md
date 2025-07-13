@@ -55,22 +55,37 @@ remote replica.
 
 ## Selecting Between Forward and Backwards Reconciliation
 
-Stream that are slightly behind should be reconciled with forward reconciliation. In all other cases
+Streams that are slightly behind should be reconciled with forward reconciliation. In all other cases
 backwards reconciliation should be used. There should be on-chain settings to control which stream
 should be reconciled with which method.
 
 ## Already Implemented Features
 
-- https://github.com/towns-protocol/towns/pull/3550
-- https://github.com/towns-protocol/towns/pull/3568
-- https://github.com/towns-protocol/towns/pull/3571
-- https://github.com/towns-protocol/towns/pull/3584
+- [PR #3550](https://github.com/towns-protocol/towns/pull/3550): **feat: implement ReinitializeStreamStorage for PostgreSQL storage**
+  - Adds `ReinitializeStreamStorage` method to create or update stream storage with miniblocks
+  - Enables storage layer to handle non-contiguous miniblock sequences
+  - Foundation for backward reconciliation support
+
+- [PR #3568](https://github.com/towns-protocol/towns/pull/3568): **feat: add WritePrecedingMiniblocks for backfilling gaps in storage**
+  - Implements `WritePrecedingMiniblocks` to backfill miniblock gaps during reconciliation
+  - Allows insertion of historical miniblocks before existing ones
+  - Essential for backward reconciliation gap filling
+
+- [PR #3571](https://github.com/towns-protocol/towns/pull/3571): **feat: extend GetStream RPC for backward stream reconciliation**
+  - Extends `GetStream` RPC with `GetResetStreamAndCookieWithPrecedingMiniblocks`
+  - Returns current stream state with configurable number of preceding miniblocks
+  - Enables streams to become operational quickly during backward reconciliation
+
+- [PR #3584](https://github.com/towns-protocol/towns/pull/3584): **refactor: simplify snapshot handling in miniblocks**
+  - Refactors snapshot handling logic in the miniblocks system
+  - Improves code clarity and maintainability for snapshot-related operations
+  - Prepares codebase for backward reconciliation implementation
 
 ## TODO
 
 - [ ] Extend storage layer to report gaps in the stream miniblocks, so gaps can be filled
 - [ ] Modify GetMiniblocks API to fallback to remote replica if miniblocks are not available locally
-- [ ] Implment backward reconciliation logic in @core/node/events
+- [ ] Implement backward reconciliation logic in @core/node/events
 - [ ] Trigger backwards or forward reconciliation based on on-chain settings
 
 
