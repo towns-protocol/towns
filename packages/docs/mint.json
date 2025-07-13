@@ -114,6 +114,12 @@
           ]
         },
         {
+          "group": "Token FAQs",
+          "pages" [
+            "token-faqs/token-faqs"
+          ]
+        },
+        {
           "group": "Grants",
           "pages": [
             "grants/grants-program"
