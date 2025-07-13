@@ -140,7 +140,7 @@ abstract contract MembershipJoin is
     }
 
     function _rejectMembership(bytes32 transactionId, address receiver) internal {
-        _captureData(transactionId, "");
+        _deleteCapturedData(transactionId);
         _refundBalance(transactionId, receiver);
         emit MembershipTokenRejected(receiver);
     }
@@ -149,8 +149,6 @@ abstract contract MembershipJoin is
         // Check if there are any prepaid memberships available
         uint256 prepaidSupply = _getPrepaidSupply();
         if (prepaidSupply > 0) return 0; // If prepaid memberships exist, no payment is required
-
-        if (price == 0) return 0; // If the price is zero, no payment is required
 
         return price;
     }
@@ -373,7 +371,7 @@ abstract contract MembershipJoin is
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
 
         _releaseCapturedValue(transactionId, paymentRequired);
-        _captureData(transactionId, "");
+        _deleteCapturedData(transactionId);
 
         _mintMembershipPoints(receiver, membershipPrice);
     }

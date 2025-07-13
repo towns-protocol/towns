@@ -2,14 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IMembership} from "../membership/IMembership.sol";
 
 // libraries
 
 // contracts
-import {EntitlementGated} from "src/spaces/facets/gated/EntitlementGated.sol";
-
-import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
-import {MembershipJoin} from "src/spaces/facets/membership/join/MembershipJoin.sol";
+import {EntitlementGated} from "../gated/EntitlementGated.sol";
+import {MembershipJoin} from "../membership/join/MembershipJoin.sol";
 
 /// @title SpaceEntitlementGated
 /// @notice Handles entitlement-gated access to spaces and membership token issuance
@@ -23,11 +22,9 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
         bytes32 transactionId,
         NodeVoteStatus result
     ) internal override {
-        bytes memory data = _getCapturedData(transactionId);
+        bytes storage data = _getCapturedData(transactionId);
 
-        if (data.length == 0) {
-            return;
-        }
+        if (data.length == 0) return;
 
         (bytes4 transactionType, , address receiver, ) = abi.decode(
             data,
