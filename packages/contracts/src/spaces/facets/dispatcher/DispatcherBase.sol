@@ -5,20 +5,20 @@ pragma solidity ^0.8.23;
 import {IDispatcherBase} from "./IDispatcher.sol";
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {DispatcherStorage} from "./DispatcherStorage.sol";
 
 abstract contract DispatcherBase is IDispatcherBase {
-    function _captureData(bytes32 transactionId, bytes memory data) internal {
-        DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-        ds.transactionData[transactionId] = data;
+    using CustomRevert for bytes4;
+
+    function _deleteTransactionData(bytes32 transactionId) internal {
+        delete DispatcherStorage.transactionDataRef(transactionId).inner;
     }
 
-    function _getCapturedData(bytes32 transactionId) internal view returns (bytes memory) {
-        DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-        return ds.transactionData[transactionId];
+    function _getCapturedData(bytes32 transactionId) internal view returns (bytes storage) {
+        return DispatcherStorage.transactionDataRef(transactionId).inner;
     }
 
     function _captureValue(bytes32 transactionId) internal {
@@ -43,7 +43,7 @@ abstract contract DispatcherBase is IDispatcherBase {
 
     function _useDispatchNonce(bytes32 keyHash) internal returns (uint256) {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-        return ds.transactionNonce[keyHash]++;
+        return ++ds.transactionNonce[keyHash];
     }
 
     function _makeDispatchInputSeed(
@@ -69,14 +69,14 @@ abstract contract DispatcherBase is IDispatcherBase {
             _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
         );
 
+        DispatcherStorage.BytesWrapper storage capturedDataRef = DispatcherStorage
+            .transactionDataRef(transactionId);
         // revert if the transaction already exists
-        if (_getCapturedData(transactionId).length > 0) {
-            CustomRevert.revertWith(Dispatcher__TransactionAlreadyExists.selector);
+        if (capturedDataRef.inner.length > 0) {
+            Dispatcher__TransactionAlreadyExists.selector.revertWith();
         }
 
-        _captureData(transactionId, data);
-        if (msg.value != 0) {
-            _captureValue(transactionId);
-        }
+        capturedDataRef.inner = data;
+        if (msg.value != 0) _captureValue(transactionId);
     }
 }
