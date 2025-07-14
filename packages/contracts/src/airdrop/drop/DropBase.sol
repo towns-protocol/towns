@@ -190,7 +190,11 @@ abstract contract DropBase is IDropFacetBase {
             lastConditionId = conditionStartId + conditionCount - 1;
         }
 
-        for (uint256 i = lastConditionId; i >= conditionStartId; ) {
+        for (uint256 i = lastConditionId + 1; i > conditionStartId; ) {
+            unchecked {
+                --i;
+            }
+
             DropGroup.ClaimCondition storage condition = _getClaimConditionById(i);
             uint256 endTimestamp = condition.endTimestamp;
             if (
@@ -198,14 +202,6 @@ abstract contract DropBase is IDropFacetBase {
                 (endTimestamp == 0 || block.timestamp < endTimestamp)
             ) {
                 return i;
-            }
-
-            if (i == conditionStartId) {
-                break;
-            }
-
-            unchecked {
-                --i;
             }
         }
 
