@@ -1,0 +1,297 @@
+---
+title: Towns Technical Overview
+description: "Comprehensive technical overview covering Towns Protocol's legal classification, token economics, technical architecture, governance structure, and regulatory compliance for decentralized communication infrastructure."
+---
+
+## Introduction & Project Description
+
+### What is Towns Protocol?
+
+**Towns Protocol** ([towns.com](https://towns.com)) is the blockchain foundation for decentralized, real-time messaging. It provides a protocol, infrastructure, and economic system for anyone to create and own programmable communication spaces—moving group chat, community coordination, and digital membership fully on-chain.
+
+Towns combines:
+
+- An **EVM-compatible Layer 2 blockchain** (Towns Protocol Chain, built on Celestia)
+- A network of **decentralized stream nodes** for real-time, encrypted message routing and consensus
+- **Smart contracts deployed on Base Mainnet** (Ethereum L2) for memberships, governance, and protocol rewards
+
+### What Makes Towns Unique?
+
+- **Programmable, Ownable Spaces**: Any user can create a Space—a programmable, on-chain group with customizable access, reputation, and economics.
+- **Native Web3 Messaging**: Real-time, end-to-end encrypted chat; no central servers; privacy and security by design.
+- **On-Chain Memberships & Subscriptions**: Memberships are ERC-721 NFTs; access and participation can be bought, earned, or transferred on-chain.
+- **Integrated Incentives**: Both community owners and participants earn protocol rewards for growth and engagement.
+- **Full User Sovereignty**: Users own their memberships and data, can move freely between communities, and cannot be censored or banned by any central authority.
+
+### Why Towns? (The Problem Solved)
+
+Traditional chat and community platforms monetize user data, restrict ownership, and rely on central control, with no real incentives for user or creator participation. Towns Protocol removes centralized bottlenecks, giving communities direct economic upside, true control over membership, and programmable logic for communication.
+
+### Token Information
+
+- **Token Name/Ticker**: Towns ($TOWNS)
+- **Genesis Supply**: 10,128,333,333 tokens
+- **Maximum Supply (after 7 years)**: 15,327,986,354 tokens (protocol inflation)
+- **Launch Date**: TBA
+- **Token Chain**: Ethereum Mainnet (Base L2)
+
+**$TOWNS Token Utility:**
+
+1. **Network Security**: Validators stake $TOWNS to secure the protocol.
+2. **Governance**: Token holders vote on upgrades, economic parameters, and protocol changes.
+3. **Protocol Utility**: Token delegation enables enhanced features and programmable access in Spaces.
+
+## Project Overview
+
+### Purpose and Description
+
+**Towns Protocol** is a decentralized, blockchain-based protocol enabling real-time messaging and programmable, user-owned communities called "Spaces." Key protocol characteristics:
+
+- Native Web3 messaging
+- Embedded economic incentives
+- Programmable infrastructure supporting user-deployed, ownable, and value-accruing communication channels
+
+**Architecture:**
+
+- **EVM-compatible Layer 2 chain (Towns Chain)**: Celestia-based, app-specific Ethereum L2
+- **Decentralized stream nodes**: For off-chain data processing, message validation, and consensus
+- **Smart contracts on Base (Ethereum L2)**: Governing Spaces, memberships, node rewards, and protocol upgrades
+
+**"Spaces"** are on-chain, programmable channels, supporting:
+
+- On-chain membership (ERC-721 NFTs)
+- Programmable reputation and access logic
+- End-to-end encrypted messaging
+
+### Use of Funds
+
+Funds raised through $TOWNS are used exclusively for:
+
+- Protocol development and ongoing R&D
+- Operational costs of the River Eridanus Association
+- Ecosystem expansion and community support
+
+## Legal and Regulatory Classification
+
+### Token Classification
+
+**$TOWNS is a utility token** as per Swiss (FINMA) and Korean legal opinions.
+
+It **does NOT qualify** as:
+
+- E-money token
+- Asset-referenced token
+- Payment token
+- Security or financial instrument (explicitly confirmed by FINMA and Korean analysis)
+- Hybrid token
+
+The $TOWNS token aligns with MiCA's definition of "other crypto-asset token."
+
+**Main functionalities are operational at issuance** (staking, delegated staking, governance).
+
+## Token Rights and Utility
+
+### Holder Rights
+
+Holders of $TOWNS tokens can:
+
+- **Stake tokens** to secure the network and support node operations (Proof-of-Stake consensus)
+- **Delegate staking** to node operators and participate in securing the network
+- **Participate in governance**: Vote on protocol upgrades, economic parameters, and improvements
+- **Unlock protocol features**: Delegation and participation unlock enhanced features within Spaces
+
+<Warning>
+$TOWNS **does NOT grant any rights to financial returns, profit, or capital reimbursement**. It **does NOT represent equity, debt, or ownership** in the protocol, association, or DAO.
+</Warning>
+
+## Technical Overview
+
+### Architecture
+
+- **Canonical Chain**: Towns Protocol Chain (Celestia-based, app-specific Ethereum L2)
+- **Smart Contract Layer**: Deployed on Base Mainnet (Ethereum L2)
+- **Node Infrastructure**: Permissionless, decentralized node operators validate, sequence, store, and propagate encrypted messages.
+- **Membership Management**: ERC-721 NFTs representing on-chain membership, programmable access, and entitlement logic
+
+### Security and Cryptography
+
+- **End-to-end encrypted messaging**: Curve25519 keys, shared session AES-GSM algorithm.
+- **Node and membership verification**: Each user/client has a device ID (Curve25519 key pair), with public keys on-chain and private keys stored client-side
+- **Consensus**: Decentralized, deterministic mini-block production and synchronization using OP-Stack for rollup integration and on-chain finality
+
+## Token Economics and Incentive Structure
+
+### Token Functions
+
+- **Protocol security**: Validators/nodes require $TOWNS staking to participate and earn rewards
+- **Delegation**: Non-operators may delegate tokens to nodes and share in rewards
+- **Governance**: Token-based DAO, with voting power proportional to token holdings
+
+### Rewards and Sustainability
+
+- **Node rewards**: Periodic (bi-weekly) inflation, distributed by DAO-managed smart contracts
+- **Buy-and-burn**: Protocol uses collected ETH fees to periodically buy back and burn $TOWNS, balancing inflation
+- **Commission model**: Node operators can set commission rates deducted from rewards
+
+## Governance
+
+Governance is on-chain, managed by the Towns Lodge DAO (smart contracts on Base).
+
+### Proposal Lifecycle
+
+1. **Submission**: Eligible stakeholders (Space Owners/Node Operators with threshold activity) propose changes
+2. **Discussion**: Open deliberation
+3. **Voting**: Token-weighted voting
+4. **Implementation**: Approved proposals executed by DAO smart contracts
+
+### Transparency
+
+All proposals, votes, and outcomes are on-chain and auditable.
+
+## Environmental Impact
+
+- **Proof-of-Stake (PoS) consensus**: Substantially lower energy use compared to Proof-of-Work
+- **Layer 2 efficiency**: Transactions are processed off-chain, with batching and rollup to Ethereum L1 for finality—drastically reducing per-transaction energy and cost
+- The protocol's decentralized infrastructure is designed to be energy-efficient and scalable
+
+## Risks
+
+<Warning>
+**Potential risks include:**
+
+- **Technological risk**: Smart contract/infrastructure bugs, protocol exploits
+- **Regulatory risk**: Evolving legal classification or restrictions in relevant jurisdictions
+- **Market risk**: Token price volatility, speculative trading
+- **Operational risk**: Dependency on protocol/community adoption, node uptime
+- **External risk**: Infrastructure, internet or blockchain ecosystem issues
+
+**Note**: Prospective holders are advised to perform independent due diligence and consult with legal/financial professionals.
+</Warning>
+
+## Disclaimer
+
+<Warning>
+- This document **does not constitute an offer of securities, e-money, or other regulated financial instruments.**
+- The $TOWNS token will **not be for sale in any jurisdiction where such activity is unlawful or would require registration or licensing**.
+- This document **is not legal, investment, or tax advice.**
+</Warning>
+
+## Additional Information
+
+Protocol documentation and further details: [towns.com](https://towns.com)
+
+## Token Distribution, Allocation, and Vesting
+
+### Genesis Allocation
+
+| **Category** | **Amount (Tokens)** | **% of Genesis Supply** | **Notes** |
+| :---- | ----: | ----: | :---- |
+| **Investor** | 1,391,716,724 | 13.74% | Seed, Series A/B; vesting applies; locked by 3rd party |
+| **Public Investor** | 265,557,200 | 2.62% | Foundation/Echo round; vesting applies |
+| **Airdrop** | 1,000,000,000 | 9.87% | Early network participants; distributed at TGE |
+| **Community Reserve** | 4,369,692,800 | 43.14% | Future rewards/incentives; vesting, held by foundation |
+| **Team** | 2,173,033,276 | 21.46% | Team incentives; vesting; locked by 3rd party |
+| **Nodes Year 1** | 800,000,000 | 7.90% | For node operators in year 1; protocol-driven release |
+| **Node Inflation** | 128,333,333 | 1.27% | Ongoing protocol inflation |
+| **Total** | **10,128,333,333** | **100.00%** | **Genesis supply** |
+
+- **Genesis Supply**: 10,128,333,333 $TOWNS
+- **Max Supply at T+84 months**: 15,327,986,354 $TOWNS (protocol inflation and allocations)
+
+### Vesting and Release Structure
+
+- **Investor, Public Investor, Team, and Community Reserve allocations** are subject to vesting/locking schedules.
+- **Airdrop** is distributed to early network participants at launch.
+- **Nodes Year 1**: Released as earned by network node operators.
+- **Node Inflation**: Ongoing protocol reward issuance.
+
+### Circulating Supply Schedule
+
+Below is the year-by-year projection of circulating supply after the Token Generation Event (TGE):
+
+| **Time Since TGE** | **Circulating Supply ($TOWNS)** | **% of Genesis Supply** |
+| :---- | ----: | ----: |
+| **TGE** | 1,366,615,385 | 13.40% |
+| +12 months | 1,483,230,769 | 14.45% |
+| +24 months | 1,599,846,154 | 15.49% |
+| +36 months | 1,716,461,538 | 16.51% |
+| +48 months | 1,833,076,923 | 17.52% |
+| +60 months | 1,949,692,308 | 18.52% |
+| +72 months | 2,066,307,692 | 19.50% |
+| +84 months | 2,197,676,255 | 20.61% |
+| +96 months | 2,329,044,817 | 21.71% |
+| +108 months | 2,460,413,379 | 22.79% |
+| +120 months | 2,591,781,942 | 23.86% |
+| +132 months | 2,673,150,504 | 24.46% |
+| +144 months | 2,754,519,067 | 25.05% |
+| (Long-term) | 3,105,799,235 | 28.08% |
+| **(Max)** | **3,457,079,403** | **31.07%** |
+
+<Note>
+These percentages are calculated against genesis supply (10,128,333,333 $TOWNS), and figures represent cumulative unlocked/vested supply at each time horizon.
+</Note>
+
+### Additional Notes
+
+This table does not account for potential early burns, slashing penalties, or buyback events, which may further reduce circulating supply over time.
+
+## Technical System Design
+
+### Abstract
+
+Digital communication is foundational to modern life but remains mostly centralized, limiting user sovereignty, privacy, and economic participation. **Towns Protocol** leverages blockchain to enable decentralized, cryptographically secure, and programmable real-time messaging through a network of user-owned Spaces. Each Space is managed by on-chain smart contracts, allowing for modular membership, programmable access, and integration with Web3 economic primitives.
+
+### System Design
+
+#### Protocol Architecture
+
+- **Towns Chain**: Celestia-based, app-specific Ethereum Layer 2.
+- **Smart Contracts**: Deployed on Base Mainnet (Ethereum L2), governing Spaces, memberships (ERC-721 NFTs), node incentives, and governance operations.
+- **Stream Nodes**: Decentralized off-chain nodes handle message validation, encrypted data propagation, storage, consensus, and synchronization.
+
+#### Spaces and Memberships
+
+- **Spaces**: On-chain, programmable channels with unique contract addresses, supporting custom governance, access, and reputation systems.
+- **Memberships**: ERC-721 NFTs as proof of membership, with on-chain or cross-chain gating and programmable entitlement logic.
+
+#### Node Layer and Consensus
+
+- **Node Registry**: Tracks active nodes and manages their staking and performance metrics.
+- **Consensus**: Mini-block production by stream nodes, finalized on Towns Chain, with periodic rollup to Ethereum L1 for security and finality (via OP-Stack).
+- **Event Validation**: Encrypted messages are validated for membership, signatures, permissions, and anti-replay measures.
+
+#### Cryptography
+
+- **End-to-end Encryption**: Curve25519 keys per device; asymmetric encryption for peer-to-peer messages; shared session AES-GSM for channels and group messages.
+- **Membership Verification**: On-chain registered public keys, device-bound identity, and cryptographic proofs for access.
+
+#### Economic Model
+
+- **Rewards**: Node operators and delegators earn inflationary $TOWNS rewards; protocol incentives are distributed bi-weekly.
+- **Fees**: Protocol collects transaction fees.
+- **Buy-and-Burn**: ETH fees are used for buyback and burning, balancing inflation.
+- **Governance**: Towns Lodge DAO manages proposals, votes, and upgrades entirely on-chain.
+
+#### Security and Privacy
+
+- **End-to-end encryption** ensures node operators and protocol cannot access plaintext communications.
+- **All governance, economic, and protocol changes are fully auditable on-chain.**
+
+#### Environmental Efficiency
+
+- **Proof-of-Stake** consensus and Layer 2 architecture dramatically reduce energy usage compared to traditional blockchains.
+- **Batching and rollups** minimize per-transaction resource demands.
+
+### Protocol Innovations
+
+- **Decentralized, ownable communication Spaces with programmable logic.**
+- **On-chain reputation and membership via NFTs.**
+- **Encrypted, permissioned messaging at Web2 speeds, with Web3 security.**
+- **Transparent, on-chain governance and auditable protocol upgrades.**
+- **Direct integration with DeFi and Web3 payment primitives.**
+
+## Closing & Further Information
+
+**Towns Protocol** aims to provide the secure, programmable, and decentralized communication infrastructure that the internet has always needed. By moving messaging, memberships, and group economics fully on-chain, Towns empowers communities and individuals with true ownership, privacy, and opportunity for innovation.
+
+**Compliance Notice**: The $TOWNS token is classified as a utility token. It does not constitute a security, payment instrument, or e-money token. The information in this document is intended for informational purposes only and does not constitute legal, tax, or investment advice. Distribution or sale of $TOWNS may be restricted in certain jurisdictions. 
