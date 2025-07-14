@@ -170,7 +170,6 @@ config-notifications: _require_run_env
     source ${ENV_FILE}
     INSTANCE_DIR="${INSTANCE_BASE}/notifications"
     mkdir -p ${INSTANCE_DIR}/{config,logs,certs}
-    # Use the notification service port from env file
     echo "RIVER_PORT=$((${NOTIFICATION_SERVICE_PORT}))" > ${INSTANCE_DIR}/config/config.env
     if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
     ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
@@ -303,7 +302,7 @@ just-register-nodes-river: _require_run_env (_loop-instances-seq "_register-node
 
 register-nodes-river: _require_run_env config-river-chain config-instances just-register-nodes-river
 
-config: _require_run_env config-root config-app-registry register-nodes-base register-nodes-river storage-start
+config: _require_run_env config-root config-app-registry config-notifications register-nodes-base register-nodes-river storage-start
 
 build: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -360,7 +359,7 @@ start-notifications: _require_run_env
     ../bin/river_node ${RUN_CMD} \
         --config ../common.yaml \
         --config ../contracts.env \
-        --config ../notifications/config.yaml \
+        --config ../config.yaml \
         --config config/config.env \
         ${RUN_ARGS} \
         > ./logs/tty.stdout.log 2> ./logs/tty.stderr.log &
