@@ -14,7 +14,6 @@ import {OperatorRegistry} from "../../src/river/registry/facets/operator/Operato
 import {StreamRegistry} from "../../src/river/registry/facets/stream/StreamRegistry.sol";
 import {RegistryModifiers, Stream} from "../../src/river/registry/libraries/RegistryStorage.sol";
 
-
 contract MockRiverRegistry is
     OwnableBase,
     NodeRegistry,
@@ -45,19 +44,16 @@ contract MockRiverRegistry is
     /// @notice Mock function to update an existing stream record
     /// @dev it does not emit the StreamUpdated event.
     /// @param stream stream to update
-    function mockUpdateStreamNoEmit(
-        bytes32 streamId,
-        Stream calldata stream
-    ) external {
+    function mockUpdateStreamNoEmit(bytes32 streamId, Stream calldata stream) external {
         _verifyStreamIdExists(streamId);
         _verifyNodes(stream.nodes);
 
         Stream storage existingStream = ds.streamById[streamId];
         _removeStreamIdFromNodes(streamId, existingStream.nodes);
-        
+
         ds.streamById[streamId] = stream;
 
         Stream storage newStream = ds.streamById[streamId];
-        _addStreamIdToNodes(streamId, newStream.nodes);        
+        _addStreamIdToNodes(streamId, newStream.nodes);
     }
 }
