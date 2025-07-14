@@ -54,9 +54,16 @@ func (m *mockRegistry) AddStreamToSubscription(syncID string, streamID StreamId)
 	return args.Bool(0), args.Bool(1)
 }
 
-func (m *mockRegistry) RemoveStreamFromSubscription(syncID string, streamID StreamId) bool {
-	args := m.Called(syncID, streamID)
-	return args.Bool(0)
+func (m *mockRegistry) RemoveStreamFromSubscription(syncID string, streamID StreamId) {
+	m.Called(syncID, streamID)
+}
+
+func (m *mockRegistry) OnStreamDown(streamID StreamId) {
+	m.Called(streamID)
+}
+
+func (m *mockRegistry) CleanupUnusedStreams(cb func([][]byte)) {
+	m.Called(cb)
 }
 
 func (m *mockRegistry) GetStats() (int, int) {

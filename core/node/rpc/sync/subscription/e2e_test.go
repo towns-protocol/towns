@@ -101,8 +101,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	assert.Equal(t, SyncOp_SYNC_UPDATE, receivedMsgs[0].GetSyncOp())
 
 	// Step 7: Test stream removal
-	shouldRemoveFromRemote := env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
-	assert.True(t, shouldRemoveFromRemote) // Last subscription for this stream
+	env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
 
 	// Verify stream is no longer associated
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -114,6 +113,8 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	// Verify subscription is gone
 	_, exists = env.registry.GetSubscriptionByID("test-sync-1")
 	assert.False(t, exists)
+
+	env.registry.CleanupUnusedStreams(nil)
 
 	// Step 9: Verify stats
 	streamCount, subCount := env.registry.GetStats()
@@ -203,8 +204,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	assert.Len(t, env.registry.GetSubscriptionsForStream(streamID), 2)
 
 	// Test removing one subscription - should not remove from remote
-	shouldRemoveFromRemote := env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
-	assert.False(t, shouldRemoveFromRemote) // Other subscription still has this stream
+	env.registry.RemoveStreamFromSubscription("test-sync-1", streamID)
 
 	// Verify remaining subscription still has the stream
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -212,8 +212,7 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	assert.Equal(t, "test-sync-2", subscriptions[0].syncID)
 
 	// Remove second subscription - should remove from remote
-	shouldRemoveFromRemote = env.registry.RemoveStreamFromSubscription("test-sync-2", streamID)
-	assert.True(t, shouldRemoveFromRemote) // No more subscriptions for this stream
+	env.registry.RemoveStreamFromSubscription("test-sync-2", streamID)
 
 	// Verify stream is gone
 	subscriptions = env.registry.GetSubscriptionsForStream(streamID)
@@ -294,7 +293,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	}
 	assert.Len(t, receivedMsgs, 0) // No messages should be delivered after SYNC_DOWN
 
-	// Test 4: Backfill message (should NOT be delivered after SYNC_DOWN)
+	// Test 4: Backfill message (should be delivered even after SYNC_DOWN)
 	backfillMsg := &SyncStreamsResponse{
 		SyncOp: SyncOp_SYNC_UPDATE,
 		Stream: &StreamAndCookie{
@@ -310,7 +309,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	receivedMsgs = sub.Messages.GetBatch(nil)
-	assert.Len(t, receivedMsgs, 0) // No messages should be delivered after SYNC_DOWN
+	assert.Len(t, receivedMsgs, 1)
 }
 
 // TestE2E_ErrorHandlingAndRecovery tests error scenarios
@@ -465,6 +464,8 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		t.Logf("After canceling subscription %d, exists in registry: %v", i, exists)
 		assert.False(t, exists, "Subscription %d should be removed", i)
 	}
+
+	env.registry.CleanupUnusedStreams(nil)
 
 	// Final stats check
 	streamCount, subCount = env.registry.GetStats()
