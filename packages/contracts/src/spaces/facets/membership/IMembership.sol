@@ -1,16 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
-// contracts
-
 interface IMembershipBase {
-    // =============================================================
-    //                           Strucs
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ENUMS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice JoinType enum for unified membership join dispatch
+    /// @dev To encode data for each action:
+    ///   switch (action) {
+    ///     case JoinType.Basic:
+    ///       data = abi.encode(address receiver);
+    ///     case JoinType.WithReferral:
+    ///       data = abi.encode(address receiver, ReferralTypes memory referral);
+    ///   }
+    enum JoinType {
+        Basic, // Basic join with just receiver address
+        WithReferral // Join with referral information
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           STRUCTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     struct Membership {
         string name;
         string symbol;
@@ -29,9 +41,10 @@ interface IMembershipBase {
         string referralCode;
     }
 
-    // =============================================================
-    //                           Errors
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     error Membership__InvalidAddress();
     error Membership__InvalidPrice();
     error Membership__InvalidLimit();
@@ -51,10 +64,12 @@ interface IMembershipBase {
     error Membership__InvalidPayment();
     error Membership__InvalidTransactionType();
     error Membership__Banned();
+    error Membership__InvalidAction();
 
-    // =============================================================
-    //                           Events
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     event MembershipPriceUpdated(uint256 indexed price);
     event MembershipLimitUpdated(uint256 indexed limit);
     event MembershipCurrencyUpdated(address indexed currency);
@@ -66,169 +81,129 @@ interface IMembershipBase {
 }
 
 interface IMembership is IMembershipBase {
-    // =============================================================
-    //                           Funds
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           MINTING                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @notice Get the current balance of funds held by the space
-     * @return The current balance of funds held by the space
-     */
-    function revenue() external view returns (uint256);
+    /// @notice Unified entry point for joining spaces with different configurations
+    /// @param action The type of join action to perform
+    /// @param data ABI-encoded data for the specific action type
+    function joinSpace(JoinType action, bytes calldata data) external payable;
 
-    // =============================================================
-    //                           Minting
-    // =============================================================
-    /**
-     * @notice Join a space
-     * @param receiver The address of the receiver
-     */
+    /// @notice Join a space
+    /// @param receiver The address of the receiver
     function joinSpace(address receiver) external payable;
 
-    /**
-     * @notice Join a space with a referral
-     * @param receiver The address of the receiver
-     * @param referral The referral data
-     */
+    /// @notice Join a space with a referral
+    /// @param receiver The address of the receiver
+    /// @param referral The referral data
     function joinSpaceWithReferral(
         address receiver,
         ReferralTypes memory referral
     ) external payable;
 
-    /**
-     * @notice Renew a space membership
-     * @param tokenId The token id of the membership
-     */
+    /// @notice Renew a space membership
+    /// @param tokenId The token id of the membership
     function renewMembership(uint256 tokenId) external payable;
 
-    /**
-     * @notice Return the expiration date of a membership
-     * @param tokenId The token id of the membership
-     */
+    /// @notice Return the expiration date of a membership
+    /// @param tokenId The token id of the membership
     function expiresAt(uint256 tokenId) external view returns (uint256);
 
-    // =============================================================
-    //                           Duration
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         DURATION                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @notice Get the membership duration
-     * @return The membership duration
-     */
+    /// @notice Get the membership duration
+    /// @return The membership duration
     function getMembershipDuration() external view returns (uint64);
 
-    /**
-     * @notice Set the membership duration
-     * @param duration The new membership duration in seconds
-     */
+    /// @notice Set the membership duration
+    /// @param duration The new membership duration in seconds
     function setMembershipDuration(uint64 duration) external;
 
-    // =============================================================
-    //                        Pricing Module
-    // =============================================================
-    /**
-     * @notice Set the membership pricing module
-     * @param pricingModule The new pricing module
-     */
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       PRICING MODULE                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set the membership pricing module
+    /// @param pricingModule The new pricing module
     function setMembershipPricingModule(address pricingModule) external;
 
-    /**
-     * @notice Get the membership pricing module
-     * @return The membership pricing module
-     */
+    /// @notice Get the membership pricing module
+    /// @return The membership pricing module
     function getMembershipPricingModule() external view returns (address);
 
-    /**
-     * @notice Get the protocol fee
-     * @return The protocol fee
-     */
+    /// @notice Get the protocol fee
+    /// @return The protocol fee
     function getProtocolFee() external view returns (uint256);
 
-    // =============================================================
-    //                           Pricing
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          PRICING                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @notice Set the membership price
-     * @param newPrice The new membership price
-     */
+    /// @notice Set the membership price
+    /// @param newPrice The new membership price
     function setMembershipPrice(uint256 newPrice) external;
 
-    /**
-     * @notice Get the membership price
-     * @return The membership price
-     */
+    /// @notice Get the membership price
+    /// @return The membership price
     function getMembershipPrice() external view returns (uint256);
 
-    /**
-     * @notice Get the membership renewal price
-     * @param tokenId The token id of the membership
-     * @return The membership renewal price
-     */
+    /// @notice Get the membership renewal price
+    /// @param tokenId The token id of the membership
+    /// @return The membership renewal price
     function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256);
 
-    // =============================================================
-    //                           Allocation
-    // =============================================================
-    /**
-     * @notice Set the membership free allocation
-     * @param newAllocation The new membership free allocation
-     */
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         ALLOCATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set the membership free allocation
+    /// @param newAllocation The new membership free allocation
     function setMembershipFreeAllocation(uint256 newAllocation) external;
 
-    /**
-     * @notice Get the membership free allocation
-     * @return The membership free allocation
-     */
+    /// @notice Get the membership free allocation
+    /// @return The membership free allocation
     function getMembershipFreeAllocation() external view returns (uint256);
 
-    // =============================================================
-    //                        Limits
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          LIMITS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @notice Set the membership limit
-     * @param newLimit The new membership limit
-     */
+    /// @notice Set the membership limit
+    /// @param newLimit The new membership limit
     function setMembershipLimit(uint256 newLimit) external;
 
-    /**
-     * @notice Get the membership limit
-     * @return The membership limit
-     */
+    /// @notice Get the membership limit
+    /// @return The membership limit
     function getMembershipLimit() external view returns (uint256);
 
-    // =============================================================
-    //                           Currency
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           IMAGE                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @notice Get the membership currency
-     * @return The membership currency
-     */
-    function getMembershipCurrency() external view returns (address);
-
-    // =============================================================
-    //                           Image
-    // =============================================================
-    /**
-     * @notice Set the membership image
-     * @param image The new membership image
-     */
+    /// @notice Set the membership image
+    /// @param image The new membership image
     function setMembershipImage(string calldata image) external;
 
-    /**
-     * @notice Get the membership image
-     * @return The membership image
-     */
+    /// @notice Get the membership image
+    /// @return The membership image
     function getMembershipImage() external view returns (string memory);
 
-    // =============================================================
-    //                           Factory
-    // =============================================================
-    /**
-     * @notice Get the space factory
-     * @return The space factory
-     */
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Get the membership currency
+    /// @return The membership currency
+    function getMembershipCurrency() external view returns (address);
+
+    /// @notice Get the space factory
+    /// @return The space factory
     function getSpaceFactory() external view returns (address);
+
+    /// @notice Get the current balance of funds held by the space
+    /// @return The current balance of funds held by the space
+    function revenue() external view returns (uint256);
 }

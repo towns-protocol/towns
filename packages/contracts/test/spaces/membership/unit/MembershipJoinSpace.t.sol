@@ -5,7 +5,6 @@ pragma solidity ^0.8.19;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IEntitlementGated, IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
@@ -21,7 +20,6 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 contract MembershipJoinSpaceTest is
     IEntitlementGatedBase,
-    IEntitlementCheckerBase,
     EntitlementTestUtils,
     MembershipBaseSetup
 {
@@ -106,21 +104,11 @@ contract MembershipJoinSpaceTest is
     ) external givenMembershipHasPrice {
         overPayment = bound(overPayment, MEMBERSHIP_PRICE, 100 * MEMBERSHIP_PRICE);
 
-        _joinSpaceWithCrosschainValidation(
-            bob,
-            overPayment,
-            IEntitlementGatedBase.NodeVoteStatus.PASSED,
-            true
-        );
+        _joinSpaceWithCrosschainValidation(bob, overPayment, NodeVoteStatus.PASSED, true);
     }
 
     function test_joinSpace_refundOnFail() external givenMembershipHasPrice {
-        _joinSpaceWithCrosschainValidation(
-            bob,
-            MEMBERSHIP_PRICE,
-            IEntitlementGatedBase.NodeVoteStatus.FAILED,
-            false
-        );
+        _joinSpaceWithCrosschainValidation(bob, MEMBERSHIP_PRICE, NodeVoteStatus.FAILED, false);
     }
 
     function test_joinSpace_withValueAndFreeAllocation() external {
@@ -173,7 +161,7 @@ contract MembershipJoinSpaceTest is
             IEntitlementGated(resolverAddress).postEntitlementCheckResult(
                 transactionId,
                 roleId,
-                IEntitlementGatedBase.NodeVoteStatus.PASSED
+                NodeVoteStatus.PASSED
             );
         }
 
@@ -221,12 +209,7 @@ contract MembershipJoinSpaceTest is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_joinSpace_pass_crossChain() external {
-        _joinSpaceWithCrosschainValidation(
-            bob,
-            0,
-            IEntitlementGatedBase.NodeVoteStatus.PASSED,
-            true
-        );
+        _joinSpaceWithCrosschainValidation(bob, 0, NodeVoteStatus.PASSED, true);
     }
 
     function test_joinSpace_multipleCrosschainEntitlementChecks_finalPasses()
@@ -265,7 +248,7 @@ contract MembershipJoinSpaceTest is
                 _entitlementGated.postEntitlementCheckResult(
                     transactionId,
                     roleId,
-                    IEntitlementGatedBase.NodeVoteStatus.PASSED
+                    NodeVoteStatus.PASSED
                 );
                 continue;
             }
@@ -275,7 +258,7 @@ contract MembershipJoinSpaceTest is
             _entitlementGated.postEntitlementCheckResult(
                 transactionId,
                 roleId,
-                IEntitlementGatedBase.NodeVoteStatus.PASSED
+                NodeVoteStatus.PASSED
             );
         }
 
@@ -304,11 +287,9 @@ contract MembershipJoinSpaceTest is
 
         vm.recordLogs();
         for (uint256 j = 0; j < firstRequest.randomNodes.length; j++) {
-            IEntitlementGatedBase.NodeVoteStatus status = IEntitlementGatedBase
-                .NodeVoteStatus
-                .PASSED;
+            NodeVoteStatus status = IEntitlementGatedBase.NodeVoteStatus.PASSED;
             if (j % 2 == 1) {
-                status = IEntitlementGatedBase.NodeVoteStatus.FAILED;
+                status = NodeVoteStatus.FAILED;
             }
             vm.prank(firstRequest.randomNodes[j]);
             IEntitlementGated(firstRequest.resolverAddress).postEntitlementCheckResult(
@@ -331,9 +312,7 @@ contract MembershipJoinSpaceTest is
         );
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IEntitlementGatedBase.EntitlementGated_TransactionCheckAlreadyCompleted.selector
-            )
+            abi.encodeWithSelector(EntitlementGated_TransactionCheckAlreadyCompleted.selector)
         );
         EntitlementCheckRequestEvent memory finalRequest = entitlementCheckRequests[2];
         (bool success, ) = address(finalRequest.resolverAddress).call(
@@ -341,7 +320,7 @@ contract MembershipJoinSpaceTest is
                 IEntitlementGated(finalRequest.resolverAddress).postEntitlementCheckResult.selector,
                 finalRequest.transactionId,
                 finalRequest.requestId,
-                IEntitlementGatedBase.NodeVoteStatus.PASSED
+                NodeVoteStatus.PASSED
             )
         );
         assertTrue(success, "postEntitlementCheckResult should have reverted");
@@ -375,7 +354,7 @@ contract MembershipJoinSpaceTest is
                 IEntitlementGated(resolverAddress).postEntitlementCheckResult(
                     transactionId,
                     roleId,
-                    IEntitlementGatedBase.NodeVoteStatus.FAILED
+                    NodeVoteStatus.FAILED
                 );
                 continue;
             }
@@ -385,7 +364,7 @@ contract MembershipJoinSpaceTest is
             IEntitlementGated(resolverAddress).postEntitlementCheckResult(
                 transactionId,
                 roleId,
-                IEntitlementGatedBase.NodeVoteStatus.PASSED
+                NodeVoteStatus.PASSED
             );
         }
 
@@ -440,7 +419,7 @@ contract MembershipJoinSpaceTest is
             IEntitlementGated(resolverAddress).postEntitlementCheckResult(
                 transactionId,
                 roleId,
-                IEntitlementGatedBase.NodeVoteStatus.PASSED
+                NodeVoteStatus.PASSED
             );
         }
 
@@ -478,7 +457,7 @@ contract MembershipJoinSpaceTest is
             IEntitlementGated(resolverAddress).postEntitlementCheckResult(
                 transactionId,
                 roleId,
-                IEntitlementGatedBase.NodeVoteStatus.FAILED
+                NodeVoteStatus.FAILED
             );
         }
 
@@ -572,7 +551,7 @@ contract MembershipJoinSpaceTest is
             entitlementGated.postEntitlementCheckResult(
                 transactionId,
                 roleId,
-                IEntitlementGatedBase.NodeVoteStatus.PASSED
+                NodeVoteStatus.PASSED
             );
         }
 
@@ -587,7 +566,7 @@ contract MembershipJoinSpaceTest is
     function _joinSpaceWithCrosschainValidation(
         address user,
         uint256 payment,
-        IEntitlementGatedBase.NodeVoteStatus voteStatus,
+        NodeVoteStatus voteStatus,
         bool expectSuccess
     ) internal {
         uint256 initialBalance = user.balance;
