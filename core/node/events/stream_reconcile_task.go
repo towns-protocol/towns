@@ -64,12 +64,11 @@ func (s *StreamCache) submitGetRecordTask(
 	}
 
 	s.submitToPool(pool, func() {
-		s.getRecordTask(pool, stream)
+		s.getRecordTask(stream)
 	})
 }
 
 func (s *StreamCache) getRecordTask(
-	pool *workerpool.WorkerPool,
 	stream *Stream,
 ) {
 	s.scheduledGetRecordTasks.Delete(stream.streamId)
@@ -84,7 +83,7 @@ func (s *StreamCache) getRecordTask(
 		return
 	}
 
-	s.submitReconciliationTask(pool, stream, streamRecord)
+	s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord)
 }
 
 func (s *StreamCache) submitReconciliationTask(
@@ -115,13 +114,12 @@ func (s *StreamCache) submitReconciliationTask(
 
 	if schedule {
 		s.submitToPool(pool, func() {
-			s.reconciliationTask(pool, stream.StreamId())
+			s.reconciliationTask(stream.StreamId())
 		})
 	}
 }
 
 func (s *StreamCache) reconciliationTask(
-	pool *workerpool.WorkerPool,
 	streamId StreamId,
 ) {
 	corrupt := false
@@ -206,8 +204,8 @@ func (s *StreamCache) reconciliationTask(
 	}
 
 	if schedule {
-		s.submitToPool(pool, func() {
-			s.reconciliationTask(pool, streamId)
+		s.submitToPool(s.onlineReconcileWorkerPool, func() {
+			s.reconciliationTask(streamId)
 		})
 	}
 }

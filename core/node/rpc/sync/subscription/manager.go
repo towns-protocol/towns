@@ -3,6 +3,7 @@ package subscription
 import (
 	"context"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -16,6 +17,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+const (
+	unusedStreamsCleanupInterval = 5 * time.Minute // Interval to check for unused streams
 )
 
 // Manager is the subscription manager that manages all subscriptions for stream sync operations.
@@ -76,6 +81,7 @@ func NewManager(
 		distributor:   dis,
 	}
 
+	go manager.startUnusedStreamsCleaner()
 	go manager.start()
 
 	return manager
@@ -175,4 +181,36 @@ func (m *Manager) processMessage(msg *SyncStreamsResponse) error {
 	}
 
 	return nil
+}
+
+// startUnusedStreamsCleaner starts a goroutine that periodically checks for streams with no subscriptions.
+// If a stream has no subscriptions for a certain period, it is considered unused and can be cleaned up to not
+// receive updates.
+func (m *Manager) startUnusedStreamsCleaner() {
+	ticker := time.NewTicker(unusedStreamsCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-m.globalCtx.Done():
+			return
+		case <-ticker.C:
+			m.registry.CleanupUnusedStreams(func(streamIds [][]byte) {
+				ctx, cancel := context.WithTimeout(m.globalCtx, time.Second*10)
+				if err := m.syncers.Modify(ctx, client.ModifyRequest{
+					ToRemove: streamIds,
+					RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+						m.log.Errorw("Failed to remove unused stream from syncer set",
+							"streamId", StreamId(status.GetStreamId()),
+							"error", status.GetMessage(),
+							"code", status.GetCode(),
+						)
+					},
+				}); err != nil {
+					m.log.Errorw("Failed to drop unused streams from shared syncer set", "error", err)
+				}
+				cancel()
+			})
+		}
+	}
 }
