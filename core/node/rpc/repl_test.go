@@ -12,16 +12,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/events"
-	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
-
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/contracts/river/deploy"
+	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestReplCreate(t *testing.T) {
@@ -674,9 +672,9 @@ func TestStreamMiniblockRegistrationOnStart(t *testing.T) {
 	// is ahead of the stream record and registers the latest miniblock in the registry.
 	params := quorumNodeService.cache.Params()
 	params.AppliedBlockNum = tt.btc.BlockNum(tt.ctx)
-	streamCache := events.NewStreamCache(params)
+	streamCache := NewStreamCache(params)
 	go func() {
-		require.NoError(streamCache.Start(tt.ctx, &events.MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: false}))
+		require.NoError(streamCache.Start(tt.ctx, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: false}))
 	}()
 
 	// ensure that at some point the stream record in the registry is upgraded to the latest miniblock
