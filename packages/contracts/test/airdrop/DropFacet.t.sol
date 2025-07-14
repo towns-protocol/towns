@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// utils
-import {Vm} from "forge-std/Test.sol";
-
-//interfaces
+// interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-//libraries
+// libraries
 import {DropClaim} from "src/airdrop/drop/DropClaim.sol";
 import {DropGroup} from "src/airdrop/drop/DropGroup.sol";
 import {DropStorage} from "src/airdrop/drop/DropStorage.sol";
