@@ -55,6 +55,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
     "getProtocolFee()": FunctionFragment;
     "getSpaceFactory()": FunctionFragment;
+    "joinSpace(uint8,bytes)": FunctionFragment;
     "joinSpace(address)": FunctionFragment;
     "joinSpaceWithReferral(address,(address,address,string))": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
@@ -80,7 +81,8 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipRenewalPrice"
       | "getProtocolFee"
       | "getSpaceFactory"
-      | "joinSpace"
+      | "joinSpace(uint8,bytes)"
+      | "joinSpace(address)"
       | "joinSpaceWithReferral"
       | "renewMembership"
       | "revenue"
@@ -137,7 +139,11 @@ export interface MembershipFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "joinSpace",
+    functionFragment: "joinSpace(uint8,bytes)",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "joinSpace(address)",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -215,7 +221,14 @@ export interface MembershipFacetInterface extends utils.Interface {
     functionFragment: "getSpaceFactory",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "joinSpace", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "joinSpace(uint8,bytes)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "joinSpace(address)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "joinSpaceWithReferral",
     data: BytesLike
@@ -789,7 +802,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -866,7 +885,13 @@ export interface MembershipFacet extends BaseContract {
 
   getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
-  joinSpace(
+  "joinSpace(uint8,bytes)"(
+    action: PromiseOrValue<BigNumberish>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "joinSpace(address)"(
     receiver: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -943,7 +968,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1296,7 +1327,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1388,7 +1425,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
