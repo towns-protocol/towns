@@ -275,16 +275,10 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 		}
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(StreamId, struct{}) bool {
-		noMoreStreams = false
-		return false
-	})
-
+	noMoreStreams := s.streams.Size() == 0
 	if noMoreStreams {
 		s.syncStreamCancel()
 	}
-
 	return resp.Msg, noMoreStreams, nil
 }
 
@@ -297,15 +291,9 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		return false, AsRiverError(err)
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(StreamId, struct{}) bool {
-		noMoreStreams = false
-		return false
-	})
-
+	noMoreStreams := s.streams.Size() == 0
 	if noMoreStreams {
 		s.syncStreamCancel()
 	}
-
 	return noMoreStreams, nil
 }
