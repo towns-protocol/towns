@@ -61,7 +61,9 @@
         "incentivizes",
         "Merkle",
         "merkle",
-        "repudiable"
+        "repudiable",
+        "FINMA",
+        "permissioned"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [
