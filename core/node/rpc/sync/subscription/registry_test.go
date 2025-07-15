@@ -4,26 +4,27 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func TestRegistry_AddSubscription(t *testing.T) {
 	tests := []struct {
 		name  string
-		setup func(t *testing.T) (*registry, *Subscription)
+		setup func(t *testing.T) (*shardedRegistry, *Subscription)
 	}{
 		{
 			name: "successfully add subscription",
-			setup: func(t *testing.T) (*registry, *Subscription) {
-				reg := newRegistry()
+			setup: func(t *testing.T) (*shardedRegistry, *Subscription) {
+				reg := newShardedRegistry(32)
 				sub := createTestSubscription("test-sync-1")
 				return reg, sub
 			},
 		},
 		{
 			name: "add multiple subscriptions",
-			setup: func(t *testing.T) (*registry, *Subscription) {
-				reg := newRegistry()
+			setup: func(t *testing.T) (*shardedRegistry, *Subscription) {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				sub := createTestSubscription("test-sync-2")
 				return reg, sub
@@ -48,14 +49,14 @@ func TestRegistry_AddSubscription(t *testing.T) {
 func TestRegistry_RemoveSubscription(t *testing.T) {
 	tests := []struct {
 		name           string
-		setup          func(t *testing.T) *registry
+		setup          func(t *testing.T) *shardedRegistry
 		syncIDToRemove string
 		verifyRemoved  bool
 	}{
 		{
 			name: "successfully remove existing subscription",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				streamCount, subsCount := reg.GetStats()
 				assert.Equal(t, 0, streamCount)
@@ -67,8 +68,8 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 		},
 		{
 			name: "remove non-existent subscription",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				streamCount, subsCount := reg.GetStats()
 				assert.Equal(t, 0, streamCount)
@@ -80,8 +81,8 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 		},
 		{
 			name: "remove subscription with streams",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				sub := createTestSubscription("test-sync-1")
 				reg.AddSubscription(sub)
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
@@ -119,14 +120,14 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 func TestRegistry_GetSubscriptionsForStream(t *testing.T) {
 	tests := []struct {
 		name            string
-		setup           func(t *testing.T) (*registry, StreamId)
+		setup           func(t *testing.T) (*shardedRegistry, StreamId)
 		expectedCount   int
 		expectedSyncIDs []string
 	}{
 		{
 			name: "get subscriptions for stream with one subscription",
-			setup: func(t *testing.T) (*registry, StreamId) {
-				reg := newRegistry()
+			setup: func(t *testing.T) (*shardedRegistry, StreamId) {
+				reg := newShardedRegistry(32)
 				streamID := StreamId{1, 2, 3, 4}
 				sub := createTestSubscription("test-sync-1")
 				reg.AddSubscription(sub)
@@ -138,8 +139,8 @@ func TestRegistry_GetSubscriptionsForStream(t *testing.T) {
 		},
 		{
 			name: "get subscriptions for stream with multiple subscriptions",
-			setup: func(t *testing.T) (*registry, StreamId) {
-				reg := newRegistry()
+			setup: func(t *testing.T) (*shardedRegistry, StreamId) {
+				reg := newShardedRegistry(32)
 				streamID := StreamId{1, 2, 3, 4}
 
 				sub1 := createTestSubscription("test-sync-1")
@@ -157,8 +158,8 @@ func TestRegistry_GetSubscriptionsForStream(t *testing.T) {
 		},
 		{
 			name: "get subscriptions for non-existent stream",
-			setup: func(t *testing.T) (*registry, StreamId) {
-				reg := newRegistry()
+			setup: func(t *testing.T) (*shardedRegistry, StreamId) {
+				reg := newShardedRegistry(32)
 				return reg, StreamId{9, 9, 9, 9}
 			},
 			expectedCount:   0,
@@ -190,15 +191,15 @@ func TestRegistry_GetSubscriptionsForStream(t *testing.T) {
 func TestRegistry_GetSubscriptionByID(t *testing.T) {
 	tests := []struct {
 		name           string
-		setup          func(t *testing.T) *registry
+		setup          func(t *testing.T) *shardedRegistry
 		syncID         string
 		expectExists   bool
 		expectedSyncID string
 	}{
 		{
 			name: "get existing subscription",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				return reg
 			},
@@ -208,8 +209,8 @@ func TestRegistry_GetSubscriptionByID(t *testing.T) {
 		},
 		{
 			name: "get non-existent subscription",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				return reg
 			},
@@ -239,7 +240,7 @@ func TestRegistry_GetSubscriptionByID(t *testing.T) {
 func TestRegistry_AddStreamToSubscription(t *testing.T) {
 	tests := []struct {
 		name              string
-		setup             func(t *testing.T) *registry
+		setup             func(t *testing.T) *shardedRegistry
 		syncID            string
 		streamID          StreamId
 		expectAddToRemote bool
@@ -247,8 +248,8 @@ func TestRegistry_AddStreamToSubscription(t *testing.T) {
 	}{
 		{
 			name: "add stream to new subscription - should add to remote",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				return reg
 			},
@@ -259,8 +260,8 @@ func TestRegistry_AddStreamToSubscription(t *testing.T) {
 		},
 		{
 			name: "add stream to existing subscription - should backfill",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				reg.AddSubscription(createTestSubscription("test-sync-2"))
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
@@ -273,8 +274,8 @@ func TestRegistry_AddStreamToSubscription(t *testing.T) {
 		},
 		{
 			name: "add stream to non-existent subscription",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				return reg
 			},
 			syncID:            "non-existent",
@@ -321,15 +322,15 @@ func TestRegistry_AddStreamToSubscription(t *testing.T) {
 func TestRegistry_RemoveStreamFromSubscription(t *testing.T) {
 	tests := []struct {
 		name                   string
-		setup                  func(t *testing.T) *registry
+		setup                  func(t *testing.T) *shardedRegistry
 		syncID                 string
 		streamID               StreamId
 		expectRemoveFromRemote bool
 	}{
 		{
 			name: "remove stream from subscription with multiple subscriptions",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				reg.AddSubscription(createTestSubscription("test-sync-2"))
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
@@ -342,8 +343,8 @@ func TestRegistry_RemoveStreamFromSubscription(t *testing.T) {
 		},
 		{
 			name: "remove stream from last subscription - should remove from remote",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
 				return reg
@@ -375,22 +376,22 @@ func TestRegistry_RemoveStreamFromSubscription(t *testing.T) {
 func TestRegistry_GetStats(t *testing.T) {
 	tests := []struct {
 		name                string
-		setup               func(t *testing.T) *registry
+		setup               func(t *testing.T) *shardedRegistry
 		expectedStreamCount int
 		expectedSubCount    int
 	}{
 		{
 			name: "empty registry",
-			setup: func(t *testing.T) *registry {
-				return newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				return newShardedRegistry(32)
 			},
 			expectedStreamCount: 0,
 			expectedSubCount:    0,
 		},
 		{
 			name: "registry with subscriptions but no streams",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				reg.AddSubscription(createTestSubscription("test-sync-2"))
 				return reg
@@ -400,8 +401,8 @@ func TestRegistry_GetStats(t *testing.T) {
 		},
 		{
 			name: "registry with subscriptions and streams",
-			setup: func(t *testing.T) *registry {
-				reg := newRegistry()
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
 				reg.AddSubscription(createTestSubscription("test-sync-2"))
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
@@ -427,7 +428,7 @@ func TestRegistry_GetStats(t *testing.T) {
 
 func TestRegistry_CancelAll(t *testing.T) {
 	t.Run("cancel all subscriptions", func(t *testing.T) {
-		reg := newRegistry()
+		reg := newShardedRegistry(32)
 
 		// Add some subscriptions
 		sub1 := createTestSubscription("test-sync-1")

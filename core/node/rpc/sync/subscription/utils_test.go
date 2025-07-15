@@ -3,10 +3,9 @@ package subscription
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/stretchr/testify/mock"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -22,7 +21,7 @@ func createTestSubscription(syncID string) *Subscription {
 		cancel:              cancel,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
-		registry:            newRegistry(),
+		registry:            newShardedRegistry(32),
 	}
 }
 

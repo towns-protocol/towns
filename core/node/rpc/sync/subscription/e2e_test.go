@@ -17,7 +17,7 @@ import (
 // E2E test helper that sets up a real subscription environment
 type e2eTestEnv struct {
 	manager     *Manager
-	registry    *registry
+	registry    *shardedRegistry
 	distributor *distributor
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -30,7 +30,7 @@ func newE2ETestEnv(t *testing.T) *e2eTestEnv {
 	manager := NewManager(ctx, [20]byte{1}, nil, nil, nil)
 
 	// Extract the real registry and distributor for testing
-	registry := manager.registry.(*registry)
+	registry := manager.registry.(*shardedRegistry)
 	distributor := manager.distributor
 
 	return &e2eTestEnv{

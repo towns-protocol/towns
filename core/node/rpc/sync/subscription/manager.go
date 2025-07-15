@@ -65,7 +65,8 @@ func NewManager(
 
 	go syncers.Run()
 
-	reg := newRegistry()
+	// Use sharded registry with 32 shards for better concurrent performance
+	reg := newShardedRegistry(32)
 	dis := newDistributor(reg, log.Named("distributor"))
 
 	manager := &Manager{
