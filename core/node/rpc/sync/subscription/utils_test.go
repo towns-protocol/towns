@@ -15,7 +15,8 @@ import (
 // createTestSubscription creates a properly initialized Subscription for testing
 func createTestSubscription(syncID string) *Subscription {
 	ctx, cancel := context.WithCancelCause(context.Background())
-	log, _ := testutils.ZapJsonLogger()
+	// Use a discard logger for concurrent tests to avoid race conditions
+	log := testutils.DiscardLogger()
 	return &Subscription{
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
