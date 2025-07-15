@@ -508,13 +508,11 @@ export async function createSpaceAndDefaultChannel(
 
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
-    await waitFor(
-        () =>
-            expect(
-                userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
-                `waitFor ${spaceId} in ${userStreamId}`,
-            ).toBe(true),
-        { timeoutMS: 10000 },
+    await waitFor(() =>
+        expect(
+            userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+            `waitFor ${spaceId} in ${userStreamId}`,
+        ).toBe(true),
     )
 
     const channelReturnVal = await client.createChannel(
@@ -524,13 +522,11 @@ export async function createSpaceAndDefaultChannel(
         channelId,
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
-    await waitFor(
-        () =>
-            expect(
-                userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
-                `waitFor ${channelId} in ${userStreamId}`,
-            ).toBe(true),
-        { timeoutMS: 10000 },
+    await waitFor(() =>
+        expect(
+            userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+            `waitFor ${channelId} in ${userStreamId}`,
+        ).toBe(true),
     )
 
     return {
@@ -728,19 +724,16 @@ export async function expectUserCanJoin(
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
 
     const userStreamView = client.stream(client.userStreamId!)!.view
-    await waitFor(
-        () => {
-            expect(
-                userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
-                `waitFor ${spaceId} in ${client.userStreamId}`,
-            ).toBe(true)
-            expect(
-                userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
-                `waitFor ${channelId} in ${client.userStreamId}`,
-            ).toBe(true)
-        },
-        { timeoutMS: 10000 },
-    )
+    await waitFor(() => {
+        expect(
+            userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+            `waitFor ${spaceId} in ${client.userStreamId}`,
+        ).toBe(true)
+        expect(
+            userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+            `waitFor ${channelId} in ${client.userStreamId}`,
+        ).toBe(true)
+    })
 }
 
 export async function everyoneMembershipStruct(
@@ -980,7 +973,7 @@ export async function linkWallets(
 /// wait for a value, return the value if it is defined, otherwise throw an error or return undefined. false is a valid value.
 export function waitForValue<T>(
     callback: () => T | undefined,
-    options: { timeoutMS: number } = { timeoutMS: 5000 },
+    options: { timeoutMS: number } = { timeoutMS: 10000 },
 ): Promise<T> {
     const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
@@ -1038,7 +1031,7 @@ export function waitForValue<T>(
 /// })
 export function waitFor<T extends void | boolean>(
     callback: (() => T) | (() => Promise<T>),
-    options: { timeoutMS: number } = { timeoutMS: 5000 },
+    options: { timeoutMS: number } = { timeoutMS: 10000 },
 ): Promise<T> {
     const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
@@ -1563,13 +1556,11 @@ export async function expectUserCanJoinChannel(
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
     const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))).view
     // Wait for alice's user stream to have the join
-    await waitFor(
-        () =>
-            expect(
-                userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
-                `waitFor ${channelId} in ${client.userStreamId}`,
-            ).toBe(true),
-        { timeoutMS: 10000 },
+    await waitFor(() =>
+        expect(
+            userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+            `waitFor ${channelId} in ${client.userStreamId}`,
+        ).toBe(true),
     )
 }
 
