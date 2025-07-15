@@ -246,12 +246,10 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         Attestation memory att = _getAttestation(appId);
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
-        App memory appData = abi.decode(att.data, (App));
-
         ITownsApp appContract = ITownsApp(app);
         uint256 installPrice = appContract.installPrice();
 
-        _chargeForInstall(msg.sender, appData.owner, installPrice);
+        _chargeForInstall(msg.sender, app, installPrice);
 
         IAppAccount(account).onInstallApp(appId, data);
 
