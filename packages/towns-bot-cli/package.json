@@ -1,6 +1,6 @@
 {
     "name": "towns-bot",
-    "version": "0.0.274",
+    "version": "0.0.275",
     "description": "CLI for creating and managing Towns Protocol bot projects",
     "keywords": [
         "towns",
