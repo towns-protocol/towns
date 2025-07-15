@@ -7,9 +7,9 @@ import { injected } from 'wagmi/connectors'
 export const wagmiConfig = createConfig({
     chains: [base, baseSepolia, foundry],
     transports: {
-        [base.id]: http(),
-        [baseSepolia.id]: http(),
-        [foundry.id]: http(),
+        [base.id]: http('https://base-rpc.publicnode.com'),
+        [baseSepolia.id]: http('https://base-sepolia-rpc.publicnode.com'),
+        [foundry.id]: http('http://127.0.0.1:8545'),
     },
     connectors: [injected()],
 })

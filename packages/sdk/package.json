@@ -44,7 +44,8 @@
         "lodash-es": "^4.17.21",
         "nanoid": "^4.0.0",
         "p-limit": "^6.1.0",
-        "vitest": "^3.2.3"
+        "vitest": "^3.2.3",
+        "workerpool": "^9.3.3"
     },
     "devDependencies": {
         "@connectrpc/connect-web": "^2.0.0",

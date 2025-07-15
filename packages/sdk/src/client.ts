@@ -111,7 +111,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import { makeEvent, UnpackEnvelopeOpts } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -196,6 +196,7 @@ import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
 import { NotificationsClient, INotificationStore } from './notificationsClient'
 import { RpcOptions } from './rpcCommon'
+import { Unpacker, createUnpacker } from './unpacker'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -214,6 +215,7 @@ export type ClientOptions = {
     }
     decryptionExtensionsOpts?: DecryptionExtensionsOptions
     excludeEventsInScrollback?: ExclusionFilter
+    unpacker?: Unpacker
 }
 
 type SendChannelMessageOptions = {
@@ -283,6 +285,7 @@ export class Client
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
     private pendingUsernames: Map<string, string> = new Map()
     private pendingUsernameTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
+    private unpacker: Unpacker
 
     constructor(
         signerContext: SignerContext,
@@ -338,6 +341,7 @@ export class Client
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(this.logId)
         this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
+        this.unpacker = opts?.unpacker ?? createUnpacker()
 
         if (opts?.persistenceStoreName) {
             this.persistenceStore = new PersistenceStore(opts.persistenceStoreName)
@@ -352,6 +356,7 @@ export class Client
             opts?.unpackEnvelopeOpts,
             this.logId,
             opts?.streamOpts,
+            this.unpacker,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
@@ -639,7 +644,7 @@ export class Client
             optional: true,
         })
         if (response.stream) {
-            return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
+            return this.unpacker.unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
         } else {
             return undefined
         }
@@ -665,7 +670,7 @@ export class Client
             streamId: streamIdAsBytes(userStreamId),
             metadata: encoded,
         })
-        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
+        return this.unpacker.unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserMetadataStream(
@@ -688,7 +693,7 @@ export class Client
             streamId: streamIdAsBytes(userMetadataStreamId),
             metadata: encoded,
         })
-        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
+        return this.unpacker.unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserInboxStream(
@@ -711,7 +716,7 @@ export class Client
             streamId: streamIdAsBytes(userInboxStreamId),
             metadata: encoded,
         })
-        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
+        return this.unpacker.unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserSettingsStream(
@@ -736,7 +741,7 @@ export class Client
             streamId: userSettingsStreamId,
             metadata: encoded,
         })
-        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
+        return this.unpacker.unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createStreamAndSync(
@@ -753,7 +758,10 @@ export class Client
                 // fetch the stream to get the client in the rigth state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
-            const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
+            const unpacked = await this.unpacker.unpackStream(
+                response.stream,
+                this.opts?.unpackEnvelopeOpts,
+            )
             await stream.initializeFromResponse(unpacked)
             if (stream.view.syncCookie) {
                 this.streams.addStreamToSync(streamId, stream.view.syncCookie)
@@ -1521,7 +1529,7 @@ export class Client
             const response = await this.rpcClient.getStream({
                 streamId: streamIdAsBytes(streamId),
             })
-            const unpackedResponse = await unpackStream(
+            const unpackedResponse = await this.unpacker.unpackStream(
                 response.stream,
                 this.opts?.unpackEnvelopeOpts,
             )
@@ -1607,7 +1615,10 @@ export class Client
                     )}.`,
                 )
             }
-            const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
+            const unpackedResponse = await this.unpacker.unpackStreamEx(
+                miniblocks,
+                this.opts?.unpackEnvelopeOpts,
+            )
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)
@@ -1681,7 +1692,7 @@ export class Client
                     const response = await this.rpcClient.getStream({
                         streamId: streamIdAsBytes(streamId),
                     })
-                    const unpacked = await unpackStream(
+                    const unpacked = await this.unpacker.unpackStream(
                         response.stream,
                         this.opts?.unpackEnvelopeOpts,
                     )
@@ -2456,6 +2467,7 @@ export class Client
             true,
             exclusionFilter,
             this.opts?.unpackEnvelopeOpts,
+            this.unpacker,
         )
 
         if (opts?.skipPersistence !== true) {

@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom'
 import { getWeb3Deployment, getWeb3Deployments } from '@towns-protocol/web3'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
+import { workerPool } from '@/utils/workers'
+import { createUnpackerWorkerpool } from '@/utils/unpacker'
 import { Button } from '../ui/button'
 import {
     Dialog,
@@ -127,6 +129,12 @@ export const RiverEnvSwitcherContent = (props: {
                                                 if (bearerToken) {
                                                     await connectUsingBearerToken(bearerToken, {
                                                         riverConfig,
+                                                        clientOptions: {
+                                                            unpacker:
+                                                                createUnpackerWorkerpool(
+                                                                    workerPool,
+                                                                ),
+                                                        },
                                                     }).then((sync) => {
                                                         if (sync?.config.context) {
                                                             storeAuth(
@@ -143,6 +151,10 @@ export const RiverEnvSwitcherContent = (props: {
                                                 }
                                                 await connect(signer, {
                                                     riverConfig,
+                                                    clientOptions: {
+                                                        unpacker:
+                                                            createUnpackerWorkerpool(workerPool),
+                                                    },
                                                 }).then((sync) => {
                                                     if (sync?.config.context) {
                                                         storeAuth(sync?.config.context, riverConfig)
