@@ -146,7 +146,6 @@ describe('syncAgents.test.ts', () => {
         // bob can pin
         const result = await channel.pin(event.eventId)
         expect(result).toBeDefined()
-        expect(result.error).toBeUndefined()
         await waitFor(() =>
             expect(
                 bob.riverConnection.client?.streams.get(channelId)?.view.membershipContent.pins
@@ -156,7 +155,6 @@ describe('syncAgents.test.ts', () => {
         // bob can unpin
         const result2 = await channel.unpin(event.eventId)
         expect(result2).toBeDefined()
-        expect(result2.error).toBeUndefined()
 
         // alice can't pin yet, she doesn't have permissions
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channelId)
@@ -186,7 +184,6 @@ describe('syncAgents.test.ts', () => {
         // alice can pin
         const result3 = await aliceChannel.pin(event.eventId)
         expect(result3).toBeDefined()
-        expect(result3.error).toBeUndefined()
     })
 
     test('dm', async () => {

@@ -246,12 +246,11 @@ export const createTownsClient = async (
                             miniblockHash,
                         )
                         const eventId = bin_toHexString(event.hash)
-                        const { error } = await rpc.addEvent({
+                        await rpc.addEvent({
                             streamId: streamIdAsBytes(streamId),
                             event,
-                            optional: false,
                         })
-                        return { miniblockHash, eventId, error }
+                        return { miniblockHash, eventId }
                     } catch {
                         return undefined
                     }
