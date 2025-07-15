@@ -9,7 +9,7 @@ export default mergeConfig(
             name: 'multi',
             env: {
                 RIVER_ENV: 'local_multi',
-                NOTIFICATION_SERVICE_URL: 'http://localhost:7170',
+                NOTIFICATION_SERVICE_URL: 'https://localhost:7170',
             },
             include: ['./src/tests/multi/**/*.test.ts', './src/tests/multi_v2/**/*.test.ts'],
             hookTimeout: 120_000,

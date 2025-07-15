@@ -356,8 +356,6 @@ start-notifications: _require_run_env
     RUN_ARGS=${RUN_ARGS:-}
     RUN_CMD=${RUN_CMD:-notifications}
     cd ${INSTANCE_BASE}/notifications
-    echo "Config file:"
-    cat config/config.env
     ../bin/river_node ${RUN_CMD} \
         --config ../common.yaml \
         --config ../contracts.env \
