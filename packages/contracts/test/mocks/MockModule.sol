@@ -12,8 +12,9 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
+import {BaseApp} from "../../src/apps/BaseApp.sol";
 
-contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, ITownsApp {
+contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
     bytes4 private constant INVALID_SIGNATURE = 0xffffffff;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -72,15 +73,15 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, ITownsApp {
         return "mock-module";
     }
 
-    function moduleOwner() external view returns (address) {
+    function _moduleOwner() internal view override returns (address) {
         return _owner();
     }
 
-    function installPrice() external view returns (uint256) {
+    function _installPrice() internal view override returns (uint256) {
         return price;
     }
 
-    function accessDuration() external view returns (uint48) {
+    function _accessDuration() internal view override returns (uint48) {
         return duration;
     }
 
@@ -164,14 +165,14 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, ITownsApp {
     /*                    LIFECYCLE FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function onInstall(bytes calldata data) external {
+    function _onInstall(bytes calldata data) internal override {
         if (shouldFailInstall) {
             revert("Installation failed");
         }
         emit OnInstallCalled(msg.sender, data);
     }
 
-    function onUninstall(bytes calldata data) external {
+    function _onUninstall(bytes calldata data) internal override {
         if (shouldFailUninstall) {
             revert("Uninstallation failed");
         }
@@ -222,14 +223,6 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, ITownsApp {
                 executionHooks: executionHooks,
                 interfaceIds: interfaceIds
             });
-    }
-
-    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return
-            interfaceId == type(IERC6900ExecutionModule).interfaceId ||
-            interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsApp).interfaceId ||
-            interfaceId == type(IERC173).interfaceId;
     }
 
     function _domainNameAndVersion() internal pure override returns (string memory, string memory) {

@@ -7,25 +7,26 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 //interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITownsApp} from "../../src/apps/ITownsApp.sol";
+import {ISimpleApp} from "../../src/apps/helpers/ISimpleApp.sol";
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 //contracts
-import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
-import {MockPlugin} from "test/mocks/MockPlugin.sol";
-import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
-import {MockModule} from "test/mocks/MockModule.sol";
+import {AppRegistryFacet} from "../../src/apps/facets/registry/AppRegistryFacet.sol";
+import {MockPlugin} from "../../test/mocks/MockPlugin.sol";
+import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
+import {MockModule} from "../../test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase {
@@ -48,13 +49,20 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         DEFAULT_DEV = _randomAddress();
 
         MockModule mockModuleV1 = new MockModule();
-
         vm.prank(DEFAULT_DEV);
         mockModule = MockModule(
-            address(
-                new ERC1967Proxy(
-                    address(mockModuleV1),
-                    abi.encodeWithSelector(MockModule.initialize.selector, false, false, false, 0)
+            payable(
+                address(
+                    new ERC1967Proxy(
+                        address(mockModuleV1),
+                        abi.encodeWithSelector(
+                            MockModule.initialize.selector,
+                            false,
+                            false,
+                            false,
+                            0
+                        )
+                    )
                 )
             )
         );
@@ -185,6 +193,34 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(module, app);
         assertEq(registry.getAppByClient(DEFAULT_CLIENT), app);
         assertEq(registry.getAppDuration(app), DEFAULT_ACCESS_DURATION);
+    }
+
+    function test_SimpleApp_withdrawETH() external {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        vm.prank(DEFAULT_DEV);
+        (address app, ) = registry.createApp(appData);
+
+        uint256 totalRequired = registry.getAppPrice(app);
+
+        vm.deal(founder, totalRequired);
+
+        vm.prank(founder);
+        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+
+        vm.prank(DEFAULT_DEV);
+        ISimpleApp(app).withdrawETH(DEFAULT_DEV);
+
+        assertEq(address(DEFAULT_DEV).balance, DEFAULT_INSTALL_PRICE);
     }
 
     function test_revertWhen_createApp_EmptyName() external {
@@ -323,7 +359,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         // Verify fee distribution
         assertEq(address(deployer).balance, protocolFee);
-        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(mockModule).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -346,7 +382,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, minFee);
-        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - minFee);
+        assertEq(address(mockModule).balance - devInitialBalance, totalPrice - minFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -365,7 +401,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(protocolFee > minFee);
-        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(mockModule).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -389,7 +425,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(bpsFee < minFee);
         assertEq(protocolFee, minFee);
-        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(mockModule).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -410,7 +446,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         // Verify excess was refunded
         assertEq(address(founder).balance - founderInitialBalance, excess);
-        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(mockModule).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 
@@ -489,7 +525,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(newExpiration, initialExpiration + DEFAULT_ACCESS_DURATION);
 
         // Verify fee distribution
-        assertEq(address(DEFAULT_DEV).balance - devInitialBalance, totalPrice - protocolFee);
+        assertEq(address(mockModule).balance - devInitialBalance, totalPrice - protocolFee);
         assertEq(address(appAccount).balance, 0);
     }
 

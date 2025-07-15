@@ -49,10 +49,18 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
 
         vm.prank(dev);
         mockModule = MockModule(
-            address(
-                new ERC1967Proxy(
-                    address(mockModuleV1),
-                    abi.encodeWithSelector(MockModule.initialize.selector, false, false, false, 0)
+            payable(
+                address(
+                    new ERC1967Proxy(
+                        address(mockModuleV1),
+                        abi.encodeWithSelector(
+                            MockModule.initialize.selector,
+                            false,
+                            false,
+                            false,
+                            0
+                        )
+                    )
                 )
             )
         );
