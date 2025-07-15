@@ -242,6 +242,12 @@ type (
 		// DebugReadStreamStatistics returns statistics for debugging about the stream.
 		DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
 
+		// DebugDeleteMiniblocks deletes miniblocks from the storage in the given range.
+		// This is a debug function used for testing backwards reconciliation.
+		// fromInclusive and toInclusive specify the range of miniblock numbers to delete.
+		// WARNING: This function should only be used for testing purposes.
+		DebugDeleteMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toInclusive int64) error
+
 		// Close closes the storage.
 		Close(ctx context.Context)
 	}

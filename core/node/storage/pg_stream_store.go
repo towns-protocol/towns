@@ -2299,6 +2299,65 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	return result, nil
 }
 
+func (s *PostgresStreamStore) DebugDeleteMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	fromInclusive int64,
+	toInclusive int64,
+) error {
+	return s.txRunner(
+		ctx,
+		"DebugDeleteMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.debugDeleteMiniblocksTx(ctx, tx, streamId, fromInclusive, toInclusive)
+		},
+		nil,
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toInclusive", toInclusive,
+	)
+}
+
+func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	fromInclusive int64,
+	toInclusive int64,
+) error {
+	// Lock the stream to ensure consistency
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Delete miniblocks in the specified range
+	query := s.sqlForStream(
+		"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num <= $3",
+		streamId,
+	)
+	
+	result, err := tx.Exec(ctx, query, streamId, fromInclusive, toInclusive)
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("Failed to delete miniblocks").
+			Tag("streamId", streamId).
+			Tag("fromInclusive", fromInclusive).
+			Tag("toInclusive", toInclusive)
+	}
+
+	rowsAffected := result.RowsAffected()
+	logging.FromCtx(ctx).Infow("DebugDeleteMiniblocks completed",
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toInclusive", toInclusive,
+		"rowsDeleted", rowsAffected,
+	)
+
+	return nil
+}
+
 func (s *PostgresStreamStore) DebugReadStreamStatistics(
 	ctx context.Context,
 	streamId StreamId,
