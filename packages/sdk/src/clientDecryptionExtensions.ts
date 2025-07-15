@@ -188,7 +188,17 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public getKeySolicitations(streamId: string): KeySolicitationContent[] {
         const stream = this.client.stream(streamId)
-        return stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const nonEphemeralSolicitations =
+            stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const ephemeralSolicitations = (this.ownEphemeralSolicitations.get(streamId) ?? []).map(
+            (s) => ({
+                deviceKey: s.deviceKey,
+                fallbackKey: s.fallbackKey,
+                isNewDevice: s.isNewDevice,
+                sessionIds: Array.from(s.missingSessionIds),
+            }),
+        )
+        return [...nonEphemeralSolicitations, ...ephemeralSolicitations]
     }
 
     /**
