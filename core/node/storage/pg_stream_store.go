@@ -2512,60 +2512,46 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 		return nil, err
 	}
 
-	// Query all miniblock numbers starting from the given number, ordered by seq_num
-	rows, err := tx.Query(
-		ctx,
-		s.sqlForStream(
-			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 ORDER BY seq_num",
-			streamId,
-		),
-		streamId,
-		startMiniblockNumberInclusive,
-	)
+	// Use window function to identify continuous ranges efficiently
+	query := s.sqlForStream(`
+		SELECT 
+			MIN(seq_num) AS start_range,
+			MAX(seq_num) AS end_range
+		FROM (
+			SELECT 
+				seq_num,
+				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
+			FROM {{miniblocks}}
+			WHERE stream_id = $1 AND seq_num >= $2
+		) AS subquery
+		GROUP BY grp
+		ORDER BY start_range
+	`, streamId)
+
+	rows, err := tx.Query(ctx, query, streamId, startMiniblockNumberInclusive)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	// Scan all miniblock numbers into a slice
-	var numbers []int64
-	for rows.Next() {
-		var num int64
-		if err := rows.Scan(&num); err != nil {
-			return nil, err
-		}
-		numbers = append(numbers, num)
+	// Use pgx.CollectRows to scan all results at once
+	type rangeRow struct {
+		StartRange int64
+		EndRange   int64
 	}
-	if err := rows.Err(); err != nil {
+
+	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[rangeRow])
+	if err != nil {
 		return nil, err
 	}
 
-	// If no miniblocks found, return empty slice
-	if len(numbers) == 0 {
-		return [][2]int64{}, nil
+	// Convert to the expected format
+	result := make([][2]int64, len(ranges))
+	for i, r := range ranges {
+		result[i] = [2]int64{r.StartRange, r.EndRange}
 	}
 
-	// Build ranges by detecting gaps
-	var ranges [][2]int64
-	rangeStart := numbers[0]
-	rangeEnd := numbers[0]
-
-	for i := 1; i < len(numbers); i++ {
-		if numbers[i] == rangeEnd+1 {
-			// Continuous sequence, extend current range
-			rangeEnd = numbers[i]
-		} else {
-			// Gap detected, close current range and start new one
-			ranges = append(ranges, [2]int64{rangeStart, rangeEnd})
-			rangeStart = numbers[i]
-			rangeEnd = numbers[i]
-		}
-	}
-
-	// Append the last range
-	ranges = append(ranges, [2]int64{rangeStart, rangeEnd})
-
-	return ranges, nil
+	return result, nil
 }
 
 func parseAndCheckHasLegacySnapshot(data []byte) bool {

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -305,4 +306,80 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 8)
 	require.NoError(err)
 	require.Equal([][2]int64{{10, 15}}, ranges)
+}
+
+func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+
+	// Create a stream with many miniblocks and gaps to test performance
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Create initial continuous range 0-999
+	miniblocks := make([]*WriteMiniblockData, 1000)
+	for i := 0; i < 1000; i++ {
+		miniblocks[i] = &WriteMiniblockData{
+			Number:   int64(i),
+			Hash:     common.HexToHash(string(rune(i % 256))),
+			Data:     []byte("miniblock"),
+			Snapshot: nil,
+		}
+		if i == 0 {
+			miniblocks[i].Snapshot = []byte("snapshot0")
+		}
+	}
+
+	err := store.ReinitializeStreamStorage(
+		ctx,
+		streamId,
+		miniblocks,
+		0,
+		false,
+	)
+	require.NoError(err)
+
+	// Add more ranges with gaps: 2000-2999, 4000-4999, etc.
+	for base := int64(2000); base < 10000; base += 2000 {
+		extraBlocks := make([]*WriteMiniblockData, 1000)
+		for i := 0; i < 1000; i++ {
+			extraBlocks[i] = &WriteMiniblockData{
+				Number:   base + int64(i),
+				Hash:     common.HexToHash(string(rune(i % 256))),
+				Data:     []byte("miniblock"),
+				Snapshot: nil,
+			}
+			if i == 0 {
+				extraBlocks[i].Snapshot = []byte("snapshot")
+			}
+		}
+		
+		err = store.ReinitializeStreamStorage(
+			ctx,
+			streamId,
+			extraBlocks,
+			base, // snapshot at start of each range
+			true, // updateExisting
+		)
+		require.NoError(err)
+	}
+
+	// Test performance of the optimized query
+	start := time.Now()
+	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, 0)
+	elapsed := time.Since(start)
+
+	require.NoError(err)
+	require.Len(ranges, 5) // Should have 5 ranges
+	require.Equal([2]int64{0, 999}, ranges[0])
+	require.Equal([2]int64{2000, 2999}, ranges[1])
+	require.Equal([2]int64{4000, 4999}, ranges[2])
+	require.Equal([2]int64{6000, 6999}, ranges[3])
+	require.Equal([2]int64{8000, 8999}, ranges[4])
+
+	t.Logf("GetMiniblockNumberRanges with 5000 miniblocks in 5 ranges took: %v", elapsed)
+	require.Less(elapsed, 100*time.Millisecond, "Query should complete in under 100ms")
 }
