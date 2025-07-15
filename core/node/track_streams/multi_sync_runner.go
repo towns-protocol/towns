@@ -157,11 +157,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
-	resetLabelValue := "false"
-	if reset {
-		resetLabelValue = "true"
-	}
-	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": resetLabelValue}).Inc()
+	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
 
 	if reset {
 		trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
@@ -262,25 +258,24 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 	log := logging.FromCtx(ssr.syncCtx)
 	switch update.SyncOp {
 	case protocol.SyncOp_SYNC_UPDATE:
-		{
-			streamID, err := shared.StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
-			if err != nil {
-				log.Errorw("Received corrupt update, invalid stream ID", "error", err)
-				ssr.cancelSync(fmt.Errorf("invalid SYNC_UPDATE, missing stream id"))
-			}
-
-			record, ok := ssr.streamRecords.Load(streamID)
-			if !ok {
-				log.Errorw(
-					"Expected stream id for sync to be in the syncSessionRunner records",
-					"streamId", streamID,
-					"syncId", ssr.syncer.GetSyncId(),
-				)
-				return
-			}
-
-			ssr.applyUpdateToStream(update.GetStream(), record)
+		streamID, err := shared.StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
+		if err != nil {
+			log.Errorw("Received corrupt update, invalid stream ID", "error", err)
+			ssr.cancelSync(fmt.Errorf("invalid SYNC_UPDATE, missing stream id"))
+			return
 		}
+
+		record, ok := ssr.streamRecords.Load(streamID)
+		if !ok {
+			log.Errorw(
+				"Expected stream id for sync to be in the syncSessionRunner records",
+				"streamId", streamID,
+				"syncId", ssr.syncer.GetSyncId(),
+			)
+			return
+		}
+
+		ssr.applyUpdateToStream(update.GetStream(), record)
 	case protocol.SyncOp_SYNC_DOWN:
 		// Stream relocation is invoked by the remote syncer whenever a SYNC_DOWN is received, via a callback.
 		// We can count sync downs to get a sense of how often streams are relocated due to node unavailability.
@@ -351,11 +346,9 @@ func (ssr *syncSessionRunner) Run() {
 	ssr.syncStarted.Done()
 
 	var batch []*protocol.SyncStreamsResponse
-	metricsTicker := time.Tick(1 * time.Second)
-
 	for {
 		select {
-		case <-metricsTicker:
+		case <-time.Tick(time.Second):
 			ssr.metrics.StreamsPerSyncSession.Observe(float64(ssr.streamRecords.Size()))
 
 		// Root context cancelled - this should propogate to the sync context and cause it to stop itself.
