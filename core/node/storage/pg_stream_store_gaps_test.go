@@ -67,17 +67,17 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test from start
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, 0)
 		require.NoError(err)
-		require.Equal([][2]int64{{0, 5}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 5}}, ranges)
 
 		// Test from middle
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 3)
 		require.NoError(err)
-		require.Equal([][2]int64{{3, 5}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 3, EndInclusive: 5}}, ranges)
 
 		// Test from beyond last
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 10)
 		require.NoError(err)
-		require.Equal([][2]int64{}, ranges)
+		require.Equal([]MiniblockRange{}, ranges)
 	})
 
 	t.Run("SequenceWithGaps", func(t *testing.T) {
@@ -118,17 +118,17 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test full range - should have gap between 2 and 5
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamIdGaps, 0)
 		require.NoError(err)
-		require.Equal([][2]int64{{0, 2}, {5, 10}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 10}}, ranges)
 
 		// Test from middle of first gap
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdGaps, 4)
 		require.NoError(err)
-		require.Equal([][2]int64{{5, 10}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 5, EndInclusive: 10}}, ranges)
 
 		// Test from middle of continuous range
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdGaps, 6)
 		require.NoError(err)
-		require.Equal([][2]int64{{6, 10}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 6, EndInclusive: 10}}, ranges)
 
 		// Now update the stream to create gap at 11 by reinitializing
 		err = store.ReinitializeStreamStorage(
@@ -145,7 +145,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test after update - should have 0-2, 5-10, 15
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdGaps, 0)
 		require.NoError(err)
-		require.Equal([][2]int64{{0, 2}, {5, 10}, {15, 15}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 10}, {StartInclusive: 15, EndInclusive: 15}}, ranges)
 	})
 
 	t.Run("NonZeroStartingSequence", func(t *testing.T) {
@@ -168,17 +168,17 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test from 0 (before first miniblock)
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamIdNonZero, 0)
 		require.NoError(err)
-		require.Equal([][2]int64{{100, 102}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 100, EndInclusive: 102}}, ranges)
 
 		// Test from exact start
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdNonZero, 100)
 		require.NoError(err)
-		require.Equal([][2]int64{{100, 102}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 100, EndInclusive: 102}}, ranges)
 
 		// Test from middle
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdNonZero, 101)
 		require.NoError(err)
-		require.Equal([][2]int64{{101, 102}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 101, EndInclusive: 102}}, ranges)
 	})
 
 	t.Run("LargeGapsSequence", func(t *testing.T) {
@@ -224,12 +224,12 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test full range
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamIdLarge, 0)
 		require.NoError(err)
-		require.Equal([][2]int64{{0, 0}, {1000, 1002}, {2000, 2000}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 0}, {StartInclusive: 1000, EndInclusive: 1002}, {StartInclusive: 2000, EndInclusive: 2000}}, ranges)
 
 		// Test from middle of large gap
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdLarge, 500)
 		require.NoError(err)
-		require.Equal([][2]int64{{1000, 1002}, {2000, 2000}}, ranges)
+		require.Equal([]MiniblockRange{{StartInclusive: 1000, EndInclusive: 1002}, {StartInclusive: 2000, EndInclusive: 2000}}, ranges)
 	})
 }
 
@@ -262,7 +262,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	// Initial state: miniblocks 10-15
 	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, 0)
 	require.NoError(err)
-	require.Equal([][2]int64{{10, 15}}, ranges)
+	require.Equal([]MiniblockRange{{StartInclusive: 10, EndInclusive: 15}}, ranges)
 
 	// Use WritePrecedingMiniblocks to backfill some gaps
 	err = store.WritePrecedingMiniblocks(
@@ -279,7 +279,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	// After backfilling: should have gap between 7 and 10
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 0)
 	require.NoError(err)
-	require.Equal([][2]int64{{5, 7}, {10, 15}}, ranges)
+	require.Equal([]MiniblockRange{{StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}}, ranges)
 
 	// Backfill more to create another gap
 	err = store.WritePrecedingMiniblocks(
@@ -296,16 +296,16 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	// Final state: 0-2, 5-7, 10-15
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 0)
 	require.NoError(err)
-	require.Equal([][2]int64{{0, 2}, {5, 7}, {10, 15}}, ranges)
+	require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}}, ranges)
 
 	// Test querying from different starting points
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 3)
 	require.NoError(err)
-	require.Equal([][2]int64{{5, 7}, {10, 15}}, ranges)
+	require.Equal([]MiniblockRange{{StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}}, ranges)
 
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 8)
 	require.NoError(err)
-	require.Equal([][2]int64{{10, 15}}, ranges)
+	require.Equal([]MiniblockRange{{StartInclusive: 10, EndInclusive: 15}}, ranges)
 }
 
 func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
@@ -374,11 +374,11 @@ func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 
 	require.NoError(err)
 	require.Len(ranges, 5) // Should have 5 ranges
-	require.Equal([2]int64{0, 999}, ranges[0])
-	require.Equal([2]int64{2000, 2999}, ranges[1])
-	require.Equal([2]int64{4000, 4999}, ranges[2])
-	require.Equal([2]int64{6000, 6999}, ranges[3])
-	require.Equal([2]int64{8000, 8999}, ranges[4])
+	require.Equal(MiniblockRange{StartInclusive: 0, EndInclusive: 999}, ranges[0])
+	require.Equal(MiniblockRange{StartInclusive: 2000, EndInclusive: 2999}, ranges[1])
+	require.Equal(MiniblockRange{StartInclusive: 4000, EndInclusive: 4999}, ranges[2])
+	require.Equal(MiniblockRange{StartInclusive: 6000, EndInclusive: 6999}, ranges[3])
+	require.Equal(MiniblockRange{StartInclusive: 8000, EndInclusive: 8999}, ranges[4])
 
 	t.Logf("GetMiniblockNumberRanges with 5000 miniblocks in 5 ranges took: %v", elapsed)
 	require.Less(elapsed, 100*time.Millisecond, "Query should complete in under 100ms")

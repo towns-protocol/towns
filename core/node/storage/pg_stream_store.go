@@ -2481,8 +2481,8 @@ func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 	ctx context.Context,
 	streamId StreamId,
 	startMiniblockNumberInclusive int64,
-) ([][2]int64, error) {
-	var ranges [][2]int64
+) ([]MiniblockRange, error) {
+	var ranges []MiniblockRange
 	err := s.txRunner(
 		ctx,
 		"GetMiniblockNumberRanges",
@@ -2507,7 +2507,7 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	startMiniblockNumberInclusive int64,
-) ([][2]int64, error) {
+) ([]MiniblockRange, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
@@ -2535,23 +2535,12 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	defer rows.Close()
 
 	// Use pgx.CollectRows to scan all results at once
-	type rangeRow struct {
-		StartRange int64
-		EndRange   int64
-	}
-
-	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[rangeRow])
+	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[MiniblockRange])
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert to the expected format
-	result := make([][2]int64, len(ranges))
-	for i, r := range ranges {
-		result[i] = [2]int64{r.StartRange, r.EndRange}
-	}
-
-	return result, nil
+	return ranges, nil
 }
 
 func parseAndCheckHasLegacySnapshot(data []byte) bool {
