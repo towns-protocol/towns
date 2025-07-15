@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -458,5 +459,241 @@ func TestRegistry_CancelAll(t *testing.T) {
 
 		_, exists = reg.GetSubscriptionByID("test-sync-2")
 		assert.False(t, exists)
+	})
+}
+
+func TestRegistry_GetShardStats(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func(t *testing.T) *shardedRegistry
+		validate func(t *testing.T, stats []struct {
+			ShardIndex  int
+			StreamCount int
+		})
+	}{
+		{
+			name: "empty registry should have zero stream counts",
+			setup: func(t *testing.T) *shardedRegistry {
+				return newShardedRegistry(4) // Small shard count for easier testing
+			},
+			validate: func(t *testing.T, stats []struct {
+				ShardIndex  int
+				StreamCount int
+			}) {
+				assert.Len(t, stats, 4)
+				for i, stat := range stats {
+					assert.Equal(t, i, stat.ShardIndex)
+					assert.Equal(t, 0, stat.StreamCount)
+				}
+			},
+		},
+		{
+			name: "registry with streams distributed across shards",
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(4)
+				
+				// Add subscriptions
+				for i := 0; i < 3; i++ {
+					reg.AddSubscription(createTestSubscription(fmt.Sprintf("test-sync-%d", i)))
+				}
+				
+				// Add streams - these should distribute across shards
+				// Using different stream IDs to ensure distribution
+				streams := []StreamId{
+					{0x10, 0x00, 0x00, 0x00}, // Should go to one shard
+					{0x20, 0x00, 0x00, 0x00}, // Should go to another shard
+					{0x30, 0x00, 0x00, 0x00}, // Should go to another shard
+					{0x40, 0x00, 0x00, 0x00}, // Should go to another shard
+				}
+				
+				for _, streamID := range streams {
+					reg.AddStreamToSubscription("test-sync-0", streamID)
+				}
+				
+				return reg
+			},
+			validate: func(t *testing.T, stats []struct {
+				ShardIndex  int
+				StreamCount int
+			}) {
+				assert.Len(t, stats, 4)
+				
+				totalStreams := 0
+				for _, stat := range stats {
+					totalStreams += stat.StreamCount
+				}
+				
+				// Should have 4 streams total distributed across shards
+				assert.Equal(t, 4, totalStreams)
+				
+				// Verify shard indices are correct
+				for i, stat := range stats {
+					assert.Equal(t, i, stat.ShardIndex)
+				}
+			},
+		},
+		{
+			name: "registry with many shards",
+			setup: func(t *testing.T) *shardedRegistry {
+				reg := newShardedRegistry(32)
+				
+				// Add some subscriptions and streams
+				reg.AddSubscription(createTestSubscription("test-sync-1"))
+				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+				reg.AddStreamToSubscription("test-sync-1", StreamId{5, 6, 7, 8})
+				
+				return reg
+			},
+			validate: func(t *testing.T, stats []struct {
+				ShardIndex  int
+				StreamCount int
+			}) {
+				assert.Len(t, stats, 32)
+				
+				// Verify all shard indices are present and in order
+				for i, stat := range stats {
+					assert.Equal(t, i, stat.ShardIndex)
+				}
+				
+				// Should have exactly 2 streams across all shards
+				totalStreams := 0
+				for _, stat := range stats {
+					totalStreams += stat.StreamCount
+				}
+				assert.Equal(t, 2, totalStreams)
+			},
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := tt.setup(t)
+			
+			stats := reg.GetShardStats()
+			
+			tt.validate(t, stats)
+		})
+	}
+}
+
+func TestRegistry_NewShardedRegistry(t *testing.T) {
+	tests := []struct {
+		name               string
+		inputShardCount    uint32
+		expectedShardCount uint32
+	}{
+		{
+			name:               "zero shard count should default to 32",
+			inputShardCount:    0,
+			expectedShardCount: 32,
+		},
+		{
+			name:               "power of 2 shard count should remain unchanged",
+			inputShardCount:    16,
+			expectedShardCount: 16,
+		},
+		{
+			name:               "non-power of 2 should round up to next power of 2",
+			inputShardCount:    10,
+			expectedShardCount: 16,
+		},
+		{
+			name:               "3 should round up to 4",
+			inputShardCount:    3,
+			expectedShardCount: 4,
+		},
+		{
+			name:               "17 should round up to 32",
+			inputShardCount:    17,
+			expectedShardCount: 32,
+		},
+		{
+			name:               "large non-power of 2",
+			inputShardCount:    100,
+			expectedShardCount: 128,
+		},
+		{
+			name:               "exact power of 2 - 64",
+			inputShardCount:    64,
+			expectedShardCount: 64,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := newShardedRegistry(tt.inputShardCount)
+			
+			assert.Equal(t, tt.expectedShardCount, reg.shardCount)
+			assert.Len(t, reg.shards, int(tt.expectedShardCount))
+			
+			// Verify all shards are initialized
+			for i, shard := range reg.shards {
+				assert.NotNil(t, shard, "shard %d should not be nil", i)
+			}
+			
+			// Verify global subscriptions map is initialized
+			assert.NotNil(t, reg.globalSubscriptions)
+		})
+	}
+}
+
+func TestRegistry_CleanupUnusedStreams(t *testing.T) {
+	t.Run("cleanup removes empty stream entries", func(t *testing.T) {
+		reg := newShardedRegistry(4)
+		
+		// Track cleaned up streams
+		var cleanedStreams [][]byte
+		
+		// Add subscriptions
+		sub1 := createTestSubscription("test-sync-1")
+		sub2 := createTestSubscription("test-sync-2")
+		reg.AddSubscription(sub1)
+		reg.AddSubscription(sub2)
+		
+		// Add streams to subscriptions
+		stream1 := StreamId{1, 2, 3, 4}
+		stream2 := StreamId{5, 6, 7, 8}
+		reg.AddStreamToSubscription("test-sync-1", stream1)
+		reg.AddStreamToSubscription("test-sync-2", stream2)
+		
+		// Remove subscription 1 - this should leave stream1 with empty subscription list
+		reg.RemoveSubscription("test-sync-1")
+		
+		// Run cleanup
+		reg.CleanupUnusedStreams(func(streamIds [][]byte) {
+			cleanedStreams = streamIds
+		})
+		
+		// Verify stream1 was cleaned up
+		assert.Len(t, cleanedStreams, 1)
+		assert.Equal(t, stream1[:], cleanedStreams[0])
+		
+		// Verify stream2 is still there
+		subs := reg.GetSubscriptionsForStream(stream2)
+		assert.Len(t, subs, 1)
+	})
+	
+	t.Run("cleanup with no callback", func(t *testing.T) {
+		reg := newShardedRegistry(4)
+		
+		// This should not panic
+		reg.CleanupUnusedStreams(nil)
+	})
+	
+	t.Run("cleanup with no unused streams", func(t *testing.T) {
+		reg := newShardedRegistry(4)
+		called := false
+		
+		// Add active subscription
+		reg.AddSubscription(createTestSubscription("test-sync-1"))
+		reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+		
+		// Run cleanup
+		reg.CleanupUnusedStreams(func(streamIds [][]byte) {
+			called = true
+		})
+		
+		// Callback should not be called when no streams are cleaned
+		assert.False(t, called)
 	})
 }

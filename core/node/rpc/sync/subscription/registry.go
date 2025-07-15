@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -25,19 +27,11 @@ type Registry interface {
 
 // shardedRegistry implements Registry interface with sharding for better concurrency
 type shardedRegistry struct {
-	shards     []*registryShard
+	shards     []*xsync.Map[StreamId, []*Subscription]
 	shardCount uint32
 
-	// Global subscription lookup - we use a single map with read-write lock
-	// since subscription lookups by ID are less frequent than stream operations
-	globalSubsLock      sync.RWMutex
-	globalSubscriptions map[string]*Subscription
-}
-
-type registryShard struct {
-	mu sync.RWMutex
-	// subscriptionsByStream is a map of stream IDs to subscriptions
-	subscriptionsByStream map[StreamId][]*Subscription
+	// Global subscription lookup
+	globalSubscriptions *xsync.Map[string, *Subscription]
 }
 
 // newShardedRegistry creates a new sharded subscription registry
@@ -60,17 +54,15 @@ func newShardedRegistry(shardCount uint32) *shardedRegistry {
 		shardCount = v
 	}
 
-	shards := make([]*registryShard, shardCount)
+	shards := make([]*xsync.Map[StreamId, []*Subscription], shardCount)
 	for i := uint32(0); i < shardCount; i++ {
-		shards[i] = &registryShard{
-			subscriptionsByStream: make(map[StreamId][]*Subscription),
-		}
+		shards[i] = xsync.NewMap[StreamId, []*Subscription]()
 	}
 
 	return &shardedRegistry{
 		shards:              shards,
 		shardCount:          shardCount,
-		globalSubscriptions: make(map[string]*Subscription),
+		globalSubscriptions: xsync.NewMap[string, *Subscription](),
 	}
 }
 
@@ -82,37 +74,45 @@ func hashStreamID(streamID StreamId) uint32 {
 }
 
 // getShard returns the shard for a given stream ID
-func (r *shardedRegistry) getShard(streamID StreamId) *registryShard {
+func (r *shardedRegistry) getShard(streamID StreamId) *xsync.Map[StreamId, []*Subscription] {
 	hash := hashStreamID(streamID)
 	return r.shards[hash&(r.shardCount-1)] // Fast modulo for power of 2
 }
 
 // AddSubscription adds a subscription to the registry
 func (r *shardedRegistry) AddSubscription(sub *Subscription) {
-	r.globalSubsLock.Lock()
-	r.globalSubscriptions[sub.syncID] = sub
-	r.globalSubsLock.Unlock()
+	r.globalSubscriptions.Store(sub.syncID, sub)
 }
 
 // RemoveSubscription removes a subscription from the registry
 func (r *shardedRegistry) RemoveSubscription(syncID string) {
-	r.globalSubsLock.Lock()
-	delete(r.globalSubscriptions, syncID)
-	r.globalSubsLock.Unlock()
+	r.globalSubscriptions.Delete(syncID)
 
 	// Remove from all shards in parallel
 	var wg sync.WaitGroup
 	for _, shard := range r.shards {
 		wg.Add(1)
-		go func(s *registryShard) {
+		go func(s *xsync.Map[StreamId, []*Subscription]) {
 			defer wg.Done()
-			s.mu.Lock()
-			for streamID, subs := range s.subscriptionsByStream {
-				s.subscriptionsByStream[streamID] = slices.DeleteFunc(subs, func(sub *Subscription) bool {
-					return sub.syncID == syncID
-				})
-			}
-			s.mu.Unlock()
+			s.Range(func(streamID StreamId, subs []*Subscription) bool {
+				// Use Compute to atomically update the subscription list
+				s.Compute(
+					streamID,
+					func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+						if !loaded {
+							return nil, xsync.CancelOp
+						}
+						newValue = slices.DeleteFunc(oldValue, func(sub *Subscription) bool {
+							return sub.syncID == syncID
+						})
+						if len(newValue) == len(oldValue) {
+							return oldValue, xsync.CancelOp
+						}
+						return newValue, xsync.UpdateOp
+					},
+				)
+				return true
+			})
 		}(shard)
 	}
 	wg.Wait()
@@ -120,28 +120,21 @@ func (r *shardedRegistry) RemoveSubscription(syncID string) {
 
 // GetSubscriptionsForStream returns all subscriptions for a given stream
 func (r *shardedRegistry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
-	shard := r.getShard(streamID)
-
-	shard.mu.RLock()
-	subs := slices.Clone(shard.subscriptionsByStream[streamID])
-	shard.mu.RUnlock()
-
-	return subs
+	if subs, ok := r.getShard(streamID).Load(streamID); ok {
+		return slices.Clone(subs)
+	}
+	return nil
 }
 
 // GetSubscriptionByID returns a subscription by its sync ID
 func (r *shardedRegistry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
-	r.globalSubsLock.RLock()
-	sub, ok := r.globalSubscriptions[syncID]
-	r.globalSubsLock.RUnlock()
+	sub, ok := r.globalSubscriptions.Load(syncID)
 	return sub, ok
 }
 
 // AddStreamToSubscription adds a stream to a subscription
 func (r *shardedRegistry) AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool) {
-	r.globalSubsLock.RLock()
-	sub, exists := r.globalSubscriptions[syncID]
-	r.globalSubsLock.RUnlock()
+	sub, exists := r.globalSubscriptions.Load(syncID)
 
 	if !exists {
 		return false, false
@@ -149,51 +142,57 @@ func (r *shardedRegistry) AddStreamToSubscription(syncID string, streamID Stream
 
 	shard := r.getShard(streamID)
 
-	shard.mu.Lock()
-	defer shard.mu.Unlock()
+	shard.Compute(
+		streamID,
+		func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+			if !loaded {
+				shouldAddToRemote = true
+				return []*Subscription{sub}, xsync.UpdateOp
+			}
 
-	subscriptions, ok := shard.subscriptionsByStream[streamID]
-	if !ok {
-		shouldAddToRemote = true
-		shard.subscriptionsByStream[streamID] = []*Subscription{sub}
-	} else if !slices.ContainsFunc(subscriptions, func(s *Subscription) bool {
-		return s.syncID == syncID
-	}) {
-		shouldBackfill = true
-		sub.initializingStreams.Store(streamID, struct{}{})
-		shard.subscriptionsByStream[streamID] = append(shard.subscriptionsByStream[streamID], sub)
-	}
+			// Check if subscription already exists
+			if !slices.ContainsFunc(oldValue, func(s *Subscription) bool {
+				return s.syncID == syncID
+			}) {
+				shouldBackfill = true
+				sub.initializingStreams.Store(streamID, struct{}{})
+				newValue = append(slices.Clone(oldValue), sub)
+				return newValue, xsync.UpdateOp
+			}
+
+			// Subscription already exists, no change needed
+			return oldValue, xsync.CancelOp
+		},
+	)
+
 	return
 }
 
 // RemoveStreamFromSubscription removes a stream from a subscription
 func (r *shardedRegistry) RemoveStreamFromSubscription(syncID string, streamID StreamId) {
-	shard := r.getShard(streamID)
-
-	shard.mu.Lock()
-	shard.subscriptionsByStream[streamID] = slices.DeleteFunc(
-		shard.subscriptionsByStream[streamID],
-		func(sub *Subscription) bool {
-			return sub.syncID == syncID
+	r.getShard(streamID).Compute(
+		streamID,
+		func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+			newValue = slices.DeleteFunc(oldValue, func(sub *Subscription) bool {
+				return sub.syncID == syncID
+			})
+			if len(newValue) == len(oldValue) {
+				// No change, keep the old value
+				return oldValue, xsync.CancelOp
+			}
+			return newValue, xsync.UpdateOp
 		},
 	)
-	shard.mu.Unlock()
 }
 
 // OnStreamDown is called when a stream goes down
 func (r *shardedRegistry) OnStreamDown(streamID StreamId) {
-	shard := r.getShard(streamID)
-
-	shard.mu.Lock()
-	delete(shard.subscriptionsByStream, streamID)
-	shard.mu.Unlock()
+	r.getShard(streamID).Delete(streamID)
 }
 
 // GetStats returns statistics about the registry
 func (r *shardedRegistry) GetStats() (streamCount, subscriptionCount int) {
-	r.globalSubsLock.RLock()
-	subscriptionCount = len(r.globalSubscriptions)
-	r.globalSubsLock.RUnlock()
+	subscriptionCount = r.globalSubscriptions.Size()
 
 	// Count streams across all shards
 	var totalStreams atomic.Int32
@@ -201,11 +200,9 @@ func (r *shardedRegistry) GetStats() (streamCount, subscriptionCount int) {
 
 	for _, shard := range r.shards {
 		wg.Add(1)
-		go func(s *registryShard) {
+		go func(s *xsync.Map[StreamId, []*Subscription]) {
 			defer wg.Done()
-			s.mu.RLock()
-			totalStreams.Add(int32(len(s.subscriptionsByStream)))
-			s.mu.RUnlock()
+			totalStreams.Add(int32(s.Size()))
 		}(shard)
 	}
 	wg.Wait()
@@ -215,24 +212,24 @@ func (r *shardedRegistry) GetStats() (streamCount, subscriptionCount int) {
 
 // CancelAll cancels all subscriptions with the given error
 func (r *shardedRegistry) CancelAll(err error) {
-	r.globalSubsLock.Lock()
-	for _, sub := range r.globalSubscriptions {
+	// Cancel all subscriptions
+	r.globalSubscriptions.Range(func(syncID string, sub *Subscription) bool {
 		if !sub.isClosed() {
 			sub.cancel(err)
 		}
-	}
-	r.globalSubscriptions = make(map[string]*Subscription)
-	r.globalSubsLock.Unlock()
+		return true
+	})
+
+	// Clear global subscriptions
+	r.globalSubscriptions.Clear()
 
 	// Clear all shards in parallel
 	var wg sync.WaitGroup
 	for _, shard := range r.shards {
 		wg.Add(1)
-		go func(s *registryShard) {
+		go func(s *xsync.Map[StreamId, []*Subscription]) {
 			defer wg.Done()
-			s.mu.Lock()
-			s.subscriptionsByStream = make(map[StreamId][]*Subscription)
-			s.mu.Unlock()
+			s.Clear()
 		}(shard)
 	}
 	wg.Wait()
@@ -247,22 +244,22 @@ func (r *shardedRegistry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
 	var wg sync.WaitGroup
 	for _, shard := range r.shards {
 		wg.Add(1)
-		go func(s *registryShard) {
+		go func(s *xsync.Map[StreamId, []*Subscription]) {
 			defer wg.Done()
 			localStreams := make([][]byte, 0)
 
-			s.mu.Lock()
-			for streamID, subs := range s.subscriptionsByStream {
+			// Find empty entries
+			s.Range(func(streamID StreamId, subs []*Subscription) bool {
 				if len(subs) == 0 {
 					localStreams = append(localStreams, streamID[:])
 				}
-			}
+				return true
+			})
 
 			// Clean up empty entries
 			for _, streamBytes := range localStreams {
-				delete(s.subscriptionsByStream, StreamId(streamBytes))
+				s.Delete(StreamId(streamBytes))
 			}
-			s.mu.Unlock()
 
 			// Add to global list
 			if len(localStreams) > 0 {
@@ -292,12 +289,10 @@ func (r *shardedRegistry) GetShardStats() []struct {
 	var wg sync.WaitGroup
 	for i, shard := range r.shards {
 		wg.Add(1)
-		go func(idx int, s *registryShard) {
+		go func(idx int, s *xsync.Map[StreamId, []*Subscription]) {
 			defer wg.Done()
-			s.mu.RLock()
 			stats[idx].ShardIndex = idx
-			stats[idx].StreamCount = len(s.subscriptionsByStream)
-			s.mu.RUnlock()
+			stats[idx].StreamCount = s.Size()
 		}(i, shard)
 	}
 	wg.Wait()

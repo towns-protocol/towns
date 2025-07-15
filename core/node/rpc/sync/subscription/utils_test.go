@@ -9,11 +9,13 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 // createTestSubscription creates a properly initialized Subscription for testing
 func createTestSubscription(syncID string) *Subscription {
 	ctx, cancel := context.WithCancelCause(context.Background())
+	log, _ := testutils.ZapJsonLogger()
 	return &Subscription{
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
@@ -22,6 +24,7 @@ func createTestSubscription(syncID string) *Subscription {
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
 		registry:            newShardedRegistry(32),
+		log:                 log,
 	}
 }
 
