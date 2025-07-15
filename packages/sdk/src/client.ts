@@ -229,10 +229,6 @@ type SendBlockchainTransactionOptions = {
 const defaultExcludeEventsInScrollback: ExclusionFilter = [
     {
         payload: 'memberPayload',
-        content: 'membership',
-    },
-    {
-        payload: 'memberPayload',
         content: 'keySolicitation',
     },
     {
