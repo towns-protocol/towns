@@ -383,6 +383,9 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 
 func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 	options := st.opts.nodeStartOpts
+	if options == nil {
+		options = &startOpts{}
+	}
 	if len(opts) > 0 {
 		options = &opts[0]
 	}
