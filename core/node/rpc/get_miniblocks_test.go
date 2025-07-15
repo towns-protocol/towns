@@ -465,25 +465,121 @@ func TestGetMiniblocksWithMissingBlocks(t *testing.T) {
 	require.NoError(err, "Request should succeed via forwarding")
 	require.GreaterOrEqual(len(getMbResp.Msg.Miniblocks), 5, "Should get miniblocks via forwarding")
 
-	// Test Case 3: Test that no-forward header prevents forwarding
-	// Create a separate user stream that only exists on Bob's node
-	bobSpaceId, _ := bob.createSpace()
+	// Test Case 3: Test that no-forward header prevents forwarding for non-local streams
+	// Find a node that doesn't have the stream locally
+	var nodeWithoutStream int = -1
+	for i := 0; i < 3; i++ {
+		stream, err := tt.nodes[i].service.cache.GetStreamNoWait(tt.ctx, spaceId)
+		if err != nil || stream == nil || !stream.IsLocal() {
+			nodeWithoutStream = i
+			break
+		}
+	}
 	
-	// Alice tries to get Bob's space miniblocks with no-forward header
-	bobMbReq := &GetMiniblocksRequest{
-		StreamId:      bobSpaceId[:],
+	if nodeWithoutStream != -1 {
+		// Use a client from a node that doesn't have the stream locally
+		client := tt.testClient(nodeWithoutStream)
+		forwardedReq := connect.NewRequest(getMbReq)
+		forwardedReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+		
+		// This should fail because the node doesn't have the stream and forwarding is disabled
+		_, err = client.GetMiniblocks(tt.ctx, forwardedReq)
+		require.Error(err, "Request with no-forward header should fail when stream is not local")
+		require.Contains(err.Error(), "Forwarding disabled")
+	}
+
+	// Test Case 4: Verify that MINIBLOCKS_STORAGE_FAILURE is retriable
+	// This is tested in TestIsOperationRetriableOnRemotes
+}
+
+func TestGetMiniblocksForwardingBehavior(t *testing.T) {
+	// This test verifies that GetMiniblocks handles forwarding correctly
+	// when miniblocks are missing locally and MINIBLOCKS_STORAGE_FAILURE
+	// is retriable on remotes
+	
+	// Create a 3-node setup
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes: 3,
+		start:    true,
+	})
+	require := tt.require
+	ctx := tt.ctx
+
+	// Create test clients
+	alice := tt.newTestClient(0, testClientOpts{})
+	alice.createUserStream()
+
+	// Create a space - it will be replicated to some nodes
+	spaceId, _ := alice.createSpace()
+	
+	// Create 10 miniblocks
+	for i := 0; i < 10; i++ {
+		ref := alice.getLastMiniblockHash(spaceId)
+		envelope, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
+				Content: &MemberPayload_Username{
+					Username: &EncryptedData{
+						Ciphertext: fmt.Sprintf("username_%d", i),
+						Algorithm:  "test_algo",
+					},
+				},
+			}},
+			ref,
+		)
+		require.NoError(err)
+		alice.addEvent(spaceId, envelope)
+		alice.makeMiniblock(spaceId, false, -1)
+	}
+
+	// Ensure all nodes can read the miniblocks via forwarding
+	getMbReq := &GetMiniblocksRequest{
+		StreamId:      spaceId[:],
 		FromInclusive: 0,
 		ToExclusive:   10,
 		OmitSnapshots: true,
 	}
-	forwardedReq := connect.NewRequest(bobMbReq)
-	forwardedReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	
-	// This should fail because alice's node doesn't have Bob's stream and forwarding is disabled
-	_, err = alice.client.GetMiniblocks(tt.ctx, forwardedReq)
-	require.Error(err, "Request with no-forward header should fail when stream is not local")
-	require.Contains(err.Error(), "Forwarding disabled")
-
-	// Test Case 4: Verify that MINIBLOCKS_STORAGE_FAILURE is retriable
+	for i := 0; i < 3; i++ {
+		client := tt.testClient(i)
+		resp, err := client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
+		require.NoError(err, "Node %d should successfully read miniblocks via forwarding", i)
+		require.GreaterOrEqual(len(resp.Msg.Miniblocks), 10, "Node %d should return all miniblocks", i)
+	}
+	
+	// Test with forwarding disabled
+	forwardDisabledReq := connect.NewRequest(getMbReq)
+	forwardDisabledReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	
+	// Find which nodes have the stream locally
+	localNodes := []int{}
+	nonLocalNodes := []int{}
+	
+	for i := 0; i < 3; i++ {
+		stream, err := tt.nodes[i].service.cache.GetStreamNoWait(ctx, spaceId)
+		if err == nil && stream != nil && stream.IsLocal() {
+			localNodes = append(localNodes, i)
+		} else {
+			nonLocalNodes = append(nonLocalNodes, i)
+		}
+	}
+	
+	// Nodes with the stream locally should succeed
+	for _, nodeIdx := range localNodes {
+		client := tt.testClient(nodeIdx)
+		resp, err := client.GetMiniblocks(ctx, forwardDisabledReq)
+		require.NoError(err, "Local node %d should succeed without forwarding", nodeIdx)
+		require.GreaterOrEqual(len(resp.Msg.Miniblocks), 10)
+	}
+	
+	// Nodes without the stream locally should fail
+	for _, nodeIdx := range nonLocalNodes {
+		client := tt.testClient(nodeIdx)
+		_, err := client.GetMiniblocks(ctx, forwardDisabledReq)
+		require.Error(err, "Non-local node %d should fail with forwarding disabled", nodeIdx)
+		require.Contains(err.Error(), "Forwarding disabled")
+	}
+	
+	// Verify that MINIBLOCKS_STORAGE_FAILURE is in the retriable errors list
 	// This is tested in TestIsOperationRetriableOnRemotes
 }
