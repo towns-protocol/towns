@@ -508,8 +508,13 @@ export async function createSpaceAndDefaultChannel(
 
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
-    await waitFor(() =>
-        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true),
+    await waitFor(
+        () =>
+            expect(
+                userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+                `waitFor ${spaceId} in ${userStreamId}`,
+            ).toBe(true),
+        { timeoutMS: 10000 },
     )
 
     const channelReturnVal = await client.createChannel(
@@ -519,8 +524,13 @@ export async function createSpaceAndDefaultChannel(
         channelId,
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
-    await waitFor(() =>
-        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true),
+    await waitFor(
+        () =>
+            expect(
+                userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+                `waitFor ${channelId} in ${userStreamId}`,
+            ).toBe(true),
+        { timeoutMS: 10000 },
     )
 
     return {
@@ -718,10 +728,19 @@ export async function expectUserCanJoin(
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
 
     const userStreamView = client.stream(client.userStreamId!)!.view
-    await waitFor(() => {
-        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
-        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
-    })
+    await waitFor(
+        () => {
+            expect(
+                userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+                `waitFor ${spaceId} in ${client.userStreamId}`,
+            ).toBe(true)
+            expect(
+                userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+                `waitFor ${channelId} in ${client.userStreamId}`,
+            ).toBe(true)
+        },
+        { timeoutMS: 10000 },
+    )
 }
 
 export async function everyoneMembershipStruct(
@@ -1544,7 +1563,14 @@ export async function expectUserCanJoinChannel(
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
     const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))).view
     // Wait for alice's user stream to have the join
-    await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
+    await waitFor(
+        () =>
+            expect(
+                userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+                `waitFor ${channelId} in ${client.userStreamId}`,
+            ).toBe(true),
+        { timeoutMS: 10000 },
+    )
 }
 
 export async function expectUserCannotJoinChannel(
