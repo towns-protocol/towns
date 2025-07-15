@@ -76,7 +76,7 @@ func NewAppRegistryStreamsTracker(
 	return tracker, nil
 }
 
-func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId) bool {
+func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, unused bool) bool {
 	streamType := streamId.Type()
 
 	return streamType == shared.STREAM_CHANNEL_BIN

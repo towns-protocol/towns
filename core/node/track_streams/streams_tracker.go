@@ -27,7 +27,7 @@ import (
 // must provide the logic for determining which streams to track, and for constructing application-specific
 // tracked stream views.
 type StreamFilter interface {
-	TrackStream(streamID shared.StreamId) bool
+	TrackStream(streamID shared.StreamId, isInit bool) bool
 
 	NewTrackedStream(
 		ctx context.Context,
@@ -139,7 +139,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId()) {
+			if !tracker.filter.TrackStream(stream.StreamId(), true) {
 				return true
 			}
 
@@ -224,7 +224,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	event *river.StreamState,
 ) {
 	streamID := event.GetStreamId()
-	if !tracker.filter.TrackStream(streamID) {
+	if !tracker.filter.TrackStream(streamID, false) {
 		return
 	}
 
@@ -239,7 +239,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	event *river.StreamState,
 ) {
 	streamID := event.GetStreamId()
-	if !tracker.filter.TrackStream(streamID) {
+	if !tracker.filter.TrackStream(streamID, false) {
 		return
 	}
 
@@ -247,10 +247,17 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
-	context.Context,
-	*river.StreamMiniblockUpdate,
+	ctx context.Context,
+	event *river.StreamMiniblockUpdate,
 ) {
-	// miniblocks are processed when a stream event with a block header is received for the stream
+	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+		return
+	}
+	if err := tracker.AddStream(event.GetStreamId()); err != nil {
+		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
+			"streamId", event.GetStreamId(),
+			"error", err)
+	}
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamPlacementUpdated(
