@@ -65,6 +65,11 @@ type (
 		LatestSnapshotMiniblockNum int64
 	}
 
+	MiniblockRange struct {
+		StartInclusive int64
+		EndInclusive   int64
+	}
+
 	StreamStorage interface {
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
@@ -241,6 +246,21 @@ type (
 
 		// DebugReadStreamStatistics returns statistics for debugging about the stream.
 		DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
+
+		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers 
+		// present in storage for the given stream, starting from the specified miniblock number.
+		// Each range contains StartInclusive and EndInclusive miniblock numbers.
+		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
+		//
+		// Example: If the stream has miniblocks [0,1,2,5,6,7,10] and startMiniblockNumberInclusive=0,
+		// the result would be: [{0,2}, {5,7}, {10,10}]
+		//
+		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
+		GetMiniblockNumberRanges(
+			ctx context.Context,
+			streamId StreamId,
+			startMiniblockNumberInclusive int64,
+		) ([]MiniblockRange, error)
 
 		// Close closes the storage.
 		Close(ctx context.Context)
