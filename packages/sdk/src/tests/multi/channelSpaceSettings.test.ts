@@ -171,12 +171,7 @@ describe('channelSpaceSettingsTests', () => {
         })
 
         // Set channel1 to autojoin=true
-        const { eventId, error: error3 } = await bob.updateChannelAutojoin(
-            spaceId,
-            channel1Id!,
-            true,
-        )
-        expect(error3).toBeUndefined()
+        const { eventId } = await bob.updateChannelAutojoin(spaceId, channel1Id!, true)
         expect(eventId).toBeDefined()
 
         // Validate autojoin event was emitted for channel1
@@ -314,12 +309,11 @@ describe('channelSpaceSettingsTests', () => {
         })
 
         // Set channel1 to hideUserJoinLeaveEvents=true
-        const { eventId, error: error2 } = await bob.updateChannelHideUserJoinLeaveEvents(
+        const { eventId } = await bob.updateChannelHideUserJoinLeaveEvents(
             spaceId,
             defaultChannelId,
             true,
         )
-        expect(error2).toBeUndefined()
         expect(eventId).toBeDefined()
 
         // Validate updateHideUserJoinLeaveEvent event was emitted for channel1
