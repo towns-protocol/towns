@@ -19,6 +19,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 )
 
+// starting point
 func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *ServerStartOpts) error {
 	var err error
 	s.startTime = time.Now()
@@ -64,6 +65,9 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 		return err
 	}
 
+	// load the list of nodes from the river registry contract
+	// and create a connection to each node
+	// also track changes to the node registry
 	registry, err := nodes.LoadNodeRegistry(
 		s.serverCtx,
 		s.registryContract,
@@ -81,6 +85,8 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 
 	var registries []nodes.NodeRegistry
 
+	// bypass httpClient limits, shard grpc node connections
+	// TODO: refactor to use a pool of httpClients
 	for range 10 {
 		httpClient, err := s.httpClientMaker(s.serverCtx, s.config)
 		if err != nil {
@@ -110,6 +116,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
 
+	// initialize http andl middleware handlers for the notification service
 	if err := s.initNotificationHandlers(); err != nil {
 		return err
 	}

@@ -61,6 +61,7 @@ func (tracker *NotificationsStreamsTracker) NewTrackedStream(
 }
 
 // TrackStream returns true if the given streamID must be tracked for notifications.
+// filter creation
 func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId) bool {
 	streamType := streamID.Type()
 

@@ -98,6 +98,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
 		tracker.OnStreamAllocated,
 		tracker.OnStreamAdded,
+		// new message, possibly on a cold stream
 		tracker.OnStreamLastMiniblockUpdated,
 		tracker.OnStreamPlacementUpdated,
 	); err != nil {
@@ -126,6 +127,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 	go tracker.multiSyncRunner.Run(ctx)
 
+	// go over all streams in the river registry
 	err := tracker.riverRegistry.ForAllStreams(
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
@@ -138,6 +140,8 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
+			// good place to filter cold streams
+			// get from the chain "give me all of the updates in the last X hours"
 			if !tracker.filter.TrackStream(stream.StreamId()) {
 				return true
 			}
