@@ -65,6 +65,11 @@ type (
 		LatestSnapshotMiniblockNum int64
 	}
 
+	MiniblockRange struct {
+		StartInclusive int64
+		EndInclusive   int64
+	}
+
 	StreamStorage interface {
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
@@ -220,14 +225,14 @@ type (
 
 		// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
 		// This is used for backfilling gaps in the miniblock sequence during reconciliation.
-		// 
+		//
 		// Requirements:
 		// - miniblocks must be continuous (no gaps)
 		// - all miniblock numbers must be less than the last miniblock in storage
 		// - overlapping miniblocks are skipped (not overwritten)
 		// - does not modify minipool
 		// - does not update latest_snapshot_miniblock
-		// 
+		//
 		// This function is designed for reconciliation processes that need to fill gaps
 		// in the miniblock sequence without affecting the current stream state.
 		WritePrecedingMiniblocks(
@@ -235,6 +240,21 @@ type (
 			streamId StreamId,
 			miniblocks []*WriteMiniblockData,
 		) error
+
+		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
+		// present in storage for the given stream, starting from the specified miniblock number.
+		// Each range contains StartInclusive and EndInclusive miniblock numbers.
+		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
+		//
+		// Example: If the stream has miniblocks [0,1,2,5,6,7,10] and startMiniblockNumberInclusive=0,
+		// the result would be: [{0,2}, {5,7}, {10,10}]
+		//
+		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
+		GetMiniblockNumberRanges(
+			ctx context.Context,
+			streamId StreamId,
+			startMiniblockNumberInclusive int64,
+		) ([]MiniblockRange, error)
 
 		// DebugReadStreamData returns details for debugging about the stream.
 		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)

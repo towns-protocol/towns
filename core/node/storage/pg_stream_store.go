@@ -2552,6 +2552,74 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 	return lowestMiniblock, err
 }
 
+// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers present in storage
+// for the given stream, starting from the specified miniblock number.
+func (s *PostgresStreamStore) GetMiniblockNumberRanges(
+	ctx context.Context,
+	streamId StreamId,
+	startMiniblockNumberInclusive int64,
+) ([]MiniblockRange, error) {
+	var ranges []MiniblockRange
+	err := s.txRunner(
+		ctx,
+		"GetMiniblockNumberRanges",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, startMiniblockNumberInclusive)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+		"startMiniblockNumberInclusive", startMiniblockNumberInclusive,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ranges, nil
+}
+
+func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	startMiniblockNumberInclusive int64,
+) ([]MiniblockRange, error) {
+	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+		return nil, err
+	}
+
+	// Use window function to identify continuous ranges efficiently
+	query := s.sqlForStream(`
+		SELECT 
+			MIN(seq_num) AS start_range,
+			MAX(seq_num) AS end_range
+		FROM (
+			SELECT 
+				seq_num,
+				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
+			FROM {{miniblocks}}
+			WHERE stream_id = $1 AND seq_num >= $2
+		) AS subquery
+		GROUP BY grp
+		ORDER BY start_range
+	`, streamId)
+
+	rows, err := tx.Query(ctx, query, streamId, startMiniblockNumberInclusive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Use pgx.CollectRows to scan all results at once
+	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[MiniblockRange])
+	if err != nil {
+		return nil, err
+	}
+
+	return ranges, nil
+}
+
 func parseAndCheckHasLegacySnapshot(data []byte) bool {
 	mb := &Miniblock{}
 	if err := proto.Unmarshal(data, mb); err != nil {
