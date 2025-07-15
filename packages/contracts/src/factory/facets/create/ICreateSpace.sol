@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
-
-// libraries
-
-// contracts
+import {IArchitectBase} from "../architect/IArchitect.sol";
 
 interface ICreateSpaceBase {
     /// @notice Action enum for unified space creation dispatch

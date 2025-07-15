@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -28,7 +28,7 @@ type remoteSyncer struct {
 	remoteAddr       common.Address
 	client           protocolconnect.StreamServiceClient
 	messages         *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams          sync.Map
+	streams          *xsync.Map[StreamId, struct{}]
 	responseStream   *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream      func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
@@ -92,6 +92,7 @@ func NewRemoteSyncer(
 		syncStreamCancel: syncStreamCancel,
 		client:           client,
 		messages:         messages,
+		streams:          xsync.NewMap[StreamId, struct{}](),
 		responseStream:   responseStream,
 		remoteAddr:       remoteAddr,
 		unsubStream:      unsubStream,
@@ -148,8 +149,7 @@ func (s *remoteSyncer) Run() {
 	if s.syncStreamCtx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
-		s.streams.Range(func(key, value any) bool {
-			streamID := key.(StreamId)
+		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
 			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
@@ -283,15 +283,9 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		return false, AsRiverError(err)
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
+	noMoreStreams := s.streams.Size() == 0
 	if noMoreStreams {
 		s.syncStreamCancel()
 	}
-
 	return noMoreStreams, nil
 }
