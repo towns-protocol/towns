@@ -1,8 +1,8 @@
 import TypedEmitter from 'typed-emitter'
 import { Permission } from '@towns-protocol/web3'
 import {
-    AddEventResponse_Error,
     EncryptedData,
+    Err,
     PlainMessage,
     SessionKeys,
     SessionKeysSchema,
@@ -26,6 +26,7 @@ import {
 import { create, fromJsonString } from '@bufbuild/protobuf'
 import { sortedArraysEqual } from './observable/utils'
 import { isDefined } from './check'
+import { errorContains } from './rpcInterceptors'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -355,7 +356,7 @@ export abstract class BaseDecryptionExtensions {
     ): Promise<void>
     public abstract sendKeyFulfillment(
         args: KeyFulfilmentData & { ephemeral?: boolean },
-    ): Promise<{ error?: AddEventResponse_Error }>
+    ): Promise<{ error?: unknown }>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
     public abstract shouldPauseTicking(): boolean
     /**
@@ -1058,7 +1059,10 @@ export abstract class BaseDecryptionExtensions {
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
         if (error) {
-            if (!error.msg.includes('DUPLICATE_EVENT') && !error.msg.includes('NOT_FOUND')) {
+            if (
+                !errorContains(error, Err.DUPLICATE_EVENT) &&
+                !errorContains(error, Err.NOT_FOUND)
+            ) {
                 // duplicate events are expected, we can ignore them, others are not
                 this.log.error('failed to send key fulfillment', error)
             }

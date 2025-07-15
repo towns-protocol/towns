@@ -13,11 +13,7 @@ import {
     KeySolicitationItem,
 } from './decryptionExtensions'
 
-import {
-    AddEventResponse_Error,
-    EncryptedData,
-    UserInboxPayload_GroupEncryptionSessions,
-} from '@towns-protocol/proto'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'
@@ -372,18 +368,21 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         deviceKey,
         sessionIds,
         ephemeral = false,
-    }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: AddEventResponse_Error }> {
+    }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: unknown }> {
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
             sessionIds: sessionIds,
         })
 
-        const { error } = await this.client.makeEventAndAddToStream(streamId, fulfillment, {
-            optional: true,
-            ephemeral,
-        })
-        return { error }
+        try {
+            await this.client.makeEventAndAddToStream(streamId, fulfillment, {
+                ephemeral,
+            })
+        } catch (err) {
+            return { error: err }
+        }
+        return {}
     }
 
     public async uploadDeviceKeys(): Promise<void> {
