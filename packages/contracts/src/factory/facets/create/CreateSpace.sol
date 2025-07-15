@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
+import {ICreateSpace} from "./ICreateSpace.sol";
 
 // libraries
-import {CreateSpaceLib} from "src/factory/facets/create/CreateSpaceLib.sol";
+import {CreateSpaceLib} from "./CreateSpaceLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
