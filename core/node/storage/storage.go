@@ -244,9 +244,9 @@ type (
 
 		// DebugDeleteMiniblocks deletes miniblocks from the storage in the given range.
 		// This is a debug function used for testing backwards reconciliation.
-		// fromInclusive and toInclusive specify the range of miniblock numbers to delete.
+		// fromInclusive and toExclusive specify the range of miniblock numbers to delete.
 		// WARNING: This function should only be used for testing purposes.
-		DebugDeleteMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toInclusive int64) error
+		DebugDeleteMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) error
 
 		// Close closes the storage.
 		Close(ctx context.Context)

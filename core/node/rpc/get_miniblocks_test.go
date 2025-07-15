@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -630,8 +631,8 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 
 	spaceId, spaceLastMb := alice.createSpace()
 
-	// Create 50 miniblocks
-	for i := 0; i < 50; i++ {
+	// Create 50 miniblocks total
+	for i := range 200 {
 		envelope, err := events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			&StreamEvent_MemberPayload{MemberPayload: &MemberPayload{
@@ -646,9 +647,12 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 		require.NoError(err)
 		alice.addEvent(spaceId, envelope)
 		spaceLastMb = alice.makeMiniblock(spaceId, false, spaceLastMb.Num)
+		if spaceLastMb.Num >= 49 {
+			break
+		}
 	}
-	require.GreaterOrEqual(spaceLastMb.Num, int64(50))
-	t.Logf("Created %d miniblocks, last miniblock num: %d", 50, spaceLastMb.Num)
+	require.Equal(int64(49), spaceLastMb.Num)
+	t.Logf("Created 50 miniblocks total, last miniblock num: %d", spaceLastMb.Num)
 
 	// Verify we can read all miniblocks before deletion
 	getMbReq := &GetMiniblocksRequest{
@@ -673,13 +677,11 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 			nodesWithStream = append(nodesWithStream, i)
 
 			if len(nodesWithStream) == 2 {
-				// Delete miniblocks 0-25 from the first replica
-				t.Logf("Deleting miniblocks 0-25 from node %d", i)
+				t.Logf("Deleting miniblocks 0-24 from node %d", i)
 				err := tt.nodes[i].service.storage.DebugDeleteMiniblocks(ctx, spaceId, 0, 25)
 				require.NoError(err)
 			} else if len(nodesWithStream) == 3 {
-				// Delete miniblocks 10-30 from the second replica
-				t.Logf("Deleting miniblocks 10-30 from node %d", i)
+				t.Logf("Deleting miniblocks 10-29 from node %d", i)
 				err := tt.nodes[i].service.storage.DebugDeleteMiniblocks(ctx, spaceId, 10, 30)
 				require.NoError(err)
 			}
@@ -691,117 +693,71 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 	require.NotEqual(nodeWithoutStream, -1)
 	allNodes := append(nodesWithStream, nodeWithoutStream)
 
-	// Let's create clients in order: 0 - all minibocks, 1 - 0-25 deleted, 2 - 10-30 deleted, 3 - no stream
-	clientDescription := []string{"all minibocks", "0-25 deleted", "10-30 deleted", "no stream"}
+	// Let's create clients in order: 0 - all minibocks, 1 - 0-24 deleted, 2 - 10-29 deleted, 3 - no stream
+	clientDescription := []string{"all minibocks", "0-24 deleted", "10-29 deleted", "no stream"}
 	streamServiceClients := make([]protocolconnect.StreamServiceClient, tt.opts.numNodes)
 	for i := range tt.opts.numNodes {
 		streamServiceClients[i] = tt.testClient(allNodes[i])
 	}
 
-	// Test reading various ranges with and without forwarding
-	// Test 1: Read range 0-10 from all nodes - should work via forwarding
-	lowRangeReq := &GetMiniblocksRequest{
-		StreamId:      spaceId[:],
-		FromInclusive: 0,
-		ToExclusive:   10,
-		OmitSnapshots: true,
+	for _, test := range []struct {
+		fromInclusive    int64
+		toExclusive      int64
+		miniblocks       int
+		noForwardSuccess []int
+	}{
+		{0, 10, 10, []int{0, 2}},
+		{10, 25, 15, []int{0}},
+		{10, 30, 20, []int{0}},
+		{25, 35, 10, []int{0, 1}},
+		{30, 60, 20, []int{0, 1, 2}},
+		{0, 60, 50, []int{0}},
+	} {
+		req := &GetMiniblocksRequest{
+			StreamId:      spaceId[:],
+			FromInclusive: test.fromInclusive,
+			ToExclusive:   test.toExclusive,
+		}
+		for i, c := range streamServiceClients {
+			t.Logf(
+				"Testing client %d '%s' with range %d-%d, expected %d miniblocks, no-forward success: %v",
+				i,
+				clientDescription[i],
+				test.fromInclusive,
+				test.toExclusive,
+				test.miniblocks,
+				test.noForwardSuccess,
+			)
+			resp, err := c.GetMiniblocks(ctx, connect.NewRequest(req))
+			require.NoError(err, "Node %s should successfully read low range via forwarding", clientDescription[i])
+			require.Len(
+				resp.Msg.Miniblocks,
+				test.miniblocks,
+				"Node %s should return %d miniblocks",
+				clientDescription[i],
+				test.miniblocks,
+			)
+
+			// Same with no-forward header
+			noForwardReq := connect.NewRequest(req)
+			noForwardReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+			resp, err = c.GetMiniblocks(ctx, noForwardReq)
+			if slices.Contains(test.noForwardSuccess, i) {
+				require.NoError(
+					err,
+					"Node %s should successfully read low range without forwarding",
+					clientDescription[i],
+				)
+				require.Len(
+					resp.Msg.Miniblocks,
+					test.miniblocks,
+					"Node %s should return %d miniblocks",
+					clientDescription[i],
+					test.miniblocks,
+				)
+			} else {
+				require.Error(err, "Node %s should fail with forwarding disabled", clientDescription[i])
+			}
+		}
 	}
-	for i, c := range streamServiceClients {
-		t.Logf("Testing client %s", clientDescription[i])
-		resp, err := c.GetMiniblocks(ctx, connect.NewRequest(lowRangeReq))
-		require.NoError(err, "Node %s should successfully read low range via forwarding", clientDescription[i])
-		require.Len(resp.Msg.Miniblocks, 10, "Node %s should return 10 miniblocks", clientDescription[i])
-	}
-
-	// // Test reading various ranges with and without forwarding
-	// // Test 1: Read range 0-10 from all nodes - should work via forwarding
-	// lowRangeReq := &GetMiniblocksRequest{
-	// 	StreamId:      spaceId[:],
-	// 	FromInclusive: 0,
-	// 	ToExclusive:   10,
-	// 	OmitSnapshots: true,
-	// }
-
-	// // Test 2: Read range 15-25 - should work from all nodes
-	// midRangeReq := &GetMiniblocksRequest{
-	// 	StreamId:      spaceId[:],
-	// 	FromInclusive: 15,
-	// 	ToExclusive:   25,
-	// 	OmitSnapshots: true,
-	// }
-
-	// for i := 0; i < 4; i++ {
-	// 	client := tt.testClient(i)
-	// 	resp, err := client.GetMiniblocks(ctx, connect.NewRequest(midRangeReq))
-	// 	require.NoError(err, "Node %d should successfully read mid range via forwarding", i)
-	// 	require.Greater(len(resp.Msg.Miniblocks), 0, "Node %d should return some miniblocks", i)
-	// }
-
-	// // Test 3: Read range 35-50 - should work from all nodes (no gaps in this range)
-	// highRangeReq := &GetMiniblocksRequest{
-	// 	StreamId:      spaceId[:],
-	// 	FromInclusive: 35,
-	// 	ToExclusive:   50,
-	// 	OmitSnapshots: true,
-	// }
-
-	// for i := 0; i < 4; i++ {
-	// 	client := tt.testClient(i)
-	// 	resp, err := client.GetMiniblocks(ctx, connect.NewRequest(highRangeReq))
-	// 	require.NoError(err, "Node %d should successfully read high range", i)
-	// 	require.Greater(len(resp.Msg.Miniblocks), 0, "Node %d should return some miniblocks", i)
-	// }
-
-	// // Test 4: Test with forwarding disabled - nodes with gaps should fail
-	// forwardDisabledLowReq := connect.NewRequest(lowRangeReq)
-	// forwardDisabledLowReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
-
-	// forwardDisabledMidReq := connect.NewRequest(midRangeReq)
-	// forwardDisabledMidReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
-
-	// forwardDisabledHighReq := connect.NewRequest(highRangeReq)
-	// forwardDisabledHighReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
-
-	// // Check each replica node
-	// for i, nodeIdx := range nodesWithStream {
-	// 	client := tt.testClient(nodeIdx)
-
-	// 	// Low range (0-10) with no forwarding
-	// 	_, err := client.GetMiniblocks(ctx, forwardDisabledLowReq)
-	// 	if i == 0 {
-	// 		// First replica has gaps in 0-25
-	// 		require.Error(err, "Replica %d should fail for range 0-10 due to gaps", i)
-	// 		require.Contains(err.Error(), "MINIBLOCKS_STORAGE_FAILURE")
-	// 	} else if i == 1 {
-	// 		// Second replica has gaps in 10-30
-	// 		require.NoError(err, "Replica %d should succeed for range 0-10", i)
-	// 	} else {
-	// 		// Third replica has all miniblocks
-	// 		require.NoError(err, "Replica %d should succeed for range 0-10", i)
-	// 	}
-
-	// 	// Mid range (15-25) with no forwarding
-	// 	_, err = client.GetMiniblocks(ctx, forwardDisabledMidReq)
-	// 	if i == 0 || i == 1 {
-	// 		// Both first and second replicas have gaps in this range
-	// 		require.Error(err, "Replica %d should fail for range 15-25 due to gaps", i)
-	// 		require.Contains(err.Error(), "MINIBLOCKS_STORAGE_FAILURE")
-	// 	} else {
-	// 		// Third replica has all miniblocks
-	// 		require.NoError(err, "Replica %d should succeed for range 15-25", i)
-	// 	}
-
-	// 	// High range (35-50) with no forwarding - all should succeed
-	// 	resp, err := client.GetMiniblocks(ctx, forwardDisabledHighReq)
-	// 	require.NoError(err, "Replica %d should succeed for range 35-50", i)
-	// 	require.Greater(len(resp.Msg.Miniblocks), 0)
-	// }
-
-	// // Test non-replica node with forwarding disabled - should fail
-	// if nodeWithoutStream != -1 {
-	// 	client := tt.testClient(nodeWithoutStream)
-	// 	_, err := client.GetMiniblocks(ctx, forwardDisabledHighReq)
-	// 	require.Error(err, "Non-replica node should fail with forwarding disabled")
-	// 	require.Contains(err.Error(), "Forwarding disabled")
-	// }
 }
