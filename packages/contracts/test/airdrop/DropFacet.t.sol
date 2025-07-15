@@ -225,19 +225,117 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     // getActiveClaimConditionId
     function test_getActiveClaimConditionId() external givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3) {
         DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](3);
-        conditions[0] = _createClaimCondition(block.timestamp - 100, root, TOTAL_TOKEN_AMOUNT); // expired
-        conditions[1] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT); // active
+        conditions[0] = _createClaimCondition(block.timestamp - 100, root, TOTAL_TOKEN_AMOUNT); // current
+        conditions[1] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT); // next
         conditions[2] = _createClaimCondition(block.timestamp + 100, root, TOTAL_TOKEN_AMOUNT); // future
 
         vm.prank(deployer);
         dropFacet.setClaimConditions(conditions);
 
-        uint256 id = dropFacet.getActiveClaimConditionId();
+        uint256 id = dropFacet.getActiveClaimConditionId(); // fetch the boundary condition
         assertEq(id, 1);
 
         vm.warp(block.timestamp + 100);
         id = dropFacet.getActiveClaimConditionId();
         assertEq(id, 2);
+    }
+
+    function test_getActiveClaimConditionId_extended()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3)
+    {
+        // Test 1: No claim conditions - should revert without underflow
+        vm.expectRevert(DropFacet__NoActiveClaimCondition.selector);
+        dropFacet.getActiveClaimConditionId();
+
+        // Test 2: Expired conditions - should revert without underflow
+        DropGroup.ClaimCondition[] memory expiredConditions = new DropGroup.ClaimCondition[](2);
+        expiredConditions[0] = _createClaimCondition(
+            block.timestamp - 200,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        expiredConditions[0].endTimestamp = uint40(block.timestamp - 100); // Expired
+        expiredConditions[1] = _createClaimCondition(
+            block.timestamp - 100,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        expiredConditions[1].endTimestamp = uint40(block.timestamp - 50); // Also expired
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(expiredConditions);
+
+        vm.expectRevert(DropFacet__NoActiveClaimCondition.selector);
+        dropFacet.getActiveClaimConditionId();
+
+        // Test 3: Future conditions - should revert without underflow
+        DropGroup.ClaimCondition[] memory futureConditions = new DropGroup.ClaimCondition[](2);
+        futureConditions[0] = _createClaimCondition(
+            block.timestamp + 100,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        futureConditions[1] = _createClaimCondition(
+            block.timestamp + 200,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(futureConditions);
+
+        vm.expectRevert(DropFacet__NoActiveClaimCondition.selector);
+        dropFacet.getActiveClaimConditionId();
+
+        // Test 4: Valid active condition - should return correct ID
+        DropGroup.ClaimCondition[] memory validConditions = new DropGroup.ClaimCondition[](3);
+        validConditions[0] = _createClaimCondition(block.timestamp - 100, root, TOTAL_TOKEN_AMOUNT);
+        validConditions[0].endTimestamp = uint40(block.timestamp - 50); // Expired
+        validConditions[1] = _createClaimCondition(block.timestamp - 50, root, TOTAL_TOKEN_AMOUNT); // Active (no end time)
+        validConditions[2] = _createClaimCondition(block.timestamp + 100, root, TOTAL_TOKEN_AMOUNT); // Future
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(validConditions);
+
+        uint256 activeConditionId = dropFacet.getActiveClaimConditionId();
+        assertEq(activeConditionId, 1, "Should return the active condition ID");
+
+        // Test 5: Multiple active conditions - should return the latest one
+        DropGroup.ClaimCondition[] memory multipleActiveConditions = new DropGroup.ClaimCondition[](
+            3
+        );
+        multipleActiveConditions[0] = _createClaimCondition(
+            block.timestamp - 100,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        multipleActiveConditions[1] = _createClaimCondition(
+            block.timestamp - 50,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        multipleActiveConditions[2] = _createClaimCondition(
+            block.timestamp - 25,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(multipleActiveConditions);
+
+        uint256 latestActiveId = dropFacet.getActiveClaimConditionId();
+        assertEq(latestActiveId, 2, "Should return the latest active condition ID");
+
+        // Test 6: Edge case - single condition at boundary
+        DropGroup.ClaimCondition[] memory boundaryCondition = new DropGroup.ClaimCondition[](1);
+        boundaryCondition[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(boundaryCondition);
+
+        uint256 boundaryId = dropFacet.getActiveClaimConditionId();
+        assertEq(boundaryId, 0, "Should handle boundary condition correctly");
     }
 
     function test_getActiveClaimConditionId_revertWhen_noActiveClaimCondition() external {

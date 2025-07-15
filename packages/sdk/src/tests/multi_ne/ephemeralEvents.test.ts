@@ -139,6 +139,7 @@ describe('ephemeralEvents', () => {
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
 
         expect(ephemeralSolicitations).toEqual([true])
+        await waitFor(() => expect(ephemeralFulfillments.length).toEqual(1))
         expect(ephemeralFulfillments).toEqual([true])
     })
 })
