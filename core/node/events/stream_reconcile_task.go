@@ -47,7 +47,9 @@ func (s *StreamCache) submitToPool(
 	pool *workerpool.WorkerPool,
 	task func(),
 ) {
-	if !s.stopped.Load() {
+	s.stoppedMu.RLock()
+	defer s.stoppedMu.RUnlock()
+	if !s.stopped {
 		pool.Submit(task)
 	}
 }
