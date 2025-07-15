@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"slices"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -73,10 +72,9 @@ type StreamCache struct {
 	loadStreamRecordCounter           *infra.StatusCounterVec
 	scheduledGetRecordTasksGauge      prometheus.Gauge
 	scheduledReconciliationTasksGauge prometheus.Gauge
-	retryableReconciliationTasksGauge  prometheus.Gauge
+	retryableReconciliationTasksGauge prometheus.Gauge
 
-	stoppedMu sync.RWMutex
-	stopped   bool
+	stopped atomic.Bool
 
 	scheduledGetRecordTasks      *xsync.Map[StreamId, bool]
 	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
@@ -137,7 +135,7 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			"Number of stream record loads",
 		),
 		chainConfig:                  params.ChainConfig,
-		onlineReconcileWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		onlineReconcileWorkerPool:    workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 		retryableReconciliationTasks: newRetryableReconciliationTasks(
@@ -204,9 +202,7 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 
 	go func() {
 		<-ctx.Done()
-		s.stoppedMu.Lock()
-		s.stopped = true
-		s.stoppedMu.Unlock()
+		s.stopped.Store(true)
 		s.onlineReconcileWorkerPool.Stop()
 		initialReconcileWorkerPool.Stop()
 	}()
