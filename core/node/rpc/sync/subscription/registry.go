@@ -1,10 +1,10 @@
 package subscription
 
 import (
-	"hash/fnv"
 	"slices"
 	"sync"
 	"sync/atomic"
+	"unsafe"
 
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -76,9 +76,9 @@ func newShardedRegistry(shardCount uint32) *shardedRegistry {
 
 // hashStreamID returns a hash of the stream ID for sharding
 func hashStreamID(streamID StreamId) uint32 {
-	h := fnv.New32a()
-	h.Write(streamID[:])
-	return h.Sum32()
+	// Cast to uint32 slice for faster access - StreamId is always 32 bytes
+	data := (*[8]uint32)(unsafe.Pointer(&streamID[0]))
+	return data[0] ^ data[1] ^ data[2] ^ data[3] ^ data[4] ^ data[5] ^ data[6] ^ data[7]
 }
 
 // getShard returns the shard for a given stream ID
