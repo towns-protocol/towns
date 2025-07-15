@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -74,7 +75,8 @@ type StreamCache struct {
 	scheduledReconciliationTasksGauge prometheus.Gauge
 	retryableReconciliationTasksGauge prometheus.Gauge
 
-	stopped atomic.Bool
+	stoppedMu sync.RWMutex
+	stopped   bool
 
 	scheduledGetRecordTasks      *xsync.Map[StreamId, bool]
 	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
@@ -202,7 +204,9 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 
 	go func() {
 		<-ctx.Done()
-		s.stopped.Store(true)
+		s.stoppedMu.Lock()
+		s.stopped = true
+		s.stoppedMu.Unlock()
 		s.onlineReconcileWorkerPool.Stop()
 		initialReconcileWorkerPool.Stop()
 	}()

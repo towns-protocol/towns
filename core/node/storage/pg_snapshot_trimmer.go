@@ -7,7 +7,6 @@ import (
 
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
-	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -43,7 +42,8 @@ type snapshotTrimmer struct {
 	workerPool *workerpool.WorkerPool
 
 	// Task tracking
-	pendingTasks *xsync.Map[StreamId, struct{}]
+	pendingTasksLock sync.Mutex
+	pendingTasks     map[StreamId]struct{}
 
 	stopOnce sync.Once
 	stop     chan struct{}
@@ -63,7 +63,7 @@ func newSnapshotTrimmer(
 		config:       config,
 		minKeep:      minKeep,
 		workerPool:   workerPool,
-		pendingTasks: xsync.NewMap[StreamId, struct{}](),
+		pendingTasks: make(map[StreamId]struct{}),
 		stop:         make(chan struct{}),
 	}
 
@@ -113,9 +113,13 @@ func (st *snapshotTrimmer) tryScheduleTrimming(streamId StreamId) {
 
 // scheduleTrimTask schedules a new trim task for a stream
 func (st *snapshotTrimmer) scheduleTrimTask(streamId StreamId, retentionInterval int64) {
-	if _, exists := st.pendingTasks.LoadOrStore(streamId, struct{}{}); exists {
+	st.pendingTasksLock.Lock()
+	if _, exists := st.pendingTasks[streamId]; exists {
+		st.pendingTasksLock.Unlock()
 		return
 	}
+	st.pendingTasks[streamId] = struct{}{}
+	st.pendingTasksLock.Unlock()
 
 	// Create a new task
 	task := snapshotTrimTask{
@@ -159,7 +163,12 @@ func (st *snapshotTrimmer) processTrimTaskTx(
 	tx pgx.Tx,
 	task snapshotTrimTask,
 ) error {
-	defer st.pendingTasks.Delete(task.streamId)
+	defer func() {
+		// Delete the pending task mark
+		st.pendingTasksLock.Lock()
+		delete(st.pendingTasks, task.streamId)
+		st.pendingTasksLock.Unlock()
+	}()
 
 	// Get the last snapshot miniblock number
 	lastSnapshotMiniblock, err := st.store.lockStream(ctx, tx, task.streamId, true)
