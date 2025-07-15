@@ -60,7 +60,10 @@
         "unstake",
         "incentivizes",
         "Merkle",
-        "repudiable"
+        "merkle",
+        "repudiable",
+        "FINMA",
+        "permissioned"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [
