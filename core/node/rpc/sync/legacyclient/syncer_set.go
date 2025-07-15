@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -46,7 +47,7 @@ type (
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer map[StreamId]client.StreamsSyncer
 		// stopped holds an indication if the sync operation is stopped
-		stopped bool
+		stopped atomic.Bool
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -81,11 +82,7 @@ func NewSyncers(
 
 func (ss *SyncerSet) Run() {
 	<-ss.ctx.Done() // sync cancelled by client, client conn dropped or client send buffer full
-
-	ss.muSyncers.Lock()
-	ss.stopped = true
-	ss.muSyncers.Unlock()
-
+	ss.stopped.Store(true)
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
@@ -166,12 +163,12 @@ func (ss *SyncerSet) Modify(ctx context.Context, req client.ModifyRequest) error
 
 // modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) modify(ctx context.Context, req client.ModifyRequest) error {
-	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
-
-	if len(req.ToAdd) > 0 && ss.stopped {
+	if len(req.ToAdd) > 0 && ss.stopped.Load() {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
 	}
+
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
 
