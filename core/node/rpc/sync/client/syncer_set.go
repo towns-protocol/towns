@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -58,10 +59,12 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// syncerTasks is a wait group for running background StreamsSyncers that is used to ensure all syncers stopped
 		syncerTasks sync.WaitGroup
+		// muSyncers guards syncers map
+		muSyncers deadlock.Mutex
 		// stopped holds an indication if the sync operation is stopped
 		stopped atomic.Bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
-		syncers *xsync.Map[common.Address, StreamsSyncer]
+		syncers map[common.Address]StreamsSyncer
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// streamLocks provides per-stream locking
@@ -91,8 +94,8 @@ func NewSyncers(
 		streamCache:      streamCache,
 		nodeRegistry:     nodeRegistry,
 		localNodeAddress: localNodeAddress,
+		syncers:          make(map[common.Address]StreamsSyncer),
 		messages:         dynmsgbuf.NewDynamicBufferWithSize[*SyncStreamsResponse](commonBufferSize),
-		syncers:          xsync.NewMap[common.Address, StreamsSyncer](),
 		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
 		streamLocks:      xsync.NewMap[StreamId, *sync.Mutex](),
 		otelTracer:       otelTracer,
@@ -560,7 +563,9 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 
 	ss.streamID2Syncer.Delete(streamID)
 	if syncerStopped {
-		ss.syncers.Delete(syncer.Address())
+		ss.muSyncers.Lock()
+		delete(ss.syncers, syncer.Address())
+		ss.muSyncers.Unlock()
 	}
 
 	return nil
@@ -613,7 +618,10 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 // getOrCreateSyncer returns the syncer for the given node address.
 // If the syncer does not exist, it creates a new one and starts it.
 func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSyncer, error) {
-	if syncer, found := ss.syncers.Load(nodeAddress); found {
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
+
+	if syncer, found := ss.syncers[nodeAddress]; found {
 		return syncer, nil
 	}
 
@@ -654,12 +662,14 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		return nil, RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	ss.syncers.Store(nodeAddress, syncer)
+	ss.syncers[nodeAddress] = syncer
 	ss.syncerTasks.Add(1)
 	go func() {
 		syncer.Run()
 		ss.syncerTasks.Done()
-		ss.syncers.Delete(syncer.Address())
+		ss.muSyncers.Lock()
+		delete(ss.syncers, syncer.Address())
+		ss.muSyncers.Unlock()
 	}()
 
 	return syncer, nil
