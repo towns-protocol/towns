@@ -18,7 +18,8 @@ import (
 // StreamsTracker functionality with notifications-specific data structures.
 type NotificationsStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
-	storage UserPreferencesStore
+	storage       UserPreferencesStore
+	onChainConfig crypto.OnChainConfiguration
 }
 
 var _ track_streams.StreamFilter = (*NotificationsStreamsTracker)(nil)
@@ -35,7 +36,8 @@ func NewNotificationsStreamsTracker(
 	trackingConfig config.StreamTrackingConfig,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &NotificationsStreamsTracker{
-		storage: storage,
+		onChainConfig: onChainConfig,
+		storage:       storage,
 	}
 	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory, trackingConfig); err != nil {
 		return nil, err
@@ -60,9 +62,19 @@ func (tracker *NotificationsStreamsTracker) NewTrackedStream(
 	)
 }
 
+func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
+	settings := tracker.onChainConfig.Get()
+	return settings.NotificationsColdStreamsEnabled == 1
+}
+
 // TrackStream returns true if the given streamID must be tracked for notifications.
-func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId) bool {
+func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool) bool {
 	streamType := streamID.Type()
+
+	// When cold streams are enabled, only track user settings streams on init
+	if isInit && tracker.coldStreamsEnabled() {
+		return streamType == shared.STREAM_USER_SETTINGS_BIN
+	}
 
 	return streamType == shared.STREAM_DM_CHANNEL_BIN ||
 		streamType == shared.STREAM_GDM_CHANNEL_BIN ||

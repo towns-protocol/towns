@@ -58,6 +58,8 @@ const (
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
 	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
+	NotificationsColdStreamsEnabledConfigKey                 = "notifications.coldStreamsEnabled"
+
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
@@ -159,6 +161,10 @@ type OnChainSettings struct {
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThreshold uint64 `mapstructure:"stream.backwardsReconciliationThreshold"`
+
+	// NotificationsColdStreamsEnabled indicates whether cold streams are enabled for notifications.
+	// Options: 1 means enabled, 0 means disabled.
+	NotificationsColdStreamsEnabled uint64 `mapstructure:"notifications.coldStreamsEnabled"`
 }
 
 type XChainSettings struct {
@@ -274,6 +280,10 @@ func DefaultOnChainSettings() *OnChainSettings {
 		},
 
 		ServerEnableNode2NodeAuth: 0,
+
+		ServerEnableNode2NodeAuth: 0,
+
+		NotificationsColdStreamsEnabled: 0,
 
 		StreamBackwardsReconciliationThreshold: 50,
 	}
