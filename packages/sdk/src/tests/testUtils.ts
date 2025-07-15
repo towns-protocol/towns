@@ -38,7 +38,7 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '../decryptionExtensions'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
-import { RiverDbManager } from '../riverDbManager'
+import { createCryptoStore } from '@towns-protocol/encryption'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
 import assert from 'assert'
 import { forEachRight } from 'lodash-es'
@@ -292,7 +292,7 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const persistenceDbName = `persistence-${userId}${deviceId}`
 
     // create a new client with store(s)
-    const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
+    const cryptoStore = createCryptoStore(dbName, userId)
     const rpcClient = await makeTestRpcClient()
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,

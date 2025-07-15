@@ -10,13 +10,13 @@ import {
     AppRegistryService,
     Client,
     MockEntitlementsDelegate,
-    RiverDbManager,
     getAppRegistryUrl,
     makeBaseProvider,
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
 } from '@towns-protocol/sdk'
+import { createCryptoStore } from '@towns-protocol/encryption'
 import { AppPrivateDataSchema } from '@towns-protocol/proto'
 import { create, toBinary } from '@bufbuild/protobuf'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
@@ -234,7 +234,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 makeRiverProvider(riverConfig),
                 riverConfig.river.chainConfig,
             )
-            const cryptoStore = RiverDbManager.getCryptoDb(appAddress)
+            const cryptoStore = createCryptoStore(`database-${appAddress}`, appAddress)
             const botClient = new Client(
                 signerContext,
                 rpcClient,
