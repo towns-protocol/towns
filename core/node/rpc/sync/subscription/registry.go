@@ -102,7 +102,9 @@ func (r *shardedRegistry) RemoveSubscription(syncID string) {
 						if !loaded {
 							return nil, xsync.CancelOp
 						}
-						newValue = slices.DeleteFunc(oldValue, func(sub *Subscription) bool {
+						// Create a copy of the slice before modifying to prevent race conditions
+						copied := slices.Clone(oldValue)
+						newValue = slices.DeleteFunc(copied, func(sub *Subscription) bool {
 							return sub.syncID == syncID
 						})
 						if len(newValue) == len(oldValue) {
@@ -173,7 +175,9 @@ func (r *shardedRegistry) RemoveStreamFromSubscription(syncID string, streamID S
 	r.getShard(streamID).Compute(
 		streamID,
 		func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
-			newValue = slices.DeleteFunc(oldValue, func(sub *Subscription) bool {
+			// Create a copy of the slice before modifying to prevent race conditions
+			copied := slices.Clone(oldValue)
+			newValue = slices.DeleteFunc(copied, func(sub *Subscription) bool {
 				return sub.syncID == syncID
 			})
 			if len(newValue) == len(oldValue) {
