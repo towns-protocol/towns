@@ -151,6 +151,10 @@ func TestIsOperationRetriableOnRemotes(t *testing.T) {
 			err:        RiverError(protocol.Err_BUFFER_FULL, "buffer full"),
 			isRetriable: true,
 		},
+		"retriable error - MINIBLOCKS_NOT_FOUND": {
+			err:        RiverError(protocol.Err_MINIBLOCKS_NOT_FOUND, "miniblocks not found"),
+			isRetriable: true,
+		},
 		"non-retriable error - INVALID_ARGUMENT": {
 			err:        RiverError(protocol.Err_INVALID_ARGUMENT, "invalid argument"),
 			isRetriable: false,

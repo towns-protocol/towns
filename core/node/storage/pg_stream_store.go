@@ -1249,7 +1249,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	if _, err = pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seqNum, &snapshot}, func() error {
 		// Check if the first miniblock matches the requested fromInclusive
 		if firstRow && int64(seqNum) != fromInclusive {
-			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Missing miniblocks at start of range").
+			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Missing miniblocks at start of range").
 				Tag("RequestedStart", fromInclusive).
 				Tag("ActualStart", seqNum).
 				Tag("streamId", streamId)
@@ -1258,7 +1258,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 		
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
-			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
+			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seqNum).
 				Tag("ExpectedBlockNumber", prevSeqNum+1).
 				Tag("streamId", streamId)
@@ -1276,7 +1276,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 
 	// Check if we got any miniblocks at all when we expected some
 	if len(miniblocks) == 0 && fromInclusive < toExclusive {
-		return nil, RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "No miniblocks found in requested range").
+		return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "No miniblocks found in requested range").
 			Tag("fromInclusive", fromInclusive).
 			Tag("toExclusive", toExclusive).
 			Tag("streamId", streamId)
