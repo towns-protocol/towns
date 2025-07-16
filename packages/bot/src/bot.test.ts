@@ -57,8 +57,8 @@ describe('Bot', { sequential: true }, () => {
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
 
-    const BOT_NAME = 'bot-witness-of-infinity'
-    const BOT_DESCRIPTION = 'I shall witness everything'
+    const BOT_NAME = `bot-${crypto.randomUUID()}`
+    const BOT_DESCRIPTION = 'Beep boop boop beep'
 
     let bot: Bot
     let spaceId: string
@@ -77,6 +77,12 @@ describe('Bot', { sequential: true }, () => {
         await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
+        await bobClient.riverConnection.call((client) =>
+            Promise.all([
+                client.debugForceMakeMiniblock(spaceId, { forceSnapshot: true }),
+                client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
+            ]),
+        )
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -508,6 +514,11 @@ describe('Bot', { sequential: true }, () => {
         await bobDefaultChannel.adminRedact(messageId)
         await waitFor(() => receivedEventRevokeEvents.length > 0)
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
+    })
+
+    it.only('should be able to get channel inception event', async () => {
+        const inception = await bot.snapshot.getChannelInception(channelId)
+        expect(inception?.spaceId).toBeDefined()
     })
 
     it.fails(
