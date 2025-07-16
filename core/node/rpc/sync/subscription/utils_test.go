@@ -64,7 +64,7 @@ func (m *mockRegistry) OnStreamDown(streamID StreamId) {
 	m.Called(streamID)
 }
 
-func (m *mockRegistry) CleanupUnusedStreams(cb func([][]byte)) {
+func (m *mockRegistry) CleanupUnusedStreams(cb func(StreamId)) {
 	m.Called(cb)
 }
 

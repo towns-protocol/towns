@@ -16,7 +16,7 @@ type Registry interface {
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
 	RemoveStreamFromSubscription(syncID string, streamID StreamId)
 	OnStreamDown(streamID StreamId)
-	CleanupUnusedStreams(func(streamIds [][]byte))
+	CleanupUnusedStreams(cb func(streamID StreamId))
 	GetStats() (streamCount, subscriptionCount int)
 	CancelAll(err error)
 }
@@ -161,21 +161,21 @@ func (r *registry) CancelAll(err error) {
 }
 
 // CleanupUnusedStreams removes unused streams from the syncer set.
-// FIXME: In a very rare case, it might cause a race condition.
-func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
+func (r *registry) CleanupUnusedStreams(cb func(streamID StreamId)) {
 	streamIds := make([][]byte, 0)
 	r.subscriptionsByStream.Range(func(streamID StreamId, subs []*Subscription) bool {
 		if len(subs) == 0 {
+			r.subscriptionsByStream.Compute(
+				streamID,
+				func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+					if cb != nil {
+						cb(streamID)
+					}
+					return nil, xsync.DeleteOp
+				},
+			)
 			streamIds = append(streamIds, streamID[:])
 		}
 		return true
 	})
-	if len(streamIds) > 0 {
-		if cb != nil {
-			cb(streamIds)
-		}
-		for _, streamID := range streamIds {
-			r.subscriptionsByStream.Delete(StreamId(streamID))
-		}
-	}
 }

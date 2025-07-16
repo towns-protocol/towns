@@ -195,13 +195,13 @@ func (m *Manager) startUnusedStreamsCleaner() {
 		case <-m.globalCtx.Done():
 			return
 		case <-ticker.C:
-			m.registry.CleanupUnusedStreams(func(streamIds [][]byte) {
+			m.registry.CleanupUnusedStreams(func(streamID StreamId) {
 				ctx, cancel := context.WithTimeout(m.globalCtx, time.Second*10)
 				if err := m.syncers.Modify(ctx, client.ModifyRequest{
-					ToRemove: streamIds,
+					ToRemove: [][]byte{streamID[:]},
 					RemovingFailureHandler: func(status *SyncStreamOpStatus) {
 						m.log.Errorw("Failed to remove unused stream from syncer set",
-							"streamId", StreamId(status.GetStreamId()),
+							"streamId", streamID,
 							"error", status.GetMessage(),
 							"code", status.GetCode(),
 						)
