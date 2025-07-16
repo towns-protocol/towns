@@ -28,7 +28,10 @@ describe('channelsWithEntitlementLoss', () => {
         const channelStream = await bob.waitForStream(channelId!)
         // Validate Alice is member of the channel
         await waitFor(() =>
-            channelStream.view.membershipContent.isMember(MembershipOp.SO_JOIN, alice.userId),
+            expect(
+                channelStream.view.membershipContent.isMember(MembershipOp.SO_JOIN, alice.userId),
+                `waitFor ${alice.userId} to be member in ${channelStream.view.streamId}`,
+            ).toBe(true),
         )
 
         // Burn Alice's NFT and validate her zero balance. She should now fail an entitlement check for the
