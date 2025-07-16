@@ -646,7 +646,7 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 		)
 		require.NoError(err)
 		alice.addEvent(spaceId, envelope)
-		spaceLastMb = alice.makeMiniblock(spaceId, false, spaceLastMb.Num)
+		spaceLastMb, _ = alice.tryMakeMiniblock(spaceId, false, spaceLastMb.Num)
 		if spaceLastMb.Num >= 49 {
 			break
 		}
