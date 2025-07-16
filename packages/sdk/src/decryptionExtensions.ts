@@ -26,6 +26,7 @@ import {
 import { create, fromJsonString } from '@bufbuild/protobuf'
 import { sortedArraysEqual } from './observable/utils'
 import { isDefined } from './check'
+import { isUserInboxStreamId } from './id'
 import { errorContains } from './rpcInterceptors'
 
 export interface EntitlementsDelegate {
@@ -502,6 +503,10 @@ export abstract class BaseDecryptionExtensions {
     public setStreamUpToDate(streamId: string): void {
         //this.log.debug('streamUpToDate', streamId)
         this.upToDateStreams.add(streamId)
+        if (isUserInboxStreamId(streamId)) {
+            // enqueue a task to download new to-device messages
+            this.enqueueNewMessageDownload()
+        }
         this.checkStartTicking()
     }
 
@@ -534,8 +539,10 @@ export abstract class BaseDecryptionExtensions {
 
         // enqueue a task to upload device keys
         this.mainQueues.priorityTasks.push(() => this.uploadDeviceKeys())
-        // enqueue a task to download new to-device messages
-        this.enqueueNewMessageDownload()
+        if (Array.from(this.upToDateStreams).some(isUserInboxStreamId)) {
+            // enqueue a task to download new to-device messages
+            this.enqueueNewMessageDownload()
+        }
         // start the tick loop
         this.checkStartTicking()
     }
@@ -593,12 +600,7 @@ export abstract class BaseDecryptionExtensions {
 
     private lastPrintedAt = 0
     protected checkStartTicking() {
-        if (
-            !this.started ||
-            !this._onStopFn ||
-            !this.isUserInboxStreamUpToDate(this.upToDateStreams) ||
-            this.shouldPauseTicking()
-        ) {
+        if (!this.started || !this._onStopFn || this.shouldPauseTicking()) {
             return
         }
 
@@ -665,57 +667,68 @@ export abstract class BaseDecryptionExtensions {
         const now = Date.now()
 
         // update the priority queue
-        if (this.mainQueueRunners.priority.inProgress) {
-            return // if the main queue is in progress, don't do anything else
-        }
-
-        const priorityTask = this.mainQueues.priorityTasks.shift()
-        if (priorityTask) {
-            this.setStatus(DecryptionStatus.updating)
-            this.mainQueueRunners.priority.run(priorityTask())
-            return // if the priority queue is in progress, don't do anything else
-        }
-
-        // update any new group sessions
-        if (this.mainQueueRunners.newGroupSessions.inProgress) {
-            return // if the new group sessions queue is in progress, don't do anything else
-        }
-        const session = this.mainQueues.newGroupSession.shift()
-        if (session) {
-            this.setStatus(DecryptionStatus.working)
-            this.mainQueueRunners.newGroupSessions.run(this.processNewGroupSession(session))
-            return // if the new group sessions queue is in progress, don't do anything else
-        }
-
-        // run the rest of the processes in parallel
-        if (!this.mainQueueRunners.ownKeySolicitations.inProgress) {
-            const ownSolicitation = this.mainQueues.ownKeySolicitations.shift()
-            if (ownSolicitation) {
-                this.log.debug(' processing own key solicitation')
-                this.setStatus(DecryptionStatus.working)
-                this.mainQueueRunners.ownKeySolicitations.run(
-                    this.processKeySolicitation(ownSolicitation),
-                )
+        if (!this.mainQueueRunners.priority.inProgress) {
+            const priorityTask = this.mainQueues.priorityTasks.shift()
+            if (priorityTask) {
+                this.setStatus(DecryptionStatus.updating)
+                this.mainQueueRunners.priority.run(priorityTask())
             }
         }
 
-        if (!this.mainQueueRunners.ephemeralKeySolicitations.inProgress) {
-            if (this.mainQueues.ephemeralKeySolicitations.length > 0) {
-                this.mainQueues.ephemeralKeySolicitations.sort(
-                    (a, b) => a.respondAfter - b.respondAfter,
+        // update any new group sessions
+        if (!this.mainQueueRunners.newGroupSessions.inProgress) {
+            const session = this.mainQueues.newGroupSession.shift()
+            if (session) {
+                this.setStatus(DecryptionStatus.working)
+                this.mainQueueRunners.newGroupSessions.run(this.processNewGroupSession(session))
+            }
+        }
+
+        // respond to any own or ephemeral key solicitations (if you're not still ingesting sessions)
+        if (!this.mainQueueRunners.newGroupSessions.inProgress) {
+            if (
+                !this.mainQueueRunners.ownKeySolicitations.inProgress &&
+                this.mainQueues.ownKeySolicitations.length > 0
+            ) {
+                this.mainQueues.ownKeySolicitations.sort((a, b) =>
+                    this.compareStreamIds(a.streamId, b.streamId),
                 )
-                const ephemeralSolicitation = dequeueUpToDate(
-                    this.mainQueues.ephemeralKeySolicitations,
-                    now,
-                    (x) => x.respondAfter,
-                    this.upToDateStreams,
-                )
-                if (ephemeralSolicitation) {
-                    this.log.debug(' processing ephemeral key solicitation')
-                    this.setStatus(DecryptionStatus.working)
-                    this.mainQueueRunners.ephemeralKeySolicitations.run(
-                        this.processKeySolicitation(ephemeralSolicitation),
+                if (this.upToDateStreams.has(this.mainQueues.ownKeySolicitations[0].streamId)) {
+                    const ownSolicitation = this.mainQueues.ownKeySolicitations.shift()
+                    if (ownSolicitation) {
+                        this.log.debug(' processing own key solicitation')
+                        this.setStatus(DecryptionStatus.working)
+                        this.mainQueueRunners.ownKeySolicitations.run(
+                            this.processKeySolicitation(ownSolicitation),
+                        )
+                    }
+                }
+            }
+
+            if (!this.mainQueueRunners.ephemeralKeySolicitations.inProgress) {
+                if (this.mainQueues.ephemeralKeySolicitations.length > 0) {
+                    this.mainQueues.ephemeralKeySolicitations.sort((a, b) => {
+                        if (!this.upToDateStreams.has(a.streamId)) {
+                            return 1
+                        }
+                        if (!this.upToDateStreams.has(b.streamId)) {
+                            return -1
+                        }
+                        return a.respondAfter - b.respondAfter
+                    })
+                    const ephemeralSolicitation = dequeueUpToDate(
+                        this.mainQueues.ephemeralKeySolicitations,
+                        now,
+                        (x) => x.respondAfter,
+                        this.upToDateStreams,
                     )
+                    if (ephemeralSolicitation) {
+                        this.log.debug(' processing ephemeral key solicitation')
+                        this.setStatus(DecryptionStatus.working)
+                        this.mainQueueRunners.ephemeralKeySolicitations.run(
+                            this.processKeySolicitation(ephemeralSolicitation),
+                        )
+                    }
                 }
             }
         }
@@ -745,9 +758,17 @@ export abstract class BaseDecryptionExtensions {
                 continue
             }
 
+            // if there are external things to do, don't do anything else
+            if (
+                !this.isUserInboxStreamUpToDate(this.upToDateStreams) ||
+                this.mainQueueRunners.priority.inProgress ||
+                this.mainQueueRunners.newGroupSessions.inProgress
+            ) {
+                continue
+            }
             // if the stream is not up to date, don't move forward
-            // it might be useful to post key solicitations, but without knowing the
-            // state of the stream it's not a good idea
+            // solicitations could have been fulfilled by someone else
+            // adding events will fail
             if (!this.upToDateStreams.has(streamId)) {
                 continue
             }
