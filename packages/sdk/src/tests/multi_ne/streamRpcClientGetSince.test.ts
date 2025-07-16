@@ -18,6 +18,7 @@ describe('streamRpcClientGetSince', () => {
     let bobsContext: SignerContext
     let client: StreamRpcClient
     let bobsUserId: string
+    let bobsSettingsStreamIdStr: string
     let bobsSettingsStreamId: Uint8Array
     let cookie: SyncCookie
     let settingsStream: StreamAndCookie
@@ -26,7 +27,8 @@ describe('streamRpcClientGetSince', () => {
         bobsContext = await makeRandomUserContext()
         client = await makeTestRpcClient()
         bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        bobsSettingsStreamId = streamIdToBytes(makeUserSettingsStreamId(bobsUserId))
+        bobsSettingsStreamIdStr = makeUserSettingsStreamId(bobsUserId)
+        bobsSettingsStreamId = streamIdToBytes(bobsSettingsStreamIdStr)
 
         const settingsStreamResp = await client.createStream({
             events: [
@@ -141,9 +143,18 @@ describe('streamRpcClientGetSince', () => {
                     syncCookie: cookie,
                 })
 
-                expect(streamSince.stream?.events.length).toBe(0)
-                expect(streamSince.stream?.miniblocks.length).toBeGreaterThan(0)
-                expect(streamSince.stream?.syncReset).toBe(true)
+                expect(
+                    streamSince.stream?.events.length,
+                    `events length for ${bobsSettingsStreamIdStr}`,
+                ).toBe(0)
+                expect(
+                    streamSince.stream?.miniblocks.length,
+                    `miniblocks length for ${bobsSettingsStreamIdStr}`,
+                ).toBeGreaterThan(0)
+                expect(
+                    streamSince.stream?.syncReset,
+                    `sync reset for ${bobsSettingsStreamIdStr}`,
+                ).toBe(true)
             },
             { timeoutMS: 15000 },
         )
