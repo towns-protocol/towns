@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestGetMiniblocksExclusionFilter(t *testing.T) {
@@ -647,23 +649,33 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 		require.NoError(err)
 		alice.addEvent(spaceId, envelope)
 		spaceLastMb, _ = alice.tryMakeMiniblock(spaceId, false, spaceLastMb.Num)
-		if spaceLastMb.Num >= 49 {
+		if spaceLastMb != nil && spaceLastMb.Num >= 49 {
 			break
 		}
 	}
 	require.Equal(int64(49), spaceLastMb.Num)
-	t.Logf("Created 50 miniblocks total, last miniblock num: %d", spaceLastMb.Num)
+	testfmt.Logf(t, "Created 50 miniblocks total, last miniblock num: %d", spaceLastMb.Num)
+
+	// Wait for all nodes to have all miniblocks locally
+	require.Eventually(func() bool {
+		var totalNum int64
+		for i := range tt.opts.numNodes {
+			num, _ := tt.nodes[i].service.storage.GetLastMiniblockNumber(ctx, spaceId)
+			testfmt.Logf(t, "Node %d has last miniblock num: %d", i, num)
+			totalNum += num
+		}
+		return totalNum == 147
+	}, 10*time.Second, 100*time.Millisecond)
 
 	// Verify we can read all miniblocks before deletion
 	getMbReq := &GetMiniblocksRequest{
 		StreamId:      spaceId[:],
 		FromInclusive: 0,
 		ToExclusive:   spaceLastMb.Num + 1,
-		OmitSnapshots: true,
 	}
 	resp, err := alice.client.GetMiniblocks(ctx, connect.NewRequest(getMbReq))
 	require.NoError(err)
-	t.Logf("Total miniblocks before deletion: %d", len(resp.Msg.Miniblocks))
+	testfmt.Logf(t, "Total miniblocks before deletion: %d", len(resp.Msg.Miniblocks))
 
 	// Flush all caches, delete miniblocks in the pattern.
 	var nodesWithStream []int
@@ -677,11 +689,11 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 			nodesWithStream = append(nodesWithStream, i)
 
 			if len(nodesWithStream) == 2 {
-				t.Logf("Deleting miniblocks 0-24 from node %d", i)
+				testfmt.Logf(t, "Deleting miniblocks 0-24 from node %d", i)
 				err := tt.nodes[i].service.storage.DebugDeleteMiniblocks(ctx, spaceId, 0, 25)
 				require.NoError(err)
 			} else if len(nodesWithStream) == 3 {
-				t.Logf("Deleting miniblocks 10-29 from node %d", i)
+				testfmt.Logf(t, "Deleting miniblocks 10-29 from node %d", i)
 				err := tt.nodes[i].service.storage.DebugDeleteMiniblocks(ctx, spaceId, 10, 30)
 				require.NoError(err)
 			}
@@ -719,7 +731,7 @@ func TestGetMiniblocksWithGapsAcrossReplicas(t *testing.T) {
 			ToExclusive:   test.toExclusive,
 		}
 		for i, c := range streamServiceClients {
-			t.Logf(
+			testfmt.Logf(t,
 				"Testing client %d '%s' with range %d-%d, expected %d miniblocks, no-forward success: %v",
 				i,
 				clientDescription[i],
