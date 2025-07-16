@@ -14,7 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
-// NotificationsStreamTracker implements the StreamsTracker interface for the notifications service. It encapsulates
+// NotificationsStreamsTracker implements the StreamsTracker interface for the notifications service. It encapsulates
 // StreamsTracker functionality with notifications-specific data structures.
 type NotificationsStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
@@ -24,7 +24,7 @@ type NotificationsStreamsTracker struct {
 
 var _ track_streams.StreamFilter = (*NotificationsStreamsTracker)(nil)
 
-// NewStreamsTracker creates a stream tracker instance.
+// NewNotificationsStreamsTracker creates a stream tracker instance.
 func NewNotificationsStreamsTracker(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,

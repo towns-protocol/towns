@@ -210,7 +210,7 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 			Message("Could not fetch stream from contract")
 	}
 
-	// Use tracker.ctx here so that the stream continues to  be synced after
+	// Use tracker.ctx here so that the stream continues to be synced after
 	// the originating request expires
 	tracker.forwardStreamEventsFromInception(streamId, stream.Nodes)
 	return nil
