@@ -27,7 +27,11 @@ import (
 // must provide the logic for determining which streams to track, and for constructing application-specific
 // tracked stream views.
 type StreamFilter interface {
-	TrackStream(streamID shared.StreamId, isInit bool) bool
+	// TrackStream
+	// inInit is true when the stream_tracker is initialized (usually when the process starts), otherwise it's false
+	// updateType is nil when initializing; otherwise is set the appropriate type
+	// this feels a little brittle, possibly we can create another type?
+	TrackStream(streamID shared.StreamId, isInit bool, updateType *river.StreamUpdatedEventType) bool
 
 	NewTrackedStream(
 		ctx context.Context,
@@ -139,7 +143,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId(), true) {
+			if !tracker.filter.TrackStream(stream.StreamId(), true, nil) {
 				return true
 			}
 
@@ -198,7 +202,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEvents(
 
 func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId, applyHistoricalStreamContents bool) error {
 	// Check if the stream is already tracked
-	if _, exists := tracker.tracked.Load(streamId); exists {
+	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
 		return nil
 	}
 	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
@@ -220,7 +224,8 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	_ context.Context,
 	event *river.StreamState,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	updateType := river.StreamUpdatedEventTypeAllocate
+	if !tracker.filter.TrackStream(event.GetStreamId(), false, &updateType) {
 		return
 	}
 	tracker.forwardStreamEvents(event.Stream, true)
@@ -233,7 +238,8 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	_ context.Context,
 	event *river.StreamState,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	updateType := river.StreamUpdatedEventTypeCreate
+	if !tracker.filter.TrackStream(event.GetStreamId(), false, &updateType) {
 		return
 	}
 	tracker.forwardStreamEvents(event.Stream, true)
@@ -243,7 +249,8 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	ctx context.Context,
 	event *river.StreamMiniblockUpdate,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	updateType := river.StreamUpdatedEventTypeLastMiniblockBatchUpdated
+	if !tracker.filter.TrackStream(event.GetStreamId(), false, &updateType) {
 		return
 	}
 	if err := tracker.AddStream(event.GetStreamId(), false); err != nil {
