@@ -2,8 +2,8 @@ package subscription
 
 import (
 	"slices"
-	"sync"
 
+	"github.com/puzpuzpuz/xsync/v4"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -16,150 +16,166 @@ type Registry interface {
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
 	RemoveStreamFromSubscription(syncID string, streamID StreamId)
 	OnStreamDown(streamID StreamId)
-	CleanupUnusedStreams(func(streamIds [][]byte))
+	CleanupUnusedStreams(cb func(streamID StreamId))
 	GetStats() (streamCount, subscriptionCount int)
 	CancelAll(err error)
 }
 
 // registry implements SubscriptionRegistry for managing subscription lifecycle
 type registry struct {
-	// sLock is the mutex that protects the subscriptions maps
-	sLock sync.RWMutex
 	// subscriptionsByStream is a map of stream IDs to subscriptions
-	subscriptionsByStream map[StreamId][]*Subscription
+	subscriptionsByStream *xsync.Map[StreamId, []*Subscription]
 	// subscriptionsByID is a map of sync IDs to subscriptions for fast lookup
-	subscriptionsByID map[string]*Subscription
+	subscriptionsByID *xsync.Map[string, *Subscription]
 }
 
 // newRegistry creates a new subscription registry
 func newRegistry() *registry {
 	return &registry{
-		subscriptionsByStream: make(map[StreamId][]*Subscription),
-		subscriptionsByID:     make(map[string]*Subscription),
+		subscriptionsByStream: xsync.NewMap[StreamId, []*Subscription](),
+		subscriptionsByID:     xsync.NewMap[string, *Subscription](),
 	}
 }
 
 // AddSubscription adds a subscription to the registry
 func (r *registry) AddSubscription(sub *Subscription) {
-	r.sLock.Lock()
-	r.subscriptionsByID[sub.syncID] = sub
-	r.sLock.Unlock()
+	r.subscriptionsByID.Store(sub.syncID, sub)
 }
 
 // RemoveSubscription removes a subscription from the registry
 func (r *registry) RemoveSubscription(syncID string) {
-	r.sLock.Lock()
-
-	delete(r.subscriptionsByID, syncID)
+	r.subscriptionsByID.Delete(syncID)
 
 	// Remove from all stream mappings
-	for streamID, subs := range r.subscriptionsByStream {
-		r.subscriptionsByStream[streamID] = slices.DeleteFunc(subs, func(s *Subscription) bool {
-			return s.syncID == syncID
-		})
-	}
-
-	r.sLock.Unlock()
+	r.subscriptionsByStream.Range(func(streamID StreamId, subs []*Subscription) bool {
+		r.subscriptionsByStream.Compute(
+			streamID,
+			func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+				if !loaded {
+					return nil, xsync.CancelOp
+				}
+				// Create a copy of the slice before modifying to prevent race conditions
+				copied := slices.Clone(oldValue)
+				newValue = slices.DeleteFunc(copied, func(sub *Subscription) bool {
+					return sub.syncID == syncID
+				})
+				if len(newValue) == len(oldValue) {
+					return oldValue, xsync.CancelOp
+				}
+				return newValue, xsync.UpdateOp
+			},
+		)
+		return true
+	})
 }
 
 // GetSubscriptionsForStream returns all subscriptions for a given stream
 func (r *registry) GetSubscriptionsForStream(streamID StreamId) []*Subscription {
-	r.sLock.RLock()
-	defer r.sLock.RUnlock()
-
-	return slices.Clone(r.subscriptionsByStream[streamID])
+	if subs, ok := r.subscriptionsByStream.Load(streamID); ok {
+		return slices.Clone(subs)
+	}
+	return nil
 }
 
 // GetSubscriptionByID returns a subscription by its sync ID
 func (r *registry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
-	r.sLock.RLock()
-	sub, ok := r.subscriptionsByID[syncID]
-	r.sLock.RUnlock()
-	return sub, ok
+	return r.subscriptionsByID.Load(syncID)
 }
 
 // AddStreamToSubscription adds a stream to a subscription
 // Returns true if the given stream must be added to the main syncer set
 func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool) {
-	r.sLock.Lock()
-	defer r.sLock.Unlock()
-
-	sub, exists := r.subscriptionsByID[syncID]
+	sub, exists := r.subscriptionsByID.Load(syncID)
 	if !exists {
 		return false, false
 	}
 
-	subscriptions, ok := r.subscriptionsByStream[streamID]
-	if !ok {
-		shouldAddToRemote = true
-		r.subscriptionsByStream[streamID] = []*Subscription{sub}
-	} else if !slices.ContainsFunc(subscriptions, func(s *Subscription) bool {
-		return s.syncID == syncID
-	}) {
-		shouldBackfill = true
-		sub.initializingStreams.Store(streamID, struct{}{})
-		r.subscriptionsByStream[streamID] = append(r.subscriptionsByStream[streamID], sub)
-	}
+	r.subscriptionsByStream.Compute(
+		streamID,
+		func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+			if !loaded {
+				shouldAddToRemote = true
+				return []*Subscription{sub}, xsync.UpdateOp
+			}
+
+			// Check if subscription already exists
+			if !slices.ContainsFunc(oldValue, func(s *Subscription) bool {
+				return s.syncID == syncID
+			}) {
+				shouldBackfill = true
+				sub.initializingStreams.Store(streamID, struct{}{})
+				newValue = append(slices.Clone(oldValue), sub)
+				return newValue, xsync.UpdateOp
+			}
+
+			// Subscription already exists, no change needed
+			return oldValue, xsync.CancelOp
+		},
+	)
+
 	return
 }
 
 // RemoveStreamFromSubscription removes a stream from a subscription
 // Returns true if the given stream must be removed from the main syncer set
 func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId) {
-	r.sLock.Lock()
-	r.subscriptionsByStream[streamID] = slices.DeleteFunc(
-		r.subscriptionsByStream[streamID],
-		func(sub *Subscription) bool {
-			return sub.syncID == syncID
+	r.subscriptionsByStream.Compute(
+		streamID,
+		func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+			// Create a copy of the slice before modifying to prevent race conditions
+			copied := slices.Clone(oldValue)
+			newValue = slices.DeleteFunc(copied, func(sub *Subscription) bool {
+				return sub.syncID == syncID
+			})
+			if len(newValue) == len(oldValue) {
+				// No change, keep the old value
+				return oldValue, xsync.CancelOp
+			}
+			return newValue, xsync.UpdateOp
 		},
 	)
-	r.sLock.Unlock()
 }
 
 // OnStreamDown is called when a stream goes down
 func (r *registry) OnStreamDown(streamID StreamId) {
-	r.sLock.Lock()
-	delete(r.subscriptionsByStream, streamID)
-	r.sLock.Unlock()
+	r.subscriptionsByStream.Delete(streamID)
 }
 
 // GetStats returns statistics about the registry
 func (r *registry) GetStats() (streamCount, subscriptionCount int) {
-	r.sLock.RLock()
-	defer r.sLock.RUnlock()
-
-	return len(r.subscriptionsByStream), len(r.subscriptionsByID)
+	streamCount = r.subscriptionsByStream.Size()
+	subscriptionCount = r.subscriptionsByID.Size()
+	return
 }
 
 // CancelAll cancels all subscriptions with the given error.
 func (r *registry) CancelAll(err error) {
-	r.sLock.Lock()
-	for _, sub := range r.subscriptionsByID {
+	r.subscriptionsByID.Range(func(syncID string, sub *Subscription) bool {
 		if !sub.isClosed() {
 			sub.cancel(err)
 		}
-	}
-	r.subscriptionsByID = make(map[string]*Subscription)
-	r.subscriptionsByStream = make(map[StreamId][]*Subscription)
-	r.sLock.Unlock()
+		return true
+	})
+	r.subscriptionsByID.Clear()
+	r.subscriptionsByStream.Clear()
 }
 
 // CleanupUnusedStreams removes unused streams from the syncer set.
-func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
-	r.sLock.Lock()
+func (r *registry) CleanupUnusedStreams(cb func(streamID StreamId)) {
 	streamIds := make([][]byte, 0)
-	for streamID, subs := range r.subscriptionsByStream {
+	r.subscriptionsByStream.Range(func(streamID StreamId, subs []*Subscription) bool {
 		if len(subs) == 0 {
+			r.subscriptionsByStream.Compute(
+				streamID,
+				func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+					if cb != nil {
+						cb(streamID)
+					}
+					return nil, xsync.DeleteOp
+				},
+			)
 			streamIds = append(streamIds, streamID[:])
 		}
-	}
-	if len(streamIds) > 0 {
-		if cb != nil {
-			cb(streamIds)
-		}
-		for _, streamID := range streamIds {
-			delete(r.subscriptionsByStream, StreamId(streamID))
-		}
-	}
-	r.sLock.Unlock()
+		return true
+	})
 }
