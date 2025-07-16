@@ -408,7 +408,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
-	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app)); err != nil {
+	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app), true); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Error subscribing to app's user inbox stream to watch for keys").
 			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddress(app))
