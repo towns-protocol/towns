@@ -197,6 +197,8 @@ import { StreamsView } from './views/streamsView'
 import { NotificationsClient, INotificationStore } from './notificationsClient'
 import { RpcOptions } from './rpcCommon'
 import { Unpacker, createUnpacker } from './unpacker'
+import { Decryptor } from './decryption/decryptor'
+import { FallbackDecryptor } from './decryption/fallbackDecryptor'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -216,6 +218,7 @@ export type ClientOptions = {
     decryptionExtensionsOpts?: DecryptionExtensionsOptions
     excludeEventsInScrollback?: ExclusionFilter
     unpacker?: Unpacker
+    decryptor?: Decryptor
 }
 
 type SendChannelMessageOptions = {
@@ -272,6 +275,7 @@ export class Client
 
     public cryptoBackend?: GroupEncryptionCrypto
     public cryptoStore: CryptoStore
+    private decryptor?: Decryptor
 
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
     private getStreamExRequests: Map<string, Promise<StreamStateView>> = new Map()
@@ -342,6 +346,7 @@ export class Client
         this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
         this.unpacker = opts?.unpacker ?? createUnpacker()
+        this.decryptor = opts?.decryptor
 
         if (opts?.persistenceStoreName) {
             this.persistenceStore = new PersistenceStore(opts.persistenceStoreName)
@@ -2876,6 +2881,12 @@ export class Client
         const crypto = new GroupEncryptionCrypto(this, this.cryptoStore)
         await crypto.init(opts)
         this.cryptoBackend = crypto
+
+        // If using a fallback decryptor, set the main thread crypto
+        if (this.decryptor && 'setMainThreadCrypto' in this.decryptor) {
+            ;(this.decryptor as FallbackDecryptor).setMainThreadCrypto(crypto)
+        }
+
         this.decryptionExtensions = new ClientDecryptionExtensions(
             this,
             crypto,
@@ -2998,10 +3009,16 @@ export class Client
         }
         this.logDebug('Cache miss for cleartext', eventId)
 
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
+        let cleartext: Uint8Array | string
+        if (this.decryptor) {
+            // Use custom decryptor if provided (e.g., worker-based)
+            cleartext = await this.decryptor.decryptGroupEvent(streamId, encryptedData)
+        } else if (this.cryptoBackend) {
+            // Fall back to standard crypto backend
+            cleartext = await this.cryptoBackend.decryptGroupEvent(streamId, encryptedData)
+        } else {
+            throw new Error('Neither decryptor nor crypto backend initialized')
         }
-        const cleartext = await this.cryptoBackend.decryptGroupEvent(streamId, encryptedData)
 
         await this.persistenceStore.saveCleartext(eventId, cleartext)
         return cleartext

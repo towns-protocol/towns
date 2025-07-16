@@ -14,10 +14,13 @@ import { parseEther } from 'viem'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getWeb3Deployment, getWeb3Deployments } from '@towns-protocol/web3'
+import { createFallbackDecryptor } from '@towns-protocol/sdk/src/decryption/fallbackDecryptor'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { workerPool } from '@/utils/workers'
 import { createUnpackerWorkerpool } from '@/utils/unpacker'
+import { createDecryptorWorkerpool } from '@/utils/decryptor'
+import { decryptorWorkerPool } from '@/utils/decryptorWorkers'
 import { Button } from '../ui/button'
 import {
     Dialog,
@@ -125,6 +128,13 @@ export const RiverEnvSwitcherContent = (props: {
                                         disabled={currentEnv === id && isAgentConnected}
                                         onClick={async () => {
                                             const riverConfig = makeRiverConfig(id)
+
+                                            // Create worker-based decryptor with fallback to main thread
+                                            const workerDecryptor =
+                                                createDecryptorWorkerpool(decryptorWorkerPool)
+                                            const fallbackDecryptor =
+                                                createFallbackDecryptor(workerDecryptor)
+
                                             if (props.allowBearerToken) {
                                                 if (bearerToken) {
                                                     await connectUsingBearerToken(bearerToken, {
@@ -134,6 +144,7 @@ export const RiverEnvSwitcherContent = (props: {
                                                                 createUnpackerWorkerpool(
                                                                     workerPool,
                                                                 ),
+                                                            decryptor: fallbackDecryptor,
                                                         },
                                                     }).then((sync) => {
                                                         if (sync?.config.context) {
@@ -154,6 +165,7 @@ export const RiverEnvSwitcherContent = (props: {
                                                     clientOptions: {
                                                         unpacker:
                                                             createUnpackerWorkerpool(workerPool),
+                                                        decryptor: fallbackDecryptor,
                                                     },
                                                 }).then((sync) => {
                                                     if (sync?.config.context) {
