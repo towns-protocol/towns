@@ -194,6 +194,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		return
 	}
 
+	// Crystal - does this iterates over all miniblocks?
+	// do we get all all of the miniblocks of the stream? is this unbounded?
 	for _, block := range streamAndCookie.GetMiniblocks() {
 		if !reset {
 			if err := trackedView.ApplyBlock(

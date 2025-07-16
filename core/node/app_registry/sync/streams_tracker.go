@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"github.com/towns-protocol/towns/core/contracts/river"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -76,10 +77,11 @@ func NewAppRegistryStreamsTracker(
 	return tracker, nil
 }
 
-func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, unused bool) bool {
+func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, isInit bool, updateType *river.StreamUpdatedEventType) bool {
 	streamType := streamId.Type()
 
-	return streamType == shared.STREAM_CHANNEL_BIN
+	return streamType == shared.STREAM_CHANNEL_BIN &&
+		(isInit || *updateType == river.StreamUpdatedEventTypeAllocate || *updateType == river.StreamUpdatedEventTypeCreate)
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
