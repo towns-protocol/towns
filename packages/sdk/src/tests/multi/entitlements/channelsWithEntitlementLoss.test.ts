@@ -62,12 +62,14 @@ describe('channelsWithEntitlementLoss', () => {
         const aliceUserStream = await alice.waitForStream(alice.userStreamId!)
         await waitFor(() =>
             expect(
-                aliceUserStream.view.userContent.isMember(channelId!, MembershipOp.SO_LEAVE),
-            ).toBeTruthy(),
+                aliceUserStream.view.userContent.getMembership(channelId!)?.op,
+                `waitFor ${alice.userId} to be member of ${channelId} in ${aliceUserStream.view.streamId}`,
+            ).toBe(MembershipOp.SO_LEAVE),
         )
         await waitFor(() =>
             expect(
                 channelStream.view.membershipContent.isMember(MembershipOp.SO_LEAVE, alice.userId),
+                `waitFor ${alice.userId} to be member in ${channelId}`,
             ).toBeTruthy(),
         )
 
