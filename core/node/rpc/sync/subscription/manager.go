@@ -196,7 +196,7 @@ func (m *Manager) startUnusedStreamsCleaner() {
 			return
 		case <-ticker.C:
 			m.registry.CleanupUnusedStreams(func(streamID StreamId) {
-				ctx, cancel := context.WithTimeout(m.globalCtx, time.Second*10)
+				ctx, cancel := context.WithTimeout(m.globalCtx, time.Second*5)
 				if err := m.syncers.Modify(ctx, client.ModifyRequest{
 					ToRemove: [][]byte{streamID[:]},
 					RemovingFailureHandler: func(status *SyncStreamOpStatus) {
