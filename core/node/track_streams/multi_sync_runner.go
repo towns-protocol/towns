@@ -139,6 +139,8 @@ func (ssr *syncSessionRunner) AddStream(
 				Tag("node", ssr.node).
 				Tag("stream", record.streamId).
 				Tag("size", ssr.streamRecords.Size()).
+				Tag("error", resp.Adds[0].GetMessage()).
+				Tag("code", protocol.Err(resp.Adds[0].GetCode())).
 				LogError(logging.FromCtx(ctx))
 		}
 	}
