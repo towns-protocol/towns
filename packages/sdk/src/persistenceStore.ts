@@ -184,6 +184,19 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return undefined
         }
 
+        if (
+            persistedSyncedStream.lastMiniblockNum !==
+            persistedSyncedStream.syncCookie.minipoolGen - 1n
+        ) {
+            logError(
+                'Persisted miniblock num mismatch',
+                streamId,
+                persistedSyncedStream.lastMiniblockNum,
+                persistedSyncedStream.syncCookie.minipoolGen - 1n,
+            )
+            return undefined
+        }
+
         const miniblocks = await this.getMiniblocks(
             streamId,
             persistedSyncedStream.lastSnapshotMiniblockNum,
