@@ -43,10 +43,11 @@ describe('member.test.ts - queue update', () => {
             })
         await bob.start()
         await expect(updateAllMetadata).resolves.toBeDefined()
-        expect(bob.spaces.data.spaceIds.length, `expected SpaceId: ${newSpaceId}`).toBe(1)
+        const msg = `expected SpaceId: ${newSpaceId} user: ${bob.userId} userStreamId: ${bob.riverConnection.client?.userStreamId}`
+        expect(bob.spaces.data.spaceIds.length, msg).toBe(1)
         const spaceId = bob.spaces.data.spaceIds[0]
-        expect(spaceId, `expected SpaceId: ${newSpaceId}`).toBeDefined()
-        expect(spaceId.length, `expected SpaceId: ${newSpaceId}`).toBeGreaterThan(0)
+        expect(spaceId, msg).toBeDefined()
+        expect(spaceId.length, msg).toBeGreaterThan(0)
         const space = bob.spaces.getSpace(spaceId)
         const member = space.members.get(bob.userId)
         expect(member?.username).toBe(testMetadata.username)
