@@ -791,14 +791,20 @@ func (msr *MultiSyncRunner) addToSync(
 func (msr *MultiSyncRunner) AddStream(
 	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
+	lastMiniblockNum *int64,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
+	var minipoolGen int64 = math.MaxInt64
+
+	if lastMiniblockNum != nil {
+		minipoolGen = *lastMiniblockNum
+	}
 	msr.streamsToSync <- &streamSyncInitRecord{
 		streamId:                      stream.StreamId(),
 		applyHistoricalStreamContents: applyHistoricalStreamContents,
-		minipoolGen:                   math.MaxInt64,
+		minipoolGen:                   minipoolGen,
 		prevMiniblockHash:             common.Hash{}.Bytes(),
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
