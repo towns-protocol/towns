@@ -61,6 +61,9 @@ func TestNotifications(t *testing.T) {
 		ApnPushNotifications: make(map[common.Hash]map[common.Address]int),
 	}
 
+	// enable cold streams, since this should be the default ASAP
+	tester.btc.SetConfigValue(t, ctx, crypto.NotificationsColdStreamsEnabledConfigKey, crypto.ABIEncodeUint64(1))
+
 	notificationService := initNotificationService(ctx, tester, notifications)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
