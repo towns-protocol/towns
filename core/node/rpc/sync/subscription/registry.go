@@ -161,6 +161,7 @@ func (r *registry) CancelAll(err error) {
 }
 
 // CleanupUnusedStreams removes unused streams from the syncer set.
+// FIXME: In a very rare case, it might cause a race condition.
 func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
 	streamIds := make([][]byte, 0)
 	r.subscriptionsByStream.Range(func(streamID StreamId, subs []*Subscription) bool {
@@ -171,7 +172,7 @@ func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
 	})
 	if len(streamIds) > 0 {
 		if cb != nil {
-			// cb(streamIds)
+			cb(streamIds)
 		}
 		for _, streamID := range streamIds {
 			r.subscriptionsByStream.Delete(StreamId(streamID))
