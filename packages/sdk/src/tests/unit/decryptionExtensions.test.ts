@@ -14,7 +14,6 @@ import {
     makeSessionKeys,
 } from '../../decryptionExtensions'
 import {
-    AddEventResponse_Error,
     EncryptedData,
     SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
@@ -402,9 +401,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return Promise.resolve()
     }
 
-    public sendKeyFulfillment(
-        args: KeyFulfilmentData,
-    ): Promise<{ error?: AddEventResponse_Error }> {
+    public sendKeyFulfillment(args: KeyFulfilmentData): Promise<{ error?: unknown }> {
         log('sendKeyFulfillment', args)
         return Promise.resolve({})
     }
@@ -541,9 +538,7 @@ class MockGroupEncryptionClient
         return Promise.resolve()
     }
 
-    public sendKeyFulfillment(
-        _args: KeyFulfilmentData,
-    ): Promise<{ error?: AddEventResponse_Error }> {
+    public sendKeyFulfillment(_args: KeyFulfilmentData): Promise<{ error?: unknown }> {
         return Promise.resolve({})
     }
 

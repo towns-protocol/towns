@@ -161,7 +161,6 @@ describe('Bot', { sequential: true }, () => {
         )
         const addResult = await botClient.uploadDeviceKeys()
         expect(addResult).toBeDefined()
-        expect(addResult.error).toBeUndefined()
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
         expect(exportedDevice).toBeDefined()
