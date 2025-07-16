@@ -157,14 +157,14 @@ type OnChainSettings struct {
 	// Options: 1 means enabled, 0 means disabled.
 	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enablenode2nodeauth"`
 
+	// NotificationsColdStreamsEnabled indicates whether cold streams are enabled for notifications.
+	// Options: 1 means enabled, 0 means disabled.
+	NotificationsColdStreamsEnabled uint64 `mapstructure:"notifications.coldStreamsEnabled"`
+
 	// StreamBackwardsReconciliationThreshold is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThreshold uint64 `mapstructure:"stream.backwardsReconciliationThreshold"`
-
-	// NotificationsColdStreamsEnabled indicates whether cold streams are enabled for notifications.
-	// Options: 1 means enabled, 0 means disabled.
-	NotificationsColdStreamsEnabled uint64 `mapstructure:"notifications.coldStreamsEnabled"`
 }
 
 type XChainSettings struct {
@@ -278,8 +278,6 @@ func DefaultOnChainSettings() *OnChainSettings {
 		XChain: XChainSettings{
 			Blockchains: []uint64{},
 		},
-
-		ServerEnableNode2NodeAuth: 0,
 
 		ServerEnableNode2NodeAuth: 0,
 
