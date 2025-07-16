@@ -18,6 +18,7 @@ describe('member.test.ts - queue update', () => {
         const bobUser = new Bot()
         await bobUser.fundWallet()
         const bob = await bobUser.makeSyncAgent()
+        let newSpaceId: string | undefined
 
         const updateAllMetadata = bob.spaces
             .createSpace(
@@ -26,20 +27,27 @@ describe('member.test.ts - queue update', () => {
                 },
                 bobUser.signer,
             )
-            .then(({ spaceId }) => bob.spaces.getSpace(spaceId))
+            .then(({ spaceId }) => {
+                newSpaceId = spaceId
+                return bob.spaces.getSpace(spaceId)
+            })
             .then((space) => {
                 const metadata = space.members.myself
 
                 return Promise.all([
-                    metadata?.setUsername(testMetadata.username),
-                    metadata?.setDisplayName(testMetadata.displayName),
-                    metadata?.setEnsAddress(testMetadata.ensAddress),
-                    metadata?.setNft(testMetadata.nft),
+                    metadata.setUsername(testMetadata.username),
+                    metadata.setDisplayName(testMetadata.displayName),
+                    metadata.setEnsAddress(testMetadata.ensAddress),
+                    metadata.setNft(testMetadata.nft),
                 ])
             })
         await bob.start()
-        await updateAllMetadata
+        await expect(updateAllMetadata).resolves.toBeDefined()
+        const msg = `expected SpaceId: ${newSpaceId} user: ${bob.userId} userStreamId: ${bob.riverConnection.client?.userStreamId}`
+        expect(bob.spaces.data.spaceIds.length, msg).toBe(1)
         const spaceId = bob.spaces.data.spaceIds[0]
+        expect(spaceId, msg).toBeDefined()
+        expect(spaceId.length, msg).toBeGreaterThan(0)
         const space = bob.spaces.getSpace(spaceId)
         const member = space.members.get(bob.userId)
         expect(member?.username).toBe(testMetadata.username)

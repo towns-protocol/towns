@@ -75,13 +75,10 @@ describe('ClientDecryptionExtensions', () => {
 
     const waitForDecryptionErrors = async (client: Client, streamId: string, count: number) => {
         log('waitForDecryptionErrors', client.userId, streamId, count)
-        return waitFor(
-            async () => {
-                const errors = await getDecryptionErrors(client, streamId)
-                expect(errors.length).toEqual(count)
-            },
-            { timeoutMS: 10000 },
-        )
+        return waitFor(async () => {
+            const errors = await getDecryptionErrors(client, streamId)
+            expect(errors.length).toEqual(count)
+        })
     }
 
     beforeEach(async () => {})
