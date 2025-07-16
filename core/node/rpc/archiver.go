@@ -647,7 +647,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 				ToExclusive:   toBlock,
 			}),
 		)
-		if err != nil && AsRiverError(err).Code != Err_NOT_FOUND {
+		if err != nil && AsRiverError(err).Code != Err_NOT_FOUND && AsRiverError(err).Code != Err_MINIBLOCKS_NOT_FOUND {
 			log.Warnw(
 				"Error when calling GetMiniblocks on server",
 				"error",
@@ -662,7 +662,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			return err
 		}
 
-		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
+		if (err != nil && (AsRiverError(err).Code == Err_NOT_FOUND || AsRiverError(err).Code == Err_MINIBLOCKS_NOT_FOUND)) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
 			// If the stream is unable to fully update, consider this attempt to archive the stream as
 			// a failure, even though we do not return an error.
 			stream.corrupt.RecordBlockUpdateFailure(
