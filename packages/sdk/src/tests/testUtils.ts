@@ -299,7 +299,7 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
         persistenceStoreName: persistenceDbName,
         streamOpts: {
             useModifySync: true,
-            useSharedSyncer: true,
+            useSharedSyncer: false,
         },
     }) as TestClient
     client.wallet = context.wallet
