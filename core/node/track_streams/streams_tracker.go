@@ -187,20 +187,12 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 }
 
 func (tracker *StreamsTrackerImpl) forwardStreamEvents(
-	streamId shared.StreamId,
-	nodes []common.Address,
+	streamWithId *river.StreamWithId,
 	applyHistoricalStreamContents bool,
 ) {
-	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
+	_, loaded := tracker.tracked.LoadOrStore(streamWithId.StreamId(), struct{}{})
 	if !loaded {
-		stream := &river.StreamWithId{
-			Id: streamId,
-			Stream: river.Stream{
-				Reserved0: uint64(len(nodes)),
-				Nodes:     nodes,
-			},
-		}
-		tracker.multiSyncRunner.AddStream(stream, applyHistoricalStreamContents)
+		tracker.multiSyncRunner.AddStream(streamWithId, applyHistoricalStreamContents)
 	}
 }
 
@@ -217,7 +209,7 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId, applyHist
 
 	// Use tracker.ctx here so that the stream continues to be synced after
 	// the originating request expires
-	tracker.forwardStreamEvents(streamId, stream.Nodes, applyHistoricalStreamContents)
+	tracker.forwardStreamEvents(&river.StreamWithId{Id: streamId, Stream: stream}, applyHistoricalStreamContents)
 	return nil
 }
 
@@ -225,30 +217,26 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId, applyHist
 // If the stream must be tracked for the service, then add it to the worker that is
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAllocated(
-	ctx context.Context,
+	_ context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.GetStreamId()
-	if !tracker.filter.TrackStream(streamID, false) {
+	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
 		return
 	}
-
-	tracker.forwardStreamEvents(streamID, event.Stream.Nodes(), true)
+	tracker.forwardStreamEvents(event.Stream, true)
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
 // If the stream must be tracked for the service, then add it to the worker that is
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAdded(
-	ctx context.Context,
+	_ context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.GetStreamId()
-	if !tracker.filter.TrackStream(streamID, false) {
+	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
 		return
 	}
-
-	tracker.forwardStreamEvents(streamID, event.Stream.Nodes(), true)
+	tracker.forwardStreamEvents(event.Stream, true)
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
