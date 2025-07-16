@@ -72,7 +72,7 @@ func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
 func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool, updateType *river.StreamUpdatedEventType) bool {
 	streamType := streamID.Type()
 
-	// When cold streams are enabled, only track user settings streams on init
+	// When cold streams are enabled, only track user settings stream on init
 	if isInit && tracker.coldStreamsEnabled() {
 		return streamType == shared.STREAM_USER_SETTINGS_BIN
 	}
