@@ -171,7 +171,7 @@ func (r *registry) CleanupUnusedStreams(cb func(streamIds [][]byte)) {
 	})
 	if len(streamIds) > 0 {
 		if cb != nil {
-			cb(streamIds)
+			// cb(streamIds)
 		}
 		for _, streamID := range streamIds {
 			r.subscriptionsByStream.Delete(StreamId(streamID))
