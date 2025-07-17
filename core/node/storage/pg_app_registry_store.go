@@ -185,10 +185,10 @@ type (
 			app common.Address,
 		) (*types.AppMetadata, error)
 
-		// IsDisplayNameAvailable checks if a display name is available (case-sensitive)
-		IsDisplayNameAvailable(
+		// IsUsernameAvailable checks if a username is available (case-sensitive)
+		IsUsernameAvailable(
 			ctx context.Context,
-			displayName string,
+			username string,
 		) (bool, error)
 	}
 )
@@ -333,23 +333,23 @@ func (s *PostgresAppRegistryStore) createApp(
 
 	if _, err := txn.Exec(
 		ctx,
-		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting, display_name, app_metadata) values ($1, $2, $3, $4, $5, $6);",
+		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting, username, app_metadata) values ($1, $2, $3, $4, $5, $6);",
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
 		int16(settings.ForwardSetting),
-		// We store the name in a separate column from the metadata so we can guarantee unique bot diplay
-		// names. Therefore, the name field is removed from the JSON output of the app metadata struct,
+		// We store the username in a separate column from the metadata so we can guarantee unique bot
+		// usernames. Therefore, the username field is removed from the JSON output of the app metadata struct,
 		// and is stored separately in its own column.
-		metadata.Name,
+		metadata.Username,
 		string(metadataJSON),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
-			if strings.Contains(err.Error(), "app_registry_display_name_idx") {
+			if strings.Contains(err.Error(), "app_registry_username_idx") {
 				return WrapRiverError(
 					protocol.Err_ALREADY_EXISTS,
 					err,
-				).Message("another app with the same name already exists")
+				).Message("another app with the same username already exists")
 			}
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
 		} else {
@@ -530,11 +530,11 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	app = PGAddress(appAddr)
 	var appInfo AppInfo
 	var metadataJSON string
-	var displayName string
+	var username string
 	if err := tx.QueryRow(
 		ctx,
 		`
-		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata, display_name,
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata, username,
 			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
 		    FROM app_registry WHERE app_id = $1
 		`,
@@ -545,7 +545,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&encryptedSecret,
 		&appInfo.Settings.ForwardSetting,
 		&metadataJSON,
-		&displayName,
+		&username,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
@@ -561,14 +561,14 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		appInfo.Owner = common.BytesToAddress(owner[:])
 		appInfo.EncryptedSecret = encryptedSecret
 
-		// Parse metadata JSON And apply the name field from the display name column.
-		// The metadata JSON will not have a Name field defined, as it is omitted from
-		// the json serialization of the object.
+		// Parse metadata JSON and apply the username field from its separate column.
+		// The metadata JSON will not have a Username field defined, as it is omitted from
+		// the json serialization of the object. DisplayName is stored within the JSON.
 		if err := json.Unmarshal([]byte(metadataJSON), &appInfo.Metadata); err != nil {
 			return nil, AsRiverError(err, protocol.Err_INTERNAL).
 				Message("Unable to unmarshal app metadata from JSON")
 		}
-		appInfo.Metadata.Name = displayName
+		appInfo.Metadata.Username = username
 	}
 	return &appInfo, nil
 }
@@ -1032,28 +1032,28 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	metadata types.AppMetadata,
 	txn pgx.Tx,
 ) error {
-	// Marshal metadata to JSON (Name field is omitted via json:"-" tag)
+	// Marshal metadata to JSON (Username field is omitted via json:"-" tag)
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to marshal app metadata to JSON").Tag("metadata", metadata).Tag("name", metadata.Name)
+			Message("Unable to marshal app metadata to JSON").Tag("metadata", metadata).Tag("username", metadata.Username)
 	}
 
 	tag, err := txn.Exec(
 		ctx,
-		`UPDATE app_registry SET app_metadata = $2, display_name = $3 WHERE app_id = $1`,
+		`UPDATE app_registry SET app_metadata = $2, username = $3 WHERE app_id = $1`,
 		PGAddress(app),
 		string(metadataJSON),
-		// We store the name in a separate column so we can guarantee unique bot diplay names.
-		// The Name field is omitted from the serialized JSON, so there is no duplication here.
-		metadata.Name,
+		// We store the username in a separate column so we can guarantee unique bot usernames.
+		// The Username field is omitted from the serialized JSON, so there is no duplication here.
+		metadata.Username,
 	)
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(
 				protocol.Err_ALREADY_EXISTS,
 				err,
-			).Message("another app with the same name already exists")
+			).Message("another app with the same username already exists")
 		} else {
 			return RiverErrorWithBase(protocol.Err_DB_OPERATION_FAILURE, "unable to update the app metadata", err)
 		}
@@ -1094,12 +1094,12 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	tx pgx.Tx,
 ) (*types.AppMetadata, error) {
 	var metadataJSON string
-	var displayName string
+	var username string
 	if err := tx.QueryRow(
 		ctx,
-		`SELECT app_metadata, display_name FROM app_registry WHERE app_id = $1`,
+		`SELECT app_metadata, username FROM app_registry WHERE app_id = $1`,
 		PGAddress(app),
-	).Scan(&metadataJSON, &displayName); err != nil {
+	).Scan(&metadataJSON, &username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
 		} else {
@@ -1113,34 +1113,35 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		return nil, AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to unmarshal app metadata from JSON")
 	}
-	// Set the Name field from the display_name column.
-	metadata.Name = displayName
+	// Set the Username field from its separate column.
+	// DisplayName is already in the metadata JSON.
+	metadata.Username = username
 
 	return &metadata, nil
 }
 
-func (s *PostgresAppRegistryStore) IsDisplayNameAvailable(
+func (s *PostgresAppRegistryStore) IsUsernameAvailable(
 	ctx context.Context,
-	displayName string,
+	username string,
 ) (bool, error) {
 	var exists bool
 	err := s.txRunner(
 		ctx,
-		"IsDisplayNameAvailable",
+		"IsUsernameAvailable",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			return tx.QueryRow(
 				ctx,
-				"SELECT EXISTS(SELECT 1 FROM app_registry WHERE display_name = $1)",
-				displayName,
+				"SELECT EXISTS(SELECT 1 FROM app_registry WHERE username = $1)",
+				username,
 			).Scan(&exists)
 		},
 		nil,
-		"displayName", displayName,
+		"username", username,
 	)
 	if err != nil {
 		return false, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to check display name availability")
+			Message("failed to check username availability")
 	}
 	return !exists, nil
 }
