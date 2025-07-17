@@ -183,6 +183,16 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 				Func("sendSyncStreamResponseToClient")
 			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
 			s.syncStreamCancel()
+		} else {
+			logging.FromCtx(s.syncStreamCtx).StreamSync.Debugw("remoteSyncer::sendResponse",
+				"stream", StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId()),
+				"syncId", msg.GetSyncId(),
+				"remoteAddr", s.remoteAddr,
+				"syncOp", msg.GetSyncOp(),
+				"minipoolGen", msg.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+				"miniblocks", len(msg.GetStream().GetMiniblocks()),
+				"events", len(msg.GetStream().GetEvents()),
+				"reset", msg.GetStream().GetSyncReset())
 		}
 
 		return nil

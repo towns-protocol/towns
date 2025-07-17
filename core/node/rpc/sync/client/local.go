@@ -205,6 +205,8 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		return err
 	}
 
+	logging.FromCtx(ctx).StreamSync.Debugw("Add stream to local active streams", "stream", streamID)
+
 	s.activeStreams.Store(streamID, syncStream)
 
 	return nil
@@ -232,6 +234,15 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 		_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
 		return rvrErr
 	}
+
+	logging.FromCtx(s.globalCtx).StreamSync.Debugw("localSyncer::sendResponse",
+		"stream", StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId()),
+		"syncOp", msg.GetSyncOp(),
+		"localAddr", s.localAddr,
+		"minipoolGen", msg.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+		"miniblocks", len(msg.GetStream().GetMiniblocks()),
+		"events", len(msg.GetStream().GetEvents()),
+		"reset", msg.GetStream().GetSyncReset())
 
 	return nil
 }

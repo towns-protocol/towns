@@ -22,6 +22,8 @@ type (
 		Miniblock *zap.SugaredLogger
 		// Miniblock represents the logger for the Rpc component.
 		Rpc *zap.SugaredLogger
+		// StreamSync is a logger for the sync component, which is used for syncing streams.
+		StreamSync *zap.SugaredLogger
 	}
 
 	// LogLevels represents the set of log levels for each component.
@@ -33,9 +35,10 @@ type (
 type Component string
 
 const (
-	Default   Component = "default"
-	Miniblock Component = "miniblock"
-	Rpc       Component = "rpc"
+	Default    Component = "default"
+	Miniblock  Component = "miniblock"
+	Rpc        Component = "rpc"
+	StreamSync Component = "sync"
 )
 
 func (l *Log) With(args ...interface{}) *Log {
@@ -44,6 +47,7 @@ func (l *Log) With(args ...interface{}) *Log {
 		Default:    l.Default.With(args...),
 		Miniblock:  l.Miniblock.With(args...),
 		Rpc:        l.Rpc.With(args...),
+		StreamSync: l.StreamSync.With(args...),
 	}
 }
 
@@ -54,6 +58,7 @@ func (l *Log) Named(name string) *Log {
 		Default:    l.Default.Named(name),
 		Miniblock:  l.Miniblock.Named(name),
 		Rpc:        l.Rpc.Named(name),
+		StreamSync: l.StreamSync.Named(name),
 	}
 }
 
@@ -173,24 +178,30 @@ func (ll LogLevels) Cores(
 	default_ zapcore.Core,
 	miniblock zapcore.Core,
 	rpc zapcore.Core,
+	sync zapcore.Core,
 	err error,
 ) {
 	defCore, err := ll.core(Default, core)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	mbCore, err := ll.core(Miniblock, core)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	rpcCore, err := ll.core(Rpc, core)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return defCore, mbCore, rpcCore, nil
+	syncCore, err := ll.core(StreamSync, core)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	return defCore, mbCore, rpcCore, syncCore, nil
 }
 
 // ParseLogLevels decodes the given cfg into log configuration grouped by module.
@@ -232,11 +243,13 @@ func ParseLogLevels(cfg string) (LogLevels, error) {
 			return nil, fmt.Errorf("invalid log configuration components value %s", cfg)
 		}
 
-		switch parts[0] {
-		case "miniblock":
+		switch Component(strings.ToLower(parts[0])) {
+		case Miniblock:
 			levels[Miniblock] = lvl
-		case "rpc":
+		case Rpc:
 			levels[Rpc] = lvl
+		case StreamSync:
+			levels[StreamSync] = lvl
 		default:
 			return nil, fmt.Errorf("unsupported log configuration component %s", parts[0])
 		}
