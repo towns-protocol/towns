@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"go.uber.org/zap/zapcore"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -235,14 +236,23 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 		return rvrErr
 	}
 
-	logging.FromCtx(s.globalCtx).StreamSync.Debugw("localSyncer::sendResponse",
-		"stream", StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId()),
-		"syncOp", msg.GetSyncOp(),
-		"localAddr", s.localAddr,
-		"minipoolGen", msg.GetStream().GetNextSyncCookie().GetMinipoolGen(),
-		"miniblocks", len(msg.GetStream().GetMiniblocks()),
-		"events", len(msg.GetStream().GetEvents()),
-		"reset", msg.GetStream().GetSyncReset())
+	log := logging.FromCtx(s.globalCtx).StreamSync
+	if log.Level().Enabled(zapcore.DebugLevel) {
+		tags := []any{
+			"syncOp", msg.GetSyncOp(),
+			"localAddr", s.localAddr,
+		}
+		if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+			tags = append(tags,
+				"stream", StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId()),
+				"minipoolGen", msg.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+				"miniblocks", len(msg.GetStream().GetMiniblocks()),
+				"events", len(msg.GetStream().GetEvents()),
+				"reset", msg.GetStream().GetSyncReset(),
+			)
+		}
+		logging.FromCtx(s.globalCtx).StreamSync.Debugw("localSyncer::sendResponse", tags...)
+	}
 
 	return nil
 }
