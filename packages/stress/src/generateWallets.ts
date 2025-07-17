@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { generateWalletsFromSeed } from './utils/wallets'
 
 function printUsage() {
@@ -44,7 +45,7 @@ function parseArgs(): { seed?: string; start: number; end: number; help: boolean
     return result
 }
 
-async function main() {
+function main() {
     const { seed, start, end, help } = parseArgs()
 
     if (help) {
@@ -93,7 +94,4 @@ async function main() {
     }
 }
 
-main().catch((error) => {
-    console.error('Unexpected error:', error)
-    process.exit(1)
-})
+main()
