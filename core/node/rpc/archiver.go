@@ -662,7 +662,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			return err
 		}
 
-		if (err != nil && (AsRiverError(err).Code == Err_NOT_FOUND || AsRiverError(err).Code == Err_MINIBLOCKS_NOT_FOUND)) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
+		if (err != nil && (AsRiverError(err).Code == Err_NOT_FOUND || AsRiverError(err).Code == Err_MINIBLOCKS_NOT_FOUND)) ||
+			resp.Msg == nil ||
+			len(resp.Msg.Miniblocks) == 0 {
 			// If the stream is unable to fully update, consider this attempt to archive the stream as
 			// a failure, even though we do not return an error.
 			stream.corrupt.RecordBlockUpdateFailure(
@@ -1056,6 +1058,7 @@ func (a *Archiver) worker(ctx context.Context) {
 				if !IsRiverErrorCode(err, Err_UNKNOWN_NODE) {
 					log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
 				}
+				fmt.Println("Archive error ====================================================\n", err)
 				a.failedOpsCount.Add(1)
 			} else {
 				a.successOpsCount.Add(1)
