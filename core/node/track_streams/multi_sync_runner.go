@@ -634,6 +634,7 @@ func (msr *MultiSyncRunner) addToSync(
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
 
+	log.Infow("addToSync", "record", record.streamId, "minipoolGen", record.minipoolGen, "apply", record.applyHistoricalStreamContents)
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
 		runner = newSyncSessionRunner(
