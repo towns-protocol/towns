@@ -1,5 +1,9 @@
 export default [
   {
+    "type": "receive",
+    "stateMutability": "payable"
+  },
+  {
     "type": "function",
     "name": "accessDuration",
     "inputs": [],
