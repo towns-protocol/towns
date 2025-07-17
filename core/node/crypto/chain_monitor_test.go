@@ -235,7 +235,13 @@ func TestChainMonitorEvents(t *testing.T) {
 	event := <-contractWithTopicsEventCallbackCapturedEvents
 	require.Equal(nodeRegistryABI.Events["NodeAdded"].ID, event.Topics[0])
 
-	<-onMonitorStoppedCount // if the on stop callback isn't called this will time out
+	t.Cleanup(func() {
+		select {
+		case <-onMonitorStoppedCount:
+		case <-time.After(10 * time.Second):
+			t.Error("onMonitorStoppedCount callback not called")
+		}
+	})
 }
 
 func TestContractAllEventsFromFuture(t *testing.T) {
