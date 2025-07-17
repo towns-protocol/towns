@@ -61,13 +61,13 @@ When updating the seed phrase used for stress testing (e.g., in AWS Secrets Mana
 
 ```bash
 # 1. Check old wallet balances
-yarn transfer-funds check --old-seed "pony dice shiver photo process own nephew child wrong dash evil ketchup"
+yarn transfer-funds check --old-seed "your old twelve word mnemonic seed phrase goes here"
 
 # 2. Transfer to new wallets
 yarn transfer-funds transfer \
-  --old-seed "pony dice shiver photo process own nephew child wrong dash evil ketchup" \
-  --new-seed "animal decline oil quarter flag report scrap neither supply quick client garment"
+  --old-seed "your old twelve word mnemonic seed phrase goes here" \
+  --new-seed "your new twelve word mnemonic seed phrase goes here"
 
 # 3. Verify new wallet balances
-yarn transfer-funds check --old-seed "animal decline oil quarter flag report scrap neither supply quick client garment"
+yarn transfer-funds check --old-seed "your new twelve word mnemonic seed phrase goes here"
 ```
