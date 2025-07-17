@@ -4072,6 +4072,68 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@layerzerolabs/lz-evm-messagelib-v2@npm:^3.0.112":
+  version: 3.0.112
+  resolution: "@layerzerolabs/lz-evm-messagelib-v2@npm:3.0.112"
+  peerDependencies:
+    "@arbitrum/nitro-contracts": ^1.1.0
+    "@axelar-network/axelar-gmp-sdk-solidity": ^5.6.4
+    "@chainlink/contracts-ccip": ^0.7.6
+    "@eth-optimism/contracts": ^0.6.0
+    "@layerzerolabs/lz-evm-protocol-v2": ^3.0.112
+    "@layerzerolabs/lz-evm-v1-0.7": ^3.0.112
+    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
+    hardhat-deploy: ^0.12.4
+    solidity-bytes-utils: ^0.8.0
+  peerDependenciesMeta:
+    "@arbitrum/nitro-contracts":
+      optional: true
+  checksum: 7b2151070ca642caba6926c97009795efcae8b820ffe215b5db09cfa955ed7267483560596c3b9e59d37f29deef4af186f585dfe484c7faf6945dc3014e038bb
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/lz-evm-protocol-v2@npm:^3.0.112":
+  version: 3.0.112
+  resolution: "@layerzerolabs/lz-evm-protocol-v2@npm:3.0.112"
+  peerDependencies:
+    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
+    hardhat-deploy: ^0.12.4
+    solidity-bytes-utils: ^0.8.0
+  checksum: 9f13d32b6f5c814156c55b7198e4bd7b497695afd98329b6414adea5bd5695cfa5b52f965f4ec67249f2d0685d2df319456e65ae61c0e0a6c33970b30ece33db
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/oapp-evm@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "@layerzerolabs/oapp-evm@npm:0.3.2"
+  dependencies:
+    ethers: ^5.7.2
+  peerDependencies:
+    "@layerzerolabs/lz-evm-messagelib-v2": ^3.0.75
+    "@layerzerolabs/lz-evm-protocol-v2": ^3.0.75
+    "@layerzerolabs/lz-evm-v1-0.7": ^3.0.75
+    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
+  checksum: 95863c30a50a2315f9c80e9faa53d91be70dffdfbad5be70a441b67d67c2655bbae7cfbd9ebf9ded5e2d496bcd7879458bbaa80002c8e022ad5c1983c15cf742
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/oft-evm@npm:^3.1.4":
+  version: 3.1.4
+  resolution: "@layerzerolabs/oft-evm@npm:3.1.4"
+  peerDependencies:
+    "@layerzerolabs/lz-evm-messagelib-v2": ^3.0.75
+    "@layerzerolabs/lz-evm-protocol-v2": ^3.0.75
+    "@layerzerolabs/lz-evm-v1-0.7": ^3.0.75
+    "@layerzerolabs/oapp-evm": ^0.3.2
+    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
+  checksum: 7c5b1989f91dbf8c9a449d2382bca0cea35e6f3541e544e90bdc13b856822c4d695b19bb3829822424efc696992b1b2c49ef6a857aee3c87b556a2563a7fc6e1
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.5
   resolution: "@leichtgewicht/ip-codec@npm:2.0.5"
@@ -8693,6 +8755,10 @@ __metadata:
   dependencies:
     "@erc6900/reference-implementation": ^0.8.1
     "@ethereum-attestation-service/eas-contracts": ^1.8.0
+    "@layerzerolabs/lz-evm-messagelib-v2": ^3.0.112
+    "@layerzerolabs/lz-evm-protocol-v2": ^3.0.112
+    "@layerzerolabs/oapp-evm": ^0.3.2
+    "@layerzerolabs/oft-evm": ^3.1.4
     "@openzeppelin/contracts": ^5.3.0
     "@openzeppelin/contracts-upgradeable": ^5.3.0
     "@openzeppelin/merkle-tree": ^1.0.8
@@ -8709,6 +8775,7 @@ __metadata:
     prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.14
     solhint: ^5.0.5
+    solidity-bytes-utils: ^0.8.4
   languageName: unknown
   linkType: soft
 
@@ -27912,6 +27979,13 @@ __metadata:
   bin:
     solhint: solhint.js
   checksum: 8fa19a4411564c79c17017fdc68d4cccff46a67b11da5fc6c435aab9b5c8b8c22f25ea49307d82b4ba03a87ff57e6b91be8f9fee5e95227e80b539905c07a7ec
+  languageName: node
+  linkType: hard
+
+"solidity-bytes-utils@npm:^0.8.4":
+  version: 0.8.4
+  resolution: "solidity-bytes-utils@npm:0.8.4"
+  checksum: 3eb3d7628c60727e3c528fd4bf7a3427e2fb145b9793964605ccde81e774a4681f8778552670c7d95671a198387199e8fc1b042173449b044528284a508f9fc5
   languageName: node
   linkType: hard
 
