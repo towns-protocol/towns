@@ -9,6 +9,10 @@ interface TransferOptions {
     startIndex: number
     endIndex: number
     gasBuffer: number
+    from?: string
+    to?: string
+    amount?: string
+    privateKey?: string
 }
 
 function printUsage() {
@@ -17,7 +21,8 @@ Usage: yarn transfer-funds <command> [options]
 
 Commands:
   check     Check balances of wallets from old seed
-  transfer  Transfer funds from old seed wallets to new seed wallets
+  transfer  Transfer ETH from old seed wallets to new seed wallets
+  send-gas  Send ETH from one wallet to another for gas fees
 
 Options:
   --old-seed <phrase>      Old mnemonic seed phrase (required)
@@ -26,17 +31,21 @@ Options:
   --start <number>         Starting wallet index (default: 0)
   --end <number>           Ending wallet index (default: 40)
   --gas-buffer <percent>   Gas buffer percentage (default: 10)
+  --from <address>         From address (for send-gas)
+  --to <address>           To address (for send-gas)
+  --amount <eth>           Amount in ETH (for send-gas)
+  --private-key <key>      Private key (for send-gas)
   --help                   Show this help message
 
 Examples:
   # Check balances
   yarn transfer-funds check --old-seed "your old seed phrase"
 
-  # Transfer funds
+  # Transfer ETH between seed phrases
   yarn transfer-funds transfer --old-seed "old phrase" --new-seed "new phrase"
 
-  # Custom range and RPC
-  yarn transfer-funds transfer --old-seed "old" --new-seed "new" --start 0 --end 20 --rpc-url https://custom.rpc
+  # Send gas money
+  yarn transfer-funds send-gas --from 0x123... --to 0x456... --amount 0.001 --private-key 0x...
 `)
 }
 
@@ -74,6 +83,18 @@ function parseArgs(): {
                 break
             case '--gas-buffer':
                 options.gasBuffer = parseInt(args[++i], 10)
+                break
+            case '--from':
+                options.from = args[++i]
+                break
+            case '--to':
+                options.to = args[++i]
+                break
+            case '--amount':
+                options.amount = args[++i]
+                break
+            case '--private-key':
+                options.privateKey = args[++i]
                 break
             case '--help':
                 help = true
@@ -186,6 +207,43 @@ async function transferFunds(options: TransferOptions) {
     console.log(`  Total transferred: ${ethers.utils.formatEther(totalTransferred)} ETH`)
 }
 
+async function sendGas(options: TransferOptions) {
+    const provider = new ethers.providers.JsonRpcProvider(options.rpcUrl)
+    const wallet = new ethers.Wallet(options.privateKey!, provider)
+
+    console.log('Connected to:', options.rpcUrl)
+    console.log('Sending from:', wallet.address)
+
+    // Get balance
+    const balance = await provider.getBalance(wallet.address)
+    console.log('Current balance:', ethers.utils.formatEther(balance), 'ETH')
+
+    // Convert amount to wei
+    const amountWei = ethers.utils.parseEther(options.amount!)
+
+    // Send transaction
+    console.log(`\nSending ${options.amount} ETH to ${options.to}...`)
+
+    const tx = await wallet.sendTransaction({
+        to: options.to!,
+        value: amountWei,
+    })
+
+    console.log(`Transaction hash: ${tx.hash}`)
+    console.log('Waiting for confirmation...')
+
+    const receipt = await tx.wait()
+    console.log(`Transaction confirmed in block ${receipt.blockNumber}`)
+
+    // Check new balances
+    const senderBalance = await provider.getBalance(options.from!)
+    const receiverBalance = await provider.getBalance(options.to!)
+
+    console.log('\nNew balances:')
+    console.log(`Sender (${options.from}): ${ethers.utils.formatEther(senderBalance)} ETH`)
+    console.log(`Receiver (${options.to}): ${ethers.utils.formatEther(receiverBalance)} ETH`)
+}
+
 async function main() {
     const { command, options, help } = parseArgs()
 
@@ -248,6 +306,16 @@ async function main() {
 
             await new Promise((resolve) => setTimeout(resolve, 5000))
             await transferFunds(fullOptions)
+        } else if (command === 'send-gas') {
+            if (!options.from || !options.to || !options.amount || !options.privateKey) {
+                console.error(
+                    'Error: --from, --to, --amount, and --private-key are required for send-gas',
+                )
+                printUsage()
+                process.exit(1)
+            }
+
+            await sendGas(options as TransferOptions)
         } else {
             console.error(`Error: Unknown command '${command}'`)
             printUsage()
