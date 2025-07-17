@@ -219,8 +219,9 @@ message SlashCommand {
 }
 
 message AppMetadata {
-    // name is used as the display name of the bot.
-    string name = 1;
+    // username is the identifier used to mention the bot (e.g., "@mybot").
+    // Must be unique across all bots.
+    string username = 1;
 
     string description = 2;
 
@@ -235,6 +236,10 @@ message AppMetadata {
     // slash_commands is a list of commands the bot supports.
     // Maximum of 25 commands per bot.
     repeated SlashCommand slash_commands = 6;
+
+    // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
+    // Must be non-empty and unique across all bots.
+    string display_name = 7;
 }
 
 // Set app metadata
@@ -254,9 +259,9 @@ message GetAppMetadataResponse {
     AppMetadata metadata = 1;
 }
 
-// Validate bot name
+// Validate bot username
 message ValidateBotNameRequest {
-    string name = 1;
+    string username = 1;
 }
 
 message ValidateBotNameResponse {

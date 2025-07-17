@@ -70,7 +70,8 @@ func (ar *appRegistryServiceTester) newTestClients(numClients int, opts testClie
 
 func appMetadataForBot(address []byte) *protocol.AppMetadata {
 	return &protocol.AppMetadata{
-		Name:        fmt.Sprintf("app %x", address),
+		Username:    fmt.Sprintf("app_%x", address),
+		DisplayName: fmt.Sprintf("App %x Bot", address),
 		Description: fmt.Sprintf("Bot description - %x", address),
 		ImageUrl:    fmt.Sprintf("http://image.com/%x/image.png", address),
 		AvatarUrl:   fmt.Sprintf("http://image.com/%x/avatar.png", address),
@@ -87,7 +88,8 @@ func assertAppMetadataEqual(t *testing.T, expected, actual *protocol.AppMetadata
 	require.NotNil(actual, "actual metadata should not be nil")
 	require.NotNil(expected, "expected metadata should not be nil")
 
-	require.Equal(expected.GetName(), actual.GetName(), "metadata name mismatch")
+	require.Equal(expected.GetUsername(), actual.GetUsername(), "metadata username mismatch")
+	require.Equal(expected.GetDisplayName(), actual.GetDisplayName(), "metadata display_name mismatch")
 	require.Equal(expected.GetDescription(), actual.GetDescription(), "metadata description mismatch")
 	require.Equal(expected.GetImageUrl(), actual.GetImageUrl(), "metadata image_url mismatch")
 	require.Equal(expected.GetAvatarUrl(), actual.GetAvatarUrl(), "metadata avatar_url mismatch")
@@ -494,7 +496,8 @@ func safeNewWallet(ctx context.Context, require *require.Assertions) *crypto.Wal
 // Helper function to create test metadata
 func testAppMetadata() *protocol.AppMetadata {
 	return &protocol.AppMetadata{
-		Name:        "Test Bot App",
+		Username:    "test_bot_app",
+		DisplayName: "Test Bot App Display",
 		Description: "A test bot application for integration testing",
 		ImageUrl:    "https://example.com/test-image.png",
 		AvatarUrl:   "https://example.com/test-avatar.png",
@@ -576,7 +579,8 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 
 	// Test valid metadata
 	validMetadata := &protocol.AppMetadata{
-		Name:        "Updated Test App",
+		Username:    "updated_test_app",
+		DisplayName: "Updated Test App Display",
 		Description: "Updated description for testing",
 		ImageUrl:    "https://example.com/updated-image.jpg",
 		AvatarUrl:   "https://example.com/updated-avatar.jpg",
@@ -593,7 +597,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Updated Test App 1",
+				Username: "updated_test_app_1",
+
+				DisplayName: "Updated Test App 1",
 				Description: validMetadata.Description,
 				ImageUrl:    validMetadata.ImageUrl,
 				AvatarUrl:   validMetadata.AvatarUrl,
@@ -604,7 +610,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: ownerWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Owner Updated App 2",
+				Username: "owner_updated_app_2",
+
+				DisplayName: "Owner Updated App 2",
 				Description: "Updated by owner wallet",
 				ImageUrl:    "https://owner.example.com/image.png",
 				AvatarUrl:   "https://owner.example.com/avatar.png",
@@ -615,28 +623,46 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Minimal App",
+				Username: "minimal_app",
+
+				DisplayName: "Minimal App",
 				Description: "App with minimal metadata",
 				ImageUrl:    "https://example.com/minimal-image.png",
 				AvatarUrl:   "https://example.com/minimal-avatar.png",
 				ExternalUrl: nil,
 			},
 		},
-		"Failure: missing name": {
+		"Failure: missing username": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "",
-				Description: "Missing name test",
+				Username:    "",
+				DisplayName: "Valid Display Name",
+				Description: "Missing username test",
+				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
-			expectedErr: "metadata name is required",
+			expectedErr: "metadata username is required",
+		},
+		"Failure: empty display name": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Username:    "test_app_with_empty_display",
+				DisplayName: "",
+				Description: "Testing empty display name validation",
+				ImageUrl:    "https://example.com/image.png",
+				AvatarUrl:   "https://example.com/avatar.png",
+			},
+			expectedErr: "metadata display_name is required",
 		},
 		"Failure: missing description": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -647,7 +673,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Missing image URL",
 				ImageUrl:    "",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -658,7 +686,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid image URL",
 				ImageUrl:    "invalid-url",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -669,7 +699,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Missing avatar URL",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "",
@@ -680,7 +712,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid avatar URL format",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "not-a-url",
@@ -691,7 +725,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Avatar URL with invalid scheme",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "ftp://example.com/avatar.png",
@@ -702,7 +738,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Avatar URL missing file path",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/",
@@ -713,7 +751,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Avatar URL with invalid extension",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.txt",
@@ -724,7 +764,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Image URL with invalid scheme",
 				ImageUrl:    "ftp://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -735,7 +777,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Image URL missing file path",
 				ImageUrl:    "https://example.com/",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -746,7 +790,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Image URL with invalid extension",
 				ImageUrl:    "https://example.com/image.txt",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -757,7 +803,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "IPFS Avatar App 1",
+				Username: "ipfs_avatar_app_1",
+
+				DisplayName: "IPFS Avatar App 1",
 				Description: "App with IPFS avatar",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "ipfs://QmHashExample/avatar.png",
@@ -767,7 +815,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "IPFS Image App 1",
+				Username: "ipfs_image_app_1",
+
+				DisplayName: "IPFS Image App 1",
 				Description: "App with IPFS image",
 				ImageUrl:    "ipfs://QmHashExample/image.jpg",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -777,7 +827,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "HTTP URLs App",
+				Username: "http_urls_app",
+
+				DisplayName: "HTTP URLs App",
 				Description: "App with HTTP URLs",
 				ImageUrl:    "http://example.com/image.jpeg",
 				AvatarUrl:   "http://example.com/avatar.gif",
@@ -787,7 +839,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Various Extensions App",
+				Username: "various_extensions_app",
+
+				DisplayName: "Various Extensions App",
 				Description: "App with various supported extensions",
 				ImageUrl:    "https://example.com/image.webp",
 				AvatarUrl:   "https://example.com/avatar.svg",
@@ -797,7 +851,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid external URL",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -809,7 +865,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid external URL",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -838,7 +896,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Commands",
+				Username: "app_with_commands",
+
+				DisplayName: "App with Commands",
 				Description: "App with valid slash commands",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -853,7 +913,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Invalid Command",
+				Username: "app_with_invalid_command",
+
+				DisplayName: "App with Invalid Command",
 				Description: "App with invalid command name",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -867,7 +929,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Duplicate Commands",
+				Username: "app_with_duplicate_commands",
+
+				DisplayName: "App with Duplicate Commands",
 				Description: "App with duplicate command names",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -882,7 +946,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Too Many Commands",
+				Username: "app_with_too_many_commands",
+
+				DisplayName: "App with Too Many Commands",
 				Description: "App exceeding command limit",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -903,7 +969,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Empty Description",
+				Username: "app_with_empty_description",
+
+				DisplayName: "App with Empty Description",
 				Description: "App with command missing description",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -917,7 +985,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Long Command Name",
+				Username: "app_with_long_command_name",
+
+				DisplayName: "App with Long Command Name",
 				Description: "App with command name exceeding limit",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -931,7 +1001,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Invalid Command Start",
+				Username: "app_with_invalid_command_start",
+
+				DisplayName: "App with Invalid Command Start",
 				Description: "App with command starting with number",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -945,7 +1017,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:          "App without Commands",
+				Username: "app_without_commands",
+
+				DisplayName:   "App without Commands",
 				Description:   "App with no slash commands",
 				ImageUrl:      "https://example.com/image.png",
 				AvatarUrl:     "https://example.com/avatar.png",
@@ -956,7 +1030,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Max Length Commands",
+				Username: "app_with_max_length_commands",
+
+				DisplayName: "App with Max Length Commands",
 				Description: "Testing maximum lengths",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -972,7 +1048,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Unicode Commands",
+				Username: "app_with_unicode_commands",
+
+				DisplayName: "App with Unicode Commands",
 				Description: "Testing unicode in descriptions",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -986,7 +1064,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Case Sensitive Commands",
+				Username: "app_with_case_sensitive_commands",
+
+				DisplayName: "App with Case Sensitive Commands",
 				Description: "Testing case sensitivity",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -1001,7 +1081,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Alphanumeric Commands",
+				Username: "app_with_alphanumeric_commands",
+
+				DisplayName: "App with Alphanumeric Commands",
 				Description: "Testing valid command names",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -1017,7 +1099,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Too Long Description",
+				Username: "app_with_too_long_description",
+
+				DisplayName: "App with Too Long Description",
 				Description: "Testing description length limit",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -1031,7 +1115,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Name:        "App with Underscore Prefix",
+				Username: "app_with_underscore_prefix",
+
+				DisplayName: "App with Underscore Prefix",
 				Description: "Testing invalid underscore prefix",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -1090,23 +1176,23 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		tester.require.ErrorContains(err, "app is not registered")
 	})
 
-	// Test duplicate display name
-	t.Run("Failure_DuplicateDisplayName", func(t *testing.T) {
+	// Test duplicate username (not display name)
+	t.Run("Failure_DuplicateUsername", func(t *testing.T) {
 		// Create two more apps with distinct names.
 		tester.RegisterBotService(1, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
 		tester.RegisterBotService(2, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
 		firstAppWallet, _ := tester.BotWallets(1)
 		secondAppWallet, _ := tester.BotWallets(2)
 
-		app2MetadataWithApp1Name := appMetadataForBot(secondAppWallet.Address[:])
-		app2MetadataWithApp1Name.Name = appMetadataForBot(firstAppWallet.Address[:]).Name
+		app2MetadataWithApp1Username := appMetadataForBot(secondAppWallet.Address[:])
+		app2MetadataWithApp1Username.Username = appMetadataForBot(firstAppWallet.Address[:]).Username
 
-		// Update the name of app2 to match the name of the other app, and expect a failure to update
+		// Update the username of app2 to match the username of the other app, and expect a failure to update
 		// the app's metadata.
 		req := &connect.Request[protocol.SetAppMetadataRequest]{
 			Msg: &protocol.SetAppMetadataRequest{
 				AppId:    secondAppWallet.Address[:],
-				Metadata: app2MetadataWithApp1Name,
+				Metadata: app2MetadataWithApp1Username,
 			},
 		}
 		authenticateBS(tester.ctx, tester.require, tester.authClient, secondAppWallet, req)
@@ -1114,7 +1200,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
 		tester.require.Nil(resp)
 		tester.require.Error(err)
-		tester.require.ErrorContains(err, "another app with the same name already exists")
+		tester.require.ErrorContains(err, "another app with the same username already exists")
 	})
 }
 
@@ -1943,7 +2029,7 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 		},
 	)
 	tester.require.NoError(err)
-	existingBotName := getMetadataResp.Msg.Metadata.Name
+	existingBotUsername := getMetadataResp.Msg.Metadata.Username
 
 	tests := map[string]struct {
 		name             string
@@ -1954,19 +2040,19 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 			name:            "UniqueNewBotName",
 			expectAvailable: true,
 		},
-		"Existing name": {
-			name:             existingBotName,
+		"Existing username": {
+			name:             existingBotUsername,
 			expectAvailable:  false,
-			expectErrMessage: "name is already taken",
+			expectErrMessage: "username is already taken",
 		},
 		"Empty name": {
 			name:             "",
 			expectAvailable:  false,
-			expectErrMessage: "name cannot be empty",
+			expectErrMessage: "username cannot be empty",
 		},
-		"Different case of existing name": {
-			name:            strings.ToUpper(existingBotName),
-			expectAvailable: true, // Expect case-sensitive name uniqueness
+		"Different case of existing username": {
+			name:            strings.ToUpper(existingBotUsername),
+			expectAvailable: true, // Expect case-sensitive username uniqueness
 		},
 		"Name with spaces": {
 			name:            "Bot With Spaces",
@@ -1984,7 +2070,7 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 				tester.ctx,
 				&connect.Request[protocol.ValidateBotNameRequest]{
 					Msg: &protocol.ValidateBotNameRequest{
-						Name: tt.name,
+						Username: tt.name,
 					},
 				},
 			)
@@ -2038,7 +2124,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test Bot App Success 1",
+				Username: "test_bot_app_success_1",
+
+				DisplayName: "Test Bot App Success 1",
 				Description: testAppMetadata().Description,
 				ImageUrl:    testAppMetadata().ImageUrl,
 				AvatarUrl:   testAppMetadata().AvatarUrl,
@@ -2050,7 +2138,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet2.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Minimal App Success 2",
+				Username: "minimal_app_success_2",
+
+				DisplayName: "Minimal App Success 2",
 				Description: "Minimal app description",
 				ImageUrl:    "https://example.com/minimal-image.png",
 				AvatarUrl:   "https://example.com/minimal-avatar.png",
@@ -2083,19 +2173,23 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "",
+				Username: "",
+
+				DisplayName: "",
 				Description: "Missing name",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			authenticatingWallet: ownerWallet,
-			expectedErr:          "metadata name is required",
+			expectedErr:          "metadata username is required",
 		},
 		"Invalid metadata - missing description": {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -2107,7 +2201,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Missing avatar URL",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "",
@@ -2119,7 +2215,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid avatar URL",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "not-a-valid-url",
@@ -2131,7 +2229,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid image URL",
 				ImageUrl:    "invalid-url",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -2143,7 +2243,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App",
+				Username: "test_app",
+
+				DisplayName: "Test App",
 				Description: "Invalid external URL",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -2169,7 +2271,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App Invalid Command",
+				Username: "test_app_invalid_command",
+
+				DisplayName: "Test App Invalid Command",
 				Description: "Test app with invalid command",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -2184,7 +2288,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App Duplicate Commands",
+				Username: "test_app_duplicate_commands",
+
+				DisplayName: "Test App Duplicate Commands",
 				Description: "Test app with duplicate commands",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
@@ -2200,7 +2306,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Name:        "Test App Many Commands",
+				Username: "test_app_many_commands",
+
+				DisplayName: "Test App Many Commands",
 				Description: "Test app with too many commands",
 				ImageUrl:    "https://example.com/image.png",
 				AvatarUrl:   "https://example.com/avatar.png",
