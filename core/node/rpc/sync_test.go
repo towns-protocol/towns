@@ -141,14 +141,14 @@ func makeSyncClient(tt *serviceTester, i int) *syncClient {
 	}
 }
 
-func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) {
+func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) func() {
 	for _, client := range sc.clients {
 		go client.syncMany(ctx, cookies)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		sc.cancelAll(t, ctx)
-	})
+	}
 
 	for i, client := range sc.clients {
 		select {
@@ -156,22 +156,24 @@ func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies 
 			// Received syncId, continue
 		case err := <-client.errC:
 			t.Fatalf("Error in sync client %d: %v", i, err)
-			return
+			return cleanup
 		case <-time.After(defaultTimeout):
 			t.Fatalf("Timeout waiting for syncId from client %d", i)
-			return
+			return cleanup
 		}
 	}
+
+	return cleanup
 }
 
-func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) {
+func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) func() {
 	for _, client := range sc.clients {
 		go client.sync(ctx, cookie)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		sc.cancelAll(t, ctx)
-	})
+	}
 
 	for i, client := range sc.clients {
 		select {
@@ -179,12 +181,14 @@ func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *prot
 			// Received syncId, continue
 		case err := <-client.errC:
 			t.Fatalf("Error in sync client %d: %v", i, err)
-			return
+			return cleanup
 		case <-time.After(defaultTimeout):
 			t.Fatalf("Timeout waiting for syncId from client %d", i)
-			return
+			return cleanup
 		}
 	}
+
+	return cleanup
 }
 
 func (sc *syncClients) modifySync(t *testing.T, ctx context.Context, add []*protocol.SyncCookie, remove [][]byte) {
@@ -386,7 +390,8 @@ func TestSyncWithFlush(t *testing.T) {
 	)
 	require.NoError(err)
 
-	syncClients.startSync(t, ctx, cookie)
+	cleanup := syncClients.startSync(t, ctx, cookie)
+	defer cleanup()
 
 	syncClients.expectOneUpdate(t, &updateOpts{})
 
@@ -476,7 +481,9 @@ func TestSyncWithManyStreams(t *testing.T) {
 
 	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
+
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
@@ -666,7 +673,9 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	}
 
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
+
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),

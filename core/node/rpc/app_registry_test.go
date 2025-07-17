@@ -244,7 +244,6 @@ type appRegistryTesterOpts struct {
 	numNodes            int
 	numBots             int
 	botCredentials      []testBotCredentials
-	enableRiverLogs     bool
 	enableAppServerLogs bool
 }
 
@@ -253,8 +252,7 @@ func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *app
 	if opts != nil && opts.numNodes > 0 {
 		numNodes = opts.numNodes
 	}
-	enableRiverLogs := opts != nil && opts.enableRiverLogs
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, printTestLogs: enableRiverLogs})
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
 	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
@@ -307,7 +305,7 @@ func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *app
 		client,
 		enableAppServerLogs,
 	)
-	tester.cleanup(appServer.Close)
+	tester.t.Cleanup(appServer.Close)
 
 	return &appRegistryServiceTester{
 		serviceTester:      tester,
@@ -375,7 +373,7 @@ func initAppRegistryService(
 	tester.require.NoError(err)
 
 	// Clean up schema
-	tester.cleanup(func() {
+	tester.t.Cleanup(func() {
 		err := dbtestutils.DeleteTestSchema(
 			context.Background(),
 			tester.dbUrl,
@@ -383,7 +381,7 @@ func initAppRegistryService(
 		)
 		tester.require.NoError(err)
 	})
-	tester.cleanup(service.Close)
+	tester.t.Cleanup(service.Close)
 
 	return service
 }
@@ -570,7 +568,7 @@ func registerWebhook(
 func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 	// TODO: refactor app registry sql to use row-locking in order to fix flakes
 	t.Skip("flaky")
-	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 3, enableRiverLogs: false})
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 3})
 	tester.StartBotServices()
 	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
 
@@ -1301,8 +1299,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 	// TODO: refactor app registry sql to use row-locking in order to fix flakes
 	t.Skip("flaky")
 
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	require := require.New(t)
 	botWallet := safeNewWallet(ctx, require)
 	ownerWallet := safeNewWallet(ctx, require)
@@ -2012,7 +2009,7 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 	// TODO: refactor app registry sql to use row-locking in order to fix flakes
 	t.Skip("flaky")
 
-	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 2, enableRiverLogs: false})
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 2})
 	tester.StartBotServices()
 
 	// Register a bot in order to create a bot with an existing name

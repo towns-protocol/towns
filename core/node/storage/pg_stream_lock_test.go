@@ -19,7 +19,7 @@ import (
 
 func TestDbLocking(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	defer params.closer()
+
 	ctx := params.ctx
 	require := require.New(t)
 

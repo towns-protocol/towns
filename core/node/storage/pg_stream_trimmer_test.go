@@ -17,7 +17,7 @@ func TestStreamTrimmer(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	pgStreamStore := params.pgStreamStore
-	defer params.closer()
+
 	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
