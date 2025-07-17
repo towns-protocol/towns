@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -51,13 +50,12 @@ type testAppRegistryStoreParams struct {
 	pgAppRegistryStore *storage.PostgresAppRegistryStore
 	schema             string
 	config             *config.DatabaseConfig
-	closer             func()
 	exitSignal         chan error
 }
 
 func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 	require := require.New(t)
-	ctx, ctxCloser := test.NewTestContext()
+	ctx := test.NewTestContext(t)
 
 	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDbWithPrefix(ctx, "b_")
 	require.NoError(err, "Error configuring db for test")
@@ -88,12 +86,12 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 		schema:             dbSchemaName,
 		config:             dbCfg,
 		exitSignal:         exitSignal,
-		closer: sync.OnceFunc(func() {
-			store.Close(ctx)
-			dbCloser()
-			ctxCloser()
-		}),
 	}
+
+	t.Cleanup(func() {
+		store.Close(ctx)
+		dbCloser()
+	})
 
 	return params
 }
@@ -107,7 +105,6 @@ func safeAddress(t *testing.T) common.Address {
 
 func TestGetSessionKey(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -192,7 +189,6 @@ func TestGetSessionKey(t *testing.T) {
 
 func TestUpdateSettings(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -257,7 +253,6 @@ func TestUpdateSettings(t *testing.T) {
 
 func TestRegisterWebhook(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -359,7 +354,6 @@ func TestRegisterWebhook(t *testing.T) {
 
 func TestCreateApp(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -490,7 +484,6 @@ func TestCreateApp(t *testing.T) {
 
 func TestRotateSecret(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -540,7 +533,6 @@ func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessag
 
 func TestPublishSessionKeys(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -627,7 +619,6 @@ func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
 
 func TestGetSendableApps(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -713,7 +704,6 @@ func TestGetSendableApps(t *testing.T) {
 
 func TestEnqueueMessages(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1182,7 +1172,6 @@ func TestEnqueueMessages(t *testing.T) {
 
 func TestSetAppMetadata(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1280,7 +1269,11 @@ func TestSetAppMetadata(t *testing.T) {
 	require.NoError(err)
 	appInfo2, err := store.GetAppInfo(params.ctx, app2)
 	require.NoError(err)
-	require.Equal(appInfo1.Metadata.DisplayName, appInfo2.Metadata.DisplayName, "Both apps should have the same display name")
+	require.Equal(
+		appInfo1.Metadata.DisplayName,
+		appInfo2.Metadata.DisplayName,
+		"Both apps should have the same display name",
+	)
 	require.NotEqual(appInfo1.Metadata.Username, appInfo2.Metadata.Username, "Apps should have different usernames")
 
 	// Test updating slash commands - remove all commands
@@ -1315,7 +1308,6 @@ func TestSetAppMetadata(t *testing.T) {
 
 func TestGetAppMetadata(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1364,7 +1356,6 @@ func TestGetAppMetadata(t *testing.T) {
 
 func TestAppMetadataInGetAppInfo(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1428,7 +1419,6 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 
 func TestIsUsernameAvailable(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1507,7 +1497,10 @@ func TestIsUsernameAvailable(t *testing.T) {
 	// The service layer is responsible for validating that empty usernames are not acceptable
 	available, err = store.IsUsernameAvailable(params.ctx, "")
 	require.NoError(err)
-	require.True(available, "Storage layer returns true for empty username (no DB entry), service layer handles validation")
+	require.True(
+		available,
+		"Storage layer returns true for empty username (no DB entry), service layer handles validation",
+	)
 
 	// Test case sensitivity (assuming the implementation is case-sensitive based on the unique constraint)
 	available, err = store.IsUsernameAvailable(params.ctx, "existingbot")

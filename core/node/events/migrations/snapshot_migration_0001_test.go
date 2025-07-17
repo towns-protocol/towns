@@ -15,8 +15,7 @@ import (
 // every insert, we need to remove duplicates
 
 func TestSnapshotMigration0001(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	userWallet, _ := crypto.NewWallet(ctx)
 	spaceId := testutils.FakeStreamId(0x10) // events.STREAM_SPACE_BIN
 	channelId := testutils.MakeChannelId(spaceId)

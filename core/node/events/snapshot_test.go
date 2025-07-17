@@ -150,8 +150,7 @@ func make_Space_DisplayName(
 }
 
 func TestMakeSnapshot(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
@@ -164,8 +163,7 @@ func TestMakeSnapshot(t *testing.T) {
 }
 
 func TestUpdateSnapshot(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
@@ -188,8 +186,7 @@ func TestUpdateSnapshot(t *testing.T) {
 }
 
 func TestCloneAndUpdateUserSnapshot(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
@@ -214,8 +211,7 @@ func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 }
 
 func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_Space_Inception(wallet, streamId, t)
@@ -279,8 +275,7 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 }
 
 func TestUpdateSnapshotFailsIfInception(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
@@ -370,8 +365,7 @@ func make_Metadata_PlacementUpdate(
 // Test metadata snapshot creation and updates
 
 func TestMakeMetadataSnapshot(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	streamId := MetadataStreamIdFromShard(0)
 	inception := make_Metadata_Inception(t, wallet, streamId)
@@ -389,8 +383,7 @@ func TestMakeMetadataSnapshot(t *testing.T) {
 }
 
 func TestUpdateMetadataSnapshot_NewStream(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
 	
@@ -439,8 +432,7 @@ func TestUpdateMetadataSnapshot_NewStream(t *testing.T) {
 }
 
 func TestUpdateMetadataSnapshot_LastMiniblockUpdate(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
 	
@@ -508,8 +500,7 @@ func TestUpdateMetadataSnapshot_LastMiniblockUpdate(t *testing.T) {
 }
 
 func TestUpdateMetadataSnapshot_PlacementUpdate(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
 	
@@ -584,8 +575,7 @@ func TestUpdateMetadataSnapshot_PlacementUpdate(t *testing.T) {
 }
 
 func TestUpdateMetadataSnapshot_MultipleStreams(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
 	
@@ -643,8 +633,7 @@ func TestUpdateMetadataSnapshot_MultipleStreams(t *testing.T) {
 // Test error cases
 
 func TestUpdateMetadataSnapshot_InceptionFails(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
 	
@@ -660,8 +649,7 @@ func TestUpdateMetadataSnapshot_InceptionFails(t *testing.T) {
 }
 
 func TestUpdateMetadataSnapshot_WrongSnapshotType(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	userStreamId := UserStreamIdFromAddr(wallet.Address)
 	
@@ -699,8 +687,7 @@ func TestUpdateMetadataSnapshot_WrongSnapshotType(t *testing.T) {
 }
 
 func TestUpdateMetadataSnapshot_StreamNotFound(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	wallet, _ := crypto.NewWallet(ctx)
 	metadataStreamId := MetadataStreamIdFromShard(0)
 	

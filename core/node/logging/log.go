@@ -167,9 +167,13 @@ func DefaultZapEncoderConfig() zapcore.EncoderConfig {
 }
 
 func DefaultLogger(level zapcore.Level) *Log {
+	return LoggerWithWriter(level, DefaultLogOut)
+}
+
+func LoggerWithWriter(level zapcore.Level, writer zapcore.WriteSyncer) *Log {
 	encoder := NewJSONEncoder(DefaultZapEncoderConfig())
 
-	core := zapcore.NewCore(encoder, DefaultLogOut, level)
+	core := zapcore.NewCore(encoder, writer, level)
 	logger := zap.New(core, zap.AddCaller())
 
 	sugar := logger.Sugar()

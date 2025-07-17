@@ -79,7 +79,9 @@ func TestSyncWithEmptyNodeAddress_NoRace(t *testing.T) {
 
 	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
+
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),

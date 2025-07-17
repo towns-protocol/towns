@@ -16,8 +16,7 @@ import (
 )
 
 func TestRiverError(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	log := logging.FromCtx(ctx)
 
 	e := RiverError(

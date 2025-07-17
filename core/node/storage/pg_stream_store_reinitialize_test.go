@@ -19,7 +19,7 @@ func TestReinitializeStreamStorage_CreateNew(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -76,7 +76,7 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -168,7 +168,7 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -245,7 +245,7 @@ func TestReinitializeStreamStorage_UpdateValidation(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -274,7 +274,7 @@ func TestReinitializeStreamStorage_ExistenceChecks(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	existingStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	nonExistingStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
@@ -319,7 +319,7 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -380,7 +380,7 @@ func TestReinitializeStreamStorage_TransactionRollback(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -431,7 +431,7 @@ func TestReinitializeStreamStorage_LargeDataSet(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -470,7 +470,7 @@ func TestReinitializeStreamStorage_SnapshotHandling(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	tests := []struct {
 		name                     string
@@ -537,7 +537,7 @@ func TestReinitializeStreamStorage_MinipoolGeneration(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	tests := []struct {
 		name               string
@@ -592,7 +592,7 @@ func TestReinitializeStreamStorage_NonZeroStart(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -629,7 +629,7 @@ func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -678,7 +678,7 @@ func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -712,7 +712,7 @@ func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	tests := []struct {
 		name                     string
@@ -773,7 +773,7 @@ func TestReinitializeStreamStorage_IntegerOverflow(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-	defer params.closer()
+
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
