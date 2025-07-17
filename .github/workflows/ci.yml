@@ -714,12 +714,20 @@ jobs:
               working-directory: core
 
             - name: Run go tests with race detection exluding large tests
-              run: gotestsum --format-hide-empty-pkg ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
+              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug gotestsum --format-hide-empty-pkg ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 
             - name: Run large go tests without race detection
-              run: gotestsum --format-hide-empty-pkg ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
+              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug gotestsum --format-hide-empty-pkg ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
+
+            - name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: 'go-test-logs-${{ github.job }}'
+                  path: |
+                      ./core/run_files/test_logs/
 
     XChain_Integration:
         permissions: write-all
