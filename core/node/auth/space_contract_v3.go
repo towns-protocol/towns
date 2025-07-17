@@ -250,11 +250,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 	var furthestExpiryTime *big.Int
 	var mostRecentExpiry *big.Int
 
-	// Iterate over token ids backwards, since the most recent is the most likely to be
-	// unexpired. In the case that the user has multiple tokens, this may save a few rpc
-	// calls.
-	for i := len(tokens) - 1; i >= 0; i-- {
-		tokenId := tokens[i]
+	for _, tokenId := range tokens {
 		expiresAt, err := membership.ExpiresAt(&bind.CallOpts{Context: ctx}, tokenId)
 		if err != nil {
 			log.Warnw(
