@@ -51,6 +51,20 @@ func authenticateNS[T any](
 
 var notificationDeliveryDelay = 30 * time.Second
 
+func TestNotificationsColdStreams(t *testing.T) {
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	ctx := tester.ctx
+
+	notifications := &notificationCapture{
+		WebPushNotifications: make(map[common.Hash]map[common.Address]int),
+		ApnPushNotifications: make(map[common.Hash]map[common.Address]int),
+	}
+
+	// enable cold streams, since this should be the default ASAP
+	tester.btc.SetConfigValue(t, ctx, crypto.NotificationsColdStreamsEnabledConfigKey, crypto.ABIEncodeUint64(1))
+
+}
+
 // TestNotifications is designed in such a way that all tests are run in parallel
 // and share the same set of nodes, notification service and client.
 func TestNotifications(t *testing.T) {
@@ -593,7 +607,7 @@ func testSpaceChannelPlainMessage(
 	test *spaceChannelNotificationsTestContext,
 	nc *notificationCapture,
 ) {
-	// by default non of the members should receive a notification for this message
+	// by default, none of the members should receive a notification for this message
 	expectedUsersToReceiveNotification := make(map[common.Address]int)
 	for _, wallet := range test.members {
 		test.setSpaceChannelSetting(ctx, wallet, SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_NO_MESSAGES)
