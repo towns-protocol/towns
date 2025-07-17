@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"math/big"
 	"net/http"
 	"sync"
@@ -23,7 +24,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -63,14 +63,18 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
 
+	log := logging.FromCtx(ctx)
+
 	// enable cold streams, since this should be the default ASAP
 	tester.btc.SetConfigValue(t, ctx, crypto.NotificationsColdStreamsEnabledConfigKey, crypto.ABIEncodeUint64(1))
 
 	test := setupNotificationsColdStreams(ctx, tester)
 
+	log.Errorw("sending message msg1", "stream id", test.dmStreamID)
 	test.sendMessageWithTags(ctx, test.initiator, "msg1", &Tags{})
 
 	// initialize notifications service AFTER we've created the stream and sent a message
+	log.Errorw("initializing notification service", "stream id", test.dmStreamID)
 	notificationService := initNotificationService(ctx, tester, nc)
 
 	notificationClient := protocolconnect.NewNotificationServiceClient(
@@ -79,9 +83,9 @@ func TestNotificationsColdStreams(t *testing.T) {
 	authClient := protocolconnect.NewAuthenticationServiceClient(
 		httpClient, "https://"+notificationService.listener.Addr().String())
 
+	log.Errorw("subscribing to notifications", "stream id", test.dmStreamID)
 	subscribeWebPush(ctx, test.member, test.req, authClient, notificationClient)
 
-	log := logging.FromCtx(ctx)
 	log.Errorw("sending message", "stream id", test.dmStreamID)
 	event := test.sendMessageWithTags(ctx, test.initiator, "msg2", &Tags{})
 	eventHash := common.BytesToHash(event.Hash)
