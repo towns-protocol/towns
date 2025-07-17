@@ -98,22 +98,6 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
     const { content, error } = toTownsContent(timelineEvent)
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.id, content, error)}`
-
-    function extractSessionId(event: StreamTimelineEvent): string | undefined {
-        const payload = event.remoteEvent?.event.payload
-        if (
-            !payload ||
-            payload.case !== 'channelPayload' ||
-            payload.value.content.case !== 'message'
-        ) {
-            return undefined
-        }
-
-        return payload.value.content.value.sessionIdBytes.length > 0
-            ? bin_toHexString(payload.value.content.value.sessionIdBytes)
-            : payload.value.content.value.sessionId
-    }
-
     const sessionId = extractSessionId(timelineEvent)
 
     return {
@@ -140,6 +124,17 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         sender,
         sessionId,
     }
+}
+
+function extractSessionId(event: StreamTimelineEvent): string | undefined {
+    const payload = event.remoteEvent?.event.payload
+    if (!payload || payload.value?.content.case !== 'message') {
+        return undefined
+    }
+
+    return payload.value.content.value.sessionIdBytes.length > 0
+        ? bin_toHexString(payload.value.content.value.sessionIdBytes)
+        : payload.value.content.value.sessionId
 }
 
 function getSenderId(timelineEvent: StreamTimelineEvent): string {
