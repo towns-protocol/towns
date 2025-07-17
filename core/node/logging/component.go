@@ -244,6 +244,8 @@ func ParseLogLevels(cfg string) (LogLevels, error) {
 		}
 
 		switch Component(strings.ToLower(parts[0])) {
+		case Default:
+			continue
 		case Miniblock:
 			levels[Miniblock] = lvl
 		case Rpc:
