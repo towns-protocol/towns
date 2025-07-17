@@ -600,6 +600,15 @@ export abstract class BaseDecryptionExtensions {
 
     private lastPrintedAt = 0
     protected checkStartTicking() {
+        // tick is safe to call multiple times in the same frame, but we dont' want it
+        // slowing down the rest of the main thread, and we want tick to happen async outside of
+        // any dispatched events (decrypted item shows up, event dispatched, then event is added to timeline, only then should we update it with the decrypted content)
+        queueMicrotask(() => {
+            this.tick()
+        })
+    }
+
+    private tick() {
         if (!this.started || !this._onStopFn || this.shouldPauseTicking()) {
             return
         }
@@ -639,7 +648,7 @@ export abstract class BaseDecryptionExtensions {
             this.lastPrintedAt = Date.now()
         }
 
-        this.tick(streamIds)
+        this._tick(streamIds)
 
         if (logDebugInfo) {
             const runners = this.allQueueRunners.filter((x) => isDefined(x.inProgress))
@@ -663,7 +672,7 @@ export abstract class BaseDecryptionExtensions {
     }
 
     // just do one thing then return
-    private tick(streamIds: string[]) {
+    private _tick(streamIds: string[]) {
         const now = Date.now()
 
         // update the priority queue
@@ -684,36 +693,31 @@ export abstract class BaseDecryptionExtensions {
             }
         }
 
-        // respond to any own or ephemeral key solicitations (if you're not still ingesting sessions)
+        // if you're not still ingesting sessions...
+        // (we don't want to respond to key solicitations while we're ingesting sessions because we might not have injested the keys yet)
         if (!this.mainQueueRunners.newGroupSessions.inProgress) {
-            if (
-                !this.mainQueueRunners.ownKeySolicitations.inProgress &&
-                this.mainQueues.ownKeySolicitations.length > 0
-            ) {
-                this.mainQueues.ownKeySolicitations.sort((a, b) =>
-                    this.compareStreamIds(a.streamId, b.streamId),
+            // respond to any own key solicitations
+            if (!this.mainQueueRunners.ownKeySolicitations.inProgress) {
+                // only process the first one if it's up to date
+                const ownSolicitation = dequeueUpToDate(
+                    this.mainQueues.ownKeySolicitations,
+                    now,
+                    () => 0,
+                    this.upToDateStreams,
                 )
-                if (this.upToDateStreams.has(this.mainQueues.ownKeySolicitations[0].streamId)) {
-                    const ownSolicitation = this.mainQueues.ownKeySolicitations.shift()
-                    if (ownSolicitation) {
-                        this.log.debug(' processing own key solicitation')
-                        this.setStatus(DecryptionStatus.working)
-                        this.mainQueueRunners.ownKeySolicitations.run(
-                            this.processKeySolicitation(ownSolicitation),
-                        )
-                    }
+                if (ownSolicitation) {
+                    this.log.debug(' processing own key solicitation')
+                    this.setStatus(DecryptionStatus.working)
+                    this.mainQueueRunners.ownKeySolicitations.run(
+                        this.processKeySolicitation(ownSolicitation),
+                    )
                 }
             }
-
+            // respond to any ephemeral key solicitations
             if (!this.mainQueueRunners.ephemeralKeySolicitations.inProgress) {
                 if (this.mainQueues.ephemeralKeySolicitations.length > 0) {
+                    // sort the solicitations to match the order of stream priority and respondAfter
                     this.mainQueues.ephemeralKeySolicitations.sort((a, b) => {
-                        if (!this.upToDateStreams.has(a.streamId)) {
-                            return 1
-                        }
-                        if (!this.upToDateStreams.has(b.streamId)) {
-                            return -1
-                        }
                         return a.respondAfter - b.respondAfter
                     })
                     const ephemeralSolicitation = dequeueUpToDate(
@@ -738,14 +742,18 @@ export abstract class BaseDecryptionExtensions {
         const inProgressStreamIds = this.streamQueueRunners.map((x) => x.streamId).filter(isDefined)
 
         for (const streamId of streamIds) {
+            // if there are no open runners left early return
             if (openRunners.length === 0) {
                 return // exit tick
             }
+            // if the stream is already in progress, skip it
             if (inProgressStreamIds.includes(streamId)) {
                 continue
             }
 
+            // grab the queue for the stream
             const streamQueue = this.streamQueues.getQueue(streamId)
+            // if there is encrypted content to decrypt, decrypt it
             const encryptedContent = streamQueue.encryptedContent.shift()
             if (encryptedContent) {
                 this.setStatus(DecryptionStatus.working)

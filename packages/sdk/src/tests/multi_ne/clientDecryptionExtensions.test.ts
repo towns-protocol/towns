@@ -3,7 +3,7 @@
  */
 
 import { Client } from '../../client'
-import { dlog, shortenHexString } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
 import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Stream } from '../../stream'
