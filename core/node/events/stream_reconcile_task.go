@@ -246,7 +246,8 @@ func (s *StreamCache) reconcileStreamFromPeers(
 	// if local storage is ahead of the stream record, write the latest miniblock to the blockchain.
 	// This can happen when a stream started as a non-replicated stream and mb registration frequency
 	// was set to > 1.
-	if writeLatestKnownMiniblock && streamRecord.LastMbNum() < lastLocalMiniblockNum {
+	if writeLatestKnownMiniblock && stream.nodesLocked.IsLocalInQuorum() &&
+		streamRecord.LastMbNum() < lastLocalMiniblockNum {
 		if view, _ := stream.GetViewIfLocal(ctx); view != nil {
 			if lastBlock := view.LastBlock(); lastBlock != nil {
 				go s.mbProducer.writeLatestKnownMiniblock(ctx, stream, lastBlock)
