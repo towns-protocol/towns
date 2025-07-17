@@ -1002,6 +1002,7 @@ export function toDecryptedEvent(
                 return {
                     ...event,
                     content,
+                    fallbackContent: getFallbackContent(event.sender.id, content),
                     threadParentId: getThreadParentId(content),
                     replyParentId: getReplyParentId(content),
                     reactionParentId: getReactionParentId(content),
@@ -1017,12 +1018,15 @@ export function toDecryptedEvent(
         }
         case RiverTimelineEvent.SpaceDisplayName: {
             if (decryptedContent.kind === 'text') {
+                const content = {
+                    ...event.content,
+                    displayName: decryptedContent.content,
+                }
+                const fallbackContent = getFallbackContent(event.sender.id, content)
                 return {
                     ...event,
-                    content: {
-                        ...event.content,
-                        displayName: decryptedContent.content,
-                    },
+                    content,
+                    fallbackContent,
                 }
             } else {
                 logger.error('$$$ timelineStoreEvents invalid spaceDisplayName', {
@@ -1034,12 +1038,15 @@ export function toDecryptedEvent(
         }
         case RiverTimelineEvent.SpaceUsername: {
             if (decryptedContent.kind === 'text') {
+                const content = {
+                    ...event.content,
+                    username: decryptedContent.content,
+                }
+                const fallbackContent = getFallbackContent(event.sender.id, content)
                 return {
                     ...event,
-                    content: {
-                        ...event.content,
-                        username: decryptedContent.content,
-                    },
+                    content,
+                    fallbackContent,
                 }
             } else {
                 logger.error('$$$ timelineStoreEvents invalid spaceUsername', {
@@ -1051,12 +1058,15 @@ export function toDecryptedEvent(
         }
         case RiverTimelineEvent.EncryptedChannelProperties: {
             if (decryptedContent.kind === 'channelProperties') {
+                const content = {
+                    ...event.content,
+                    properties: decryptedContent.content,
+                }
+                const fallbackContent = getFallbackContent(event.sender.id, content)
                 return {
                     ...event,
-                    content: {
-                        kind: RiverTimelineEvent.ChannelProperties,
-                        properties: decryptedContent.content,
-                    } satisfies ChannelPropertiesEvent,
+                    content,
+                    fallbackContent,
                 }
             } else {
                 logger.error('$$$ timelineStoreEvents invalid encryptedChannelProperties', {
