@@ -109,12 +109,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             sigBundle: EventSignatureBundle,
         ) => this.enqueueInitKeySolicitations(streamId, eventHashStr, members, sigBundle)
 
-        const onStreamInitialized = (streamId: string) => {
-            if (isUserInboxStreamId(streamId)) {
-                this.enqueueNewMessageDownload()
-            }
-        }
-
         const onStreamSyncActive = (active: boolean) => {
             this.log.info('onStreamSyncActive', active)
             if (!active) {
@@ -133,7 +127,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('updatedKeySolicitation', onKeySolicitation)
         client.on('initKeySolicitations', onInitKeySolicitations)
         client.on('streamNewUserJoined', onMembershipChange)
-        client.on('streamInitialized', onStreamInitialized)
         client.on('streamSyncActive', onStreamSyncActive)
         client.on('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
 
@@ -145,7 +138,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('updatedKeySolicitation', onKeySolicitation)
             client.off('initKeySolicitations', onInitKeySolicitations)
             client.off('streamNewUserJoined', onMembershipChange)
-            client.off('streamInitialized', onStreamInitialized)
             client.off('streamSyncActive', onStreamSyncActive)
             client.off('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
         }

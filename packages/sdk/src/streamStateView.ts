@@ -563,6 +563,11 @@ export class StreamStateView {
         this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
 
+        const minipoolEvent = this.minipoolEvents.get(eventId)
+        if (minipoolEvent) {
+            minipoolEvent.decryptedContent = content
+        }
+
         const timelineEvent = this.streamsView.timelinesView.streamEventDecrypted(
             this.streamId,
             eventId,

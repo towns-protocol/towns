@@ -3016,7 +3016,7 @@ export class Client
             try {
                 if (deviceKeys.length === 0) {
                     // means we failed to download the device keys, we should enqueue a retry
-                    this.logInfo(
+                    this.logCall(
                         'encryptAndShareGroupSessions: no device keys to send',
                         inStreamId,
                         userId,
@@ -3035,7 +3035,7 @@ export class Client
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
                 if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
-                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                    this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                         toStreamId,
                         deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
                     })
@@ -3058,9 +3058,9 @@ export class Client
             }
         })
 
-        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
+        this.logCall('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
-        this.logInfo('encryptAndShareGroupSessions: done')
+        this.logCall('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.
