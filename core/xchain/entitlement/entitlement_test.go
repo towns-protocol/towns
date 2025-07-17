@@ -357,8 +357,7 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContextForTestMain("xchain/entitlement")
 	evaluator, err = NewEvaluatorFromConfig(
 		ctx,
 		cfg,
@@ -379,8 +378,7 @@ var (
 )
 
 func TestAndOperation(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	testCases := []struct {
 		description  string
@@ -524,8 +522,7 @@ func TestAndOperation(t *testing.T) {
 }
 
 func TestOrOperation(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	testCases := []struct {
 		description  string
@@ -676,8 +673,7 @@ func areDurationsClose(d1, d2, threshold time.Duration) bool {
 }
 
 func TestCheckOperation(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	testCases := []struct {
 		a            Operation
@@ -1060,8 +1056,7 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
+			ctx := test.NewTestContext(t)
 			result, err := evaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
@@ -1117,8 +1112,7 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
+			ctx := test.NewTestContext(t)
 			require := require.New(t)
 			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
 				ctx,

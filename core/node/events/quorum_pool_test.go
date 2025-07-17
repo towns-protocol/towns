@@ -63,8 +63,7 @@ func TestQuorumPool(t *testing.T) {
 }
 
 func quorumPoolSuccess(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	var (
 		req     = require.New(t)
@@ -99,8 +98,7 @@ func quorumPoolSuccess(t *testing.T) {
 }
 
 func quorumPoolFail(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	var (
 		req     = require.New(t)
@@ -138,8 +136,7 @@ func quorumPoolFail(t *testing.T) {
 
 // quorumPoolWithSomeSlowRemotes ensures that quorum is reached even when some remotes timeout before responding
 func quorumPoolWithSomeSlowRemotes(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	var (
 		req     = require.New(t)
@@ -186,8 +183,7 @@ func quorumPoolWithSomeSlowRemotes(t *testing.T) {
 // quorumPoolWithTooManySlowRemotes ensures that quorum isn't reached when too many remotes timeout before responding
 // preventing reaching quorum withing timeout.
 func quorumPoolWithTooManySlowRemotes(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	var (
 		req     = require.New(t)
@@ -238,8 +234,7 @@ func quorumPoolWithTooManySlowRemotes(t *testing.T) {
 }
 
 func quorumPoolWithExternalCheckFail(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	var (
 		req     = require.New(t)
@@ -273,8 +268,7 @@ func quorumPoolWithExternalCheckFail(t *testing.T) {
 }
 
 func quorumPoolWithExternalCheckSuccess(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	var (
 		req     = require.New(t)
@@ -307,9 +301,8 @@ func quorumPoolWithExternalCheckSuccess(t *testing.T) {
 }
 
 func quorumPoolReadModeAllSuccess(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
-	ctx, cancel = context.WithTimeout(ctx, time.Second*10)
+	ctx := test.NewTestContext(t)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	require := require.New(t)
 
@@ -328,9 +321,8 @@ func quorumPoolReadModeAllSuccess(t *testing.T) {
 }
 
 func quorumPoolWriteModeQuorumSuccess(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
-	ctx, cancel = context.WithTimeout(ctx, time.Second*10)
+	ctx := test.NewTestContext(t)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	require := require.New(t)
 

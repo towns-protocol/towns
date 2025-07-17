@@ -11,11 +11,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestGetMiniblockNumberRanges(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	ctx := params.ctx
@@ -83,7 +83,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 	t.Run("SequenceWithGaps", func(t *testing.T) {
 		// Create a new stream for this test
 		streamIdGaps := testutils.FakeStreamId(STREAM_SPACE_BIN)
-		
+
 		// Create stream with miniblocks that have gaps: 0,1,2,5,6,7,10
 		// This simulates a stream that has been partially reconciled
 		// First create with higher numbered miniblocks
@@ -98,7 +98,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 				{Number: 9, Hash: common.HexToHash("0x09"), Data: []byte("miniblock9"), Snapshot: nil},
 				{Number: 10, Hash: common.HexToHash("0x10"), Data: []byte("miniblock10"), Snapshot: nil},
 			},
-			7, // last snapshot at 7
+			7,     // last snapshot at 7
 			false, // not updating existing
 		)
 		require.NoError(err)
@@ -118,7 +118,10 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test full range - should have gap between 2 and 5
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamIdGaps, 0)
 		require.NoError(err)
-		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 10}}, ranges)
+		require.Equal(
+			[]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 10}},
+			ranges,
+		)
 
 		// Test from middle of first gap
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdGaps, 4)
@@ -135,9 +138,14 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 			ctx,
 			streamIdGaps,
 			[]*WriteMiniblockData{
-				{Number: 15, Hash: common.HexToHash("0x15"), Data: []byte("miniblock15"), Snapshot: []byte("snapshot15")},
+				{
+					Number:   15,
+					Hash:     common.HexToHash("0x15"),
+					Data:     []byte("miniblock15"),
+					Snapshot: []byte("snapshot15"),
+				},
 			},
-			15, // last snapshot at 15
+			15,   // last snapshot at 15
 			true, // updateExisting
 		)
 		require.NoError(err)
@@ -145,22 +153,34 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test after update - should have 0-2, 5-10, 15
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdGaps, 0)
 		require.NoError(err)
-		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 10}, {StartInclusive: 15, EndInclusive: 15}}, ranges)
+		require.Equal(
+			[]MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 2},
+				{StartInclusive: 5, EndInclusive: 10},
+				{StartInclusive: 15, EndInclusive: 15},
+			},
+			ranges,
+		)
 	})
 
 	t.Run("NonZeroStartingSequence", func(t *testing.T) {
 		// Create stream starting from miniblock 100
 		streamIdNonZero := testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN)
-		
+
 		err := store.ReinitializeStreamStorage(
 			ctx,
 			streamIdNonZero,
 			[]*WriteMiniblockData{
-				{Number: 100, Hash: common.HexToHash("0x100"), Data: []byte("miniblock100"), Snapshot: []byte("snapshot100")},
+				{
+					Number:   100,
+					Hash:     common.HexToHash("0x100"),
+					Data:     []byte("miniblock100"),
+					Snapshot: []byte("snapshot100"),
+				},
 				{Number: 101, Hash: common.HexToHash("0x101"), Data: []byte("miniblock101"), Snapshot: nil},
 				{Number: 102, Hash: common.HexToHash("0x102"), Data: []byte("miniblock102"), Snapshot: nil},
 			},
-			100, // last snapshot at 100
+			100,   // last snapshot at 100
 			false, // not updating existing
 		)
 		require.NoError(err)
@@ -184,13 +204,18 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 	t.Run("LargeGapsSequence", func(t *testing.T) {
 		// Create stream with large gaps to test edge cases
 		streamIdLarge := testutils.FakeStreamId(STREAM_GDM_CHANNEL_BIN)
-		
+
 		// First create stream starting at a high number
 		err := store.ReinitializeStreamStorage(
 			ctx,
 			streamIdLarge,
 			[]*WriteMiniblockData{
-				{Number: 1000, Hash: common.HexToHash("0x1000"), Data: []byte("miniblock1000"), Snapshot: []byte("snapshot1000")},
+				{
+					Number:   1000,
+					Hash:     common.HexToHash("0x1000"),
+					Data:     []byte("miniblock1000"),
+					Snapshot: []byte("snapshot1000"),
+				},
 				{Number: 1001, Hash: common.HexToHash("0x1001"), Data: []byte("miniblock1001"), Snapshot: nil},
 				{Number: 1002, Hash: common.HexToHash("0x1002"), Data: []byte("miniblock1002"), Snapshot: nil},
 			},
@@ -204,7 +229,12 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 			ctx,
 			streamIdLarge,
 			[]*WriteMiniblockData{
-				{Number: 2000, Hash: common.HexToHash("0x2000"), Data: []byte("miniblock2000"), Snapshot: []byte("snapshot2000")},
+				{
+					Number:   2000,
+					Hash:     common.HexToHash("0x2000"),
+					Data:     []byte("miniblock2000"),
+					Snapshot: []byte("snapshot2000"),
+				},
 			},
 			2000, // last snapshot at 2000
 			true, // updateExisting
@@ -224,18 +254,27 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		// Test full range
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamIdLarge, 0)
 		require.NoError(err)
-		require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 0}, {StartInclusive: 1000, EndInclusive: 1002}, {StartInclusive: 2000, EndInclusive: 2000}}, ranges)
+		require.Equal(
+			[]MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 0},
+				{StartInclusive: 1000, EndInclusive: 1002},
+				{StartInclusive: 2000, EndInclusive: 2000},
+			},
+			ranges,
+		)
 
 		// Test from middle of large gap
 		ranges, err = store.GetMiniblockNumberRanges(ctx, streamIdLarge, 500)
 		require.NoError(err)
-		require.Equal([]MiniblockRange{{StartInclusive: 1000, EndInclusive: 1002}, {StartInclusive: 2000, EndInclusive: 2000}}, ranges)
+		require.Equal(
+			[]MiniblockRange{{StartInclusive: 1000, EndInclusive: 1002}, {StartInclusive: 2000, EndInclusive: 2000}},
+			ranges,
+		)
 	})
 }
 
 func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	ctx := params.ctx
@@ -279,7 +318,10 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	// After backfilling: should have gap between 7 and 10
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 0)
 	require.NoError(err)
-	require.Equal([]MiniblockRange{{StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}}, ranges)
+	require.Equal(
+		[]MiniblockRange{{StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}},
+		ranges,
+	)
 
 	// Backfill more to create another gap
 	err = store.WritePrecedingMiniblocks(
@@ -296,12 +338,22 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	// Final state: 0-2, 5-7, 10-15
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 0)
 	require.NoError(err)
-	require.Equal([]MiniblockRange{{StartInclusive: 0, EndInclusive: 2}, {StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}}, ranges)
+	require.Equal(
+		[]MiniblockRange{
+			{StartInclusive: 0, EndInclusive: 2},
+			{StartInclusive: 5, EndInclusive: 7},
+			{StartInclusive: 10, EndInclusive: 15},
+		},
+		ranges,
+	)
 
 	// Test querying from different starting points
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 3)
 	require.NoError(err)
-	require.Equal([]MiniblockRange{{StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}}, ranges)
+	require.Equal(
+		[]MiniblockRange{{StartInclusive: 5, EndInclusive: 7}, {StartInclusive: 10, EndInclusive: 15}},
+		ranges,
+	)
 
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 8)
 	require.NoError(err)
@@ -310,7 +362,6 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 
 func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	ctx := params.ctx
@@ -356,7 +407,7 @@ func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 				extraBlocks[i].Snapshot = []byte("snapshot")
 			}
 		}
-		
+
 		err = store.ReinitializeStreamStorage(
 			ctx,
 			streamId,
@@ -380,6 +431,6 @@ func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 	require.Equal(MiniblockRange{StartInclusive: 6000, EndInclusive: 6999}, ranges[3])
 	require.Equal(MiniblockRange{StartInclusive: 8000, EndInclusive: 8999}, ranges[4])
 
-	t.Logf("GetMiniblockNumberRanges with 5000 miniblocks in 5 ranges took: %v", elapsed)
+	testfmt.Logf(t, "GetMiniblockNumberRanges with 5000 miniblocks in 5 ranges took: %v", elapsed)
 	require.Less(elapsed, 100*time.Millisecond, "Query should complete in under 100ms")
 }

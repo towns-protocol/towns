@@ -24,8 +24,7 @@ import (
 
 func TestChainMonitorBlocks(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
@@ -145,7 +144,7 @@ func TestNextPollInterval(t *testing.T) {
 
 func TestChainMonitorEvents(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
@@ -236,14 +235,12 @@ func TestChainMonitorEvents(t *testing.T) {
 	event := <-contractWithTopicsEventCallbackCapturedEvents
 	require.Equal(nodeRegistryABI.Events["NodeAdded"].ID, event.Topics[0])
 
-	cancel()
 	<-onMonitorStoppedCount // if the on stop callback isn't called this will time out
 }
 
 func TestContractAllEventsFromFuture(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -384,8 +381,7 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 
 func TestContractAllEventsFromPast(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -509,8 +505,7 @@ func TestContractAllEventsFromPast(t *testing.T) {
 
 func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -705,8 +700,7 @@ func TestNodeRegistryChainMonitorNodeCallbacks(t *testing.T) {
 // chain monitor each time the node status is changed.
 func testNodeStatusUpdatedEvent(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
 	require.NoError(err)
@@ -795,8 +789,7 @@ func testNodeStatusUpdatedEvent(t *testing.T) {
 
 func testNodeAddedEvent(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
 	require.NoError(err)
@@ -833,8 +826,7 @@ func testNodeAddedEvent(t *testing.T) {
 
 func testNodeUrlUpdatedEvent(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
 	require.NoError(err)
@@ -923,8 +915,7 @@ func testNodeUrlUpdatedEvent(t *testing.T) {
 
 func testNodeRemovedEvent(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
 	require.NoError(err)
@@ -1016,8 +1007,7 @@ func testNodeRemovedEvent(t *testing.T) {
 
 func TestOnBlockWithLogs(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -1087,8 +1077,7 @@ func TestOnBlockWithLogs(t *testing.T) {
 
 func TestContractEventsWithTopicsFromPast(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -1200,8 +1189,7 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 
 func TestEventsOrder(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
