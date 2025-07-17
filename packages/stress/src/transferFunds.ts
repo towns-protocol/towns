@@ -24,7 +24,7 @@ Options:
   --new-seed <phrase>      New mnemonic seed phrase (required for transfer)
   --rpc-url <url>          RPC URL (default: https://sepolia.base.org)
   --start <number>         Starting wallet index (default: 0)
-  --end <number>           Ending wallet index (default: 10)
+  --end <number>           Ending wallet index (default: 40)
   --gas-buffer <percent>   Gas buffer percentage (default: 10)
   --help                   Show this help message
 
@@ -50,7 +50,7 @@ function parseArgs(): {
     const options: Partial<TransferOptions> = {
         rpcUrl: 'https://sepolia.base.org',
         startIndex: 0,
-        endIndex: 10,
+        endIndex: 40,
         gasBuffer: 10,
     }
     let help = false
@@ -211,7 +211,7 @@ async function main() {
             }
 
             const startIndex = options.startIndex ?? 0
-            const endIndex = options.endIndex ?? 10
+            const endIndex = options.endIndex ?? 40
             const gasBuffer = options.gasBuffer ?? 10
 
             if (isNaN(startIndex) || isNaN(endIndex) || isNaN(gasBuffer)) {
