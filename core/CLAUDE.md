@@ -108,6 +108,23 @@ The node can be run in archive mode to listen to the stream registry for the cre
 
 ## Development Patterns
 
+### Code Formatting and Linting
+
+Before committing any Go code changes:
+
+1. **Format all modified Go files**: Run `go fmt` on all changed `.go` files
+   - From the `/core` directory: `go fmt ./path/to/file.go`
+   - Or format all files in a package: `go fmt ./node/rpc/...`
+
+2. **Run the linter**: Use the provided linter script to check code quality
+   - From the `/core` directory: `./lint.sh`
+   - This lints all Go code in the entire core directory
+   - The linter runs both `golangci-lint` and `staticcheck`
+   - Fix any issues reported before committing
+
+3. **Verify changes**: Ensure all Go files in your commit are properly formatted and pass linting
+   - You can check modified files with: `git diff --name-only | grep "\.go$"`
+
 ### Error Handling
 
 - Use `RiverError` type from `node/base/error.go` for structured errors
