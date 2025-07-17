@@ -75,12 +75,10 @@ describe('syncAgents.test.ts', () => {
         // sleep for a bit, then check if alice got the message
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
         logger.log(aliceChannel.timeline.events.value)
-        await waitFor(
-            () =>
-                expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'Hello, World!'),
-                ).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(
+                findMessageByText(aliceChannel.timeline.events.value, 'Hello, World!'),
+            ).toBeDefined(),
         )
     })
 
@@ -111,12 +109,10 @@ describe('syncAgents.test.ts', () => {
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
         await aliceChannel.join()
         logger.log(aliceChannel.timeline.events.value)
-        await waitFor(
-            () =>
-                expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'Hello, World again!'),
-                ).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(
+                findMessageByText(aliceChannel.timeline.events.value, 'Hello, World again!'),
+            ).toBeDefined(),
         )
         // reset the unpackEnvelopeOpts
         bob.riverConnection.clientParams.opts = {
@@ -196,10 +192,8 @@ describe('syncAgents.test.ts', () => {
         )
         await bobAndAliceDm.sendMessage('hi')
         const aliceAndBobDm = alice.dms.getDmWithUserId(bob.userId)
-        await waitFor(
-            () =>
-                expect(findMessageByText(aliceAndBobDm.timeline.events.value, 'hi')).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(findMessageByText(aliceAndBobDm.timeline.events.value, 'hi')).toBeDefined(),
         )
     })
 
@@ -213,12 +207,10 @@ describe('syncAgents.test.ts', () => {
         )
         await bobGdm.sendMessage('Hello, World!')
         const aliceGdm = alice.gdms.getGdm(streamId)
-        await waitFor(
-            () =>
-                expect(
-                    findMessageByText(aliceGdm.timeline.events.value, 'Hello, World!'),
-                ).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(
+                findMessageByText(aliceGdm.timeline.events.value, 'Hello, World!'),
+            ).toBeDefined(),
         )
     })
 })

@@ -3,13 +3,14 @@ package subscription
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/stretchr/testify/mock"
+
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 // createTestSubscription creates a properly initialized Subscription for testing
@@ -23,6 +24,7 @@ func createTestSubscription(syncID string) *Subscription {
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
 		registry:            newRegistry(),
+		log:                 testutils.DiscardLogger(),
 	}
 }
 
@@ -62,7 +64,7 @@ func (m *mockRegistry) OnStreamDown(streamID StreamId) {
 	m.Called(streamID)
 }
 
-func (m *mockRegistry) CleanupUnusedStreams(cb func([][]byte)) {
+func (m *mockRegistry) CleanupUnusedStreams(cb func(StreamId)) {
 	m.Called(cb)
 }
 

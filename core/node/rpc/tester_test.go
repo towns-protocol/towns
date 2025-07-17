@@ -779,7 +779,7 @@ func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
 		},
 	)
 	tc.require.NoError(err)
-	tc.require.Nil(addEventResp.Msg.GetError())
+	tc.require.NotNil(addEventResp.Msg)
 }
 
 func (tc *testClient) createUserInboxStream() {

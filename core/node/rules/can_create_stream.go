@@ -292,7 +292,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.params.eventCountGreaterThanOrEqualTo(4),
 				ru.checkGDMPayloads,
 			).
-			requireUserAddr(ru.getGDMUserIds()[1:]...).
+			requireUserAddr(ru.getGDMUserAddresses()[1:]...).
 			// TODO: re-enable this check when app registry contract behavior is validated
 			// on test environments.
 			// requireChainAuth(ru.params.getCreatorIsNotRegisteredApp).
@@ -850,22 +850,6 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 		}
 	}
 	return nil
-}
-
-func (ru *csGdmChannelRules) getGDMUserIds() [][]byte {
-	userIds := make([][]byte, 0, len(ru.params.parsedEvents)-1)
-	for _, event := range ru.params.parsedEvents[1:] {
-		payload := event.Event.GetMemberPayload()
-		if payload == nil {
-			continue
-		}
-		membershipPayload := payload.GetMembership()
-		if membershipPayload == nil {
-			continue
-		}
-		userIds = append(userIds, membershipPayload.UserAddress)
-	}
-	return userIds
 }
 
 func (ru *csGdmChannelRules) getGDMUserAddresses() [][]byte {
