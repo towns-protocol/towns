@@ -714,11 +714,11 @@ jobs:
               working-directory: core
 
             - name: Run go tests with race detection exluding large tests
-              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
+              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 
             - name: Run large go tests without race detection
-              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
+              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
             - name: Archive River Node Logs and Settings
