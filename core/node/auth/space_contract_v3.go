@@ -266,10 +266,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 		// Token never expires
 		if expiresAt.Cmp(big.NewInt(0)) == 0 {
 			hasActiveToken = true
-			// If a token is permanent, use 0 to indicate it never expires
-			if furthestExpiryTime == nil || furthestExpiryTime.Cmp(big.NewInt(0)) != 0 {
-				furthestExpiryTime = big.NewInt(0)
-			}
+			furthestExpiryTime = big.NewInt(0)
 			break
 		}
 
