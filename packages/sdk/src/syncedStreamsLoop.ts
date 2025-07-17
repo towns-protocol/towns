@@ -852,7 +852,7 @@ export class SyncedStreamsLoop {
                                                 syncStartedAt: this.syncStartedAt,
                                                 duration,
                                             },
-                                            `sync timed out after ${duration}ms`,
+                                            `sync has stalled after ${duration}ms`,
                                         )
                                         this.clientEmitter.emit('streamSyncTimedOut', {
                                             duration,
