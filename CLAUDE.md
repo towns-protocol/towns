@@ -116,6 +116,15 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - Implement proper error handling and validation
 - Follow existing patterns for client-server communication
 
+### Code Quality Requirements
+
+- **All TypeScript files must pass Prettier formatting**
+  - Run `yarn prettier:fix` to automatically format all TypeScript files
+  - This command will check and fix any formatting issues in one step
+- **All PRs must pass global linting**
+  - Run `yarn lint` from the root directory before committing
+  - This ensures code quality and consistency across the entire repository
+
 ## Key Technology Stack
 
 ### Backend (Go)

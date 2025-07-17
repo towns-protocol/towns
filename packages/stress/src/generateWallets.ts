@@ -76,11 +76,11 @@ async function main() {
 
     try {
         console.log(`Generating wallets from index ${start} to ${end - 1}...\n`)
-        
+
         const wallets = generateWalletsFromSeed(seed, start, end)
-        
+
         console.log(`Generated ${wallets.length} wallet(s):\n`)
-        
+
         wallets.forEach((wallet, index) => {
             console.log(`Wallet #${start + index}:`)
             console.log(`  Address: ${wallet.address}`)
