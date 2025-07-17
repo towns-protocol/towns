@@ -54,7 +54,7 @@ There are just commands to run go tests, `go test` works too:
 
 To get logs from tests, set `RIVER_TEST_LOG_DIR` to a directory where you want to store the logs.
 
-    RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug just t-debug -run TestMyName
+    RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug go test -v ./...
 
 Use `RIVER_TEST_LOG` to set the log level. If level is set and directory is not set, logs will be printed to console (use `-v` test flag).
 
