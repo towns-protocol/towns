@@ -618,7 +618,9 @@ export abstract class BaseDecryptionExtensions {
             this.streamQueues.isEmpty()
         ) {
             this.log.debug('no more work to do, setting status to done')
-            this.setStatus(DecryptionStatus.done)
+            if (this.allQueueRunners.every((x) => !x.inProgress)) {
+                this.setStatus(DecryptionStatus.done)
+            }
             return
         }
 
