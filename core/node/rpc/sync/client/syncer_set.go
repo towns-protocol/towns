@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -145,7 +146,15 @@ func (ss *SyncerSet) waitForStreamUnlock(ctx context.Context, streamID StreamId)
 }
 
 // lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks
-func (ss *SyncerSet) lockStreams(req ModifyRequest) []StreamId {
+func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []StreamId {
+	if ss.otelTracer != nil {
+		_, span := ss.otelTracer.Start(ctx, "localSyncer::lockStreams",
+			trace.WithAttributes(
+				attribute.Int("toAdd", len(req.ToAdd)),
+				attribute.Int("toRemove", len(req.ToRemove))))
+		defer span.End()
+	}
+
 	// Collect all stream IDs that need to be locked
 	streamIDs := make(map[StreamId]struct{})
 
@@ -310,7 +319,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	// Lock all affected streams (excluding backfill streams)
-	lockedStreams := ss.lockStreams(req)
+	lockedStreams := ss.lockStreams(ctx, req)
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -336,7 +345,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			if !found {
 				// Stream is not part of any sync operation, so we can add it to the syncer set.
 				req.ToAdd = append(req.ToAdd, cookie)
-				lockedStreams = append(lockedStreams, ss.lockStreams(ModifyRequest{ToAdd: []*SyncCookie{cookie}})...)
+				lockedStreams = append(lockedStreams, ss.lockStreams(ctx, ModifyRequest{ToAdd: []*SyncCookie{cookie}})...)
 				continue
 			}
 
@@ -624,6 +633,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messages,
+			ss.streamID2Syncer.Delete,
 			ss.otelTracer,
 		)
 	} else {
@@ -636,7 +646,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.globalCtx,
 			nodeAddress,
 			client,
-			ss.rmStream,
+			ss.streamID2Syncer.Delete,
 			ss.messages,
 			ss.otelTracer,
 		)
@@ -663,10 +673,6 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 	}()
 
 	return syncer, nil
-}
-
-func (ss *SyncerSet) rmStream(streamID StreamId) {
-	ss.streamID2Syncer.Delete(streamID)
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.

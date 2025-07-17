@@ -104,6 +104,90 @@ func isEntitledForSpaceAndChannel(
 	return nil
 }
 
+func checkSpaceMembership(
+	ctx context.Context,
+	cfg config.Config,
+	spaceId shared.StreamId,
+	userId common.Address,
+) error {
+	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
+	ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.InfoLevel))
+	
+	baseChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.BaseChain,
+		nil,
+		metricsFactory,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	riverChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		metricsFactory,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	chainConfig, err := crypto.NewOnChainConfig(
+		ctx, riverChain.Client, cfg.RegistryContract.Address, riverChain.InitialBlockNum, riverChain.ChainMonitor)
+	if err != nil {
+		return err
+	}
+
+	evaluator, err := entitlement.NewEvaluatorFromConfig(
+		ctx,
+		&cfg,
+		chainConfig,
+		metricsFactory,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	chainAuth, err := auth.NewChainAuth(
+		ctx,
+		baseChain,
+		evaluator,
+		&cfg.ArchitectContract,
+		&cfg.AppRegistryContract,
+		20,
+		30000,
+		metricsFactory,
+	)
+	if err != nil {
+		return err
+	}
+
+	args := auth.NewChainAuthArgsForIsSpaceMember(
+		spaceId,
+		userId,
+		common.Address{},
+	)
+
+	isEntitledResult, err := chainAuth.IsEntitled(
+		ctx,
+		&cfg,
+		args,
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("User %v membership status for space %v:\n", userId, spaceId.String())
+	fmt.Printf("Is Member: %v\n", isEntitledResult.IsEntitled())
+	fmt.Printf("Reason: %v\n", isEntitledResult.Reason())
+	
+	return nil
+}
+
 func init() {
 	isEntitledCmd := &cobra.Command{
 		Use:          "is-entitled",
@@ -141,7 +225,27 @@ func init() {
 		},
 	}
 
+	isSpaceMemberCmd := &cobra.Command{
+		Use:   "is-space-member <spaceId> <walletAddr>",
+		Short: "Check if a user is a member of a space",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spaceId, err := shared.StreamIdFromString(args[0])
+			if err != nil {
+				return fmt.Errorf("could not parse spaceId: %w", err)
+			}
+
+			if !common.IsHexAddress(args[1]) {
+				return fmt.Errorf("not a hex address: %s", args[1])
+			}
+			addr := common.HexToAddress(args[1])
+
+			return checkSpaceMembership(cmd.Context(), *cmdConfig, spaceId, addr)
+		},
+	}
+
 	isEntitledCmd.AddCommand(isEntitledToChannelCmd)
+	isEntitledCmd.AddCommand(isSpaceMemberCmd)
 	// isEntitledCmd.AddCommand(isEntitledToSpaceCmd)
 	rootCmd.AddCommand(isEntitledCmd)
 }

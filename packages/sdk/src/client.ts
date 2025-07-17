@@ -29,7 +29,6 @@ import {
     ChannelMessage_Post_Attachment,
     MemberPayload_Nft,
     CreateStreamRequest,
-    AddEventResponse_Error,
     ChunkedMedia,
     UserBio,
     Tags,
@@ -227,10 +226,6 @@ type SendBlockchainTransactionOptions = {
 }
 
 const defaultExcludeEventsInScrollback: ExclusionFilter = [
-    {
-        payload: 'memberPayload',
-        content: 'membership',
-    },
     {
         payload: 'memberPayload',
         content: 'keySolicitation',
@@ -2655,11 +2650,10 @@ export class Client
             method?: string
             localId?: string
             cleartext?: Uint8Array
-            optional?: boolean
             tags?: PlainMessage<Tags>
             ephemeral?: boolean
         } = {},
-    ): Promise<{ eventId: string; error?: AddEventResponse_Error }> {
+    ): Promise<{ eventId: string }> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
             'await makeEventAndAddToStream',
@@ -2667,7 +2661,6 @@ export class Client
             streamId,
             payload,
             options.localId,
-            options.optional,
         )
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
@@ -2684,19 +2677,18 @@ export class Client
             isDefined(prevMiniblockNum),
             'no prev miniblock num for stream ' + streamIdAsString(streamId),
         )
-        const { eventId, error } = await this.makeEventWithHashAndAddToStream(
+        const { eventId } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
             prevMiniblockNum,
-            options.optional,
             options.localId,
             options.cleartext,
             options.tags,
             undefined, // retryCount
             options.ephemeral,
         )
-        return { eventId, error }
+        return { eventId }
     }
 
     async makeEventWithHashAndAddToStream(
@@ -2704,13 +2696,12 @@ export class Client
         payload: PlainMessage<StreamEvent>['payload'],
         prevMiniblockHash: Uint8Array,
         prevMiniblockNum: bigint,
-        optional?: boolean,
         localId?: string,
         cleartext?: Uint8Array,
         tags?: PlainMessage<Tags>,
         retryCount?: number,
         ephemeral?: boolean,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
         const event = await makeEvent(
@@ -2735,16 +2726,15 @@ export class Client
         }
 
         try {
-            const { error } = await this.rpcClient.addEvent({
+            await this.rpcClient.addEvent({
                 streamId: streamIdAsBytes(streamId),
                 event,
-                optional,
             })
             if (localId) {
                 const stream = this.streams.get(streamId)
                 stream?.updateLocalEvent(localId, eventId, 'sent')
             }
-            return { prevMiniblockHash, eventId, error }
+            return { prevMiniblockHash, eventId }
         } catch (err) {
             // custom retry logic for addEvent
             // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH
@@ -2758,7 +2748,6 @@ export class Client
                     payload,
                     prevMiniblockHash,
                     prevMiniblockNum,
-                    optional,
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
                     tags,
@@ -3027,7 +3016,7 @@ export class Client
             try {
                 if (deviceKeys.length === 0) {
                     // means we failed to download the device keys, we should enqueue a retry
-                    this.logInfo(
+                    this.logCall(
                         'encryptAndShareGroupSessions: no device keys to send',
                         inStreamId,
                         userId,
@@ -3046,7 +3035,7 @@ export class Client
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
                 if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
-                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                    this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                         toStreamId,
                         deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
                     })
@@ -3069,9 +3058,9 @@ export class Client
             }
         })
 
-        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
+        this.logCall('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
-        this.logInfo('encryptAndShareGroupSessions: done')
+        this.logCall('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.

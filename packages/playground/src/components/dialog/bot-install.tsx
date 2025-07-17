@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { type Address, parseEther } from 'viem'
+import { type Address } from 'viem'
 import { useChannel, useSpace, useSyncAgent, useUserSpaces } from '@towns-protocol/react-sdk'
 import { ArrowLeftIcon, LoaderCircleIcon } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -81,6 +81,7 @@ export const BotInstallDialog = ({
             if (!space) {
                 throw new Error('Space not found')
             }
+            const appPrice = await appRegistryDapp.getAppPrice(appAddress)
             const isBotInstalled = await space.AppAccount.read
                 .getInstalledApps()
                 .then((apps) => apps.includes(appAddress))
@@ -89,7 +90,7 @@ export const BotInstallDialog = ({
                     signer,
                     appAddress,
                     SpaceAddressFromSpaceId(state.spaceId) as Address,
-                    parseEther('0.02'),
+                    appPrice.toBigInt(),
                 )
                 await tx.wait()
                 console.log('bot installed')

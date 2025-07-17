@@ -92,7 +92,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             name: '',
             description: '',
             permissions: [Permission.Read, Permission.Write],
-            installPrice: '0.01',
+            installPrice: '0',
             membershipDuration: String(ONE_YEAR_IN_SECONDS),
             botKind: 'simple',
             contractAddress: undefined,

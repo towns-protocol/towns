@@ -34,3 +34,13 @@ func ZapJsonLogger() (*logging.Log, *bytes.Buffer) {
 		Rpc:       l.Named("rpc"),
 	}, buffer
 }
+
+// DiscardLogger creates a logger that discards all output, safe for concurrent use
+func DiscardLogger() *logging.Log {
+	l := zap.NewNop().Sugar()
+	return &logging.Log{
+		Default:   l.Named("default"),
+		Miniblock: l.Named("miniblock"),
+		Rpc:       l.Named("rpc"),
+	}
+}

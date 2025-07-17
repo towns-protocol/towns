@@ -22,6 +22,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
+var _ nodes.StreamNodes = (*Stream)(nil)
+
 type ViewStream interface {
 	GetView(ctx context.Context) (*StreamView, error)
 }
@@ -33,6 +35,27 @@ type SyncResultReceiver interface {
 	OnSyncError(err error)
 	// OnStreamSyncDown is called when updates for a stream could not be given.
 	OnStreamSyncDown(StreamId)
+}
+
+type localStreamState struct {
+	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
+	// Use view() and setView() to access it.
+	useGetterAndSetterToGetView *StreamView
+
+	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
+	// are never scrubbed will not have this value modified.
+	lastScrubbedTime time.Time
+
+	receivers mapset.Set[SyncResultReceiver]
+
+	// pendingCandidates contains list of miniblocks that should be applied immediately when candidate is received.
+	// When StreamLastMiniblockUpdated is received and promoteCandidate is called,
+	// if there is no candidate in local storage, request is stored in pendingCandidates.
+	// First element is the oldest candidate with block number view.LastBlock().Num + 1,
+	// second element is the next candidate with next block number and so on.
+	// If SaveMiniblockCandidate is called and it matched first element of pendingCandidates,
+	// it is removed from pendingCandidates and is applied immediately instead of being stored.
+	pendingCandidates []*MiniblockRef
 }
 
 type Stream struct {
@@ -58,27 +81,19 @@ type Stream struct {
 	local *localStreamState
 }
 
-var _ nodes.StreamNodes = (*Stream)(nil)
-
-type localStreamState struct {
-	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
-	// Use view() and setView() to access it.
-	useGetterAndSetterToGetView *StreamView
-
-	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
-	// are never scrubbed will not have this value modified.
-	lastScrubbedTime time.Time
-
-	receivers mapset.Set[SyncResultReceiver]
-
-	// pendingCandidates contains list of miniblocks that should be applied immediately when candidate is received.
-	// When StreamLastMiniblockUpdated is received and promoteCandidate is called,
-	// if there is no candidate in local storage, request is stored in pendingCandidates.
-	// First element is the oldest candidate with block number view.LastBlock().Num + 1,
-	// second element is the next candidate with next block number and so on.
-	// If SaveMiniblockCandidate is called and it matched first element of pendingCandidates,
-	// it is removed from pendingCandidates and is applied immediately instead of being stored.
-	pendingCandidates []*MiniblockRef
+// NewStream creates a new stream with the given streamId and lastAppliedBlockNum.
+func NewStream(
+	streamId StreamId,
+	lastAppliedBlockNum crypto.BlockNumber,
+	params *StreamCacheParams,
+) *Stream {
+	return &Stream{
+		params:              params,
+		streamId:            streamId,
+		lastAppliedBlockNum: lastAppliedBlockNum,
+		lastAccessedTime:    time.Now(),
+		local:               &localStreamState{},
+	}
 }
 
 // IsLocal is thread-safe.
@@ -293,7 +308,7 @@ func (s *Stream) importMiniblocksLocked(
 		allNewEvents = append(allNewEvents, newEvents...)
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
 		if len(miniblock.Header().GetSnapshotHash()) > 0 {
-			snapshot = miniblock.Snapshot
+			snapshot = miniblock.SnapshotEnvelope
 		}
 	}
 
@@ -381,7 +396,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	newEvents = append(newEvents, info.headerEvent.Envelope)
 	var snapshot *Envelope
 	if len(info.Header().GetSnapshotHash()) > 0 {
-		snapshot = info.Snapshot
+		snapshot = info.SnapshotEnvelope
 	}
 	s.notifySubscribersLocked(newEvents, newSyncCookie, snapshot)
 	return nil
@@ -817,7 +832,7 @@ func (s *Stream) addEventToMinipoolAndStorageLocked(
 func (s *Stream) UpdatesSinceCookie(
 	ctx context.Context,
 	cookie *SyncCookie,
-	cb func(*StreamAndCookie),
+	cb func(*StreamAndCookie) error,
 ) error {
 	if !s.IsLocal() {
 		return RiverError(
@@ -861,9 +876,7 @@ func (s *Stream) UpdatesSinceCookie(
 		return err
 	}
 
-	cb(resp)
-
-	return nil
+	return cb(resp)
 }
 
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.

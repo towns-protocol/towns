@@ -1643,7 +1643,7 @@ func lastSnapshotIndexFromMiniblocks(
 				printMaxSeqNum = true
 			}
 
-			if mbInfo.GetSnapshot() != nil {
+			if mbInfo.Snapshot != nil {
 				if verbose {
 					fmt.Printf("debug -- saw a snapshot for stream %s, seq_num %d\n", streamId, seqNum)
 				}

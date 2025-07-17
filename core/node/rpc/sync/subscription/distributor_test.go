@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -53,25 +54,6 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "distribute message to closed subscription - should remove it",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
-			},
-			streamID: StreamId{1, 2, 3, 4},
-			msg: &SyncStreamsResponse{
-				SyncOp:   SyncOp_SYNC_UPDATE,
-				StreamId: []byte{1, 2, 3, 4},
-			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
-				sub.Close() // Mark as closed
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub}).Maybe()
-				mockReg.On("RemoveSubscription", "test-sync-1")
-			},
-		},
-		{
 			name: "distribute SYNC_DOWN message - should remove streams",
 			setup: func() (*distributor, *mockRegistry) {
 				mockReg := &mockRegistry{}
@@ -87,8 +69,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				sub1 := createTestSubscription("test-sync-1")
 				sub2 := createTestSubscription("test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
-				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", StreamId{1, 2, 3, 4}).Return(false)
-				mockReg.On("RemoveStreamFromSubscription", "test-sync-2", StreamId{1, 2, 3, 4}).Return(false)
+				mockReg.On("OnStreamDown", StreamId{1, 2, 3, 4})
 			},
 		},
 		{
@@ -143,7 +124,6 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 			expectedCalls: func(mockReg *mockRegistry) {
 				sub := createTestSubscription("test-sync-1")
 				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub})
 			},
 		},
 		{
@@ -161,7 +141,6 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
 				mockReg.On("GetSubscriptionByID", "non-existent").Return((*Subscription)(nil), false)
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{}).Maybe()
 			},
 		},
 		{
@@ -181,7 +160,6 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				sub := createTestSubscription("test-sync-1")
 				sub.Close() // Mark as closed
 				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{}).Maybe()
 			},
 		},
 		{

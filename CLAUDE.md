@@ -192,3 +192,11 @@ Key lessons:
 - Test both positive and negative cases explicitly
 - Ensure test repeatability in shared environments
 - Document the distinction between internal identifiers and display values
+
+## Git Commit Guidelines
+
+When creating git commits:
+- Write clear, concise commit messages that describe the changes
+- Follow conventional commit format when applicable (feat:, fix:, docs:, etc.)
+- Do NOT mention Claude, AI assistance, or automated generation in commit messages
+- Focus on describing what changed and why, not how it was created

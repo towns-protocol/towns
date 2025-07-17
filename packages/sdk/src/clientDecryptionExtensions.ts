@@ -13,11 +13,7 @@ import {
     KeySolicitationItem,
 } from './decryptionExtensions'
 
-import {
-    AddEventResponse_Error,
-    EncryptedData,
-    UserInboxPayload_GroupEncryptionSessions,
-} from '@towns-protocol/proto'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'
@@ -113,12 +109,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             sigBundle: EventSignatureBundle,
         ) => this.enqueueInitKeySolicitations(streamId, eventHashStr, members, sigBundle)
 
-        const onStreamInitialized = (streamId: string) => {
-            if (isUserInboxStreamId(streamId)) {
-                this.enqueueNewMessageDownload()
-            }
-        }
-
         const onStreamSyncActive = (active: boolean) => {
             this.log.info('onStreamSyncActive', active)
             if (!active) {
@@ -137,7 +127,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('updatedKeySolicitation', onKeySolicitation)
         client.on('initKeySolicitations', onInitKeySolicitations)
         client.on('streamNewUserJoined', onMembershipChange)
-        client.on('streamInitialized', onStreamInitialized)
         client.on('streamSyncActive', onStreamSyncActive)
         client.on('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
 
@@ -149,7 +138,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('updatedKeySolicitation', onKeySolicitation)
             client.off('initKeySolicitations', onInitKeySolicitations)
             client.off('streamNewUserJoined', onMembershipChange)
-            client.off('streamInitialized', onStreamInitialized)
             client.off('streamSyncActive', onStreamSyncActive)
             client.off('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
         }
@@ -188,7 +176,17 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public getKeySolicitations(streamId: string): KeySolicitationContent[] {
         const stream = this.client.stream(streamId)
-        return stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const nonEphemeralSolicitations =
+            stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const ephemeralSolicitations = (this.ownEphemeralSolicitations.get(streamId) ?? []).map(
+            (s) => ({
+                deviceKey: s.deviceKey,
+                fallbackKey: s.fallbackKey,
+                isNewDevice: s.isNewDevice,
+                sessionIds: Array.from(s.missingSessionIds),
+            }),
+        )
+        return [...nonEphemeralSolicitations, ...ephemeralSolicitations]
     }
 
     /**
@@ -362,18 +360,21 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         deviceKey,
         sessionIds,
         ephemeral = false,
-    }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: AddEventResponse_Error }> {
+    }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: unknown }> {
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
             sessionIds: sessionIds,
         })
 
-        const { error } = await this.client.makeEventAndAddToStream(streamId, fulfillment, {
-            optional: true,
-            ephemeral,
-        })
-        return { error }
+        try {
+            await this.client.makeEventAndAddToStream(streamId, fulfillment, {
+                ephemeral,
+            })
+        } catch (err) {
+            return { error: err }
+        }
+        return {}
     }
 
     public async uploadDeviceKeys(): Promise<void> {

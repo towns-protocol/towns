@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// utils
-import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
-
-//interfaces
+// interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
-
 import {IEntitlementCheckerBase} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
-import {IEntitlementGated} from "src/spaces/facets/gated/IEntitlementGated.sol";
-import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementGated, IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 
-//libraries
-
+// libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {Vm} from "forge-std/Test.sol";
 
-//contracts
+// contracts
 import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
 import {MockLegacyMembership} from "test/mocks/legacy/membership/MockLegacyMembership.sol";
 import {EntitlementTestUtils} from "test/utils/EntitlementTestUtils.sol";
+import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 contract MembershipJoinSpaceTest is
     IEntitlementGatedBase,

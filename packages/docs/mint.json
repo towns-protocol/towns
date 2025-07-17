@@ -206,6 +206,13 @@
           ]
         }
       ]
+    },
+    {
+      "group": "White Paper",
+      "pages": [
+        "white-paper/towns-technical-overview",
+        "white-paper/technical-whitepaper"
+      ]
     }
   ],
   "footerSocials": {
