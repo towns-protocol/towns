@@ -240,12 +240,14 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                   )
             : []
 
+        const minipoolEventIds = persistedSyncedStream.minipoolEvents.map((e) => e.hashStr)
         const snapshotEventIds = eventIdsFromSnapshot(snapshot.snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
         const prependedEventIds = prependedMiniblocks.flatMap((mb) =>
             mb.events.map((e) => e.hashStr),
         )
         const cleartexts = await this.getCleartexts([
+            ...minipoolEventIds,
             ...eventIds,
             ...snapshotEventIds,
             ...prependedEventIds,
