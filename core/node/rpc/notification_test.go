@@ -23,6 +23,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -55,7 +56,7 @@ func TestNotificationsColdStreams(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 
-	notifications := &notificationCapture{
+	nc := &notificationCapture{
 		WebPushNotifications: make(map[common.Hash]map[common.Address]int),
 		ApnPushNotifications: make(map[common.Hash]map[common.Address]int),
 	}
@@ -67,10 +68,10 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 	test := setupNotificationsColdStreams(ctx, tester)
 
-	test.sendMessageWithTags(ctx, test.initiator, "hi!", &Tags{})
+	test.sendMessageWithTags(ctx, test.initiator, "msg1", &Tags{})
 
-	// initialize notifications service AFTER we've created the stream and sent a few messages
-	notificationService := initNotificationService(ctx, tester, notifications)
+	// initialize notifications service AFTER we've created the stream and sent a message
+	notificationService := initNotificationService(ctx, tester, nc)
 
 	notificationClient := protocolconnect.NewNotificationServiceClient(
 		httpClient, "https://"+notificationService.listener.Addr().String())
@@ -78,8 +79,24 @@ func TestNotificationsColdStreams(t *testing.T) {
 	authClient := protocolconnect.NewAuthenticationServiceClient(
 		httpClient, "https://"+notificationService.listener.Addr().String())
 
-	subscribeWebPush(ctx, test.initiator, test.req, authClient, notificationClient)
 	subscribeWebPush(ctx, test.member, test.req, authClient, notificationClient)
+
+	log := logging.FromCtx(ctx)
+	log.Errorw("sending message", "stream id", test.dmStreamID)
+	event := test.sendMessageWithTags(ctx, test.initiator, "msg2", &Tags{})
+	eventHash := common.BytesToHash(event.Hash)
+
+	test.req.Eventuallyf(func() bool {
+		nc.WebPushNotificationsMu.Lock()
+		defer nc.WebPushNotificationsMu.Unlock()
+
+		nc.ApnPushNotificationsMu.Lock()
+		defer nc.ApnPushNotificationsMu.Unlock()
+
+		webNotifications := nc.WebPushNotifications[eventHash]
+
+		return cmp.Equal(webNotifications, map[common.Address]int{test.member.Address: 1})
+	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
 }
 
 type notificationsColdStreamsTestContext struct {
@@ -99,16 +116,8 @@ func (tc *notificationsColdStreamsTestContext) sendMessageWithTags(
 	messageContent string,
 	tags *Tags,
 ) *Envelope {
-	return sendMessageWithTagsGeneric(
-		ctx,
-		from,
-		messageContent,
-		tags,
-		tc.dmStreamID,
-		events.Make_DMChannelPayload_Message,
-		tc.req,
-		tc.streamClient,
-	)
+	return sendMessageWithTagsGeneric(ctx, from, messageContent, tags, tc.dmStreamID,
+		events.Make_DMChannelPayload_Message, tc.req, tc.streamClient)
 }
 
 func setupNotificationsColdStreams(
@@ -1443,7 +1452,6 @@ func (tc *gdmChannelNotificationsTestContext) subscribeWebPush(
 	subscribeWebPush(ctx, user, tc.req, tc.authClient, tc.notificationClient)
 }
 
-
 func (tc *dmChannelNotificationsTestContext) sendMessageWithTags(
 	ctx context.Context,
 	from *crypto.Wallet,
@@ -1532,7 +1540,6 @@ func (tc *dmChannelNotificationsTestContext) subscribeWebPush(
 	subscribeWebPush(ctx, user, tc.req, tc.authClient, tc.notificationClient)
 }
 
-
 type spaceChannelNotificationsTestContext struct {
 	req                *require.Assertions
 	members            []*crypto.Wallet
@@ -1559,7 +1566,6 @@ func (tc *spaceChannelNotificationsTestContext) subscribeWebPush(
 ) {
 	subscribeWebPush(ctx, user, tc.req, tc.authClient, tc.notificationClient)
 }
-
 
 func (tc *spaceChannelNotificationsTestContext) setSpaceChannelSetting(
 	ctx context.Context,
