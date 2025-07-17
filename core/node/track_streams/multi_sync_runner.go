@@ -114,7 +114,7 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Debugw("Adding stream with cookie",
+		Infow("Adding stream with cookie",
 			"stream", record.streamId,
 			"minipoolGen", record.minipoolGen,
 			"prevMiniblockHash", record.prevMiniblockHash,
@@ -128,6 +128,8 @@ func (ssr *syncSessionRunner) AddStream(
 			PrevMiniblockHash: record.prevMiniblockHash,
 		}},
 	}); err != nil || len(resp.Adds) > 0 {
+		logging.FromCtx(ctx).
+			Infow("failed to add stream to existing sync", "error", err, "streamId", record.streamId, "minipoolGen", record.minipoolGen)
 		// We failed to add this stream to the sync, return an error.
 		ssr.streamRecords.Delete(record.streamId)
 
@@ -634,7 +636,7 @@ func (msr *MultiSyncRunner) addToSync(
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
 
-	log.Infow("addToSync", "record", record.streamId, "minipoolGen", record.minipoolGen, "apply", record.applyHistoricalStreamContents)
+	log.Infow("addToSync", "streamId", record.streamId, "minipoolGen", record.minipoolGen, "apply", record.applyHistoricalStreamContents)
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
 		runner = newSyncSessionRunner(

@@ -129,6 +129,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 		start                 = time.Now()
 	)
 
+	log.Errorw("initializing stream tracker", "initialBlockNum", tracker.riverRegistry.Blockchain.InitialBlockNum)
 	go tracker.multiSyncRunner.Run(ctx)
 
 	err := tracker.riverRegistry.ForAllStreams(
@@ -167,6 +168,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
 				// start tracking the stream, until the root ctx expires.
+				log.Errorw("adding stream on init", "streamId", stream.StreamId(), "nodes", stream.Nodes(), "initialBlockNum", tracker.riverRegistry.Blockchain.InitialBlockNum)
 				tracker.multiSyncRunner.AddStream(stream, false, nil)
 			}
 
@@ -255,7 +257,8 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	if !tracker.filter.TrackStream(event.GetStreamId(), false, &updateType) {
 		return
 	}
-	lastMiniblockNum := max(int64(event.LastMiniblockNum-1), 0)
+	//lastMiniblockNum := max(int64(event.LastMiniblockNum-1), 0)
+	lastMiniblockNum := int64(event.LastMiniblockNum)
 	logging.FromCtx(ctx).Infow("Stream last miniblock updated",
 		"lastMiniblockNum orig", event.LastMiniblockNum,
 		"lastMiniblockNum", lastMiniblockNum,
