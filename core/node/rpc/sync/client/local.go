@@ -82,8 +82,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 	if toBackfill := request.GetBackfillStreams().GetStreams(); len(toBackfill) > 0 {
 		var backfillsLock sync.Mutex
+		wg.Add(len(toBackfill))
 		for _, cookie := range toBackfill {
-			wg.Add(1)
 			go func(cookie *SyncCookie) {
 				defer wg.Done()
 
@@ -103,8 +103,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 	if adds := request.GetAddStreams(); len(adds) > 0 {
 		var addsLock sync.Mutex
-		for _, cookie := range request.GetAddStreams() {
-			wg.Add(1)
+		wg.Add(len(adds))
+		for _, cookie := range adds {
 			go func(cookie *SyncCookie) {
 				defer wg.Done()
 
