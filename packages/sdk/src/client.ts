@@ -428,7 +428,6 @@ export class Client
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
-        this.on('streamInitialized', (s) => void this.onStreamInitialized(s))
         this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
@@ -1715,22 +1714,6 @@ export class Client
     private onLeftStream = async (streamId: string): Promise<void> => {
         this.logEvent('onLeftStream', streamId)
         return await this.streams.removeStreamFromSync(streamId)
-    }
-
-    private onStreamInitialized = (streamId: string): void => {
-        const scrollbackUntilContentFound = async () => {
-            const stream = this.streams.get(streamId)
-            if (!stream) {
-                return
-            }
-            while (stream.view.getContent().needsScrollback()) {
-                const scrollback = await this.scrollback(streamId)
-                if (scrollback.terminus) {
-                    break
-                }
-            }
-        }
-        void scrollbackUntilContentFound()
     }
 
     private onStreamUpToDate = (streamId: string): void => {
