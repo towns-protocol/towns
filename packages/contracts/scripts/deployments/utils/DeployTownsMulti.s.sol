@@ -6,6 +6,7 @@ import {IMessageLibManager} from "@layerzerolabs/lz-evm-protocol-v2/contracts/in
 
 // libraries
 import {LibLayerZeroValues} from "./LibLayerZeroValues.sol";
+import {Create2Utils} from "../../../src/utils/libraries/Create2Utils.sol";
 
 // contracts
 import {Towns} from "../../../src/tokens/towns/multichain/Towns.sol";
@@ -13,7 +14,7 @@ import {Deployer} from "scripts/common/Deployer.s.sol";
 
 contract DeployTownsMulti is Deployer {
     function versionName() public pure override returns (string memory) {
-        return "utils/towns";
+        return "utils/townsBnb";
     }
 
     function __deploy(address deployer) internal override returns (address) {
@@ -22,12 +23,20 @@ contract DeployTownsMulti is Deployer {
 
         IMessageLibManager libManager = IMessageLibManager(endpoint);
 
+        bytes memory initCode = abi.encodePacked(
+            type(Towns).creationCode,
+            abi.encode("Towns", "TOWNS", endpoint, deployer)
+        );
+
         vm.startBroadcast(deployer);
-        Towns towns = new Towns("Towns", "TOWNS", endpoint, deployer);
+
+        // test salt, remove before deploying
+        bytes32 salt = keccak256(abi.encodePacked(block.chainid, deployer));
+        address towns = Create2Utils.create2Deploy(salt, initCode);
 
         libManager.setSendLibrary(
             address(towns),
-            LibLayerZeroValues.getEid(11155111), // Destination chain eid (Sepolia Testnet)
+            LibLayerZeroValues.getEid(1), // Destination chain eid (Mainnet)
             LibLayerZeroValues.getSendLib(block.chainid)
         );
 

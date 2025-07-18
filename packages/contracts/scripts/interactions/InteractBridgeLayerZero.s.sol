@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
 // common
 import {Interaction} from "scripts/common/Interaction.s.sol";
 
@@ -17,7 +15,6 @@ import {MessagingFee} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 
 // debugging
 import {console} from "forge-std/console.sol";
-
 contract InteractBridgeLayerZero is Interaction {
     using OptionsBuilder for bytes;
 
@@ -26,9 +23,9 @@ contract InteractBridgeLayerZero is Interaction {
     }
 
     function __interact(address deployer) internal override {
-        address wrappedTowns = getDeployment("utils/wrappedTowns");
+        address wrappedTowns = getDeployment("utils/wTowns");
         uint256 amount = 1 ether;
-        uint32 dstEid = LibLayerZeroValues.getEid(97);
+        uint32 dstEid = LibLayerZeroValues.getEid(56); // BNB
 
         Towns oft = Towns(wrappedTowns);
 

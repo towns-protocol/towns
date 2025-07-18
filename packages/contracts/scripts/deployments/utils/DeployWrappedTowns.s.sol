@@ -6,13 +6,11 @@ import {IMessageLibManager} from "@layerzerolabs/lz-evm-protocol-v2/contracts/in
 
 // libraries
 import {LibLayerZeroValues} from "./LibLayerZeroValues.sol";
+import {Create2Utils} from "../../../src/utils/libraries/Create2Utils.sol";
 
 // contracts
 import {wTowns} from "../../../src/tokens/towns/multichain/wTowns.sol";
 import {Deployer} from "scripts/common/Deployer.s.sol";
-
-// debuggging
-import {console} from "forge-std/console.sol";
 
 contract DeployWrappedTowns is Deployer {
     function versionName() public pure override returns (string memory) {
@@ -25,16 +23,23 @@ contract DeployWrappedTowns is Deployer {
         IMessageLibManager libManager = IMessageLibManager(endpoint);
 
         vm.startBroadcast(deployer);
-        wTowns towns = new wTowns(LibLayerZeroValues.getToken(block.chainid), endpoint, deployer);
+
+        bytes memory initCode = abi.encodePacked(
+            type(wTowns).creationCode,
+            abi.encode(getDeployment("townsMainnet"), endpoint, deployer)
+        );
+
+        bytes32 salt = keccak256(abi.encodePacked(block.chainid, deployer));
+        address wrappedTowns = Create2Utils.create2Deploy(salt, initCode);
 
         libManager.setSendLibrary(
-            address(towns),
-            LibLayerZeroValues.getEid(97), // Destination chain eid (BNB Testnet)
+            wrappedTowns,
+            LibLayerZeroValues.getEid(56), // Destination chain eid (BNB Testnet)
             LibLayerZeroValues.getSendLib(block.chainid)
         );
 
         libManager.setReceiveLibrary(
-            address(towns),
+            wrappedTowns,
             LibLayerZeroValues.getEid(block.chainid), // Source chain eid
             LibLayerZeroValues.getReceiveLib(block.chainid),
             0
@@ -42,11 +47,6 @@ contract DeployWrappedTowns is Deployer {
 
         vm.stopBroadcast();
 
-        console.log("Set these values on destination peer");
-        console.log("EID", LibLayerZeroValues.getEid(block.chainid));
-        console.log("Peer Id");
-        console.logBytes32(bytes32(uint256(uint160(address(towns)))));
-
-        return address(towns);
+        return wrappedTowns;
     }
 }
