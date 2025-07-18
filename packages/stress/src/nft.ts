@@ -5,7 +5,7 @@ import { ethers } from 'ethers'
 const ERC721A_ABI = [
     'function safeTransferFrom(address from, address to, uint256 tokenId) external',
     'function ownerOf(uint256 tokenId) view returns (address)',
-]
+] as const
 
 interface NFTOptions {
     rpcUrl: string
@@ -84,15 +84,20 @@ function parseArgs(): {
 }
 
 async function checkOwner(options: NFTOptions) {
+    if (!options.contract || options.tokenId === undefined) {
+        throw new Error('Contract and tokenId are required')
+    }
+
     const provider = new ethers.providers.JsonRpcProvider(options.rpcUrl)
-    const contract = new ethers.Contract(options.contract!, ERC721A_ABI, provider)
+    const contract = new ethers.Contract(options.contract, ERC721A_ABI, provider)
 
     console.log(`Checking owner of token #${options.tokenId}...`)
     console.log(`Contract: ${options.contract}`)
     console.log(`RPC URL: ${options.rpcUrl}\n`)
 
     try {
-        const owner = await contract.ownerOf(options.tokenId!)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const owner: string = (await contract.ownerOf(options.tokenId)) as string
         console.log(`Token #${options.tokenId} owner: ${owner}`)
     } catch (error) {
         console.error('Error:', error instanceof Error ? error.message : 'Unknown error')
@@ -101,21 +106,32 @@ async function checkOwner(options: NFTOptions) {
 }
 
 async function transferNFT(options: NFTOptions) {
+    if (
+        !options.contract ||
+        options.tokenId === undefined ||
+        !options.from ||
+        !options.to ||
+        !options.privateKey
+    ) {
+        throw new Error('Contract, tokenId, from, to, and privateKey are required')
+    }
+
     const provider = new ethers.providers.JsonRpcProvider(options.rpcUrl)
-    const wallet = new ethers.Wallet(options.privateKey!, provider)
+    const wallet = new ethers.Wallet(options.privateKey, provider)
 
     console.log('Connected to:', options.rpcUrl)
     console.log('Using wallet:', wallet.address)
 
     // Create contract instance
-    const nftContract = new ethers.Contract(options.contract!, ERC721A_ABI, wallet)
+    const nftContract = new ethers.Contract(options.contract, ERC721A_ABI, wallet)
 
     try {
         // Check current owner
-        const currentOwner = await nftContract.ownerOf(options.tokenId!)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const currentOwner: string = (await nftContract.ownerOf(options.tokenId)) as string
         console.log(`\nToken #${options.tokenId} current owner: ${currentOwner}`)
 
-        if (currentOwner.toLowerCase() !== options.from!.toLowerCase()) {
+        if (currentOwner.toLowerCase() !== options.from.toLowerCase()) {
             console.error(`Error: Token #${options.tokenId} is not owned by ${options.from}`)
             process.exit(1)
         }
@@ -125,22 +141,28 @@ async function transferNFT(options: NFTOptions) {
         console.log(`From: ${options.from}`)
         console.log(`To: ${options.to}`)
 
-        const tx = await nftContract.safeTransferFrom(options.from!, options.to!, options.tokenId!)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const tx: ethers.ContractTransaction = (await nftContract.safeTransferFrom(
+            options.from,
+            options.to,
+            options.tokenId,
+        )) as ethers.ContractTransaction
 
         console.log(`\nTransaction hash: ${tx.hash}`)
         console.log('Waiting for confirmation...')
 
-        const receipt = await tx.wait()
+        const receipt: ethers.ContractReceipt = await tx.wait()
         console.log(`Transaction confirmed in block ${receipt.blockNumber}`)
 
         // Wait a moment for state to update
         await new Promise((resolve) => setTimeout(resolve, 2000))
 
         // Verify new owner
-        const newOwner = await nftContract.ownerOf(options.tokenId!)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const newOwner: string = (await nftContract.ownerOf(options.tokenId)) as string
         console.log(`\nToken #${options.tokenId} new owner: ${newOwner}`)
 
-        if (newOwner.toLowerCase() === options.to!.toLowerCase()) {
+        if (newOwner.toLowerCase() === options.to.toLowerCase()) {
             console.log('✅ Transfer successful!')
         } else {
             console.log('⚠️  Transfer completed but ownership verification shows unexpected owner')

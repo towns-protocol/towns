@@ -208,8 +208,12 @@ async function transferFunds(options: TransferOptions) {
 }
 
 async function sendGas(options: TransferOptions) {
+    if (!options.privateKey || !options.amount || !options.to || !options.from) {
+        throw new Error('privateKey, amount, to, and from are required')
+    }
+
     const provider = new ethers.providers.JsonRpcProvider(options.rpcUrl)
-    const wallet = new ethers.Wallet(options.privateKey!, provider)
+    const wallet = new ethers.Wallet(options.privateKey, provider)
 
     console.log('Connected to:', options.rpcUrl)
     console.log('Sending from:', wallet.address)
@@ -219,13 +223,13 @@ async function sendGas(options: TransferOptions) {
     console.log('Current balance:', ethers.utils.formatEther(balance), 'ETH')
 
     // Convert amount to wei
-    const amountWei = ethers.utils.parseEther(options.amount!)
+    const amountWei = ethers.utils.parseEther(options.amount)
 
     // Send transaction
     console.log(`\nSending ${options.amount} ETH to ${options.to}...`)
 
     const tx = await wallet.sendTransaction({
-        to: options.to!,
+        to: options.to,
         value: amountWei,
     })
 
@@ -236,8 +240,8 @@ async function sendGas(options: TransferOptions) {
     console.log(`Transaction confirmed in block ${receipt.blockNumber}`)
 
     // Check new balances
-    const senderBalance = await provider.getBalance(options.from!)
-    const receiverBalance = await provider.getBalance(options.to!)
+    const senderBalance = await provider.getBalance(options.from)
+    const receiverBalance = await provider.getBalance(options.to)
 
     console.log('\nNew balances:')
     console.log(`Sender (${options.from}): ${ethers.utils.formatEther(senderBalance)} ETH`)
