@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -82,7 +81,7 @@ func TestNode2NodeAuth(t *testing.T) {
 	tt.require.NoError(err)
 
 	// Create another client with invalid certificate - unknown signer of certificate
-	wallet, err := crypto.NewWallet(context.Background())
+	wallet, err := crypto.NewWallet(tt.ctx)
 	tt.require.NoError(err)
 	clientWithInvalidCert, err := testcert.GetHttp2LocalhostTLSClientWithCert(
 		tt.ctx, tt.getConfig(), node2nodeauth.CertGetter(logging.FromCtx(tt.ctx), wallet, tt.btc.ChainId),

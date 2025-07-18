@@ -341,7 +341,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	ctx := context.Background()
+	ctx := test.NewTestContextForTestMain("xchain_server")
 	var err error
 	anvilWallet, err = node_crypto.NewWallet(ctx)
 	if err != nil {
@@ -388,7 +388,7 @@ func mintTokenForWallet(
 	wallet *node_crypto.Wallet,
 	amount int64,
 ) {
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 	txn, err := erc721.Mint(auth, wallet.Address, big.NewInt(amount))
@@ -462,7 +462,7 @@ func deployMockErc721Contract(
 	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
 	require.NoError(err)
 
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)         // in wei
@@ -601,7 +601,7 @@ func mintErc20TokensForWallet(
 	wallet *node_crypto.Wallet,
 	amount int64,
 ) {
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 	txn, err := erc20.Mint(auth, wallet.Address, big.NewInt(amount))
@@ -614,7 +614,7 @@ func deployMockErc20Contract(
 	st *serviceTester,
 ) (*bind.TransactOpts, common.Address, *test_contracts.MockErc20) {
 	// Deploy mock ERC20 contract to anvil chain
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
 	require.NoError(err)
@@ -633,7 +633,7 @@ func deployMockErc1155Contract(
 	st *serviceTester,
 ) (*bind.TransactOpts, common.Address, *test_contracts.MockErc1155) {
 	// Deploy mock ERC1155 contract to anvil chain
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
 	require.NoError(err)
@@ -661,7 +661,7 @@ func mintErc1155TokensForWallet(
 	wallet *node_crypto.Wallet,
 	tokenId int,
 ) {
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 	var txn *types.Transaction
@@ -880,6 +880,7 @@ func TestErc20Entitlements(t *testing.T) {
 }
 
 func toggleEntitlement(
+	ctx context.Context,
 	require *require.Assertions,
 	auth *bind.TransactOpts,
 	crossChainEntitlement *deploy.MockCrossChainEntitlement,
@@ -888,7 +889,7 @@ func toggleEntitlement(
 	response bool,
 ) {
 	// Update nonce
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 
@@ -904,7 +905,7 @@ func deployMockCrossChainEntitlement(
 	st *serviceTester,
 ) (*bind.TransactOpts, common.Address, *deploy.MockCrossChainEntitlement) {
 	// Deploy mock crosschain entitlement contract to anvil chain
-	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(st.ctx, anvilWallet.Address)
 	require.NoError(err)
 	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
 	require.NoError(err)
@@ -972,7 +973,7 @@ func TestCrossChainEntitlements(t *testing.T) {
 			check(isEntitledCheck, false)
 
 			// Toggle entitlemenet result for user's wallet
-			toggleEntitlement(require, auth, crossChainEntitlement, cs.Wallet(), 1, true)
+			toggleEntitlement(ctx, require, auth, crossChainEntitlement, cs.Wallet(), 1, true)
 
 			// Check should now succeed.
 			check(isEntitledCheck, true)
@@ -989,13 +990,13 @@ func TestCrossChainEntitlements(t *testing.T) {
 				check(isEntitledCheck, false)
 
 				// Toggle entitlement for a particular linked wallet
-				toggleEntitlement(require, auth, crossChainEntitlement, wallet, id, true)
+				toggleEntitlement(ctx, require, auth, crossChainEntitlement, wallet, id, true)
 
 				// Check should now succeed for the wallet.
 				check(isEntitledCheck, true)
 
 				// Untoggle entitlement for the wallet
-				toggleEntitlement(require, auth, crossChainEntitlement, wallet, id, false)
+				toggleEntitlement(ctx, require, auth, crossChainEntitlement, wallet, id, false)
 			}
 		})
 	}

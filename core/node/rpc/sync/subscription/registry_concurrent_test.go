@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
@@ -33,7 +34,7 @@ func TestRegistry_Concurrent_AddRemoveSubscriptions(t *testing.T) {
 
 			for j := 0; j < opsPerGoroutine; j++ {
 				syncID := fmt.Sprintf("sync-%d-%d", id, j)
-				sub := createTestSubscription(syncID)
+				sub := createTestSubscription(t, syncID)
 
 				// Add subscription
 				reg.AddSubscription(sub)
@@ -76,7 +77,7 @@ func TestRegistry_Concurrent_StreamOperations(t *testing.T) {
 	subscriptions := make([]string, numGoroutines)
 	for i := 0; i < numGoroutines; i++ {
 		subscriptions[i] = fmt.Sprintf("sync-%d", i)
-		reg.AddSubscription(createTestSubscription(subscriptions[i]))
+		reg.AddSubscription(createTestSubscription(t, subscriptions[i]))
 	}
 
 	// Generate stream IDs
@@ -136,7 +137,7 @@ func TestRegistry_Concurrent_StreamOperations(t *testing.T) {
 
 func TestRegistry_Concurrent_MixedOperations(t *testing.T) {
 	reg := newRegistry()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(test.NewTestContext(t), 10*time.Second)
 	defer cancel()
 
 	// Operation counters
@@ -163,7 +164,7 @@ func TestRegistry_Concurrent_MixedOperations(t *testing.T) {
 					return
 				default:
 					syncID := fmt.Sprintf("sync-add-%d-%d", id, atomic.LoadInt32(&addSubOps))
-					reg.AddSubscription(createTestSubscription(syncID))
+					reg.AddSubscription(createTestSubscription(t, syncID))
 					atomic.AddInt32(&addSubOps, 1)
 					time.Sleep(time.Microsecond * 10)
 				}
@@ -313,7 +314,7 @@ func TestRegistry_Concurrent_StressTest(t *testing.T) {
 
 	// Pre-create some subscriptions
 	for i := 0; i < 10; i++ {
-		reg.AddSubscription(createTestSubscription(fmt.Sprintf("base-sync-%d", i)))
+		reg.AddSubscription(createTestSubscription(t, fmt.Sprintf("base-sync-%d", i)))
 	}
 
 	var wg sync.WaitGroup
@@ -332,7 +333,7 @@ func TestRegistry_Concurrent_StressTest(t *testing.T) {
 				switch op {
 				case 0: // Add subscription
 					syncID := fmt.Sprintf("stress-sync-%d-%d", id, j)
-					reg.AddSubscription(createTestSubscription(syncID))
+					reg.AddSubscription(createTestSubscription(t, syncID))
 
 				case 1: // Add stream to subscription
 					syncID := fmt.Sprintf("base-sync-%d", j%10)
@@ -387,7 +388,7 @@ func TestRegistry_Concurrent_OnStreamDown(t *testing.T) {
 	// Create subscriptions with streams
 	for i := 0; i < numGoroutines; i++ {
 		syncID := fmt.Sprintf("sync-%d", i)
-		sub := createTestSubscription(syncID)
+		sub := createTestSubscription(t, syncID)
 		reg.AddSubscription(sub)
 
 		// Add streams to each subscription

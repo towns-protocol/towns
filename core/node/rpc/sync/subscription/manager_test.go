@@ -9,14 +9,15 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestManager_Subscribe(t *testing.T) {
-	m := NewManager(context.Background(), [20]byte{1}, nil, nil, nil)
-	ctx, cancel := context.WithCancelCause(context.Background())
+	m := NewManager(test.NewTestContext(t), [20]byte{1}, nil, nil, nil)
+	ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
 	defer cancel(nil)
 
 	sub, err := m.Subscribe(ctx, cancel, "test-sync-id")
@@ -38,7 +39,7 @@ func TestManager_Subscribe(t *testing.T) {
 
 func TestManager_processMessage(t *testing.T) {
 	mockReg := &mockRegistry{}
-	m := NewManager(context.Background(), [20]byte{1}, nil, nil, nil)
+	m := NewManager(test.NewTestContext(t), [20]byte{1}, nil, nil, nil)
 	m.registry = mockReg
 	m.distributor = newDistributor(mockReg, nil)
 
@@ -69,7 +70,7 @@ func TestManager_processMessage(t *testing.T) {
 	mockReg.AssertExpectations(t)
 
 	// Backfill path - SYNC_UPDATE with target sync IDs
-	sub := createTestSubscription("test-sync-id")
+	sub := createTestSubscription(t, "test-sync-id")
 	msg3 := &SyncStreamsResponse{
 		SyncOp: SyncOp_SYNC_UPDATE,
 		Stream: &StreamAndCookie{
@@ -86,7 +87,7 @@ func TestManager_processMessage(t *testing.T) {
 }
 
 func TestManager_start(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(test.NewTestContext(t))
 	defer cancel()
 
 	mockReg := &mockRegistry{}

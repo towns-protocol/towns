@@ -375,7 +375,7 @@ func initAppRegistryService(
 	// Clean up schema
 	tester.t.Cleanup(func() {
 		err := dbtestutils.DeleteTestSchema(
-			context.Background(),
+			ctx,
 			tester.dbUrl,
 			storage.DbSchemaNameForAppRegistryService(config.AppRegistry.AppRegistryId),
 		)

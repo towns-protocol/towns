@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,7 +12,7 @@ import (
 )
 
 func runGetLinkedWalletsCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	if !common.IsHexAddress(args[0]) {
 		return fmt.Errorf("argument 0 is not an address: '%v'", args[0])
 	}

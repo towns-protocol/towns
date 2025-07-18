@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -39,8 +38,8 @@ func keyboardInput(input chan rune) {
 	}
 }
 
-func runClientSimulator(entitlementGatedAddress common.Address) error {
-	bc := context.Background()
+func runClientSimulator(cmd *cobra.Command, entitlementGatedAddress common.Address) error {
+	bc := cmd.Context()
 	pid := os.Getpid()
 
 	log := logging.FromCtx(bc).With("pid", pid)
@@ -93,8 +92,8 @@ func init() {
 		Short: "Runs the client simulator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			entitlementGatedAddress := common.HexToAddress(args[1])
-			return runClientSimulator(entitlementGatedAddress)
+			entitlementGatedAddress := common.HexToAddress(args[0])
+			return runClientSimulator(cmd, entitlementGatedAddress)
 		},
 	}
 

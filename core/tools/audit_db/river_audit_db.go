@@ -301,7 +301,7 @@ func main() {
 		}
 	}
 
-	err = rootCmd.ExecuteContext(context.Background())
+	err = rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}

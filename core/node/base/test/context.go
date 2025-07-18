@@ -58,7 +58,7 @@ func newTestLoggerForName(name string) *logging.Log {
 }
 
 func NewTestContextForTestMain(pkg string) context.Context {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := context.Background() //nolint:forbidigo  // No parent context available in TestMain
 
 	ctx = logging.CtxWithLog(ctx, newTestLoggerForName(pkg))
 

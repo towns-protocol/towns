@@ -16,6 +16,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -563,7 +564,7 @@ func requireStreamScrubCorruption(
 
 func TestCorruptionTracker(t *testing.T) {
 	maxFailedConsecutiveUpdates := uint32(50)
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	stream := NewArchiveStream(
 		testutils.FakeStreamId(STREAM_SPACE_BIN),
 		[]common.Address{},

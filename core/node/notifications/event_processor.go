@@ -665,8 +665,7 @@ func (p *MessageToNotificationsProcessor) sendAPNNotification(
 	content map[string]interface{},
 	payloadVersion NotificationPushVersion,
 ) (bool, int, error) {
-	// lint:ignore context.Background() is fine here
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) //nolint:forbidigo  // TODO: fix this
 	defer cancel()
 
 	notificationPayload := payload.NewPayload().

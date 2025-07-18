@@ -2429,7 +2429,7 @@ func main() {
 		}
 	}
 
-	err = rootCmd.ExecuteContext(context.Background())
+	err = rootCmd.ExecuteContext(context.Background()) //nolint:forbidigo  // First context.
 	if err != nil {
 		os.Exit(1)
 	}

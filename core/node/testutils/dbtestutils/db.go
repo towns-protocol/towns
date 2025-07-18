@@ -91,8 +91,7 @@ func ConfigureDbWithSchemaName(
 	return &cfg,
 		dbSchemaName,
 		func() {
-			// lint:ignore context.Background() is fine here
-			err := DeleteTestSchema(context.Background(), cfg.GetUrl(), dbSchemaName)
+			err := DeleteTestSchema(context.Background(), cfg.GetUrl(), dbSchemaName) //nolint:forbidigo  // Still delete even if text context is already cancelled.
 			// Force test writers to properly clean up schemas if this fails for some reason.
 			if err != nil {
 				panic(err)

@@ -1,7 +1,6 @@
 package push_test
 
 import (
-	"context"
 	"encoding/hex"
 	"os"
 	"testing"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
@@ -24,7 +24,7 @@ func TestAPNSPushNotification(t *testing.T) {
 
 	var (
 		req = require.New(t)
-		ctx = context.Background()
+		ctx = test.NewTestContext(t)
 		cfg = &config.NotificationsConfig{
 			APN: config.APNPushNotificationsConfig{
 				AppBundleID: "com.towns.internal",
@@ -74,7 +74,7 @@ func TestWebPushWithVapid(t *testing.T) {
 
 	var (
 		req = require.New(t)
-		ctx = context.Background()
+		ctx = test.NewTestContext(t)
 		cfg = &config.NotificationsConfig{
 			APN: config.APNPushNotificationsConfig{
 				AppBundleID: "com.towns.internal",

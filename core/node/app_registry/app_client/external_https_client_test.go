@@ -1,17 +1,18 @@
 package app_client
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"golang.org/x/net/http2"
 )
 
 func TestExternalHttpsClient(t *testing.T) {
-	http1Client, err := http_client.GetHttp11Client(context.Background())
+	ctx := test.NewTestContext(t)
+	http1Client, err := http_client.GetHttp11Client(ctx)
 	require.NoError(t, err)
 
 	http2Client := &http.Client{

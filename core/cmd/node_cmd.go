@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -16,7 +15,7 @@ import (
 )
 
 func runNodeGetStreams(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 
 	nodeAddress := common.HexToAddress(args[0])
 	zeroAddress := common.Address{}

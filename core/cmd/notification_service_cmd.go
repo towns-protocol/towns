@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 
 	"github.com/towns-protocol/towns/core/node/rpc"
@@ -14,7 +12,7 @@ func runNotificationService(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	return rpc.RunNotificationService(ctx, cmdConfig)
 }
 

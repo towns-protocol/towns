@@ -2,11 +2,13 @@ package subscription
 
 import (
 	"context"
+	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -14,8 +16,8 @@ import (
 )
 
 // createTestSubscription creates a properly initialized Subscription for testing
-func createTestSubscription(syncID string) *Subscription {
-	ctx, cancel := context.WithCancelCause(context.Background())
+func createTestSubscription(t *testing.T, syncID string) *Subscription {
+	ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
 	return &Subscription{
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),

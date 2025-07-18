@@ -31,7 +31,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				StreamId: []byte{1, 2, 3, 4},
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
+				sub := createTestSubscription(t, "test-sync-1")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub})
 			},
 		},
@@ -48,8 +48,8 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				StreamId: []byte{1, 2, 3, 4},
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
-				sub1 := createTestSubscription("test-sync-1")
-				sub2 := createTestSubscription("test-sync-2")
+				sub1 := createTestSubscription(t, "test-sync-1")
+				sub2 := createTestSubscription(t, "test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
 			},
 		},
@@ -66,8 +66,8 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				StreamId: []byte{1, 2, 3, 4},
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
-				sub1 := createTestSubscription("test-sync-1")
-				sub2 := createTestSubscription("test-sync-2")
+				sub1 := createTestSubscription(t, "test-sync-1")
+				sub2 := createTestSubscription(t, "test-sync-2")
 				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
 				mockReg.On("OnStreamDown", StreamId{1, 2, 3, 4})
 			},
@@ -122,7 +122,7 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				TargetSyncIds: []string{"test-sync-1"},
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
+				sub := createTestSubscription(t, "test-sync-1")
 				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
 			},
 		},
@@ -157,7 +157,7 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				TargetSyncIds: []string{"test-sync-1"},
 			},
 			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
+				sub := createTestSubscription(t, "test-sync-1")
 				sub.Close() // Mark as closed
 				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
 			},
@@ -202,7 +202,7 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 			name: "send SYNC_UPDATE message to subscription",
 			setup: func() (*distributor, *Subscription) {
 				dis := newDistributor(nil, nil)
-				return dis, createTestSubscription("test-sync-1")
+				return dis, createTestSubscription(t, "test-sync-1")
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
@@ -214,7 +214,7 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 			name: "send SYNC_DOWN message to subscription",
 			setup: func() (*distributor, *Subscription) {
 				dis := newDistributor(nil, nil)
-				return dis, createTestSubscription("test-sync-1")
+				return dis, createTestSubscription(t, "test-sync-1")
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{

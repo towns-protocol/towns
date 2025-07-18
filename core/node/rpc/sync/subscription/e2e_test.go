@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	testutils "github.com/towns-protocol/towns/core/node/testutils"
@@ -24,7 +25,7 @@ type e2eTestEnv struct {
 }
 
 func newE2ETestEnv(t *testing.T) *e2eTestEnv {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(test.NewTestContext(t))
 
 	// Create real components (not mocks)
 	manager := NewManager(ctx, [20]byte{1}, nil, nil, nil)
@@ -54,7 +55,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	defer env.cleanup()
 
 	// Step 1: Create a subscription
-	ctx, cancel := context.WithCancelCause(context.Background())
+	ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
 	defer cancel(nil)
 
 	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1")
@@ -128,9 +129,9 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	defer env.cleanup()
 
 	// Create two subscriptions
-	ctx1, cancel1 := context.WithCancelCause(context.Background())
+	ctx1, cancel1 := context.WithCancelCause(test.NewTestContext(t))
 	defer cancel1(nil)
-	ctx2, cancel2 := context.WithCancelCause(context.Background())
+	ctx2, cancel2 := context.WithCancelCause(test.NewTestContext(t))
 	defer cancel2(nil)
 
 	sub1, err := env.manager.Subscribe(ctx1, cancel1, "test-sync-1")
@@ -225,7 +226,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	defer env.cleanup()
 
 	// Create subscription
-	ctx, cancel := context.WithCancelCause(context.Background())
+	ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
 	defer cancel(nil)
 
 	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1")
@@ -320,7 +321,7 @@ func TestE2E_ErrorHandlingAndRecovery(t *testing.T) {
 	// Test 1: Subscription to stopped manager
 	env.manager.stopped.Store(true)
 
-	ctx, cancel := context.WithCancelCause(context.Background())
+	ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
 	defer cancel(nil)
 
 	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1")
@@ -370,7 +371,7 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 	contexts := make([]context.CancelCauseFunc, numSubscriptions)
 
 	for i := 0; i < numSubscriptions; i++ {
-		ctx, cancel := context.WithCancelCause(context.Background())
+		ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
 		contexts[i] = cancel
 		defer cancel(nil)
 

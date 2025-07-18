@@ -100,9 +100,9 @@ func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress
 }
 
 func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.Int {
-	log := logging.FromCtx(context.Background())
+	log := logging.FromCtx(context.Background()) //nolint:forbidigo  // TODO: fix this
 	for {
-		receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
+		receipt, err := client.TransactionReceipt(context.Background(), tx.Hash()) //nolint:forbidigo  // TODO: fix this
 		if err != nil {
 			if err == ethereum.NotFound {
 

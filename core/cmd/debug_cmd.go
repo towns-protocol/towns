@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,7 +17,7 @@ import (
 )
 
 func runDebugCallstacksDownloadCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 
 	dir := args[0]
 	err := os.MkdirAll(dir, 0755)

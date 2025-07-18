@@ -1,7 +1,6 @@
 package node2nodeauth
 
 import (
-	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -15,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 )
@@ -22,7 +22,8 @@ import (
 func TestCreateCert(t *testing.T) {
 	logger := logging.DefaultLogger(zap.DebugLevel)
 
-	wallet, err := crypto.NewWallet(context.Background())
+	ctx := test.NewTestContext(t)
+	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(t, err)
 
 	cert, err := createCert(logger, wallet, big.NewInt(1))
@@ -55,7 +56,8 @@ func TestCreateCert(t *testing.T) {
 func TestCertGetter(t *testing.T) {
 	logger := logging.DefaultLogger(zap.DebugLevel)
 
-	wallet, err := crypto.NewWallet(context.Background())
+	ctx := test.NewTestContext(t)
+	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(t, err)
 
 	getCertFunc := CertGetter(logger, wallet, big.NewInt(1))
@@ -90,7 +92,8 @@ func TestVerifyCert(t *testing.T) {
 	logger := logging.DefaultLogger(zap.DebugLevel)
 
 	// Create test wallet
-	wallet, err := crypto.NewWallet(context.Background())
+	ctx := test.NewTestContext(t)
+	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(t, err)
 
 	cert, err := createCert(logger, wallet, big.NewInt(1))
