@@ -101,21 +101,29 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 		}
 	}
 
-	for _, cookie := range request.GetAddStreams() {
-		if err := s.addStream(ctx, cookie); err != nil {
-			rvrErr := AsRiverError(err)
-			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
-			})
+	if adds := request.GetAddStreams(); len(adds) > 0 {
+		var addsLock sync.Mutex
+		for _, cookie := range request.GetAddStreams() {
+			wg.Add(1)
+			go func(cookie *SyncCookie) {
+				defer wg.Done()
+
+				if err := s.addStream(ctx, cookie); err != nil {
+					rvrErr := AsRiverError(err)
+					addsLock.Lock()
+					resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
+						StreamId: cookie.GetStreamId(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
+					addsLock.Unlock()
+				}
+			}(cookie)
 		}
 	}
 
-	if len(request.GetRemoveStreams()) > 0 {
-		for _, streamID := range request.GetRemoveStreams() {
-			s.streamUnbsub(StreamId(streamID))
-		}
+	for _, streamID := range request.GetRemoveStreams() {
+		s.streamUnbsub(StreamId(streamID))
 	}
 
 	wg.Wait()
@@ -216,18 +224,13 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 
 	select {
 	case <-s.globalCtx.Done():
-		if s.globalCtx.Err() != nil {
-			err = AsRiverError(s.globalCtx.Err(), Err_CANCELED).
-				Tag("op", msg.GetSyncOp()).
-				Func("localSyncer.sendResponse")
-		}
+		err = s.globalCtx.Err()
 	default:
 		err = s.messages.AddMessage(msg)
 	}
 
 	if err != nil {
-		rvrErr := AsRiverError(err).
-			Tag("op", msg.GetSyncOp()).
+		rvrErr := AsRiverError(err, Err_CANCELED).
 			Func("localSyncer.sendResponse")
 		_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
 		return rvrErr
