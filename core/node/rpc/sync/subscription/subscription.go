@@ -131,13 +131,14 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		if modifiedReq.BackfillingFailureHandler == nil {
 			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
 		} else {
+			originalBackfillingFailureHandler := req.BackfillingFailureHandler
 			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
 				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
 					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
 				}) {
 					modifiedReq.AddingFailureHandler(status)
-				} else {
-					modifiedReq.BackfillingFailureHandler(status)
+				} else if originalBackfillingFailureHandler != nil {
+					originalBackfillingFailureHandler(status)
 				}
 			}
 		}
