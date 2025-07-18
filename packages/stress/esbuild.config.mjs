@@ -7,6 +7,8 @@ build({
         demo: './src/demo.ts',
         notifications: './src/notifications.ts',
         generateWallets: './src/generateWallets.ts',
+        transferFunds: './src/transferFunds.ts',
+        nft: './src/nft.ts',
     },
     bundle: true,
     sourcemap: 'inline',

@@ -9,6 +9,8 @@
         "demo": "node --enable-source-maps ./dist/demo.cjs",
         "notifications": "node --enable-source-maps ./dist/notifications.cjs",
         "generate-wallets": "node --enable-source-maps ./dist/generateWallets.cjs",
+        "transfer-funds": "node --enable-source-maps ./dist/transferFunds.cjs",
+        "nft": "node --enable-source-maps ./dist/nft.cjs",
         "lint": "eslint . --ext .ts",
         "start": "node --enable-source-maps ./dist/start.cjs",
         "test:ci:with-entitlements": "vitest run --config ./vitest.config.entitlements.ts --silent",
