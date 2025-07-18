@@ -26,9 +26,9 @@ contract InteractBridgeLayerZero is Interaction {
     }
 
     function __interact(address deployer) internal override {
-        address wrappedTowns = getDeployment("utils/wrappedTowns");
+        address wrappedTowns = getDeployment("utils/wTowns");
         uint256 amount = 1 ether;
-        uint32 dstEid = LibLayerZeroValues.getEid(97);
+        uint32 dstEid = LibLayerZeroValues.getEid(56); // BNB
 
         Towns oft = Towns(wrappedTowns);
 
