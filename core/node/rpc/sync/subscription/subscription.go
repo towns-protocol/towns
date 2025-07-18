@@ -76,9 +76,9 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	if err != nil {
 		rvrErr := AsRiverError(err).
 			Tag("syncId", s.syncID).
-			Tag("op", msg.GetSyncOp())
+			Func("Subscription.Send")
 		s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
-		s.log.Errorw("Failed to add message to subscription", "op", msg.GetSyncOp(), "error", err)
+		_ = rvrErr.LogError(s.log)
 	}
 }
 
