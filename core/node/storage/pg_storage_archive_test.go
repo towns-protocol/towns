@@ -29,7 +29,6 @@ func TestArchive(t *testing.T) {
 
 	ctx := params.ctx
 	pgStreamStore := params.pgStreamStore
-	defer params.closer()
 
 	streamId1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 

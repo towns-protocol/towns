@@ -52,7 +52,7 @@ func TestArchive100StreamsWithReplication_NoRace(t *testing.T) {
 		false,
 	)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
@@ -113,7 +113,7 @@ func TestArchive20StreamsWithCorruption_NoRace(t *testing.T) {
 
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), false)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
@@ -177,7 +177,7 @@ func TestArchive100Streams_NoRace(t *testing.T) {
 		true,
 	)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
@@ -214,7 +214,7 @@ func TestArchive100StreamsWithData_NoRace(t *testing.T) {
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), true)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)

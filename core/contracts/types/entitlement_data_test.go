@@ -231,8 +231,7 @@ func TestConvertV1RuleDataToV2(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
+			ctx := test.NewTestContext(t)
 			require := require.New(t)
 			converted, err := types.ConvertV1RuleDataToV2(ctx, &tc.ruleData)
 			if tc.expectedErr != nil {

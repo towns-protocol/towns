@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -33,7 +32,8 @@ var (
 // Helper function to create test metadata
 func testAppMetadataWithName(name string) types.AppMetadata {
 	return types.AppMetadata{
-		Name:        name,
+		Username:    name,
+		DisplayName: name + " Bot", // Add " Bot" suffix to display name for testing
 		Description: "A test application",
 		ImageUrl:    "https://example.com/image.png",
 		ExternalUrl: "",
@@ -45,19 +45,17 @@ func testAppMetadataWithName(name string) types.AppMetadata {
 	}
 }
 
-
 type testAppRegistryStoreParams struct {
 	ctx                context.Context
 	pgAppRegistryStore *storage.PostgresAppRegistryStore
 	schema             string
 	config             *config.DatabaseConfig
-	closer             func()
 	exitSignal         chan error
 }
 
 func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 	require := require.New(t)
-	ctx, ctxCloser := test.NewTestContext()
+	ctx := test.NewTestContext(t)
 
 	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDbWithPrefix(ctx, "b_")
 	require.NoError(err, "Error configuring db for test")
@@ -88,12 +86,12 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 		schema:             dbSchemaName,
 		config:             dbCfg,
 		exitSignal:         exitSignal,
-		closer: sync.OnceFunc(func() {
-			store.Close(ctx)
-			dbCloser()
-			ctxCloser()
-		}),
 	}
+
+	t.Cleanup(func() {
+		store.Close(ctx)
+		dbCloser()
+	})
 
 	return params
 }
@@ -107,7 +105,6 @@ func safeAddress(t *testing.T) common.Address {
 
 func TestGetSessionKey(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -192,7 +189,6 @@ func TestGetSessionKey(t *testing.T) {
 
 func TestUpdateSettings(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -257,7 +253,6 @@ func TestUpdateSettings(t *testing.T) {
 
 func TestRegisterWebhook(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -359,7 +354,6 @@ func TestRegisterWebhook(t *testing.T) {
 
 func TestCreateApp(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -412,19 +406,45 @@ func TestCreateApp(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Test creating an app with duplicate display name should fail
+	// Test creating an app with duplicate username should fail
 	app4 := safeAddress(t)
 	err = store.CreateApp(
 		params.ctx,
 		owner,
 		app4,
 		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
-		testAppMetadataWithName("app"), // Same display name as first app
+		testAppMetadataWithName("app"), // Same username as first app
 		secret,
 	)
 	require.Error(err)
 	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
-	require.ErrorContains(err, "another app with the same name already exists")
+	require.ErrorContains(err, "another app with the same username already exists")
+
+	// Test creating an app with duplicate display name but different username should succeed
+	app5 := safeAddress(t)
+	metadataWithDuplicateDisplayName := types.AppMetadata{
+		Username:    "unique_username_5", // Different username
+		DisplayName: "app Bot",           // Same display name as the first app
+		Description: "Another test application",
+		ImageUrl:    "https://example.com/image5.png",
+		AvatarUrl:   "https://example.com/avatar5.png",
+	}
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app5,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		metadataWithDuplicateDisplayName,
+		secret,
+	)
+	require.NoError(err, "Should be able to create app with duplicate display name but different username")
+
+	// Verify the app was created successfully
+	info5, err := store.GetAppInfo(params.ctx, app5)
+	require.NoError(err)
+	require.Equal(metadataWithDuplicateDisplayName.Username, info5.Metadata.Username)
+	require.Equal(metadataWithDuplicateDisplayName.DisplayName, info5.Metadata.DisplayName)
+	require.Equal("app Bot", info5.Metadata.DisplayName, "Display name should be the same as first app")
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
@@ -464,7 +484,6 @@ func TestCreateApp(t *testing.T) {
 
 func TestRotateSecret(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -514,7 +533,6 @@ func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessag
 
 func TestPublishSessionKeys(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -601,7 +619,6 @@ func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
 
 func TestGetSendableApps(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -687,7 +704,6 @@ func TestGetSendableApps(t *testing.T) {
 
 func TestEnqueueMessages(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1156,7 +1172,6 @@ func TestEnqueueMessages(t *testing.T) {
 
 func TestSetAppMetadata(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1188,7 +1203,8 @@ func TestSetAppMetadata(t *testing.T) {
 
 	// Update metadata
 	updatedMetadata := types.AppMetadata{
-		Name:        "Updated App Name",
+		Username:    "updated_app",
+		DisplayName: "Updated App Display",
 		Description: "Updated description for the app",
 		ImageUrl:    "https://example.com/updated-image.png",
 		AvatarUrl:   "https://example.com/updated-avatar.png",
@@ -1214,11 +1230,12 @@ func TestSetAppMetadata(t *testing.T) {
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 	require.ErrorContains(err, "app was not found in registry")
 
-	// Setting metadata with duplicate display name should fail
+	// Test that duplicate usernames are not allowed but duplicate display names ARE allowed
 	// First, create another app.
 	app2 := safeAddress(t)
 	app2Metadata := types.AppMetadata{
-		Name:        "App 2",
+		Username:    "app2",
+		DisplayName: "App 2 Display",
 		Description: "A second test application",
 		ImageUrl:    "https://example.com/second-image.png",
 		AvatarUrl:   "https://example.com/second-avatar.png",
@@ -1234,12 +1251,30 @@ func TestSetAppMetadata(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Next, try to update app2's display name to match app's display name.
-	app2Metadata.Name = updatedMetadata.Name
+	// Test 1: Try to update app2's username to match app's username - should fail
+	app2Metadata.Username = updatedMetadata.Username
 	err = store.SetAppMetadata(params.ctx, app2, app2Metadata)
 	require.Error(err)
 	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
-	require.ErrorContains(err, "another app with the same name already exists")
+	require.ErrorContains(err, "another app with the same username already exists")
+
+	// Test 2: Update app2's display name to match app's display name - should succeed
+	app2Metadata.Username = "app2"                         // Reset to original username
+	app2Metadata.DisplayName = updatedMetadata.DisplayName // Same display name as app
+	err = store.SetAppMetadata(params.ctx, app2, app2Metadata)
+	require.NoError(err, "Should be able to set duplicate display name")
+
+	// Verify both apps have the same display name but different usernames
+	appInfo1, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	appInfo2, err := store.GetAppInfo(params.ctx, app2)
+	require.NoError(err)
+	require.Equal(
+		appInfo1.Metadata.DisplayName,
+		appInfo2.Metadata.DisplayName,
+		"Both apps should have the same display name",
+	)
+	require.NotEqual(appInfo1.Metadata.Username, appInfo2.Metadata.Username, "Apps should have different usernames")
 
 	// Test updating slash commands - remove all commands
 	metadataNoCommands := updatedMetadata
@@ -1273,7 +1308,6 @@ func TestSetAppMetadata(t *testing.T) {
 
 func TestGetAppMetadata(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1288,7 +1322,8 @@ func TestGetAppMetadata(t *testing.T) {
 
 	// Create an app with metadata
 	originalMetadata := types.AppMetadata{
-		Name:        "My Test App",
+		Username:    "my_test_app",
+		DisplayName: "My Test App Display",
 		Description: "This is a test application for unit testing",
 		ImageUrl:    "https://example.com/my-image.png",
 		AvatarUrl:   "https://example.com/my-avatar.png",
@@ -1321,7 +1356,6 @@ func TestGetAppMetadata(t *testing.T) {
 
 func TestAppMetadataInGetAppInfo(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1335,7 +1369,8 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 
 	// Create an app with comprehensive metadata
 	metadata := types.AppMetadata{
-		Name:        "Comprehensive Test App",
+		Username:    "comprehensive_test_app",
+		DisplayName: "Comprehensive Test App Display",
 		Description: "This app tests all metadata fields integration with AppInfo",
 		ImageUrl:    "https://example.com/comprehensive-image.jpg",
 		AvatarUrl:   "https://example.com/comprehensive-avatar.jpg",
@@ -1382,9 +1417,8 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 	)
 }
 
-func TestIsDisplayNameAvailable(t *testing.T) {
+func TestIsUsernameAvailable(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
 
 	require := require.New(t)
 	store := params.pgAppRegistryStore
@@ -1397,14 +1431,15 @@ func TestIsDisplayNameAvailable(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	// Test that a name is available before any app is created
-	available, err := store.IsDisplayNameAvailable(params.ctx, "UniqueBotName")
+	// Test that a username is available before any app is created
+	available, err := store.IsUsernameAvailable(params.ctx, "unique_bot_name")
 	require.NoError(err)
-	require.True(available, "Name should be available when no apps exist")
+	require.True(available, "Username should be available when no apps exist")
 
-	// Create an app with a specific name
+	// Create an app with a specific username
 	metadata1 := types.AppMetadata{
-		Name:        "ExistingBot",
+		Username:    "existing_bot",
+		DisplayName: "Existing Bot Display",
 		Description: "First bot",
 		ImageUrl:    "https://example.com/bot1.png",
 		AvatarUrl:   "https://example.com/avatar1.png",
@@ -1420,19 +1455,20 @@ func TestIsDisplayNameAvailable(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Test that the same name is not available
-	available, err = store.IsDisplayNameAvailable(params.ctx, "ExistingBot")
+	// Test that the same username is not available
+	available, err = store.IsUsernameAvailable(params.ctx, "existing_bot")
 	require.NoError(err)
-	require.False(available, "Name should not be available when already taken")
+	require.False(available, "Username should not be available when already taken")
 
-	// Test that a different name is available
-	available, err = store.IsDisplayNameAvailable(params.ctx, "DifferentBot")
+	// Test that a different username is available
+	available, err = store.IsUsernameAvailable(params.ctx, "different_bot")
 	require.NoError(err)
-	require.True(available, "Different name should be available")
+	require.True(available, "Different username should be available")
 
-	// Create another app with a different name
+	// Create another app with a different username
 	metadata2 := types.AppMetadata{
-		Name:        "SecondBot",
+		Username:    "second_bot",
+		DisplayName: "Second Bot Display",
 		Description: "Second bot",
 		ImageUrl:    "https://example.com/bot2.png",
 		AvatarUrl:   "https://example.com/avatar2.png",
@@ -1448,27 +1484,30 @@ func TestIsDisplayNameAvailable(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Verify both names are not available
-	available, err = store.IsDisplayNameAvailable(params.ctx, "ExistingBot")
+	// Verify both usernames are not available
+	available, err = store.IsUsernameAvailable(params.ctx, "existing_bot")
 	require.NoError(err)
 	require.False(available)
 
-	available, err = store.IsDisplayNameAvailable(params.ctx, "SecondBot")
+	available, err = store.IsUsernameAvailable(params.ctx, "second_bot")
 	require.NoError(err)
 	require.False(available)
 
-	// Test empty name - storage layer just checks DB, returns true since no app has empty name
-	// The service layer is responsible for validating that empty names are not acceptable
-	available, err = store.IsDisplayNameAvailable(params.ctx, "")
+	// Test empty username - storage layer just checks DB, returns true since no app has empty username
+	// The service layer is responsible for validating that empty usernames are not acceptable
+	available, err = store.IsUsernameAvailable(params.ctx, "")
 	require.NoError(err)
-	require.True(available, "Storage layer returns true for empty name (no DB entry), service layer handles validation")
+	require.True(
+		available,
+		"Storage layer returns true for empty username (no DB entry), service layer handles validation",
+	)
 
 	// Test case sensitivity (assuming the implementation is case-sensitive based on the unique constraint)
-	available, err = store.IsDisplayNameAvailable(params.ctx, "existingbot")
+	available, err = store.IsUsernameAvailable(params.ctx, "existingbot")
 	require.NoError(err)
 	require.True(available, "Lowercase version should be available if implementation is case-sensitive")
 
-	available, err = store.IsDisplayNameAvailable(params.ctx, "EXISTINGBOT")
+	available, err = store.IsUsernameAvailable(params.ctx, "EXISTINGBOT")
 	require.NoError(err)
 	require.True(available, "Uppercase version should be available if implementation is case-sensitive")
 }

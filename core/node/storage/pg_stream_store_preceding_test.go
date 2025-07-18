@@ -14,7 +14,7 @@ import (
 
 func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -101,7 +101,7 @@ func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -198,7 +198,7 @@ func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_StreamNotFound(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -222,7 +222,7 @@ func TestWritePrecedingMiniblocks_StreamNotFound(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_InvalidRange(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -271,7 +271,7 @@ func TestWritePrecedingMiniblocks_InvalidRange(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -327,7 +327,7 @@ func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -356,7 +356,7 @@ func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -418,7 +418,7 @@ func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -487,7 +487,7 @@ func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -567,7 +567,7 @@ func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore

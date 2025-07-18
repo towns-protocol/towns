@@ -47,8 +47,7 @@ func TestEntitlementResultReasons(t *testing.T) {
 // Test for the newEntitlementCache function
 // Test for the newEntitlementCache function
 func TestCache(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	cfg := &config.Config{}
 

@@ -112,9 +112,9 @@ func Init(
 		}
 
 		if len(defaultCores) > 1 {
-			defaultLogger := zap.New(zapcore.NewTee(defaultCores...))
-			miniblockLogger := zap.New(zapcore.NewTee(miniblockCores...))
-			rpcLogger := zap.New(zapcore.NewTee(rpcCores...))
+			defaultLogger := zap.New(zapcore.NewTee(defaultCores...), zap.AddCaller(), zap.AddCallerSkip(1))
+			miniblockLogger := zap.New(zapcore.NewTee(miniblockCores...), zap.AddCaller(), zap.AddCallerSkip(1))
+			rpcLogger := zap.New(zapcore.NewTee(rpcCores...), zap.AddCaller(), zap.AddCallerSkip(1))
 
 			zap.ReplaceGlobals(defaultLogger)
 
@@ -126,9 +126,9 @@ func Init(
 			}
 
 		} else if len(defaultCores) == 1 {
-			defaultLogger := zap.New(defaultCores[0])
-			miniblockLogger := zap.New(miniblockCores[0])
-			rpcLogger := zap.New(rpcCores[0])
+			defaultLogger := zap.New(defaultCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
+			miniblockLogger := zap.New(miniblockCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
+			rpcLogger := zap.New(rpcCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
 
 			zap.ReplaceGlobals(defaultLogger)
 
@@ -167,10 +167,14 @@ func DefaultZapEncoderConfig() zapcore.EncoderConfig {
 }
 
 func DefaultLogger(level zapcore.Level) *Log {
+	return LoggerWithWriter(level, DefaultLogOut)
+}
+
+func LoggerWithWriter(level zapcore.Level, writer zapcore.WriteSyncer) *Log {
 	encoder := NewJSONEncoder(DefaultZapEncoderConfig())
 
-	core := zapcore.NewCore(encoder, DefaultLogOut, level)
-	logger := zap.New(core, zap.AddCaller())
+	core := zapcore.NewCore(encoder, writer, level)
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
 	sugar := logger.Sugar()
 
