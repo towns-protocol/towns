@@ -594,7 +594,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	// Check if stream info was loaded from db.
 	if mbsInDb <= -1 {
 		maxBlockNum, err := a.storage.GetMaxArchivedMiniblockNumber(ctx, stream.streamId)
-		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
+		if err != nil && (AsRiverError(err).Code == Err_NOT_FOUND || AsRiverError(err).Code == Err_MINIBLOCKS_NOT_FOUND) {
 			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
 				return err
