@@ -428,7 +428,6 @@ export class Client
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
-        this.on('streamInitialized', (s) => void this.onStreamInitialized(s))
         this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
@@ -1717,22 +1716,6 @@ export class Client
         return await this.streams.removeStreamFromSync(streamId)
     }
 
-    private onStreamInitialized = (streamId: string): void => {
-        const scrollbackUntilContentFound = async () => {
-            const stream = this.streams.get(streamId)
-            if (!stream) {
-                return
-            }
-            while (stream.view.getContent().needsScrollback()) {
-                const scrollback = await this.scrollback(streamId)
-                if (scrollback.terminus) {
-                    break
-                }
-            }
-        }
-        void scrollbackUntilContentFound()
-    }
-
     private onStreamUpToDate = (streamId: string): void => {
         // we're migrating away from the old megolm based encryption to the new `grpaes` encryption,
         // this is to avoid too many active crypto sessions active in the same stream
@@ -3016,7 +2999,7 @@ export class Client
             try {
                 if (deviceKeys.length === 0) {
                     // means we failed to download the device keys, we should enqueue a retry
-                    this.logInfo(
+                    this.logCall(
                         'encryptAndShareGroupSessions: no device keys to send',
                         inStreamId,
                         userId,
@@ -3035,7 +3018,7 @@ export class Client
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
                 if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
-                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                    this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                         toStreamId,
                         deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
                     })
@@ -3058,9 +3041,9 @@ export class Client
             }
         })
 
-        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
+        this.logCall('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
-        this.logInfo('encryptAndShareGroupSessions: done')
+        this.logCall('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.
