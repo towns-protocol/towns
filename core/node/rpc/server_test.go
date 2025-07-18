@@ -140,10 +140,12 @@ func createDMChannel(
 		return nil, nil, err
 	}
 
+	logging.FromCtx(ctx).Infow("Creating DM channel", "channelStreamId", channelStreamId)
 	reschannel, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{channel, join1, join2},
 		StreamId: channelStreamId[:],
 	}))
+	logging.FromCtx(ctx).Infow("DM channel created", "reschannel", reschannel)
 	if err != nil {
 		return nil, nil, err
 	}

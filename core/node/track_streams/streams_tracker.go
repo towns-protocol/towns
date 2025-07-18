@@ -2,6 +2,7 @@ package track_streams
 
 import (
 	"context"
+	"math"
 	"slices"
 	"time"
 
@@ -58,7 +59,7 @@ var _ StreamsTracker = (*StreamsTrackerImpl)(nil)
 // views, which are application-specific. The filter implementation struct embeds this tracker implementation
 // and provides these methods for encapsulation.
 type StreamsTrackerImpl struct {
-	ctx             context.Context
+	Ctx             context.Context
 	filter          StreamFilter
 	nodeRegistries  []nodes.NodeRegistry
 	riverRegistry   *registries.RiverRegistryContract
@@ -80,7 +81,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	metricsFactory infra.MetricsFactory,
 	streamTracking config.StreamTrackingConfig,
 ) error {
-	tracker.ctx = ctx
+	tracker.Ctx = ctx
 	tracker.metrics = NewTrackStreamsSyncMetrics(metricsFactory)
 	tracker.riverRegistry = riverRegistry
 	tracker.onChainConfig = onChainConfig
@@ -208,7 +209,7 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId, applyHist
 	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
 		return nil
 	}
-	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
+	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.Ctx}, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")
@@ -232,6 +233,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	if !tracker.filter.TrackStream(event.GetStreamId(), false, &updateType) {
 		return
 	}
+	logging.FromCtx(tracker.Ctx).Infow("Stream allocated")
 	tracker.forwardStreamEvents(event.Stream, true, nil)
 }
 
@@ -246,6 +248,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	if !tracker.filter.TrackStream(event.GetStreamId(), false, &updateType) {
 		return
 	}
+	logging.FromCtx(tracker.Ctx).Infow("Stream added")
 	tracker.forwardStreamEvents(event.Stream, true, nil)
 }
 
@@ -258,7 +261,8 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 		return
 	}
 	//lastMiniblockNum := max(int64(event.LastMiniblockNum-1), 0)
-	lastMiniblockNum := int64(event.LastMiniblockNum)
+	//lastMiniblockNum := int64(event.LastMiniblockNum)
+	lastMiniblockNum := int64(math.MaxInt64)
 	logging.FromCtx(ctx).Infow("Stream last miniblock updated",
 		"lastMiniblockNum orig", event.LastMiniblockNum,
 		"lastMiniblockNum", lastMiniblockNum,
