@@ -16,8 +16,9 @@ import (
 )
 
 func TestManager_Subscribe(t *testing.T) {
-	m := NewManager(test.NewTestContext(t), [20]byte{1}, nil, nil, nil)
-	ctx, cancel := context.WithCancelCause(test.NewTestContext(t))
+	ctx := test.NewTestContext(t)
+	m := NewManager(ctx, [20]byte{1}, nil, nil, nil)
+	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 
 	sub, err := m.Subscribe(ctx, cancel, "test-sync-id")
@@ -38,8 +39,9 @@ func TestManager_Subscribe(t *testing.T) {
 }
 
 func TestManager_processMessage(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	mockReg := &mockRegistry{}
-	m := NewManager(test.NewTestContext(t), [20]byte{1}, nil, nil, nil)
+	m := NewManager(ctx, [20]byte{1}, nil, nil, nil)
 	m.registry = mockReg
 	m.distributor = newDistributor(mockReg, nil)
 
@@ -70,7 +72,7 @@ func TestManager_processMessage(t *testing.T) {
 	mockReg.AssertExpectations(t)
 
 	// Backfill path - SYNC_UPDATE with target sync IDs
-	sub := createTestSubscription(t, "test-sync-id")
+	sub := createTestSubscription(ctx, "test-sync-id")
 	msg3 := &SyncStreamsResponse{
 		SyncOp: SyncOp_SYNC_UPDATE,
 		Stream: &StreamAndCookie{
@@ -87,7 +89,8 @@ func TestManager_processMessage(t *testing.T) {
 }
 
 func TestManager_start(t *testing.T) {
-	ctx, cancel := context.WithCancel(test.NewTestContext(t))
+	ctx := test.NewTestContext(t)
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	mockReg := &mockRegistry{}

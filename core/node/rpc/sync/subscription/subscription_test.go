@@ -27,6 +27,7 @@ func (m *MockSyncerSet) Modify(ctx context.Context, req client.ModifyRequest) er
 }
 
 func TestSubscription_Modify(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Generate stream IDs once to ensure consistency
 	streamID1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	streamID2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -44,7 +45,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -68,7 +69,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -92,7 +93,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -114,7 +115,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -143,7 +144,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -168,7 +169,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -187,7 +188,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -211,7 +212,7 @@ func TestSubscription_Modify(t *testing.T) {
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
 				mockSyncer := &MockSyncerSet{}
 				mockReg := &mockRegistry{}
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.syncers = mockSyncer
 				sub.registry = mockReg
 				return sub, mockSyncer, mockReg
@@ -237,7 +238,7 @@ func TestSubscription_Modify(t *testing.T) {
 			sub, mockSyncer, mockReg := tt.setup()
 			tt.expectedCalls(mockSyncer, mockReg)
 
-			err := sub.Modify(test.NewTestContext(t), tt.req)
+			err := sub.Modify(ctx, tt.req)
 
 			if tt.expectError > 0 {
 				assert.Error(t, err)
@@ -256,10 +257,11 @@ func TestSubscription_Modify(t *testing.T) {
 }
 
 func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Test that the adding failure handler properly removes streams from registry
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &mockRegistry{}
-	sub := createTestSubscription(t, "test-sync-1")
+	sub := createTestSubscription(ctx, "test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg
 
@@ -281,7 +283,7 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 		},
 	}
 
-	err := sub.Modify(test.NewTestContext(t), req)
+	err := sub.Modify(ctx, req)
 	assert.NoError(t, err)
 
 	mockSyncer.AssertExpectations(t)
@@ -289,10 +291,11 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 }
 
 func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Test that the backfill failure handler properly routes failures
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &mockRegistry{}
-	sub := createTestSubscription(t, "test-sync-1")
+	sub := createTestSubscription(ctx, "test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg
 
@@ -318,7 +321,7 @@ func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 		},
 	}
 
-	err := sub.Modify(test.NewTestContext(t), req)
+	err := sub.Modify(ctx, req)
 	assert.NoError(t, err)
 
 	mockSyncer.AssertExpectations(t)
@@ -326,6 +329,7 @@ func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 }
 
 func TestSubscription_DebugDropStream(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	tests := []struct {
 		name     string
 		streamID StreamId
@@ -340,14 +344,14 @@ func TestSubscription_DebugDropStream(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup subscription and mock registry
 			mockReg := &mockRegistry{}
-			sub := createTestSubscription(t, "test-sync-1")
+			sub := createTestSubscription(ctx, "test-sync-1")
 			sub.registry = mockReg
 
 			// Setup expectations
 			mockReg.On("RemoveStreamFromSubscription", "test-sync-1", tt.streamID).Return()
 
 			// Call DebugDropStream
-			err := sub.DebugDropStream(test.NewTestContext(t), tt.streamID)
+			err := sub.DebugDropStream(ctx, tt.streamID)
 			assert.NoError(t, err)
 
 			// Verify registry was called
@@ -365,6 +369,7 @@ func TestSubscription_DebugDropStream(t *testing.T) {
 }
 
 func TestSubscription_Send(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	tests := []struct {
 		name         string
 		setup        func() *Subscription
@@ -374,7 +379,7 @@ func TestSubscription_Send(t *testing.T) {
 		{
 			name: "successful send",
 			setup: func() *Subscription {
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				return sub
 			},
 			msg: &SyncStreamsResponse{
@@ -386,7 +391,7 @@ func TestSubscription_Send(t *testing.T) {
 		{
 			name: "send to closed subscription - should return without error",
 			setup: func() *Subscription {
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				sub.Close()
 				return sub
 			},
@@ -399,7 +404,7 @@ func TestSubscription_Send(t *testing.T) {
 		{
 			name: "send when buffer is full - should cancel subscription",
 			setup: func() *Subscription {
-				sub := createTestSubscription(t, "test-sync-1")
+				sub := createTestSubscription(ctx, "test-sync-1")
 				// Fill the buffer to capacity
 				// MaxBufferSize is defined in dynmsgbuf package as 2048
 				for i := 0; i < 2048; i++ {
@@ -449,8 +454,9 @@ func TestSubscription_Send(t *testing.T) {
 }
 
 func TestSubscription_Send_ConcurrentWithClose(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Test that Send handles concurrent Close gracefully
-	sub := createTestSubscription(t, "test-sync-1")
+	sub := createTestSubscription(ctx, "test-sync-1")
 
 	// Start multiple goroutines sending messages
 	done := make(chan bool, 10)
@@ -481,10 +487,11 @@ func TestSubscription_Send_ConcurrentWithClose(t *testing.T) {
 }
 
 func TestSubscription_Concurrent_Modify(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Test concurrent Modify operations
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &mockRegistry{}
-	sub := createTestSubscription(t, "test-sync-1")
+	sub := createTestSubscription(ctx, "test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg
 
@@ -543,10 +550,11 @@ func TestSubscription_Concurrent_Modify(t *testing.T) {
 }
 
 func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Test concurrent Send and Modify operations
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &mockRegistry{}
-	sub := createTestSubscription(t, "test-sync-1")
+	sub := createTestSubscription(ctx, "test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg
 
@@ -578,7 +586,7 @@ func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
 			defer func() { done <- true }()
 			for j := 0; j < 10; j++ {
 				newStreamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-				err := sub.Modify(test.NewTestContext(t), client.ModifyRequest{
+				err := sub.Modify(ctx, client.ModifyRequest{
 					SyncID: "test-sync-1",
 					ToAdd: []*SyncCookie{
 						{StreamId: newStreamID[:]},
@@ -596,7 +604,7 @@ func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
 			defer func() { done <- true }()
 			for j := 0; j < 5; j++ {
 				newStreamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-				err := sub.DebugDropStream(test.NewTestContext(t), newStreamID)
+				err := sub.DebugDropStream(ctx, newStreamID)
 				assert.NoError(t, err)
 			}
 		}(i)
@@ -613,10 +621,11 @@ func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
 }
 
 func TestSubscription_Concurrent_Close_During_Operations(t *testing.T) {
+	ctx := test.NewTestContext(t)
 	// Test that Close during concurrent operations doesn't cause deadlock
 	mockSyncer := &MockSyncerSet{}
 	mockReg := &mockRegistry{}
-	sub := createTestSubscription(t, "test-sync-1")
+	sub := createTestSubscription(ctx, "test-sync-1")
 	sub.syncers = mockSyncer
 	sub.registry = mockReg
 
@@ -653,7 +662,7 @@ func TestSubscription_Concurrent_Close_During_Operations(t *testing.T) {
 					break
 				}
 				streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-				_ = sub.Modify(test.NewTestContext(t), client.ModifyRequest{
+				_ = sub.Modify(ctx, client.ModifyRequest{
 					SyncID: "test-sync-1",
 					ToAdd: []*SyncCookie{
 						{StreamId: streamID[:]},
