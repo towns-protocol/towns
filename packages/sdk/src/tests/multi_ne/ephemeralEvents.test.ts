@@ -5,7 +5,7 @@
 import { createEventDecryptedPromise, makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from '../../types'
-import { hexToBytes } from 'ethereum-cryptography/utils'
+import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils'
 import { MembershipOp } from '@towns-protocol/proto'
 
 // Scaffold for ephemeral events tests
@@ -120,9 +120,9 @@ describe('ephemeralEvents', () => {
             ephemeralSolicitations.push(ephemeral ?? false)
         })
 
-        const ephemeralFulfillments: { userAddress: Uint8Array }[] = []
+        const ephemeralFulfillments: string[] = []
         alice.on('ephemeralKeyFulfillment', (event) => {
-            ephemeralFulfillments.push({ userAddress: event.userAddress })
+            ephemeralFulfillments.push(bytesToHex(event.userAddress))
         })
 
         await waitFor(() => {
