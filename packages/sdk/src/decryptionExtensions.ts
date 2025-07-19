@@ -645,7 +645,7 @@ export abstract class BaseDecryptionExtensions {
                 .slice(0, 4)
                 .join(', ')
             if (first4Priority.length > 0 || first4Blocked.length > 0) {
-                this.log.info(`priorityTasks: ${first4Priority} waitingFor: ${first4Blocked}`)
+                this.log.info(`priorityStreams: ${first4Priority} waitingFor: ${first4Blocked}`)
             }
             this.lastPrintedAt = Date.now()
         }
