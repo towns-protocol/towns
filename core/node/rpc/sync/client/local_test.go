@@ -379,8 +379,9 @@ func TestLocalSyncer_SendResponse_ContextDone(t *testing.T) {
 	// Cancel context to cause sendResponse to fail
 	cancel()
 
-	msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE}
-	err := syncer.sendResponse(msg)
+	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, StreamId: streamID[:]}
+	err := syncer.sendResponse(streamID, msg)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "CANCELED")
@@ -410,7 +411,7 @@ func TestLocalSyncer_SendResponse_TargetSyncIds(t *testing.T) {
 	// Set up expectation for backfill message
 	messageDistributor.On("DistributeBackfillMessage", streamID, msg).Once()
 
-	err := syncer.sendResponse(msg)
+	err := syncer.sendResponse(streamID, msg)
 	assert.NoError(t, err)
 
 	// Verify backfill message was distributed

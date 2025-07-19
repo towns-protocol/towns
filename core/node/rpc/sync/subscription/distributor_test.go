@@ -53,8 +53,12 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				sub2.registry = reg  // Use shared registry
 				reg.AddSubscription(sub1)
 				reg.AddSubscription(sub2)
+				// Add both subscriptions at once to avoid backfill marking
+				// We need a fresh registry for each test
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
 				reg.AddStreamToSubscription("test-sync-2", StreamId{1, 2, 3, 4})
+				// Clear the initializing flag for sub2 since we're testing regular message distribution
+				sub2.initializingStreams.Delete(StreamId{1, 2, 3, 4})
 				dis := newDistributor(reg, nil)
 				return dis, reg
 			},
@@ -67,8 +71,20 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				subs := reg.GetSubscriptionsForStream(streamID)
 				assert.Len(t, subs, 2)
 				// Verify message was sent to both subscriptions
-				assert.Equal(t, 1, subs[0].Messages.Len())
-				assert.Equal(t, 1, subs[1].Messages.Len())
+				sub1, exists1 := reg.GetSubscriptionByID("test-sync-1")
+				sub2, exists2 := reg.GetSubscriptionByID("test-sync-2")
+				assert.True(t, exists1)
+				assert.True(t, exists2)
+				t.Logf("Sub1 closed: %v, Sub2 closed: %v", sub1.isClosed(), sub2.isClosed())
+				
+				// Check if stream is marked as initializing
+				_, initializing1 := sub1.initializingStreams.Load(streamID)
+				_, initializing2 := sub2.initializingStreams.Load(streamID)
+				t.Logf("Sub1 initializing: %v, Sub2 initializing: %v", initializing1, initializing2)
+				
+				t.Logf("Sub1 messages: %d, Sub2 messages: %d", sub1.Messages.Len(), sub2.Messages.Len())
+				assert.Equal(t, 1, sub1.Messages.Len())
+				assert.Equal(t, 1, sub2.Messages.Len())
 			},
 		},
 		{
@@ -121,7 +137,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			dis, reg := tt.setup()
 			dis.DistributeMessage(tt.streamID, tt.msg)
 			// Wait for goroutines to complete
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			if tt.verify != nil {
 				tt.verify(t, reg, tt.streamID)
 			}

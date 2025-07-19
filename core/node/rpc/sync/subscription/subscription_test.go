@@ -66,8 +66,10 @@ func TestSubscription_Modify(t *testing.T) {
 				sub.syncers = mockSyncer
 				// Need to add subscription to its own registry
 				sub.registry.AddSubscription(sub)
-				// Pre-add the stream to registry to simulate existing stream
-				sub.registry.AddStreamToSubscription("test-sync-1", streamID2)
+				// To simulate existing stream, we need another subscription to have it first
+				otherSub := createTestSubscription("other-sync")
+				sub.registry.AddSubscription(otherSub)
+				sub.registry.AddStreamToSubscription("other-sync", streamID2)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -144,8 +146,10 @@ func TestSubscription_Modify(t *testing.T) {
 				sub.syncers = mockSyncer
 				// Need to add subscription to its own registry
 				sub.registry.AddSubscription(sub)
-				// Pre-add the stream to registry to simulate existing stream
-				sub.registry.AddStreamToSubscription("test-sync-1", streamID1)
+				// To simulate existing stream, we need another subscription to have it first
+				otherSub := createTestSubscription("other-sync")
+				sub.registry.AddSubscription(otherSub)
+				sub.registry.AddStreamToSubscription("other-sync", streamID1)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -302,8 +306,10 @@ func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
-	// Pre-add the stream to registry to simulate existing stream (triggers backfill)
-	sub.registry.AddStreamToSubscription("test-sync-1", streamID)
+	// To simulate existing stream, we need another subscription to have it first
+	otherSub := createTestSubscription("other-sync")
+	sub.registry.AddSubscription(otherSub)
+	sub.registry.AddStreamToSubscription("other-sync", streamID)
 
 	// Setup mocks
 	mockSyncer.On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
