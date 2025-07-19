@@ -563,8 +563,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit{value: 0.1 ether}(
             defaultInputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -577,8 +577,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             inputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -591,8 +591,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             inputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -606,8 +606,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             inputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -723,8 +723,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             tamperedParams,
             tamperedRouterParams,
-            originalPermit,
-            tamperedPoster
+            FeeConfig(tamperedPoster, POSTER_BPS),
+            originalPermit
         );
     }
 
@@ -794,7 +794,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         token0.approve(PERMIT2, params.amountIn);
 
         // execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, defaultPosterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -876,7 +876,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         deal(mockRouter, params.amountOut * 2);
 
         // execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, defaultPosterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -1033,7 +1033,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 swapRouterBalanceBefore = token0.balanceOf(address(swapRouter));
 
         // Execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, defaultPosterFee, permitParams);
 
         // Verify balances: owner should receive refund
         assertEq(
@@ -1229,7 +1229,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         bytes32 messageHash = swapRouter.getPermit2MessageHash(
             defaultInputParams,
             defaultRouterParams,
-            POSTER,
+            defaultPosterFee,
             amount,
             nonce,
             deadline
@@ -1251,7 +1251,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             ),
             ISignatureTransfer.SignatureTransferDetails(address(swapRouter), amount),
             signer,
-            Permit2Hash.hash(SwapWitness(defaultInputParams, defaultRouterParams, POSTER)),
+            Permit2Hash.hash(
+                SwapWitness(defaultInputParams, defaultRouterParams, defaultPosterFee)
+            ),
             Permit2Hash.WITNESS_TYPE_STRING,
             signature
         );

@@ -755,7 +755,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 ownerBalanceBefore = token0.balanceOf(owner);
 
         vm.prank(user);
-        swapFacet.executeSwapWithPermit(params, routerParams, permitParams, POSTER);
+        swapFacet.executeSwapWithPermit(params, routerParams, defaultPosterFee, permitParams);
 
         // Verify refund to permit owner
         uint256 expectedRefund = maxAmountIn - actualAmountIn;
@@ -784,8 +784,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.executeSwapWithPermit{value: 0.1 ether}(
             defaultInputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -798,8 +798,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.executeSwapWithPermit(
             defaultInputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -815,8 +815,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.executeSwapWithPermit(
             defaultInputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -881,8 +881,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 actualAmountOut = swapFacet.executeSwapWithPermit(
             params,
             routerParams,
-            permitParams,
-            POSTER
+            defaultPosterFee,
+            permitParams
         );
 
         assertEq(actualAmountOut, expectedAmountOut, "Returned amount should match expected");
@@ -983,7 +983,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         );
 
         vm.prank(caller);
-        swapFacet.executeSwapWithPermit(params, routerParams, permitParams, POSTER);
+        swapFacet.executeSwapWithPermit(params, routerParams, defaultPosterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -1026,9 +1026,65 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.executeSwapWithPermit(
             defaultInputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            invalidPoster
+            FeeConfig(invalidPoster, POSTER_BPS),
+            defaultEmptyPermit
         );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_feeManipulationAttack(
+        uint256 privateKey,
+        uint16 signedFeeBps,
+        uint16 actualFeeBps
+    ) external givenMembership(user) {
+        // Bound inputs to valid ranges, ensuring they are different to create the attack scenario
+        signedFeeBps = uint16(bound(signedFeeBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
+        actualFeeBps = uint16(bound(actualFeeBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
+        vm.assume(signedFeeBps != actualFeeBps); // Ensure attack scenario: signed != actual
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+
+        // Step 1: Setup initial fee configuration (the "bait")
+        vm.prank(founder);
+        swapFacet.setSwapFeeConfig(signedFeeBps, false); // forwardPosterFee=false (fee goes to space)
+
+        // Step 2: User creates permit with the initial (low) fee rate
+        ExactInputParams memory params = defaultInputParams;
+        params.recipient = user;
+
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(swapRouter),
+            0,
+            block.timestamp + 1 hours,
+            params,
+            defaultRouterParams,
+            FeeConfig(everyoneSpace, signedFeeBps) // Permit signed with initial fee rate
+        );
+
+        // Prepare tokens for the swap
+        token0.mint(owner, DEFAULT_AMOUNT_IN);
+        vm.prank(owner);
+        token0.approve(PERMIT2, DEFAULT_AMOUNT_IN);
+
+        // Step 3: Malicious space owner changes fee configuration (the "switch")
+        vm.prank(founder);
+        swapFacet.setSwapFeeConfig(actualFeeBps, false); // Change to different fee rate
+
+        // Step 4: Attack attempt - try to execute swap with mismatched fees
+        vm.prank(user);
+        vm.expectRevert(SwapFacet__PosterFeeMismatch.selector);
+        swapFacet.executeSwapWithPermit(
+            params,
+            defaultRouterParams,
+            FeeConfig(everyoneSpace, signedFeeBps), // Still using originally signed fee rate
+            permitParams
+        );
+
+        // The attack should fail because:
+        // - Permit was signed with signedFeeBps
+        // - But space now has actualFeeBps (different rate)
+        // - Our validation catches this mismatch and reverts
     }
 
     function test_executeSwapWithPermit_posterFeeToSpace(
@@ -1047,6 +1103,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         ExactInputParams memory params = defaultInputParams;
         params.recipient = user;
 
+        // calculate fee bps for permit signature
+        uint16 actualPosterBps = posterBps == 0 ? POSTER_BPS : posterBps;
+
         // must use space address as poster when forwardPosterFee=false
         Permit2Params memory permitParams = _createPermitParams(
             privateKey,
@@ -1056,7 +1115,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             block.timestamp + 1 hours,
             params,
             defaultRouterParams,
-            everyoneSpace
+            FeeConfig(everyoneSpace, actualPosterBps)
         );
 
         token0.mint(owner, DEFAULT_AMOUNT_IN);
@@ -1064,10 +1123,14 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         token0.approve(PERMIT2, DEFAULT_AMOUNT_IN);
 
         vm.prank(user);
-        swapFacet.executeSwapWithPermit(params, defaultRouterParams, permitParams, everyoneSpace);
+        swapFacet.executeSwapWithPermit(
+            params,
+            defaultRouterParams,
+            FeeConfig(everyoneSpace, actualPosterBps),
+            permitParams
+        );
 
         // verify fee distribution - space should receive poster fee
-        uint256 actualPosterBps = posterBps == 0 ? POSTER_BPS : posterBps;
         uint256 expectedPosterFee = BasisPoints.calculate(DEFAULT_AMOUNT_OUT, actualPosterBps);
         assertEq(
             token1.balanceOf(everyoneSpace),

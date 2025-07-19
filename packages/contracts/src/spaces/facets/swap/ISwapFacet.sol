@@ -20,6 +20,9 @@ interface ISwapFacetBase {
     /// @notice Error thrown when poster address is invalid for the current fee configuration
     error SwapFacet__InvalidPosterInput();
 
+    /// @notice Error thrown when actual poster fee doesn't match expected fee from permit
+    error SwapFacet__PosterFeeMismatch();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -67,13 +70,13 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @param params The parameters for the swap
     /// @param routerParams The router parameters for the swap
     /// @param permit The Permit2 permit data
-    /// @param poster The address that posted this swap opportunity
+    /// @param posterFee The fee configuration bound to the permit
     /// @return amountOut The amount of tokenOut received
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable returns (uint256 amountOut);
 
     /// @notice Get the current swap router address

@@ -112,24 +112,30 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable nonReentrant returns (uint256 amountOut) {
         // Permit2 swaps do not support ETH
         if (msg.value != 0) SwapFacet__UnexpectedETH.selector.revertWith();
 
-        address swapRouter = _validateSwapPrerequisites(poster);
+        address swapRouter = _validateSwapPrerequisites(posterFee.recipient);
+
+        // validate that the actual poster fee matches the expected fee from the permit
+        (, uint16 actualPosterBps, ) = getSwapFees();
+        if (actualPosterBps != posterFee.feeBps) {
+            SwapFacet__PosterFeeMismatch.selector.revertWith();
+        }
 
         // execute swap through the router with permit
         uint256 protocolFee;
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit(
             params,
             routerParams,
-            permit,
-            poster
+            posterFee,
+            permit
         );
 
-        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, poster, permit.owner);
+        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, posterFee.recipient, permit.owner);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
