@@ -335,6 +335,21 @@ export class SyncedStreamsLoop {
                     const syncCookies: SyncCookie[] = []
                     if (this.streamOpts?.useModifySync == true) {
                         this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
+                        // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
+                        // prioritized spaces will be added later during the calls to tick()
+                        for (const id of this.highPriorityIds) {
+                            if (
+                                isChannelStreamId(id) ||
+                                isDMChannelStreamId(id) ||
+                                isGDMChannelStreamId(id)
+                            ) {
+                                const syncCookie = this.streams.get(id)?.syncCookie
+                                if (syncCookie) {
+                                    syncCookies.push(syncCookie)
+                                    this.inFlightSyncCookies.add(id)
+                                }
+                            }
+                        }
                     } else {
                         syncCookies.push(
                             ...Array.from(this.streams.entries())
