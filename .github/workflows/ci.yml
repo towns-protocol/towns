@@ -309,6 +309,10 @@ jobs:
               working-directory: core
               run: just RUN_ENV=multi_ne start-and-wait-app-registry
 
+            - name: Run notifications
+              working-directory: core
+              run: just RUN_ENV=multi_ne start-and-wait-notifications
+
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
               run: yarn run test:ci:multi:ne
@@ -455,6 +459,10 @@ jobs:
             - name: Run app registry
               working-directory: core
               run: just RUN_ENV=multi start-and-wait-app-registry
+
+            - name: Run notifications
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-notifications
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
