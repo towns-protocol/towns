@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -81,6 +82,15 @@ func NewNotificationMessageProcessor(
 	}
 }
 
+var debugUserAddress string
+
+func init() {
+	bytes, _ := hex.DecodeString("9662995fc1364eb79d75cc570aa14c7851cef32a")
+	debugUserAddress, _ = shared.AddressHex(bytes)
+
+	logging.DefaultLogger(zapcore.InfoLevel).Infow("debugUserAddress", "address", debugUserAddress)
+}
+
 // OnMessageEvent sends a notification to the given user for the given event when needed.
 //
 // Note: there is room for an optimization for (large) space channels to keep a list of members that have subscribed
@@ -99,6 +109,17 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		"members", members.String(),
 		"eventCreator", common.BytesToAddress(event.Event.CreatorAddress),
 	)
+
+	// force debug logs if a particular user is encountered
+	if members.Contains(debugUserAddress) {
+		l = logging.DefaultLogger(zap.DebugLevel).With(
+			"channel", channelID,
+			"event", event.Hash,
+			"members", members.String(),
+			"eventCreator", common.BytesToAddress(event.Event.CreatorAddress),
+		)
+	}
+
 	if spaceID != nil {
 		l = l.With("space", *spaceID)
 	}
@@ -169,14 +190,14 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		}
 
 		if !pref.HasSubscriptions() {
-			p.log.Debugw("User hasn't subscribed for notifications",
+			l.Debugw("User hasn't subscribed for notifications",
 				"user", participant, "event", event.Hash)
 			return false
 		}
 
 		blocked := p.cache.IsBlocked(participant, sender)
 		if blocked {
-			p.log.Debugw("Message creator was blocked", "user", participant, "blocked_user", sender)
+			l.Debugw("Message creator was blocked", "user", participant, "blocked_user", sender)
 			return false
 		}
 
@@ -332,6 +353,11 @@ func (p *MessageToNotificationsProcessor) onSpaceChannelPayload(
 	mentioned := isMentioned(participant, tags.GetGroupMentionTypes(), tags.GetMentionedUserAddresses())
 	participating := isParticipating(participant, tags.GetParticipatingUserAddresses())
 
+	l := p.log
+	if userString, _ := shared.AddressHex(participant[:]); userString == debugUserAddress {
+		l = logging.DefaultLogger(zapcore.DebugLevel)
+	}
+
 	// for non-reaction events send a notification to all users
 	if userPref.WantNotificationForSpaceChannelMessage(
 		spaceID,
@@ -340,10 +366,18 @@ func (p *MessageToNotificationsProcessor) onSpaceChannelPayload(
 		participating,
 		messageInteractionType,
 	) {
+		l.Debugw("User wants to receive notification for space channel message",
+			"user", participant,
+			"space", spaceID,
+			"channel", channelID,
+			"event", event.Hash,
+			"mentioned", mentioned,
+			"messageType", messageInteractionType,
+		)
 		return true
 	}
 
-	p.log.Debugw("User doesn't want to receive notification for space channel message",
+	l.Debugw("User doesn't want to receive notification for space channel message",
 		"user", participant,
 		"space", spaceID,
 		"channel", channelID,
@@ -451,6 +485,22 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 	kind string,
 	members mapset.Set[string],
 ) {
+	if userString, _ := shared.AddressHex(user[:]); userString == debugUserAddress {
+		p.log.Infow(
+			"sendNotification for user",
+			"user",
+			user,
+			"spaceId",
+			spaceID,
+			"channelId",
+			channelID,
+			"event",
+			event,
+			"kind",
+			kind,
+		)
+	}
+
 	eventBytes, err := proto.Marshal(event.Event)
 	if err != nil {
 		p.log.Errorw("Unable to marshal event", "error", err)
@@ -582,6 +632,20 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				sub.PushVersion,
 			)
 
+			p.log.Infow(
+				"Sent APN notification",
+				"channelId",
+				channelID,
+				"payload",
+				apnPayload,
+				"sub",
+				sub,
+				"user",
+				user,
+				"prefs",
+				userPref,
+			)
+
 			// APN can return an error that the payload is too large, drop the (stream)event from the payload and retry.
 			// The client can handle notifications with no (stream)event and doesn't show a preview to the user.
 			if err != nil && statusCode == http.StatusRequestEntityTooLarge {
@@ -613,7 +677,11 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 			}
 
 			if err == nil {
-				p.log.Debugw("Successfully sent APN notification",
+				logFn := p.log.Debugw
+				if userString, _ := shared.AddressHex(user[:]); userString == debugUserAddress {
+					logFn = p.log.Infow
+				}
+				logFn("Successfully sent APN notification",
 					"user", user,
 					"event", event.Hash,
 					"channelID", channelID,
