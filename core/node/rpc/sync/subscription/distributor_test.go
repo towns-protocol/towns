@@ -15,109 +15,137 @@ import (
 func TestDistributor_DistributeMessage(t *testing.T) {
 	tests := []struct {
 		name          string
-		setup         func() (*distributor, *mockRegistry)
+		setup         func() (*distributor, Registry)
 		streamID      StreamId
 		msg           *SyncStreamsResponse
-		expectedCalls func(*mockRegistry)
+		verify        func(t *testing.T, reg Registry, streamID StreamId)
 	}{
 		{
 			name: "distribute message to single subscription",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				sub := createTestSubscription("test-sync-1")
+				sub.registry = reg  // Use shared registry
+				reg.AddSubscription(sub)
+				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub})
+			verify: func(t *testing.T, reg Registry, streamID StreamId) {
+				subs := reg.GetSubscriptionsForStream(streamID)
+				assert.Len(t, subs, 1)
+				// Verify message was sent to subscription
+				assert.Equal(t, 1, subs[0].Messages.Len())
 			},
 		},
 		{
 			name: "distribute message to multiple subscriptions",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				sub1 := createTestSubscription("test-sync-1")
+				sub1.registry = reg  // Use shared registry
+				sub2 := createTestSubscription("test-sync-2")
+				sub2.registry = reg  // Use shared registry
+				reg.AddSubscription(sub1)
+				reg.AddSubscription(sub2)
+				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+				reg.AddStreamToSubscription("test-sync-2", StreamId{1, 2, 3, 4})
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub1 := createTestSubscription("test-sync-1")
-				sub2 := createTestSubscription("test-sync-2")
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
+			verify: func(t *testing.T, reg Registry, streamID StreamId) {
+				subs := reg.GetSubscriptionsForStream(streamID)
+				assert.Len(t, subs, 2)
+				// Verify message was sent to both subscriptions
+				assert.Equal(t, 1, subs[0].Messages.Len())
+				assert.Equal(t, 1, subs[1].Messages.Len())
 			},
 		},
 		{
 			name: "distribute SYNC_DOWN message - should remove streams",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				sub1 := createTestSubscription("test-sync-1")
+				sub1.registry = reg  // Use shared registry
+				sub2 := createTestSubscription("test-sync-2")
+				sub2.registry = reg  // Use shared registry
+				reg.AddSubscription(sub1)
+				reg.AddSubscription(sub2)
+				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+				reg.AddStreamToSubscription("test-sync-2", StreamId{1, 2, 3, 4})
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
 				SyncOp:   SyncOp_SYNC_DOWN,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub1 := createTestSubscription("test-sync-1")
-				sub2 := createTestSubscription("test-sync-2")
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{sub1, sub2})
-				mockReg.On("OnStreamDown", StreamId{1, 2, 3, 4})
+			verify: func(t *testing.T, reg Registry, streamID StreamId) {
+				// After SYNC_DOWN, stream should be removed from registry
+				subs := reg.GetSubscriptionsForStream(streamID)
+				assert.Len(t, subs, 0)
 			},
 		},
 		{
 			name: "no subscriptions for stream",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				mockReg.On("GetSubscriptionsForStream", StreamId{1, 2, 3, 4}).Return([]*Subscription{})
+			verify: func(t *testing.T, reg Registry, streamID StreamId) {
+				subs := reg.GetSubscriptionsForStream(streamID)
+				assert.Len(t, subs, 0)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dis, mockReg := tt.setup()
-			tt.expectedCalls(mockReg)
+			dis, reg := tt.setup()
 			dis.DistributeMessage(tt.streamID, tt.msg)
 			// Wait for goroutines to complete
 			time.Sleep(10 * time.Millisecond)
-			mockReg.AssertExpectations(t)
+			if tt.verify != nil {
+				tt.verify(t, reg, tt.streamID)
+			}
 		})
 	}
 }
 
 func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func() (*distributor, *mockRegistry)
-		streamID      StreamId
-		msg           *SyncStreamsResponse
-		expectedCalls func(*mockRegistry)
+		name     string
+		setup    func() (*distributor, Registry)
+		streamID StreamId
+		msg      *SyncStreamsResponse
+		verify   func(t *testing.T, reg Registry)
 	}{
 		{
 			name: "distribute backfill message to existing subscription",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				sub := createTestSubscription("test-sync-1")
+				sub.registry = reg  // Use shared registry
+				reg.AddSubscription(sub)
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
@@ -125,17 +153,18 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{"test-sync-1"},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
-				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
+			verify: func(t *testing.T, reg Registry) {
+				sub, exists := reg.GetSubscriptionByID("test-sync-1")
+				assert.True(t, exists)
+				assert.Equal(t, 1, sub.Messages.Len())
 			},
 		},
 		{
 			name: "distribute backfill message to non-existent subscription",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
@@ -143,16 +172,21 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{"non-existent"},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				mockReg.On("GetSubscriptionByID", "non-existent").Return((*Subscription)(nil), false)
+			verify: func(t *testing.T, reg Registry) {
+				_, exists := reg.GetSubscriptionByID("non-existent")
+				assert.False(t, exists)
 			},
 		},
 		{
 			name: "distribute backfill message to closed subscription",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				sub := createTestSubscription("test-sync-1")
+				sub.registry = reg  // Use shared registry
+				sub.Close() // Mark as closed
+				reg.AddSubscription(sub)
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
@@ -160,18 +194,19 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{"test-sync-1"},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				sub := createTestSubscription("test-sync-1")
-				sub.Close() // Mark as closed
-				mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
+			verify: func(t *testing.T, reg Registry) {
+				sub, exists := reg.GetSubscriptionByID("test-sync-1")
+				assert.True(t, exists)
+				// Closed subscription should not receive messages
+				assert.Equal(t, 0, sub.Messages.Len())
 			},
 		},
 		{
 			name: "distribute backfill message with no target sync IDs",
-			setup: func() (*distributor, *mockRegistry) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
-				return dis, mockReg
+			setup: func() (*distributor, Registry) {
+				reg := newRegistry()
+				dis := newDistributor(reg, nil)
+				return dis, reg
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			msg: &SyncStreamsResponse{
@@ -179,18 +214,19 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				StreamId:      []byte{1, 2, 3, 4},
 				TargetSyncIds: []string{},
 			},
-			expectedCalls: func(mockReg *mockRegistry) {
-				// No calls expected
+			verify: func(t *testing.T, reg Registry) {
+				// Nothing to verify
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dis, mockReg := tt.setup()
-			tt.expectedCalls(mockReg)
+			dis, reg := tt.setup()
 			dis.DistributeBackfillMessage(tt.streamID, tt.msg)
-			mockReg.AssertExpectations(t)
+			if tt.verify != nil {
+				tt.verify(t, reg)
+			}
 		})
 	}
 }
@@ -282,7 +318,7 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 func TestDistributor_BackfillEventFiltering(t *testing.T) {
 	tests := []struct {
 		name                 string
-		setup                func() (*distributor, *mockRegistry, *Subscription)
+		setup                func() (*distributor, Registry, *Subscription)
 		streamID             StreamId
 		backfillMsg          *SyncStreamsResponse
 		regularMsg           *SyncStreamsResponse
@@ -290,13 +326,16 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 	}{
 		{
 			name: "filter duplicate events from backfill",
-			setup: func() (*distributor, *mockRegistry, *Subscription) {
-				mockReg := &mockRegistry{}
-				dis := newDistributor(mockReg, nil)
+			setup: func() (*distributor, Registry, *Subscription) {
+				reg := newRegistry()
+				dis := newDistributor(reg, nil)
 				sub := createTestSubscription("test-sync-1")
+				sub.registry = reg  // Use shared registry
 				// Mark stream as initializing for backfill
 				sub.initializingStreams.Store(StreamId{1, 2, 3, 4}, struct{}{})
-				return dis, mockReg, sub
+				reg.AddSubscription(sub)
+				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+				return dis, reg, sub
 			},
 			streamID: StreamId{1, 2, 3, 4},
 			backfillMsg: &SyncStreamsResponse{
@@ -327,16 +366,10 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dis, mockReg, sub := tt.setup()
-
-			// Setup mock for backfill
-			mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
+			dis, reg, sub := tt.setup()
 
 			// Send backfill message
 			dis.DistributeBackfillMessage(tt.streamID, tt.backfillMsg)
-
-			// Setup mock for regular message distribution
-			mockReg.On("GetSubscriptionsForStream", tt.streamID).Return([]*Subscription{sub})
 
 			// Send regular message (should filter out backfill events)
 			dis.DistributeMessage(tt.streamID, tt.regularMsg)
@@ -357,7 +390,9 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 				assert.Equal(t, common.Hash{3}.Bytes(), regularMsgReceived.Stream.Events[0].Hash)
 			}
 
-			mockReg.AssertExpectations(t)
+			// Verify registry state
+			subs := reg.GetSubscriptionsForStream(tt.streamID)
+			assert.Len(t, subs, 1)
 		})
 	}
 }

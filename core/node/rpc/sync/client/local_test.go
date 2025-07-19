@@ -282,7 +282,6 @@ func TestLocalSyncer_Modify_AddStreams(t *testing.T) {
 	streamCache.AssertExpectations(t)
 }
 
-
 // TestLocalSyncer_Modify_RemoveStreams tests the Modify method with remove streams
 func TestLocalSyncer_Modify_RemoveStreams(t *testing.T) {
 	ctx := context.Background()
@@ -345,7 +344,6 @@ func TestLocalSyncer_Modify_BackfillStreams(t *testing.T) {
 	streamCache.AssertExpectations(t)
 }
 
-
 // TestLocalSyncer_DebugDropStream tests the DebugDropStream method
 func TestLocalSyncer_DebugDropStream(t *testing.T) {
 	ctx := context.Background()
@@ -367,9 +365,6 @@ func TestLocalSyncer_DebugDropStream(t *testing.T) {
 	// Verify no message was distributed
 	messageDistributor.AssertNotCalled(t, "DistributeMessage", mock.Anything, mock.Anything)
 }
-
-
-
 
 // TestLocalSyncer_SendResponse_ContextDone tests sendResponse when context is done
 func TestLocalSyncer_SendResponse_ContextDone(t *testing.T) {
@@ -403,7 +398,7 @@ func TestLocalSyncer_SendResponse_TargetSyncIds(t *testing.T) {
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	msg := &SyncStreamsResponse{
-		SyncOp:        SyncOp_SYNC_UPDATE,
+		SyncOp: SyncOp_SYNC_UPDATE,
 		Stream: &StreamAndCookie{
 			NextSyncCookie: &SyncCookie{
 				StreamId: streamID[:],
@@ -438,10 +433,9 @@ func TestLocalSyncer_StreamUnbsub(t *testing.T) {
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
-	// Test streamUnbsub on non-existent stream
-	found := syncer.streamUnbsub(streamID)
+	// Test streamUnsub on non-existent stream
+	found := syncer.streamUnsub(streamID)
 
 	assert.False(t, found)
 	assert.False(t, unsubCalled) // Should not call unsubStream for non-existent stream
 }
-

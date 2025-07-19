@@ -46,31 +46,35 @@ func TestManager_CleanupUnusedStreams(t *testing.T) {
 
 	// Create mock syncer set
 	mockSyncerSet := &mockSyncerSet{}
-	mockReg := &mockRegistry{}
 
 	m := &Manager{
 		log:           testutils.DiscardLogger(),
 		localNodeAddr: common.Address{1},
 		globalCtx:     ctx,
 		syncers:       mockSyncerSet,
-		registry:      mockReg,
+		registry:      newRegistry(),
 	}
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
+	// Add a subscription without any streams (to simulate unused stream)
+	sub := createTestSubscription("test-sync-1")
+	m.registry.AddSubscription(sub)
+
+	// Add stream to subscription then remove subscription to make stream unused
+	m.registry.AddStreamToSubscription("test-sync-1", streamID)
+	m.registry.RemoveSubscription("test-sync-1")
+
 	// Setup expectations
 	cleaned := false
-	mockReg.On("CleanupUnusedStreams", mock.Anything).Run(func(args mock.Arguments) {
-		cb := args.Get(0).(func(StreamId))
-		// Simulate cleanup of unused stream
-		cb(streamID)
-		cleaned = true
-	}).Once()
-
 	mockSyncerSet.On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
-		return len(req.ToRemove) == 1 &&
+		if len(req.ToRemove) == 1 &&
 			StreamId(req.ToRemove[0]) == streamID &&
-			req.RemovingFailureHandler != nil
+			req.RemovingFailureHandler != nil {
+			cleaned = true
+			return true
+		}
+		return false
 	})).Return(nil).Once()
 
 	// Manually trigger cleanup
@@ -85,7 +89,6 @@ func TestManager_CleanupUnusedStreams(t *testing.T) {
 
 	// Verify cleanup was called
 	assert.True(t, cleaned)
-	mockReg.AssertExpectations(t)
 	mockSyncerSet.AssertExpectations(t)
 }
 
