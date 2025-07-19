@@ -2,9 +2,11 @@ package subscription
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -95,6 +97,8 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			dis, mockReg := tt.setup()
 			tt.expectedCalls(mockReg)
 			dis.DistributeMessage(tt.streamID, tt.msg)
+			// Wait for goroutines to complete
+			time.Sleep(10 * time.Millisecond)
 			mockReg.AssertExpectations(t)
 		})
 	}
@@ -193,10 +197,11 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 
 func TestDistributor_SendMessageToSubscription(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func() (*distributor, *Subscription)
-		streamID StreamId
-		msg      *SyncStreamsResponse
+		name          string
+		setup         func() (*distributor, *Subscription)
+		streamID      StreamId
+		msg           *SyncStreamsResponse
+		verify        func(t *testing.T, sub *Subscription)
 	}{
 		{
 			name: "send SYNC_UPDATE message to subscription",
@@ -208,6 +213,16 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 			msg: &SyncStreamsResponse{
 				SyncOp:   SyncOp_SYNC_UPDATE,
 				StreamId: []byte{1, 2, 3, 4},
+				Stream: &StreamAndCookie{
+					Events: []*Envelope{{Hash: []byte{1, 2, 3}}},
+				},
+			},
+			verify: func(t *testing.T, sub *Subscription) {
+				// Verify message was sent to subscription
+				assert.Equal(t, 1, sub.Messages.Len())
+				batch := sub.Messages.GetBatch(nil)
+				assert.Len(t, batch, 1)
+				assert.Equal(t, SyncOp_SYNC_UPDATE, batch[0].SyncOp)
 			},
 		},
 		{
@@ -221,16 +236,128 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 				SyncOp:   SyncOp_SYNC_DOWN,
 				StreamId: []byte{1, 2, 3, 4},
 			},
+			verify: func(t *testing.T, sub *Subscription) {
+				// Verify message was sent to subscription
+				assert.Equal(t, 1, sub.Messages.Len())
+				batch := sub.Messages.GetBatch(nil)
+				assert.Len(t, batch, 1)
+				assert.Equal(t, SyncOp_SYNC_DOWN, batch[0].SyncOp)
+			},
+		},
+		{
+			name: "skip SYNC_UPDATE for initializing stream",
+			setup: func() (*distributor, *Subscription) {
+				dis := newDistributor(nil, nil)
+				sub := createTestSubscription("test-sync-1")
+				// Mark stream as initializing
+				sub.initializingStreams.Store(StreamId{1, 2, 3, 4}, struct{}{})
+				return dis, sub
+			},
+			streamID: StreamId{1, 2, 3, 4},
+			msg: &SyncStreamsResponse{
+				SyncOp:   SyncOp_SYNC_UPDATE,
+				StreamId: []byte{1, 2, 3, 4},
+				Stream: &StreamAndCookie{
+					Events: []*Envelope{{Hash: []byte{1, 2, 3}}},
+				},
+			},
+			verify: func(t *testing.T, sub *Subscription) {
+				// Verify message was NOT sent (initializing stream)
+				assert.Equal(t, 0, sub.Messages.Len())
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dis, sub := tt.setup()
-
-			// This is a simple test to ensure the method doesn't panic
-			// In a real test, we'd mock the subscription's Send method
 			dis.sendMessageToSubscription(tt.streamID, tt.msg, sub)
+			if tt.verify != nil {
+				tt.verify(t, sub)
+			}
+		})
+	}
+}
+
+func TestDistributor_BackfillEventFiltering(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setup                func() (*distributor, *mockRegistry, *Subscription)
+		streamID             StreamId
+		backfillMsg          *SyncStreamsResponse
+		regularMsg           *SyncStreamsResponse
+		expectedEventCount   int
+	}{
+		{
+			name: "filter duplicate events from backfill",
+			setup: func() (*distributor, *mockRegistry, *Subscription) {
+				mockReg := &mockRegistry{}
+				dis := newDistributor(mockReg, nil)
+				sub := createTestSubscription("test-sync-1")
+				// Mark stream as initializing for backfill
+				sub.initializingStreams.Store(StreamId{1, 2, 3, 4}, struct{}{})
+				return dis, mockReg, sub
+			},
+			streamID: StreamId{1, 2, 3, 4},
+			backfillMsg: &SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				StreamId:      []byte{1, 2, 3, 4},
+				TargetSyncIds: []string{"test-sync-1"},
+				Stream: &StreamAndCookie{
+					Events: []*Envelope{
+						{Hash: common.Hash{1}.Bytes()},
+						{Hash: common.Hash{2}.Bytes()},
+					},
+				},
+			},
+			regularMsg: &SyncStreamsResponse{
+				SyncOp:   SyncOp_SYNC_UPDATE,
+				StreamId: []byte{1, 2, 3, 4},
+				Stream: &StreamAndCookie{
+					Events: []*Envelope{
+						{Hash: common.Hash{1}.Bytes()}, // Duplicate from backfill
+						{Hash: common.Hash{2}.Bytes()}, // Duplicate from backfill
+						{Hash: common.Hash{3}.Bytes()}, // New event
+					},
+				},
+			},
+			expectedEventCount: 1, // Only the new event should be included
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dis, mockReg, sub := tt.setup()
+
+			// Setup mock for backfill
+			mockReg.On("GetSubscriptionByID", "test-sync-1").Return(sub, true)
+
+			// Send backfill message
+			dis.DistributeBackfillMessage(tt.streamID, tt.backfillMsg)
+
+			// Setup mock for regular message distribution
+			mockReg.On("GetSubscriptionsForStream", tt.streamID).Return([]*Subscription{sub})
+
+			// Send regular message (should filter out backfill events)
+			dis.DistributeMessage(tt.streamID, tt.regularMsg)
+
+			// Wait for async operations
+			time.Sleep(20 * time.Millisecond)
+
+			// Verify the messages in subscription buffer
+			assert.Equal(t, 2, sub.Messages.Len()) // One backfill + one regular
+			batch := sub.Messages.GetBatch(nil)
+			require.Len(t, batch, 2)
+
+			// Check the regular message has filtered events
+			regularMsgReceived := batch[1]
+			assert.Equal(t, tt.expectedEventCount, len(regularMsgReceived.Stream.Events))
+			if tt.expectedEventCount > 0 {
+				// Verify it's the new event (hash{3})
+				assert.Equal(t, common.Hash{3}.Bytes(), regularMsgReceived.Stream.Events[0].Hash)
+			}
+
+			mockReg.AssertExpectations(t)
 		})
 	}
 }

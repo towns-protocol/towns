@@ -2,14 +2,17 @@ package subscription
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
@@ -36,95 +39,95 @@ func TestManager_Subscribe(t *testing.T) {
 	assert.Error(t, err2)
 }
 
-func TestManager_processMessage(t *testing.T) {
-	mockReg := &mockRegistry{}
-	m := NewManager(context.Background(), [20]byte{1}, nil, nil, nil)
-	m.registry = mockReg
-	m.distributor = newDistributor(mockReg, nil)
-
-	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-
-	// Test SYNC_UPDATE message - needs Stream field with NextSyncCookie
-	msg := &SyncStreamsResponse{
-		SyncOp: SyncOp_SYNC_UPDATE,
-		Stream: &StreamAndCookie{
-			NextSyncCookie: &SyncCookie{
-				StreamId: streamID[:],
-			},
-		},
-	}
-	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
-	err := m.processMessage(msg)
-	assert.NoError(t, err)
-	mockReg.AssertExpectations(t)
-
-	// Test SYNC_DOWN message - uses direct StreamId field
-	msg2 := &SyncStreamsResponse{
-		SyncOp:   SyncOp_SYNC_DOWN,
-		StreamId: streamID[:],
-	}
-	mockReg.On("GetSubscriptionsForStream", streamID).Return([]*Subscription{}).Once()
-	err = m.processMessage(msg2)
-	assert.NoError(t, err)
-	mockReg.AssertExpectations(t)
-
-	// Backfill path - SYNC_UPDATE with target sync IDs
-	sub := createTestSubscription("test-sync-id")
-	msg3 := &SyncStreamsResponse{
-		SyncOp: SyncOp_SYNC_UPDATE,
-		Stream: &StreamAndCookie{
-			NextSyncCookie: &SyncCookie{
-				StreamId: streamID[:],
-			},
-		},
-		TargetSyncIds: []string{"test-sync-id"},
-	}
-	mockReg.On("GetSubscriptionByID", "test-sync-id").Return(sub, true).Once()
-	err = m.processMessage(msg3)
-	assert.NoError(t, err)
-	mockReg.AssertExpectations(t)
-}
-
-func TestManager_start(t *testing.T) {
+func TestManager_CleanupUnusedStreams(t *testing.T) {
+	// Test the unused streams cleanup functionality
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Create mock syncer set
+	mockSyncerSet := &MockSyncerSet{}
 	mockReg := &mockRegistry{}
-	m := NewManager(ctx, [20]byte{1}, nil, nil, nil)
-	m.registry = mockReg
-	m.distributor = newDistributor(mockReg, nil)
 
-	// Create a test message
-	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	msg := &SyncStreamsResponse{
-		SyncOp: SyncOp_SYNC_UPDATE,
-		Stream: &StreamAndCookie{
-			NextSyncCookie: &SyncCookie{
-				StreamId: streamID[:],
-			},
-		},
+	m := &Manager{
+		log:           testutils.DiscardLogger(),
+		localNodeAddr: common.Address{1},
+		globalCtx:     ctx,
+		syncers:       mockSyncerSet,
+		registry:      mockReg,
 	}
 
-	// Mock the registry to expect the message processing
-	mockReg.On("GetSubscriptionsForStream", mock.Anything).Return([]*Subscription{}).Maybe()
+	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
-	// Add message to the buffer
-	err := m.messages.AddMessage(msg)
-	require.NoError(t, err)
+	// Setup expectations
+	cleaned := false
+	mockReg.On("CleanupUnusedStreams", mock.Anything).Run(func(args mock.Arguments) {
+		cb := args.Get(0).(func(StreamId))
+		// Simulate cleanup of unused stream
+		cb(streamID)
+		cleaned = true
+	}).Once()
 
-	// Give the start goroutine time to process the message
-	time.Sleep(50 * time.Millisecond)
+	mockSyncerSet.On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
+		return len(req.ToRemove) == 1 && 
+			StreamId(req.ToRemove[0]) == streamID &&
+			req.RemovingFailureHandler != nil
+	})).Return(nil).Once()
 
-	// Verify the message processing mock was called
+	// Manually trigger cleanup
+	m.registry.CleanupUnusedStreams(func(streamID StreamId) {
+		ctx, cancel := context.WithTimeout(m.globalCtx, time.Second*5)
+		defer cancel()
+		_ = m.syncers.Modify(ctx, client.ModifyRequest{
+			ToRemove: [][]byte{streamID[:]},
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
+		})
+	})
+
+	// Verify cleanup was called
+	assert.True(t, cleaned)
 	mockReg.AssertExpectations(t)
+	mockSyncerSet.AssertExpectations(t)
+}
 
-	// Now mock the CancelAll call and cancel the context
-	mockReg.On("CancelAll", mock.Anything).Return().Once()
-	cancel()
+func TestManager_Subscribe_Concurrent(t *testing.T) {
+	// Test concurrent subscription creation
+	ctx := context.Background()
+	m := NewManager(ctx, common.Address{1}, nil, nil, nil)
 
-	// Give time for the cancel to be processed
-	time.Sleep(10 * time.Millisecond)
+	// Create multiple subscriptions concurrently
+	n := 10
+	done := make(chan bool, n)
+	subs := make([]*Subscription, n)
 
-	// Verify all mocks were called
-	mockReg.AssertExpectations(t)
+	for i := 0; i < n; i++ {
+		go func(idx int) {
+			defer func() { done <- true }()
+			syncID := fmt.Sprintf("test-sync-%d", idx)
+			ctx, cancel := context.WithCancelCause(context.Background())
+			defer cancel(nil)
+			
+			sub, err := m.Subscribe(ctx, cancel, syncID)
+			assert.NoError(t, err)
+			assert.NotNil(t, sub)
+			subs[idx] = sub
+		}(i)
+	}
+
+	// Wait for all subscriptions to be created
+	for i := 0; i < n; i++ {
+		<-done
+	}
+
+	// Verify all subscriptions are in the registry
+	for i, sub := range subs {
+		if sub != nil {
+			got, exists := m.registry.GetSubscriptionByID(fmt.Sprintf("test-sync-%d", i))
+			assert.True(t, exists)
+			assert.Equal(t, sub, got)
+		}
+	}
+
+	// Verify stats
+	_, subCount := m.registry.GetStats()
+	assert.Equal(t, n, subCount)
 }

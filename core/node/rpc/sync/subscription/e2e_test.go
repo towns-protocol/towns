@@ -87,9 +87,8 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 		},
 	}
 
-	// Add message to manager's buffer
-	err = env.manager.messages.AddMessage(msg)
-	require.NoError(t, err)
+	// Distribute message directly through distributor
+	env.distributor.DistributeMessage(streamID, msg)
 
 	// Step 6: Wait for message to be processed and verify it reaches subscription
 	time.Sleep(50 * time.Millisecond)
