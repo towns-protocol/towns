@@ -21,11 +21,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-const (
-	// commonBufferSize is the size of the common messages buffer of the shared syncer.
-	commonBufferSize = 10240
-)
-
 type (
 	// MessageDistributor defines the contract for distributing messages to subscriptions
 	MessageDistributor interface {
