@@ -134,7 +134,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 // DebugDropStream is called to drop a stream from the syncer.
 func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (bool, error) {
 	if s.streamUnsub(streamID) {
-		return false, s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+		return false, s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	}
 
 	return false, RiverError(Err_NOT_FOUND, "stream not found").Tag("stream", streamID)
@@ -142,8 +142,14 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
-		s.streamUnsub(StreamId(r.GetNextSyncCookie().GetStreamId()))
+	streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
+	if err != nil {
+		logging.FromCtx(s.globalCtx).Errorw("failed to get stream id", "stream", r.GetNextSyncCookie().GetStreamId(), "error", err)
+		return
+	}
+
+	if err = s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
+		s.streamUnsub(streamID)
 	}
 }
 
@@ -158,7 +164,7 @@ func (s *localSyncer) OnSyncError(error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
+	if err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
 		s.streamUnsub(streamID)
 	}
 }
@@ -180,7 +186,7 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 	}
 
 	return stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) error {
-		return s.sendResponse(&SyncStreamsResponse{
+		return s.sendResponse(streamID, &SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_UPDATE,
 			Stream:        streamAndCookie,
 			TargetSyncIds: targetSyncIds,
@@ -218,7 +224,7 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
+func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	select {
 	case <-s.globalCtx.Done():
 		if err := s.globalCtx.Err(); err != nil {
@@ -231,11 +237,10 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 	default:
 	}
 
-	// TODO: Parse stream ID properly or pass it via parameter
 	if len(msg.GetTargetSyncIds()) > 0 {
-		s.messageDistributor.DistributeBackfillMessage(StreamId(msg.StreamID()), msg)
+		s.messageDistributor.DistributeBackfillMessage(streamID, msg)
 	} else {
-		s.messageDistributor.DistributeMessage(StreamId(msg.StreamID()), msg)
+		s.messageDistributor.DistributeMessage(streamID, msg)
 	}
 
 	return nil

@@ -35,6 +35,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry for the test to work
+				sub.registry.AddSubscription(sub)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -62,6 +64,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				// Pre-add the stream to registry to simulate existing stream
 				sub.registry.AddStreamToSubscription("test-sync-1", streamID2)
 				return sub, mockSyncer
@@ -85,6 +89,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -109,6 +115,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -134,6 +142,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				// Pre-add the stream to registry to simulate existing stream
 				sub.registry.AddStreamToSubscription("test-sync-1", streamID1)
 				return sub, mockSyncer
@@ -158,6 +168,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -175,6 +187,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -196,6 +210,8 @@ func TestSubscription_Modify(t *testing.T) {
 				mockSyncer := &mockSyncerSet{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
+				// Need to add subscription to its own registry
+				sub.registry.AddSubscription(sub)
 				return sub, mockSyncer
 			},
 			req: client.ModifyRequest{
@@ -245,6 +261,7 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 	mockSyncer := &mockSyncerSet{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
+	sub.registry.AddSubscription(sub)
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -281,6 +298,7 @@ func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 	mockSyncer := &mockSyncerSet{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
+	sub.registry.AddSubscription(sub)
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -471,6 +489,7 @@ func TestSubscription_Concurrent_Modify(t *testing.T) {
 	mockSyncer := &mockSyncerSet{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
+	sub.registry.AddSubscription(sub)
 
 	streamIDs := make([]StreamId, 10)
 	for i := 0; i < 10; i++ {
@@ -526,6 +545,7 @@ func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
 	mockSyncer := &mockSyncerSet{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
+	sub.registry.AddSubscription(sub)
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -591,6 +611,7 @@ func TestSubscription_Concurrent_Close_During_Operations(t *testing.T) {
 	mockSyncer := &mockSyncerSet{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
+	sub.registry.AddSubscription(sub)
 
 	// Setup mocks
 	mockSyncer.On("Modify", mock.Anything, mock.Anything).Return(nil).Maybe()

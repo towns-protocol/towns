@@ -124,7 +124,13 @@ func (s *remoteSyncer) Run() {
 		res := s.responseStream.Msg()
 
 		if res.GetSyncOp() == SyncOp_SYNC_UPDATE {
-			if err := s.sendSyncStreamResponseToClient(res); err != nil {
+			streamID, err := StreamIdFromBytes(res.GetStream().GetNextSyncCookie().GetStreamId())
+			if err != nil {
+				log.Errorw("Received invalid stream ID in sync update", "remote", s.remoteAddr, "error", err)
+				continue
+			}
+
+			if err = s.sendResponse(streamID, res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				}
@@ -133,7 +139,7 @@ func (s *remoteSyncer) Run() {
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
 				s.unsubStream(streamID)
-				if err := s.sendSyncStreamResponseToClient(res); err != nil {
+				if err := s.sendResponse(streamID, res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 					}
@@ -154,7 +160,7 @@ func (s *remoteSyncer) Run() {
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
 			// TODO: slow down a bit to give client time to read stream down updates
-			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
+			if err := s.sendResponse(streamID, msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
@@ -168,9 +174,9 @@ func (s *remoteSyncer) Run() {
 	}
 }
 
-// sendSyncStreamResponseToClient tries to write msg to the client send message channel.
+// sendResponse tries to write msg to the client send message channel.
 // If the channel is full or the sync operation is cancelled, the function returns an error.
-func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
+func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	select {
 	case <-s.syncStreamCtx.Done():
 		if err := s.syncStreamCtx.Err(); err != nil {
@@ -183,11 +189,10 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 	default:
 	}
 
-	// TODO: Parse stream ID properly or pass it via parameter
 	if len(msg.GetTargetSyncIds()) > 0 {
-		s.messageDistributor.DistributeBackfillMessage(StreamId(msg.StreamID()), msg)
+		s.messageDistributor.DistributeBackfillMessage(streamID, msg)
 	} else {
-		s.messageDistributor.DistributeMessage(StreamId(msg.StreamID()), msg)
+		s.messageDistributor.DistributeMessage(streamID, msg)
 	}
 
 	return nil
