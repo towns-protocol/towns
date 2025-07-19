@@ -56,7 +56,7 @@ func (s *localSyncer) Run() {
 	<-s.globalCtx.Done()
 
 	s.activeStreams.Range(func(streamID StreamId, _ *Stream) bool {
-		s.streamUnbsub(streamID)
+		s.streamUnsub(streamID)
 		return true
 	})
 }
@@ -122,7 +122,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	for _, streamID := range request.GetRemoveStreams() {
-		s.streamUnbsub(StreamId(streamID))
+		s.streamUnsub(StreamId(streamID))
 	}
 
 	wg.Wait()
@@ -133,7 +133,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 // DebugDropStream is called to drop a stream from the syncer.
 func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (bool, error) {
-	if s.streamUnbsub(streamID) {
+	if s.streamUnsub(streamID) {
 		return false, s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	}
 
@@ -143,7 +143,7 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
-		s.streamUnbsub(StreamId(r.GetNextSyncCookie().GetStreamId()))
+		s.streamUnsub(StreamId(r.GetNextSyncCookie().GetStreamId()))
 	}
 }
 
@@ -159,7 +159,7 @@ func (s *localSyncer) OnSyncError(error) {
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
 	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
-		s.streamUnbsub(streamID)
+		s.streamUnsub(streamID)
 	}
 }
 
@@ -241,8 +241,8 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 	return nil
 }
 
-// streamUnbsub is called to unsubscribe from a stream.
-func (s *localSyncer) streamUnbsub(streamID StreamId) bool {
+// streamUnsub is called to unsubscribe from a stream.
+func (s *localSyncer) streamUnsub(streamID StreamId) bool {
 	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
 	if found {
 		go syncStream.Unsub(s)
