@@ -102,7 +102,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	if spaceID != nil {
 		l = l.With("space", *spaceID)
 	}
-	l.Debugw("Process event")
+	l.Infow("Process event")
 
 	kind := "new_message"
 	tags := event.Event.GetTags()

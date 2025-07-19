@@ -447,6 +447,7 @@ func setupTestChannelAndAddToSyncer(
 			},
 		},
 		true,
+		nil,
 	)
 
 	return channelId, channelHash, nil

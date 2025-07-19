@@ -114,7 +114,7 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Debugw("Adding stream with cookie",
+		Infow("Adding stream with cookie",
 			"stream", record.streamId,
 			"minipoolGen", record.minipoolGen,
 			"prevMiniblockHash", record.prevMiniblockHash,
@@ -128,6 +128,8 @@ func (ssr *syncSessionRunner) AddStream(
 			PrevMiniblockHash: record.prevMiniblockHash,
 		}},
 	}); err != nil || len(resp.Adds) > 0 {
+		logging.FromCtx(ctx).
+			Infow("failed to add stream to existing sync", "error", err, "streamId", record.streamId, "minipoolGen", record.minipoolGen)
 		// We failed to add this stream to the sync, return an error.
 		ssr.streamRecords.Delete(record.streamId)
 
@@ -194,6 +196,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		return
 	}
 
+	// Crystal - does this iterates over all miniblocks?
+	// do we get all all of the miniblocks of the stream? is this unbounded?
 	for _, block := range streamAndCookie.GetMiniblocks() {
 		if !reset {
 			if err := trackedView.ApplyBlock(
@@ -604,6 +608,7 @@ func (msr *MultiSyncRunner) addToSync(
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
 
+	log.Infow("addToSync", "streamId", record.streamId, "minipoolGen", record.minipoolGen, "apply", record.applyHistoricalStreamContents)
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
 		runner = newSyncSessionRunner(
@@ -761,14 +766,20 @@ func (msr *MultiSyncRunner) addToSync(
 func (msr *MultiSyncRunner) AddStream(
 	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
+	lastMiniblockNum *int64,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
+	var minipoolGen int64 = math.MaxInt64
+
+	if lastMiniblockNum != nil {
+		minipoolGen = *lastMiniblockNum
+	}
 	msr.streamsToSync <- &streamSyncInitRecord{
 		streamId:                      stream.StreamId(),
 		applyHistoricalStreamContents: applyHistoricalStreamContents,
-		minipoolGen:                   math.MaxInt64,
+		minipoolGen:                   minipoolGen,
 		prevMiniblockHash:             common.Hash{}.Bytes(),
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
