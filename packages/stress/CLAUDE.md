@@ -2,6 +2,30 @@
 
 This file provides guidance for working with the stress test package.
 
+## Stress Test Architecture and Race Conditions
+
+### Root Client and Follower Client Architecture
+
+The stress test uses a distributed architecture:
+- **Root client (client 0)**: Runs in container 0 and is responsible for minting space memberships for all test wallets
+- **Follower clients**: Run in all containers and wait for memberships before joining spaces
+
+### Membership Minting Synchronization
+
+To prevent race conditions between membership minting and space joining:
+
+1. The root client mints all memberships in `kickoffChat.ts`
+2. After all memberships are minted, the root client sends a `MEMBERSHIPS_MINTED:{sessionId}` signal
+3. Follower clients in `joinChat.ts` wait for this signal before attempting to join spaces
+
+This prevents the "PERMISSION_DENIED" error that occurs when clients try to create user streams without having space membership.
+
+#### Key Implementation Details
+
+- The synchronization signal is sent to the announce channel as a threaded message
+- The wait timeout is controlled by `waitForChannelDecryptionTimeoutMs` (defaults to max of test duration or 20 seconds)
+- Removing the 1.1 second delay between membership minting operations significantly improves performance at scale
+
 ## Wallet Management
 
 ### Transferring Funds Between Seed Phrases
