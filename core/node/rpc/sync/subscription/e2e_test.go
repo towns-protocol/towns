@@ -11,7 +11,7 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	testutils "github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 // E2E test helper that sets up a real subscription environment

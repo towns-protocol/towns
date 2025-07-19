@@ -3,13 +3,12 @@ package subscription
 import (
 	"context"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/mock"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -29,7 +28,6 @@ func createTestSubscription(syncID string) *Subscription {
 		log:                 testutils.DiscardLogger(),
 	}
 }
-
 
 // mockSyncerSet for testing
 type mockSyncerSet struct {
