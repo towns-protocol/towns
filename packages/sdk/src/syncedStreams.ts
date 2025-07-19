@@ -8,6 +8,7 @@ import { streamIdAsString } from './id'
 import { PingInfo, SyncState, SyncedStreamsLoop } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
 import { UnpackEnvelopeOpts } from './sign'
+import { createUnpacker, type Unpacker } from './unpacker'
 
 export class SyncedStreams {
     private syncedStreamsLoop: SyncedStreamsLoop | undefined
@@ -33,6 +34,7 @@ export class SyncedStreams {
         private readonly streamOpts?:
             | { useModifySync?: boolean; useSharedSyncer?: boolean }
             | undefined,
+        private readonly unpacker?: Unpacker,
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
@@ -113,6 +115,7 @@ export class SyncedStreams {
             this.unpackEnvelopeOpts,
             this.highPriorityIds,
             this.streamOpts,
+            this.unpacker ?? createUnpacker(),
         )
         this.syncedStreamsLoop.start()
     }

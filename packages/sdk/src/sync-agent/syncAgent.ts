@@ -25,6 +25,7 @@ import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
 import { dlog, DLogger, shortenHexString } from '@towns-protocol/dlog'
+import type { ClientOptions } from '../client'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -39,6 +40,7 @@ export interface SyncAgentConfig {
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     logId?: string
+    clientOptions?: Omit<ClientOptions, 'unpackEnvelopeOpts' | 'logId' | 'persistenceStoreName'>
 }
 
 export class SyncAgent {
@@ -96,6 +98,7 @@ export class SyncAgent {
                     useModifySync: true,
                     useSharedSyncer: true,
                 },
+                ...config.clientOptions,
             },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,

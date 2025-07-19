@@ -8937,6 +8937,7 @@ __metadata:
     vite-plugin-wasm: ^3.4.1
     vite-tsconfig-paths: ^5.1.3
     wagmi: ^2.15.3
+    workerpool: ^9.3.3
     zod: ^3.21.4
   languageName: unknown
   linkType: soft
@@ -9094,6 +9095,7 @@ __metadata:
     vite-plugin-wasm: ^3.4.1
     vitest: ^3.2.3
     vitest-fetch-mock: ^0.4.3
+    workerpool: ^9.3.3
   languageName: unknown
   linkType: soft
 
@@ -31607,6 +31609,13 @@ __metadata:
   version: 6.5.1
   resolution: "workerpool@npm:6.5.1"
   checksum: f86d13f9139c3a57c5a5867e81905cd84134b499849405dec2ffe5b1acd30dabaa1809f6f6ee603a7c65e1e4325f21509db6b8398eaf202c8b8f5809e26a2e16
+  languageName: node
+  linkType: hard
+
+"workerpool@npm:^9.3.3":
+  version: 9.3.3
+  resolution: "workerpool@npm:9.3.3"
+  checksum: 88ac57d881383dbfce04c88f29f89e7a5787dc489f33a901e75fad5c92df7dc88dfb47b26def8676df779e3ed46c6ff36786205eaed9c9720cebc9794e2142dd
   languageName: node
   linkType: hard
 

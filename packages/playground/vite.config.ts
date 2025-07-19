@@ -41,6 +41,9 @@ export default ({ mode }: { mode: string }) => {
                 allow,
             },
         },
+        worker: {
+            format: 'es',
+        },
         build: {
             target: 'esnext',
         },

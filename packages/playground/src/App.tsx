@@ -9,6 +9,8 @@ import { type SyncAgent } from '@towns-protocol/sdk'
 import { router } from './routes'
 import { wagmiConfig } from './config/wagmi'
 import { loadAuth } from './utils/persist-auth'
+import { createUnpackerWorkerpool } from './utils/unpacker'
+import { workerPool } from './utils/workers'
 
 function App() {
     const [queryClient] = useState(() => new QueryClient())
@@ -19,9 +21,19 @@ function App() {
         if (persistedAuth) {
             connectTowns(persistedAuth.signerContext, {
                 riverConfig: persistedAuth.riverConfig,
+                clientOptions: {
+                    unpacker: createUnpackerWorkerpool(workerPool),
+                },
             }).then((syncAgent) => setSyncAgent(syncAgent))
         }
     }, [persistedAuth])
+
+    useEffect(() => {
+        // Cleanup worker pool on unmount
+        return () => {
+            workerPool.terminate()
+        }
+    }, [])
 
     return (
         <WagmiProvider config={wagmiConfig}>

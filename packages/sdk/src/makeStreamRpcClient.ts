@@ -11,10 +11,11 @@ import {
     retryInterceptor,
     type RetryParams,
 } from './rpcInterceptors'
-import { UnpackEnvelopeOpts, unpackMiniblock, unpackSnapshot } from './sign'
+import { UnpackEnvelopeOpts } from './sign'
 import { RpcOptions } from './rpcCommon'
 import { streamIdAsBytes } from './id'
 import { ParsedMiniblock, ExclusionFilter } from './types'
+import type { Unpacker } from './unpacker'
 
 const logInfo = dlog('csb:rpc:info')
 let nextRpcClientNum = 0
@@ -82,6 +83,7 @@ export async function getMiniblocks(
     omitSnapshots: boolean,
     exclusionFilter: ExclusionFilter | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+    unpacker: Unpacker,
 ): Promise<{
     miniblocks: ParsedMiniblock[]
     terminus: boolean
@@ -101,6 +103,7 @@ export async function getMiniblocks(
             omitSnapshots,
             exclusionFilter,
             unpackEnvelopeOpts,
+            unpacker,
         )
 
         allMiniblocks.push(...miniblocks)
@@ -138,6 +141,7 @@ async function fetchMiniblocksFromRpc(
     omitSnapshots: boolean,
     exclusionFilter: ExclusionFilter | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+    unpacker: Unpacker,
 ) {
     const response = await client.getMiniblocks({
         streamId: streamIdAsBytes(streamId),
@@ -154,12 +158,12 @@ async function fetchMiniblocksFromRpc(
     const miniblocks: ParsedMiniblock[] = []
     const parsedSnapshots: Record<string, Snapshot> = {}
     for (const miniblock of response.miniblocks) {
-        const unpackedMiniblock = await unpackMiniblock(miniblock, unpackEnvelopeOpts)
+        const unpackedMiniblock = await unpacker.unpackMiniblock(miniblock, unpackEnvelopeOpts)
         const unpackedMiniblockNum = unpackedMiniblock.header.miniblockNum.toString()
         miniblocks.push(unpackedMiniblock)
         if (!omitSnapshots && response.snapshots[unpackedMiniblockNum]) {
             parsedSnapshots[unpackedMiniblockNum] = (
-                await unpackSnapshot(
+                await unpacker.unpackSnapshot(
                     unpackedMiniblock.events.at(-1)?.event,
                     unpackedMiniblock.header.snapshotHash,
                     response.snapshots[unpackedMiniblockNum],

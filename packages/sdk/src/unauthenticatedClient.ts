@@ -3,11 +3,12 @@ import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
 import { PayloadCaseType, ContentCaseType } from '@towns-protocol/proto'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
-import { UnpackEnvelopeOpts, unpackStream } from './sign'
+import { UnpackEnvelopeOpts } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
 import { StreamsView } from './views/streamsView'
+import { createUnpacker, type Unpacker } from './unpacker'
 
 const SCROLLBACK_MULTIPLIER = 4n
 export class UnauthenticatedClient {
@@ -29,6 +30,7 @@ export class UnauthenticatedClient {
             disableSignatureValidation: true,
             disableHashValidation: true,
         },
+        private readonly unpacker: Unpacker = createUnpacker(),
     ) {
         if (logNamespaceFilter) {
             debug.enable(logNamespaceFilter)
@@ -78,10 +80,8 @@ export class UnauthenticatedClient {
                 isDefined(response.stream) && hasElements(response.stream.miniblocks),
                 'got bad stream',
             )
-            const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } = await unpackStream(
-                response.stream,
-                this.unpackEnvelopeOpts,
-            )
+            const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } =
+                await this.unpacker.unpackStream(response.stream, this.unpackEnvelopeOpts)
             const streamView = new StreamStateView(
                 this.userId,
                 streamIdAsString(streamId),
@@ -197,6 +197,7 @@ export class UnauthenticatedClient {
             true,
             exclusionFilter,
             this.unpackEnvelopeOpts,
+            this.unpacker,
         )
 
         return {

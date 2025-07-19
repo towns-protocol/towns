@@ -44,6 +44,7 @@
         "use-stick-to-bottom": "^1.1.0",
         "viem": "^2.29.3",
         "wagmi": "^2.15.3",
+        "workerpool": "^9.3.3",
         "zod": "^3.21.4"
     },
     "devDependencies": {
