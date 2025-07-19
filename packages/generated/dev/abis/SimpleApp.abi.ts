@@ -1,5 +1,9 @@
 export default [
   {
+    "type": "receive",
+    "stateMutability": "payable"
+  },
+  {
     "type": "function",
     "name": "accessDuration",
     "inputs": [],
@@ -309,6 +313,19 @@ export default [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "withdrawETH",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "type": "event",
     "name": "Initialized",
     "inputs": [
@@ -367,6 +384,44 @@ export default [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "PricingUpdated",
+    "inputs": [
+      {
+        "name": "installPrice",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "accessDuration",
+        "type": "uint48",
+        "indexed": false,
+        "internalType": "uint48"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Withdrawal",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "AlreadyInitialized",
     "inputs": []
@@ -383,6 +438,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "NoBalanceToWithdraw",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NoHandoverRequest",
     "inputs": []
   },
@@ -394,6 +454,11 @@ export default [
   {
     "type": "error",
     "name": "Unauthorized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroAddress",
     "inputs": []
   }
 ] as const
