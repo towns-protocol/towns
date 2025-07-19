@@ -35,6 +35,7 @@ func Init(
 			defaultCores   []zapcore.Core
 			miniblockCores []zapcore.Core
 			rpcCores       []zapcore.Core
+			syncCores      []zapcore.Core
 
 			globalLevels  = LogLevels{}
 			consoleLevels LogLevels
@@ -66,9 +67,10 @@ func Init(
 				defaultCores = append(defaultCores, consoleCore)
 				miniblockCores = append(miniblockCores, consoleCore)
 				rpcCores = append(rpcCores, consoleCore)
+				syncCores = append(syncCores, consoleCore)
 			} else {
 				consoleCore := zapcore.NewCore(encoder, zapcore.AddSync(DefaultLogOut), consoleLevels.LowestLevel())
-				default_, miniblock, rpc, err := consoleLevels.Cores(consoleCore)
+				default_, miniblock, rpc, streamSync, err := consoleLevels.Cores(consoleCore)
 				if err != nil {
 					panic(err)
 				}
@@ -76,6 +78,7 @@ func Init(
 				defaultCores = append(defaultCores, default_)
 				miniblockCores = append(miniblockCores, miniblock)
 				rpcCores = append(rpcCores, rpc)
+				syncCores = append(syncCores, streamSync)
 			}
 		}
 
@@ -97,9 +100,10 @@ func Init(
 					defaultCores = append(defaultCores, fileCore)
 					miniblockCores = append(miniblockCores, fileCore)
 					rpcCores = append(rpcCores, fileCore)
+					syncCores = append(syncCores, fileCore)
 				} else {
 					fileCore := zapcore.NewCore(encoder, zapcore.AddSync(file), fileLevels.LowestLevel())
-					default_, miniblock, rpc, err := fileLevels.Cores(fileCore)
+					default_, miniblock, rpc, streamSync, err := fileLevels.Cores(fileCore)
 					if err != nil {
 						panic(err)
 					}
@@ -107,6 +111,7 @@ func Init(
 					defaultCores = append(defaultCores, default_)
 					miniblockCores = append(miniblockCores, miniblock)
 					rpcCores = append(rpcCores, rpc)
+					syncCores = append(syncCores, streamSync)
 				}
 			}
 		}
@@ -115,6 +120,7 @@ func Init(
 			defaultLogger := zap.New(zapcore.NewTee(defaultCores...), zap.AddCaller(), zap.AddCallerSkip(1))
 			miniblockLogger := zap.New(zapcore.NewTee(miniblockCores...), zap.AddCaller(), zap.AddCallerSkip(1))
 			rpcLogger := zap.New(zapcore.NewTee(rpcCores...), zap.AddCaller(), zap.AddCallerSkip(1))
+			syncLogger := zap.New(zapcore.NewTee(syncCores...), zap.AddCaller(), zap.AddCallerSkip(1))
 
 			zap.ReplaceGlobals(defaultLogger)
 
@@ -123,12 +129,13 @@ func Init(
 				Default:    defaultLogger.Sugar(),
 				Miniblock:  miniblockLogger.Sugar(),
 				Rpc:        rpcLogger.Sugar(),
+				StreamSync: syncLogger.Sugar(),
 			}
-
 		} else if len(defaultCores) == 1 {
 			defaultLogger := zap.New(defaultCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
 			miniblockLogger := zap.New(miniblockCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
 			rpcLogger := zap.New(rpcCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
+			syncLogger := zap.New(syncCores[0], zap.AddCaller(), zap.AddCallerSkip(1))
 
 			zap.ReplaceGlobals(defaultLogger)
 
@@ -137,6 +144,7 @@ func Init(
 				Default:    defaultLogger.Sugar(),
 				Miniblock:  miniblockLogger.Sugar(),
 				Rpc:        rpcLogger.Sugar(),
+				StreamSync: syncLogger.Sugar(),
 			}
 		} else {
 			logger := zap.NewNop()
@@ -148,6 +156,7 @@ func Init(
 				Default:    logger.Sugar(),
 				Miniblock:  logger.Sugar(),
 				Rpc:        logger.Sugar(),
+				StreamSync: logger.Sugar(),
 			}
 		}
 	})
@@ -183,6 +192,7 @@ func LoggerWithWriter(level zapcore.Level, writer zapcore.WriteSyncer) *Log {
 		Default:    sugar.Named(string(Default)),
 		Miniblock:  sugar.Named(string(Miniblock)),
 		Rpc:        sugar.Named(string(Rpc)),
+		StreamSync: sugar.Named(string(StreamSync)),
 	}
 }
 
@@ -193,6 +203,7 @@ func NoopLogger() *Log {
 		Default:    nop.Named(string(Default)),
 		Rpc:        nop.Named(string(Rpc)),
 		Miniblock:  nop.Named(string(Miniblock)),
+		StreamSync: nop.Named(string(StreamSync)),
 	}
 }
 

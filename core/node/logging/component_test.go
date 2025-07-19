@@ -28,6 +28,7 @@ func TestParseLogLevels(t *testing.T) {
 		{"warn,,miniblock=debug,rpc=info", nil, true},
 		{"warn,miniblock=debug,,rpc=info", nil, true},
 		{"warn,miniblock=debug,rpc=info,", nil, true},
+		{"warn,sync=debug,rpc=info", logging.LogLevels{logging.Default: zapcore.WarnLevel, logging.StreamSync: zapcore.DebugLevel, logging.Rpc: zapcore.InfoLevel}, false},
 	}
 
 	assert := assert.New(t)

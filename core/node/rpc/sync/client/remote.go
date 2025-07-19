@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.uber.org/zap/zapcore"
 	"slices"
 	"sync/atomic"
 	"time"
@@ -183,6 +184,21 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 				Func("sendSyncStreamResponseToClient")
 			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
 			s.syncStreamCancel()
+		} else {
+			log := logging.FromCtx(s.syncStreamCtx).StreamSync
+			if log.Level().Enabled(zapcore.DebugLevel) {
+				tags := []any{"syncId", msg.GetSyncId(), "syncOp", msg.GetSyncOp(), "remoteAddr", s.remoteAddr}
+				if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+					tags = append(tags,
+						"stream", StreamId(msg.GetStream().GetNextSyncCookie().GetStreamId()),
+						"minipoolGen", msg.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+						"miniblocks", len(msg.GetStream().GetMiniblocks()),
+						"events", len(msg.GetStream().GetEvents()),
+						"reset", msg.GetStream().GetSyncReset(),
+					)
+				}
+				log.Debugw("remoteSyncer::sendResponse", tags...)
+			}
 		}
 
 		return nil
