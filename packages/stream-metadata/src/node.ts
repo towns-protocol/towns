@@ -14,6 +14,7 @@ import { fetchSpaceImage } from './routes/spaceImage'
 import { fetchSpaceMetadata } from './routes/spaceMetadata'
 import { fetchUserProfileImage } from './routes/profileImage'
 import { fetchUserBio } from './routes/userBio'
+import { fetchUserSpaces } from './routes/userSpaces'
 import { fetchMedia } from './routes/media'
 import { spaceRefresh, spaceRefreshOnResponse } from './routes/spaceRefresh'
 import { userRefresh } from './routes/userRefresh'
@@ -115,6 +116,7 @@ export function setupRoutes(srv: Server) {
 	srv.get('/space/:spaceAddress', fetchSpaceMetadata)
 	srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata) // for fetching token info (i.e. openSea metadata)
 	srv.get('/user/:userId/bio', fetchUserBio)
+	srv.get('/user/:userId/spaces', fetchUserSpaces)
 	srv.get('/user/:userId/tips', fetchUserTips)
 
 	// not cached
