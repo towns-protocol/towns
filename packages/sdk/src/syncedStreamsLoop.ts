@@ -548,6 +548,11 @@ export class SyncedStreamsLoop {
     }
 
     private async tick() {
+        const item = this.responsesQueue.shift()
+        if (item) {
+            await this.onUpdate(item)
+        }
+
         if (this.syncState === SyncState.Syncing) {
             const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
                 (x) => !this.inFlightSyncCookies.has(x),
@@ -605,11 +610,6 @@ export class SyncedStreamsLoop {
                 }
             }
         }
-        const item = this.responsesQueue.shift()
-        if (!item || item.syncId !== this.syncId) {
-            return
-        }
-        await this.onUpdate(item)
     }
 
     private async waitForSyncingState() {
