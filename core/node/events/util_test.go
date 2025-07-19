@@ -73,8 +73,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		p.numInstances = 1
 	}
 
-	ctx, cancel := test.NewTestContext()
-	t.Cleanup(cancel)
+	ctx := test.NewTestContext(t)
 
 	ctc := &cacheTestContext{
 		testParams:      p,

@@ -27,8 +27,7 @@ var (
 )
 
 func TestEVMCustomError(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -105,8 +104,7 @@ func TestEVMCustomError(t *testing.T) {
 }
 
 func TestEVMStringError(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -155,8 +153,7 @@ func TestEVMStringError(t *testing.T) {
 }
 
 func TestEVMUnexpectedError(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

@@ -534,10 +534,7 @@ export class Space {
             })
         } catch (error) {
             log.error('getMembershipStatus expirations::error', { error })
-            // Error evaluating expirations, assume not expired
-            return {
-                isMember: false,
-            }
+            throw new Error('Error evaluating membership status', { cause: error })
         }
 
         const currentTime = BigInt(Math.floor(Date.now() / 1000))

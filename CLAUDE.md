@@ -116,6 +116,15 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - Implement proper error handling and validation
 - Follow existing patterns for client-server communication
 
+### Code Quality Requirements
+
+- **All TypeScript files must pass Prettier formatting**
+  - Run `yarn prettier:fix` to automatically format all TypeScript files
+  - This command will check and fix any formatting issues in one step
+- **All PRs must pass global linting**
+  - Run `yarn lint` from the root directory before committing
+  - This ensures code quality and consistency across the entire repository
+
 ## Key Technology Stack
 
 ### Backend (Go)
@@ -150,6 +159,48 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - Local chains run on ports 8545 (Base) and 8546 (River)
 - PostgreSQL runs on port 5433 for local development
 - HTTPS certificates managed via `generate-certs.sh`
+
+## Building End-to-End Features
+
+When implementing features that span multiple layers of the stack, follow this pattern:
+
+### 1. Start with Protocol Definition
+- Define or modify protobuf messages in `/protocol/`
+- Consider backward compatibility (wire vs source compatibility)
+- Run code generation to update bindings
+
+### 2. Implement Backend Changes
+- Update Go types and storage layer
+- Create database migrations if needed
+- Update service layer with validation logic
+- Write comprehensive storage tests
+- Ensure proper error handling
+
+### 3. Update Frontend/SDK
+- Update TypeScript types and API calls
+- Modify UI components as needed
+- Update any affected SDK methods
+
+### 4. Testing Strategy
+- Storage tests: Verify data persistence and constraints
+- Service tests: Validate business logic and API behavior
+- End-to-end tests: Confirm full feature functionality
+- Make tests re-runnable (e.g., use unique identifiers)
+
+### Example: Adding Display Name to Bot Metadata
+
+1. **Protocol**: Modified `apps.proto` to rename `name` to `username` and add `display_name`
+2. **Storage**: Updated PostgreSQL schema to store display_name in JSONB, kept username column for uniqueness
+3. **Validation**: Ensured username uniqueness, allowed duplicate display names
+4. **Migration**: Created migration to rename existing column while preserving data
+5. **Tests**: Added explicit tests for duplicate display names, made bot test re-runnable with UUIDs
+6. **Frontend**: Updated all TypeScript references to use new field names
+
+Key lessons:
+- Consider data migration early when renaming fields
+- Test both positive and negative cases explicitly
+- Ensure test repeatability in shared environments
+- Document the distinction between internal identifiers and display values
 
 ## Git Commit Guidelines
 
