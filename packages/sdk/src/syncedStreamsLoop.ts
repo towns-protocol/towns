@@ -350,6 +350,10 @@ export class SyncedStreamsLoop {
                                 }
                             }
                         }
+                        // remove any added stream ids from the pending sync cookies
+                        this.pendingSyncCookies = this.pendingSyncCookies.filter(
+                            (id) => !this.inFlightSyncCookies.has(id),
+                        )
                     } else {
                         syncCookies.push(
                             ...Array.from(this.streams.entries())
