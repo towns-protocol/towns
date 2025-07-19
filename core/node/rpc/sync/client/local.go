@@ -13,7 +13,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -24,11 +23,11 @@ type streamCache interface {
 type localSyncer struct {
 	globalCtx context.Context
 
-	streamCache   streamCache
-	messages      *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	localAddr     common.Address
-	unsubStream   func(streamID StreamId)
-	activeStreams *xsync.Map[StreamId, *Stream]
+	streamCache        streamCache
+	messageDistributor MessageDistributor
+	localAddr          common.Address
+	unsubStream        func(streamID StreamId)
+	activeStreams      *xsync.Map[StreamId, *Stream]
 
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
@@ -38,18 +37,18 @@ func newLocalSyncer(
 	globalCtx context.Context,
 	localAddr common.Address,
 	streamCache streamCache,
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+	messageDistributor MessageDistributor,
 	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		globalCtx:     globalCtx,
-		streamCache:   streamCache,
-		localAddr:     localAddr,
-		messages:      messages,
-		unsubStream:   unsubStream,
-		activeStreams: xsync.NewMap[StreamId, *Stream](),
-		otelTracer:    otelTracer,
+		globalCtx:          globalCtx,
+		streamCache:        streamCache,
+		localAddr:          localAddr,
+		messageDistributor: messageDistributor,
+		unsubStream:        unsubStream,
+		activeStreams:      xsync.NewMap[StreamId, *Stream](),
+		otelTracer:         otelTracer,
 	}
 }
 
@@ -220,20 +219,23 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
-	var err error
-
 	select {
 	case <-s.globalCtx.Done():
-		err = s.globalCtx.Err()
+		if err := s.globalCtx.Err(); err != nil {
+			rvrErr := AsRiverError(err, Err_CANCELED).
+				Func("localSyncer.sendResponse")
+			_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
+			return rvrErr
+		}
+		return nil
 	default:
-		err = s.messages.AddMessage(msg)
 	}
 
-	if err != nil {
-		rvrErr := AsRiverError(err, Err_CANCELED).
-			Func("localSyncer.sendResponse")
-		_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
-		return rvrErr
+	// TODO: Parse stream ID properly or pass it via parameter
+	if len(msg.GetTargetSyncIds()) > 0 {
+		s.messageDistributor.DistributeBackfillMessage(StreamId(msg.StreamID()), msg)
+	} else {
+		s.messageDistributor.DistributeMessage(StreamId(msg.StreamID()), msg)
 	}
 
 	return nil

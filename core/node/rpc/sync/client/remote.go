@@ -17,20 +17,19 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type remoteSyncer struct {
-	syncStreamCtx    context.Context
-	syncStreamCancel context.CancelFunc
-	syncID           string
-	remoteAddr       common.Address
-	client           protocolconnect.StreamServiceClient
-	messages         *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams          *xsync.Map[StreamId, struct{}]
-	responseStream   *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream      func(streamID StreamId)
+	syncStreamCtx      context.Context
+	syncStreamCancel   context.CancelFunc
+	syncID             string
+	remoteAddr         common.Address
+	client             protocolconnect.StreamServiceClient
+	messageDistributor MessageDistributor
+	streams            *xsync.Map[StreamId, struct{}]
+	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream        func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -40,7 +39,7 @@ func NewRemoteSyncer(
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+	messageDistributor MessageDistributor,
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
@@ -87,16 +86,16 @@ func NewRemoteSyncer(
 	}
 
 	return &remoteSyncer{
-		syncID:           responseStream.Msg().GetSyncId(),
-		syncStreamCtx:    syncStreamCtx,
-		syncStreamCancel: syncStreamCancel,
-		client:           client,
-		messages:         messages,
-		streams:          xsync.NewMap[StreamId, struct{}](),
-		responseStream:   responseStream,
-		remoteAddr:       remoteAddr,
-		unsubStream:      unsubStream,
-		otelTracer:       otelTracer,
+		syncID:             responseStream.Msg().GetSyncId(),
+		syncStreamCtx:      syncStreamCtx,
+		syncStreamCancel:   syncStreamCancel,
+		client:             client,
+		messageDistributor: messageDistributor,
+		streams:            xsync.NewMap[StreamId, struct{}](),
+		responseStream:     responseStream,
+		remoteAddr:         remoteAddr,
+		unsubStream:        unsubStream,
+		otelTracer:         otelTracer,
 	}, nil
 }
 
@@ -174,19 +173,24 @@ func (s *remoteSyncer) Run() {
 func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
 	select {
 	case <-s.syncStreamCtx.Done():
-		return s.syncStreamCtx.Err()
-	default:
-		if err := s.messages.AddMessage(msg); err != nil {
-			rvrErr := AsRiverError(err).
-				Tag("syncId", s.syncID).
-				Tag("op", msg.GetSyncOp()).
-				Func("sendSyncStreamResponseToClient")
+		if err := s.syncStreamCtx.Err(); err != nil {
+			rvrErr := AsRiverError(err, Err_CANCELED).
+				Func("localSyncer.sendResponse")
 			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
-			s.syncStreamCancel()
+			return rvrErr
 		}
-
 		return nil
+	default:
 	}
+
+	// TODO: Parse stream ID properly or pass it via parameter
+	if len(msg.GetTargetSyncIds()) > 0 {
+		s.messageDistributor.DistributeBackfillMessage(StreamId(msg.StreamID()), msg)
+	} else {
+		s.messageDistributor.DistributeMessage(StreamId(msg.StreamID()), msg)
+	}
+
+	return nil
 }
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
