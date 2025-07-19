@@ -1389,4 +1389,10 @@ enum Err {
     // SYNC_SESSION_RUNNER_UNASSIGNABLE occurs when an attempt is made to assign a stream to a
     // sync session runner that is full or closed.
     SYNC_SESSION_RUNNER_UNASSIGNABLE = 71;
+    
+    // Miniblocks are not found in the requested range. This is different from
+    // MINIBLOCKS_STORAGE_FAILURE which indicates corruption or database issues.
+    // This error is retriable and indicates the miniblocks might be available
+    // on other nodes.
+    MINIBLOCKS_NOT_FOUND = 72;
 }

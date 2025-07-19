@@ -225,14 +225,14 @@ type (
 
 		// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
 		// This is used for backfilling gaps in the miniblock sequence during reconciliation.
-		// 
+		//
 		// Requirements:
 		// - miniblocks must be continuous (no gaps)
 		// - all miniblock numbers must be less than the last miniblock in storage
 		// - overlapping miniblocks are skipped (not overwritten)
 		// - does not modify minipool
 		// - does not update latest_snapshot_miniblock
-		// 
+		//
 		// This function is designed for reconciliation processes that need to fill gaps
 		// in the miniblock sequence without affecting the current stream state.
 		WritePrecedingMiniblocks(
@@ -241,13 +241,7 @@ type (
 			miniblocks []*WriteMiniblockData,
 		) error
 
-		// DebugReadStreamData returns details for debugging about the stream.
-		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
-
-		// DebugReadStreamStatistics returns statistics for debugging about the stream.
-		DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
-
-		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers 
+		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
 		// present in storage for the given stream, starting from the specified miniblock number.
 		// Each range contains StartInclusive and EndInclusive miniblock numbers.
 		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
@@ -261,6 +255,18 @@ type (
 			streamId StreamId,
 			startMiniblockNumberInclusive int64,
 		) ([]MiniblockRange, error)
+
+		// DebugReadStreamData returns details for debugging about the stream.
+		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
+
+		// DebugReadStreamStatistics returns statistics for debugging about the stream.
+		DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
+
+		// DebugDeleteMiniblocks deletes miniblocks from the storage in the given range.
+		// This is a debug function used for testing backwards reconciliation.
+		// fromInclusive and toExclusive specify the range of miniblock numbers to delete.
+		// WARNING: This function should only be used for testing purposes.
+		DebugDeleteMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) error
 
 		// Close closes the storage.
 		Close(ctx context.Context)

@@ -594,7 +594,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	// Check if stream info was loaded from db.
 	if mbsInDb <= -1 {
 		maxBlockNum, err := a.storage.GetMaxArchivedMiniblockNumber(ctx, stream.streamId)
-		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
+		if err != nil && IsRiverErrorCode(err, Err_NOT_FOUND) {
 			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
 				return err
@@ -639,15 +639,16 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	for mbsInDb < mbsInContract {
 		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), mbsInContract)
 
-		resp, err := stub.GetMiniblocks(
-			ctx,
-			connect.NewRequest(&GetMiniblocksRequest{
-				StreamId:      stream.streamId[:],
-				FromInclusive: mbsInDb,
-				ToExclusive:   toBlock,
-			}),
-		)
-		if err != nil && AsRiverError(err).Code != Err_NOT_FOUND {
+		req := connect.NewRequest(&GetMiniblocksRequest{
+			StreamId:      stream.streamId[:],
+			FromInclusive: mbsInDb,
+			ToExclusive:   toBlock,
+		})
+		req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+		resp, err := stub.GetMiniblocks(ctx, req)
+		notFoundError := err != nil &&
+			(IsRiverErrorCode(err, Err_NOT_FOUND) || IsRiverErrorCode(err, Err_MINIBLOCKS_NOT_FOUND))
+		if err != nil && !notFoundError {
 			log.Warnw(
 				"Error when calling GetMiniblocks on server",
 				"error",
@@ -662,7 +663,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			return err
 		}
 
-		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
+		if notFoundError ||
+			resp.Msg == nil ||
+			len(resp.Msg.Miniblocks) == 0 {
 			// If the stream is unable to fully update, consider this attempt to archive the stream as
 			// a failure, even though we do not return an error.
 			stream.corrupt.RecordBlockUpdateFailure(

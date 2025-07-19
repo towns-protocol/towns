@@ -1245,10 +1245,20 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	var blockdata []byte
 	var seqNum int
 	var snapshot []byte
+	firstRow := true
 	if _, err = pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seqNum, &snapshot}, func() error {
+		// Check if the first miniblock matches the requested fromInclusive
+		if firstRow && int64(seqNum) != fromInclusive {
+			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Missing miniblocks at start of range").
+				Tag("RequestedStart", fromInclusive).
+				Tag("ActualStart", seqNum).
+				Tag("streamId", streamId)
+		}
+		firstRow = false
+		
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
-			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
+			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seqNum).
 				Tag("ExpectedBlockNumber", prevSeqNum+1).
 				Tag("streamId", streamId)
@@ -1262,6 +1272,14 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	// Check if we got any miniblocks at all when we expected some
+	if len(miniblocks) == 0 && fromInclusive < toExclusive {
+		return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "No miniblocks found in requested range").
+			Tag("fromInclusive", fromInclusive).
+			Tag("toExclusive", toExclusive).
+			Tag("streamId", streamId)
 	}
 
 	return miniblocks, nil
@@ -2297,6 +2315,65 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	}
 
 	return result, nil
+}
+
+func (s *PostgresStreamStore) DebugDeleteMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) error {
+	return s.txRunner(
+		ctx,
+		"DebugDeleteMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.debugDeleteMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive)
+		},
+		nil,
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toExclusive", toExclusive,
+	)
+}
+
+func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) error {
+	// Lock the stream to ensure consistency
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Delete miniblocks in the specified range
+	query := s.sqlForStream(
+		"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num < $3",
+		streamId,
+	)
+	
+	result, err := tx.Exec(ctx, query, streamId, fromInclusive, toExclusive)
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("Failed to delete miniblocks").
+			Tag("streamId", streamId).
+			Tag("fromInclusive", fromInclusive).
+			Tag("toExclusive", toExclusive)
+	}
+
+	rowsAffected := result.RowsAffected()
+	logging.FromCtx(ctx).Infow("DebugDeleteMiniblocks completed",
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toExclusive", toExclusive,
+		"rowsDeleted", rowsAffected,
+	)
+
+	return nil
 }
 
 func (s *PostgresStreamStore) DebugReadStreamStatistics(

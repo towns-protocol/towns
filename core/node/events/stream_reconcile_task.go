@@ -47,6 +47,10 @@ func (s *StreamCache) submitToPool(
 	pool *workerpool.WorkerPool,
 	task func(),
 ) {
+	if s.params.Config.StreamReconciliation.OnlineWorkerPoolSize == 0 {
+		return
+	}
+
 	s.stoppedMu.RLock()
 	defer s.stoppedMu.RUnlock()
 	if !s.stopped {
