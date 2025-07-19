@@ -101,7 +101,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         );
 
         // post-swap processing (points minting and events)
-        _afterSwap(params, amountOut, protocolFee, poster);
+        _afterSwap(params, amountOut, protocolFee, poster, msg.sender);
 
         // handle refunds of unconsumed input tokens
         _handleRefunds(params.tokenIn, tokenInBalanceBefore);
@@ -134,7 +134,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         );
 
         // post-swap processing (points minting and events)
-        _afterSwap(params, amountOut, protocolFee, poster);
+        _afterSwap(params, amountOut, protocolFee, poster, permit.owner);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -177,11 +177,13 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /// @param amountOut The amount of output tokens received
     /// @param protocolFee The protocol fee collected for points calculation
     /// @param poster The swap poster address
+    /// @param payer The address that should receive the points
     function _afterSwap(
         ExactInputParams calldata params,
         uint256 amountOut,
         uint256 protocolFee,
-        address poster
+        address poster,
+        address payer
     ) internal {
         // mint points based on the protocol fee if ETH is involved
         if (
@@ -194,7 +196,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
                 ITownsPointsBase.Action.Swap,
                 abi.encode(protocolFee)
             );
-            _mintPoints(airdropDiamond, msg.sender, points);
+            _mintPoints(airdropDiamond, payer, points);
         }
 
         emit SwapExecuted(
