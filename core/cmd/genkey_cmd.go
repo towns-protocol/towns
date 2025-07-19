@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -9,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func genkey(overwrite bool) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func genkey(cmd *cobra.Command, overwrite bool) error {
+	ctx := cmd.Context()
 
 	wallet, err := crypto.NewWallet(ctx)
 	if err != nil {
@@ -45,7 +44,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return genkey(overwrite)
+			return genkey(cmd, overwrite)
 		},
 	}
 	cmdGenKey.Flags().Bool("overwrite", false, "Overwrite existing key files")

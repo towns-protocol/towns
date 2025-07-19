@@ -89,7 +89,7 @@ func getStreamFromNode(
 }
 
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -191,7 +191,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 
 	nodeAddress := common.HexToAddress(args[0])
 	zeroAddress := common.Address{}
@@ -229,7 +229,7 @@ func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -422,7 +422,7 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 }
 
 func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -488,7 +488,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -582,7 +582,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	nodeAddress := common.HexToAddress(args[0])
 	zeroAddress := common.Address{}
 	if nodeAddress == zeroAddress {
@@ -675,7 +675,7 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runStreamGetCmd(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	streamID, err := StreamIdFromString(args[0])
 	if err != nil {
 		return err
@@ -819,8 +819,8 @@ func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+func runStreamCompareMiniblockChainCmd(cmd *cobra.Command, cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
 	defer cancel()
 
 	streamId, err := StreamIdFromString(args[0])
@@ -1091,8 +1091,8 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 	return nil
 }
 
-func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+func runStreamOutOfSyncCmd(cmd *cobra.Command, cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
 	defer cancel()
 
 	outputFile, err := os.Create(args[0])
@@ -1400,7 +1400,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Long:  `Compare miniblock chain by loading all miniblocks and comparing them between nodes.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStreamCompareMiniblockChainCmd(cmdConfig, args)
+			return runStreamCompareMiniblockChainCmd(cmd, cmdConfig, args)
 		},
 	}
 
@@ -1410,7 +1410,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Long:  `Find out-of-sync streams by loading all miniblocks and comparing them between nodes.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStreamOutOfSyncCmd(cmdConfig, args)
+			return runStreamOutOfSyncCmd(cmd, cmdConfig, args)
 		},
 	}
 

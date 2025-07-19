@@ -63,9 +63,8 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 		n.service = nil
 	}
 	if n.address != (common.Address{}) {
-		// lint:ignore context.Background() is fine here
 		err := dbtestutils.DeleteTestSchema(
-			context.Background(),
+			ctx,
 			dbUrl,
 			storage.DbSchemaNameFromAddress(n.address.String()),
 		)

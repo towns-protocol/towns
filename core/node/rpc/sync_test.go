@@ -704,7 +704,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	)
 
 	// Add all cookies to the modify stream again and expect for updates
-	resp, err := syncClient0.ModifySync(context.Background(), connect.NewRequest(&protocol.ModifySyncRequest{
+	resp, err := syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 		SyncId:     syncClients.clients[0].syncId,
 		AddStreams: channelCookies,
 	}))

@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"context"
-
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/rpc"
@@ -11,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func runArchive(cfg *config.Config, once bool) error {
+func runArchive(cmd *cobra.Command, cfg *config.Config, once bool) error {
 	err := setupProfiler("archive-node", cfg)
 
 	// Enable sampling for archiver logs.
@@ -20,7 +18,7 @@ func runArchive(cfg *config.Config, once bool) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 	return rpc.RunArchive(ctx, cfg, once)
 }
 
@@ -33,7 +31,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return runArchive(cmdConfig, once)
+			return runArchive(cmd, cmdConfig, once)
 		},
 	}
 

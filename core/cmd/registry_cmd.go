@@ -102,8 +102,8 @@ func printStream(opts *streamDumpOpts, i int64, strm *river.StreamWithId) {
 	}
 }
 
-func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func srStreamDump(cmd *cobra.Command, cfg *config.Config, opts *streamDumpOpts) error {
+	ctx := cmd.Context()
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.RiverChain,
@@ -348,6 +348,7 @@ func validateStream(
 }
 
 func srStream(
+	cmd *cobra.Command,
 	cfg *config.Config,
 	streamId string,
 	validate, urls, csv, jsonOutput, verbose bool,
@@ -359,7 +360,7 @@ func srStream(
 	if (csv && jsonOutput) || (jsonOutput && validate) {
 		return RiverError(Err_INVALID_ARGUMENT, "--json and --csv or --validate flags cannot be used together")
 	}
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+	ctx := cmd.Context()
 
 	httpClient, err := http_client.GetHttpClient(ctx, cfg)
 	if err != nil {
@@ -512,8 +513,8 @@ func srStream(
 	return err
 }
 
-func nodesDump(cfg *config.Config, csv bool) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func nodesDump(cmd *cobra.Command, cfg *config.Config, csv bool) error {
+	ctx := cmd.Context()
 
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
@@ -566,8 +567,8 @@ func nodesDump(cfg *config.Config, csv bool) error {
 	return nil
 }
 
-func settingsDump(cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func settingsDump(cmd *cobra.Command, cfg *config.Config) error {
+	ctx := cmd.Context()
 
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
@@ -611,8 +612,8 @@ func settingsDump(cfg *config.Config) error {
 	return nil
 }
 
-func blockNumber(cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func blockNumber(cmd *cobra.Command, cfg *config.Config) error {
+	ctx := cmd.Context()
 
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
@@ -840,7 +841,7 @@ func init() {
 			}
 			opts.blockNum = crypto.BlockNumber(blockNum)
 
-			return srStreamDump(cmdConfig, opts)
+			return srStreamDump(cmd, cmdConfig, opts)
 		},
 	}
 	streamsCmd.Flags().Bool("count", false, "Only print the stream count")
@@ -864,7 +865,7 @@ func init() {
 			}
 
 			return getStreamsForNode(
-				logging.CtxWithLog(context.Background(), logging.NoopLogger()),
+				logging.CtxWithLog(cmd.Context(), logging.NoopLogger()),
 				nodeAddress,
 			)
 		},
@@ -900,7 +901,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return srStream(cmdConfig, args[0], validate, urls, csv, json, verbose, timeout)
+			return srStream(cmd, cmdConfig, args[0], validate, urls, csv, json, verbose, timeout)
 		},
 	}
 	streamCmd.Flags().Bool("validate", false, "Fetch stream from each node and compare to the registry record")
@@ -919,7 +920,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return nodesDump(cmdConfig, csv)
+			return nodesDump(cmd, cmdConfig, csv)
 		},
 	}
 	nodesCmd.Flags().Bool("csv", false, "Output in CSV format")
@@ -929,7 +930,7 @@ func init() {
 		Use:   "settings",
 		Short: "Dump settings from the registry contract",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return settingsDump(cmdConfig)
+			return settingsDump(cmd, cmdConfig)
 		},
 	})
 
@@ -938,7 +939,7 @@ func init() {
 		Aliases: []string{"bn"},
 		Short:   "Print current River chain block number",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return blockNumber(cmdConfig)
+			return blockNumber(cmd, cmdConfig)
 		},
 	})
 
@@ -967,13 +968,13 @@ stream-placement <wallet> <stream-id> 1 0xaa..ff 0xbb..ff 0xcc..ff
 Marks node 0xaa..ff as the single quorum node and node 0xbb..ff and 0xcc..ff as sync nodes.`,
 		Args: cobra.RangeArgs(4, 10),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRegistryUpdateStream(args, cmdConfig)
+			return runRegistryUpdateStream(cmd, args, cmdConfig)
 		},
 	})
 }
 
-func runRegistryUpdateStream(args []string, cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func runRegistryUpdateStream(cmd *cobra.Command, args []string, cfg *config.Config) error {
+	ctx := cmd.Context()
 
 	walletFileContents, err := os.ReadFile(args[0])
 	if err != nil {
