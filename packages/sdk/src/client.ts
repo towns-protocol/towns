@@ -347,6 +347,7 @@ export class Client
             opts?.unpackEnvelopeOpts,
             this.logId,
             opts?.streamOpts,
+            opts?.highPriorityStreamIds,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
