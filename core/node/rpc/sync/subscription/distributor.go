@@ -10,12 +10,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// MessageDistributor defines the contract for distributing messages to subscriptions
-type MessageDistributor interface {
-	DistributeMessage(streamID StreamId, msg *SyncStreamsResponse)
-	DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse)
-}
-
 // distributor implements MessageDistributor for distributing messages to subscriptions
 type distributor struct {
 	registry Registry
