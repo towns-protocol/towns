@@ -3,6 +3,8 @@ package subscription
 import (
 	"context"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/mock"
@@ -75,4 +77,14 @@ func (m *mockRegistry) GetStats() (int, int) {
 
 func (m *mockRegistry) CancelAll(err error) {
 	m.Called(err)
+}
+
+// mockSyncerSet for testing
+type mockSyncerSet struct {
+	mock.Mock
+}
+
+func (m *mockSyncerSet) Modify(ctx context.Context, req client.ModifyRequest) error {
+	args := m.Called(ctx, req)
+	return args.Error(0)
 }

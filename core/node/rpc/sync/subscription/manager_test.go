@@ -45,7 +45,7 @@ func TestManager_CleanupUnusedStreams(t *testing.T) {
 	defer cancel()
 
 	// Create mock syncer set
-	mockSyncerSet := &MockSyncerSet{}
+	mockSyncerSet := &mockSyncerSet{}
 	mockReg := &mockRegistry{}
 
 	m := &Manager{
@@ -68,7 +68,7 @@ func TestManager_CleanupUnusedStreams(t *testing.T) {
 	}).Once()
 
 	mockSyncerSet.On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
-		return len(req.ToRemove) == 1 && 
+		return len(req.ToRemove) == 1 &&
 			StreamId(req.ToRemove[0]) == streamID &&
 			req.RemovingFailureHandler != nil
 	})).Return(nil).Once()
@@ -78,7 +78,7 @@ func TestManager_CleanupUnusedStreams(t *testing.T) {
 		ctx, cancel := context.WithTimeout(m.globalCtx, time.Second*5)
 		defer cancel()
 		_ = m.syncers.Modify(ctx, client.ModifyRequest{
-			ToRemove: [][]byte{streamID[:]},
+			ToRemove:               [][]byte{streamID[:]},
 			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
 		})
 	})
@@ -105,7 +105,7 @@ func TestManager_Subscribe_Concurrent(t *testing.T) {
 			syncID := fmt.Sprintf("test-sync-%d", idx)
 			ctx, cancel := context.WithCancelCause(context.Background())
 			defer cancel(nil)
-			
+
 			sub, err := m.Subscribe(ctx, cancel, syncID)
 			assert.NoError(t, err)
 			assert.NotNil(t, sub)

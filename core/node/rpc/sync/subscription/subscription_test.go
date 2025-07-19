@@ -15,16 +15,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
-// MockSyncerSet for testing
-type MockSyncerSet struct {
-	mock.Mock
-}
-
-func (m *MockSyncerSet) Modify(ctx context.Context, req client.ModifyRequest) error {
-	args := m.Called(ctx, req)
-	return args.Error(0)
-}
-
 func TestSubscription_Modify(t *testing.T) {
 	// Generate stream IDs once to ensure consistency
 	streamID1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -41,7 +31,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "add new stream - should add to remote",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -57,7 +47,7 @@ func TestSubscription_Modify(t *testing.T) {
 			},
 			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
-				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
+				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
 				})).Return(nil)
 			},
@@ -65,7 +55,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "add existing stream - should backfill",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -81,7 +71,7 @@ func TestSubscription_Modify(t *testing.T) {
 			},
 			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID2).Return(false, true)
-				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
+				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
 				})).Return(nil)
 			},
@@ -89,7 +79,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "remove stream - should not remove from remote",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -111,7 +101,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "mixed add and remove streams",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -132,7 +122,7 @@ func TestSubscription_Modify(t *testing.T) {
 			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
 				mockReg.On("RemoveStreamFromSubscription", "test-sync-1", streamID2)
-				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
+				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
 				})).Return(nil)
 			},
@@ -140,7 +130,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "add stream with backfill and custom backfill handler",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -157,7 +147,7 @@ func TestSubscription_Modify(t *testing.T) {
 			},
 			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(false, true)
-				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
+				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
 				})).Return(nil)
 			},
@@ -165,7 +155,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "empty request - should return early",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -184,7 +174,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "syncer modify returns error",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -200,7 +190,7 @@ func TestSubscription_Modify(t *testing.T) {
 			},
 			expectedCalls: func(mockSyncer SyncerSet, mockReg *mockRegistry) {
 				mockReg.On("AddStreamToSubscription", "test-sync-1", streamID1).Return(true, false)
-				mockSyncer.(*MockSyncerSet).On("Modify", mock.Anything, mock.Anything).Return(assert.AnError)
+				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			expectError:   Err_UNKNOWN,
 			errorContains: assert.AnError.Error(),
@@ -208,7 +198,7 @@ func TestSubscription_Modify(t *testing.T) {
 		{
 			name: "invalid request - duplicate streams in add",
 			setup: func() (*Subscription, SyncerSet, *mockRegistry) {
-				mockSyncer := &MockSyncerSet{}
+				mockSyncer := &mockSyncerSet{}
 				mockReg := &mockRegistry{}
 				sub := createTestSubscription("test-sync-1")
 				sub.syncers = mockSyncer
@@ -248,7 +238,7 @@ func TestSubscription_Modify(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			mockSyncer.(*MockSyncerSet).AssertExpectations(t)
+			mockSyncer.(*mockSyncerSet).AssertExpectations(t)
 			mockReg.AssertExpectations(t)
 		})
 	}
@@ -256,7 +246,7 @@ func TestSubscription_Modify(t *testing.T) {
 
 func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 	// Test that the adding failure handler properly removes streams from registry
-	mockSyncer := &MockSyncerSet{}
+	mockSyncer := &mockSyncerSet{}
 	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
@@ -289,7 +279,7 @@ func TestSubscription_Modify_AddingFailureHandler(t *testing.T) {
 
 func TestSubscription_Modify_BackfillFailureHandler(t *testing.T) {
 	// Test that the backfill failure handler properly routes failures
-	mockSyncer := &MockSyncerSet{}
+	mockSyncer := &mockSyncerSet{}
 	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
@@ -481,7 +471,7 @@ func TestSubscription_Send_ConcurrentWithClose(t *testing.T) {
 
 func TestSubscription_Concurrent_Modify(t *testing.T) {
 	// Test concurrent Modify operations
-	mockSyncer := &MockSyncerSet{}
+	mockSyncer := &mockSyncerSet{}
 	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
@@ -543,7 +533,7 @@ func TestSubscription_Concurrent_Modify(t *testing.T) {
 
 func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
 	// Test concurrent Send and Modify operations
-	mockSyncer := &MockSyncerSet{}
+	mockSyncer := &mockSyncerSet{}
 	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
@@ -613,7 +603,7 @@ func TestSubscription_Concurrent_Send_And_Modify(t *testing.T) {
 
 func TestSubscription_Concurrent_Close_During_Operations(t *testing.T) {
 	// Test that Close during concurrent operations doesn't cause deadlock
-	mockSyncer := &MockSyncerSet{}
+	mockSyncer := &mockSyncerSet{}
 	mockReg := &mockRegistry{}
 	sub := createTestSubscription("test-sync-1")
 	sub.syncers = mockSyncer
