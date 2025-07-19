@@ -2,7 +2,6 @@ package subscription
 
 // Stats holds the metrics for the subscription system.
 type Stats struct {
-	BufferSize          int
 	SyncingStreamsCount int
 }
 
@@ -10,7 +9,6 @@ type Stats struct {
 func (m *Manager) GetStats() Stats {
 	syncingStreamsCount, _ := m.registry.GetStats()
 	return Stats{
-		BufferSize:          m.messages.Len(),
 		SyncingStreamsCount: syncingStreamsCount,
 	}
 }

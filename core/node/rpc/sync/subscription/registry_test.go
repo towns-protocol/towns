@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 

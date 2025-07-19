@@ -323,7 +323,7 @@ func (ssr *syncSessionRunner) Run() {
 		ssr.node,
 		streamClient,
 		ssr.relocateStream,
-		ssr.messages,
+		ssr,
 		ssr.otelTracer,
 	)
 	if err != nil {
@@ -447,6 +447,34 @@ func (ssr *syncSessionRunner) Close(err error) {
 		ssr.relocateStream(streamId)
 		return true
 	})
+}
+
+// DistributeMessage implements MessageDistributor interface
+func (ssr *syncSessionRunner) DistributeMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
+	if err := ssr.messages.AddMessage(msg); err != nil {
+		logging.FromCtx(ssr.syncCtx).Errorw(
+			"Failed to add message to sync session runner",
+			"error", err,
+			"syncId", ssr.GetSyncId(),
+			"node", ssr.node,
+			"streamId", msg.GetStreamId(),
+			"func", "DistributeMessage",
+		)
+	}
+}
+
+// DistributeBackfillMessage implements MessageDistributor interface
+func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
+	if err := ssr.messages.AddMessage(msg); err != nil {
+		logging.FromCtx(ssr.syncCtx).Errorw(
+			"Failed to add message to sync session runner",
+			"error", err,
+			"syncId", ssr.GetSyncId(),
+			"node", ssr.node,
+			"streamId", msg.GetStreamId(),
+			"func", "DistributeBackfillMessage",
+		)
+	}
 }
 
 type TrackedViewForStream func(streamId shared.StreamId, stream *protocol.StreamAndCookie) (events.TrackedStreamView, error)

@@ -5,16 +5,11 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
-
-// MessageDistributor defines the contract for distributing messages to subscriptions
-type MessageDistributor interface {
-	DistributeMessage(streamID StreamId, msg *SyncStreamsResponse)
-	DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse)
-}
 
 // distributor implements MessageDistributor for distributing messages to subscriptions
 type distributor struct {
