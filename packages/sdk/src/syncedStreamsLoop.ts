@@ -1,7 +1,7 @@
 import { SyncCookie, SyncOp, SyncStreamsResponse } from '@towns-protocol/proto'
 import { DLogger, dlog, dlogError } from '@towns-protocol/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
-import { UnpackEnvelopeOpts, unpackStream, unpackStreamAndCookie } from './sign'
+import { UnpackEnvelopeOpts } from './sign'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
 import { nanoid } from 'nanoid'
@@ -21,6 +21,7 @@ import {
 } from './id'
 import { ParsedEvent, ParsedSnapshot, ParsedStreamResponse } from './types'
 import { isDefined, logNever } from './check'
+import type { Unpacker } from './unpacker'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -151,6 +152,7 @@ export class SyncedStreamsLoop {
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
         private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
+        private unpacker: Unpacker,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -870,11 +872,14 @@ export class SyncedStreamsLoop {
                         this.log('sync got stream', streamId, 'NOT FOUND')
                     } else if (syncStream.syncReset) {
                         this.logDebug('initStream from sync reset', streamId, 'RESET')
-                        const response = await unpackStream(syncStream, this.unpackEnvelopeOpts)
+                        const response = await this.unpacker.unpackStream(
+                            syncStream,
+                            this.unpackEnvelopeOpts,
+                        )
                         streamRecord.syncCookie = response.streamAndCookie.nextSyncCookie
                         await streamRecord.stream.initializeFromResponse(response)
                     } else {
-                        const streamAndCookie = await unpackStreamAndCookie(
+                        const streamAndCookie = await this.unpacker.unpackStreamAndCookie(
                             syncStream,
                             // Miniblocks are not provided in the sync updates so skipping signature validation
                             // that ensures that the snapshot creator is the same address as its miniblock creator.
