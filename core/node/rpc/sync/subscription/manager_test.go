@@ -48,11 +48,10 @@ func TestManager_CleanupUnusedStreams(t *testing.T) {
 	mockSyncerSet := &mockSyncerSet{}
 
 	m := &Manager{
-		log:           testutils.DiscardLogger(),
-		localNodeAddr: common.Address{1},
-		globalCtx:     ctx,
-		syncers:       mockSyncerSet,
-		registry:      newRegistry(),
+		log:       testutils.DiscardLogger(),
+		globalCtx: ctx,
+		syncers:   mockSyncerSet,
+		registry:  newRegistry(),
 	}
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)

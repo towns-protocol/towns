@@ -27,20 +27,14 @@ const (
 type Manager struct {
 	// log is the logger for this stream sync operation
 	log *logging.Log
-	// localNodeAddr is the address of the local node
-	localNodeAddr common.Address
 	// globalCtx is the global context of the node
 	globalCtx context.Context
-	// streamCache is the global stream cache
-	streamCache *StreamCache
-	// nodeRegistry is the node registry that provides information about other nodes in the network
-	nodeRegistry nodes.NodeRegistry
+	// distributor is the message distributor that distributes messages to subscriptions
+	distributor *distributor
 	// syncers is the set of syncers that handle stream synchronization
 	syncers SyncerSet
 	// Registry is the subscription registry that manages all subscriptions.
 	registry Registry
-	// distributor is the message distributor that distributes messages to subscriptions.
-	distributor *distributor
 	// stopped is a flag that indicates whether the manager is stopped (1) or not (0).
 	stopped atomic.Bool
 	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
@@ -66,15 +60,12 @@ func NewManager(
 	go syncers.Run()
 
 	manager := &Manager{
-		log:           log,
-		localNodeAddr: localNodeAddr,
-		globalCtx:     ctx,
-		streamCache:   streamCache,
-		nodeRegistry:  nodeRegistry,
-		otelTracer:    otelTracer,
-		syncers:       syncers,
-		registry:      reg,
-		distributor:   dis,
+		log:         log,
+		globalCtx:   ctx,
+		distributor: dis,
+		otelTracer:  otelTracer,
+		syncers:     syncers,
+		registry:    reg,
 	}
 
 	go manager.startUnusedStreamsCleaner()
