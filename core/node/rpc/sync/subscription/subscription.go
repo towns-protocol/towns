@@ -56,9 +56,11 @@ type Subscription struct {
 // Close closes the subscription.
 func (s *Subscription) Close() {
 	s.closed.Store(true)
-	s.Messages.Close()
 	// Remove the subscription from the registry
 	s.registry.RemoveSubscription(s.syncID)
+	s.Messages.Close()
+	s.initializingStreams.Clear()
+	s.backfillEvents.Clear()
 }
 
 // isClosed returns true if the subscription is closed, false otherwise.
