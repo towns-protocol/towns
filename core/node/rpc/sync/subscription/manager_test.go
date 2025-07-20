@@ -133,3 +133,34 @@ func TestManager_Subscribe_Concurrent(t *testing.T) {
 	_, subCount := m.registry.GetStats()
 	assert.Equal(t, n, subCount)
 }
+
+func TestManager_GetStats(t *testing.T) {
+	// Test the GetStats method
+	ctx := context.Background()
+	m := NewManager(ctx, common.Address{1}, nil, nil, nil)
+
+	// Initially should have 0 streams and 0 subscriptions
+	stats := m.GetStats()
+	assert.Equal(t, 0, stats.SyncingStreamsCount)
+
+	// Create some subscriptions with streams
+	for i := 0; i < 3; i++ {
+		syncID := fmt.Sprintf("test-sync-%d", i)
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+
+		sub, err := m.Subscribe(ctx, cancel, syncID)
+		require.NoError(t, err)
+		require.NotNil(t, sub)
+
+		// Add streams to the subscription
+		for j := 0; j < 2; j++ {
+			streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+			m.registry.AddStreamToSubscription(syncID, streamID)
+		}
+	}
+
+	// Check stats after adding subscriptions and streams
+	stats = m.GetStats()
+	assert.Equal(t, 6, stats.SyncingStreamsCount) // 3 subscriptions * 2 streams each
+}
