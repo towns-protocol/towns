@@ -29,9 +29,10 @@ func ZapJsonLogger() (*logging.Log, *bytes.Buffer) {
 	).Sugar()
 
 	return &logging.Log{
-		Default:   l.Named("default"),
-		Miniblock: l.Named("miniblock"),
-		Rpc:       l.Named("rpc"),
+		Default:    l.Named("default"),
+		Miniblock:  l.Named("miniblock"),
+		Rpc:        l.Named("rpc"),
+		StreamSync: l.Named("sync"),
 	}, buffer
 }
 
