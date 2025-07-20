@@ -482,8 +482,9 @@ func TestDistributor_ExtractBackfillHashes(t *testing.T) {
 			hashes := dis.extractBackfillHashes(tt.msg)
 
 			assert.Len(t, hashes, len(tt.expectedHashes))
-			for i, expectedHash := range tt.expectedHashes {
-				assert.Equal(t, expectedHash, hashes[i])
+			for _, expectedHash := range tt.expectedHashes {
+				_, exists := hashes[expectedHash]
+				assert.True(t, exists, "Expected hash %v not found in map", expectedHash)
 			}
 		})
 	}

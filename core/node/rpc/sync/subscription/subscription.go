@@ -42,7 +42,7 @@ type Subscription struct {
 	// backfillEvents is the map of stream and backfill events and miniblocks hashes that were sent to the client.
 	// This is used to avoid sending the same backfill events multiple times.
 	// The list of hashes is deleted after receiving the first message after the backfill.
-	backfillEvents *xsync.Map[StreamId, []common.Hash]
+	backfillEvents *xsync.Map[StreamId, map[common.Hash]struct{}]
 	// syncers is the set of syncers that handle stream synchronization
 	syncers SyncerSet
 	// registry is the subscription registry that manages all subscriptions.

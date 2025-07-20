@@ -1,7 +1,6 @@
 package subscription
 
 import (
-	"slices"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -92,13 +91,23 @@ func (d *distributor) sendMessageToSubscription(streamID StreamId, msg *SyncStre
 		// Filter out backfill events that were already sent
 		backfillEvents, _ := subscription.backfillEvents.LoadAndDelete(streamID)
 		if len(backfillEvents) > 0 {
+			filteredEvents := make([]*Envelope, 0, len(msg.GetStream().GetEvents()))
+			for _, e := range msg.GetStream().GetEvents() {
+				if _, exists := backfillEvents[common.BytesToHash(e.Hash)]; !exists {
+					filteredEvents = append(filteredEvents, e)
+				}
+			}
+
+			filteredMiniblocks := make([]*Miniblock, 0, len(msg.GetStream().GetMiniblocks()))
+			for _, mb := range msg.GetStream().GetMiniblocks() {
+				if _, exists := backfillEvents[common.BytesToHash(mb.Header.Hash)]; !exists {
+					filteredMiniblocks = append(filteredMiniblocks, mb)
+				}
+			}
+
 			msg.Stream = &StreamAndCookie{
-				Events: slices.DeleteFunc(slices.Clone(msg.GetStream().GetEvents()), func(e *Envelope) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(e.Hash))
-				}),
-				Miniblocks: slices.DeleteFunc(slices.Clone(msg.GetStream().GetMiniblocks()), func(mb *Miniblock) bool {
-					return slices.Contains(backfillEvents, common.BytesToHash(mb.Header.Hash))
-				}),
+				Events:         filteredEvents,
+				Miniblocks:     filteredMiniblocks,
 				NextSyncCookie: msg.GetStream().GetNextSyncCookie(),
 				SyncReset:      msg.GetStream().GetSyncReset(),
 				Snapshot:       msg.GetStream().GetSnapshot(),
@@ -110,15 +119,15 @@ func (d *distributor) sendMessageToSubscription(streamID StreamId, msg *SyncStre
 }
 
 // extractBackfillHashes extracts hashes from backfill events and miniblocks
-func (d *distributor) extractBackfillHashes(msg *SyncStreamsResponse) []common.Hash {
-	hashes := make([]common.Hash, 0, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
+func (d *distributor) extractBackfillHashes(msg *SyncStreamsResponse) map[common.Hash]struct{} {
+	hashes := make(map[common.Hash]struct{}, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
 
 	for _, event := range msg.GetStream().GetEvents() {
-		hashes = append(hashes, common.BytesToHash(event.Hash))
+		hashes[common.BytesToHash(event.Hash)] = struct{}{}
 	}
 
 	for _, miniblock := range msg.GetStream().GetMiniblocks() {
-		hashes = append(hashes, common.BytesToHash(miniblock.Header.Hash))
+		hashes[common.BytesToHash(miniblock.Header.Hash)] = struct{}{}
 	}
 
 	return hashes

@@ -23,7 +23,7 @@ func createTestSubscription(syncID string) *Subscription {
 		ctx:                 ctx,
 		cancel:              cancel,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
-		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
+		backfillEvents:      xsync.NewMap[StreamId, map[common.Hash]struct{}](),
 		registry:            newRegistry(),
 		log:                 testutils.DiscardLogger(),
 	}
