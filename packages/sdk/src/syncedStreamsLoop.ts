@@ -570,7 +570,7 @@ export class SyncedStreamsLoop {
 
     private async tickResponses() {
         const item = this.responsesQueue.shift()
-        if (item && item.syncId === this.syncId) {
+        if (item) {
             await this.onUpdate(item)
         }
     }
