@@ -333,12 +333,13 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 
 func TestDistributor_BackfillEventFiltering(t *testing.T) {
 	tests := []struct {
-		name                 string
-		setup                func() (*distributor, Registry, *Subscription)
-		streamID             StreamId
-		backfillMsg          *SyncStreamsResponse
-		regularMsg           *SyncStreamsResponse
-		expectedEventCount   int
+		name                   string
+		setup                  func() (*distributor, Registry, *Subscription)
+		streamID               StreamId
+		backfillMsg            *SyncStreamsResponse
+		regularMsg             *SyncStreamsResponse
+		expectedEventCount     int
+		expectedMiniblockCount int
 	}{
 		{
 			name: "filter duplicate events from backfill",
@@ -378,6 +379,51 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 			},
 			expectedEventCount: 1, // Only the new event should be included
 		},
+		{
+			name: "filter duplicate events and miniblocks from backfill",
+			setup: func() (*distributor, Registry, *Subscription) {
+				reg := newRegistry()
+				dis := newDistributor(reg, nil)
+				sub := createTestSubscription("test-sync-2")
+				// Mark stream as initializing for backfill
+				sub.initializingStreams.Store(StreamId{5, 6, 7, 8}, struct{}{})
+				reg.AddSubscription(sub)
+				reg.AddStreamToSubscription("test-sync-2", StreamId{5, 6, 7, 8})
+				return dis, reg, sub
+			},
+			streamID: StreamId{5, 6, 7, 8},
+			backfillMsg: &SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				StreamId:      []byte{5, 6, 7, 8},
+				TargetSyncIds: []string{"test-sync-2"},
+				Stream: &StreamAndCookie{
+					Events: []*Envelope{
+						{Hash: common.Hash{10}.Bytes()},
+						{Hash: common.Hash{11}.Bytes()},
+					},
+					Miniblocks: []*Miniblock{
+						{Header: &Envelope{Hash: common.Hash{20}.Bytes()}},
+						{Header: &Envelope{Hash: common.Hash{21}.Bytes()}},
+					},
+				},
+			},
+			regularMsg: &SyncStreamsResponse{
+				SyncOp:   SyncOp_SYNC_UPDATE,
+				StreamId: []byte{5, 6, 7, 8},
+				Stream: &StreamAndCookie{
+					Events: []*Envelope{
+						{Hash: common.Hash{10}.Bytes()}, // Duplicate from backfill
+						{Hash: common.Hash{12}.Bytes()}, // New event
+					},
+					Miniblocks: []*Miniblock{
+						{Header: &Envelope{Hash: common.Hash{20}.Bytes()}}, // Duplicate from backfill
+						{Header: &Envelope{Hash: common.Hash{22}.Bytes()}}, // New miniblock
+					},
+				},
+			},
+			expectedEventCount:     1, // Only the new event
+			expectedMiniblockCount: 1, // Only the new miniblock
+		},
 	}
 
 	for _, tt := range tests {
@@ -402,8 +448,20 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 			regularMsgReceived := batch[1]
 			assert.Equal(t, tt.expectedEventCount, len(regularMsgReceived.Stream.Events))
 			if tt.expectedEventCount > 0 {
-				// Verify it's the new event (hash{3})
-				assert.Equal(t, common.Hash{3}.Bytes(), regularMsgReceived.Stream.Events[0].Hash)
+				// For test case 1: Verify it's the new event (hash{3})
+				// For test case 2: Verify it's the new event (hash{12})
+				if tt.streamID == (StreamId{1, 2, 3, 4}) {
+					assert.Equal(t, common.Hash{3}.Bytes(), regularMsgReceived.Stream.Events[0].Hash)
+				} else if tt.streamID == (StreamId{5, 6, 7, 8}) {
+					assert.Equal(t, common.Hash{12}.Bytes(), regularMsgReceived.Stream.Events[0].Hash)
+				}
+			}
+
+			// Check miniblocks if expected
+			if tt.expectedMiniblockCount > 0 {
+				assert.Equal(t, tt.expectedMiniblockCount, len(regularMsgReceived.Stream.Miniblocks))
+				// Verify it's the new miniblock (hash{22})
+				assert.Equal(t, common.Hash{22}.Bytes(), regularMsgReceived.Stream.Miniblocks[0].Header.Hash)
 			}
 
 			// Verify registry state
