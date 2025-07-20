@@ -646,8 +646,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		})
 		req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 		resp, err := stub.GetMiniblocks(ctx, req)
+		// Since forwarding is disabled, Err_UNAVAILABLE indicates that miniblocks were not found.
 		notFoundError := err != nil &&
-			(IsRiverErrorCode(err, Err_NOT_FOUND) || IsRiverErrorCode(err, Err_MINIBLOCKS_NOT_FOUND))
+			(IsRiverErrorCode(err, Err_NOT_FOUND) || IsRiverErrorCode(err, Err_MINIBLOCKS_NOT_FOUND) || IsRiverErrorCode(err, Err_UNAVAILABLE))
 		if err != nil && !notFoundError {
 			log.Warnw(
 				"Error when calling GetMiniblocks on server",

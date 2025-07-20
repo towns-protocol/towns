@@ -86,7 +86,11 @@ func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 }
 
 func RiverErrorWithBase(code protocol.Err, msg string, base error, tags ...any) *RiverErrorImpl {
-	return RiverErrorWithBases(code, msg, []error{base}, tags...)
+	var bases []error
+	if base != nil {
+		bases = []error{base}
+	}
+	return RiverErrorWithBases(code, msg, bases, tags...)
 }
 
 func RiverErrorWithBases(code protocol.Err, msg string, bases []error, tags ...any) *RiverErrorImpl {

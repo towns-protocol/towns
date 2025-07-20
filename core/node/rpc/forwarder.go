@@ -25,9 +25,9 @@ const (
 	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 )
 
-func checkNoForward[T any](req *connect.Request[T]) error {
+func checkNoForward[T any](req *connect.Request[T], baseErr error) error {
 	if req.Header().Get(RiverNoForwardHeader) == RiverHeaderTrueValue {
-		return RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header")
+		return RiverErrorWithBase(Err_UNAVAILABLE, "Forwarding disabled by request header", baseErr)
 	}
 	return nil
 }
@@ -155,7 +155,7 @@ func (s *Service) getStreamImpl(
 	}
 
 	if view == nil {
-		if err = checkNoForward(req); err != nil {
+		if err = checkNoForward(req, err); err != nil {
 			return nil, err
 		}
 	}
@@ -243,7 +243,7 @@ func (s *Service) getStreamExImpl(
 		}
 	}
 
-	if err = checkNoForward(req); err != nil {
+	if err = checkNoForward(req, err); err != nil {
 		return err
 	}
 
@@ -318,20 +318,15 @@ func (s *Service) getMiniblocksImpl(
 	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
 		if resp, err := s.localGetMiniblocks(ctx, req, stream); err == nil {
 			return resp, nil
-		} else if (IsRiverErrorCode(err, Err_MINIBLOCKS_NOT_FOUND) || IsRiverErrorCode(err, Err_MINIBLOCKS_STORAGE_FAILURE)) && req.Header().Get(RiverNoForwardHeader) != RiverHeaderTrueValue {
-			// Missing miniblocks locally and this is not a forwarded request, fall back to remotes
-			logging.FromCtx(ctx).Warnw("Missing miniblocks locally, falling back to remotes",
-				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
-			// Fall through to forwarding logic below
 		} else if IsOperationRetriableOnRemotes(err) {
-			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes",
-				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes (if request is not \"no-forward\")",
+				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId, RiverNoForwardHeader, req.Header().Get(RiverNoForwardHeader))
 		} else {
 			return nil, err
 		}
 	}
 
-	if err = checkNoForward(req); err != nil {
+	if err = checkNoForward(req, err); err != nil {
 		return nil, err
 	}
 
@@ -390,7 +385,7 @@ func (s *Service) getLastMiniblockHashImpl(
 		}
 	}
 
-	if err = checkNoForward(req); err != nil {
+	if err = checkNoForward(req, err); err != nil {
 		return nil, err
 	}
 
@@ -451,7 +446,7 @@ func (s *Service) addEventImpl(
 		}
 	}
 
-	if err = checkNoForward(req); err != nil {
+	if err = checkNoForward(req, err); err != nil {
 		return nil, err
 	}
 
@@ -490,6 +485,7 @@ func (s *Service) addMediaEventImpl(
 ) (*connect.Response[AddMediaEventResponse], error) {
 	cc := req.Msg.GetCreationCookie()
 
+	var err error
 	// Check if the current node is in the replica nodes list for the given stream.
 	if cc.IsLocal(s.wallet.Address) {
 		streamId, err := shared.StreamIdFromBytes(cc.GetStreamId())
@@ -513,7 +509,7 @@ func (s *Service) addMediaEventImpl(
 	}
 
 	// Forward the request to the first sticky node otherwise
-	if err := checkNoForward(req); err != nil {
+	if err := checkNoForward(req, err); err != nil {
 		return nil, err
 	}
 
