@@ -76,9 +76,9 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	if err != nil {
 		rvrErr := AsRiverError(err).
 			Tag("syncId", s.syncID).
-			Tag("op", msg.GetSyncOp())
+			Func("Subscription.Send")
 		s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
-		s.log.Errorw("Failed to add message to subscription", "op", msg.GetSyncOp(), "error", err)
+		_ = rvrErr.LogError(s.log)
 	}
 }
 
@@ -131,13 +131,14 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		if modifiedReq.BackfillingFailureHandler == nil {
 			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
 		} else {
+			originalBackfillingFailureHandler := req.BackfillingFailureHandler
 			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
 				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
 					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
 				}) {
 					modifiedReq.AddingFailureHandler(status)
-				} else {
-					modifiedReq.BackfillingFailureHandler(status)
+				} else if originalBackfillingFailureHandler != nil {
+					originalBackfillingFailureHandler(status)
 				}
 			}
 		}
