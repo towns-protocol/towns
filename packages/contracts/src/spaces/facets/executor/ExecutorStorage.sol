@@ -36,6 +36,8 @@ library ExecutorStorage {
         mapping(bytes32 scheduleId => Schedule schedule) schedules;
         // Hook Config ID => Hook Config
         mapping(bytes32 configId => HookConfig config) hooks;
+        // Executing Target => Execution ID
+        mapping(address target => bytes32 executionId) executingTarget;
     }
 
     function getLayout() internal pure returns (Layout storage l) {

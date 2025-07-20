@@ -53,6 +53,15 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
+    function onRequestTransfer(
+        address token,
+        address to,
+        uint256 amount
+    ) external returns (bool success) {
+        return _onRequestTransfer(msg.sender, token, to, amount);
+    }
+
+    /// @inheritdoc IAppAccount
     function enableApp(address app) external onlyOwner {
         _enableApp(app);
     }
