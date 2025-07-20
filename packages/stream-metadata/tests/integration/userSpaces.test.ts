@@ -11,14 +11,7 @@ const log = dlog('test:stream-metadata:test:userSpaces', {
 })
 
 interface UserSpacesResponsePayload {
-	spaces: Array<{
-		spaceId: string
-		spaceAddress: string
-		name?: string
-		description?: string
-		motto?: string
-		image: string
-	}>
+	spaceIds: string[]
 }
 
 describe('integration/stream-metadata/userSpaces', () => {
@@ -93,23 +86,18 @@ describe('integration/stream-metadata/userSpaces', () => {
 
 		expect(aliceResponse.status).toBe(200)
 		expect(aliceResponse.headers['content-type']).toContain('application/json')
-		expect(aliceResponse.data.spaces).toBeInstanceOf(Array)
-		expect(aliceResponse.data.spaces.length).toBeGreaterThanOrEqual(2)
+		expect(aliceResponse.data.spaceIds).toBeInstanceOf(Array)
+		expect(aliceResponse.data.spaceIds.length).toBeGreaterThanOrEqual(2)
 
 		// Check that both spaces are present
-		const aliceSpaceIds = aliceResponse.data.spaces.map((space) => space.spaceId)
-		expect(aliceSpaceIds).toContain(space1Id)
-		expect(aliceSpaceIds).toContain(space2Id)
+		expect(aliceResponse.data.spaceIds).toContain(space1Id)
+		expect(aliceResponse.data.spaceIds).toContain(space2Id)
 
-		// Verify spaces have required properties
-		aliceResponse.data.spaces.forEach((space) => {
-			expect(space.spaceId).toBeDefined()
-			expect(space.spaceAddress).toBeDefined()
-			expect(space.image).toContain('/space/')
-			expect(space.image).toContain('/image')
-		})
+		// Verify spaces are sorted
+		const sortedSpaceIds = [...aliceResponse.data.spaceIds].sort()
+		expect(aliceResponse.data.spaceIds).toEqual(sortedSpaceIds)
 
-		log("Alice's spaces verified:", aliceSpaceIds)
+		log("Alice's spaces verified:", aliceResponse.data.spaceIds)
 
 		// Fetch Bob's spaces (should include the spaces he created)
 		const bobRoute = `user/${bobIdentity.rootWallet.address}/spaces`
@@ -118,15 +106,14 @@ describe('integration/stream-metadata/userSpaces', () => {
 
 		expect(bobResponse.status).toBe(200)
 		expect(bobResponse.headers['content-type']).toContain('application/json')
-		expect(bobResponse.data.spaces).toBeInstanceOf(Array)
-		expect(bobResponse.data.spaces.length).toBeGreaterThanOrEqual(2)
+		expect(bobResponse.data.spaceIds).toBeInstanceOf(Array)
+		expect(bobResponse.data.spaceIds.length).toBeGreaterThanOrEqual(2)
 
 		// Check that both spaces are present
-		const bobSpaceIds = bobResponse.data.spaces.map((space) => space.spaceId)
-		expect(bobSpaceIds).toContain(space1Id)
-		expect(bobSpaceIds).toContain(space2Id)
+		expect(bobResponse.data.spaceIds).toContain(space1Id)
+		expect(bobResponse.data.spaceIds).toContain(space2Id)
 
-		log("Bob's spaces verified:", bobSpaceIds)
+		log("Bob's spaces verified:", bobResponse.data.spaceIds)
 	})
 
 	test('should return 404 for a non-existent user', async () => {

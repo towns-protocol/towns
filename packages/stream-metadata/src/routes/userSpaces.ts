@@ -2,12 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { StreamPrefix, StreamStateView, makeStreamId, isSpaceStreamId } from '@towns-protocol/sdk'
 import { MembershipOp } from '@towns-protocol/proto'
 import { z } from 'zod'
-import { SpaceAddressFromSpaceId, type ISpaceOwnerBase } from '@towns-protocol/web3'
 
 import { getStream } from '../riverStreamRpcClient'
 import { isValidEthereumAddress } from '../validators'
-import { config } from '../environment'
-import { spaceDapp } from '../contract-utils'
 
 const paramsSchema = z.object({
 	userId: z.string().min(1, 'userId parameter is required').refine(isValidEthereumAddress, {
@@ -61,33 +58,10 @@ export async function fetchUserSpaces(request: FastifyRequest, reply: FastifyRep
 			.header('Cache-Control', CACHE_CONTROL[404])
 			.send('user spaces not found')
 	}
-
-	const spaceInfoMap = new Map<string, ISpaceOwnerBase.SpaceStructOutput>()
-	await Promise.all(
-		spaceIds.map(async (spaceId) => {
-			const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-			const spaceInfo = await spaceDapp.spaceOwner.getSpaceInfo(spaceAddress)
-			spaceInfoMap.set(spaceAddress, spaceInfo)
-		}),
-	)
-
-	const spaces = spaceIds.map((spaceId) => {
-		const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-		const spaceInfo = spaceInfoMap.get(spaceAddress)
-
-		return {
-			spaceId,
-			spaceAddress,
-			name: spaceInfo?.name,
-			description: spaceInfo?.longDescription,
-			motto: spaceInfo?.shortDescription,
-			image: `${config.streamMetadataBaseUrl}/space/${spaceAddress}/image`,
-		}
-	})
 	return reply
 		.header('Content-Type', 'application/json')
 		.header('Cache-Control', CACHE_CONTROL[200])
-		.send({ spaces })
+		.send({ spaceIds })
 }
 
 function getUserSpaces(streamView: StreamStateView): string[] | undefined {
