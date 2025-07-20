@@ -563,6 +563,8 @@ export class SyncedStreamsLoop {
         queueMicrotask(() => {
             tick.catch((e) => this.logError('ProcessResponseTick Error', e)).finally(() => {
                 this.inProgressResponseTick = undefined
+                // Tick both queues, not just the response queue. Handled responses affect the ModifySync flow
+                // in the modifications queue.
                 setTimeout(() => this.checkStartTicking())
             })
         })
