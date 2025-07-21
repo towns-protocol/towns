@@ -1,4 +1,4 @@
-import { Queue, QueueEvents } from 'bullmq'
+import { JobProgress, Queue, QueueEvents } from 'bullmq'
 import { getLogger } from './utils/logger'
 import {
     RunOpts,
@@ -30,7 +30,10 @@ export class StressDriver {
     jobs: StressJob[] = []
     lastUpdateEpochMs: number = 0
     scheduledJobs: number = 0
-    constructor(readonly index: number, readonly opts: RunOpts) {
+    constructor(
+        readonly index: number,
+        readonly opts: RunOpts,
+    ) {
         this.queueName = queueNameForIndex(opts.sessionId, index)
         this.queue = new Queue<StressTask, StressResult, StressTaskName>(this.queueName, {
             connection: {
@@ -62,7 +65,7 @@ export class StressDriver {
         this.logger.error(args, 'Job FAILED')
     }
 
-    onJobProgress(args: { jobId: string; data: number | object }) {
+    onJobProgress(args: { jobId: string; data: JobProgress }) {
         this.lastUpdateEpochMs = Date.now()
         this.logger.info(args, 'Job PROGRESS')
     }
