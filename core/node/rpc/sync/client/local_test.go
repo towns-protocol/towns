@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
@@ -43,7 +44,7 @@ func createTestSyncCookie(streamID StreamId) *SyncCookie {
 
 // TestNewLocalSyncer tests the constructor
 func TestNewLocalSyncer(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -61,7 +62,7 @@ func TestNewLocalSyncer(t *testing.T) {
 
 // TestLocalSyncer_Address tests the Address method
 func TestLocalSyncer_Address(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x456")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -74,7 +75,7 @@ func TestLocalSyncer_Address(t *testing.T) {
 
 // TestLocalSyncer_Run tests the Run method
 func TestLocalSyncer_Run(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(test.NewTestContext(t))
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -103,7 +104,7 @@ func TestLocalSyncer_Run(t *testing.T) {
 
 // TestLocalSyncer_OnUpdate tests the OnUpdate method
 func TestLocalSyncer_OnUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -129,7 +130,7 @@ func TestLocalSyncer_OnUpdate(t *testing.T) {
 
 // TestLocalSyncer_OnUpdate_Error tests OnUpdate when sendResponse fails
 func TestLocalSyncer_OnUpdate_Error(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -159,7 +160,7 @@ func TestLocalSyncer_OnUpdate_Error(t *testing.T) {
 
 // TestLocalSyncer_OnSyncError tests the OnSyncError method
 func TestLocalSyncer_OnSyncError(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -176,7 +177,7 @@ func TestLocalSyncer_OnSyncError(t *testing.T) {
 
 // TestLocalSyncer_OnStreamSyncDown tests the OnStreamSyncDown method
 func TestLocalSyncer_OnStreamSyncDown(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -197,7 +198,7 @@ func TestLocalSyncer_OnStreamSyncDown(t *testing.T) {
 
 // TestLocalSyncer_OnStreamSyncDown_Error tests OnStreamSyncDown when sendResponse fails
 func TestLocalSyncer_OnStreamSyncDown_Error(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -224,7 +225,7 @@ func TestLocalSyncer_OnStreamSyncDown_Error(t *testing.T) {
 
 // TestLocalSyncer_Modify_AddStreams tests the Modify method with add streams
 func TestLocalSyncer_Modify_AddStreams(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -257,7 +258,7 @@ func TestLocalSyncer_Modify_AddStreams(t *testing.T) {
 
 // TestLocalSyncer_Modify_AddStreams_Error tests Modify with add streams error
 func TestLocalSyncer_Modify_AddStreams_Error(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -290,7 +291,7 @@ func TestLocalSyncer_Modify_AddStreams_Error(t *testing.T) {
 
 // TestLocalSyncer_Modify_RemoveStreams tests the Modify method with remove streams
 func TestLocalSyncer_Modify_RemoveStreams(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -317,7 +318,7 @@ func TestLocalSyncer_Modify_RemoveStreams(t *testing.T) {
 
 // TestLocalSyncer_Modify_BackfillStreams tests the Modify method with backfill streams
 func TestLocalSyncer_Modify_BackfillStreams(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -352,7 +353,7 @@ func TestLocalSyncer_Modify_BackfillStreams(t *testing.T) {
 
 // TestLocalSyncer_Modify_BackfillStreams_Error tests Modify with backfill streams error
 func TestLocalSyncer_Modify_BackfillStreams_Error(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -387,7 +388,7 @@ func TestLocalSyncer_Modify_BackfillStreams_Error(t *testing.T) {
 
 // TestLocalSyncer_DebugDropStream tests the DebugDropStream method
 func TestLocalSyncer_DebugDropStream(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -410,7 +411,7 @@ func TestLocalSyncer_DebugDropStream(t *testing.T) {
 
 // TestLocalSyncer_DebugDropStream_NotFound tests DebugDropStream when stream not found
 func TestLocalSyncer_DebugDropStream_NotFound(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -426,7 +427,7 @@ func TestLocalSyncer_DebugDropStream_NotFound(t *testing.T) {
 
 // TestLocalSyncer_AddStream_Duplicate tests addStream with duplicate stream
 func TestLocalSyncer_AddStream_Duplicate(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -455,7 +456,7 @@ func TestLocalSyncer_AddStream_Duplicate(t *testing.T) {
 
 // TestLocalSyncer_AddStream_SubError tests addStream when Sub fails
 func TestLocalSyncer_AddStream_SubError(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -479,7 +480,7 @@ func TestLocalSyncer_AddStream_SubError(t *testing.T) {
 
 // TestLocalSyncer_SendResponse_ContextDone tests sendResponse when context is done
 func TestLocalSyncer_SendResponse_ContextDone(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(test.NewTestContext(t))
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -499,7 +500,7 @@ func TestLocalSyncer_SendResponse_ContextDone(t *testing.T) {
 
 // TestLocalSyncer_SendResponse_AddMessageError tests sendResponse when AddMessage fails
 func TestLocalSyncer_SendResponse_AddMessageError(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -519,7 +520,7 @@ func TestLocalSyncer_SendResponse_AddMessageError(t *testing.T) {
 
 // TestLocalSyncer_StreamUnbsub tests the streamUnbsub method
 func TestLocalSyncer_StreamUnbsub(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
@@ -542,7 +543,7 @@ func TestLocalSyncer_StreamUnbsub(t *testing.T) {
 
 // TestLocalSyncer_StreamUnbsub_NotFound tests streamUnbsub when stream is not found
 func TestLocalSyncer_StreamUnbsub_NotFound(t *testing.T) {
-	ctx := context.Background()
+	ctx := test.NewTestContext(t)
 	localAddr := common.HexToAddress("0x123")
 	streamCache := &mockStreamCache{}
 	messages := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()

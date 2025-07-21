@@ -14,8 +14,8 @@ import (
 )
 
 // createTestSubscription creates a properly initialized Subscription for testing
-func createTestSubscription(syncID string) *Subscription {
-	ctx, cancel := context.WithCancelCause(context.Background())
+func createTestSubscription(ctx context.Context, syncID string) *Subscription {
+	ctx, cancel := context.WithCancelCause(ctx)
 	return &Subscription{
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),

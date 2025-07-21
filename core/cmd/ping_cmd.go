@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,8 +15,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc"
 )
 
-func runPing(cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func runPing(cmd *cobra.Command, cfg *config.Config) error {
+	ctx := cmd.Context()
 
 	riverChain, err := crypto.NewBlockchain(
 		ctx,
@@ -87,7 +86,7 @@ func init() {
 		Use:   "ping",
 		Short: "Pings all nodes in the network based on config and print the results as JSON",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPing(cmdConfig)
+			return runPing(cmd, cmdConfig)
 		},
 	}
 

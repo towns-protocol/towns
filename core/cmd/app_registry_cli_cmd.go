@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,7 +12,7 @@ import (
 )
 
 func runCheckRegisteredApp(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	// Validate the input address
 	if !common.IsHexAddress(args[0]) {

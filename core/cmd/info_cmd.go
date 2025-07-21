@@ -1,16 +1,14 @@
 package cmd
 
 import (
-	"context"
-
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/rpc"
 
 	"github.com/spf13/cobra"
 )
 
-func runInfo(cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func runInfo(cmd *cobra.Command, cfg *config.Config) error {
+	ctx := cmd.Context()
 	return rpc.RunInfoMode(ctx, cfg)
 }
 
@@ -19,7 +17,7 @@ func init() {
 		Use:   "info",
 		Short: "Runs the node in info mode when only /debug/multi page is available",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runInfo(cmdConfig)
+			return runInfo(cmd, cmdConfig)
 		},
 	}
 

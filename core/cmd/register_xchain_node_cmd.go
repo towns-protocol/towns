@@ -47,7 +47,7 @@ func register(cmd *cobra.Command, args []string) error {
 		userConfirmationMessage = "Register xchain node '%s' from operator '%s'?\n"
 		autoApproval, _         = cmd.Flags().GetBool("approve")
 	)
-	return registerImpl(operatorKeyfile, userConfirmationMessage, true, autoApproval)
+	return registerImpl(cmd, operatorKeyfile, userConfirmationMessage, true, autoApproval)
 }
 
 func unregister(cmd *cobra.Command, args []string) error {
@@ -56,12 +56,12 @@ func unregister(cmd *cobra.Command, args []string) error {
 		userConfirmationMessage = "Unregister xchain node '%s' from operator '%s'?\n"
 		autoApproval, _         = cmd.Flags().GetBool("approve")
 	)
-	return registerImpl(operatorKeyfile, userConfirmationMessage, false, autoApproval)
+	return registerImpl(cmd, operatorKeyfile, userConfirmationMessage, false, autoApproval)
 }
 
-func registerImpl(operatorKeyfile string, userConfirmationMessage string, register bool, autoApprove bool) error {
+func registerImpl(cmd *cobra.Command, operatorKeyfile string, userConfirmationMessage string, register bool, autoApprove bool) error {
 	var (
-		ctx, cancel                = context.WithTimeout(context.Background(), time.Minute)
+		ctx, cancel                = context.WithTimeout(cmd.Context(), time.Minute)
 		xchainWallet, xWalletErr   = util.LoadWallet(ctx)
 		operatorWallet, oWalletErr = crypto.LoadWallet(ctx, operatorKeyfile)
 	)

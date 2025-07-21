@@ -1,7 +1,6 @@
 package node2nodeauth_test
 
 import (
-	"context"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
@@ -21,7 +21,8 @@ func TestEndToEnd(t *testing.T) {
 	logger := logging.DefaultLogger(zap.DebugLevel)
 
 	// Create a wallet
-	wallet, err := crypto.NewWallet(context.Background())
+	ctx := test.NewTestContext(t)
+	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(t, err)
 
 	// Set up the HTTP server
@@ -43,7 +44,7 @@ func TestEndToEnd(t *testing.T) {
 
 	// Create client with mTLS setup
 	client, err := testcert.GetHttp2LocalhostTLSClientWithCert(
-		context.Background(), nil, node2nodeauth.CertGetter(logger, wallet, big.NewInt(1)),
+		ctx, nil, node2nodeauth.CertGetter(logger, wallet, big.NewInt(1)),
 	)
 	require.NoError(t, err)
 
@@ -53,7 +54,7 @@ func TestEndToEnd(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Create a client without mTLS
-	client, err = testcert.GetHttp2LocalhostTLSClient(context.Background(), nil)
+	client, err = testcert.GetHttp2LocalhostTLSClient(ctx, nil)
 	require.NoError(t, err)
 
 	// Perform a request to the server
