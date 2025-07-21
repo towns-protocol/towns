@@ -127,7 +127,8 @@ export class SyncedStreamsLoop {
     // Responses are queued and processed in order
     // and are cleared when sync stops
     private responsesQueue: SyncStreamsResponse[] = []
-    private inProgressTick?: Promise<void>
+    private inProgressResponseTick?: Promise<void>
+    private inProgressModificationTick?: Promise<void>
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
     private pendingStreamsToDelete: string[] = []
@@ -537,15 +538,35 @@ export class SyncedStreamsLoop {
     }
 
     private checkStartTicking() {
-        if (this.inProgressTick) {
+        this.checkStartTickingResponses()
+        this.checkStartTickingModifications()
+    }
+
+    private checkStartTickingModifications() {
+        if (this.inProgressModificationTick) {
             return
         }
 
-        if (
-            this.responsesQueue.length === 0 &&
-            this.pendingSyncCookies.length === 0 &&
-            this.pendingStreamsToDelete.length === 0
-        ) {
+        if (this.pendingSyncCookies.length === 0 && this.pendingStreamsToDelete.length === 0) {
+            return
+        }
+
+        const tick = this.tickModifications()
+        this.inProgressModificationTick = tick
+        queueMicrotask(() => {
+            tick.catch((e) => this.logError('ProcessModificationTick Error', e)).finally(() => {
+                this.inProgressModificationTick = undefined
+                setTimeout(() => this.checkStartTickingModifications())
+            })
+        })
+    }
+
+    private checkStartTickingResponses() {
+        if (this.inProgressResponseTick) {
+            return
+        }
+
+        if (this.responsesQueue.length === 0) {
             return
         }
 
@@ -553,17 +574,26 @@ export class SyncedStreamsLoop {
             return
         }
 
-        const tick = this.tick()
-        this.inProgressTick = tick
+        const tick = this.tickResponses()
+        this.inProgressResponseTick = tick
         queueMicrotask(() => {
-            tick.catch((e) => this.logError('ProcessTick Error', e)).finally(() => {
-                this.inProgressTick = undefined
+            tick.catch((e) => this.logError('ProcessResponseTick Error', e)).finally(() => {
+                this.inProgressResponseTick = undefined
+                // Tick both queues, not just the response queue. Handled responses affect the ModifySync flow
+                // in the modifications queue.
                 setTimeout(() => this.checkStartTicking())
             })
         })
     }
 
-    private async tick() {
+    private async tickResponses() {
+        const item = this.responsesQueue.shift()
+        if (item) {
+            await this.onUpdate(item)
+        }
+    }
+
+    private async tickModifications() {
         if (this.syncState === SyncState.Syncing) {
             const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
                 (x) => !this.inFlightSyncCookies.has(x),
@@ -621,11 +651,6 @@ export class SyncedStreamsLoop {
                 }
             }
         }
-        const item = this.responsesQueue.shift()
-        if (!item || item.syncId !== this.syncId) {
-            return
-        }
-        await this.onUpdate(item)
     }
 
     private async waitForSyncingState() {
@@ -808,9 +833,10 @@ export class SyncedStreamsLoop {
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
             if (this.syncId != res.syncId) {
-                throw new Error(
+                this.logError(
                     `syncId mismatch; has:'${this.syncId}', got:${res.syncId}'. Throw away update.`,
                 )
+                return
             }
             const syncStream = res.stream
             if (syncStream !== undefined) {

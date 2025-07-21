@@ -27,22 +27,14 @@ const (
 type Manager struct {
 	// log is the logger for this stream sync operation
 	log *logging.Log
-	// localNodeAddr is the address of the local node
-	localNodeAddr common.Address
 	// globalCtx is the global context of the node
 	globalCtx context.Context
-	// streamCache is the global stream cache
-	streamCache *StreamCache
-	// nodeRegistry is the node registry that provides information about other nodes in the network
-	nodeRegistry nodes.NodeRegistry
+	// distributor is the message distributor that distributes messages to subscriptions
+	distributor *distributor
 	// syncers is the set of syncers that handle stream synchronization
 	syncers SyncerSet
-	// messages is the global channel for messages of all syncing streams
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	// Registry is the subscription registry that manages all subscriptions.
 	registry Registry
-	// distributor is the message distributor that distributes messages to subscriptions.
-	distributor *distributor
 	// stopped is a flag that indicates whether the manager is stopped (1) or not (0).
 	stopped atomic.Bool
 	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
@@ -61,28 +53,22 @@ func NewManager(
 		Named("shared-syncer").
 		With("node", localNodeAddr)
 
-	syncers, messages := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, otelTracer)
-
-	go syncers.Run()
-
 	reg := newRegistry()
 	dis := newDistributor(reg, log.Named("distributor"))
 
+	syncers := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, dis, otelTracer)
+	go syncers.Run()
+
 	manager := &Manager{
-		log:           log,
-		localNodeAddr: localNodeAddr,
-		globalCtx:     ctx,
-		streamCache:   streamCache,
-		nodeRegistry:  nodeRegistry,
-		otelTracer:    otelTracer,
-		syncers:       syncers,
-		messages:      messages,
-		registry:      reg,
-		distributor:   dis,
+		log:         log,
+		globalCtx:   ctx,
+		distributor: dis,
+		otelTracer:  otelTracer,
+		syncers:     syncers,
+		registry:    reg,
 	}
 
 	go manager.startUnusedStreamsCleaner()
-	go manager.start()
 
 	return manager
 }
@@ -103,7 +89,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		syncID:              syncID,
 		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
-		backfillEvents:      xsync.NewMap[StreamId, []common.Hash](),
+		backfillEvents:      xsync.NewMap[StreamId, map[common.Hash]struct{}](),
 		syncers:             m.syncers,
 		registry:            m.registry,
 		otelTracer:          m.otelTracer,
@@ -113,74 +99,6 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 	m.registry.AddSubscription(sub)
 
 	return sub, nil
-}
-
-// start starts the subscription manager and listens for messages from the syncer set.
-func (m *Manager) start() {
-	defer func() {
-		m.stopped.Store(true)
-		m.registry.CancelAll(m.globalCtx.Err())
-	}()
-
-	var msgs []*SyncStreamsResponse
-	for {
-		select {
-		case <-m.globalCtx.Done():
-			return
-		case _, open := <-m.messages.Wait():
-			msgs = m.messages.GetBatch(msgs)
-
-			// nil msgs indicates the buffer is closed
-			if msgs == nil {
-				return
-			}
-
-			for _, msg := range msgs {
-				if err := m.processMessage(msg); err != nil {
-					m.log.Errorw("Failed to process message", "error", err, "op", msg.GetSyncOp())
-				}
-
-				// In case of the global context (the node itself) is done in the middle of the sending messages
-				// from the current batch, just interrupt the sending process and close.
-				select {
-				case <-m.globalCtx.Done():
-					return
-				default:
-				}
-			}
-
-			// If the client sent a close message, stop sending messages to client from the buffer.
-			// In theory should not happen, but just in case.
-			if !open {
-				return
-			}
-		}
-	}
-}
-
-// processMessage processes a single message
-func (m *Manager) processMessage(msg *SyncStreamsResponse) error {
-	// Validate message type
-	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE && msg.GetSyncOp() != SyncOp_SYNC_DOWN {
-		m.log.Errorw("Received unexpected sync stream message", "op", msg.GetSyncOp())
-		return nil
-	}
-
-	// Extract stream ID
-	streamID, err := StreamIdFromBytes(msg.StreamID())
-	if err != nil {
-		m.log.Errorw("Failed to get stream ID from message", "streamId", msg.StreamID(), "error", err)
-		return err
-	}
-
-	// Route message based on type
-	if len(msg.GetTargetSyncIds()) > 0 {
-		m.distributor.DistributeBackfillMessage(streamID, msg)
-	} else {
-		m.distributor.DistributeMessage(streamID, msg)
-	}
-
-	return nil
 }
 
 // startUnusedStreamsCleaner starts a goroutine that periodically checks for streams with no subscriptions.
