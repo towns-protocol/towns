@@ -685,7 +685,6 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		syncer.Run()
 		ss.syncerTasks.Done()
 		ss.syncers.Delete(nodeAddress)
-		ss.syncerLocks.Delete(nodeAddress)
 	}()
 
 	return syncer, nil
