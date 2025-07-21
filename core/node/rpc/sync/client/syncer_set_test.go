@@ -1,0 +1,347 @@
+package client
+
+import (
+	"context"
+	"errors"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
+)
+
+// Helper functions for testing
+func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+	streamCache := &mockStreamCache{}
+	messageDistributor := &mockMessageDistributor{}
+	nodeRegistry := &mocks.MockNodeRegistry{}
+
+	syncerSet := NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localAddr,
+		messageDistributor,
+		nil, // no otel tracer
+	)
+
+	return syncerSet, streamCache, messageDistributor, nodeRegistry
+}
+
+// TestGetOrCreateSyncer_LocalNode tests creating a local syncer
+func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+
+	// Test creating local syncer
+	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+
+	require.NoError(t, err)
+	require.NotNil(t, syncer)
+	assert.Equal(t, localAddr, syncer.Address())
+
+	// Verify syncer is stored
+	storedSyncer, found := syncerSet.syncers.Load(localAddr)
+	assert.True(t, found)
+	assert.Equal(t, syncer, storedSyncer)
+
+	// Test getting the same syncer again (should return cached)
+	syncer2, err := syncerSet.getOrCreateSyncer(localAddr)
+	require.NoError(t, err)
+	assert.Equal(t, syncer, syncer2)
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_RemoteNode tests creating a remote syncer
+func TestGetOrCreateSyncer_RemoteNode(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+
+	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
+
+	// Mock the stream service client
+	mockClient := &mocks.MockStreamServiceClient{}
+	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil)
+
+	// Mock SyncStreams to return an error (simpler test)
+	expectedErr := errors.New("sync stream error")
+	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
+
+	// Test creating remote syncer with error
+	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+
+	require.Error(t, err)
+	require.Nil(t, syncer)
+	assert.Contains(t, err.Error(), "sync stream error")
+
+	// Verify syncer is NOT stored
+	_, found := syncerSet.syncers.Load(remoteAddr)
+	assert.False(t, found)
+
+	// Cleanup
+	nodeRegistry.AssertExpectations(t)
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_RemoteNodeError tests error handling when creating remote syncer fails
+func TestGetOrCreateSyncer_RemoteNodeError(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+
+	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
+
+	// Mock the stream service client to return error
+	expectedErr := errors.New("connection failed")
+	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(nil, expectedErr)
+
+	// Test creating remote syncer with error
+	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+
+	require.Error(t, err)
+	require.Nil(t, syncer)
+	assert.Contains(t, err.Error(), "connection failed")
+
+	// Verify syncer is NOT stored
+	_, found := syncerSet.syncers.Load(remoteAddr)
+	assert.False(t, found)
+
+	// Cleanup
+	nodeRegistry.AssertExpectations(t)
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_SyncStopped tests behavior when sync is stopped
+func TestGetOrCreateSyncer_SyncStopped(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+
+	// Mark sync as stopped
+	syncerSet.stopped.Store(true)
+
+	// Test creating syncer when stopped
+	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+
+	require.Error(t, err)
+	require.Nil(t, syncer)
+	assert.Contains(t, err.Error(), "Sync stopped")
+
+	// Verify syncer is NOT stored
+	_, found := syncerSet.syncers.Load(localAddr)
+	assert.False(t, found)
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_ConcurrentAccess tests concurrent access to getOrCreateSyncer
+func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+
+	// Number of concurrent goroutines
+	numGoroutines := 10
+	errs := make(chan error, numGoroutines)
+	syncers := make(chan StreamsSyncer, numGoroutines)
+
+	// Start concurrent goroutines
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+			errs <- err
+			syncers <- syncer
+		}()
+	}
+
+	// Collect results
+	var firstSyncer StreamsSyncer
+	for i := 0; i < numGoroutines; i++ {
+		err := <-errs
+		syncer := <-syncers
+
+		require.NoError(t, err)
+		require.NotNil(t, syncer)
+
+		// All goroutines should get the same syncer instance
+		if firstSyncer == nil {
+			firstSyncer = syncer
+		} else {
+			assert.Equal(t, firstSyncer, syncer)
+		}
+	}
+
+	// Verify only one syncer was created and stored
+	storedSyncer, found := syncerSet.syncers.Load(localAddr)
+	assert.True(t, found)
+	assert.Equal(t, firstSyncer, storedSyncer)
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_RemoteSyncerInitError tests when NewRemoteSyncer returns an error
+func TestGetOrCreateSyncer_RemoteSyncerInitError(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+
+	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
+
+	// Mock the stream service client
+	mockClient := &mocks.MockStreamServiceClient{}
+	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil)
+
+	// Mock SyncStreams to return error immediately
+	expectedErr := errors.New("sync init failed")
+	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
+
+	// Test creating remote syncer with init error
+	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+
+	require.Error(t, err)
+	require.Nil(t, syncer)
+	assert.Contains(t, err.Error(), "sync init failed")
+
+	// Verify syncer is NOT stored
+	_, found := syncerSet.syncers.Load(remoteAddr)
+	assert.False(t, found)
+
+	// Cleanup
+	nodeRegistry.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_SyncerLifecycle tests that syncer is removed when Run completes
+func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+
+	// Create a local syncer
+	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	require.NoError(t, err)
+	require.NotNil(t, syncer)
+
+	// Verify syncer is stored
+	_, found := syncerSet.syncers.Load(localAddr)
+	assert.True(t, found)
+
+	// Cancel context to trigger syncer shutdown
+	cancel()
+
+	// Wait for syncer to be removed (give it some time to clean up)
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify syncer is removed after Run completes
+	_, found = syncerSet.syncers.Load(localAddr)
+	assert.False(t, found)
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestSyncerSet_Run tests the Run method of SyncerSet
+func TestSyncerSet_Run(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+
+	// Start Run in a goroutine
+	runComplete := make(chan bool)
+	go func() {
+		syncerSet.Run()
+		runComplete <- true
+	}()
+
+	// Create a syncer to ensure we have something to wait for
+	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	require.NoError(t, err)
+	require.NotNil(t, syncer)
+
+	// Cancel context
+	cancel()
+
+	// Wait for Run to complete
+	select {
+	case <-runComplete:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Fatal("Run did not complete in time")
+	}
+
+	// Verify stopped flag is set
+	assert.True(t, syncerSet.stopped.Load())
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_ComputeOpBehavior tests xsync.Compute operation behavior
+func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
+	// This test verifies the atomic nature of the Compute operation
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+
+	// Create a custom syncer set to test internal behavior
+	streamCache := &mockStreamCache{}
+	messageDistributor := &mockMessageDistributor{}
+	nodeRegistry := &mocks.MockNodeRegistry{}
+
+	syncerSet := &SyncerSet{
+		globalCtx:          ctx,
+		streamCache:        streamCache,
+		nodeRegistry:       nodeRegistry,
+		localNodeAddress:   localAddr,
+		messageDistributor: messageDistributor,
+		syncers:            xsync.NewMap[common.Address, StreamsSyncer](),
+		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
+		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+	}
+
+	// Pre-store a syncer
+	existingSyncer := newLocalSyncer(ctx, localAddr, streamCache, messageDistributor, func(StreamId) {}, nil)
+	syncerSet.syncers.Store(remoteAddr, existingSyncer)
+
+	// Try to get the existing syncer
+	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+
+	require.NoError(t, err)
+	require.NotNil(t, syncer)
+	assert.Equal(t, existingSyncer, syncer) // Should return the existing syncer
+
+	// Verify nodeRegistry was NOT called since syncer already existed
+	nodeRegistry.AssertNotCalled(t, "GetStreamServiceClientForAddress", mock.Anything)
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+	nodeRegistry.AssertExpectations(t)
+}
