@@ -92,6 +92,7 @@ type serviceTesterOpts struct {
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
+	nodeStartOpts     *startOpts
 }
 
 func makeTestListener(t *testing.T) (net.Listener, string) {
@@ -346,7 +347,10 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 }
 
 func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
-	options := &startOpts{}
+	options := st.opts.nodeStartOpts
+	if options == nil {
+		options = &startOpts{}
+	}
 	if len(opts) > 0 {
 		options = &opts[0]
 	}
@@ -1247,7 +1251,11 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 	}
 }
 
-func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
+func (tc *testClient) tryMakeMiniblock(
+	streamId StreamId,
+	forceSnapshot bool,
+	lastKnownMiniblockNum int64,
+) (*MiniblockRef, error) {
 	resp, err := tc.client.Info(tc.ctx, connect.NewRequest(&InfoRequest{
 		Debug: []string{
 			"make_miniblock",
@@ -1256,7 +1264,9 @@ func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastK
 			fmt.Sprintf("%d", lastKnownMiniblockNum),
 		},
 	}))
-	tc.require.NoError(err, "client.Info make_miniblock failed")
+	if err != nil {
+		return nil, err
+	}
 	var hashBytes []byte
 	if resp.Msg.Graffiti != "" {
 		hashBytes = common.FromHex(resp.Msg.Graffiti)
@@ -1268,7 +1278,18 @@ func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastK
 	return &MiniblockRef{
 		Hash: common.BytesToHash(hashBytes),
 		Num:  num,
-	}
+	}, nil
+}
+
+func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
+	ref, err := tc.tryMakeMiniblock(streamId, forceSnapshot, lastKnownMiniblockNum)
+	tc.require.NoError(
+		err,
+		"client.Info make_miniblock failed, forceSnapshot: %t, lastKnownMiniblockNum: %d",
+		forceSnapshot,
+		lastKnownMiniblockNum,
+	)
+	return ref
 }
 
 func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusive int64) []*MiniblockInfo {

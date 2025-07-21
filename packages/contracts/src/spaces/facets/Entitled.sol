@@ -8,12 +8,12 @@ import {IEntitlementBase} from "../entitlements/IEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {PausableStorage} from "@towns-protocol/diamond/src/facets/pausable/PausableStorage.sol";
+import {ERC721AStorage} from "../../diamond/facets/token/ERC721A/ERC721AStorage.sol";
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {EntitlementsManagerStorage} from "./entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "./membership/MembershipStorage.sol";
-import {ERC721AStorage} from "../../diamond/facets/token/ERC721A/ERC721AStorage.sol";
 import {BanningStorage} from "./banning/BanningStorage.sol";
-import {PausableStorage} from "@towns-protocol/diamond/src/facets/pausable/PausableStorage.sol";
 import {AppAccountStorage} from "./account/AppAccountStorage.sol";
 import {DependencyLib} from "./DependencyLib.sol";
 

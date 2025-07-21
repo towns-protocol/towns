@@ -28,6 +28,8 @@ packages/contracts/.env
 packages/contracts/.env.tpl
 packages/contracts/in
 .env
+.env.*
+!.env.example*
 
 abi/
 
