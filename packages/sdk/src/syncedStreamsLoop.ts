@@ -84,6 +84,9 @@ interface Nonces {
     [nonce: string]: NonceStats
 }
 
+const isHighPriorityStreamForSync = (streamId: string | Uint8Array): boolean =>
+    isChannelStreamId(streamId) || isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+
 export interface PingInfo {
     nonces: Nonces // the nonce that the server should echo back
     currentSequence: number // the current sequence number
@@ -336,6 +339,21 @@ export class SyncedStreamsLoop {
                     const syncCookies: SyncCookie[] = []
                     if (this.streamOpts?.useModifySync == true) {
                         this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
+                        // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
+                        // prioritized spaces will be added later during the calls to tick()
+                        for (const id of this.highPriorityIds) {
+                            if (isHighPriorityStreamForSync(id)) {
+                                const syncCookie = this.streams.get(id)?.syncCookie
+                                if (syncCookie) {
+                                    syncCookies.push(syncCookie)
+                                    this.inFlightSyncCookies.add(id)
+                                }
+                            }
+                        }
+                        // remove any added stream ids from the pending sync cookies
+                        this.pendingSyncCookies = this.pendingSyncCookies.filter(
+                            (id) => !this.inFlightSyncCookies.has(id),
+                        )
                     } else {
                         syncCookies.push(
                             ...Array.from(this.streams.entries())
