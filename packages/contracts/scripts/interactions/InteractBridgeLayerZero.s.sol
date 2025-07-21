@@ -23,11 +23,47 @@ contract InteractBridgeLayerZero is Interaction {
         return bytes32(uint256(uint160(_addr)));
     }
 
-    function __interact(address deployer) internal override {
+    function __interact(address deployer) internal override {}
+
+    function sendToEth(address deployer) internal {
+        address towns = getDeployment("townsBnb");
+        uint256 amount = 11 ether;
+        uint32 dstEid = LibLayerZeroValues.getEid(1); // Ethereum
+
+        Towns oft = Towns(towns);
+
+        bytes memory extraOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(
+            65000,
+            0
+        );
+        SendParam memory sendParam = SendParam({
+            dstEid: dstEid,
+            to: addressToBytes32(deployer),
+            amountLD: amount,
+            minAmountLD: (amount * 95) / 100, // 5% slippage tolerance
+            extraOptions: extraOptions,
+            composeMsg: "",
+            oftCmd: ""
+        });
+
+        // Get fee quote
+        MessagingFee memory fee = oft.quoteSend(sendParam, false);
+
+        console.log("Sending tokens...");
+        console.log("Towns address:", towns);
+        console.log("Fee amount:", fee.nativeFee);
+
+        // Send tokens
+        vm.startBroadcast(deployer);
+        oft.send{value: fee.nativeFee}(sendParam, fee, msg.sender);
+        vm.stopBroadcast();
+    }
+
+    function sendToBnb(address deployer) internal {
         address towns = getDeployment("townsMainnet");
         address wrappedTowns = getDeployment("wTowns");
         uint256 amount = 11 ether;
-        uint32 dstEid = LibLayerZeroValues.getEid(56); // BNB
+        uint32 dstEid = LibLayerZeroValues.getEid(56); // Ethereum
 
         Towns oft = Towns(wrappedTowns);
 
