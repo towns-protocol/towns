@@ -2913,6 +2913,7 @@ export class Client
         this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
         this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        
         this.streams.setHighPriorityStreams(streamIds)
     }
 

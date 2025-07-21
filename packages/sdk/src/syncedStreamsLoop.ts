@@ -127,7 +127,6 @@ export class SyncedStreamsLoop {
     // and are cleared when sync stops
     private responsesQueue: SyncStreamsResponse[] = []
     private inProgressResponseTick?: Promise<void>
-    private inProgressModificationTick?: Promise<void>
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
     private pendingStreamsToDelete: string[] = []
@@ -291,6 +290,7 @@ export class SyncedStreamsLoop {
 
     public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityIds = new Set(streamIds)
+        this.checkStartTicking()
     }
 
     public onNetworkStatusChanged(isOnline: boolean) {
@@ -527,19 +527,13 @@ export class SyncedStreamsLoop {
     }
 
     private checkStartTickingModifications() {
-        if (this.inProgressModificationTick) {
-            return
-        }
-
         if (this.pendingSyncCookies.length === 0 && this.pendingStreamsToDelete.length === 0) {
             return
         }
 
         const tick = this.tickModifications()
-        this.inProgressModificationTick = tick
         queueMicrotask(() => {
             tick.catch((e) => this.logError('ProcessModificationTick Error', e)).finally(() => {
-                this.inProgressModificationTick = undefined
                 setTimeout(() => this.checkStartTickingModifications())
             })
         })
@@ -582,7 +576,10 @@ export class SyncedStreamsLoop {
             const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
                 (x) => !this.inFlightSyncCookies.has(x),
             )
-            if (
+            if (this.pendingStreamsToDelete.intersection(this.highPriorityIds)) {
+                // call modify sync with high priority streams
+                return
+            } else if (
                 (this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
                     this.pendingSyncCookies.length > 0) ||
                 pendingStreamsToDelete.length > 0
