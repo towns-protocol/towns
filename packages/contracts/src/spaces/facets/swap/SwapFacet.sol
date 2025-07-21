@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IImplementationRegistry} from "../../../factory/facets/registry/IImplementationRegistry.sol";
 import {ISwapRouter} from "../../../router/ISwapRouter.sol";
 import {ISwapFacet} from "./ISwapFacet.sol";
 
@@ -12,6 +11,7 @@ import {ISwapFacet} from "./ISwapFacet.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {DependencyLib} from "../DependencyLib.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {SwapFacetStorage} from "./SwapFacetStorage.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
@@ -31,9 +31,6 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
     /// @notice Maximum fee in basis points (2%)
     uint16 internal constant MAX_FEE_BPS = 200;
-
-    /// @dev The implementation ID for the SwapRouter
-    bytes32 internal constant SWAP_ROUTER_DIAMOND = bytes32("SwapRouter");
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -143,10 +140,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
     /// @inheritdoc ISwapFacet
     function getSwapRouter() public view returns (address) {
-        return
-            IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(
-                SWAP_ROUTER_DIAMOND
-            );
+        return DependencyLib.getDependency(MembershipStorage.layout(), DependencyLib.SWAP_ROUTER);
     }
 
     /// @inheritdoc ISwapFacet
@@ -244,12 +238,8 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         }
     }
 
-    function _getSpaceFactory() internal view returns (address) {
-        return MembershipStorage.layout().spaceFactory;
-    }
-
     function _getPlatformRequirements() internal view returns (IPlatformRequirements) {
-        return IPlatformRequirements(_getSpaceFactory());
+        return IPlatformRequirements(MembershipStorage.layout().spaceFactory);
     }
 
     /// @notice Gets the balance of a token for this contract
