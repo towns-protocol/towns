@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"math/big"
 	"net/http"
 	"sync"
@@ -103,11 +102,7 @@ func TestNotificationsColdStreams(t *testing.T) {
 		}
 
 		_, hasHash1 := nc.WebPushNotifications[eventHash1]
-		if !hasHash1 {
-			return false
-		}
-
-		return true
+		return hasHash1
 	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
 }
 
