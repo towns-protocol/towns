@@ -139,10 +139,10 @@ describe('ephemeralEvents', () => {
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
 
         expect(ephemeralSolicitations).toEqual([true])
-        
+
         // Wait for at least one ephemeral fulfillment
         await waitFor(() => expect(ephemeralFulfillments.length).toBeGreaterThanOrEqual(1))
-        
+
         // Verify all fulfillments are from different clients
         const uniqueSenders = new Set(ephemeralFulfillments)
         expect(uniqueSenders.size).toEqual(ephemeralFulfillments.length)
