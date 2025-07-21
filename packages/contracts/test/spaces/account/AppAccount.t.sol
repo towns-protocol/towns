@@ -53,13 +53,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
                 address(
                     new ERC1967Proxy(
                         address(mockModuleV1),
-                        abi.encodeWithSelector(
-                            MockModule.initialize.selector,
-                            false,
-                            false,
-                            false,
-                            0
-                        )
+                        abi.encodeCall(MockModule.initialize, (false, false, false, 0))
                     )
                 )
             )
