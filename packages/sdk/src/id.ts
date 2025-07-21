@@ -176,8 +176,6 @@ export const isUserInboxStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.UserInbox)
 export const isMetadataStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.Metadata)
-export const isHighPriorityStreamForSync = (streamId: string | Uint8Array): boolean =>
-    isChannelStreamId(streamId) || isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
 
 export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     const prefix = streamId.slice(0, 2) as StreamPrefix

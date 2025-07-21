@@ -18,7 +18,6 @@ import {
     streamIdAsBytes,
     streamIdAsString,
     isChannelStreamId,
-    isHighPriorityStreamForSync,
 } from './id'
 import { ParsedEvent, ParsedSnapshot, ParsedStreamResponse } from './types'
 import { isDefined, logNever } from './check'
@@ -84,6 +83,9 @@ interface NonceStats {
 interface Nonces {
     [nonce: string]: NonceStats
 }
+
+const isHighPriorityStreamForSync = (streamId: string | Uint8Array): boolean =>
+    isChannelStreamId(streamId) || isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
 
 export interface PingInfo {
     nonces: Nonces // the nonce that the server should echo back
