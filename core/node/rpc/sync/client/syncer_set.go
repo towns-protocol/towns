@@ -68,12 +68,12 @@ type (
 		stopped atomic.Bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers *xsync.Map[common.Address, StreamsSyncer]
+		// syncerLocks provides per-node-address locking for syncer creation
+		syncerLocks *xsync.Map[common.Address, *sync.Mutex]
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// streamLocks provides per-stream locking
 		streamLocks *xsync.Map[StreamId, *sync.Mutex]
-		// syncerLocks provides per-node-address locking for syncer creation
-		syncerLocks *xsync.Map[common.Address, *sync.Mutex]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}

@@ -322,6 +322,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 		localNodeAddress:   localAddr,
 		messageDistributor: messageDistributor,
 		syncers:            xsync.NewMap[common.Address, StreamsSyncer](),
+		syncerLocks:        xsync.NewMap[common.Address, *sync.Mutex](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
 		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
 	}
