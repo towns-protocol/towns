@@ -3,14 +3,13 @@ package rpc
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"slices"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,21 +17,51 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
-	"google.golang.org/protobuf/proto"
 )
 
+// Creation of extensions can cause race conditions in the database even if
+// they are created with an "IF NOT EXISTS" clause, causing migrations across
+// multiple tests to fail. Therefore we create all required extensions in
+// pg one time here.
+func initPostgres() {
+	ctx := test.NewTestContextForTestMain("core/node/rpc")
+
+	// We are not creating a schema for this connection, therefore no need to tear
+	// it down - do not call the closer.
+	cfg, _, _, err := dbtestutils.ConfigureDbWithSchemaName(ctx, "")
+	if err != nil {
+		log.Fatalf("Unable to create postgres extensions: unable to configure db: %v", err)
+	}
+
+	conn, err := pgxpool.New(ctx, cfg.GetUrl())
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer conn.Close()
+	_, err = conn.Exec(ctx, "CREATE EXTENSION IF NOT EXISTS btree_gin;")
+	if err != nil {
+		log.Fatalf("Unable to create extension: %v", err)
+	}
+}
+
 func TestMain(m *testing.M) {
+	initPostgres()
+
 	c := m.Run()
 	if c != 0 {
 		os.Exit(c)
@@ -253,8 +282,9 @@ func joinChannel(
 		events.Make_UserPayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
 			channelId,
-			nil,
+			common.Address{},
 			spaceId[:],
+			nil,
 		),
 		&MiniblockRef{
 			Hash: common.BytesToHash(userStreamSyncCookie.PrevMiniblockHash),
@@ -265,7 +295,7 @@ func joinChannel(
 		return err
 	}
 
-	add, err := client.AddEvent(
+	_, err = client.AddEvent(
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
@@ -277,12 +307,13 @@ func joinChannel(
 	if err != nil {
 		return err
 	}
-	if add.Msg.Error != nil {
-		return fmt.Errorf("Could not add join event to user stream: %v", add.Msg.Error.Msg)
-	}
 	return nil
 }
 
+// createChannel creates a channel and adds the creator to the channel. It checks the derived
+// events of the stream creation to validate that the creator's user stream has the join event,
+// and the space stream also contains an event for the channel, returning error conditions if
+// either check fails.
 func createChannel(
 	ctx context.Context,
 	wallet *crypto.Wallet,
@@ -393,6 +424,8 @@ func addUserBlockedFillerEvent(
 	return err
 }
 
+// makeMiniblock uses debug commands on the info endpoint of the stream service client to provoke
+// the stream node into making a miniblock for the specified stream.
 func makeMiniblock(
 	ctx context.Context,
 	client protocolconnect.StreamServiceClient,
@@ -553,16 +586,18 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	}))
 	require.NoError(err)
 
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: []*protocol.SyncCookie{
+			channel,
+		},
+	})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := client.SyncStreams(
 		syncCtx,
-		connect.NewRequest(
-			&protocol.SyncStreamsRequest{
-				SyncPos: []*protocol.SyncCookie{
-					channel,
-				},
-			},
-		),
+		connReq,
 	)
 	require.NoError(err)
 
@@ -682,12 +717,11 @@ func testRiverDeviceId(tester *serviceTester) {
 			&protocol.AddEventRequest{
 				StreamId: channelId[:],
 				Event:    envelope,
-				Optional: true,
 			},
 		),
 	)
-	require.NoError(err)
-	require.NotNil(resp.Msg.Error, "expected error")
+	require.Error(err)
+	require.Nil(resp)
 }
 
 func testSyncStreams(tester *serviceTester) {
@@ -715,17 +749,19 @@ func testSyncStreams(tester *serviceTester) {
 	/**
 	Act
 	*/
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: []*protocol.SyncCookie{
+			channel1,
+		},
+	})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
 	// sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := client.SyncStreams(
 		syncCtx,
-		connect.NewRequest(
-			&protocol.SyncStreamsRequest{
-				SyncPos: []*protocol.SyncCookie{
-					channel1,
-				},
-			},
-		),
+		connReq,
 	)
 	require.Nilf(err, "error calling SyncStreams: %v", err)
 	// get the syncId for requires later
@@ -804,15 +840,17 @@ func testAddStreamsToSync(tester *serviceTester) {
 	/**
 	Act
 	*/
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: []*protocol.SyncCookie{},
+	})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
 	// bob sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
 		syncCtx,
-		connect.NewRequest(
-			&protocol.SyncStreamsRequest{
-				SyncPos: []*protocol.SyncCookie{},
-			},
-		),
+		connReq,
 	)
 	require.Nilf(err, "error calling SyncStreams: %v", err)
 	// get the syncId for requires later
@@ -894,14 +932,15 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	require.Nilf(err, "error calling createChannel: %v", err)
 	require.NotNil(channel1, "nil sync cookie")
 	// bob sync streams
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: []*protocol.SyncCookie{},
+	})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
 		syncCtx,
-		connect.NewRequest(
-			&protocol.SyncStreamsRequest{
-				SyncPos: []*protocol.SyncCookie{},
-			},
-		),
+		connReq,
 	)
 	require.Nilf(err, "error calling SyncStreams: %v", err)
 	// get the syncId for requires later
@@ -1147,391 +1186,6 @@ func TestForwardingWithRetries(t *testing.T) {
 	}
 }
 
-// TestUnstableStreams ensures that when a stream becomes unavailable a SyncOp_Down message is received and when
-// available again allows the client to resubscribe.
-func TestUnstableStreams(t *testing.T) {
-	var (
-		req      = require.New(t)
-		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true})
-		client0  = services.testClient(0)
-		client1  = services.testClient(1)
-		ctx      = services.ctx
-		wallets  []*crypto.Wallet
-		users    []*protocol.SyncCookie
-		channels []*protocol.SyncCookie
-	)
-
-	// create users that will join and add messages to channels.
-	for range 10 {
-		// Create user streams
-		wallet, err := crypto.NewWallet(ctx)
-		req.NoError(err, "new wallet")
-		syncCookie, _, err := createUser(ctx, wallet, client0, nil)
-		req.NoError(err, "create user")
-
-		_, _, err = createUserMetadataStream(ctx, wallet, client0, nil)
-		req.NoError(err)
-
-		wallets = append(wallets, wallet)
-		users = append(users, syncCookie)
-	}
-
-	// create a space and several channels in it
-	spaceID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceID, nil)
-	req.NoError(err)
-	req.NotNil(resspace, "create space sync cookie")
-
-	// create enough channels that they will be distributed among local and remote nodes
-	for range TestStreams {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		channel, _, err := createChannel(ctx, wallets[0], client0, spaceID, channelId, nil)
-		req.NoError(err)
-		req.NotNil(channel, "nil create channel sync cookie")
-		channels = append(channels, channel)
-	}
-
-	// subscribe to channel updates
-	syncPos := append(users, channels...)
-	syncRes, err := client1.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}))
-	req.NoError(err, "sync streams")
-
-	syncRes.Receive()
-	syncID := syncRes.Msg().SyncId
-	testfmt.Logf(t, "subscription %s created on node: %s", syncID, services.nodes[1].address)
-
-	// collect sync cookie updates for channels
-	var (
-		messages           = make(chan string, 512)
-		mu                 sync.Mutex
-		streamDownMessages = make(map[StreamId]struct{})
-		syncCookies        = make(map[StreamId][]*protocol.StreamAndCookie)
-	)
-
-	go func() {
-		for syncRes.Receive() {
-			msg := syncRes.Msg()
-
-			switch msg.GetSyncOp() {
-			case protocol.SyncOp_SYNC_NEW:
-				syncID := msg.GetSyncId()
-				testfmt.Logf(t, "start stream sync %s ", syncID)
-			case protocol.SyncOp_SYNC_UPDATE:
-				req.Equal(syncID, msg.GetSyncId(), "sync id")
-				req.NotNil(msg.GetStream(), "stream")
-				req.NotNil(msg.GetStream().GetNextSyncCookie(), "next sync cookie")
-				cookie := msg.GetStream().GetNextSyncCookie()
-				streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-				if err != nil {
-					req.NoError(err, "invalid stream id in sync op update")
-				}
-
-				mu.Lock()
-				syncCookies[streamID] = append(syncCookies[streamID], msg.GetStream())
-				delete(streamDownMessages, streamID)
-				mu.Unlock()
-
-				for _, e := range msg.GetStream().GetEvents() {
-					var payload protocol.StreamEvent
-					err = proto.Unmarshal(e.Event, &payload)
-					req.NoError(err)
-					switch p := payload.Payload.(type) {
-					case *protocol.StreamEvent_ChannelPayload:
-						switch p.ChannelPayload.Content.(type) {
-						case *protocol.ChannelPayload_Message:
-							messages <- p.ChannelPayload.GetMessage().GetCiphertext()
-						}
-					}
-				}
-
-			case protocol.SyncOp_SYNC_DOWN:
-				req.Equal(syncID, msg.GetSyncId(), "sync id")
-				streamID, err := StreamIdFromBytes(msg.GetStreamId())
-				req.NoError(err, "stream id")
-
-				mu.Lock()
-				if _, found := streamDownMessages[streamID]; found {
-					t.Error("received a second down message in a row for a stream")
-					return
-				}
-				streamDownMessages[streamID] = struct{}{}
-				mu.Unlock()
-
-			case protocol.SyncOp_SYNC_CLOSE:
-				req.Equal(syncID, msg.GetSyncId(), "invalid sync id in sync close message")
-				close(messages)
-
-			case protocol.SyncOp_SYNC_UNSPECIFIED, protocol.SyncOp_SYNC_PONG:
-				continue
-
-			default:
-				t.Errorf("unexpected sync operation %s", msg.GetSyncOp())
-				return
-			}
-		}
-	}()
-
-	// users join channels
-	channelsCount := len(channels)
-	for i, wallet := range wallets[1:] {
-		for c := range channelsCount {
-			channel := channels[c]
-
-			miniBlockHashResp, err := client1.GetLastMiniblockHash(
-				ctx,
-				connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: users[i+1].StreamId}))
-
-			req.NoError(err, "get last miniblock hash")
-
-			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
-			userJoin, err := events.MakeEnvelopeWithPayload(
-				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:]),
-				&MiniblockRef{
-					Hash: common.BytesToHash(miniBlockHashResp.Msg.GetHash()),
-					Num:  miniBlockHashResp.Msg.GetMiniblockNum(),
-				},
-			)
-			req.NoError(err)
-
-			resp, err := client1.AddEvent(
-				ctx,
-				connect.NewRequest(
-					&protocol.AddEventRequest{
-						StreamId: users[i+1].StreamId,
-						Event:    userJoin,
-					},
-				),
-			)
-
-			req.NoError(err)
-			req.Nil(resp.Msg.GetError())
-		}
-	}
-
-	// send a bunch of messages and ensure that all are received
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(StreamId) bool { return false })
-
-	testfmt.Logf(t, "first messages batch received")
-
-	// bring ~25% of the streams down
-	streamsDownCounter := 0
-	rand.Shuffle(len(channels), func(i, j int) { channels[i], channels[j] = channels[j], channels[i] })
-
-	for i, syncCookie := range channels {
-		streamID, _ := StreamIdFromBytes(syncCookie.GetStreamId())
-		if _, err = client1.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{
-			"drop_stream",
-			syncID,
-			streamID.String(),
-		}})); err != nil {
-			req.NoError(err, "unable to bring stream down")
-		}
-
-		streamsDownCounter++
-
-		testfmt.Logf(t, "bring stream %s down", streamID)
-
-		if i > TestStreams/4 {
-			break
-		}
-	}
-
-	// make sure that for all streams that are down a SyncOp_Down msg is received
-	req.Eventuallyf(func() bool {
-		mu.Lock()
-		count := len(streamDownMessages)
-		mu.Unlock()
-
-		return count == streamsDownCounter
-	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
-
-	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
-
-	// make sure that no more stream down messages are received
-	req.Never(func() bool {
-		mu.Lock()
-		count := len(streamDownMessages)
-		mu.Unlock()
-		return count > streamsDownCounter
-	}, 5*time.Second, 100*time.Millisecond, "received unexpected stream down message")
-
-	// send a bunch of messages to streams and ensure that we messages are received streams that are up
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
-		mu.Lock()
-		defer mu.Unlock()
-
-		_, found := streamDownMessages[streamID]
-		return found
-	})
-
-	testfmt.Logf(t, "second messages batch received")
-
-	// resubscribe to the head on down streams and ensure that messages are received for all streams again
-	mu.Lock()
-	for streamID := range streamDownMessages {
-		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: streamID[:],
-			Optional: false,
-		}))
-		req.NoError(err, "GetStream")
-
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
-		}))
-		req.NoError(err, "AddStreamToSync")
-	}
-	mu.Unlock()
-
-	testfmt.Logf(t, "resubscribed to streams that where brought down")
-
-	// ensure that messages for all streams are received again
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(StreamId) bool { return false })
-
-	testfmt.Logf(t, "third messages batch received")
-
-	// unsub from ~25% streams and ensure that no updates are received again
-	unsubbedStreams := make(map[StreamId]struct{})
-	rand.Shuffle(len(channels), func(i, j int) { channels[i], channels[j] = channels[j], channels[i] })
-	for i, syncCookie := range channels {
-		streamID, _ := StreamIdFromBytes(syncCookie.GetStreamId())
-		_, err = client1.RemoveStreamFromSync(ctx, connect.NewRequest(&protocol.RemoveStreamFromSyncRequest{
-			SyncId:   syncID,
-			StreamId: streamID[:],
-		}))
-		req.NoError(err, "RemoveStreamFromSync")
-
-		unsubbedStreams[streamID] = struct{}{}
-
-		testfmt.Logf(t, "unsubbed from stream %s", streamID)
-
-		if i > TestStreams/4 {
-			break
-		}
-	}
-
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
-		_, found := unsubbedStreams[streamID]
-		return found
-	})
-
-	testfmt.Logf(t, "fourth messages batch received")
-
-	// resubscribe to the head on down streams and ensure that messages are received for all streams again
-	mu.Lock()
-	for streamID := range unsubbedStreams {
-		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: streamID[:],
-			Optional: false,
-		}))
-		req.NoError(err, "GetStream")
-
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
-		}))
-		req.NoError(err, "AddStreamToSync")
-	}
-	mu.Unlock()
-
-	testfmt.Logf(t, "resubscribed to streams that where brought down")
-
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
-		return false
-	})
-
-	testfmt.Logf(t, "fifth messages batch received")
-
-	// drop all streams from a node
-	var (
-		targetNodeAddr = services.nodes[4].address
-		targetStreams  []StreamId
-	)
-
-	mu.Lock()
-	streamDownMessages = map[StreamId]struct{}{}
-	mu.Unlock()
-
-	for _, pos := range syncPos {
-		if bytes.Equal(pos.GetNodeAddress(), targetNodeAddr.Bytes()) {
-			streamID, _ := StreamIdFromBytes(pos.GetStreamId())
-			targetStreams = append(targetStreams, streamID)
-		}
-	}
-
-	for _, targetStream := range targetStreams {
-		_, err = client1.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{
-			"drop_stream",
-			syncID,
-			targetStream.String(),
-		}}))
-		req.NoError(err, "drop stream")
-	}
-
-	// make sure that for all streams that are down a SyncOp_Down msg is received
-	req.Eventuallyf(func() bool {
-		mu.Lock()
-		count := len(streamDownMessages)
-		mu.Unlock()
-
-		return count == len(targetStreams)
-	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
-
-	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
-
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
-		mu.Lock()
-		_, found := streamDownMessages[streamID]
-		mu.Unlock()
-		return found
-	})
-
-	testfmt.Logf(t, "sixt messages batch received")
-
-	// make sure we can resubscribe to these streams
-	for _, streamID := range targetStreams {
-		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: streamID[:],
-			Optional: false,
-		}))
-		req.NoError(err, "GetStream")
-
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
-		}))
-		req.NoError(err, "AddStreamToSync")
-	}
-
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
-		return false
-	})
-
-	testfmt.Logf(t, "seventh messages batch received")
-
-	_, err = client1.CancelSync(ctx, connect.NewRequest(&protocol.CancelSyncRequest{SyncId: syncID}))
-	req.NoError(err, "cancel sync")
-
-	testfmt.Logf(t, "Streams subscription cancelled")
-
-	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
-		return true
-	})
-
-	testfmt.Logf(t, "eight messages batch received")
-
-	// make sure that SyncOp_Close msg is received (messages is closed)
-	req.Eventuallyf(func() bool {
-		select {
-		case _, gotMsg := <-messages:
-			return !gotMsg
-		default:
-			return false
-		}
-	}, 20*time.Second, 100*time.Millisecond, "no SyncOp_Close message received")
-}
-
 func sendMessagesAndReceive(
 	N int,
 	wallets []*crypto.Wallet,
@@ -1618,7 +1272,10 @@ func TestStreamSyncPingPong(t *testing.T) {
 	)
 
 	// create stream sub
-	syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: nil}))
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: nil})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+	syncRes, err := client.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
 
 	pings := []string{"ping1", "ping2", "ping3", "ping4", "ping5"}
@@ -1669,211 +1326,93 @@ func (s slowStreamsResponseSender) Send(msg *protocol.SyncStreamsResponse) error
 	return nil
 }
 
-// TestSyncSubscriptionWithTooSlowClient ensures that a sync operation cancels itself when a subscriber isn't able to
-// keep up with sync updates.
-func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
-	var (
-		req      = require.New(t)
-		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true})
-		client0  = services.testClient(0)
-		client1  = services.testClient(1)
-		node1    = services.nodes[1]
-		ctx      = services.ctx
-		wallets  []*crypto.Wallet
-		users    []*protocol.SyncCookie
-		channels []*protocol.SyncCookie
-		syncID   = GenNanoid()
-	)
+func TestModifySyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
 
-	// create users that will join and add messages to channels.
-	for range 10 {
-		// Create user streams
-		wallet, err := crypto.NewWallet(ctx)
-		req.NoError(err, "new wallet")
-		syncCookie, _, err := createUser(ctx, wallet, client0, nil)
-		req.NoError(err, "create user")
+	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
+	cookie := alice.createUserStreamGetCookie()
 
-		_, _, err = createUserMetadataStream(ctx, wallet, client0, nil)
-		req.NoError(err)
+	alice.startSync()
 
-		wallets = append(wallets, wallet)
-		users = append(users, syncCookie)
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
 	}
 
-	// create a space and several channels in it
-	spaceID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceID, nil)
-	req.NoError(err)
-	req.NotNil(resspace, "create space sync cookie")
-
-	// create enough channels that they will be distributed among local and remote nodes
-	for range TestStreams {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		channel, _, err := createChannel(ctx, wallets[0], client0, spaceID, channelId, nil)
-		req.NoError(err)
-		req.NotNil(channel, "nil create channel sync cookie")
-		channels = append(channels, channel)
-	}
-
-	// subscribe to channel updates on node 1 direct through a sync op to have better control over it
-	testfmt.Logf(t, "subscribe on node %s", node1.address)
-	syncPos := append(users, channels...)
-	syncOp, err := river_sync.NewStreamsSyncOperation(
-		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry, nil)
-	req.NoError(err, "NewStreamsSyncOperation")
-
-	syncOpResult := make(chan error)
-	syncOpStopped := atomic.Bool{}
-
-	// run the subscription in the background that takes a long time for each update to send to the client.
-	// this must cancel the sync op with a buffer too full error.
-	go func() {
-		slowSubscriber := slowStreamsResponseSender{sendDuration: 250 * time.Millisecond}
-		syncOpErr := syncOp.Run(connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}), slowSubscriber)
-		syncOpStopped.Store(true)
-		syncOpResult <- syncOpErr
-	}()
-
-	// users join channels
-	channelsCount := len(channels)
-	for i, wallet := range wallets[1:] {
-		for c := range channelsCount {
-			channel := channels[c]
-			miniBlockHashResp, err := client1.GetLastMiniblockHash(ctx,
-				connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: users[i+1].StreamId}))
-
-			req.NoError(err, "get last mini-block hash")
-
-			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
-			userJoin, err := events.MakeEnvelopeWithPayload(
-				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:]),
-				MiniblockRefFromLastHash(miniBlockHashResp.Msg),
-			)
-			req.NoError(err)
-
-			resp, err := client1.AddEvent(
-				ctx,
-				connect.NewRequest(
-					&protocol.AddEventRequest{
-						StreamId: users[i+1].StreamId,
-						Event:    userJoin,
-					},
-				),
-			)
-
-			req.NoError(err)
-			req.Nil(resp.Msg.GetError())
-		}
-	}
-
-	// send a bunch of messages and ensure that the sync op is cancelled because the client can't keep up
-	for i := range 10000 {
-		if syncOpStopped.Load() { // no need to send additional messages, sync op already cancelled
-			break
-		}
-
-		wallet := wallets[rand.Int()%len(wallets)]
-		channel := channels[rand.Int()%len(channels)]
-		msgContents := fmt.Sprintf("msg #%d", i)
-
-		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: channel.GetStreamId(),
-			Optional: false,
-		}))
-		req.NoError(err)
-
-		message, err := events.MakeEnvelopeWithPayload(
-			wallet,
-			events.Make_ChannelPayload_Message(msgContents),
-			MiniblockRefFromCookie(getStreamResp.Msg.GetStream().GetNextSyncCookie()),
-		)
-		req.NoError(err)
-
-		_, err = client1.AddEvent(
-			ctx,
-			connect.NewRequest(
-				&protocol.AddEventRequest{
-					StreamId: channel.GetStreamId(),
-					Event:    message,
-				},
-			),
-		)
-
-		req.NoError(err)
-	}
-
-	// At some moment one of the syncers in the sync op syncer set encounters a buffer full and cancels the sync op.
-	// Ensure that the sync op ends with protocol.Err_BUFFER_FULL.
-	req.Eventuallyf(func() bool {
-		select {
-		case err := <-syncOpResult:
-			var riverErr *RiverErrorImpl
-			if errors.As(err, &riverErr) {
-				req.Equal(riverErr.Code, protocol.Err_BUFFER_FULL, "unexpected error code")
-				return true
-			}
-			req.FailNow("received unexpected err", err)
-			return false
-		default:
-			return false
-		}
-	}, 20*time.Second, 100*time.Millisecond, "sync operation not stopped within reasonable time")
+	testfmt.Print(t, "Modifying sync with wrong cookie")
+	resp, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		SyncId:     alice.SyncID(),
+		AddStreams: []*protocol.SyncCookie{cookie},
+	}))
+	tt.require.NoError(err)
+	tt.require.Len(resp.Msg.GetAdds(), 0)
+	tt.require.Len(resp.Msg.GetRemovals(), 0)
 }
 
-// TestGetMiniblocksRangeLimit checks that GetMiniblocks endpoint has a validation for a max range of blocks
-// to be fetched at once.
-func TestGetMiniblocksRangeLimit(t *testing.T) {
-	const expectedLimit = 200
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	tt.btc.SetConfigValue(
-		t,
-		tt.ctx,
-		crypto.StreamGetMiniblocksMaxPageSizeConfigKey,
-		crypto.ABIEncodeUint64(uint64(expectedLimit)),
-	)
+func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
 
-	alice := tt.newTestClient(0, testClientOpts{})
-	_ = alice.createUserStream()
+	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
+	_ = alice.createUserStreamGetCookie()
 	spaceId, _ := alice.createSpace()
-	channelId, _, _ := alice.createChannel(spaceId)
+	channelId, _, cookie := alice.createChannel(spaceId)
 
-	// Here we create a miniblock for each message sent by Alice.
-	// Creating a bit more miniblocks than limit.
-	var lastMbNum int64
-	for count := range expectedLimit + 10 {
-		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))
-		mb, err := makeMiniblock(tt.ctx, alice.client, channelId, false, lastMbNum)
-		tt.require.NoError(err)
-		lastMbNum = mb.Num
+	alice.say(channelId, "hello from Alice")
+
+	alice.startSync()
+
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
 	}
 
-	// Try to get miniblocks with invalid range
-	resp, err := alice.client.GetMiniblocks(alice.ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-		StreamId:      channelId[:],
-		FromInclusive: expectedLimit + 100,
-		ToExclusive:   5,
+	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie")
+	_, err := alice.client.AddStreamToSync(alice.ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
+		SyncId:  alice.SyncID(),
+		SyncPos: cookie,
 	}))
-	tt.require.Nil(resp)
-	tt.require.ErrorContains(err, "invalid range")
+	tt.require.NoError(err)
+	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie done")
+}
 
-	tt.require.Eventually(func() bool {
-		// Requesting a list of miniblocks with the limit > max limit and expect to return "limit" miniblocks.
-		resp, err := alice.client.GetMiniblocks(alice.ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-			StreamId:      channelId[:],
-			FromInclusive: 5,
-			ToExclusive:   expectedLimit + 100,
-		}))
-		tt.require.NoError(err)
+func TestStartSyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true, replicationFactor: 1})
 
-		if len(resp.Msg.GetMiniblocks()) != expectedLimit {
-			return false
+	alice := tt.newTestClient(0, testClientOpts{enableSync: false})
+	_ = alice.createUserStreamGetCookie()
+	spaceId, _ := alice.createSpace()
+	channelId, _, cookie := alice.createChannel(spaceId)
+
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
+	}
+
+	alice.say(channelId, "hello from Alice")
+
+	testfmt.Print(t, "StartSync with wrong cookie")
+	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify sync
+	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 25*time.Second)
+	defer syncCancel()
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+	updates, err := alice.client.SyncStreams(syncCtx, connReq)
+	tt.require.NoError(err)
+	testfmt.Print(t, "StartSync with wrong cookie done")
+
+	for updates.Receive() {
+		msg := updates.Msg()
+		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE &&
+			testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
+			syncCancel()
 		}
-
-		tt.require.Equal(int64(5), resp.Msg.GetFromInclusive())
-		tt.require.Equal(int64(expectedLimit), resp.Msg.GetLimit())
-		tt.require.Len(resp.Msg.GetMiniblocks(), expectedLimit)
-
-		return true
-	}, 20*time.Second, 100*time.Millisecond)
+	}
+	tt.require.ErrorIs(updates.Err(), context.Canceled)
 }

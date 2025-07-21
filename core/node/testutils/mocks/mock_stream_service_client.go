@@ -227,36 +227,6 @@ func (_m *MockStreamServiceClient) GetLastMiniblockHash(_a0 context.Context, _a1
 	return r0, r1
 }
 
-// GetMiniblockHeader provides a mock function with given fields: _a0, _a1
-func (_m *MockStreamServiceClient) GetMiniblockHeader(_a0 context.Context, _a1 *connect.Request[protocol.GetMiniblockHeaderRequest]) (*connect.Response[protocol.GetMiniblockHeaderResponse], error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetMiniblockHeader")
-	}
-
-	var r0 *connect.Response[protocol.GetMiniblockHeaderResponse]
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *connect.Request[protocol.GetMiniblockHeaderRequest]) (*connect.Response[protocol.GetMiniblockHeaderResponse], error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *connect.Request[protocol.GetMiniblockHeaderRequest]) *connect.Response[protocol.GetMiniblockHeaderResponse]); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*connect.Response[protocol.GetMiniblockHeaderResponse])
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *connect.Request[protocol.GetMiniblockHeaderRequest]) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetMiniblocks provides a mock function with given fields: _a0, _a1
 func (_m *MockStreamServiceClient) GetMiniblocks(_a0 context.Context, _a1 *connect.Request[protocol.GetMiniblocksRequest]) (*connect.Response[protocol.GetMiniblocksResponse], error) {
 	ret := _m.Called(_a0, _a1)

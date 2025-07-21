@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/http_client"
 )
 
 // LocalhostCertBytes is a PEM-encoded TLS cert with SAN IPs
@@ -91,18 +93,25 @@ var LocalhostCertPool = func() *x509.CertPool {
 	return certpool
 }()
 
-func GetHttp2LocalhostTLSConfig() *tls.Config {
+func GetHttp2LocalhostTLSConfig(verify func([][]byte, [][]*x509.Certificate) error) *tls.Config {
 	return &tls.Config{
-		Certificates: []tls.Certificate{LocalhostCert},
-		NextProtos:   []string{"h2"},
+		Certificates:          []tls.Certificate{LocalhostCert},
+		NextProtos:            []string{"h2"},
+		ClientAuth:            tls.RequestClientCert,
+		VerifyPeerCertificate: verify,
 	}
 }
 
-func GetHttp2LocalhostTLSClient(ctx context.Context, _ *config.Config) (*http.Client, error) {
+func GetHttp2LocalhostTLSClient(ctx context.Context, cfg *config.Config) (*http.Client, error) {
+	return GetHttp2LocalhostTLSClientWithCert(ctx, cfg, nil)
+}
+
+func GetHttp2LocalhostTLSClientWithCert(_ context.Context, _ *config.Config, getCert http_client.GetClientCertFunc) (*http.Client, error) {
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs: LocalhostCertPool,
+				RootCAs:              LocalhostCertPool,
+				GetClientCertificate: getCert,
 			},
 
 			// Node-2-node connections to local nodes in tests sometimes seem to hang if the
@@ -122,11 +131,11 @@ func GetHttp2LocalhostTLSClient(ctx context.Context, _ *config.Config) (*http.Cl
 	}, nil
 }
 
-// MakeTestListener creates a localhost listener on a random port and and validates proper
-// listener creation. It does not clean up the listener on test close.
-func MakeTestListener(t *testing.T) (net.Listener, string) {
+// MakeTestListener creates a TLS-configured localhost listener on a random port and and
+// validates proper listener creation. It does not clean up the listener on test close.
+func MakeTestListener(t *testing.T, verify func([][]byte, [][]*x509.Certificate) error) (net.Listener, string) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
-	listener = tls.NewListener(listener, GetHttp2LocalhostTLSConfig())
+	listener = tls.NewListener(listener, GetHttp2LocalhostTLSConfig(verify))
 	return listener, "https://" + listener.Addr().String()
 }

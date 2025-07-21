@@ -15,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func (s *Service) createMediaStreamImpl(
@@ -58,6 +59,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		streamId,
 		parsedEvents,
 		req.Metadata,
+		s.nodeRegistry,
 	)
 	if err != nil {
 		return nil, err
@@ -68,6 +70,14 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		streamIdBytes := event.StreamId
 		stream, err := s.cache.GetStreamNoWait(ctx, streamIdBytes)
 		if err != nil || stream == nil {
+			// Include the base error if it exists.
+			if err != nil {
+				return nil, RiverErrorWithBase(
+					Err_PERMISSION_DENIED,
+					"stream does not exist",
+					err,
+				).Tag("streamId", streamIdBytes)
+			}
 			return nil, RiverError(Err_PERMISSION_DENIED, "stream does not exist", "streamId", streamIdBytes)
 		}
 	}
@@ -81,12 +91,12 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 			creatorStreamView, err = stream.GetView(ctx)
 		}
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
+			return nil, RiverErrorWithBase(Err_PERMISSION_DENIED, "failed to load creator stream", err)
 		}
 		for _, streamIdBytes := range csRules.RequiredMemberships {
 			streamId, err := StreamIdFromBytes(streamIdBytes)
 			if err != nil {
-				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
+				return nil, RiverErrorWithBase(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", err)
 			}
 			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
@@ -98,42 +108,51 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	for _, userAddress := range csRules.RequiredUserAddrs {
 		addr, err := BytesToAddress(userAddress)
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
+			return nil, RiverErrorWithBase(
+				Err_PERMISSION_DENIED,
+				"invalid user id",
+				err,
+			).Tag("requiredUser", userAddress)
 		}
 		userStreamId := UserStreamIdFromAddr(addr)
 		_, err = s.cache.GetStreamNoWait(ctx, userStreamId)
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUser", userAddress)
+			return nil, RiverErrorWithBase(
+				Err_PERMISSION_DENIED,
+				"user does not exist",
+				err,
+			).Tag("requiredUser", userAddress)
 		}
 	}
 
 	// check entitlements
 	if csRules.ChainAuth != nil {
-		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
+		isEntitledResult, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
 			return nil, err
 		}
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			return nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgs",
 				csRules.ChainAuth.String(),
-			).Func("createStream")
+			).Func("createMediaStream")
 		}
 	}
 
 	// create the stream
 	resp, err := s.createReplicatedMediaStream(ctx, streamId, []*ParsedEvent{parsedEvents[0]})
-	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
-		return nil, err
+	if err != nil {
+		return nil, AsRiverError(err).Func("createMediaStream")
 	}
 
 	// add derived events
 	for _, de := range csRules.DerivedEvents {
 		_, err = s.AddEventPayload(ctx, de.StreamId, de.Payload, de.Tags)
 		if err != nil {
-			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "err", err)
+			return nil, RiverErrorWithBase(Err_INTERNAL, "failed to add derived event", err)
 		}
 	}
 
@@ -144,7 +163,9 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		// Make sure the given chunk index is 0 as it is the first chunk
 		if chunk.GetChunkIndex() != 0 {
 			return nil, RiverError(Err_INVALID_ARGUMENT, "initial chunk index must be zero").
-				Func("createMediaStream")
+				Func("createMediaStream").
+				Tag("streamId", streamId).
+				Tag("chunkIndex", chunk.GetChunkIndex())
 		}
 
 		// Make sure the given chunk size does not exceed the maximum chunk size
@@ -154,7 +175,8 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 				"chunk size must be less than or equal to",
 				"s.chainConfig.Get().MediaMaxChunkSize",
 				s.chainConfig.Get().MediaMaxChunkSize).
-				Func("createMediaStream")
+				Func("createMediaStream").
+				Tag("chunkSize", len(chunk.GetData()))
 		}
 
 		mbHash, err := s.replicatedAddMediaEvent(
@@ -183,25 +205,29 @@ func (s *Service) createReplicatedMediaStream(
 	if err != nil {
 		return nil, err
 	}
+	mbHash := mb.Header.Hash
 
 	mbBytes, err := proto.Marshal(mb)
 	if err != nil {
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.ChooseStreamNodes(streamId)
+	nodesList, err := s.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId))
+	sender := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId),
+	)
 
 	// Create ephemeral stream within the local node
 	if isLocal {
 		sender.AddTask(func(ctx context.Context) error {
-			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: mbBytes})
 		})
 	}
 
@@ -214,7 +240,7 @@ func (s *Service) createReplicatedMediaStream(
 
 		_, err = stub.AllocateEphemeralStream(
 			ctx,
-			connect.NewRequest[AllocateEphemeralStreamRequest](
+			connect.NewRequest(
 				&AllocateEphemeralStreamRequest{
 					StreamId:  streamId[:],
 					Miniblock: mb,
@@ -226,7 +252,14 @@ func (s *Service) createReplicatedMediaStream(
 	})
 
 	if err = sender.Wait(); err != nil {
-		return nil, err
+		if !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			return nil, err
+		}
+
+		mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, 0, remotes, isLocal)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	nodesListRaw := make([][]byte, len(nodesList))
@@ -238,6 +271,72 @@ func (s *Service) createReplicatedMediaStream(
 		StreamId:          streamId[:],
 		Nodes:             nodesListRaw,
 		MiniblockNum:      1, // the block number after the genesis one is 1
-		PrevMiniblockHash: mb.Header.Hash,
+		PrevMiniblockHash: mbHash,
 	}, nil
+}
+
+// getEphemeralStreamMbHash returns the miniblock hash by the given miniblock number for an ephemeral stream
+// (not registered onchain yet).
+// It first tries to load from the local node storage, and if not found, it loads data from remotes.
+func (s *Service) getEphemeralStreamMbHash(
+	ctx context.Context,
+	streamId StreamId,
+	num int64,
+	remotes []common.Address,
+	isLocal bool,
+) ([]byte, error) {
+	if isLocal {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		var hash []byte
+		err := s.storage.ReadMiniblocksByIds(ctx, streamId, []int64{num}, true, func(data []byte, seqNum int64, _ []byte) error {
+			var mb Miniblock
+			if err := proto.Unmarshal(data, &mb); err != nil {
+				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			}
+			hash = mb.GetHeader().GetHash()
+			return nil
+		})
+		if err != nil {
+			logging.FromCtx(ctx).Errorw("Failed to read genesis miniblock from store to re-create ephemeral stream creation cookie", "streamId", streamId, "error", err)
+		} else if len(hash) > 0 {
+			return hash, nil
+		}
+	}
+
+	for _, addr := range remotes {
+		client, err := s.nodeRegistry.GetNodeToNodeClientForAddress(addr)
+		if err != nil {
+			logging.FromCtx(ctx).Errorw("Failed to get node client for address", "address", addr, "streamId", streamId, "error", err)
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		resp, err := client.GetMiniblocksByIds(ctx, connect.NewRequest(&GetMiniblocksByIdsRequest{
+			StreamId:      streamId[:],
+			MiniblockIds:  []int64{num},
+			OmitSnapshots: true,
+		}))
+		if err != nil {
+			cancel()
+			logging.FromCtx(ctx).Errorw("Failed to get genesis miniblock from remote to re-create ephemeral stream creation cookie", "address", addr, "streamId", streamId, "error", err)
+			continue
+		}
+
+		for resp.Receive() {
+			msg := resp.Msg()
+			_ = resp.Close()
+			cancel()
+			if msg == nil || msg.GetMiniblock() == nil {
+				break
+			} else {
+				return msg.GetMiniblock().GetHeader().GetHash(), nil
+			}
+		}
+		_ = resp.Close()
+		cancel()
+	}
+
+	return nil, RiverError(Err_NOT_FOUND, "genesis miniblock not found for ephemeral stream").Tag("streamId", streamId)
 }

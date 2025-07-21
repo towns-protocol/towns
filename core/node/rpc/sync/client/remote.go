@@ -5,111 +5,102 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelCauseFunc
 	syncStreamCtx      context.Context
 	syncStreamCancel   context.CancelFunc
 	syncID             string
-	forwarderSyncID    string
 	remoteAddr         common.Address
 	client             protocolconnect.StreamServiceClient
-	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams            sync.Map
+	messageDistributor MessageDistributor
+	streams            *xsync.Map[StreamId, struct{}]
 	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream        func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
 
-func newRemoteSyncer(
-	ctx context.Context,
-	cancelGlobalSyncOp context.CancelCauseFunc,
-	forwarderSyncID string,
+func NewRemoteSyncer(
+	globalCtx context.Context,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
-	cookies []*SyncCookie,
 	unsubStream func(streamID StreamId),
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+	messageDistributor MessageDistributor,
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
-	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
-	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{SyncPos: cookies}))
+	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
+
+	// TODO: Remove after removing the legacy syncer
+	req := connect.NewRequest(&SyncStreamsRequest{})
+	req.Header().Set(UseSharedSyncHeaderName, "true")
+
+	responseStream, err := client.SyncStreams(syncStreamCtx, req)
 	if err != nil {
-		go func() {
-			defer syncStreamCancel()
-			timeout := time.After(15 * time.Second)
-
-			for _, cookie := range cookies {
-				select {
-				case <-timeout:
-					return
-				case <-ctx.Done():
-					return
-				default:
-					_ = messages.AddMessage(&SyncStreamsResponse{
-						SyncOp:   SyncOp_SYNC_DOWN,
-						StreamId: cookie.GetStreamId(),
-					})
-				}
-			}
-		}()
-
+		syncStreamCancel()
 		return nil, err
 	}
 
-	if !responseStream.Receive() {
+	// Create a timer for the first Receive
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	firstMsgChan := make(chan bool, 1)
+	go func() {
+		firstMsgChan <- responseStream.Receive()
+	}()
+
+	select {
+	case received := <-firstMsgChan:
+		close(firstMsgChan)
+		if !received {
+			syncStreamCancel()
+			return nil, responseStream.Err()
+		}
+		// First message received successfully, continue with the stream
+	case <-timer.C:
+		close(firstMsgChan)
 		syncStreamCancel()
-		return nil, responseStream.Err()
+		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
-	log := logging.FromCtx(ctx)
-
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		log.Errorw("Received unexpected sync stream message",
+		logging.FromCtx(globalCtx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
 		return nil, err
 	}
 
-	s := &remoteSyncer{
-		forwarderSyncID:    forwarderSyncID,
-		cancelGlobalSyncOp: cancelGlobalSyncOp,
+	return &remoteSyncer{
+		syncID:             responseStream.Msg().GetSyncId(),
 		syncStreamCtx:      syncStreamCtx,
 		syncStreamCancel:   syncStreamCancel,
 		client:             client,
-		messages:           messages,
+		messageDistributor: messageDistributor,
+		streams:            xsync.NewMap[StreamId, struct{}](),
 		responseStream:     responseStream,
 		remoteAddr:         remoteAddr,
 		unsubStream:        unsubStream,
 		otelTracer:         otelTracer,
-	}
+	}, nil
+}
 
-	s.syncID = responseStream.Msg().GetSyncId()
-
-	for _, cookie := range cookies {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		s.streams.Store(streamID, struct{}{})
-	}
-
-	return s, nil
+func (s *remoteSyncer) GetSyncId() string {
+	return s.syncID
 }
 
 func (s *remoteSyncer) Run() {
@@ -133,67 +124,78 @@ func (s *remoteSyncer) Run() {
 		res := s.responseStream.Msg()
 
 		if res.GetSyncOp() == SyncOp_SYNC_UPDATE {
-			if err := s.sendSyncStreamResponseToClient(res); err != nil {
+			streamID, err := StreamIdFromBytes(res.GetStream().GetNextSyncCookie().GetStreamId())
+			if err != nil {
+				log.Errorw("Received invalid stream ID in sync update", "remote", s.remoteAddr, "error", err)
+				continue
+			}
+
+			if err = s.sendResponse(streamID, res); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-					s.cancelGlobalSyncOp(err)
+					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				}
 				return
 			}
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
 				s.unsubStream(streamID)
-				if err := s.sendSyncStreamResponseToClient(res); err != nil {
+				if err := s.sendResponse(streamID, res); err != nil {
 					if !errors.Is(err, context.Canceled) {
-						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-						s.cancelGlobalSyncOp(err)
+						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 					}
 					return
 				}
-
 				s.streams.Delete(streamID)
 			}
 		}
 	}
 
-	// stream interrupted while client didn't cancel sync -> remote is unavailable
+	// Stream interrupted while client didn't cancel sync -> remote is unavailable
 	if s.syncStreamCtx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
-		s.streams.Range(func(key, value any) bool {
-			streamID := key.(StreamId)
-			log.Debugw("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
+		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
+			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
 			// TODO: slow down a bit to give client time to read stream down updates
-			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
-				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-				s.cancelGlobalSyncOp(err)
+			if err := s.sendResponse(streamID, msg); err != nil {
+				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
+
+			// unsubStream is called to remove the stream from the local cache of the syncer set so
+			// the given stream could be re-added.
+			s.unsubStream(streamID)
 
 			return true
 		})
 	}
 }
 
-// sendSyncStreamResponseToClient tries to write msg to the client send message channel.
+// sendResponse tries to write msg to the client send message channel.
 // If the channel is full or the sync operation is cancelled, the function returns an error.
-func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
+func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	select {
 	case <-s.syncStreamCtx.Done():
-		return s.syncStreamCtx.Err()
-	default:
-		if err := s.messages.AddMessage(msg); err != nil {
-			return AsRiverError(err).
-				Tag("syncId", s.syncID).
-				Tag("op", msg.GetSyncOp()).
-				Func("sendSyncStreamResponseToClient")
+		if err := s.syncStreamCtx.Err(); err != nil {
+			rvrErr := AsRiverError(err, Err_CANCELED).
+				Func("localSyncer.sendResponse")
+			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
+			return rvrErr
 		}
-
 		return nil
+	default:
 	}
+
+	if len(msg.GetTargetSyncIds()) > 0 {
+		s.messageDistributor.DistributeBackfillMessage(streamID, msg)
+	} else {
+		s.messageDistributor.DistributeMessage(streamID, msg)
+	}
+
+	return nil
 }
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
@@ -225,19 +227,17 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				continue
 			}
 
-			// send ping to remote to generate activity to check if remote is still alive
+			// Send ping to remote to generate activity to check if remote is still alive
 			if _, err := s.client.PingSync(s.syncStreamCtx, connect.NewRequest(&PingSyncRequest{
 				SyncId: s.syncID,
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
 			})); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					log.Errorw("ping sync failed", "remote", s.remoteAddr, "err", err)
+					log.Errorw("ping sync failed", "remote", s.remoteAddr, "error", err)
 				}
 				s.syncStreamCancel()
 				return
 			}
-			return
-
 		case <-s.syncStreamCtx.Done():
 			return
 		}
@@ -246,62 +246,6 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 
 func (s *remoteSyncer) Address() common.Address {
 	return s.remoteAddr
-}
-
-func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
-	if s.otelTracer != nil {
-		var span trace.Span
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::AddStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
-		defer span.End()
-	}
-
-	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-	if err != nil {
-		return err
-	}
-
-	_, err = s.client.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
-		SyncId:  s.syncID,
-		SyncPos: cookie,
-	}))
-
-	if err == nil {
-		s.streams.Store(streamID, struct{}{})
-	}
-
-	return err
-}
-
-func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
-	if s.otelTracer != nil {
-		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::removeStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
-		defer span.End()
-	}
-
-	_, err := s.client.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
-		SyncId:   s.syncID,
-		StreamId: streamID[:],
-	}))
-
-	if err == nil {
-		s.streams.Delete(streamID)
-	}
-
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
-
-	return noMoreStreams, err
 }
 
 func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
@@ -335,17 +279,8 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 		}
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
-
-	return resp.Msg, noMoreStreams, nil
+	// TODO: Remove the second argument after the legacy client is removed
+	return resp.Msg, false, nil
 }
 
 func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {
@@ -357,15 +292,9 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		return false, AsRiverError(err)
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
+	noMoreStreams := s.streams.Size() == 0
 	if noMoreStreams {
 		s.syncStreamCancel()
 	}
-
 	return noMoreStreams, nil
 }

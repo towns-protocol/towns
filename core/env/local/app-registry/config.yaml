@@ -1,0 +1,23 @@
+appRegistry:
+    appRegistryId: local-app-registry
+    sharedSecretDataEncryptionKey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+    allowInsecureWebhooks: true
+    authentication:
+        sessionToken:
+            key:
+                algorithm: 'hs256'
+                key: '1111111122222222333333334444444455555555666666667777777788888888'
+
+database:
+    host: 'localhost'
+    port: 5433
+    user: 'postgres'
+    password: 'postgres'
+    database: 'river'
+    extra: '?sslmode=disable&pool_max_conns=1000'
+    startupDelay: 2000
+
+metrics:
+    port: 4142 # This should not conflict with the archiver when run locally
+
+port: 5199

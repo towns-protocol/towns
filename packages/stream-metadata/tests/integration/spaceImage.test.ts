@@ -9,7 +9,7 @@ import {
 
 import { encryptAndSendMediaPayload, getTestServerUrl, makeJpegBlob } from '../testUtils'
 
-const log = dlog('stream-metadata:test:spaceImage', {
+const log = dlog('test:stream-metadata:test:spaceImage', {
 	allowJest: true,
 	defaultEnabled: true,
 })

@@ -33,7 +33,6 @@
 /.github/CODEOWNERS @sergekh2 @texuf
 /.vscode/ @texuf
 /assets/ @texuf
-/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo
 /core/ @sergekh2
 /core/node/ @sergekh2 @bas-vk
 /core/node/events/ @sergekh2 @texuf
@@ -43,6 +42,7 @@
 /core/xchain/ @sergekh2 @bas-vk @clemire
 /infra/ @mechanical-turk
 /packages/ @sergekh2 @texuf
+/packages/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo
 /packages/generated/ @sergekh2 @giuseppecrj
 /packages/generated/addresses/ @sergekh2 @texuf @giuseppecrj
 /packages/generated/deployments/ @sergekh2 @texuf @giuseppecrj
@@ -52,6 +52,7 @@
 /packages/sdk/ @sergekh2 @texuf
 /packages/sdk/src/ @sergekh2 @texuf @erikolsson
 /packages/stream-metadata/ @texuf
+/packages/web3/ @salzbrenner
 /protocol/ @sergekh2 @texuf
 /scripts/ @texuf
 turbo.json @mechanical-turk

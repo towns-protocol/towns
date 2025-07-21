@@ -2,7 +2,6 @@ import TypedEmitter from 'typed-emitter'
 import { EncryptedData } from '@towns-protocol/proto'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
-import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { streamIdToBytes } from './id'
 
@@ -61,10 +60,6 @@ export abstract class StreamStateView_AbstractContent {
         //
     }
 
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
-        return undefined
-    }
-
     getStreamParentId(): string | undefined {
         return undefined
     }
@@ -75,9 +70,5 @@ export abstract class StreamStateView_AbstractContent {
             return undefined
         }
         return streamIdToBytes(streamParentId)
-    }
-
-    needsScrollback(): boolean {
-        return false
     }
 }

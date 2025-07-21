@@ -14,7 +14,7 @@ import { useSetDisplayName } from '@towns-protocol/react-sdk'
 ```ts
 function useSetDisplayName(
   streamId: string,
-  config?: ActionConfig<Myself['setDisplayName']>,
+  config?: ActionConfig<Myself["setDisplayName"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -37,7 +37,7 @@ The id of the stream to set the display name of.
 
 ### config
 
-- **Type:** `ActionConfig<Myself['setDisplayName']>`
+- **Type:** `ActionConfig<Myself["setDisplayName"]>`
 - **Optional**
 
 Configuration options for the action.

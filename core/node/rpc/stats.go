@@ -45,7 +45,7 @@ func StatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to read memory stats", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to read memory stats", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

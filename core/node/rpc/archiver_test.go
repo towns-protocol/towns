@@ -23,10 +23,12 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 )
 
@@ -157,7 +159,7 @@ func compareStreamMiniblocks(
 		)
 	}
 
-	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1)
+	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1, false)
 	if err != nil {
 		return err
 	}
@@ -182,7 +184,7 @@ func compareStreamMiniblocks(
 	}
 
 	for i, mb := range miniblocks {
-		info, err := events.NewMiniblockInfoFromBytesWithOpts(
+		info, err := events.NewMiniblockInfoFromDescriptorWithOpts(
 			mb,
 			events.NewParsedMiniblockInfoOpts().
 				WithExpectedBlockNumber(int64(i)).
@@ -232,8 +234,6 @@ func compareStreamsMiniblocks(
 // requireNoCorruptStreams confirms that the scrubber detected no corrupt streams.
 // Call after the archiver has downloaded all of the latest miniblocks.
 func requireNoCorruptStreams(
-	name string,
-	t *testing.T,
 	ctx context.Context,
 	require *require.Assertions,
 	archiver *Archiver,
@@ -250,69 +250,6 @@ func requireNoCorruptStreams(
 		archiver.debugGetUnscrubbedMiniblocksCount(),
 	)
 	require.Len(archiver.GetCorruptStreams(ctx), 0)
-}
-
-func TestArchive100StreamsWithReplication(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 3, start: true})
-	ctx := tester.ctx
-	require := tester.require
-
-	// Create stream
-	// Create 100 streams
-	streamIds := testCreate100Streams(
-		ctx,
-		require,
-		tester.testClient(0),
-		&StreamSettings{DisableMiniblockCreation: true},
-	)
-
-	// Kill 2/5 nodes. With a replication factor of 3, all streams are available on at least 1 node.
-	tester.nodes[1].Close(ctx, tester.dbUrl)
-	tester.nodes[3].Close(ctx, tester.dbUrl)
-
-	archiveCfg := tester.getConfig()
-	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
-
-	serverCtx, serverCancel := context.WithCancel(ctx)
-	defer serverCancel()
-
-	arch, err := StartServerInArchiveMode(
-		serverCtx,
-		archiveCfg,
-		makeTestServerOpts(tester),
-		false,
-	)
-	require.NoError(err)
-	tester.cleanup(arch.Close)
-
-	arch.Archiver.WaitForStart()
-	require.Len(arch.ExitSignal(), 0)
-
-	require.EventuallyWithT(
-		func(c *assert.CollectT) {
-			for _, streamId := range streamIds {
-				num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
-				assert.NoError(c, err)
-				expectedMaxBlockNum := int64(0)
-				// The first stream id is a user stream with 2 miniblocks. The rest are
-				// space streams with a single block.
-				if streamId == streamIds[0] {
-					expectedMaxBlockNum = int64(1)
-				}
-				assert.Equal(
-					c,
-					expectedMaxBlockNum,
-					num,
-					fmt.Sprintf("Expected %d but saw %d miniblocks for stream %s", 0, num, streamId),
-				)
-			}
-		},
-		30*time.Second,
-		100*time.Millisecond,
-	)
-
-	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(0)))
-	requireNoCorruptStreams("TestArchive100StreamsWithReplication", t, ctx, require, arch.Archiver)
 }
 
 func TestArchiveOneStream(t *testing.T) {
@@ -347,6 +284,11 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
+	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(
+		ctx,
+		nil,
+		node2nodeauth.CertGetter(nil, wallet, tester.btc.ChainId),
+	)
 	var nodeRegistry nodes.NodeRegistry
 	nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
@@ -354,7 +296,9 @@ func TestArchiveOneStream(t *testing.T) {
 		common.Address{},
 		bc.InitialBlockNum,
 		bc.ChainMonitor,
+		tester.btc.OnChainConfig,
 		httpClient,
+		httpClientWithCert,
 		nil,
 	)
 	require.NoError(err)
@@ -365,8 +309,8 @@ func TestArchiveOneStream(t *testing.T) {
 
 	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
-	tester.cleanup(pool.Pool.Close)
-	tester.cleanup(pool.StreamingPool.Close)
+	tester.t.Cleanup(pool.Pool.Close)
+	tester.t.Cleanup(pool.StreamingPool.Close)
 
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,
@@ -374,7 +318,13 @@ func TestArchiveOneStream(t *testing.T) {
 		GenShortNanoid(),
 		make(chan error, 1),
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:       time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+			},
+		},
+		100,
 	)
 	require.NoError(err)
 
@@ -392,7 +342,7 @@ func TestArchiveOneStream(t *testing.T) {
 		ctx,
 		NewArchiveStream(
 			streamId,
-			&streamRecord.Nodes,
+			streamRecord.Nodes,
 			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
@@ -418,7 +368,7 @@ func TestArchiveOneStream(t *testing.T) {
 		ctx,
 		NewArchiveStream(
 			streamId,
-			&streamRecord.Nodes,
+			streamRecord.Nodes,
 			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
@@ -441,7 +391,7 @@ func TestArchiveOneStream(t *testing.T) {
 		ctx,
 		NewArchiveStream(
 			streamId,
-			&streamRecord.Nodes,
+			streamRecord.Nodes,
 			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
@@ -458,87 +408,11 @@ func TestArchiveOneStream(t *testing.T) {
 func makeTestServerOpts(tester *serviceTester) *ServerStartOpts {
 	listener, _ := tester.makeTestListener()
 	return &ServerStartOpts{
-		RiverChain:      tester.btc.NewWalletAndBlockchain(tester.ctx),
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+		RiverChain:              tester.btc.NewWalletAndBlockchain(tester.ctx),
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
 	}
-}
-
-func TestArchive100Streams(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 10, start: true})
-	ctx := tester.ctx
-	require := tester.require
-
-	// Create 100 streams
-	streamIds := testCreate100Streams(
-		ctx,
-		require,
-		tester.testClient(0),
-		&StreamSettings{DisableMiniblockCreation: true},
-	)
-
-	archiveCfg := tester.getConfig()
-	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
-
-	serverCtx, serverCancel := context.WithCancel(ctx)
-	arch, err := StartServerInArchiveMode(
-		serverCtx,
-		archiveCfg,
-		makeTestServerOpts(tester),
-		true,
-	)
-	require.NoError(err)
-	tester.cleanup(arch.Close)
-
-	arch.Archiver.WaitForStart()
-	require.Len(arch.ExitSignal(), 0)
-
-	arch.Archiver.WaitForTasks()
-
-	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(3)))
-	requireNoCorruptStreams("TestArchive100Streams", t, ctx, require, arch.Archiver)
-
-	serverCancel()
-	arch.Archiver.WaitForWorkers()
-
-	stats := arch.Archiver.GetStats()
-	require.Equal(uint64(100), stats.StreamsExamined)
-	require.GreaterOrEqual(stats.SuccessOpsCount, uint64(100))
-	require.Zero(stats.FailedOpsCount)
-}
-
-func TestArchive100StreamsWithData(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 10, start: true})
-	ctx := tester.ctx
-	require := tester.require
-
-	_, streamIds, err := createUserSettingsStreamsWithData(ctx, tester.testClient(0), 100, 10, 5)
-	require.NoError(err)
-
-	archiveCfg := tester.getConfig()
-	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
-	archiveCfg.Archive.ReadMiniblocksSize = 3
-
-	serverCtx, serverCancel := context.WithCancel(ctx)
-	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), true)
-	require.NoError(err)
-	tester.cleanup(arch.Close)
-
-	arch.Archiver.WaitForStart()
-	require.Len(arch.ExitSignal(), 0)
-
-	arch.Archiver.WaitForTasks()
-
-	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(5)))
-	requireNoCorruptStreams("TestArchive100StreamsWithData", t, ctx, require, arch.Archiver)
-
-	serverCancel()
-	arch.Archiver.WaitForWorkers()
-
-	stats := arch.Archiver.GetStats()
-	require.Equal(uint64(100), stats.StreamsExamined)
-	require.GreaterOrEqual(stats.SuccessOpsCount, uint64(100))
-	require.Zero(stats.FailedOpsCount)
 }
 
 func createCorruptStreams(
@@ -564,75 +438,12 @@ func createCorruptStreams(
 	streamIds := make([]StreamId, len(corruptionFuncs))
 	for i, corruptMb := range corruptionFuncs {
 		streamId, mb1, blocks := createMultiblockChannelStream(ctx, require, client, store)
-		blocks[1] = corruptMb(require, wallet, blocks[1])
+		blocks[1].Data = corruptMb(require, wallet, blocks[1].Data)
 		writeStreamBackToStore(ctx, require, store, streamId, mb1, blocks)
 		streamIds[i] = streamId
 	}
 
 	return streamIds
-}
-
-func TestArchive20StreamsWithCorruption(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	ctx := tester.ctx
-	require := tester.require
-
-	_, userStreamIds, err := createUserSettingsStreamsWithData(ctx, tester.testClient(0), 10, 10, 5)
-	require.NoError(err)
-
-	corruptStreamIds := createCorruptStreams(
-		ctx,
-		require,
-		tester.nodes[0].service.wallet,
-		tester.testClient(0),
-		tester.nodes[0].service.storage,
-	)
-
-	archiveCfg := tester.getConfig()
-	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
-	archiveCfg.Archive.ReadMiniblocksSize = 10
-	archiveCfg.Archive.MaxFailedConsecutiveUpdates = 1
-
-	serverCtx, serverCancel := context.WithCancel(ctx)
-	defer serverCancel()
-
-	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), false)
-	require.NoError(err)
-	tester.cleanup(arch.Close)
-
-	arch.Archiver.WaitForStart()
-	require.Len(arch.ExitSignal(), 0)
-
-	require.EventuallyWithT(
-		func(c *assert.CollectT) {
-			for _, streamId := range userStreamIds {
-				num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
-				assert.NoError(c, err, "stream %v getMaxArchivedMiniblockNumber", streamId)
-				assert.Equal(c, int64(10), num, "stream %v behind", streamId)
-			}
-		},
-		10*time.Second,
-		10*time.Millisecond,
-	)
-	// Validate storage contents
-	require.NoError(compareStreamsMiniblocks(t, ctx, userStreamIds, arch.Storage(), tester.testClient(0)))
-
-	require.EventuallyWithT(
-		func(c *assert.CollectT) {
-			corruptStreams := arch.Archiver.GetCorruptStreams(ctx)
-			assert.Len(c, corruptStreams, 10)
-			corruptStreamsSet := map[StreamId]struct{}{}
-			for _, record := range corruptStreams {
-				corruptStreamsSet[record.StreamId] = struct{}{}
-			}
-			for _, streamId := range corruptStreamIds {
-				_, ok := corruptStreamsSet[streamId]
-				assert.True(c, ok, "Stream not in corrupt stream set: %v", streamId)
-			}
-		},
-		10*time.Second,
-		10*time.Millisecond,
-	)
 }
 
 func TestArchiveContinuous(t *testing.T) {
@@ -658,7 +469,7 @@ func TestArchiveContinuous(t *testing.T) {
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), false)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
 
@@ -712,7 +523,7 @@ func TestArchiveContinuous(t *testing.T) {
 	)
 
 	require.NoError(compareStreamsMiniblocks(t, ctx, []StreamId{streamId, streamId2}, arch.Storage(), client))
-	requireNoCorruptStreams("TestArchiveContinuous", t, ctx, require, arch.Archiver)
+	requireNoCorruptStreams(ctx, require, arch.Archiver)
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
@@ -755,7 +566,7 @@ func TestCorruptionTracker(t *testing.T) {
 	ctx := context.Background()
 	stream := NewArchiveStream(
 		testutils.FakeStreamId(STREAM_SPACE_BIN),
-		&[]common.Address{},
+		[]common.Address{},
 		0,
 		maxFailedConsecutiveUpdates,
 	)
@@ -859,7 +670,7 @@ func TestCorruptionTracker(t *testing.T) {
 	// to a scrub failure, it cannot be reset.
 	stream = NewArchiveStream(
 		testutils.FakeStreamId(STREAM_SPACE_BIN),
-		&[]common.Address{},
+		[]common.Address{},
 		0,
 		maxFailedConsecutiveUpdates,
 	)

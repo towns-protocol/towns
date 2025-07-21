@@ -9,6 +9,7 @@ package protocol
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -20,6 +21,115 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
+// of. It specifies which messages the app registry service will consider relevant for forwarding to
+// the bot.
+type ForwardSettingValue int32
+
+const (
+	// FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS as the default setting.
+	ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED ForwardSettingValue = 0
+	// FORWARD_SETTING_ALL_MESSAGES indicates that the app would like all messages forwarded for each channel
+	// it is a member of.
+	ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES ForwardSettingValue = 1
+	// FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS indicates that the app would only like messages forwarded in
+	// channels it has membership in if either the app is mentioned, or the message is a direct reply or reaction
+	// to it's own post. This is the default.
+	ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS ForwardSettingValue = 2
+	// SPACE_CHANNEL_SETTING_NO_MESSAGES indicates that the user won't receive notifications of any channel in the space.
+	ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES ForwardSettingValue = 3
+)
+
+// Enum value maps for ForwardSettingValue.
+var (
+	ForwardSettingValue_name = map[int32]string{
+		0: "FORWARD_SETTING_UNSPECIFIED",
+		1: "FORWARD_SETTING_ALL_MESSAGES",
+		2: "FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS",
+		3: "FORWARD_SETTING_NO_MESSAGES",
+	}
+	ForwardSettingValue_value = map[string]int32{
+		"FORWARD_SETTING_UNSPECIFIED":                0,
+		"FORWARD_SETTING_ALL_MESSAGES":               1,
+		"FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS": 2,
+		"FORWARD_SETTING_NO_MESSAGES":                3,
+	}
+)
+
+func (x ForwardSettingValue) Enum() *ForwardSettingValue {
+	p := new(ForwardSettingValue)
+	*p = x
+	return p
+}
+
+func (x ForwardSettingValue) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ForwardSettingValue) Descriptor() protoreflect.EnumDescriptor {
+	return file_apps_proto_enumTypes[0].Descriptor()
+}
+
+func (ForwardSettingValue) Type() protoreflect.EnumType {
+	return &file_apps_proto_enumTypes[0]
+}
+
+func (x ForwardSettingValue) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ForwardSettingValue.Descriptor instead.
+func (ForwardSettingValue) EnumDescriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{0}
+}
+
+type AppSettings struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ForwardSetting ForwardSettingValue `protobuf:"varint,1,opt,name=forward_setting,json=forwardSetting,proto3,enum=river.ForwardSettingValue" json:"forward_setting,omitempty"`
+}
+
+func (x *AppSettings) Reset() {
+	*x = AppSettings{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AppSettings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppSettings) ProtoMessage() {}
+
+func (x *AppSettings) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppSettings.ProtoReflect.Descriptor instead.
+func (*AppSettings) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *AppSettings) GetForwardSetting() ForwardSettingValue {
+	if x != nil {
+		return x.ForwardSetting
+	}
+	return ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED
+}
+
 type RegisterRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -28,13 +138,15 @@ type RegisterRequest struct {
 	// public key of the app
 	AppId []byte `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
 	// public key of the app owner
-	AppOwnerId []byte `protobuf:"bytes,2,opt,name=app_owner_id,json=appOwnerId,proto3" json:"app_owner_id,omitempty"`
+	AppOwnerId []byte       `protobuf:"bytes,2,opt,name=app_owner_id,json=appOwnerId,proto3" json:"app_owner_id,omitempty"`
+	Settings   *AppSettings `protobuf:"bytes,3,opt,name=settings,proto3" json:"settings,omitempty"`
+	Metadata   *AppMetadata `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 }
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[0]
+		mi := &file_apps_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -47,7 +159,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[0]
+	mi := &file_apps_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +172,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{0}
+	return file_apps_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RegisterRequest) GetAppId() []byte {
@@ -77,20 +189,34 @@ func (x *RegisterRequest) GetAppOwnerId() []byte {
 	return nil
 }
 
+func (x *RegisterRequest) GetSettings() *AppSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+func (x *RegisterRequest) GetMetadata() *AppMetadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 type RegisterResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// The shared secret used to sign the jwt the app registry will use to authenticate to the
-	// app service. This secret should be exactly 32 bytes.
+	// app service. This secret will be exactly 32 bytes.
 	Hs256SharedSecret []byte `protobuf:"bytes,1,opt,name=hs256_shared_secret,json=hs256SharedSecret,proto3" json:"hs256_shared_secret,omitempty"`
 }
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[1]
+		mi := &file_apps_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -103,7 +229,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[1]
+	mi := &file_apps_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -116,7 +242,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{1}
+	return file_apps_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RegisterResponse) GetHs256SharedSecret() []byte {
@@ -140,7 +266,7 @@ type RegisterWebhookRequest struct {
 func (x *RegisterWebhookRequest) Reset() {
 	*x = RegisterWebhookRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[2]
+		mi := &file_apps_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -153,7 +279,7 @@ func (x *RegisterWebhookRequest) String() string {
 func (*RegisterWebhookRequest) ProtoMessage() {}
 
 func (x *RegisterWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[2]
+	mi := &file_apps_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -166,7 +292,7 @@ func (x *RegisterWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterWebhookRequest.ProtoReflect.Descriptor instead.
 func (*RegisterWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{2}
+	return file_apps_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RegisterWebhookRequest) GetAppId() []byte {
@@ -192,7 +318,7 @@ type RegisterWebhookResponse struct {
 func (x *RegisterWebhookResponse) Reset() {
 	*x = RegisterWebhookResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[3]
+		mi := &file_apps_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -205,7 +331,7 @@ func (x *RegisterWebhookResponse) String() string {
 func (*RegisterWebhookResponse) ProtoMessage() {}
 
 func (x *RegisterWebhookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[3]
+	mi := &file_apps_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -218,7 +344,196 @@ func (x *RegisterWebhookResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterWebhookResponse.ProtoReflect.Descriptor instead.
 func (*RegisterWebhookResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{3}
+	return file_apps_proto_rawDescGZIP(), []int{4}
+}
+
+type SetAppSettingsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// public key of the app
+	AppId    []byte       `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Settings *AppSettings `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
+}
+
+func (x *SetAppSettingsRequest) Reset() {
+	*x = SetAppSettingsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetAppSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppSettingsRequest) ProtoMessage() {}
+
+func (x *SetAppSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppSettingsRequest.ProtoReflect.Descriptor instead.
+func (*SetAppSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SetAppSettingsRequest) GetAppId() []byte {
+	if x != nil {
+		return x.AppId
+	}
+	return nil
+}
+
+func (x *SetAppSettingsRequest) GetSettings() *AppSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type SetAppSettingsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *SetAppSettingsResponse) Reset() {
+	*x = SetAppSettingsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetAppSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppSettingsResponse) ProtoMessage() {}
+
+func (x *SetAppSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppSettingsResponse.ProtoReflect.Descriptor instead.
+func (*SetAppSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{6}
+}
+
+type GetAppSettingsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// public key of the app
+	AppId []byte `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+}
+
+func (x *GetAppSettingsRequest) Reset() {
+	*x = GetAppSettingsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAppSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppSettingsRequest) ProtoMessage() {}
+
+func (x *GetAppSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppSettingsRequest.ProtoReflect.Descriptor instead.
+func (*GetAppSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetAppSettingsRequest) GetAppId() []byte {
+	if x != nil {
+		return x.AppId
+	}
+	return nil
+}
+
+type GetAppSettingsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Settings *AppSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+}
+
+func (x *GetAppSettingsResponse) Reset() {
+	*x = GetAppSettingsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAppSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppSettingsResponse) ProtoMessage() {}
+
+func (x *GetAppSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppSettingsResponse.ProtoReflect.Descriptor instead.
+func (*GetAppSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetAppSettingsResponse) GetSettings() *AppSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
 }
 
 type RotateSecretRequest struct {
@@ -233,7 +548,7 @@ type RotateSecretRequest struct {
 func (x *RotateSecretRequest) Reset() {
 	*x = RotateSecretRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[4]
+		mi := &file_apps_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -246,7 +561,7 @@ func (x *RotateSecretRequest) String() string {
 func (*RotateSecretRequest) ProtoMessage() {}
 
 func (x *RotateSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[4]
+	mi := &file_apps_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -259,7 +574,7 @@ func (x *RotateSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateSecretRequest.ProtoReflect.Descriptor instead.
 func (*RotateSecretRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{4}
+	return file_apps_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *RotateSecretRequest) GetAppId() []byte {
@@ -274,14 +589,15 @@ type RotateSecretResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// the updated shared secret used to generate the hmac the app registry will send to the app service
-	HmacSharedSecret string `protobuf:"bytes,1,opt,name=hmac_shared_secret,json=hmacSharedSecret,proto3" json:"hmac_shared_secret,omitempty"`
+	// the updated shared secret used to sign the jwt the app registry will use to authenticate
+	// to the app service. This secret should be exactly 32 bytes.
+	Hs256SharedSecret []byte `protobuf:"bytes,1,opt,name=hs256_shared_secret,json=hs256SharedSecret,proto3" json:"hs256_shared_secret,omitempty"`
 }
 
 func (x *RotateSecretResponse) Reset() {
 	*x = RotateSecretResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[5]
+		mi := &file_apps_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -294,7 +610,7 @@ func (x *RotateSecretResponse) String() string {
 func (*RotateSecretResponse) ProtoMessage() {}
 
 func (x *RotateSecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[5]
+	mi := &file_apps_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,14 +623,14 @@ func (x *RotateSecretResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateSecretResponse.ProtoReflect.Descriptor instead.
 func (*RotateSecretResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{5}
+	return file_apps_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *RotateSecretResponse) GetHmacSharedSecret() string {
+func (x *RotateSecretResponse) GetHs256SharedSecret() []byte {
 	if x != nil {
-		return x.HmacSharedSecret
+		return x.Hs256SharedSecret
 	}
-	return ""
+	return nil
 }
 
 type GetStatusRequest struct {
@@ -329,7 +645,7 @@ type GetStatusRequest struct {
 func (x *GetStatusRequest) Reset() {
 	*x = GetStatusRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[6]
+		mi := &file_apps_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -342,7 +658,7 @@ func (x *GetStatusRequest) String() string {
 func (*GetStatusRequest) ProtoMessage() {}
 
 func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[6]
+	mi := &file_apps_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -355,7 +671,7 @@ func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetStatusRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{6}
+	return file_apps_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetStatusRequest) GetAppId() []byte {
@@ -375,14 +691,14 @@ type GetStatusResponse struct {
 	// valid_response is set to true if calling the webhook results in a 200 with version
 	// info included in the response body.
 	ValidResponse bool `protobuf:"varint,2,opt,name=valid_response,json=validResponse,proto3" json:"valid_response,omitempty"`
-	// version info returned by the webhook
-	VersionInfo string `protobuf:"bytes,3,opt,name=version_info,json=versionInfo,proto3" json:"version_info,omitempty"`
+	// Forward the status returned by the bot service.
+	Status *AppServiceResponse_StatusResponse `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 }
 
 func (x *GetStatusResponse) Reset() {
 	*x = GetStatusResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[7]
+		mi := &file_apps_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -395,7 +711,7 @@ func (x *GetStatusResponse) String() string {
 func (*GetStatusResponse) ProtoMessage() {}
 
 func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[7]
+	mi := &file_apps_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +724,7 @@ func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetStatusResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{7}
+	return file_apps_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetStatusResponse) GetIsRegistered() bool {
@@ -425,9 +741,1113 @@ func (x *GetStatusResponse) GetValidResponse() bool {
 	return false
 }
 
-func (x *GetStatusResponse) GetVersionInfo() string {
+func (x *GetStatusResponse) GetStatus() *AppServiceResponse_StatusResponse {
 	if x != nil {
-		return x.VersionInfo
+		return x.Status
+	}
+	return nil
+}
+
+type GetSessionRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// public key of the app
+	AppId     []byte `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	SessionId string `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+}
+
+func (x *GetSessionRequest) Reset() {
+	*x = GetSessionRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionRequest) ProtoMessage() {}
+
+func (x *GetSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionRequest.ProtoReflect.Descriptor instead.
+func (*GetSessionRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetSessionRequest) GetAppId() []byte {
+	if x != nil {
+		return x.AppId
+	}
+	return nil
+}
+
+func (x *GetSessionRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type GetSessionResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// This will be
+	GroupEncryptionSessions *Envelope `protobuf:"bytes,1,opt,name=group_encryption_sessions,json=groupEncryptionSessions,proto3" json:"group_encryption_sessions,omitempty"`
+}
+
+func (x *GetSessionResponse) Reset() {
+	*x = GetSessionResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionResponse) ProtoMessage() {}
+
+func (x *GetSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionResponse.ProtoReflect.Descriptor instead.
+func (*GetSessionResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetSessionResponse) GetGroupEncryptionSessions() *Envelope {
+	if x != nil {
+		return x.GroupEncryptionSessions
+	}
+	return nil
+}
+
+// As a performance optimization, we may wish to bundle together many key solicitation requests
+// and channel messages for the bot to respond to in a single webhook call. Thus, an isolated
+// group of channel messages and encryption keys, or a request for a key solicitation, is
+// represented here. For webhook calls regarding channel content, the payload may contain one or
+// more of these events.
+type EventPayload struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Payload:
+	//
+	//	*EventPayload_Messages_
+	//	*EventPayload_Solicitation
+	Payload isEventPayload_Payload `protobuf_oneof:"payload"`
+}
+
+func (x *EventPayload) Reset() {
+	*x = EventPayload{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventPayload) ProtoMessage() {}
+
+func (x *EventPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventPayload.ProtoReflect.Descriptor instead.
+func (*EventPayload) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{15}
+}
+
+func (m *EventPayload) GetPayload() isEventPayload_Payload {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (x *EventPayload) GetMessages() *EventPayload_Messages {
+	if x, ok := x.GetPayload().(*EventPayload_Messages_); ok {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *EventPayload) GetSolicitation() *EventPayload_SolicitKeys {
+	if x, ok := x.GetPayload().(*EventPayload_Solicitation); ok {
+		return x.Solicitation
+	}
+	return nil
+}
+
+type isEventPayload_Payload interface {
+	isEventPayload_Payload()
+}
+
+type EventPayload_Messages_ struct {
+	Messages *EventPayload_Messages `protobuf:"bytes,1,opt,name=messages,proto3,oneof"`
+}
+
+type EventPayload_Solicitation struct {
+	Solicitation *EventPayload_SolicitKeys `protobuf:"bytes,2,opt,name=solicitation,proto3,oneof"`
+}
+
+func (*EventPayload_Messages_) isEventPayload_Payload() {}
+
+func (*EventPayload_Solicitation) isEventPayload_Payload() {}
+
+type EventsPayload struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Events []*EventPayload `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+}
+
+func (x *EventsPayload) Reset() {
+	*x = EventsPayload{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventsPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventsPayload) ProtoMessage() {}
+
+func (x *EventsPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventsPayload.ProtoReflect.Descriptor instead.
+func (*EventsPayload) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *EventsPayload) GetEvents() []*EventPayload {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+type AppServiceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Payload:
+	//
+	//	*AppServiceRequest_Initialize
+	//	*AppServiceRequest_Status
+	//	*AppServiceRequest_Events
+	Payload isAppServiceRequest_Payload `protobuf_oneof:"payload"`
+}
+
+func (x *AppServiceRequest) Reset() {
+	*x = AppServiceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AppServiceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppServiceRequest) ProtoMessage() {}
+
+func (x *AppServiceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppServiceRequest.ProtoReflect.Descriptor instead.
+func (*AppServiceRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{17}
+}
+
+func (m *AppServiceRequest) GetPayload() isAppServiceRequest_Payload {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (x *AppServiceRequest) GetInitialize() *emptypb.Empty {
+	if x, ok := x.GetPayload().(*AppServiceRequest_Initialize); ok {
+		return x.Initialize
+	}
+	return nil
+}
+
+func (x *AppServiceRequest) GetStatus() *emptypb.Empty {
+	if x, ok := x.GetPayload().(*AppServiceRequest_Status); ok {
+		return x.Status
+	}
+	return nil
+}
+
+func (x *AppServiceRequest) GetEvents() *EventsPayload {
+	if x, ok := x.GetPayload().(*AppServiceRequest_Events); ok {
+		return x.Events
+	}
+	return nil
+}
+
+type isAppServiceRequest_Payload interface {
+	isAppServiceRequest_Payload()
+}
+
+type AppServiceRequest_Initialize struct {
+	Initialize *emptypb.Empty `protobuf:"bytes,101,opt,name=initialize,proto3,oneof"`
+}
+
+type AppServiceRequest_Status struct {
+	Status *emptypb.Empty `protobuf:"bytes,102,opt,name=status,proto3,oneof"`
+}
+
+type AppServiceRequest_Events struct {
+	Events *EventsPayload `protobuf:"bytes,103,opt,name=events,proto3,oneof"`
+}
+
+func (*AppServiceRequest_Initialize) isAppServiceRequest_Payload() {}
+
+func (*AppServiceRequest_Status) isAppServiceRequest_Payload() {}
+
+func (*AppServiceRequest_Events) isAppServiceRequest_Payload() {}
+
+type AppServiceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Payload:
+	//
+	//	*AppServiceResponse_Initialize
+	//	*AppServiceResponse_Status
+	Payload isAppServiceResponse_Payload `protobuf_oneof:"payload"`
+}
+
+func (x *AppServiceResponse) Reset() {
+	*x = AppServiceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AppServiceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppServiceResponse) ProtoMessage() {}
+
+func (x *AppServiceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppServiceResponse.ProtoReflect.Descriptor instead.
+func (*AppServiceResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{18}
+}
+
+func (m *AppServiceResponse) GetPayload() isAppServiceResponse_Payload {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (x *AppServiceResponse) GetInitialize() *AppServiceResponse_InitializeResponse {
+	if x, ok := x.GetPayload().(*AppServiceResponse_Initialize); ok {
+		return x.Initialize
+	}
+	return nil
+}
+
+func (x *AppServiceResponse) GetStatus() *AppServiceResponse_StatusResponse {
+	if x, ok := x.GetPayload().(*AppServiceResponse_Status); ok {
+		return x.Status
+	}
+	return nil
+}
+
+type isAppServiceResponse_Payload interface {
+	isAppServiceResponse_Payload()
+}
+
+type AppServiceResponse_Initialize struct {
+	Initialize *AppServiceResponse_InitializeResponse `protobuf:"bytes,101,opt,name=initialize,proto3,oneof"`
+}
+
+type AppServiceResponse_Status struct {
+	Status *AppServiceResponse_StatusResponse `protobuf:"bytes,102,opt,name=status,proto3,oneof"`
+}
+
+func (*AppServiceResponse_Initialize) isAppServiceResponse_Payload() {}
+
+func (*AppServiceResponse_Status) isAppServiceResponse_Payload() {}
+
+// SlashCommand represents a command that the bot supports.
+type SlashCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// name is the command name (e.g., "help", "search").
+	// Must be 1-32 characters, contain only letters, numbers, and underscores,
+	// and start with a letter.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// description is a short description of what the command does.
+	// Must be 1-256 characters.
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+}
+
+func (x *SlashCommand) Reset() {
+	*x = SlashCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SlashCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SlashCommand) ProtoMessage() {}
+
+func (x *SlashCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SlashCommand.ProtoReflect.Descriptor instead.
+func (*SlashCommand) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SlashCommand) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SlashCommand) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type AppMetadata struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// username is the identifier used to mention the bot (e.g., "@mybot").
+	// Must be unique across all bots.
+	Username    string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	// image_url is an image URL with an acceptable schema and file extension.
+	ImageUrl    string  `protobuf:"bytes,3,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
+	ExternalUrl *string `protobuf:"bytes,4,opt,name=external_url,json=externalUrl,proto3,oneof" json:"external_url,omitempty"`
+	// avatar_url is an image URL with an acceptable schema and file extension.
+	AvatarUrl string `protobuf:"bytes,5,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	// slash_commands is a list of commands the bot supports.
+	// Maximum of 25 commands per bot.
+	SlashCommands []*SlashCommand `protobuf:"bytes,6,rep,name=slash_commands,json=slashCommands,proto3" json:"slash_commands,omitempty"`
+	// display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
+	// Must be non-empty and unique across all bots.
+	DisplayName string `protobuf:"bytes,7,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+}
+
+func (x *AppMetadata) Reset() {
+	*x = AppMetadata{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AppMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppMetadata) ProtoMessage() {}
+
+func (x *AppMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppMetadata.ProtoReflect.Descriptor instead.
+func (*AppMetadata) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *AppMetadata) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *AppMetadata) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *AppMetadata) GetImageUrl() string {
+	if x != nil {
+		return x.ImageUrl
+	}
+	return ""
+}
+
+func (x *AppMetadata) GetExternalUrl() string {
+	if x != nil && x.ExternalUrl != nil {
+		return *x.ExternalUrl
+	}
+	return ""
+}
+
+func (x *AppMetadata) GetAvatarUrl() string {
+	if x != nil {
+		return x.AvatarUrl
+	}
+	return ""
+}
+
+func (x *AppMetadata) GetSlashCommands() []*SlashCommand {
+	if x != nil {
+		return x.SlashCommands
+	}
+	return nil
+}
+
+func (x *AppMetadata) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+// Set app metadata
+type SetAppMetadataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AppId    []byte       `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Metadata *AppMetadata `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *SetAppMetadataRequest) Reset() {
+	*x = SetAppMetadataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetAppMetadataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppMetadataRequest) ProtoMessage() {}
+
+func (x *SetAppMetadataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppMetadataRequest.ProtoReflect.Descriptor instead.
+func (*SetAppMetadataRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *SetAppMetadataRequest) GetAppId() []byte {
+	if x != nil {
+		return x.AppId
+	}
+	return nil
+}
+
+func (x *SetAppMetadataRequest) GetMetadata() *AppMetadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+type SetAppMetadataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *SetAppMetadataResponse) Reset() {
+	*x = SetAppMetadataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetAppMetadataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppMetadataResponse) ProtoMessage() {}
+
+func (x *SetAppMetadataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppMetadataResponse.ProtoReflect.Descriptor instead.
+func (*SetAppMetadataResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{22}
+}
+
+// Get app metadata
+type GetAppMetadataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AppId []byte `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+}
+
+func (x *GetAppMetadataRequest) Reset() {
+	*x = GetAppMetadataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAppMetadataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppMetadataRequest) ProtoMessage() {}
+
+func (x *GetAppMetadataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppMetadataRequest.ProtoReflect.Descriptor instead.
+func (*GetAppMetadataRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetAppMetadataRequest) GetAppId() []byte {
+	if x != nil {
+		return x.AppId
+	}
+	return nil
+}
+
+type GetAppMetadataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Metadata *AppMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *GetAppMetadataResponse) Reset() {
+	*x = GetAppMetadataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAppMetadataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppMetadataResponse) ProtoMessage() {}
+
+func (x *GetAppMetadataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppMetadataResponse.ProtoReflect.Descriptor instead.
+func (*GetAppMetadataResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GetAppMetadataResponse) GetMetadata() *AppMetadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// Validate bot username
+type ValidateBotNameRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+}
+
+func (x *ValidateBotNameRequest) Reset() {
+	*x = ValidateBotNameRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ValidateBotNameRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidateBotNameRequest) ProtoMessage() {}
+
+func (x *ValidateBotNameRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidateBotNameRequest.ProtoReflect.Descriptor instead.
+func (*ValidateBotNameRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ValidateBotNameRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+type ValidateBotNameResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	IsAvailable  bool   `protobuf:"varint,1,opt,name=is_available,json=isAvailable,proto3" json:"is_available,omitempty"`
+	ErrorMessage string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+}
+
+func (x *ValidateBotNameResponse) Reset() {
+	*x = ValidateBotNameResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ValidateBotNameResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidateBotNameResponse) ProtoMessage() {}
+
+func (x *ValidateBotNameResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidateBotNameResponse.ProtoReflect.Descriptor instead.
+func (*ValidateBotNameResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ValidateBotNameResponse) GetIsAvailable() bool {
+	if x != nil {
+		return x.IsAvailable
+	}
+	return false
+}
+
+func (x *ValidateBotNameResponse) GetErrorMessage() string {
+	if x != nil {
+		return x.ErrorMessage
+	}
+	return ""
+}
+
+// A Messages payload represents a group of user messages in a channel that qualifies for the app
+// to be notified. The included set of group encryption sessions in this message should have
+// all the needed ciphertexts to decrypt the set of messages sent in the same payload.
+type EventPayload_Messages struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	StreamId                        []byte      `protobuf:"bytes,1,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
+	Messages                        []*Envelope `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
+	GroupEncryptionSessionsMessages []*Envelope `protobuf:"bytes,3,rep,name=group_encryption_sessions_messages,json=groupEncryptionSessionsMessages,proto3" json:"group_encryption_sessions_messages,omitempty"`
+}
+
+func (x *EventPayload_Messages) Reset() {
+	*x = EventPayload_Messages{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[27]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventPayload_Messages) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventPayload_Messages) ProtoMessage() {}
+
+func (x *EventPayload_Messages) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[27]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventPayload_Messages.ProtoReflect.Descriptor instead.
+func (*EventPayload_Messages) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{15, 0}
+}
+
+func (x *EventPayload_Messages) GetStreamId() []byte {
+	if x != nil {
+		return x.StreamId
+	}
+	return nil
+}
+
+func (x *EventPayload_Messages) GetMessages() []*Envelope {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *EventPayload_Messages) GetGroupEncryptionSessionsMessages() []*Envelope {
+	if x != nil {
+		return x.GroupEncryptionSessionsMessages
+	}
+	return nil
+}
+
+// A SolicitKeys request is sent when one or more messages in the same channel cannot be forwarded
+// to the app because the app does not have keys available to decrypt it in it's user inbox stream.
+// In this case, the app must be prompted to send a message to the stream to solicit the missing
+// session keys so that all queued messages can be forwarded.
+type EventPayload_SolicitKeys struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	StreamId   []byte   `protobuf:"bytes,1,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
+	SessionIds []string `protobuf:"bytes,2,rep,name=session_ids,json=sessionIds,proto3" json:"session_ids,omitempty"`
+}
+
+func (x *EventPayload_SolicitKeys) Reset() {
+	*x = EventPayload_SolicitKeys{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[28]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventPayload_SolicitKeys) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventPayload_SolicitKeys) ProtoMessage() {}
+
+func (x *EventPayload_SolicitKeys) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[28]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventPayload_SolicitKeys.ProtoReflect.Descriptor instead.
+func (*EventPayload_SolicitKeys) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{15, 1}
+}
+
+func (x *EventPayload_SolicitKeys) GetStreamId() []byte {
+	if x != nil {
+		return x.StreamId
+	}
+	return nil
+}
+
+func (x *EventPayload_SolicitKeys) GetSessionIds() []string {
+	if x != nil {
+		return x.SessionIds
+	}
+	return nil
+}
+
+type AppServiceResponse_InitializeResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EncryptionDevice *UserMetadataPayload_EncryptionDevice `protobuf:"bytes,1,opt,name=encryption_device,json=encryptionDevice,proto3" json:"encryption_device,omitempty"`
+}
+
+func (x *AppServiceResponse_InitializeResponse) Reset() {
+	*x = AppServiceResponse_InitializeResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[29]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AppServiceResponse_InitializeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppServiceResponse_InitializeResponse) ProtoMessage() {}
+
+func (x *AppServiceResponse_InitializeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[29]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppServiceResponse_InitializeResponse.ProtoReflect.Descriptor instead.
+func (*AppServiceResponse_InitializeResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{18, 0}
+}
+
+func (x *AppServiceResponse_InitializeResponse) GetEncryptionDevice() *UserMetadataPayload_EncryptionDevice {
+	if x != nil {
+		return x.EncryptionDevice
+	}
+	return nil
+}
+
+type AppServiceResponse_StatusResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	FrameworkVersion int32  `protobuf:"varint,1,opt,name=framework_version,json=frameworkVersion,proto3" json:"framework_version,omitempty"`
+	DeviceKey        string `protobuf:"bytes,2,opt,name=device_key,json=deviceKey,proto3" json:"device_key,omitempty"`
+	FallbackKey      string `protobuf:"bytes,3,opt,name=fallback_key,json=fallbackKey,proto3" json:"fallback_key,omitempty"`
+}
+
+func (x *AppServiceResponse_StatusResponse) Reset() {
+	*x = AppServiceResponse_StatusResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[30]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AppServiceResponse_StatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppServiceResponse_StatusResponse) ProtoMessage() {}
+
+func (x *AppServiceResponse_StatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[30]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppServiceResponse_StatusResponse.ProtoReflect.Descriptor instead.
+func (*AppServiceResponse_StatusResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{18, 1}
+}
+
+func (x *AppServiceResponse_StatusResponse) GetFrameworkVersion() int32 {
+	if x != nil {
+		return x.FrameworkVersion
+	}
+	return 0
+}
+
+func (x *AppServiceResponse_StatusResponse) GetDeviceKey() string {
+	if x != nil {
+		return x.DeviceKey
+	}
+	return ""
+}
+
+func (x *AppServiceResponse_StatusResponse) GetFallbackKey() string {
+	if x != nil {
+		return x.FallbackKey
 	}
 	return ""
 }
@@ -436,59 +1856,261 @@ var File_apps_proto protoreflect.FileDescriptor
 
 var file_apps_proto_rawDesc = []byte{
 	0x0a, 0x0a, 0x61, 0x70, 0x70, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x72, 0x69,
-	0x76, 0x65, 0x72, 0x22, 0x4a, 0x0a, 0x0f, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x12, 0x20, 0x0a,
-	0x0c, 0x61, 0x70, 0x70, 0x5f, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0c, 0x52, 0x0a, 0x61, 0x70, 0x70, 0x4f, 0x77, 0x6e, 0x65, 0x72, 0x49, 0x64, 0x22,
-	0x42, 0x0a, 0x10, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x13, 0x68, 0x73, 0x32, 0x35, 0x36, 0x5f, 0x73, 0x68, 0x61,
-	0x72, 0x65, 0x64, 0x5f, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c,
-	0x52, 0x11, 0x68, 0x73, 0x32, 0x35, 0x36, 0x53, 0x68, 0x61, 0x72, 0x65, 0x64, 0x53, 0x65, 0x63,
-	0x72, 0x65, 0x74, 0x22, 0x50, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x57,
-	0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a,
-	0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61,
-	0x70, 0x70, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x5f,
-	0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x77, 0x65, 0x62, 0x68, 0x6f,
-	0x6f, 0x6b, 0x55, 0x72, 0x6c, 0x22, 0x19, 0x0a, 0x17, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
-	0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x2c, 0x0a, 0x13, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x44,
-	0x0a, 0x14, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x12, 0x68, 0x6d, 0x61, 0x63, 0x5f, 0x73,
+	0x76, 0x65, 0x72, 0x1a, 0x1b, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2f, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x1a, 0x0e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x22, 0x52, 0x0a, 0x0b, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x12,
+	0x43, 0x0a, 0x0f, 0x66, 0x6f, 0x72, 0x77, 0x61, 0x72, 0x64, 0x5f, 0x73, 0x65, 0x74, 0x74, 0x69,
+	0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72,
+	0x2e, 0x46, 0x6f, 0x72, 0x77, 0x61, 0x72, 0x64, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x56,
+	0x61, 0x6c, 0x75, 0x65, 0x52, 0x0e, 0x66, 0x6f, 0x72, 0x77, 0x61, 0x72, 0x64, 0x53, 0x65, 0x74,
+	0x74, 0x69, 0x6e, 0x67, 0x22, 0xaa, 0x01, 0x0a, 0x0f, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
+	0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x12,
+	0x20, 0x0a, 0x0c, 0x61, 0x70, 0x70, 0x5f, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x61, 0x70, 0x70, 0x4f, 0x77, 0x6e, 0x65, 0x72, 0x49,
+	0x64, 0x12, 0x2e, 0x0a, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x41, 0x70, 0x70, 0x53,
+	0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67,
+	0x73, 0x12, 0x2e, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x41, 0x70, 0x70, 0x4d,
+	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
+	0x61, 0x22, 0x42, 0x0a, 0x10, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x13, 0x68, 0x73, 0x32, 0x35, 0x36, 0x5f, 0x73,
 	0x68, 0x61, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x10, 0x68, 0x6d, 0x61, 0x63, 0x53, 0x68, 0x61, 0x72, 0x65, 0x64, 0x53, 0x65,
-	0x63, 0x72, 0x65, 0x74, 0x22, 0x29, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22,
-	0x82, 0x01, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x69, 0x73, 0x5f, 0x72, 0x65, 0x67, 0x69,
-	0x73, 0x74, 0x65, 0x72, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x69, 0x73,
-	0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x65, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x76, 0x61,
-	0x6c, 0x69, 0x64, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x0d, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x21, 0x0a, 0x0c, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x6e, 0x66,
-	0x6f, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,
-	0x49, 0x6e, 0x66, 0x6f, 0x32, 0xe3, 0x01, 0x0a, 0x12, 0x41, 0x70, 0x70, 0x52, 0x65, 0x67, 0x69,
-	0x73, 0x74, 0x72, 0x79, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x3b, 0x0a, 0x08, 0x52,
-	0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x12, 0x16, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e,
-	0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x17, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0f, 0x52, 0x65, 0x67, 0x69,
-	0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x12, 0x1d, 0x2e, 0x72, 0x69,
-	0x76, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68,
-	0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x72, 0x69, 0x76,
-	0x65, 0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f,
-	0x6f, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3e, 0x0a, 0x09, 0x47, 0x65,
-	0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x17, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e,
+	0x28, 0x0c, 0x52, 0x11, 0x68, 0x73, 0x32, 0x35, 0x36, 0x53, 0x68, 0x61, 0x72, 0x65, 0x64, 0x53,
+	0x65, 0x63, 0x72, 0x65, 0x74, 0x22, 0x50, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
+	0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f,
+	0x6b, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x77, 0x65, 0x62,
+	0x68, 0x6f, 0x6f, 0x6b, 0x55, 0x72, 0x6c, 0x22, 0x19, 0x0a, 0x17, 0x52, 0x65, 0x67, 0x69, 0x73,
+	0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x5e, 0x0a, 0x15, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74,
+	0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61,
+	0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70,
+	0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x41, 0x70, 0x70,
+	0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e,
+	0x67, 0x73, 0x22, 0x18, 0x0a, 0x16, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74,
+	0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2e, 0x0a, 0x15,
+	0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x48, 0x0a, 0x16,
+	0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x08, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6e,
+	0x67, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72,
+	0x2e, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x08, 0x73, 0x65,
+	0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x22, 0x2c, 0x0a, 0x13, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65,
+	0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a,
+	0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61,
+	0x70, 0x70, 0x49, 0x64, 0x22, 0x46, 0x0a, 0x14, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65,
+	0x63, 0x72, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x13,
+	0x68, 0x73, 0x32, 0x35, 0x36, 0x5f, 0x73, 0x68, 0x61, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x65, 0x63,
+	0x72, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x11, 0x68, 0x73, 0x32, 0x35, 0x36,
+	0x53, 0x68, 0x61, 0x72, 0x65, 0x64, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x22, 0x29, 0x0a, 0x10,
 	0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x18, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x34, 0x5a, 0x32, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x74, 0x6f, 0x77, 0x6e, 0x73, 0x2d, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x74, 0x6f, 0x77, 0x6e, 0x73, 0x2f, 0x63, 0x6f,
-	0x72, 0x65, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c,
+	0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0xa1, 0x01, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a,
+	0x0d, 0x69, 0x73, 0x5f, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x65, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x69, 0x73, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72,
+	0x65, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x5f, 0x72, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0d, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x40, 0x0a, 0x06, 0x73, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x72, 0x69, 0x76, 0x65,
+	0x72, 0x2e, 0x41, 0x70, 0x70, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x49, 0x0a, 0x11, 0x47,
+	0x65, 0x74, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c,
+	0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x65, 0x73, 0x73, 0x69,
+	0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x73, 0x65, 0x73,
+	0x73, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x22, 0x61, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x53, 0x65, 0x73,
+	0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x19,
+	0x67, 0x72, 0x6f, 0x75, 0x70, 0x5f, 0x65, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x5f, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x0f, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65,
+	0x52, 0x17, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x45, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x9e, 0x03, 0x0a, 0x0c, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x3a, 0x0a, 0x08, 0x6d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x72,
+	0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61,
+	0x64, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x48, 0x00, 0x52, 0x08, 0x6d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x12, 0x45, 0x0a, 0x0c, 0x73, 0x6f, 0x6c, 0x69, 0x63, 0x69,
+	0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x72,
+	0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61,
+	0x64, 0x2e, 0x53, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x74, 0x4b, 0x65, 0x79, 0x73, 0x48, 0x00, 0x52,
+	0x0c, 0x73, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0xb2, 0x01,
+	0x0a, 0x08, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x74,
+	0x72, 0x65, 0x61, 0x6d, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x73,
+	0x74, 0x72, 0x65, 0x61, 0x6d, 0x49, 0x64, 0x12, 0x2b, 0x0a, 0x08, 0x6d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x69, 0x76, 0x65,
+	0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x52, 0x08, 0x6d, 0x65, 0x73, 0x73,
+	0x61, 0x67, 0x65, 0x73, 0x12, 0x5c, 0x0a, 0x22, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x5f, 0x65, 0x6e,
+	0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x73, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x0f, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70,
+	0x65, 0x52, 0x1f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x45, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x73, 0x1a, 0x4b, 0x0a, 0x0b, 0x53, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x74, 0x4b, 0x65, 0x79,
+	0x73, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x5f, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x49, 0x64, 0x12, 0x1f,
+	0x0a, 0x0b, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x02, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x0a, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x73, 0x42,
+	0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x3c, 0x0a, 0x0d, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x73, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x2b, 0x0a, 0x06, 0x65,
+	0x76, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x72, 0x69,
+	0x76, 0x65, 0x72, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64,
+	0x52, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x22, 0xba, 0x01, 0x0a, 0x11, 0x41, 0x70, 0x70,
+	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x38,
+	0x0a, 0x0a, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x18, 0x65, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x48, 0x00, 0x52, 0x0a, 0x69, 0x6e,
+	0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x12, 0x30, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x18, 0x66, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79,
+	0x48, 0x00, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x2e, 0x0a, 0x06, 0x65, 0x76,
+	0x65, 0x6e, 0x74, 0x73, 0x18, 0x67, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x72, 0x69, 0x76,
+	0x65, 0x72, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64,
+	0x48, 0x00, 0x52, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61,
+	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0xa4, 0x03, 0x0a, 0x12, 0x41, 0x70, 0x70, 0x53, 0x65, 0x72,
+	0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x0a,
+	0x69, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x18, 0x65, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x2c, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x41, 0x70, 0x70, 0x53, 0x65, 0x72, 0x76,
+	0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x49, 0x6e, 0x69, 0x74,
+	0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x48, 0x00,
+	0x52, 0x0a, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x12, 0x42, 0x0a, 0x06,
+	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x66, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x72,
+	0x69, 0x76, 0x65, 0x72, 0x2e, 0x41, 0x70, 0x70, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x48, 0x00, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x1a, 0x6e, 0x0a, 0x12, 0x49, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x11, 0x65, 0x6e, 0x63, 0x72, 0x79, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x2b, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x45, 0x6e,
+	0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x52, 0x10,
+	0x65, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65,
+	0x1a, 0x7f, 0x0a, 0x0e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x2b, 0x0a, 0x11, 0x66, 0x72, 0x61, 0x6d, 0x65, 0x77, 0x6f, 0x72, 0x6b, 0x5f,
+	0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x10, 0x66,
+	0x72, 0x61, 0x6d, 0x65, 0x77, 0x6f, 0x72, 0x6b, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12,
+	0x1d, 0x0a, 0x0a, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x09, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4b, 0x65, 0x79, 0x12, 0x21,
+	0x0a, 0x0c, 0x66, 0x61, 0x6c, 0x6c, 0x62, 0x61, 0x63, 0x6b, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x66, 0x61, 0x6c, 0x6c, 0x62, 0x61, 0x63, 0x6b, 0x4b, 0x65,
+	0x79, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x44, 0x0a, 0x0c,
+	0x53, 0x6c, 0x61, 0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x22, 0x9f, 0x02, 0x0a, 0x0b, 0x41, 0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
+	0x74, 0x61, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x20,
+	0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x1b, 0x0a, 0x09, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x08, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x26, 0x0a,
+	0x0c, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0b, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x55,
+	0x72, 0x6c, 0x88, 0x01, 0x01, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x5f,
+	0x75, 0x72, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x61, 0x76, 0x61, 0x74, 0x61,
+	0x72, 0x55, 0x72, 0x6c, 0x12, 0x3a, 0x0a, 0x0e, 0x73, 0x6c, 0x61, 0x73, 0x68, 0x5f, 0x63, 0x6f,
+	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x72,
+	0x69, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x6c, 0x61, 0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
+	0x64, 0x52, 0x0d, 0x73, 0x6c, 0x61, 0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73,
+	0x12, 0x21, 0x0a, 0x0c, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e,
+	0x61, 0x6d, 0x65, 0x42, 0x0f, 0x0a, 0x0d, 0x5f, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c,
+	0x5f, 0x75, 0x72, 0x6c, 0x22, 0x5e, 0x0a, 0x15, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a,
+	0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61,
+	0x70, 0x70, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x41,
+	0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0x22, 0x18, 0x0a, 0x16, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2e,
+	0x0a, 0x15, 0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x48,
+	0x0a, 0x16, 0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x72, 0x69, 0x76,
+	0x65, 0x72, 0x2e, 0x41, 0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x08,
+	0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22, 0x34, 0x0a, 0x16, 0x56, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x65, 0x42, 0x6f, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x61,
+	0x0a, 0x17, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x42, 0x6f, 0x74, 0x4e, 0x61, 0x6d,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x69, 0x73, 0x5f,
+	0x61, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x0b, 0x69, 0x73, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x23, 0x0a, 0x0d,
+	0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0c, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x2a, 0xa9, 0x01, 0x0a, 0x13, 0x46, 0x6f, 0x72, 0x77, 0x61, 0x72, 0x64, 0x53, 0x65, 0x74,
+	0x74, 0x69, 0x6e, 0x67, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x1f, 0x0a, 0x1b, 0x46, 0x4f, 0x52,
+	0x57, 0x41, 0x52, 0x44, 0x5f, 0x53, 0x45, 0x54, 0x54, 0x49, 0x4e, 0x47, 0x5f, 0x55, 0x4e, 0x53,
+	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x20, 0x0a, 0x1c, 0x46, 0x4f,
+	0x52, 0x57, 0x41, 0x52, 0x44, 0x5f, 0x53, 0x45, 0x54, 0x54, 0x49, 0x4e, 0x47, 0x5f, 0x41, 0x4c,
+	0x4c, 0x5f, 0x4d, 0x45, 0x53, 0x53, 0x41, 0x47, 0x45, 0x53, 0x10, 0x01, 0x12, 0x2e, 0x0a, 0x2a,
+	0x46, 0x4f, 0x52, 0x57, 0x41, 0x52, 0x44, 0x5f, 0x53, 0x45, 0x54, 0x54, 0x49, 0x4e, 0x47, 0x5f,
+	0x4d, 0x45, 0x4e, 0x54, 0x49, 0x4f, 0x4e, 0x53, 0x5f, 0x52, 0x45, 0x50, 0x4c, 0x49, 0x45, 0x53,
+	0x5f, 0x52, 0x45, 0x41, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x53, 0x10, 0x02, 0x12, 0x1f, 0x0a, 0x1b,
+	0x46, 0x4f, 0x52, 0x57, 0x41, 0x52, 0x44, 0x5f, 0x53, 0x45, 0x54, 0x54, 0x49, 0x4e, 0x47, 0x5f,
+	0x4e, 0x4f, 0x5f, 0x4d, 0x45, 0x53, 0x53, 0x41, 0x47, 0x45, 0x53, 0x10, 0x03, 0x32, 0xfd, 0x05,
+	0x0a, 0x12, 0x41, 0x70, 0x70, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x53, 0x65, 0x72,
+	0x76, 0x69, 0x63, 0x65, 0x12, 0x3b, 0x0a, 0x08, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72,
+	0x12, 0x16, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
+	0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72,
+	0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x50, 0x0a, 0x0f, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62,
+	0x68, 0x6f, 0x6f, 0x6b, 0x12, 0x1d, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67,
+	0x69, 0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67, 0x69,
+	0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x3e, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x17, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72, 0x69, 0x76, 0x65,
+	0x72, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x4d, 0x0a, 0x0e, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74,
+	0x74, 0x69, 0x6e, 0x67, 0x73, 0x12, 0x1c, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x65,
+	0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x41,
+	0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x4d, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74,
+	0x69, 0x6e, 0x67, 0x73, 0x12, 0x1c, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74,
+	0x41, 0x70, 0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x70,
+	0x70, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x4d, 0x0a, 0x0e, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0x12, 0x1c, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x41,
+	0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x1d, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70,
+	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x4d, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
+	0x74, 0x61, 0x12, 0x1c, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x70,
+	0x70, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x1d, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x70, 0x70, 0x4d,
+	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x47, 0x0a, 0x0c, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x12,
+	0x1a, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65,
+	0x63, 0x72, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x72, 0x69,
+	0x76, 0x65, 0x72, 0x2e, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x41, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x53,
+	0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x18, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47,
+	0x65, 0x74, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x19, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x65, 0x73, 0x73,
+	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0f, 0x56,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x42, 0x6f, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1d,
+	0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x42,
+	0x6f, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e,
+	0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x42, 0x6f,
+	0x74, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x34, 0x5a,
+	0x32, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x74, 0x6f, 0x77, 0x6e,
+	0x73, 0x2d, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x74, 0x6f, 0x77, 0x6e, 0x73,
+	0x2f, 0x63, 0x6f, 0x72, 0x65, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x63, 0x6f, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -503,29 +2125,92 @@ func file_apps_proto_rawDescGZIP() []byte {
 	return file_apps_proto_rawDescData
 }
 
-var file_apps_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_apps_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_apps_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_apps_proto_goTypes = []interface{}{
-	(*RegisterRequest)(nil),         // 0: river.RegisterRequest
-	(*RegisterResponse)(nil),        // 1: river.RegisterResponse
-	(*RegisterWebhookRequest)(nil),  // 2: river.RegisterWebhookRequest
-	(*RegisterWebhookResponse)(nil), // 3: river.RegisterWebhookResponse
-	(*RotateSecretRequest)(nil),     // 4: river.RotateSecretRequest
-	(*RotateSecretResponse)(nil),    // 5: river.RotateSecretResponse
-	(*GetStatusRequest)(nil),        // 6: river.GetStatusRequest
-	(*GetStatusResponse)(nil),       // 7: river.GetStatusResponse
+	(ForwardSettingValue)(0),                      // 0: river.ForwardSettingValue
+	(*AppSettings)(nil),                           // 1: river.AppSettings
+	(*RegisterRequest)(nil),                       // 2: river.RegisterRequest
+	(*RegisterResponse)(nil),                      // 3: river.RegisterResponse
+	(*RegisterWebhookRequest)(nil),                // 4: river.RegisterWebhookRequest
+	(*RegisterWebhookResponse)(nil),               // 5: river.RegisterWebhookResponse
+	(*SetAppSettingsRequest)(nil),                 // 6: river.SetAppSettingsRequest
+	(*SetAppSettingsResponse)(nil),                // 7: river.SetAppSettingsResponse
+	(*GetAppSettingsRequest)(nil),                 // 8: river.GetAppSettingsRequest
+	(*GetAppSettingsResponse)(nil),                // 9: river.GetAppSettingsResponse
+	(*RotateSecretRequest)(nil),                   // 10: river.RotateSecretRequest
+	(*RotateSecretResponse)(nil),                  // 11: river.RotateSecretResponse
+	(*GetStatusRequest)(nil),                      // 12: river.GetStatusRequest
+	(*GetStatusResponse)(nil),                     // 13: river.GetStatusResponse
+	(*GetSessionRequest)(nil),                     // 14: river.GetSessionRequest
+	(*GetSessionResponse)(nil),                    // 15: river.GetSessionResponse
+	(*EventPayload)(nil),                          // 16: river.EventPayload
+	(*EventsPayload)(nil),                         // 17: river.EventsPayload
+	(*AppServiceRequest)(nil),                     // 18: river.AppServiceRequest
+	(*AppServiceResponse)(nil),                    // 19: river.AppServiceResponse
+	(*SlashCommand)(nil),                          // 20: river.SlashCommand
+	(*AppMetadata)(nil),                           // 21: river.AppMetadata
+	(*SetAppMetadataRequest)(nil),                 // 22: river.SetAppMetadataRequest
+	(*SetAppMetadataResponse)(nil),                // 23: river.SetAppMetadataResponse
+	(*GetAppMetadataRequest)(nil),                 // 24: river.GetAppMetadataRequest
+	(*GetAppMetadataResponse)(nil),                // 25: river.GetAppMetadataResponse
+	(*ValidateBotNameRequest)(nil),                // 26: river.ValidateBotNameRequest
+	(*ValidateBotNameResponse)(nil),               // 27: river.ValidateBotNameResponse
+	(*EventPayload_Messages)(nil),                 // 28: river.EventPayload.Messages
+	(*EventPayload_SolicitKeys)(nil),              // 29: river.EventPayload.SolicitKeys
+	(*AppServiceResponse_InitializeResponse)(nil), // 30: river.AppServiceResponse.InitializeResponse
+	(*AppServiceResponse_StatusResponse)(nil),     // 31: river.AppServiceResponse.StatusResponse
+	(*Envelope)(nil),                              // 32: river.Envelope
+	(*emptypb.Empty)(nil),                         // 33: google.protobuf.Empty
+	(*UserMetadataPayload_EncryptionDevice)(nil),  // 34: river.UserMetadataPayload.EncryptionDevice
 }
 var file_apps_proto_depIdxs = []int32{
-	0, // 0: river.AppRegistryService.Register:input_type -> river.RegisterRequest
-	2, // 1: river.AppRegistryService.RegisterWebhook:input_type -> river.RegisterWebhookRequest
-	6, // 2: river.AppRegistryService.GetStatus:input_type -> river.GetStatusRequest
-	1, // 3: river.AppRegistryService.Register:output_type -> river.RegisterResponse
-	3, // 4: river.AppRegistryService.RegisterWebhook:output_type -> river.RegisterWebhookResponse
-	7, // 5: river.AppRegistryService.GetStatus:output_type -> river.GetStatusResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: river.AppSettings.forward_setting:type_name -> river.ForwardSettingValue
+	1,  // 1: river.RegisterRequest.settings:type_name -> river.AppSettings
+	21, // 2: river.RegisterRequest.metadata:type_name -> river.AppMetadata
+	1,  // 3: river.SetAppSettingsRequest.settings:type_name -> river.AppSettings
+	1,  // 4: river.GetAppSettingsResponse.settings:type_name -> river.AppSettings
+	31, // 5: river.GetStatusResponse.status:type_name -> river.AppServiceResponse.StatusResponse
+	32, // 6: river.GetSessionResponse.group_encryption_sessions:type_name -> river.Envelope
+	28, // 7: river.EventPayload.messages:type_name -> river.EventPayload.Messages
+	29, // 8: river.EventPayload.solicitation:type_name -> river.EventPayload.SolicitKeys
+	16, // 9: river.EventsPayload.events:type_name -> river.EventPayload
+	33, // 10: river.AppServiceRequest.initialize:type_name -> google.protobuf.Empty
+	33, // 11: river.AppServiceRequest.status:type_name -> google.protobuf.Empty
+	17, // 12: river.AppServiceRequest.events:type_name -> river.EventsPayload
+	30, // 13: river.AppServiceResponse.initialize:type_name -> river.AppServiceResponse.InitializeResponse
+	31, // 14: river.AppServiceResponse.status:type_name -> river.AppServiceResponse.StatusResponse
+	20, // 15: river.AppMetadata.slash_commands:type_name -> river.SlashCommand
+	21, // 16: river.SetAppMetadataRequest.metadata:type_name -> river.AppMetadata
+	21, // 17: river.GetAppMetadataResponse.metadata:type_name -> river.AppMetadata
+	32, // 18: river.EventPayload.Messages.messages:type_name -> river.Envelope
+	32, // 19: river.EventPayload.Messages.group_encryption_sessions_messages:type_name -> river.Envelope
+	34, // 20: river.AppServiceResponse.InitializeResponse.encryption_device:type_name -> river.UserMetadataPayload.EncryptionDevice
+	2,  // 21: river.AppRegistryService.Register:input_type -> river.RegisterRequest
+	4,  // 22: river.AppRegistryService.RegisterWebhook:input_type -> river.RegisterWebhookRequest
+	12, // 23: river.AppRegistryService.GetStatus:input_type -> river.GetStatusRequest
+	6,  // 24: river.AppRegistryService.SetAppSettings:input_type -> river.SetAppSettingsRequest
+	8,  // 25: river.AppRegistryService.GetAppSettings:input_type -> river.GetAppSettingsRequest
+	22, // 26: river.AppRegistryService.SetAppMetadata:input_type -> river.SetAppMetadataRequest
+	24, // 27: river.AppRegistryService.GetAppMetadata:input_type -> river.GetAppMetadataRequest
+	10, // 28: river.AppRegistryService.RotateSecret:input_type -> river.RotateSecretRequest
+	14, // 29: river.AppRegistryService.GetSession:input_type -> river.GetSessionRequest
+	26, // 30: river.AppRegistryService.ValidateBotName:input_type -> river.ValidateBotNameRequest
+	3,  // 31: river.AppRegistryService.Register:output_type -> river.RegisterResponse
+	5,  // 32: river.AppRegistryService.RegisterWebhook:output_type -> river.RegisterWebhookResponse
+	13, // 33: river.AppRegistryService.GetStatus:output_type -> river.GetStatusResponse
+	7,  // 34: river.AppRegistryService.SetAppSettings:output_type -> river.SetAppSettingsResponse
+	9,  // 35: river.AppRegistryService.GetAppSettings:output_type -> river.GetAppSettingsResponse
+	23, // 36: river.AppRegistryService.SetAppMetadata:output_type -> river.SetAppMetadataResponse
+	25, // 37: river.AppRegistryService.GetAppMetadata:output_type -> river.GetAppMetadataResponse
+	11, // 38: river.AppRegistryService.RotateSecret:output_type -> river.RotateSecretResponse
+	15, // 39: river.AppRegistryService.GetSession:output_type -> river.GetSessionResponse
+	27, // 40: river.AppRegistryService.ValidateBotName:output_type -> river.ValidateBotNameResponse
+	31, // [31:41] is the sub-list for method output_type
+	21, // [21:31] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_apps_proto_init() }
@@ -533,9 +2218,10 @@ func file_apps_proto_init() {
 	if File_apps_proto != nil {
 		return
 	}
+	file_protocol_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_apps_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterRequest); i {
+			switch v := v.(*AppSettings); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -547,7 +2233,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterResponse); i {
+			switch v := v.(*RegisterRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -559,7 +2245,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterWebhookRequest); i {
+			switch v := v.(*RegisterResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -571,7 +2257,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterWebhookResponse); i {
+			switch v := v.(*RegisterWebhookRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -583,7 +2269,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RotateSecretRequest); i {
+			switch v := v.(*RegisterWebhookResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -595,7 +2281,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RotateSecretResponse); i {
+			switch v := v.(*SetAppSettingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -607,7 +2293,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetStatusRequest); i {
+			switch v := v.(*SetAppSettingsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -619,6 +2305,66 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetAppSettingsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetAppSettingsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RotateSecretRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RotateSecretResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetStatusRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetStatusResponse); i {
 			case 0:
 				return &v.state
@@ -630,19 +2376,250 @@ func file_apps_proto_init() {
 				return nil
 			}
 		}
+		file_apps_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSessionRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSessionResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventPayload); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventsPayload); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AppServiceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AppServiceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SlashCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AppMetadata); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetAppMetadataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetAppMetadataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetAppMetadataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetAppMetadataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ValidateBotNameRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ValidateBotNameResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventPayload_Messages); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventPayload_SolicitKeys); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AppServiceResponse_InitializeResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AppServiceResponse_StatusResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
+	file_apps_proto_msgTypes[15].OneofWrappers = []interface{}{
+		(*EventPayload_Messages_)(nil),
+		(*EventPayload_Solicitation)(nil),
+	}
+	file_apps_proto_msgTypes[17].OneofWrappers = []interface{}{
+		(*AppServiceRequest_Initialize)(nil),
+		(*AppServiceRequest_Status)(nil),
+		(*AppServiceRequest_Events)(nil),
+	}
+	file_apps_proto_msgTypes[18].OneofWrappers = []interface{}{
+		(*AppServiceResponse_Initialize)(nil),
+		(*AppServiceResponse_Status)(nil),
+	}
+	file_apps_proto_msgTypes[20].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_apps_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   8,
+			NumEnums:      1,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_apps_proto_goTypes,
 		DependencyIndexes: file_apps_proto_depIdxs,
+		EnumInfos:         file_apps_proto_enumTypes,
 		MessageInfos:      file_apps_proto_msgTypes,
 	}.Build()
 	File_apps_proto = out.File

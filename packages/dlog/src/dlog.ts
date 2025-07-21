@@ -10,14 +10,20 @@ debug.enabled = (ns: string): boolean => {
     }
 
     for (const s of debug.skips) {
-        if (s.test(ns)) {
-            return false
+        if (s instanceof RegExp) {
+            // users are complining that s.test is not a function in some cases
+            if (s.test(ns)) {
+                return false
+            }
         }
     }
 
     for (const s of debug.names) {
-        if (s.test(ns)) {
-            return true
+        if (s instanceof RegExp) {
+            if (s.test(ns)) {
+                // users are complining that s.test is not a function in some cases
+                return true
+            }
         }
     }
 
@@ -169,14 +175,26 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
                 newArgs.push(c)
             } else if (typeof c === 'object' && c !== null) {
                 if (c instanceof Error) {
-                    isSingleLineLogsMode ? fmt.push('%o\n') : fmt.push('%O\n')
+                    if (isSingleLineLogsMode) {
+                        fmt.push('%o\n')
+                    } else {
+                        fmt.push('%O\n')
+                    }
                     tailArgs.push(c)
                 } else {
-                    isSingleLineLogsMode ? fmt.push('%o\n') : fmt.push('%O\n')
+                    if (isSingleLineLogsMode) {
+                        fmt.push('%o\n')
+                    } else {
+                        fmt.push('%O\n')
+                    }
                     newArgs.push(cloneAndFormat(c, { shortenHex: true }))
                 }
             } else {
-                isSingleLineLogsMode ? fmt.push('%o ') : fmt.push('%O ')
+                if (isSingleLineLogsMode) {
+                    fmt.push('%o ')
+                } else {
+                    fmt.push('%O ')
+                }
                 newArgs.push(c)
             }
         }

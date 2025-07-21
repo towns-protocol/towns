@@ -1,0 +1,157 @@
+# Based on https://github.com/docker/build-push-action
+
+name: 'Build Subgraph Docker Image'
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - 'packages/subgraph/**'
+    workflow_dispatch: # A build was manually requested
+        inputs:
+            release_version:
+                description: 'The release version to use for the image (optional)'
+                required: false # This is no longer required, so that we can promote existing images to `mainnet`, `testnet`, `stable` etc.
+            additional_tags_csv:
+                description: 'Comma separated list of tags to apply to the image (optional)'
+                required: false
+
+env:
+    DOCKER_NAMESPACE: herenotthere
+    GHCR_NAMESPACE: herenotthere
+    PLATFORMS: linux/amd64,linux/arm64
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+
+jobs:
+    build:
+        name: Build docker image
+        runs-on: ubuntu-latest
+        outputs:
+            release_image_tag: ${{ steps.build-image.outputs.release_image_tag }}
+        permissions:
+            contents: write
+            packages: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              id: login-aws-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
+
+            - name: Build and push image to Amazon ECR
+              id: build-image
+              env:
+                  ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
+                  #This can be custom alias once requested to aws and approved for public repo
+                  REGISTRY_ALIAS: h5v6m2x1
+                  ECR_REPOSITORY: subgraph
+                  RELEASE_VERSION: ${{ inputs.release_version }}
+                  ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
+              run: |
+                  COMMIT_HASH=$(git describe --tags --always --dirty)
+                  echo "release_image_tag=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
+                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                  TAGS=($COMMIT_HASH)
+
+                  # if release version is not provided, we set it to "subgraph"
+                  if [ -z "$RELEASE_VERSION" ]; then
+                    RELEASE_VERSION="subgraph"
+                  else
+                    # If this is a release, we also tag the image with the release version.
+                    TAGS+=($RELEASE_VERSION)
+                  fi
+
+                  # If this is a push to main, we also tag the image as dev,
+                  # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
+                  if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then
+                    TAGS+=(dev)
+                  fi
+
+                  # Add additional tags if provided
+                  if [ -n "$ADDITIONAL_TAGS" ]; then
+                    IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"
+                    for tag in "${ADDITIONAL_TAGS_ARRAY[@]}"; do
+                      TAGS+=($tag)
+                    done
+                  fi
+
+                  echo "Building image with the following tags: ${TAGS[@]}"
+                  echo "Commit hash: $COMMIT_HASH"
+                  echo "Branch: $BRANCH"
+                  echo "Release version: $RELEASE_VERSION"
+
+                  docker build \
+                    --build-arg GIT_SHA=${{ github.sha }} \
+                    --build-arg VER_VERSION=$RELEASE_VERSION \
+                    --build-arg VER_BRANCH=$BRANCH \
+                    --build-arg VER_COMMIT=$COMMIT_HASH \
+                    -t subgraph:local-latest \
+                    -f packages/subgraph/Dockerfile \
+                    .
+
+                  echo "::set-output name=tag_valid::false"
+                  for tag in "${TAGS[@]}"; do
+                    if [ "$tag" == "mainnet" ] || [ "$tag" == "testnet" ]; then
+                      echo "::set-output name=tag_valid::true"
+                      echo "::set-output name=tag_value::$tag"
+                    fi
+                    docker tag subgraph:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                    docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                  done
+
+            # If action failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "step": "Build Subgraph Docker Image",
+                          "environment": "N/",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
+
+    deploy:
+        if: success() && github.event_name != 'workflow_dispatch'
+        needs: build
+        uses: ./.github/workflows/Subgraph_service_continuous_deployment.yml
+        with:
+            environment_name: gamma
+            docker_image_tag: ${{ needs.build.outputs.release_image_tag }}
+        secrets:
+            SLACK_CD_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+            ARGOCD_GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_PAT }}
+
+    notify_deploy_failure:
+        if: failure() && github.event_name != 'workflow_dispatch'
+        needs: deploy
+        runs-on: ubuntu-latest
+        steps:
+            - name: Slack notification
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+              with:
+                  payload: |
+                      {
+                          "step": "Subgraph Docker Deploy",
+                          "environment": "gamma",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }

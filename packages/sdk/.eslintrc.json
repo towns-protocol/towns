@@ -2,19 +2,34 @@
     "root": true,
     "extends": [
         "eslint:recommended",
-        "plugin:import/recommended",
-        "plugin:import/typescript",
+        "plugin:import-x/recommended",
+        "plugin:import-x/typescript",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
         "plugin:prettier/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": { "project": ["./tsconfig.json"] },
-    "plugins": ["@typescript-eslint", "import", "eslint-plugin-tsdoc"],
+    "plugins": ["@typescript-eslint", "import-x", "eslint-plugin-tsdoc"],
     "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "vitest.*"],
     "rules": {
         "no-console": "error",
-        "import/no-extraneous-dependencies": [
+        "no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "crypto",
+                        "message": "SDK should be Web compatible. Follow the convention from @towns-protocol/rpc-connector and @towns-protocol/sdk-crypto if you need specific API."
+                    },
+                    {
+                        "name": "node:crypto",
+                        "message": "SDK should be Web compatible. Follow the convention from @towns-protocol/rpc-connector and @towns-protocol/sdk-crypto if you need specific API."
+                    }
+                ]
+            }
+        ],
+        "import-x/no-extraneous-dependencies": [
             "error",
             {
                 "packageDir": "."
@@ -28,7 +43,8 @@
             "error",
             {
                 "argsIgnorePattern": "^_",
-                "destructuredArrayIgnorePattern": "^_"
+                "destructuredArrayIgnorePattern": "^_",
+                "caughtErrors": "none"
             }
         ],
         "@typescript-eslint/restrict-template-expressions": [

@@ -14,7 +14,7 @@ const _abi = [
       {
         name: "condition",
         type: "tuple",
-        internalType: "struct DropClaimLib.ClaimCondition",
+        internalType: "struct DropGroup.ClaimCondition",
         components: [
           {
             name: "currency",
@@ -62,9 +62,9 @@ const _abi = [
     name: "claimAndStake",
     inputs: [
       {
-        name: "claim",
+        name: "req",
         type: "tuple",
-        internalType: "struct DropClaimLib.Claim",
+        internalType: "struct DropClaim.Claim",
         components: [
           {
             name: "conditionId",
@@ -78,6 +78,11 @@ const _abi = [
           },
           {
             name: "quantity",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "points",
             type: "uint256",
             internalType: "uint256",
           },
@@ -118,9 +123,9 @@ const _abi = [
     name: "claimWithPenalty",
     inputs: [
       {
-        name: "claim",
+        name: "req",
         type: "tuple",
-        internalType: "struct DropClaimLib.Claim",
+        internalType: "struct DropClaim.Claim",
         components: [
           {
             name: "conditionId",
@@ -134,6 +139,11 @@ const _abi = [
           },
           {
             name: "quantity",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "points",
             type: "uint256",
             internalType: "uint256",
           },
@@ -186,7 +196,7 @@ const _abi = [
       {
         name: "",
         type: "tuple",
-        internalType: "struct DropClaimLib.ClaimCondition",
+        internalType: "struct DropGroup.ClaimCondition",
         components: [
           {
             name: "currency",
@@ -236,7 +246,7 @@ const _abi = [
       {
         name: "",
         type: "tuple[]",
-        internalType: "struct DropClaimLib.ClaimCondition[]",
+        internalType: "struct DropGroup.ClaimCondition[]",
         components: [
           {
             name: "currency",
@@ -333,7 +343,7 @@ const _abi = [
       {
         name: "conditions",
         type: "tuple[]",
-        internalType: "struct DropClaimLib.ClaimCondition[]",
+        internalType: "struct DropGroup.ClaimCondition[]",
         components: [
           {
             name: "currency",
@@ -390,7 +400,7 @@ const _abi = [
         name: "condition",
         type: "tuple",
         indexed: false,
-        internalType: "struct DropClaimLib.ClaimCondition",
+        internalType: "struct DropGroup.ClaimCondition",
         components: [
           {
             name: "currency",
@@ -446,7 +456,7 @@ const _abi = [
         name: "conditions",
         type: "tuple[]",
         indexed: false,
-        internalType: "struct DropClaimLib.ClaimCondition[]",
+        internalType: "struct DropGroup.ClaimCondition[]",
         components: [
           {
             name: "currency",

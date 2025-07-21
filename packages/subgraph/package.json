@@ -2,6 +2,7 @@
     "name": "@towns-protocol/subgraph",
     "type": "module",
     "packageManager": "yarn@3.8.0",
+    "private": true,
     "scripts": {
         "dev": "ponder dev",
         "start": "ponder start",
@@ -11,24 +12,26 @@
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "typecheck": "tsc",
-        "dev:fork": "../../scripts/setup-subgraph.sh",
-        "find-paths": "tsx utils/findContractsPath.ts"
+        "dev:fork": "./scripts/setup-subgraph.sh",
+        "find-paths": "tsx utils/findContractsPath.ts",
+        "dev:no-ui": "ponder dev --disable-ui"
     },
     "dependencies": {
-        "hono": "^4.5.0",
-        "ponder": "^0.9.27",
-        "viem": "^2.21.51"
+        "hono": "^4.7.11",
+        "ponder": "^0.11.17",
+        "viem": "^2.29.3"
     },
     "devDependencies": {
+        "@towns-protocol/contracts": "workspace:^",
         "@towns-protocol/prettier-config": "workspace:^",
-        "@types/node": "^20.5.0",
-        "eslint": "^8.53.0",
+        "@types/node": "^20.14.8",
+        "eslint": "^8.57.1",
         "eslint-config-ponder": "^0.9.27",
-        "eslint-import-resolver-typescript": "^3.5.5",
-        "eslint-plugin-prettier": "^4.2.1",
-        "prettier": "^2.8.8",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-prettier": "^5.2.6",
+        "prettier": "^3.5.3",
         "tsx": "^4.7.1",
-        "typescript": "^5.1.6"
+        "typescript": "^5.8.2"
     },
     "engines": {
         "node": ">=18.14"

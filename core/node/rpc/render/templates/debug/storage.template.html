@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -30,25 +30,38 @@
 
   <body>
     <table>
-      <tr><th colspan="2"><h2>Storage statistics</h2></th></tr>
-      <tr><th>Total Connections</th><td>{{.Status.TotalConns}}</td></tr>
+      <tr><th colspan="2"><h2>Storage statistics (universal) </h2></th></tr>
+      <tr><th>Migrated Streams</th><td>{{.Status.StreamCount}}</td></tr>
       <tr><th>Version</th> <td>{{.Status.Version}}</td></tr>
       <tr><th>SystemId</th><td>{{.Status.SystemId}}</td></tr>
-      <tr><th>Total Connections</th><td>{{.Status.TotalConns}}</td></tr>
-      <tr><th>Acquired Connections</th><td>{{.Status.AcquiredConns}}</td></tr>
-      <tr><th>Idle Connections</th><td>{{.Status.IdleConns}}</td></tr>
-      <tr><th>Constructing Connections</th><td>{{.Status.ConstructingConns}}</td></tr>
-      <tr><th>Max Connections</th><td>{{.Status.MaxConns}}</td></tr>
-      <tr><th>New Connections Count</th><td>{{.Status.NewConnsCount}}</td></tr>
-      <tr><th>Acquire Count</th><td>{{.Status.AcquireCount}}</td></tr>
-      <tr><th>Empty Acquire Count</th><td>{{.Status.EmptyAcquireCount}}</td></tr>
-      <tr><th>Canceled Acquire Count</th><td>{{.Status.CanceledAcquireCount}}</td></tr>
-      <tr><th>Acquire Duration</th><td>{{.Status.AcquireDuration}}</td></tr>
-      <tr><th>Max Lifetime Destroy Count</th><td>{{.Status.MaxLifetimeDestroyCount}}</td></tr>
-      <tr><th>Max Idle Destroy Count</th><td>{{.Status.MaxIdleDestroyCount}}</td></tr>
-      <tr><th>Unmigrated Streams</th><td>{{.Status.UnmigratedStreams}}</td></tr>
-      <tr><th>Migrated Streams</th><td>{{.Status.MigratedStreams}}</td></tr>
-      <tr><th>Partition Count</th><td>{{.Status.NumPartitions}}</td></tr>
+      <tr><th colspan="2"><h2>Storage statistics (regular pool) </h2></th></tr>
+      <tr><th>Total Connections</th><td>{{.Status.RegularPoolStats.TotalConns}}</td></tr>
+      <tr><th>Total Connections</th><td>{{.Status.RegularPoolStats.TotalConns}}</td></tr>
+      <tr><th>Acquired Connections</th><td>{{.Status.RegularPoolStats.AcquiredConns}}</td></tr>
+      <tr><th>Idle Connections</th><td>{{.Status.RegularPoolStats.IdleConns}}</td></tr>
+      <tr><th>Constructing Connections</th><td>{{.Status.RegularPoolStats.ConstructingConns}}</td></tr>
+      <tr><th>Max Connections</th><td>{{.Status.RegularPoolStats.MaxConns}}</td></tr>
+      <tr><th>New Connections Count</th><td>{{.Status.RegularPoolStats.NewConnsCount}}</td></tr>
+      <tr><th>Acquire Count</th><td>{{.Status.RegularPoolStats.AcquireCount}}</td></tr>
+      <tr><th>Empty Acquire Count</th><td>{{.Status.RegularPoolStats.EmptyAcquireCount}}</td></tr>
+      <tr><th>Canceled Acquire Count</th><td>{{.Status.RegularPoolStats.CanceledAcquireCount}}</td></tr>
+      <tr><th>Acquire Duration</th><td>{{.Status.RegularPoolStats.AcquireDuration}}</td></tr>
+      <tr><th>Max Lifetime Destroy Count</th><td>{{.Status.RegularPoolStats.MaxLifetimeDestroyCount}}</td></tr>
+      <tr><th>Max Idle Destroy Count</th><td>{{.Status.RegularPoolStats.MaxIdleDestroyCount}}</td></tr>
+      <tr><th colspan="2"><h2>Storage statistics (streaming pool) </h2></th></tr>
+      <tr><th>Total Connections</th><td>{{.Status.StreamingPoolStats.TotalConns}}</td></tr>
+      <tr><th>Total Connections</th><td>{{.Status.StreamingPoolStats.TotalConns}}</td></tr>
+      <tr><th>Acquired Connections</th><td>{{.Status.StreamingPoolStats.AcquiredConns}}</td></tr>
+      <tr><th>Idle Connections</th><td>{{.Status.StreamingPoolStats.IdleConns}}</td></tr>
+      <tr><th>Constructing Connections</th><td>{{.Status.StreamingPoolStats.ConstructingConns}}</td></tr>
+      <tr><th>Max Connections</th><td>{{.Status.StreamingPoolStats.MaxConns}}</td></tr>
+      <tr><th>New Connections Count</th><td>{{.Status.StreamingPoolStats.NewConnsCount}}</td></tr>
+      <tr><th>Acquire Count</th><td>{{.Status.StreamingPoolStats.AcquireCount}}</td></tr>
+      <tr><th>Empty Acquire Count</th><td>{{.Status.StreamingPoolStats.EmptyAcquireCount}}</td></tr>
+      <tr><th>Canceled Acquire Count</th><td>{{.Status.StreamingPoolStats.CanceledAcquireCount}}</td></tr>
+      <tr><th>Acquire Duration</th><td>{{.Status.StreamingPoolStats.AcquireDuration}}</td></tr>
+      <tr><th>Max Lifetime Destroy Count</th><td>{{.Status.StreamingPoolStats.MaxLifetimeDestroyCount}}</td></tr>
+      <tr><th>Max Idle Destroy Count</th><td>{{.Status.StreamingPoolStats.MaxIdleDestroyCount}}</td></tr>
     </table>
   </body>
 </html>

@@ -6,7 +6,7 @@
  * we can't export and describe(...) in a .test file, so this is tests for util.test.ts
  */
 
-import { waitFor } from '../testUtils'
+import { waitFor, waitForValue } from '../testUtils'
 import { hashString } from '../../utils'
 
 function stripAnsiColors(input: string): string {
@@ -15,10 +15,30 @@ function stripAnsiColors(input: string): string {
 }
 
 describe('util.test', () => {
-    /// test that you can wait for a result with an expect(...) and return a value
     test('waitFor succeeds', async () => {
         let i = 0
-        const r = await waitFor(() => {
+        await waitFor(() => {
+            i++
+            expect(i).toEqual(4)
+        })
+        expect(i).toBe(4)
+    })
+    /// test that wait for will eventually fail with the correct error message
+    test('waitFor fails', async () => {
+        const i = 0
+        try {
+            await waitFor(() => {
+                expect(i).toEqual(4)
+            })
+        } catch (err: any) {
+            const errorMsg = stripAnsiColors(String(err))
+            expect(errorMsg).toContain('AssertionError: expected +0 to deeply equal 4')
+        }
+    })
+    /// test that you can wait for a result with an expect(...) and return a value
+    test('waitForValue succeeds', async () => {
+        let i = 0
+        const r = await waitForValue(() => {
             i++
             expect(i).toEqual(4)
             return i
@@ -26,11 +46,11 @@ describe('util.test', () => {
         expect(r).toBe(4)
     })
     /// test that wait for will eventually fail with the correct error message
-    test('waitFor fails', async () => {
+    test('waitForValue fails', async () => {
         const i = 0
         let r: any
         try {
-            r = await waitFor(() => {
+            r = await waitForValue(() => {
                 expect(i).toEqual(4)
                 return i
             })
@@ -47,7 +67,7 @@ describe('util.test', () => {
             myDelayedValue = 'hello'
         }, 500)
 
-        const result = await waitFor(
+        const result = await waitForValue(
             () => {
                 return myDelayedValue
             },

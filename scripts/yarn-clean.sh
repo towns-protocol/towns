@@ -22,8 +22,6 @@ fi
 
 echo "cleaning node"
 
-yarn cache clean
-
 # remove large directories that we know we will rebuild. Git clean hangs if we try to remove these in one go
 find . -name "node_modules" -type d -exec rm -r "{}" \;
 find . -name "dist" -type d -exec rm -r "{}" \;
@@ -44,7 +42,7 @@ popd > /dev/null
 echo ""
 
 # remove files not tracked by git, but keep dev files
-git clean -fdx -e .DS_Store -e '.env.*' -e '.env.*.*' -e '*.yaml' -e .vscode -e '*.pem' -e '*.crt' -e '*.key' -e .keys -e *_key -e *_address -e .wrangler -e .dev.* -e test-config.json
+git clean -fdx -e .DS_Store -e '.env.*' -e '.env.*.*' -e '*.yaml' -e .vscode -e .idea -e '*.pem' -e '*.crt' -e '*.key' -e .keys -e *_key -e *_address -e .wrangler -e .dev.* -e test-config.json
 
 # remove empty directories and directories that only contain .DS_Store files
 find . -type d -not -path "./.git/*" -print0 | while IFS= read -r -d '' dir; do

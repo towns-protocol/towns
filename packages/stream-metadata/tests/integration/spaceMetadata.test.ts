@@ -14,7 +14,7 @@ import {
 import { spaceMetadataBaseUrl, SpaceMetadataResponse } from '../../src/routes/spaceMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 
-const log = dlog('stream-metadata:test:spaceMetadata', {
+const log = dlog('test:stream-metadata:test:spaceMetadata', {
 	allowJest: true,
 	defaultEnabled: true,
 })

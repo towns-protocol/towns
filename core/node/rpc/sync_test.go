@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -39,7 +40,12 @@ func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCooki
 	if len(cookies) > 0 {
 		req.SyncPos = cookies
 	}
-	resp, err := c.client.SyncStreams(ctx, connect.NewRequest(req))
+
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(req)
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+	resp, err := c.client.SyncStreams(ctx, connReq)
 	if err == nil {
 	syncLoop:
 		for {
@@ -97,6 +103,7 @@ func (c *syncClient) modify(t *testing.T, ctx context.Context, add []*protocol.S
 		RemoveStreams: remove,
 	}))
 	require.NoError(t, err, "failed to modify sync")
+	require.Len(t, resp.Msg.GetBackfills(), 0)
 	require.Len(t, resp.Msg.GetAdds(), 0)
 	require.Len(t, resp.Msg.GetRemovals(), 0)
 }
@@ -116,28 +123,32 @@ type syncClients struct {
 func makeSyncClients(tt *serviceTester, numNodes int) *syncClients {
 	clients := make([]*syncClient, numNodes)
 	for i := range numNodes {
-		clients[i] = &syncClient{
-			client:  tt.testClient(i),
-			err:     make(chan error, 1),
-			errC:    make(chan error, 100),
-			syncIdC: make(chan string, 100),
-			updateC: make(chan *protocol.StreamAndCookie, 100),
-			downC:   make(chan StreamId, 100),
-			pongC:   make(chan string, 100),
-		}
+		clients[i] = makeSyncClient(tt, i)
 	}
 
 	return &syncClients{clients: clients}
 }
 
-func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) {
+func makeSyncClient(tt *serviceTester, i int) *syncClient {
+	return &syncClient{
+		client:  tt.testClient(i),
+		err:     make(chan error, 1),
+		errC:    make(chan error, 100),
+		syncIdC: make(chan string, 100),
+		updateC: make(chan *protocol.StreamAndCookie, 100),
+		downC:   make(chan StreamId, 100),
+		pongC:   make(chan string, 100),
+	}
+}
+
+func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) func() {
 	for _, client := range sc.clients {
 		go client.syncMany(ctx, cookies)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		sc.cancelAll(t, ctx)
-	})
+	}
 
 	for i, client := range sc.clients {
 		select {
@@ -145,22 +156,24 @@ func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies 
 			// Received syncId, continue
 		case err := <-client.errC:
 			t.Fatalf("Error in sync client %d: %v", i, err)
-			return
+			return cleanup
 		case <-time.After(defaultTimeout):
 			t.Fatalf("Timeout waiting for syncId from client %d", i)
-			return
+			return cleanup
 		}
 	}
+
+	return cleanup
 }
 
-func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) {
+func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) func() {
 	for _, client := range sc.clients {
 		go client.sync(ctx, cookie)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		sc.cancelAll(t, ctx)
-	})
+	}
 
 	for i, client := range sc.clients {
 		select {
@@ -168,12 +181,14 @@ func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *prot
 			// Received syncId, continue
 		case err := <-client.errC:
 			t.Fatalf("Error in sync client %d: %v", i, err)
-			return
+			return cleanup
 		case <-time.After(defaultTimeout):
 			t.Fatalf("Timeout waiting for syncId from client %d", i)
-			return
+			return cleanup
 		}
 	}
+
+	return cleanup
 }
 
 func (sc *syncClients) modifySync(t *testing.T, ctx context.Context, add []*protocol.SyncCookie, remove [][]byte) {
@@ -253,6 +268,39 @@ func (sc *syncClients) expectNUpdates(
 	}
 }
 
+func (sc *syncClients) expectNStreamsDown(
+	t *testing.T,
+	streams []StreamId,
+	timeout time.Duration,
+) {
+	t.Helper()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	downStreams := make(map[StreamId]struct{})
+
+	for i, client := range sc.clients {
+		for range len(streams) {
+			select {
+			case update := <-client.downC:
+				if !slices.Contains(streams, update) {
+					t.Fatalf("Unexpected stream down on client %d: %v", i, update)
+					return
+				}
+				downStreams[update] = struct{}{}
+			case <-timer.C:
+				t.Fatalf("Timeout waiting for update on client %d", i)
+				return
+			}
+		}
+	}
+
+	if len(downStreams) != len(streams) {
+		t.Fatalf("Expected %d streams down, but got %d", len(streams), len(downStreams))
+		return
+	}
+}
+
 func (sc *syncClients) cancelAll(t *testing.T, ctx context.Context) {
 	t.Helper()
 	if sc.closed {
@@ -302,6 +350,10 @@ func checkUpdate(t *testing.T, update *protocol.StreamAndCookie, opts *updateOpt
 			t.Errorf("Failed to parse event: %v", err)
 			return
 		}
+		if len(parsedEvent.Event.GetMiniblockHeader().GetSnapshotHash()) > 0 {
+			require.NotNil(t, update.GetSnapshot)
+			require.Equal(t, parsedEvent.Event.GetMiniblockHeader().GetSnapshotHash(), update.GetSnapshot().GetHash())
+		}
 		eventType := getPayloadType(parsedEvent.Event)
 		updateStr += fmt.Sprintf("\n    %s", eventType)
 		if opts.eventType != "" && eventType != opts.eventType {
@@ -338,7 +390,8 @@ func TestSyncWithFlush(t *testing.T) {
 	)
 	require.NoError(err)
 
-	syncClients.startSync(t, ctx, cookie)
+	cleanup := syncClients.startSync(t, ctx, cookie)
+	defer cleanup()
 
 	syncClients.expectOneUpdate(t, &updateOpts{})
 
@@ -363,7 +416,7 @@ func TestSyncWithFlush(t *testing.T) {
 	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client0, streamId, mbRef))
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "UserSettingsPayload"})
 
-	mbRef, err = makeMiniblock(ctx, client0, streamId, false, mbRef.Num)
+	mbRef, err = makeMiniblock(ctx, client0, streamId, true, mbRef.Num)
 	require.NoError(err)
 	require.NotEmpty(mbRef.Hash)
 	require.Equal(int64(2), mbRef.Num)
@@ -428,9 +481,21 @@ func TestSyncWithManyStreams(t *testing.T) {
 
 	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
-	syncClients.expectNUpdates(t, len(channelCookies), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
+
+	syncClients.expectNUpdates(
+		t,
+		len(channelCookies),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received first update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
 
 	// create more streams and add them to the sync via the modify sync endpoint
 	var add []*protocol.SyncCookie
@@ -470,8 +535,30 @@ func TestSyncWithManyStreams(t *testing.T) {
 
 	// send modify sync request
 	syncClients.modifySync(t, ctx, add, remove)
-	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	syncClients.expectNUpdates(
+		t,
+		len(add)+len(channelCookies[len(channelCookies)/2:]),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received second update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
+
+	// provide invalid stream id
+	t.Run("invalid stream id provided", func(t *testing.T) {
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId: syncClients.clients[0].syncId,
+			AddStreams: []*protocol.SyncCookie{{
+				StreamId: []byte("Invalid"),
+			}},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
 
 	// add two same streams in the modify sync request and expect error
 	t.Run("duplicate add streams", func(t *testing.T) {
@@ -481,7 +568,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 			AddStreams: []*protocol.SyncCookie{channel, channel},
 		}))
 		require.Error(err)
-		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// remove two same streams in the modify sync request and expect error
@@ -494,7 +581,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 			},
 		}))
 		require.Error(err)
-		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
 	// passing the same stream in add and remove streams in the modify sync request and expect error
@@ -509,15 +596,36 @@ func TestSyncWithManyStreams(t *testing.T) {
 		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
+	// expect for the latest update when no minipool number is provided
+	t.Run("no minipool number provided", func(t *testing.T) {
+		channel, _ := produceChannel()
+		connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{{
+			NodeAddress: channel.GetNodeAddress(),
+			StreamId:    channel.GetStreamId(),
+		}}})
+		connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+		resp, err := syncClient0.SyncStreams(ctx, connReq)
+		require.NoError(err)
+		require.True(resp.Receive())
+		require.NoError(resp.Err())
+		require.Equal(protocol.SyncOp_SYNC_NEW, resp.Msg().GetSyncOp(), resp.Msg())
+		require.True(resp.Receive())
+		require.NoError(resp.Err())
+		require.Equal(protocol.SyncOp_SYNC_UPDATE, resp.Msg().GetSyncOp(), resp.Msg())
+		require.Equal(channel.GetStreamId(), resp.Msg().StreamID(), resp.Msg())
+	})
+
 	// finish testing
 	syncClients.cancelAll(t, ctx)
 	syncClients.checkDone(t)
 }
 
-// TestSyncWithEmptyNodeAddress tests that the sync service can handle an empty node address by using sticky peer.
-func TestSyncWithEmptyNodeAddress(t *testing.T) {
-	numNodes := 10
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
+// TestRemoteNodeFailsDuringSync ensures that when a remote node fails during sync, the sync session is closed and
+// the client receives a stream down event for all streams on the failed node.
+func TestRemoteNodeFailsDuringSync(t *testing.T) {
+	numNodes := 5
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 3})
 	ctx := tt.ctx
 	require := tt.require
 
@@ -533,12 +641,15 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 	_, _, err = createUserMetadataStream(ctx, wallet, syncClient0, nil)
 	require.NoError(err)
 
-	// create space with 500 channels and add 1 event to each channel
+	// create space with 50 channels and add 1 event to each channel
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
 	require.NoError(err)
 
-	produceChannel := func() (*protocol.SyncCookie, *MiniblockRef) {
+	var channelCookies []*protocol.SyncCookie
+	nodeToStreams := make(map[common.Address][]StreamId)
+	nodeToCookies := make(map[common.Address][]*protocol.SyncCookie)
+	for range 50 {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
 			ctx,
@@ -553,67 +664,147 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 		b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
 		require.NoError(err)
 		require.Equal(int64(0), b0ref.Num)
-
-		// do not specify the node address to force the sync service to use sticky peer
-		return &protocol.SyncCookie{
-			StreamId:          channel.GetStreamId(),
-			MinipoolGen:       channel.GetMinipoolGen(),
-			PrevMiniblockHash: channel.GetPrevMiniblockHash(),
-		}, channelHash
-	}
-
-	var channelCookies []*protocol.SyncCookie
-	for range 50 {
-		channel, channelHash := produceChannel()
 		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
 		channelCookies = append(channelCookies, channel)
+
+		node := common.BytesToAddress(channel.NodeAddress)
+		nodeToStreams[node] = append(nodeToStreams[node], StreamId(channel.StreamId))
+		nodeToCookies[node] = append(nodeToCookies[node], channel)
 	}
 
-	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
-	syncClients.expectNUpdates(t, len(channelCookies), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
 
-	// create more streams and add them to the sync via the modify sync endpoint
-	var add []*protocol.SyncCookie
-	for range 50 {
-		channel, channelHash := produceChannel()
-		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
-		add = append(add, channel)
+	syncClients.expectNUpdates(
+		t,
+		len(channelCookies),
+		time.Second*10,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received first update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
+
+	// Shut down second and third nodes and expect stream down events for all streams on those nodes
+	tt.CloseNode(1)
+	syncClients.expectNStreamsDown(
+		t,
+		nodeToStreams[tt.nodes[1].address],
+		time.Second*10,
+	)
+	tt.CloseNode(2)
+	syncClients.expectNStreamsDown(
+		t,
+		nodeToStreams[tt.nodes[2].address],
+		time.Second*10,
+	)
+
+	// Add all cookies to the modify stream again and expect for updates
+	resp, err := syncClient0.ModifySync(context.Background(), connect.NewRequest(&protocol.ModifySyncRequest{
+		SyncId:     syncClients.clients[0].syncId,
+		AddStreams: channelCookies,
+	}))
+	require.NoError(err)
+	require.Len(resp.Msg.GetAdds(), 0)
+
+	syncClients.expectNUpdates(
+		t,
+		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
+		time.Second*10,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received first update for all %d streams in init sync session took: %s",
+		len(nodeToStreams[tt.nodes[1].address])+len(nodeToStreams[tt.nodes[2].address]),
+		time.Since(now),
+	)
+}
+
+// TestStreamSyncDownRightAfterSendingBackfillEvent tests a scenario where a sync client
+// receives a sync down message immediately after sending a backfill event.
+// It caused a panic in the past because the sync client was not able to handle it properly.
+func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
+	numNodes := 2
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, replicationFactor: 1})
+	ctx := tt.ctx
+	require := tt.require
+
+	syncClients := makeSyncClients(tt, numNodes)
+	syncClient0 := syncClients.clients[0].client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	_, _, err = createUserMetadataStream(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+
+	// create space with 1 channel and add 1 event to the channel
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
+	require.NoError(err)
+
+	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channel, channelHash, err := createChannel(
+		ctx,
+		wallet,
+		syncClient0,
+		spaceId,
+		channelId,
+		&protocol.StreamSettings{DisableMiniblockCreation: true},
+	)
+	require.NoError(err)
+	require.NotNil(channel)
+	b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
+	require.NoError(err)
+	require.Equal(int64(0), b0ref.Num)
+	addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
+
+	// Start syncing the stream from non stream node
+	var remoteNode, syncNode int
+	if tt.nodes[0].address.Cmp(common.BytesToAddress(channel.GetNodeAddress())) == 0 {
+		remoteNode = 1
+	} else {
+		syncNode = 1
 	}
 
-	// remove half of the previously added streams and send one more message to the remaining half
-	var remove [][]byte
-	for _, existingStream := range channelCookies[:len(channelCookies)/2] {
-		remove = append(remove, existingStream.GetStreamId())
-	}
-	for _, existingStream := range channelCookies[len(channelCookies)/2:] {
-		res, err := syncClient0.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
-			StreamId: existingStream.GetStreamId(),
-		}))
-		require.NoError(err)
-
-		addMessageToChannel(
-			ctx,
-			syncClient0,
-			wallet,
-			"hello",
-			StreamId(existingStream.GetStreamId()),
-			&MiniblockRef{
-				Hash: common.BytesToHash(res.Msg.Hash),
-				Num:  res.Msg.MiniblockNum,
-			},
-			require,
-		)
+	// Create sync 1
+	sync0 := makeSyncClient(tt, remoteNode)
+	go sync0.sync(ctx, channel)
+	select {
+	case <-sync0.updateC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync channel update from client 0")
 	}
 
-	// send modify sync request
-	syncClients.modifySync(t, ctx, add, remove)
-	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	// Create sync 2 - backfilling
+	sync1 := makeSyncClient(tt, remoteNode)
+	go sync1.sync(ctx, channel)
+	select {
+	case <-sync1.updateC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync channel update from client 1")
+	}
 
-	// finish testing
-	syncClients.cancelAll(t, ctx)
-	syncClients.checkDone(t)
+	// Close the sync node to force sending sync down message
+	tt.CloseNode(syncNode)
+
+	// Expect sync down message from both syncs
+	select {
+	case <-sync0.downC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync down message from client 0")
+	}
+	select {
+	case <-sync1.downC:
+	case <-time.After(time.Second * 5):
+		t.Fatalf("timed out waiting for sync down message from client 1")
+	}
 }

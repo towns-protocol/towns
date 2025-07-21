@@ -2,13 +2,14 @@ package track_streams
 
 import (
 	"context"
-	"math/rand"
 	"slices"
-	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 
+	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -53,15 +54,15 @@ var _ StreamsTracker = (*StreamsTrackerImpl)(nil)
 // views, which are application-specific. The filter implementation struct embeds this tracker implementation
 // and provides these methods for encapsulation.
 type StreamsTrackerImpl struct {
-	ctx            context.Context
-	filter         StreamFilter
-	nodeRegistries []nodes.NodeRegistry
-	riverRegistry  *registries.RiverRegistryContract
-	onChainConfig  crypto.OnChainConfiguration
-	listener       StreamEventListener
-	metrics        *TrackStreamsSyncMetrics
-	tracked        sync.Map // map[shared.StreamId] = struct{}
-	syncRunner     *SyncRunner
+	ctx             context.Context
+	filter          StreamFilter
+	nodeRegistries  []nodes.NodeRegistry
+	riverRegistry   *registries.RiverRegistryContract
+	onChainConfig   crypto.OnChainConfiguration
+	listener        StreamEventListener
+	metrics         *TrackStreamsSyncMetrics
+	tracked         *xsync.Map[shared.StreamId, struct{}]
+	multiSyncRunner *MultiSyncRunner
 }
 
 // Init can be used by a struct embedding the StreamsTrackerImpl to initialize it.
@@ -73,6 +74,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	listener StreamEventListener,
 	filter StreamFilter,
 	metricsFactory infra.MetricsFactory,
+	streamTracking config.StreamTrackingConfig,
 ) error {
 	tracker.ctx = ctx
 	tracker.metrics = NewTrackStreamsSyncMetrics(metricsFactory)
@@ -81,7 +83,15 @@ func (tracker *StreamsTrackerImpl) Init(
 	tracker.nodeRegistries = nodeRegistries
 	tracker.listener = listener
 	tracker.filter = filter
-	tracker.syncRunner = NewSyncRunner()
+	tracker.multiSyncRunner = NewMultiSyncRunner(
+		tracker.metrics,
+		onChainConfig,
+		nodeRegistries,
+		filter.NewTrackedStream,
+		streamTracking,
+		nil,
+	)
+	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 
 	// Subscribe to stream events in river registry
 	if err := tracker.riverRegistry.OnStreamEvent(
@@ -115,10 +125,12 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 		start                 = time.Now()
 	)
 
+	go tracker.multiSyncRunner.Run(ctx)
+
 	err := tracker.riverRegistry.ForAllStreams(
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
-		func(stream *registries.GetStreamResult) bool {
+		func(stream *river.StreamWithId) bool {
 			// Print progress report every 50k streams that are added to track
 			if streamsLoaded > 0 && streamsLoaded%50_000 == 0 && streamsLoadedProgress != streamsLoaded {
 				log.Infow("Progress stream loading", "tracked", streamsLoaded, "total", totalStreams)
@@ -127,42 +139,31 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId) {
+			if !tracker.filter.TrackStream(stream.StreamId()) {
 				return true
 			}
 
 			// There are some streams managed by a node that isn't registered anymore.
 			// Filter these out because we can't sync these streams.
-			stream.Nodes = slices.DeleteFunc(stream.Nodes, func(address common.Address) bool {
+			stream.Stream.Nodes = slices.DeleteFunc(stream.Stream.Nodes, func(address common.Address) bool {
 				return !slices.Contains(validNodes, address)
 			})
 
-			if len(stream.Nodes) == 0 {
+			if len(stream.Nodes()) == 0 {
 				// We know that we have a set of these on the network because some nodes were accidentally deployed
 				// with the wrong addresses early in the network's history. We've deemed these streams not worthy
 				// of repairing and generally ignore them.
-				log.Debugw("Ignore stream, no valid node found", "stream", stream.StreamId)
+				log.Debugw("Ignore stream, no valid node found", "stream", stream.StreamId())
 				return true
 			}
 
 			streamsLoaded++
 
 			// start stream sync session for stream if it hasn't seen before
-			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId, struct{}{})
+			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
-				// start tracking the stream until ctx expires
-				go func() {
-					idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
-					tracker.syncRunner.Run(
-						ctx,
-						stream,
-						false,
-						tracker.nodeRegistries[idx],
-						tracker.onChainConfig,
-						tracker.filter.NewTrackedStream,
-						tracker.metrics,
-					)
-				}()
+				// start tracking the stream, until the root ctx expires.
+				tracker.multiSyncRunner.AddStream(stream, false)
 			}
 
 			return true
@@ -186,34 +187,24 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 }
 
 func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
-	ctx context.Context,
 	streamId shared.StreamId,
 	nodes []common.Address,
 ) {
 	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
-		go func() {
-			stream := &registries.GetStreamResult{
-				StreamId: streamId,
-				Nodes:    nodes,
-			}
-
-			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
-			tracker.syncRunner.Run(
-				ctx,
-				stream,
-				true,
-				tracker.nodeRegistries[idx],
-				tracker.onChainConfig,
-				tracker.filter.NewTrackedStream,
-				tracker.metrics,
-			)
-		}()
+		stream := &river.StreamWithId{
+			Id: streamId,
+			Stream: river.Stream{
+				Reserved0: uint64(len(nodes)),
+				Nodes:     nodes,
+			},
+		}
+		tracker.multiSyncRunner.AddStream(stream, true)
 	}
 }
 
 func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
-	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(nil, streamId)
+	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")
@@ -221,7 +212,7 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 
 	// Use tracker.ctx here so that the stream continues to  be synced after
 	// the originating request expires
-	tracker.forwardStreamEventsFromInception(tracker.ctx, streamId, stream.Nodes)
+	tracker.forwardStreamEventsFromInception(streamId, stream.Nodes)
 	return nil
 }
 
@@ -230,14 +221,14 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamAllocated,
+	event *river.StreamState,
 ) {
-	streamID := shared.StreamId(event.StreamId)
+	streamID := event.GetStreamId()
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Nodes)
+	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -245,26 +236,26 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamCreated,
+	event *river.StreamState,
 ) {
-	streamID := shared.StreamId(event.StreamId)
+	streamID := event.GetStreamId()
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes)
+	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	context.Context,
-	*river.StreamRegistryV1StreamLastMiniblockUpdated,
+	*river.StreamMiniblockUpdate,
 ) {
 	// miniblocks are processed when a stream event with a block header is received for the stream
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamPlacementUpdated(
 	context.Context,
-	*river.StreamRegistryV1StreamPlacementUpdated,
+	*river.StreamState,
 ) {
 	// reserved when replacements are introduced
 	// 1. stop existing sync operation

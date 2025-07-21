@@ -46,7 +46,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -72,7 +72,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -94,7 +94,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -112,7 +112,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -149,7 +149,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -165,7 +165,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ := streamCache.cache.Load(streamID)
-	require.Nil(loadedStream.view(), "view not unloaded")
+	require.Nil(loadedStream.getViewLocked(), "view not unloaded")
 
 	// try to create a miniblock, pool is empty so it should not fail but also should not create a miniblock
 	_ = tc.makeMiniblock(0, streamID, false)
@@ -178,6 +178,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 		streamSync,
 		"payload",
 		&MiniblockRef{Hash: common.BytesToHash(genesisMiniblock.Header.Hash), Num: 0},
+		false,
 	)
 
 	// with event in minipool ensure that view isn't evicted from cache
@@ -186,7 +187,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
-	require.NotNil(loadedStream.view(), "view unloaded")
+	require.NotNil(loadedStream.getViewLocked(), "view unloaded")
 
 	// now it should be possible to create a miniblock
 	mbRef := tc.makeMiniblock(0, streamID, false)
@@ -199,7 +200,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
-	require.Nil(loadedStream.view(), "view loaded in cache")
+	require.Nil(loadedStream.getViewLocked(), "view loaded in cache")
 }
 
 type testStreamCacheViewEvictionSub struct {
@@ -276,7 +277,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 			numToAdd := 1 + int(streamID[3]%50)
 			for i := range numToAdd {
 				addEventToStream(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0})
+					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0}, false)
 			}
 
 			mu.Lock()
@@ -311,11 +312,11 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 				syncCookie := view.SyncCookie(tc.getBC().Wallet.Address)
 				require.NotNil(syncCookie, "sync cookie")
 
-				miniblocks, _, err := stream.GetMiniblocks(ctx, 0, syncCookie.MinipoolGen)
+				miniblocks, _, err := stream.GetMiniblocks(ctx, 0, syncCookie.MinipoolGen, true)
 				require.NoError(err, "get miniblocks")
 
 				for _, mb := range miniblocks {
-					gotStreamEventsCount += len(mb.Events)
+					gotStreamEventsCount += len(mb.Proto.Events)
 				}
 
 				if expStreamEventsCount == gotStreamEventsCount {
@@ -395,9 +396,8 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 
 	// create fresh stream cache and subscribe
 	streamCache = NewStreamCache(tc.instances[0].params)
-	err = streamCache.Start(ctx)
+	err = streamCache.Start(ctx, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	require.NoError(err, "instantiating stream cache")
-	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
@@ -425,7 +425,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 			require.NoError(err, "get sync stream")
 			for i := 0; i < 1+int(streamID[3]%50); i++ {
 				addEventToStream(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0})
+					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0}, false)
 			}
 			streamsWithEvents[streamID] = 1 + int(streamID[3]%50)
 		} else {
@@ -442,9 +442,9 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	}
 
 	// make all mini-blocks to process all events in minipool
-	jobs := mpProducer.scheduleCandidates(ctx, blockNum)
+	jobs := streamCache.mbProducer.scheduleCandidates(ctx, blockNum)
 	require.Eventually(
-		func() bool { return mpProducer.testCheckAllDone(jobs) },
+		func() bool { return streamCache.mbProducer.testCheckAllDone(jobs) },
 		240*time.Second,
 		10*time.Millisecond,
 	)
@@ -464,7 +464,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	require := require.New(t)
 	instance := tt.instances[0]
-	mbProducer := instance.mbProducer
+	mbProducer := instance.cache.mbProducer
 
 	// through disableCallback the test can control if the stream cache witnesses river chain events.
 	var disableCallbacks atomic.Bool
@@ -477,14 +477,20 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 		})
 
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	genesisMb := MakeGenesisMiniblockForSpaceStream(t, instance.params.Wallet, instance.params.Wallet, spaceStreamId)
+	genesisMb := MakeGenesisMiniblockForSpaceStream(
+		t,
+		instance.params.Wallet,
+		instance.params.Wallet,
+		spaceStreamId,
+		nil,
+	)
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 
 	// advance the stream with some miniblocks
 	var producedMiniBlockRef *MiniblockRef
 	for i := range 2 {
-		addEventToStream(t, ctx, instance.params, stream, fmt.Sprintf("%d", i*2), view.LastBlock().Ref)
-		addEventToStream(t, ctx, instance.params, stream, fmt.Sprintf("%d", 1+(i*2)), view.LastBlock().Ref)
+		addEventToStream(t, ctx, instance.params, stream, fmt.Sprintf("%d", i*2), view.LastBlock().Ref, false)
+		addEventToStream(t, ctx, instance.params, stream, fmt.Sprintf("%d", 1+(i*2)), view.LastBlock().Ref, false)
 
 		var err error
 		producedMiniBlockRef, err = mbProducer.TestMakeMiniblock(ctx, spaceStreamId, false)
@@ -514,17 +520,16 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	lastBlock := view.LastBlock()
 
 	event1 := MakeEvent(
-		t, instance.params.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: "A"}), lastBlock.Ref)
+		t, instance.params.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: "A"}), false, lastBlock.Ref)
 
 	event2 := MakeEvent(
-		t, instance.params.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: "B"}), lastBlock.Ref)
+		t, instance.params.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: "B"}), false, lastBlock.Ref)
 
 	candidateHeader := &MiniblockHeader{
 		MiniblockNum:             lastBlock.Ref.Num + 1,
 		Timestamp:                NextMiniblockTimestamp(lastBlock.Header().Timestamp),
 		EventHashes:              [][]byte{event1.Hash.Bytes(), event2.Hash.Bytes()},
 		PrevMiniblockHash:        lastBlock.headerEvent.Hash[:],
-		Snapshot:                 nil,
 		EventNumOffset:           0,
 		PrevSnapshotMiniblockNum: view.LastBlock().Header().GetPrevSnapshotMiniblockNum(),
 		Content: &MiniblockHeader_None{
@@ -533,19 +538,14 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	}
 
 	candidate, err := NewMiniblockInfoFromHeaderAndParsed(
-		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2})
-	require.NoError(err)
-
-	miniblockBytes, err := candidate.ToBytes()
-	require.NoError(err)
-
-	err = instance.params.Storage.WriteMiniblockCandidate(
-		ctx,
-		spaceStreamId,
-		candidate.Ref.Hash,
-		candidate.Ref.Num,
-		miniblockBytes,
+		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2}, nil,
 	)
+	require.NoError(err)
+
+	storageMb, err := candidate.AsStorageMb()
+	require.NoError(err)
+
+	err = instance.params.Storage.WriteMiniblockCandidate(ctx, spaceStreamId, storageMb)
 	require.NoError(err)
 
 	// bypass the mini-block producer and register candidate in the stream facet
@@ -570,21 +570,21 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
 	require.NoError(err)
 
-	require.Equal(int64(getStream.LastMiniblockNum), candidate.Ref.Num)
-	require.Equal(getStream.LastMiniblockHash, candidate.Ref.Hash)
+	require.Equal(getStream.LastMbNum(), candidate.Ref.Num)
+	require.Equal(getStream.LastMbHash(), candidate.Ref.Hash)
 
 	view, err = stream.GetView(ctx)
 	require.NoError(err)
 	lastBlock = view.LastBlock()
-	require.Equal(lastBlock.Ref.Num+1, int64(getStream.LastMiniblockNum))
+	require.Equal(lastBlock.Ref.Num+1, getStream.LastMbNum())
 
 	// Add some events to the stream and try produce a mini-block. This must fail because the
 	// stream facet already progressed by the just registered candidate. The node must detect this
 	// scenario and load the candidate from its storage and apply/promote it. The node must be able
 	// to produce a new mini-block with the events in the mini-pool.
-	addEventToStream(t, ctx, instance.params, stream, "A", view.LastBlock().Ref)
-	addEventToStream(t, ctx, instance.params, stream, "B", view.LastBlock().Ref)
-	addEventToStream(t, ctx, instance.params, stream, "C", view.LastBlock().Ref)
+	addEventToStream(t, ctx, instance.params, stream, "A", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, instance.params, stream, "B", view.LastBlock().Ref, false)
+	addEventToStream(t, ctx, instance.params, stream, "C", view.LastBlock().Ref, false)
 
 	mb, err := mbProducer.TestMakeMiniblock(ctx, spaceStreamId, false)
 	require.NoError(err)

@@ -3,9 +3,10 @@ package scrub
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -27,11 +28,12 @@ type EventAdder interface {
 		payload IsStreamEvent_Payload,
 		tags *Tags,
 	) ([]*EventRef, error)
+	GetWalletAddress() common.Address
 }
 
 type streamMembershipScrubTaskProcessorImpl struct {
 	ctx          context.Context
-	pendingTasks *xsync.MapOf[StreamId, bool]
+	pendingTasks *xsync.Map[StreamId, bool]
 	workerPool   *workerpool.WorkerPool
 	cache        *StreamCache
 	eventAdder   EventAdder
@@ -60,7 +62,7 @@ func NewStreamMembershipScrubTasksProcessor(
 	proc := &streamMembershipScrubTaskProcessorImpl{
 		ctx:          ctx,
 		cache:        cache,
-		pendingTasks: xsync.NewMapOf[StreamId, bool](),
+		pendingTasks: xsync.NewMap[StreamId, bool](),
 		workerPool:   workerpool.New(100),
 		eventAdder:   eventAdder,
 		chainAuth:    chainAuth,
@@ -108,14 +110,15 @@ func NewStreamMembershipScrubTasksProcessor(
 func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	ctx context.Context,
 	channelId StreamId,
-	member string,
+	member common.Address,
+	appAddress common.Address,
 	span trace.Span,
 ) error {
 	log := logging.FromCtx(ctx)
 	tp.membershipChecks.Inc()
 
 	spaceId := channelId.SpaceID()
-	isEntitled, err := tp.chainAuth.IsEntitled(
+	isEntitledResult, err := tp.chainAuth.IsEntitled(
 		ctx,
 		tp.config,
 		auth.NewChainAuthArgsForChannel(
@@ -123,6 +126,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			channelId,
 			member,
 			auth.PermissionRead,
+			appAddress,
 		),
 	)
 	if err != nil {
@@ -130,27 +134,21 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	}
 
 	if span != nil {
-		span.SetAttributes(attribute.Bool("isEntitled", isEntitled))
+		span.SetAttributes(attribute.Bool("isEntitled", isEntitledResult.IsEntitled()))
 	}
 
 	// In the case that the user is not entitled, they must have lost their entitlement
 	// after joining the channel, so let's go ahead and boot them.
-	if !isEntitled {
+	if !isEntitledResult.IsEntitled() {
 		tp.entitlementLosses.Inc()
 
-		userId, err := AddressFromUserId(member)
-		if err != nil {
-			return err
-		}
-
-		userStreamId, err := UserStreamIdFromBytes(userId)
-		if err != nil {
-			return err
-		}
+		userStreamId := UserStreamIdFromAddr(member)
 
 		log.Debugw("Entitlement loss detected; adding LEAVE event for user",
 			"user",
 			member,
+			"appAddress",
+			appAddress,
 			"userStreamId",
 			userStreamId,
 			"channelId",
@@ -159,14 +157,17 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			spaceId,
 		)
 
+		reason := entitlementResultReasonToMembershipReason(isEntitledResult.Reason())
+
 		if _, err = tp.eventAdder.AddEventPayload(
 			ctx,
 			userStreamId,
 			Make_UserPayload_Membership(
 				MembershipOp_SO_LEAVE,
 				channelId,
-				&member,
+				tp.eventAdder.GetWalletAddress(),
 				spaceId[:],
+				&reason,
 			),
 			nil,
 		); err != nil {
@@ -184,7 +185,8 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 	ctx context.Context,
 	channelId StreamId,
-	member string,
+	member common.Address,
+	appAddress common.Address,
 ) {
 	spaceId := channelId.SpaceID()
 
@@ -194,14 +196,16 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 		span.SetAttributes(
 			attribute.String("spaceId", spaceId.String()),
 			attribute.String("channelId", channelId.String()),
-			attribute.String("userId", member),
+			attribute.String("userId", member.Hex()),
+			attribute.String("appAddress", appAddress.Hex()),
 		)
 		defer span.End()
 	}
 
-	err := tp.processMemberImpl(ctx, channelId, member, span)
+	err := tp.processMemberImpl(ctx, channelId, member, appAddress, span)
 	if err != nil {
-		logging.FromCtx(ctx).Warnw("Failed to scrub member", "channelId", channelId, "member", member, "error", err)
+		logging.FromCtx(ctx).
+			Errorw("Failed to scrub member", "channelId", channelId, "member", member, "appAddress", appAddress, "error", err)
 	}
 
 	if span != nil {
@@ -270,19 +274,44 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	}
 
 	for member := range members.Iter() {
-		tp.processMembership(ctx, streamId, member)
+		memberAddress := common.HexToAddress(member)
+		appAddress, err := view.GetMemberAppAddress(memberAddress)
+		if err != nil {
+			logging.FromCtx(ctx).
+				Errorw(
+					"Error deriving member app address from stream during membership scrub",
+					"error",
+					err,
+					"userId",
+					memberAddress,
+					"streamId",
+					streamId,
+				)
+		} else {
+			tp.processMembership(ctx, streamId, memberAddress, appAddress)
+		}
 	}
 
 	return nil
 }
 
 func (tp *streamMembershipScrubTaskProcessorImpl) Scrub(channelId StreamId) bool {
-	_, wasScheduled := tp.pendingTasks.LoadOrCompute(channelId, func() bool {
-		tp.workerPool.Submit(func() {
-			tp.processStream(channelId)
-			tp.pendingTasks.Delete(channelId)
-		})
-		return true
-	})
+	_, wasScheduled := tp.pendingTasks.LoadOrCompute(
+		channelId,
+		func() (newValue bool, cancel bool) {
+			tp.workerPool.Submit(func() {
+				tp.processStream(channelId)
+				tp.pendingTasks.Delete(channelId)
+			})
+			return true, false
+		},
+	)
 	return !wasScheduled
+}
+
+func entitlementResultReasonToMembershipReason(entitlementResultReason auth.EntitlementResultReason) MembershipReason {
+	if entitlementResultReason == auth.EntitlementResultReason_MEMBERSHIP_EXPIRED {
+		return MembershipReason_MR_EXPIRED
+	}
+	return MembershipReason_MR_NOT_ENTITLED
 }

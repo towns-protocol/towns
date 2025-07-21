@@ -2,12 +2,12 @@
  * @group main
  */
 
-import _ from 'lodash'
+import { cloneDeep } from 'lodash-es'
 import { unpackEnvelope, makeEvent, publicKeyToAddress } from '../../sign'
 import { make_UserPayload_Inception } from '../../types'
 import { dlog, bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
 import { makeUserStreamId, streamIdToBytes } from '../../id'
-import { getPublicKey } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { ethers } from 'ethers'
 import { EncryptedData, PlainMessage, StreamEvent } from '@towns-protocol/proto'
 import { TEST_ENCRYPTED_MESSAGE_PROPS } from '../testUtils'
@@ -27,7 +27,7 @@ describe('sign', () => {
         '0123456789012345678901234567890123456789012345678901234567890125',
         'aaaa456789012345678901234567890123456789012345678901234567890125',
     ].map((key) => {
-        const pub = getPublicKey(key)
+        const pub = secp256k1.getPublicKey(key, false)
         return {
             privateKey: key,
             publicKey: pub,
@@ -238,19 +238,19 @@ describe('sign', () => {
             expect(event2).not.toEqual(event)
 
             await expect(async () => {
-                const e = _.cloneDeep(event)
+                const e = cloneDeep(event)
                 e.hash = event2.hash
                 await unpackEnvelope(e, undefined)
             }).rejects.toThrow()
 
             await expect(async () => {
-                const e = _.cloneDeep(event)
+                const e = cloneDeep(event)
                 e.signature = event2.signature
                 await unpackEnvelope(e, undefined)
             }).rejects.toThrow()
 
             await expect(async () => {
-                const e = _.cloneDeep(event)
+                const e = cloneDeep(event)
                 e.event = event2.event
                 await unpackEnvelope(e, undefined)
             }).rejects.toThrow()

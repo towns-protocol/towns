@@ -1,12 +1,19 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
+
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
+	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 )
 
 // Test_Node2Node_GetMiniblocksByIds tests fetching miniblocks by their IDs using internode RPC endpoints.
@@ -52,4 +59,41 @@ func Test_Node2Node_GetMiniblocksByIds(t *testing.T) {
 
 		return len(events) == expectedEventsNumber
 	}, time.Second*5, time.Millisecond*200)
+}
+
+func TestNode2NodeAuth(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{
+		numNodes: 1,
+		start:    true,
+		btcParams: &crypto.TestParams{
+			AutoMine:         true,
+			AutoMineInterval: 10 * time.Millisecond,
+			MineOnTx:         true,
+		},
+	})
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	_ = alice.createUserStream()
+	spaceId, _ := alice.createSpace()
+	channelId, creationMb, _ := alice.createChannel(spaceId)
+
+	alice.say(channelId, "hello from Alice")
+	_, err := makeMiniblock(tt.ctx, alice.client, channelId, false, creationMb.Num)
+	tt.require.NoError(err)
+
+	// Create another client with invalid certificate - unknown signer of certificate
+	wallet, err := crypto.NewWallet(context.Background())
+	tt.require.NoError(err)
+	clientWithInvalidCert, err := testcert.GetHttp2LocalhostTLSClientWithCert(
+		tt.ctx, tt.getConfig(), node2nodeauth.CertGetter(logging.FromCtx(tt.ctx), wallet, tt.btc.ChainId),
+	)
+	tt.require.NoError(err)
+	client := protocolconnect.NewNodeToNodeClient(clientWithInvalidCert, tt.nodes[0].url, connect.WithGRPCWeb())
+	resp, err := client.GetMiniblocksByIds(tt.ctx, connect.NewRequest(&GetMiniblocksByIdsRequest{
+		StreamId:     channelId[:],
+		MiniblockIds: []int64{0, 1},
+	}))
+	tt.require.NoError(err)
+	tt.require.False(resp.Receive())
+	tt.require.Contains(resp.Err().Error(), "tls: bad certificate")
 }

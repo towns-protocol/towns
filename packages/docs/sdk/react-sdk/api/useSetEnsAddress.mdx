@@ -14,7 +14,7 @@ import { useSetEnsAddress } from '@towns-protocol/react-sdk'
 ```ts
 function useSetEnsAddress(
   streamId: string,
-  config?: ActionConfig<Myself['setEnsAddress']>,
+  config?: ActionConfig<Myself["setEnsAddress"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -37,7 +37,7 @@ The id of the stream to set the ENS address of.
 
 ### config
 
-- **Type:** `ActionConfig<Myself['setEnsAddress']>`
+- **Type:** `ActionConfig<Myself["setEnsAddress"]>`
 - **Optional**
 
 Configuration options for the action.

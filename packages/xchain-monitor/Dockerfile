@@ -6,7 +6,6 @@ WORKDIR /river
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
 COPY ./.yarn/releases ./.yarn/releases
-COPY ./remappings.txt ./remappings.txt
 COPY ./.yarnrc.yml ./.yarnrc.yml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
@@ -51,4 +50,4 @@ ENV DD_GIT_REPOSITORY_URL="https://github.com/towns-protocol/towns" \
     DD_GIT_COMMIT_SHA=${GIT_SHA} \
     NODE_ENV=production
 
-CMD ["node", "--enable-source-maps", "./dist/node_esbuild.cjs"]
+CMD ["node", "--enable-source-maps", "--max-old-space-size=4096", "./dist/node_esbuild.cjs"]

@@ -3,7 +3,7 @@
  */
 
 import {
-    getChannelMessagePayload,
+    getTimelineMessagePayload,
     makeTestClient,
     makeUniqueSpaceStreamId,
     waitFor,
@@ -11,7 +11,7 @@ import {
 import { Client } from '../../client'
 
 import { makeUniqueChannelStreamId } from '../../id'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 describe('channelsTests', () => {
     let bobsClient: Client
@@ -45,11 +45,10 @@ describe('channelsTests', () => {
         let eventId: string | undefined
         await waitFor(() => {
             const event = channelStream.view.timeline.find(
-                (e) =>
-                    getChannelMessagePayload(e.localEvent?.channelMessage) === 'Very bad message!',
+                (e) => getTimelineMessagePayload(e) === 'Very bad message!',
             )
             expect(event).toBeDefined()
-            eventId = event?.hashStr
+            eventId = event?.eventId
         })
 
         expect(channelStream).toBeDefined()
@@ -59,10 +58,8 @@ describe('channelsTests', () => {
         await waitFor(() => {
             const event = channelStream.view.timeline.find(
                 (e) =>
-                    e.remoteEvent?.event.payload.case === 'channelPayload' &&
-                    e.remoteEvent.event.payload.value.content.case === 'redaction' &&
-                    bin_toHexString(e.remoteEvent.event.payload.value.content.value.eventId) ===
-                        eventId!,
+                    e.content?.kind === RiverTimelineEvent.RedactionActionEvent &&
+                    e.content.refEventId === eventId!,
             )
             expect(event).toBeDefined()
         })

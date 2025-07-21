@@ -16,7 +16,7 @@
 
 services:
     towns-go-test:
-        image: golang:1.23.3-bookworm
+        image: golang:1.24.2-bookworm
         volumes:
             - ..:/core
             - go-cache:/go

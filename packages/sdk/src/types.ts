@@ -38,15 +38,21 @@ import {
     MemberPayload_Nft,
     BlockchainTransaction,
     ChannelMessageSchema,
+    MembershipReason,
+    PayloadCaseType,
+    ContentCaseType,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError, EventSignatureBundle } from '@towns-protocol/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from './decryptionExtensions'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
+
+export type ExclusionFilter = { payload: PayloadCaseType | '*'; content: ContentCaseType | '*' }[]
+
 export interface LocalEvent {
     localId: string
     channelMessage: ChannelMessage
@@ -59,6 +65,14 @@ export interface ParsedEvent {
     hashStr: string
     signature: Uint8Array | undefined
     creatorUserId: string
+    ephemeral: boolean
+}
+
+export interface ParsedSnapshot {
+    snapshot: Snapshot
+    hash: Uint8Array
+    hashStr: string
+    signature: Uint8Array | undefined
 }
 
 export interface StreamTimelineEvent {
@@ -198,12 +212,14 @@ export interface ParsedMiniblock {
     hash: Uint8Array
     header: MiniblockHeader
     events: ParsedEvent[]
+    partial?: boolean
 }
 
 export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
     miniblocks: ParsedMiniblock[]
     events: ParsedEvent[]
+    snapshot?: ParsedSnapshot
 }
 
 export interface ParsedStreamResponse {
@@ -531,6 +547,7 @@ export const make_MemberPayload_Membership2 = (
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
         streamParentId: value.streamParentId ? streamIdAsBytes(value.streamParentId) : undefined,
+        reason: MembershipReason.MR_NONE,
     })
 }
 

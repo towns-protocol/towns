@@ -14,6 +14,13 @@ import "google/protobuf/empty.proto";
 message Miniblock {
     repeated Envelope events = 1;
     Envelope header = 2;
+
+    /**
+     * Partial indicates that this is the copy of miniblock with some events omitted.
+     * If GetMiniblocks was used with the filter, and some events were omitted,
+     * then partial will be true.
+    */
+    bool partial = 3;
 }
 
 /**
@@ -33,7 +40,7 @@ message Envelope {
     /**
      * Signature.
      * For the event to be valid, signature must match event.creator_address
-     * or be signed by the address from evant.delegate_sig.
+     * or be signed by the address from event.delegate_sig.
      */
     bytes signature = 2;
 
@@ -91,6 +98,9 @@ message StreamEvent {
     /** prev_miniblock_num contains miniblock number for prev_miniblock_hash. */
     optional int64 prev_miniblock_num = 8;
 
+    /** Set to true when there is no need to save the event. */
+    bool ephemeral = 9;
+
     /** Variable-type payload. 
       * Payloads should obey the following rules:
       * - payloads should have their own unique type
@@ -112,6 +122,7 @@ message StreamEvent {
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
+        MetadataPayload metadata_payload = 111;
     }
 }
 
@@ -144,6 +155,12 @@ message MiniblockHeader {
     // pointer to block with previous snapshot
     int64 prev_snapshot_miniblock_num = 7;
 
+    // hash of the snapshot.
+    optional bytes snapshot_hash = 8;
+
+    // hashes of events that were rejected from the block
+    repeated bytes rejected_event_hashes = 9;
+
     // stream payloads are required to have a content field
     oneof content {
         google.protobuf.Empty none = 100;
@@ -164,7 +181,12 @@ message MemberPayload {
             WrappedEncryptedData username = 5;
             WrappedEncryptedData display_name = 6;
             bytes ens_address = 7;
-            Nft nft = 8;
+            Nft nft = 8;    
+            map<string, uint64> tips_sent = 9; // tips sent by this user: map<currency, amount>
+            map<string, uint64> tips_received = 10; // tips received by this user: map<currency, amount>
+            map<string, uint64> tips_sent_count = 11; // total tips sent by this user: map<currency, amount>
+            map<string, uint64> tips_received_count = 12; // total tips received by this user: map<currency, amount>
+            optional bytes app_address = 13;
         }
         
         repeated Member joined = 1;
@@ -173,6 +195,7 @@ message MemberPayload {
         EncryptionAlgorithm encryption_algorithm = 4;
         // tips sent in this stream: map<currency, amount>
         map<string, uint64> tips = 5;
+        map<string, uint64> tips_count = 6;
     }
 
     message KeyPackage {
@@ -186,6 +209,10 @@ message MemberPayload {
         bytes user_address = 2;
         bytes initiator_address = 3;
         optional bytes stream_parent_id = 4;
+        MembershipReason reason = 5;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It applies, for example, if the user is an app client.
+        optional bytes app_address = 6;
     }
     
     message KeySolicitation {
@@ -395,11 +422,18 @@ message UserPayload {
         map<string, uint64> tips_sent = 3;
         // tips received by this user: map<currency, amount>
         map<string, uint64> tips_received = 4;
+        // total tips sent by this user: map<currency, amount>
+        map<string, uint64> tips_sent_count = 5;
+        // total tips received by this user: map<currency, amount>
+        map<string, uint64> tips_received_count = 6;
     }
 
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
     
     // update own membership
@@ -408,6 +442,7 @@ message UserPayload {
         MembershipOp op = 2;
         optional bytes inviter = 3;
         optional bytes stream_parent_id = 4;
+        optional MembershipReason reason = 5;
     }
 
     // update someone else's membership
@@ -416,6 +451,7 @@ message UserPayload {
         bytes user_id = 2; 
         MembershipOp op = 3;
         optional bytes stream_parent_id = 4;
+        optional MembershipReason reason = 5;
     }
 
     // derived event, only send from nodes
@@ -458,6 +494,9 @@ message UserInboxPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
 
     message GroupEncryptionSessions {
@@ -506,6 +545,9 @@ message UserSettingsPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
 
     message MarkerContent {
@@ -548,6 +590,9 @@ message UserMetadataPayload {
     message Inception {
         bytes stream_id = 1;
         StreamSettings settings = 2;
+        // app_address is defined as the contract address of the app associated with this
+        // userId. It only applies if the user is a bot.
+        optional bytes app_address = 3;
     }
 
     message EncryptionDevice {
@@ -597,11 +642,56 @@ message MediaPayload {
     }
 }
 
+message StreamRecord {
+    bytes stream_id = 1;
+    bytes last_miniblock_hash = 2;
+    int64 last_miniblock_num = 3;
+    repeated bytes nodes = 4;
+    int64 replication_factor = 5;
+}
+
+message MetadataPayload {
+    message Snapshot {
+        Inception inception = 1;
+        repeated StreamRecord streams = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message NewStream {
+        bytes stream_id = 1;
+        bytes genesis_miniblock_hash = 2;
+        repeated bytes nodes = 3;
+        int64 replication_factor = 4;
+    }
+
+    message LastMiniblockUpdate {
+        bytes stream_id = 1;
+        bytes last_miniblock_hash = 2;
+        int64 last_miniblock_num = 3;
+    }
+
+    message PlacementUpdate {
+        bytes stream_id = 1;
+        repeated bytes nodes = 2;
+        int64 replication_factor = 3;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        NewStream new_stream = 2;
+        LastMiniblockUpdate last_miniblock_update = 3;
+        PlacementUpdate placement_update = 4;
+    }
+}
+
 /**
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
 message Snapshot {
-    
     MemberPayload.Snapshot members = 1;
     int32 snapshot_version = 2;
     
@@ -616,6 +706,7 @@ message Snapshot {
         DmChannelPayload.Snapshot dm_channel_content = 107;
         GdmChannelPayload.Snapshot gdm_channel_content = 108;
         UserInboxPayload.Snapshot user_inbox_content = 109;
+        MetadataPayload.Snapshot metadata_content = 110;
     }
 }
 
@@ -727,6 +818,9 @@ message EventRef {
 message StreamSettings {
     // Test setting for testing with manual miniblock creation through Info debug request. 
     bool disable_miniblock_creation = 1;
+
+    // Test setting to force creation as a light stream.
+    bool light_stream = 2;
 }
 
 /**
@@ -800,13 +894,13 @@ message CreationCookie {
 message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    // if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+    // if non-empty, contains all blocks since the latest snapshot
     repeated Miniblock miniblocks = 3;
     bool sync_reset = 4;
-}
-
-message GetStreamExRequest {
-    bytes stream_id = 1;
+    // if non-empty, contains the latest snapshot of the stream
+    optional Envelope snapshot = 5;
+    // Index of the snapshot miniblock within the miniblocks array
+    int64 snapshot_miniblock_index = 6;
 }
 
 message Minipool {
@@ -819,6 +913,26 @@ message Tags {
     repeated bytes mentioned_user_addresses = 3;
     repeated bytes participating_user_addresses = 4;
     optional bytes thread_id = 5;
+    // app_client_address refers to the client address of an app registered to the app
+    // registry contract and not the app's contract address, which is used in other protocol
+    // messages. We expect app_client_address to be populated when the message is a slash
+    // command. 
+    optional bytes app_client_address = 6;
+}
+
+message InfoRequest {
+    repeated string debug = 1;
+}
+
+message InfoResponse {
+    string graffiti = 1;
+    google.protobuf.Timestamp start_time = 2;
+    string version = 3;
+}
+
+message GetStreamExRequest {
+    bytes stream_id = 1;
+    bool omit_snapshot = 2;
 }
 
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
@@ -830,6 +944,7 @@ message GetStreamExResponse {
         Miniblock miniblock = 1;
         Minipool minipool = 2;
     }
+    optional Envelope snapshot = 3;
 }
 
 message CreateStreamRequest {
@@ -862,6 +977,8 @@ message GetStreamRequest {
     // if a sync cookie is provided, the response will be a delta from the sync cookie
     // or a new sync cookie with sync_reset set to true if the stream has advanced far enough
     SyncCookie sync_cookie = 3;
+    // Number of miniblocks to include before the snapshot to satisfy recency checks
+    int64 number_of_preceding_miniblocks = 4;
 }
 
 message GetStreamResponse {
@@ -869,10 +986,33 @@ message GetStreamResponse {
     StreamAndCookie stream = 1;
 }
 
+/**
+ * EventFilter defines a filter for events based on payload and content type.
+ */
+message EventFilter {
+    /**
+     * payload specifies the payload type to filter (e.g., "member_payload", "space_payload").
+     * Use "*" to match any payload type.
+     */
+    string payload = 1;
+    
+    /**
+     * content specifies the content type within the payload (e.g., "key_solicitation", "inception").
+     * Use "*" to match any content type.
+     */
+    string content = 2;
+}
+
 message GetMiniblocksRequest {
     bytes stream_id = 1;
-    int64 fromInclusive = 2;
-    int64 toExclusive = 3;
+    int64 from_inclusive = 2;
+    int64 to_exclusive = 3;
+    bool omit_snapshots = 4;
+    /**
+     * exclusion_filter contains event filters to exclude from returned miniblocks.
+     * If any events are excluded, the Miniblock.partial field will be set to true.
+     */
+    repeated EventFilter exclusion_filter = 5;
 }
 
 message GetMiniblocksResponse {
@@ -881,6 +1021,8 @@ message GetMiniblocksResponse {
     bool terminus = 2;
     int64 from_inclusive = 3;
     int64 limit = 4;
+    bool omit_snapshots = 5;
+    map<int64, Envelope> snapshots = 6;
 }
 
 message GetLastMiniblockHashRequest {
@@ -893,19 +1035,13 @@ message GetLastMiniblockHashResponse {
 }
 
 message AddEventRequest {
+    reserved 3;
     bytes stream_id = 1;
     Envelope event = 2;
-    bool optional = 3; // if true, response will contain non nil error if event didn't pass validation
 }
 
 message AddEventResponse {
-    message Error {
-        Err code = 1;
-        string msg = 2;
-        repeated string funcs = 3;
-    }
-    // error thrown during this request, only set if AddEventRequest.optional is true, otherwise the request will fail with this error
-    Error error = 1; 
+    reserved 1;
     // all events created during this request including parent events
     repeated EventRef new_events = 2;
 }
@@ -942,6 +1078,9 @@ message SyncStreamsResponse {
     // stream_id is set when sync_op = SYNC_DOWN and indicates it will not receive updates anymore for this stream.
     // If the client is still is interested in updates for this stream it must re-add the stream to the sync session.
     bytes stream_id = 5;
+    // target_sync_ids is the chain of sync IDs that is used to deliver the backfill update to the right end client.
+    // For example: client->nodeA->nodeB->nodeA(target sync 1)->client(target sync 2)
+    repeated string target_sync_ids = 6;
 }
 
 // AddStreamToSyncRequest is a request to add a stream to an existing streams sync session.
@@ -966,12 +1105,27 @@ message RemoveStreamFromSyncResponse {}
 
 // ModifySyncRequest adds or removes streams from an existing sync session.
 message ModifySyncRequest {
+  // Backfill is a message that contains the details of a backfill request.
+  // This message is used to request a backfill of streams that are already in the shared sync session
+  // before sending latest updates: backfill by cookie -> send latest updates.
+  // Important node to client: duplicated events might be sent once in the backfill and latest updates.
+  message Backfill {
+    // backfill_streams is the list of sync cookies to backfill
+    repeated SyncCookie streams = 1;
+    // sync_id is the id of the sync session to backfill.
+    // This is the sync ID between the end client and the node that initiated the sync session.
+    // The sync ID below is the sync ID between the node that initiated the sync session and the node that is backfilling.
+    string sync_id = 2;
+  }
+
   // sync_id is the id of the sync session.
   string sync_id = 1;
   // add_streams contains the stream cookies for streams to add to the stream sync session.
   repeated SyncCookie add_streams = 2;
   // remove_streams contains the stream id's to remove from the sync session.
   repeated bytes remove_streams = 3;
+  // backfill_streams contains the backfill requests to perform before sending the latest updates.
+  Backfill backfill_streams = 4;
 }
 
 // SyncStreamOpStatus contains details why adding or removing a stream to/from a sync session failed.
@@ -990,6 +1144,8 @@ message ModifySyncResponse {
   repeated SyncStreamOpStatus adds = 1;
   // List with streams that failed to be removed from the sync operation.
   repeated SyncStreamOpStatus removals = 2;
+  // backfills is the list of backfills that were requested to be performed.
+  repeated SyncStreamOpStatus backfills = 3;
 }
 
 // CancelSyncRequest cancels the sync session.
@@ -1010,33 +1166,14 @@ message PingSyncRequest {
 
 message PingSyncResponse {}
 
-message InfoRequest {
-    repeated string debug = 1;
-}
-
-message InfoResponse {
-    string graffiti = 1;
-    google.protobuf.Timestamp start_time = 2;
-    string version = 3;
-}
-
-message GetMiniblockHeaderRequest {
-    bytes stream_id = 1;
-    int64 miniblock_num = 2;
-}
-
-message GetMiniblockHeaderResponse {
-    Envelope header = 1;
-}
-
 service StreamService {
+    rpc Info(InfoRequest) returns (InfoResponse);
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc CreateMediaStream(CreateMediaStreamRequest) returns (CreateMediaStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc GetStreamEx(GetStreamExRequest) returns (stream GetStreamExResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
-    rpc GetMiniblockHeader(GetMiniblockHeaderRequest) returns (GetMiniblockHeaderResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc AddMediaEvent(AddMediaEventRequest) returns (AddMediaEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
@@ -1049,7 +1186,6 @@ service StreamService {
     rpc ModifySync(ModifySyncRequest) returns (ModifySyncResponse);
     rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
     rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
-    rpc Info(InfoRequest) returns (InfoResponse);
     rpc PingSync(PingSyncRequest) returns (PingSyncResponse);
 }
 
@@ -1069,6 +1205,12 @@ enum MembershipOp {
     SO_LEAVE = 3;
 }
 
+enum MembershipReason {
+    MR_NONE = 0;
+    MR_NOT_ENTITLED = 1;
+    MR_EXPIRED = 2;
+}
+
 enum ChannelOp {
     CO_UNSPECIFIED = 0;
     CO_CREATED = 1;
@@ -1085,6 +1227,7 @@ enum MessageInteractionType {
     MESSAGE_INTERACTION_TYPE_REDACTION = 5;
     MESSAGE_INTERACTION_TYPE_TIP = 6;
     MESSAGE_INTERACTION_TYPE_TRADE = 7;
+    MESSAGE_INTERACTION_TYPE_SLASH_COMMAND = 8;
 }
 
 enum GroupMentionType {
@@ -1234,4 +1377,22 @@ enum Err {
     // The encryption device returned by the app service webhook does not match the first
     // encryption device found in the app's user metadata stream.
     BAD_ENCRYPTION_DEVICE = 68;
+
+    // STREAM_RECONCILIATION_REQUIRED indicates that the stream is out of sync and must be 
+    // reconciled before it can be used.
+    STREAM_RECONCILIATION_REQUIRED = 69;
+
+    // SYNC_SESSION_RUNNER_EMPTY indicates that a sync session runner is being cancelled because
+    // it no longer hosts any streams. 
+    SYNC_SESSION_RUNNER_EMPTY = 70;
+
+    // SYNC_SESSION_RUNNER_UNASSIGNABLE occurs when an attempt is made to assign a stream to a
+    // sync session runner that is full or closed.
+    SYNC_SESSION_RUNNER_UNASSIGNABLE = 71;
+    
+    // Miniblocks are not found in the requested range. This is different from
+    // MINIBLOCKS_STORAGE_FAILURE which indicates corruption or database issues.
+    // This error is retriable and indicates the miniblocks might be available
+    // on other nodes.
+    MINIBLOCKS_NOT_FOUND = 72;
 }

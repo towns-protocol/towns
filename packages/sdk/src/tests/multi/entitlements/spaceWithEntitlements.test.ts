@@ -64,6 +64,25 @@ describe('spaceWithEntitlements', () => {
         )
         expect(entitledWallet).toBeUndefined()
 
+        // unban alice
+        const unbanTx = await bobSpaceDapp.unbanWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await unbanTx.wait()
+
+        // Wait 5 seconds for the caches to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        // Alice is entitled to join the space again
+        const entitledWallet2 = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+            spaceId,
+            alicesWallet.address,
+            getXchainConfigForTesting(),
+        )
+        expect(entitledWallet2).toBeDefined()
+
         const doneStart = Date.now()
         // kill the clients
         await bob.stopSync()

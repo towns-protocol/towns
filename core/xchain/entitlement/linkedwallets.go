@@ -39,7 +39,7 @@ func getLinkedWallets(
 	}
 
 	if err != nil {
-		log.Errorw("Failed to GetRootKeyForWallet", "err", err, "wallet", wallet.Hex())
+		log.Errorw("Failed to GetRootKeyForWallet", "error", err, "wallet", wallet.Hex())
 		if getRootKeyForWalletCalls != nil {
 			getRootKeyForWalletCalls.IncFail()
 		}
@@ -58,7 +58,7 @@ func getLinkedWallets(
 	if callDurations != nil {
 		timer = prometheus.NewTimer(callDurations.WithLabelValues("GetWalletsByRootKey"))
 	}
-	wallets, err := walletLink.GetWalletsByRootKeyWithDelegations(&bind.CallOpts{Context: ctx}, rootKey)
+	wallets, err := walletLink.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
 	if timer != nil {
 		timer.ObserveDuration()
 	}
@@ -122,9 +122,9 @@ func (e *Evaluator) getMainnetDelegators(
 		}
 
 		for _, wallet := range wallets {
-			delegationInfos, err := registry.GetDelegationsByDelegate(nil, wallet)
+			delegationInfos, err := registry.GetDelegationsByDelegate(&bind.CallOpts{Context: ctx}, wallet)
 			if err != nil {
-				log.Errorw("Unable to retrieve delegations for wallet", "chainId", chainId, "err", err)
+				log.Errorw("Unable to retrieve delegations for wallet", "chainId", chainId, "error", err)
 				return nil, err
 			}
 			for _, info := range delegationInfos {

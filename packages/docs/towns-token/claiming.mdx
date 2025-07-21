@@ -1,21 +1,20 @@
 ---
-title: Claiming Rewards 
+title: "Claiming Rewards"
 ---
 
-
-## Claim Process 
+## Claim Process
 
 At the end of each distribution period, addresses that are delegating or designated as [Authorized Claimers](./delegation) can claim their rewards.
 
 ## Claim Execution
 
-Rewards are claimed by calling the `claimReward(address beneficiary, address recipient)` function on the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract, which transfers the tokens to the recipient's wallet.
+Rewards are claimed by calling the `claimReward(address beneficiary, address recipient)` function on the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract, which transfers the tokens to the recipient's wallet.
 
 The `claimReward` function is called from the claimer address, who is either the beneficiary or an authorized claimer that can claim the reward for the beneficiary.
 
-<Note>Since the RewardsDistribution contract is a facet of the BaseRegistry contract, the `claimReward` function is called from the BaseRegistry contract address (see [contracts](../run/contracts)).</Note>
-
-If the wallet is already delegating on Base, the newly acquired tokens are automatically delegated to the same operator, conforming to the [ERC20Votes](https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#ERC20Votes) specification.
+<Note>
+  Since the RewardsDistribution contract is a facet of the BaseRegistry contract, the `claimReward` function is called from the BaseRegistry contract address (see [contracts](../run/contracts)).
+</Note>
 
 To view the current reward claimable by `claimReward` in wei, call `currentReward(address beneficiary)` on the RewardsDistribution contract from the BaseRegistry diamond contract.
 
@@ -31,4 +30,6 @@ cast call \
 37995641418907243501899 [3.799e22]
 ```
 
-<Note>To convert the current reward to base token units from wei, divide the result by `1e18`.</Note>
+<Note>
+  To convert the current reward to base token units from wei, divide the result by `1e18`.
+</Note>

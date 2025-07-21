@@ -24,8 +24,7 @@ import (
 
 func TestChainMonitorBlocks(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
@@ -145,7 +144,7 @@ func TestNextPollInterval(t *testing.T) {
 
 func TestChainMonitorEvents(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
@@ -182,7 +181,7 @@ func TestChainMonitorEvents(t *testing.T) {
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1ABI))
 
 		urls  = []string{"https://river0.test"}
-		addrs = []common.Address{tc.Wallets[0].Address}
+		addrs = []common.Address{tc.GetBlockchain(ctx, 0).Wallet.Address}
 	)
 
 	tc.DeployerBlockchain.ChainMonitor.OnBlock(onBlockCallback)
@@ -236,14 +235,18 @@ func TestChainMonitorEvents(t *testing.T) {
 	event := <-contractWithTopicsEventCallbackCapturedEvents
 	require.Equal(nodeRegistryABI.Events["NodeAdded"].ID, event.Topics[0])
 
-	cancel()
-	<-onMonitorStoppedCount // if the on stop callback isn't called this will time out
+	t.Cleanup(func() {
+		select {
+		case <-onMonitorStoppedCount:
+		case <-time.After(10 * time.Second):
+			t.Error("onMonitorStoppedCount callback not called")
+		}
+	})
 }
 
 func TestContractAllEventsFromFuture(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -384,8 +387,7 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 
 func TestContractAllEventsFromPast(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -509,8 +511,7 @@ func TestContractAllEventsFromPast(t *testing.T) {
 
 func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -654,9 +655,11 @@ func registerNodes(
 	tc *crypto.BlockchainTestContext,
 	owner *crypto.Blockchain,
 	nodeCount int,
-) {
+) []common.Address {
 	require := require.New(t)
 	// register several nodes
+	nodeAddresses := make([]common.Address, nodeCount)
+
 	var pendingTx crypto.TransactionPoolPendingTransaction
 	for i := range nodeCount {
 		wallet, err := crypto.NewWallet(ctx)
@@ -674,6 +677,8 @@ func registerNodes(
 			},
 		)
 		require.NoError(err, "register node")
+
+		nodeAddresses[i] = wallet.Address
 	}
 
 	// generate some blocks
@@ -685,12 +690,330 @@ func registerNodes(
 	receipt, err := pendingTx.Wait(ctx)
 	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	return nodeAddresses
+}
+
+// TestNodeRegistryChainMonitorNodeCallbacks tests the Node Registry chain monitor.
+func TestNodeRegistryChainMonitorNodeCallbacks(t *testing.T) {
+	t.Run("NodeAdded", testNodeAddedEvent)
+	t.Run("NodeStatusUpdated", testNodeStatusUpdatedEvent)
+	t.Run("NodeUrlUpdated", testNodeUrlUpdatedEvent)
+	t.Run("NodeRemoved", testNodeRemovedEvent)
+}
+
+// testNodeStatusUpdatedEvent ensures that the on node status updated callback is called by the
+// chain monitor each time the node status is changed.
+func testNodeStatusUpdatedEvent(t *testing.T) {
+	require := require.New(t)
+	ctx := test.NewTestContext(t)
+
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
+	require.NoError(err)
+	defer tc.Close()
+
+	owner := tc.DeployerBlockchain
+	chainMonitor := tc.DeployerBlockchain.ChainMonitor
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
+	capturedEvents := make(chan *river.NodeRegistryV1NodeStatusUpdated, 25)
+	nodes := registerNodes(t, ctx, tc, owner, 1)
+
+	nodeRegistryMonitor.OnNodeStatusUpdated(
+		tc.BlockNum(ctx),
+		func(ctx context.Context, event *river.NodeRegistryV1NodeStatusUpdated) {
+			capturedEvents <- event
+		},
+	)
+
+	pendingTx, err := owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeStatus",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeStatus(opts, nodes[0], river.NodeStatus_NotInitialized)
+		},
+	)
+	require.NoError(err, "register node")
+
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	firstUpdateEvent := receipt.Logs[0]
+
+	// update the node status for node several times
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeStatus",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeStatus(opts, nodes[0], river.NodeStatus_Operational)
+		},
+	)
+	require.NoError(err)
+	require.NotNil(pendingTx)
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	secondUpdateEvent := receipt.Logs[0]
+
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeStatus",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeStatus(opts, nodes[0], river.NodeStatus_Failed)
+		},
+	)
+	require.NoError(err)
+	require.NotNil(pendingTx)
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+	thirdUpdateEvent := receipt.Logs[0]
+
+	// ensure that the update status updates are received in the correct order
+	firstUpdate := <-capturedEvents
+	secondUpdate := <-capturedEvents
+	thirdUpdate := <-capturedEvents
+
+	require.Equal(nodes[0], firstUpdate.NodeAddress)
+	require.Equal(river.NodeStatus_NotInitialized, firstUpdate.Status)
+	require.Equal(firstUpdateEvent.TxHash, firstUpdate.Raw.TxHash)
+	require.Equal(firstUpdateEvent.Index, firstUpdate.Raw.Index)
+
+	require.Equal(nodes[0], secondUpdate.NodeAddress)
+	require.Equal(river.NodeStatus_Operational, secondUpdate.Status)
+	require.Equal(secondUpdateEvent.TxHash, secondUpdate.Raw.TxHash)
+	require.Equal(secondUpdateEvent.Index, secondUpdate.Raw.Index)
+
+	require.Equal(nodes[0], thirdUpdate.NodeAddress)
+	require.Equal(river.NodeStatus_Failed, thirdUpdate.Status)
+	require.Equal(thirdUpdateEvent.TxHash, thirdUpdate.Raw.TxHash)
+	require.Equal(thirdUpdateEvent.Index, thirdUpdate.Raw.Index)
+}
+
+func testNodeAddedEvent(t *testing.T) {
+	require := require.New(t)
+	ctx := test.NewTestContext(t)
+
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
+	require.NoError(err)
+	defer tc.Close()
+
+	owner := tc.DeployerBlockchain
+	chainMonitor := tc.DeployerBlockchain.ChainMonitor
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
+	capturedEvents := make(chan *river.NodeRegistryV1NodeAdded, 25)
+
+	nodeRegistryMonitor.OnNodeAdded(
+		tc.BlockNum(ctx),
+		func(ctx context.Context, event *river.NodeRegistryV1NodeAdded) {
+			capturedEvents <- event
+		},
+	)
+
+	nodes := registerNodes(t, ctx, tc, owner, 3)
+
+	// ensure that the node added updates are received in the correct order
+	firstUpdate := <-capturedEvents
+	secondUpdate := <-capturedEvents
+	thirdUpdate := <-capturedEvents
+
+	require.Equal(nodes[0], firstUpdate.NodeAddress)
+	require.Equal(river.NodeStatus_NotInitialized, firstUpdate.Status)
+
+	require.Equal(nodes[1], secondUpdate.NodeAddress)
+	require.Equal(river.NodeStatus_NotInitialized, secondUpdate.Status)
+
+	require.Equal(nodes[2], thirdUpdate.NodeAddress)
+	require.Equal(river.NodeStatus_NotInitialized, thirdUpdate.Status)
+}
+
+func testNodeUrlUpdatedEvent(t *testing.T) {
+	require := require.New(t)
+	ctx := test.NewTestContext(t)
+
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
+	require.NoError(err)
+	defer tc.Close()
+
+	owner := tc.DeployerBlockchain
+	chainMonitor := tc.DeployerBlockchain.ChainMonitor
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
+	capturedEvents := make(chan *river.NodeRegistryV1NodeUrlUpdated, 25)
+	nodes := registerNodes(t, ctx, tc, owner, 3)
+
+	nodeRegistryMonitor.OnNodeUrlUpdated(
+		tc.BlockNum(ctx),
+		func(ctx context.Context, event *river.NodeRegistryV1NodeUrlUpdated) {
+			capturedEvents <- event
+		},
+	)
+
+	pendingTx, err := owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeUrl",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeUrl(opts, nodes[0], "something.com:443")
+		},
+	)
+	require.NoError(err, "update node url")
+
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	firstUpdateEvent := receipt.Logs[0]
+
+	// update the node status for node several times
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeUrl",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeUrl(opts, nodes[1], "something.com:443")
+		},
+	)
+	require.NoError(err)
+	require.NotNil(pendingTx)
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	secondUpdateEvent := receipt.Logs[0]
+
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeUrl",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeUrl(opts, nodes[2], "something.com:443")
+		},
+	)
+	require.NoError(err)
+	require.NotNil(pendingTx)
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+	thirdUpdateEvent := receipt.Logs[0]
+
+	// ensure that the update url updates are received in the correct order
+	firstUpdate := <-capturedEvents
+	secondUpdate := <-capturedEvents
+	thirdUpdate := <-capturedEvents
+
+	require.Equal(nodes[0], firstUpdate.NodeAddress)
+	require.Equal("something.com:443", firstUpdate.Url)
+	require.Equal(firstUpdateEvent.TxHash, firstUpdate.Raw.TxHash)
+	require.Equal(firstUpdateEvent.Index, firstUpdate.Raw.Index)
+
+	require.Equal(nodes[1], secondUpdate.NodeAddress)
+	require.Equal("something.com:443", secondUpdate.Url)
+	require.Equal(secondUpdateEvent.TxHash, secondUpdate.Raw.TxHash)
+	require.Equal(secondUpdateEvent.Index, secondUpdate.Raw.Index)
+
+	require.Equal(nodes[2], thirdUpdate.NodeAddress)
+	require.Equal("something.com:443", thirdUpdate.Url)
+	require.Equal(thirdUpdateEvent.TxHash, thirdUpdate.Raw.TxHash)
+	require.Equal(thirdUpdateEvent.Index, thirdUpdate.Raw.Index)
+}
+
+func testNodeRemovedEvent(t *testing.T) {
+	require := require.New(t)
+	ctx := test.NewTestContext(t)
+
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{AutoMine: true, NumKeys: 1})
+	require.NoError(err)
+	defer tc.Close()
+
+	owner := tc.DeployerBlockchain
+	chainMonitor := tc.DeployerBlockchain.ChainMonitor
+	nodeRegistryMonitor := crypto.NewNodeRegistryChainMonitor(chainMonitor, tc.RiverRegistryAddress)
+	capturedEvents := make(chan *river.NodeRegistryV1NodeRemoved, 25)
+	nodes := registerNodes(t, ctx, tc, owner, 3)
+
+	nodeRegistryMonitor.OnNodeRemoved(
+		tc.BlockNum(ctx),
+		func(ctx context.Context, event *river.NodeRegistryV1NodeRemoved) {
+			capturedEvents <- event
+		},
+	)
+
+	pendingTx, err := owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeStatus",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeStatus(opts, nodes[0], river.NodeStatus_Deleted)
+		},
+	)
+	require.NoError(err, "update node status")
+
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"UpdateNodeStatus",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.UpdateNodeStatus(opts, nodes[2], river.NodeStatus_Deleted)
+		},
+	)
+	require.NoError(err, "update node status")
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"RemoveNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.RemoveNode(opts, nodes[0])
+		},
+	)
+	require.NoError(err, "remove node")
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	firstUpdateEvent := receipt.Logs[0]
+
+	// update the node status for node several times
+	pendingTx, err = owner.TxPool.Submit(
+		ctx,
+		"RemoveNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.RemoveNode(opts, nodes[2])
+		},
+	)
+	require.NoError(err)
+	require.NotNil(pendingTx)
+
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	secondUpdateEvent := receipt.Logs[0]
+
+	// ensure that the node removed updates are received in the correct order
+	firstUpdate := <-capturedEvents
+	secondUpdate := <-capturedEvents
+
+	require.Equal(nodes[0], firstUpdate.NodeAddress)
+	require.Equal(firstUpdateEvent.TxHash, firstUpdate.Raw.TxHash)
+	require.Equal(firstUpdateEvent.Index, firstUpdate.Raw.Index)
+
+	require.Equal(nodes[2], secondUpdate.NodeAddress)
+	require.Equal(secondUpdateEvent.TxHash, secondUpdate.Raw.TxHash)
+	require.Equal(secondUpdateEvent.Index, secondUpdate.Raw.Index)
 }
 
 func TestOnBlockWithLogs(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -760,8 +1083,7 @@ func TestOnBlockWithLogs(t *testing.T) {
 
 func TestContractEventsWithTopicsFromPast(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
@@ -873,8 +1195,7 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 
 func TestEventsOrder(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)

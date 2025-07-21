@@ -10,9 +10,9 @@ function dump_config_uint256_payload() {
 }
 
 printf "%-66s   %-9s   %-66s   %s\n" "normalized key" "blockNum" "value" "key"
-dump_config_uint256_payload "stream.media.maxChunkCount" 0 10
-dump_config_uint256_payload "stream.media.maxChunkSize" 0 500000
-dump_config_uint256_payload "stream.recencyConstraints.ageSeconds" 0 11
+dump_config_uint256_payload "stream.media.maxChunkCount" 0 5
+dump_config_uint256_payload "stream.media.maxChunkSize" 0 1200000
+dump_config_uint256_payload "stream.recencyConstraints.ageSeconds" 0 30
 dump_config_uint256_payload "stream.recencyConstraints.generations" 0 5
 dump_config_uint256_payload "stream.replicationFactor" 0 1
 dump_config_uint256_payload "stream.defaultMinEventsPerSnapshot" 0 10

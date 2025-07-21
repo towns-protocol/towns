@@ -227,7 +227,7 @@ func (s *AuthServiceMixin) FinishAuthentication(
 
 	sessionToken, err := token.SignedString(s.sessionTokenSigningKey)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Unable to sign session token", "err", err)
+		logging.FromCtx(ctx).Errorw("Unable to sign session token", "error", err)
 		return nil, AsRiverError(err, Err_INTERNAL).Tag("user", userID)
 	}
 

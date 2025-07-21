@@ -15,8 +15,7 @@ import (
 // every insert, we need to remove duplicates
 
 func TestSnapshotMigration0001(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	userWallet, _ := crypto.NewWallet(ctx)
 	spaceId := testutils.FakeStreamId(0x10) // events.STREAM_SPACE_BIN
 	channelId := testutils.MakeChannelId(spaceId)
@@ -35,8 +34,8 @@ func TestSnapshotMigration0001(t *testing.T) {
 		},
 	}
 	// migrate
-	migratedSnapshot := snapshot_migration_0001(badMemberSnap)
-	require.Equal(t, 1, len(migratedSnapshot.Members.Joined))
+	snapshot_migration_0001(badMemberSnap)
+	require.Equal(t, 1, len(badMemberSnap.Members.Joined))
 
 	// space channel payloads
 	badSpaceChannel := &Snapshot{
@@ -53,8 +52,8 @@ func TestSnapshotMigration0001(t *testing.T) {
 			},
 		},
 	}
-	migratedSnapshot = snapshot_migration_0001(badSpaceChannel)
-	require.Equal(t, 1, len(migratedSnapshot.GetSpaceContent().Channels))
+	snapshot_migration_0001(badSpaceChannel)
+	require.Equal(t, 1, len(badSpaceChannel.GetSpaceContent().Channels))
 
 	// user payload user membership
 	badUserPayload := &Snapshot{
@@ -71,8 +70,8 @@ func TestSnapshotMigration0001(t *testing.T) {
 			},
 		},
 	}
-	migratedSnapshot = snapshot_migration_0001(badUserPayload)
-	require.Equal(t, 1, len(migratedSnapshot.GetUserContent().Memberships))
+	snapshot_migration_0001(badUserPayload)
+	require.Equal(t, 1, len(badUserPayload.GetUserContent().Memberships))
 
 	// user settings fully read markers
 	badUserSettings := &Snapshot{
@@ -89,6 +88,6 @@ func TestSnapshotMigration0001(t *testing.T) {
 			},
 		},
 	}
-	migratedSnapshot = snapshot_migration_0001(badUserSettings)
-	require.Equal(t, 1, len(migratedSnapshot.GetUserSettingsContent().FullyReadMarkers))
+	snapshot_migration_0001(badUserSettings)
+	require.Equal(t, 1, len(badUserSettings.GetUserSettingsContent().FullyReadMarkers))
 }

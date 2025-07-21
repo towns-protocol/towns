@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -46,7 +46,7 @@
       <tr><td>Num Minipool Events:</td><td>{{.Result.NumMinipoolEvents}}</td></tr>
       <tr><td>Latest Snapshot Miniblock Num:</td><td>{{.Result.LatestSnapshotMiniblockNum}}</td></tr>
       <tr><td>Lastest Miniblock Number:</td><td>{{.Result.LatestMiniblockNum}}</td></tr>
-      <tr><td>Current Miniblock Candidates:</td>
+      <tr><td>Current Miniblock Candidates ({{ len .Result.CurrentMiniblockCandidates }}):</td>
         <td>
           <table>
             <tr><th>BlockNum</th><th>Hash</th></tr>

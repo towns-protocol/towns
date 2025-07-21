@@ -12,7 +12,7 @@ import {
 import { SpaceMemberMetadataResponse } from '../../src/routes/spaceMemberMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 
-const log = dlog('stream-metadata:test:spaceMemberMetadata', {
+const log = dlog('test:stream-metadata:test:spaceMemberMetadata', {
 	allowJest: true,
 	defaultEnabled: true,
 })

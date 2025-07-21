@@ -6,6 +6,10 @@ build({
         start: './src/start.ts',
         demo: './src/demo.ts',
         stress: './src/stressRun.ts',
+        notifications: './src/notifications.ts',
+        generateWallets: './src/generateWallets.ts',
+        transferFunds: './src/transferFunds.ts',
+        nft: './src/nft.ts',
     },
     bundle: true,
     sourcemap: 'inline',
@@ -15,6 +19,7 @@ build({
     outdir: 'dist',
     outExtension: { '.js': '.cjs' },
     plugins: [esbuildPluginPino({ transports: ['pino-pretty'] })],
+    external: ['@towns-protocol/olm'],
     ignoreAnnotations: true,
     assetNames: '[name]',
     loader: {

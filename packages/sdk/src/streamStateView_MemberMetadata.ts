@@ -33,12 +33,13 @@ export class StreamStateView_MemberMetadata {
     readonly displayNames: MemberMetadata_DisplayNames
     readonly ensAddresses: MemberMetadata_EnsAddresses
     readonly nfts: MemberMetadata_Nft
-
-    constructor(streamId: string) {
-        this.usernames = new MemberMetadata_Usernames(streamId)
+    readonly currentUserId: string
+    constructor(streamId: string, currentUserId: string) {
+        this.usernames = new MemberMetadata_Usernames(streamId, currentUserId)
         this.displayNames = new MemberMetadata_DisplayNames(streamId)
         this.ensAddresses = new MemberMetadata_EnsAddresses(streamId)
         this.nfts = new MemberMetadata_Nft(streamId)
+        this.currentUserId = currentUserId
     }
 
     applySnapshot(

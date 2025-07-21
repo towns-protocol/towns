@@ -52,6 +52,12 @@ type TownsHash [8]byte
 // TownsHashForEvents is a TownsHash with the prefix 'CSBLANCA' as bytes for hashing Towns events.
 var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // Prefix 'CSBLANCA' as bytes.
 
+// TownsHashForSnapshots is a TownsHash with the prefix 'SNAPSHOT' as bytes for hashing Towns snapshots.
+var TownsHashForSnapshots = TownsHash{83, 78, 65, 80, 83, 72, 79, 84} // Prefix 'SNAPSHOT' as bytes.
+
+// TownsHashForCert is a TownsHash with the prefix 'INTRCERT' as bytes for hashing node-2-node mTLS certificate hash.
+var TownsHashForCert = TownsHash{73, 78, 84, 82, 67, 69, 82, 84} // Prefix 'INTRCERT' as bytes.
+
 // Hash computes the hash of the given buffer using the Towns hashing algorithm.
 // It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
 // and footer to ensure that the hash is unique to Towns.

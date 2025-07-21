@@ -37,12 +37,16 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     "getMembershipFee()": FunctionFragment;
     "getMembershipMinPrice()": FunctionFragment;
     "getMembershipMintLimit()": FunctionFragment;
+    "getSwapFees()": FunctionFragment;
+    "isRouterWhitelisted(address)": FunctionFragment;
     "setFeeRecipient(address)": FunctionFragment;
     "setMembershipBps(uint16)": FunctionFragment;
     "setMembershipDuration(uint64)": FunctionFragment;
     "setMembershipFee(uint256)": FunctionFragment;
     "setMembershipMinPrice(uint256)": FunctionFragment;
     "setMembershipMintLimit(uint256)": FunctionFragment;
+    "setRouterWhitelisted(address,bool)": FunctionFragment;
+    "setSwapFees(uint16,uint16)": FunctionFragment;
   };
 
   getFunction(
@@ -55,12 +59,16 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
       | "getMembershipFee"
       | "getMembershipMinPrice"
       | "getMembershipMintLimit"
+      | "getSwapFees"
+      | "isRouterWhitelisted"
       | "setFeeRecipient"
       | "setMembershipBps"
       | "setMembershipDuration"
       | "setMembershipFee"
       | "setMembershipMinPrice"
       | "setMembershipMintLimit"
+      | "setRouterWhitelisted"
+      | "setSwapFees"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -103,6 +111,14 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getSwapFees",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isRouterWhitelisted",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setFeeRecipient",
     values: [PromiseOrValue<string>]
   ): string;
@@ -125,6 +141,14 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setMembershipMintLimit",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setRouterWhitelisted",
+    values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setSwapFees",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(
@@ -160,6 +184,14 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getSwapFees",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isRouterWhitelisted",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setFeeRecipient",
     data: BytesLike
   ): Result;
@@ -183,6 +215,14 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     functionFragment: "setMembershipMintLimit",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setRouterWhitelisted",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setSwapFees",
+    data: BytesLike
+  ): Result;
 
   events: {
     "Initialized(uint32)": EventFragment;
@@ -195,6 +235,8 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     "PlatformMembershipFeeSet(uint256)": EventFragment;
     "PlatformMembershipMinPriceSet(uint256)": EventFragment;
     "PlatformMembershipMintLimitSet(uint256)": EventFragment;
+    "PlatformSwapFeesSet(uint16,uint16)": EventFragment;
+    "RouterWhitelistUpdated(address,bool)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
@@ -213,6 +255,8 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
   getEvent(
     nameOrSignatureOrTopic: "PlatformMembershipMintLimitSet"
   ): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "PlatformSwapFeesSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RouterWhitelistUpdated"): EventFragment;
 }
 
 export interface InitializedEventObject {
@@ -321,6 +365,30 @@ export type PlatformMembershipMintLimitSetEvent = TypedEvent<
 export type PlatformMembershipMintLimitSetEventFilter =
   TypedEventFilter<PlatformMembershipMintLimitSetEvent>;
 
+export interface PlatformSwapFeesSetEventObject {
+  protocolBps: number;
+  posterBps: number;
+}
+export type PlatformSwapFeesSetEvent = TypedEvent<
+  [number, number],
+  PlatformSwapFeesSetEventObject
+>;
+
+export type PlatformSwapFeesSetEventFilter =
+  TypedEventFilter<PlatformSwapFeesSetEvent>;
+
+export interface RouterWhitelistUpdatedEventObject {
+  router: string;
+  whitelisted: boolean;
+}
+export type RouterWhitelistUpdatedEvent = TypedEvent<
+  [string, boolean],
+  RouterWhitelistUpdatedEventObject
+>;
+
+export type RouterWhitelistUpdatedEventFilter =
+  TypedEventFilter<RouterWhitelistUpdatedEvent>;
+
 export interface PlatformRequirementsFacet extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
@@ -372,6 +440,15 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getMembershipMintLimit(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    getSwapFees(
+      overrides?: CallOverrides
+    ): Promise<[number, number] & { protocolBps: number; posterBps: number }>;
+
+    isRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     setFeeRecipient(
       recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -401,6 +478,18 @@ export interface PlatformRequirementsFacet extends BaseContract {
       limit: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    setRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      whitelisted: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setSwapFees(
+      protocolBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   __PlatformRequirements_init(
@@ -426,6 +515,15 @@ export interface PlatformRequirementsFacet extends BaseContract {
   getMembershipMinPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
   getMembershipMintLimit(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getSwapFees(
+    overrides?: CallOverrides
+  ): Promise<[number, number] & { protocolBps: number; posterBps: number }>;
+
+  isRouterWhitelisted(
+    router: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
 
   setFeeRecipient(
     recipient: PromiseOrValue<string>,
@@ -457,6 +555,18 @@ export interface PlatformRequirementsFacet extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setRouterWhitelisted(
+    router: PromiseOrValue<string>,
+    whitelisted: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setSwapFees(
+    protocolBps: PromiseOrValue<BigNumberish>,
+    posterBps: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     __PlatformRequirements_init(
       feeRecipient: PromiseOrValue<string>,
@@ -481,6 +591,15 @@ export interface PlatformRequirementsFacet extends BaseContract {
     getMembershipMinPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipMintLimit(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getSwapFees(
+      overrides?: CallOverrides
+    ): Promise<[number, number] & { protocolBps: number; posterBps: number }>;
+
+    isRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     setFeeRecipient(
       recipient: PromiseOrValue<string>,
@@ -509,6 +628,18 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipMintLimit(
       limit: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      whitelisted: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setSwapFees(
+      protocolBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -577,6 +708,24 @@ export interface PlatformRequirementsFacet extends BaseContract {
     PlatformMembershipMintLimitSet(
       limit?: null
     ): PlatformMembershipMintLimitSetEventFilter;
+
+    "PlatformSwapFeesSet(uint16,uint16)"(
+      protocolBps?: null,
+      posterBps?: null
+    ): PlatformSwapFeesSetEventFilter;
+    PlatformSwapFeesSet(
+      protocolBps?: null,
+      posterBps?: null
+    ): PlatformSwapFeesSetEventFilter;
+
+    "RouterWhitelistUpdated(address,bool)"(
+      router?: PromiseOrValue<string> | null,
+      whitelisted?: null
+    ): RouterWhitelistUpdatedEventFilter;
+    RouterWhitelistUpdated(
+      router?: PromiseOrValue<string> | null,
+      whitelisted?: null
+    ): RouterWhitelistUpdatedEventFilter;
   };
 
   estimateGas: {
@@ -603,6 +752,13 @@ export interface PlatformRequirementsFacet extends BaseContract {
     getMembershipMinPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipMintLimit(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getSwapFees(overrides?: CallOverrides): Promise<BigNumber>;
+
+    isRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     setFeeRecipient(
       recipient: PromiseOrValue<string>,
@@ -631,6 +787,18 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipMintLimit(
       limit: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      whitelisted: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setSwapFees(
+      protocolBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -666,6 +834,13 @@ export interface PlatformRequirementsFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getSwapFees(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    isRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     setFeeRecipient(
       recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -693,6 +868,18 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipMintLimit(
       limit: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setRouterWhitelisted(
+      router: PromiseOrValue<string>,
+      whitelisted: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setSwapFees(
+      protocolBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

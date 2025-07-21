@@ -13,7 +13,7 @@ import { useJoinSpace } from '@towns-protocol/react-sdk'
 
 ```ts
 function useJoinSpace(
-  config?: ActionConfig<Spaces['joinSpace']>,
+  config?: ActionConfig<Spaces["joinSpace"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -21,7 +21,7 @@ function useJoinSpace(
     isSuccess: boolean;
     isError: boolean;
     joinSpace: (spaceId: string, signer: Signer, opts?: {
-        skipMintMembership?: boolean | undefined;
+        skipMintMembership?: boolean;
     } | undefined) => Promise<void>;
 }
 ```
@@ -32,7 +32,7 @@ function useJoinSpace(
 
 ### config
 
-- **Type:** `ActionConfig<Spaces['joinSpace']>`
+- **Type:** `ActionConfig<Spaces["joinSpace"]>`
 - **Optional**
 
 Configuration options for the action.
@@ -49,7 +49,7 @@ The joinSpace action and the status of the action.
     isSuccess: boolean;
     isError: boolean;
     joinSpace: (spaceId: string, signer: Signer, opts?: {
-        skipMintMembership?: boolean | undefined;
+        skipMintMembership?: boolean;
     } | undefined) => Promise<void>;
 }
 ```

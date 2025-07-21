@@ -9,6 +9,7 @@ import {
     makeDonePromise,
     createVersionedSpace,
     getFreeSpacePricingSetup,
+    waitFor,
 } from '../testUtils'
 import {
     isValidStreamId,
@@ -48,9 +49,8 @@ describe('withEntitlements', () => {
         const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
 
         // create a space stream,
         log('Bob created user, about to create space')
@@ -104,7 +104,11 @@ describe('withEntitlements', () => {
         // Now there must be "joined space" event in the user stream.
         const bobUserStreamView = bob.stream(bobsUserStreamId)!.view
         expect(bobUserStreamView).toBeDefined()
-        expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+        await waitFor(() =>
+            expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(
+                true,
+            ),
+        )
 
         const waitForStreamPromise = makeDonePromise()
         bob.on('userJoinedStream', (streamId) => {
@@ -127,7 +131,11 @@ describe('withEntitlements', () => {
         await waitForStreamPromise.expectToSucceed()
         // Now there must be "joined channel" event in the user stream.
         expect(bobUserStreamView).toBeDefined()
-        expect(bobUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+        await waitFor(() =>
+            expect(bobUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(
+                true,
+            ),
+        )
 
         // todo  getDevicesInRoom is randomly failing in ci renable https://linear.app/hnt-labs/issue/HNT-3439/getdevicesinroom-is-randomly-failing-in-ci
         // await expect(bob.sendMessage(channelId, 'Hello, world from Bob!')).resolves.not.toThrow()

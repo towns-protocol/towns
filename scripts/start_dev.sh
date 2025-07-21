@@ -75,7 +75,7 @@ tmux send-keys -t $SESSION_NAME:'BlockChains_river' "./scripts/start-local-river
 
 
 # Start contract build in background
-pushd contracts
+pushd packages/contracts
 set -a
 . .env.localhost
 set +a
@@ -131,6 +131,8 @@ commands=(
     "watch_go:cd protocol && yarn watch:go"
     "core_multi:(cd ./core && just RUN_ENV=multi run)"
     "core_multi_ne:(cd ./core && just RUN_ENV=multi_ne run)"
+    "app_registry_multi:(cd ./core && just RUN_ENV=multi run-app-registry)"
+    "app_registry_multi_ne:(cd ./core && just RUN_ENV=multi_ne run-app-registry)"
     "river_stream_metadata_multi_ne:yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne"
 )
 

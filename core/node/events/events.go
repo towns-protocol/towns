@@ -121,16 +121,34 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}, nil
 }
 
-func MakeEnvelopeWithPayload(
+func makeEnvelopeWithPayload(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
+	ephemeral bool,
 	prevMiniblock *MiniblockRef,
 ) (*Envelope, error) {
 	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblock)
 	if err != nil {
 		return nil, err
 	}
+	streamEvent.Ephemeral = ephemeral
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
+}
+
+func MakeEphemeralEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload IsStreamEvent_Payload,
+	prevMiniblock *MiniblockRef,
+) (*Envelope, error) {
+	return makeEnvelopeWithPayload(wallet, payload, true, prevMiniblock)
+}
+
+func MakeEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload IsStreamEvent_Payload,
+	prevMiniblock *MiniblockRef,
+) (*Envelope, error) {
+	return makeEnvelopeWithPayload(wallet, payload, false, prevMiniblock)
 }
 
 func MakeEnvelopeWithPayloadAndTags(
@@ -174,7 +192,13 @@ func Make_MemberPayload_Membership(
 	userAddress []byte,
 	initiatorAddress []byte,
 	streamParentId []byte,
+	inReason *MembershipReason,
+	appAddress common.Address,
 ) *StreamEvent_MemberPayload {
+	reason := MembershipReason_MR_NONE
+	if inReason != nil {
+		reason = *inReason
+	}
 	return &StreamEvent_MemberPayload{
 		MemberPayload: &MemberPayload{
 			Content: &MemberPayload_Membership_{
@@ -183,6 +207,28 @@ func Make_MemberPayload_Membership(
 					UserAddress:      userAddress,
 					InitiatorAddress: initiatorAddress,
 					StreamParentId:   streamParentId,
+					Reason:           reason,
+					AppAddress:       appAddress[:],
+				},
+			},
+		},
+	}
+}
+
+func Make_MemberPayload_KeySolicitation(
+	deviceKey string,
+	fallbackKey string,
+	isNewDevice bool,
+	sessionIds []string,
+) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_KeySolicitation_{
+				KeySolicitation: &MemberPayload_KeySolicitation{
+					DeviceKey:   deviceKey,
+					FallbackKey: fallbackKey,
+					IsNewDevice: isNewDevice,
+					SessionIds:  sessionIds,
 				},
 			},
 		},
@@ -303,7 +349,7 @@ func Make_ChannelPayload_Membership(
 	} else {
 		spaceIdBytes = nil
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, spaceIdBytes)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, spaceIdBytes, nil, common.Address{})
 }
 
 func Make_DMChannelPayload_Message(content string) *StreamEvent_DmChannelPayload {
@@ -342,13 +388,18 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	}
 }
 
-func Make_ChannelPayload_Message_WithSession(content string, sessionId string) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Message_WithSessionBytes(
+	content string,
+	sessionIdBytes []byte,
+	deviceKey string,
+) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Message{
 				Message: &EncryptedData{
-					Ciphertext: content,
-					SessionId:  sessionId,
+					Ciphertext:     content,
+					SessionIdBytes: sessionIdBytes,
+					SenderKey:      deviceKey,
 				},
 			},
 		},
@@ -368,7 +419,7 @@ func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorI
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil, common.Address{})
 }
 
 // todo delete and replace with Make_MemberPayload_Membership
@@ -384,7 +435,7 @@ func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiator
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil, common.Address{})
 }
 
 func Make_SpacePayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_SpacePayload {
@@ -413,7 +464,7 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId st
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil, common.Address{})
 }
 
 func Make_SpacePayload_SpaceImage(
@@ -532,16 +583,13 @@ func Make_UserMetadataPayload_EncryptionDevice(
 func Make_UserPayload_Membership(
 	op MembershipOp,
 	streamId StreamId,
-	inInviter *string,
+	inInviter common.Address,
 	streamParentId []byte,
+	reason *MembershipReason,
 ) *StreamEvent_UserPayload {
 	var inviter []byte
-	if inInviter != nil {
-		var err error
-		inviter, err = AddressFromUserId(*inInviter)
-		if err != nil {
-			panic(err) // todo convert everything to StreamId
-		}
+	if inInviter != (common.Address{}) {
+		inviter = inInviter.Bytes()
 	}
 
 	return &StreamEvent_UserPayload{
@@ -552,6 +600,7 @@ func Make_UserPayload_Membership(
 					Op:             op,
 					Inviter:        inviter,
 					StreamParentId: streamParentId,
+					Reason:         reason,
 				},
 			},
 		},
@@ -649,5 +698,85 @@ func Make_MediaPayload_Chunk(data []byte, chunkIndex int32, iv []byte) *StreamEv
 func Make_MiniblockHeader(miniblockHeader *MiniblockHeader) *StreamEvent_MiniblockHeader {
 	return &StreamEvent_MiniblockHeader{
 		MiniblockHeader: miniblockHeader,
+	}
+}
+
+func Make_MetadataPayload_Inception(
+	streamId StreamId,
+	settings *StreamSettings,
+) *StreamEvent_MetadataPayload {
+	return &StreamEvent_MetadataPayload{
+		MetadataPayload: &MetadataPayload{
+			Content: &MetadataPayload_Inception_{
+				Inception: &MetadataPayload_Inception{
+					StreamId: streamId[:],
+					Settings: settings,
+				},
+			},
+		},
+	}
+}
+
+func Make_MetadataPayload_NewStream(
+	streamId StreamId,
+	genesisMiniblockHash common.Hash,
+	nodeAddresses []common.Address,
+	replicationFactor int64,
+) *StreamEvent_MetadataPayload {
+	nodes := make([][]byte, len(nodeAddresses))
+	for i, addr := range nodeAddresses {
+		nodes[i] = addr.Bytes()
+	}
+	return &StreamEvent_MetadataPayload{
+		MetadataPayload: &MetadataPayload{
+			Content: &MetadataPayload_NewStream_{
+				NewStream: &MetadataPayload_NewStream{
+					StreamId:             streamId[:],
+					GenesisMiniblockHash: genesisMiniblockHash[:],
+					Nodes:                nodes,
+					ReplicationFactor:    replicationFactor,
+				},
+			},
+		},
+	}
+}
+
+func Make_MetadataPayload_LastMiniblockUpdate(
+	streamId StreamId,
+	lastMiniblockHash common.Hash,
+	lastMiniblockNum int64,
+) *StreamEvent_MetadataPayload {
+	return &StreamEvent_MetadataPayload{
+		MetadataPayload: &MetadataPayload{
+			Content: &MetadataPayload_LastMiniblockUpdate_{
+				LastMiniblockUpdate: &MetadataPayload_LastMiniblockUpdate{
+					StreamId:          streamId[:],
+					LastMiniblockHash: lastMiniblockHash[:],
+					LastMiniblockNum:  lastMiniblockNum,
+				},
+			},
+		},
+	}
+}
+
+func Make_MetadataPayload_PlacementUpdate(
+	streamId StreamId,
+	nodeAddresses []common.Address,
+	replicationFactor int64,
+) *StreamEvent_MetadataPayload {
+	nodes := make([][]byte, len(nodeAddresses))
+	for i, addr := range nodeAddresses {
+		nodes[i] = addr.Bytes()
+	}
+	return &StreamEvent_MetadataPayload{
+		MetadataPayload: &MetadataPayload{
+			Content: &MetadataPayload_PlacementUpdate_{
+				PlacementUpdate: &MetadataPayload_PlacementUpdate{
+					StreamId:          streamId[:],
+					Nodes:             nodes,
+					ReplicationFactor: replicationFactor,
+				},
+			},
+		},
 	}
 }

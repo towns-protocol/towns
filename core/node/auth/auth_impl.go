@@ -3,10 +3,14 @@ package auth
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -46,52 +50,104 @@ type ChainAuth interface {
 		6B. For channels, the space contract method `IsEntitledToChannel` is called for each linked wallet. If any of the
 			linked wallets are entitled to the channel, the permission check passes. Otherwise, it fails.
 	*/
-	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error)
+	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (IsEntitledResult, error)
 	VerifyReceipt(ctx context.Context, cfg *config.Config, receipt *BlockchainTransactionReceipt) (bool, error)
+}
+
+type isEntitledResult struct {
+	isAllowed bool
+	reason    EntitlementResultReason
+}
+
+type IsEntitledResult interface {
+	IsEntitled() bool
+	Reason() EntitlementResultReason
+}
+
+func (r *isEntitledResult) IsEntitled() bool {
+	if r == nil {
+		return false
+	}
+	return r.isAllowed
+}
+
+func (r *isEntitledResult) Reason() EntitlementResultReason {
+	if r == nil {
+		return EntitlementResultReason_NONE
+	}
+	return r.reason
 }
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
 
-func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId string, permission Permission) *ChainAuthArgs {
+func NewChainAuthArgsForApp(userId common.Address, appContractAddress common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:       chainAuthKindIsApp,
+		principal:  userId,
+		appAddress: appContractAddress,
+	}
+}
+
+func NewChainAuthArgsForIsNotApp(userId common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:      chainAuthKindIsNotApp,
+		principal: userId,
+	}
+}
+
+func NewChainAuthArgsForSpace(
+	spaceId shared.StreamId,
+	userId common.Address,
+	permission Permission,
+	appAddress common.Address,
+) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindSpace,
 		spaceId:    spaceId,
-		principal:  common.HexToAddress(userId),
+		principal:  userId,
 		permission: permission,
+		appAddress: appAddress,
 	}
 }
 
 func NewChainAuthArgsForChannel(
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
-	userId string,
+	userId common.Address,
 	permission Permission,
+	appAddress common.Address,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindChannel,
 		spaceId:    spaceId,
 		channelId:  channelId,
-		principal:  common.HexToAddress(userId),
+		principal:  userId,
 		permission: permission,
+		appAddress: appAddress,
 	}
 }
 
-func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId string) *ChainAuthArgs {
+func NewChainAuthArgsForIsSpaceMember(
+	spaceId shared.StreamId,
+	userId common.Address,
+	appAddress common.Address,
+) *ChainAuthArgs {
 	return &ChainAuthArgs{
-		kind:      chainAuthKindIsSpaceMember,
-		spaceId:   spaceId,
-		principal: common.HexToAddress(userId),
+		kind:       chainAuthKindIsSpaceMember,
+		spaceId:    spaceId,
+		principal:  userId,
+		appAddress: appAddress,
 	}
 }
 
 func NewChainAuthArgsForIsWalletLinked(
-	userAddress []byte,
-	walletAddress []byte,
+	userAddress common.Address,
+	walletAddress common.Address,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:          chainAuthKindIsWalletLinked,
-		principal:     common.BytesToAddress(userAddress),
-		walletAddress: common.BytesToAddress(walletAddress),
+		principal:     userAddress,
+		walletAddress: walletAddress,
 	}
 }
 
@@ -104,16 +160,27 @@ const (
 	chainAuthKindChannelEnabled
 	chainAuthKindIsSpaceMember
 	chainAuthKindIsWalletLinked
+	chainAuthKindIsApp
+	chainAuthKindIsNotApp
 )
 
 type ChainAuthArgs struct {
-	kind          chainAuthKind
-	spaceId       shared.StreamId
-	channelId     shared.StreamId
-	principal     common.Address
-	permission    Permission
+	kind       chainAuthKind
+	spaceId    shared.StreamId
+	channelId  shared.StreamId
+	principal  common.Address
+	permission Permission
+
+	// appAddress, when specified, is the app contract address of the app whose client address
+	// is the user id. For an IS_APP check, we check that the appAddress is correctly registered
+	// with the registry. For all other checks with non-zero appAddress values, the appAddress is
+	// inferred by the node based on snapshot inception values or membership states of various
+	// local streams.
+	appAddress common.Address
+
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
+	tokenIdsStr   string // a serialized list of token ids to comply with the cache key constraints
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -122,7 +189,7 @@ func (args *ChainAuthArgs) Principal() common.Address {
 
 func (args *ChainAuthArgs) String() string {
 	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s}",
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s}",
 		args.kind,
 		args.spaceId,
 		args.channelId,
@@ -130,6 +197,7 @@ func (args *ChainAuthArgs) String() string {
 		args.permission,
 		args.linkedWallets,
 		args.walletAddress.Hex(),
+		args.appAddress.Hex(),
 	)
 }
 
@@ -144,6 +212,38 @@ func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *Ch
 	}
 	ret.linkedWallets = builder.String()
 	return &ret
+}
+
+func (args *ChainAuthArgs) appendTokenIds(tokenIds []*big.Int) *ChainAuthArgs {
+	// serialize the token ids,
+	builder := strings.Builder{}
+	//  start with args.tokenIdsStr
+	builder.WriteString(args.tokenIdsStr)
+	for i, tokenId := range tokenIds {
+		if i > 0 || len(args.tokenIdsStr) > 0 {
+			builder.WriteString(",")
+		}
+		builder.WriteString(tokenId.String())
+	}
+	ret := *args
+	ret.tokenIdsStr = builder.String()
+	return &ret
+}
+
+func (args *ChainAuthArgs) tokenIds() ([]*big.Int, error) {
+	// deserialize the token ids
+	tokenIds := make([]*big.Int, 0)
+	if len(args.tokenIdsStr) > 0 {
+		for _, tokenIdStr := range strings.Split(args.tokenIdsStr, ",") {
+			tokenId, ok := new(big.Int).SetString(tokenIdStr, 10)
+			if !ok {
+				return nil, RiverError(Err_INTERNAL, "Failed to parse token id").Func("tokenIds").
+					Tag("tokenIdStr", tokenIdStr)
+			}
+			tokenIds = append(tokenIds, tokenId)
+		}
+	}
+	return tokenIds, nil
 }
 
 func newArgsForEnabledSpace(spaceId shared.StreamId) *ChainAuthArgs {
@@ -177,6 +277,7 @@ type chainAuth struct {
 	blockchain              *crypto.Blockchain
 	evaluator               *entitlement.Evaluator
 	spaceContract           SpaceContract
+	appRegistryContract     *AppRegistryContract
 	walletLinkContract      *base.WalletLink
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
@@ -209,6 +310,7 @@ func NewChainAuth(
 	blockchain *crypto.Blockchain,
 	evaluator *entitlement.Evaluator,
 	architectCfg *config.ContractConfig,
+	appRegistryConfig *config.ContractConfig,
 	linkedWalletsLimit int,
 	contractCallsTimeoutMs int,
 	metrics infra.MetricsFactory,
@@ -220,6 +322,11 @@ func NewChainAuth(
 	}
 
 	walletLinkContract, err := base.NewWalletLink(architectCfg.Address, blockchain.Client)
+	if err != nil {
+		return nil, err
+	}
+
+	appRegistryContract, err := NewAppRegistryContract(ctx, appRegistryConfig, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -260,6 +367,7 @@ func NewChainAuth(
 		evaluator:               evaluator,
 		spaceContract:           spaceContract,
 		walletLinkContract:      walletLinkContract,
+		appRegistryContract:     appRegistryContract,
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
@@ -297,8 +405,12 @@ func (ca *chainAuth) VerifyReceipt(
 	txHash := common.BytesToHash(userReceipt.GetTransactionHash())
 	chainReceipt, err := client.TransactionReceipt(ctx, txHash)
 	if err != nil {
-		return false, err
+		if errors.Is(err, ethereum.NotFound) {
+			return false, RiverError(Err_PERMISSION_DENIED, "Transaction receipt not found", "txHash", txHash.Hex())
+		}
+		return false, AsRiverError(err, Err_DOWNSTREAM_NETWORK_ERROR)
 	}
+
 	// Check if the block number matches:
 	if chainReceipt.BlockNumber.Uint64() != userReceipt.BlockNumber {
 		return false, RiverError(Err_PERMISSION_DENIED, "Block number mismatch", "got",
@@ -403,7 +515,11 @@ func (ca *chainAuth) VerifyReceipt(
 	return true, nil
 }
 
-func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+func (ca *chainAuth) IsEntitled(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (IsEntitledResult, error) {
 	// TODO: counter for cache hits here?
 	result, _, err := ca.entitlementCache.executeUsingCache(
 		ctx,
@@ -412,30 +528,36 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *C
 		ca.checkEntitlement,
 	)
 	if err != nil {
-		return false, AsRiverError(err).Func("IsEntitled")
+		return nil, AsRiverError(err).Func("IsEntitled")
 	}
 
-	return result.IsAllowed(), nil
+	return &isEntitledResult{
+		isAllowed: result.IsAllowed(),
+		reason:    result.Reason(),
+	}, nil
 }
 
 func (ca *chainAuth) areLinkedWalletsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
-) (bool, error) {
+) (bool, EntitlementResultReason, error) {
 	log := logging.FromCtx(ctx)
 	if args.kind == chainAuthKindSpace {
-		log.Debugw("isWalletEntitled", "kind", "space", "args", args)
+		log.Debugw("areLinkedWalletsEntitled", "kind", "space", "args", args)
 		return ca.isEntitledToSpace(ctx, cfg, args)
 	} else if args.kind == chainAuthKindChannel {
-		log.Debugw("isWalletEntitled", "kind", "channel", "args", args)
+		log.Debugw("areLinkedWalletsEntitled", "kind", "channel", "args", args)
 		return ca.isEntitledToChannel(ctx, cfg, args)
 	} else if args.kind == chainAuthKindIsSpaceMember {
-		log.Debugw("isWalletEntitled", "kind", "isSpaceMember", "args", args)
-		return true, nil // is space member is checked by the calling code in checkEntitlement
-	} else {
-		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
+		// App space memberships are handled earlier - we never get to this case if the user is an app.
+		log.Debugw("areLinkedWalletsEntitled", "kind", "isSpaceMember", "args", args)
+		return true, EntitlementResultReason_NONE, nil // is space member is checked by the calling code in checkEntitlement
 	}
+	return false, EntitlementResultReason_NONE, RiverError(
+		Err_INTERNAL,
+		"Unexpected chain auth kind",
+	).Func("areLinkedWalletsEntitled").Tag("kind", args.kind)
 }
 
 func (ca *chainAuth) isSpaceEnabledUncached(
@@ -448,10 +570,14 @@ func (ca *chainAuth) isSpaceEnabledUncached(
 	if err != nil {
 		return nil, err
 	}
-	return boolCacheResult(!isDisabled), nil
+	return boolCacheResult{!isDisabled, EntitlementResultReason_SPACE_DISABLED}, nil
 }
 
-func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, spaceId shared.StreamId) (bool, error) {
+func (ca *chainAuth) checkSpaceEnabled(
+	ctx context.Context,
+	cfg *config.Config,
+	spaceId shared.StreamId,
+) (bool, EntitlementResultReason, error) {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -459,7 +585,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, 
 		ca.isSpaceEnabledUncached,
 	)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isSpaceEnabledCacheHit.Inc()
@@ -467,7 +593,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, 
 		ca.isSpaceEnabledCacheMiss.Inc()
 	}
 
-	return isEnabled.IsAllowed(), nil
+	return isEnabled.IsAllowed(), isEnabled.Reason(), nil
 }
 
 func (ca *chainAuth) isChannelEnabledUncached(
@@ -480,7 +606,7 @@ func (ca *chainAuth) isChannelEnabledUncached(
 	if err != nil {
 		return nil, err
 	}
-	return boolCacheResult(!isDisabled), nil
+	return boolCacheResult{!isDisabled, EntitlementResultReason_CHANNEL_DISABLED}, nil
 }
 
 func (ca *chainAuth) checkChannelEnabled(
@@ -488,7 +614,7 @@ func (ca *chainAuth) checkChannelEnabled(
 	cfg *config.Config,
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
-) (bool, error) {
+) (bool, EntitlementResultReason, error) {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -496,7 +622,7 @@ func (ca *chainAuth) checkChannelEnabled(
 		ca.isChannelEnabledUncached,
 	)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isChannelEnabledCacheHit.Inc()
@@ -504,7 +630,7 @@ func (ca *chainAuth) checkChannelEnabled(
 		ca.isChannelEnabledCacheMiss.Inc()
 	}
 
-	return isEnabled.IsAllowed(), nil
+	return isEnabled.IsAllowed(), isEnabled.Reason(), nil
 }
 
 // CacheResult is the result of a cache lookup.
@@ -516,8 +642,12 @@ type entitlementCacheResult struct {
 	owner           common.Address
 }
 
-func (scr *entitlementCacheResult) IsAllowed() bool {
-	return scr.allowed
+func (ecr *entitlementCacheResult) IsAllowed() bool {
+	return ecr.allowed
+}
+
+func (ecr *entitlementCacheResult) Reason() EntitlementResultReason {
+	return EntitlementResultReason_NONE // entitlement cache results are a second layer of caching, so we don't need to return a reason
 }
 
 // If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may be cached.
@@ -580,6 +710,11 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 	log.Debugw("isEntitledToChannelUncached", "args", args)
+	// Route apps to a separate entitlement evaluation path.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
+		return ca.isAppEntitled(ctx, args)
+	}
 
 	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
 		ctx,
@@ -602,7 +737,6 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 
 	allowed, err := ca.evaluateWithEntitlements(
 		ctx,
-		cfg,
 		args,
 		entitlementData.owner,
 		entitlementData.entitlementData,
@@ -613,7 +747,7 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 			Message("Failed to evaluate entitlements").
 			Tag("channelId", args.channelId)
 	}
-	return boolCacheResult(allowed), nil
+	return boolCacheResult{allowed, EntitlementResultReason_CHANNEL_ENTITLEMENTS}, nil
 }
 
 func deserializeWallets(serialized string) []common.Address {
@@ -631,7 +765,6 @@ func deserializeWallets(serialized string) []common.Address {
 func (ca *chainAuth) evaluateEntitlementData(
 	ctx context.Context,
 	entitlements []types.Entitlement,
-	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (bool, error) {
 	log := logging.FromCtx(ctx).With("function", "evaluateEntitlementData")
@@ -639,7 +772,8 @@ func (ca *chainAuth) evaluateEntitlementData(
 
 	wallets := deserializeWallets(args.linkedWallets)
 	for _, ent := range entitlements {
-		if ent.EntitlementType == types.ModuleTypeRuleEntitlement {
+		switch ent.EntitlementType {
+		case types.ModuleTypeRuleEntitlement:
 			re := ent.RuleEntitlement
 			log.Debugw(ent.EntitlementType, "re", re)
 
@@ -659,7 +793,7 @@ func (ca *chainAuth) evaluateEntitlementData(
 			} else {
 				log.Debugw("rule entitlement is false", "spaceId", args.spaceId)
 			}
-		} else if ent.EntitlementType == types.ModuleTypeRuleEntitlementV2 {
+		case types.ModuleTypeRuleEntitlementV2:
 			re := ent.RuleEntitlementV2
 			log.Debugw(ent.EntitlementType, "re", re)
 			result, err := ca.evaluator.EvaluateRuleData(ctx, wallets, re)
@@ -673,7 +807,7 @@ func (ca *chainAuth) evaluateEntitlementData(
 				log.Debugw("rule entitlement v2 is false", "spaceId", args.spaceId)
 			}
 
-		} else if ent.EntitlementType == types.ModuleTypeUserEntitlement {
+		case types.ModuleTypeUserEntitlement:
 			log.Debugw("UserEntitlement", "userEntitlement", ent.UserEntitlement)
 			for _, user := range ent.UserEntitlement {
 				if user == everyone {
@@ -688,11 +822,43 @@ func (ca *chainAuth) evaluateEntitlementData(
 					}
 				}
 			}
-		} else {
+		default:
 			log.Warnw("Invalid entitlement type", "entitlement", ent)
 		}
 	}
 	return false, nil
+}
+
+// isAppEntitled evaluates space or channel permission entitlement for a user that has been determined
+// to be an app.
+func (ca *chainAuth) isAppEntitled(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	if args.kind == chainAuthKindIsSpaceMember {
+		// membership has already been checked earlier in the IsEntitled logic.
+		return &boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
+
+	isEntitled, err := ca.spaceContract.IsAppEntitled(
+		ctx,
+		args.spaceId,
+		args.principal,
+		args.appAddress,
+		args.permission,
+	)
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+		).Message("Error checking space contract for app entitlement").
+			Tag("appAddress", args.appAddress).
+			Tag("clientAddress", args.principal)
+	}
+	if !isEntitled {
+		return boolCacheResult{false, EntitlementResultReason_APP_ENTITLEMENTS}, nil
+	}
+
+	return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 }
 
 // evaluateWithEntitlements evaluates a user permission considering 3 factors:
@@ -701,7 +867,6 @@ func (ca *chainAuth) evaluateEntitlementData(
 // 3. Are they entitled to the space based on the entitlement data?
 func (ca *chainAuth) evaluateWithEntitlements(
 	ctx context.Context,
-	cfg *config.Config,
 	args *ChainAuthArgs,
 	owner common.Address,
 	entitlements []types.Entitlement,
@@ -725,12 +890,26 @@ func (ca *chainAuth) evaluateWithEntitlements(
 			return true, nil
 		}
 	}
+
+	// Short-circuit the rest of the evaluation if the auth check was for ownership of a space or channel.
+	if args.permission == PermissionOwnership {
+		return false, nil
+	}
+
 	// 2. Check if the user has been banned
-	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, wallets)
+	tokenIds, err := args.tokenIds()
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements").
 			Tag("spaceId", args.spaceId).
-			Tag("userId", args.principal)
+			Tag("userId", args.principal).
+			Tag("appAddress", args.appAddress)
+	}
+	banned, err := ca.spaceContract.IsBanned(ctx, args.spaceId, tokenIds)
+	if err != nil {
+		return false, AsRiverError(err).Func("evaluateEntitlements").
+			Tag("spaceId", args.spaceId).
+			Tag("userId", args.principal).
+			Tag("appAddress", args.appAddress)
 	}
 	if banned {
 		log.Warnw(
@@ -746,7 +925,7 @@ func (ca *chainAuth) evaluateWithEntitlements(
 	}
 
 	// 3. Evaluate entitlement data to check if the user is entitled to the space.
-	allowed, err := ca.evaluateEntitlementData(ctx, entitlements, cfg, args)
+	allowed, err := ca.evaluateEntitlementData(ctx, entitlements, args)
 	if err != nil {
 		return false, AsRiverError(err).Func("evaluateEntitlements")
 	} else {
@@ -761,6 +940,13 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 	log.Debugw("isEntitledToSpaceUncached", "args", args)
+
+	// Route apps to a separate entitlement evaluation path.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
+		return ca.isAppEntitled(ctx, args)
+	}
+
 	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -781,23 +967,27 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 	temp := (result.(*timestampedCacheValue).Result())
 	entitlementData := temp.(*entitlementCacheResult) // Assuming result is of *entitlementCacheResult type
 
-	allowed, err := ca.evaluateWithEntitlements(ctx, cfg, args, entitlementData.owner, entitlementData.entitlementData)
+	allowed, err := ca.evaluateWithEntitlements(ctx, args, entitlementData.owner, entitlementData.entitlementData)
 	if err != nil {
 		return nil, AsRiverError(err).
 			Func("isEntitledToSpace").
 			Message("Failed to evaluate entitlements")
 	}
-	return boolCacheResult(allowed), nil
+	return boolCacheResult{allowed, EntitlementResultReason_SPACE_ENTITLEMENTS}, nil
 }
 
-func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+func (ca *chainAuth) isEntitledToSpace(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (bool, EntitlementResultReason, error) {
 	if args.kind != chainAuthKindSpace {
-		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
 	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, cfg, args, ca.isEntitledToSpaceUncached)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isEntitledToSpaceCacheHit.Inc()
@@ -805,17 +995,21 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, cfg *config.Config, 
 		ca.isEntitledToSpaceCacheMiss.Inc()
 	}
 
-	return isEntitled.IsAllowed(), nil
+	return isEntitled.IsAllowed(), isEntitled.Reason(), nil
 }
 
-func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+func (ca *chainAuth) isEntitledToChannel(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (bool, EntitlementResultReason, error) {
 	if args.kind != chainAuthKindChannel {
-		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
 	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, cfg, args, ca.isEntitledToChannelUncached)
 	if err != nil {
-		return false, err
+		return false, EntitlementResultReason_NONE, err
 	}
 	if cacheHit {
 		ca.isEntitledToChannelCacheHit.Inc()
@@ -823,7 +1017,7 @@ func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config
 		ca.isEntitledToChannelCacheMiss.Inc()
 	}
 
-	return isEntitled.IsAllowed(), nil
+	return isEntitled.IsAllowed(), isEntitled.Reason(), nil
 }
 
 func (ca *chainAuth) getLinkedWalletsUncached(
@@ -835,7 +1029,7 @@ func (ca *chainAuth) getLinkedWalletsUncached(
 
 	wallets, err := ca.evaluator.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -874,7 +1068,7 @@ func (ca *chainAuth) getLinkedWallets(
 		ca.getLinkedWalletsUncached,
 	)
 	if err != nil {
-		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		log.Errorw("Failed to get linked wallets", "error", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
@@ -887,24 +1081,24 @@ func (ca *chainAuth) getLinkedWallets(
 	return result.(*timestampedCacheValue).result.(*linkedWalletCacheValue).wallets, nil
 }
 
-func (ca *chainAuth) checkMembershipUncached(
+func (ca *chainAuth) checkWalletMembershipUncached(
 	ctx context.Context,
 	_ *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
-	isMember, err := ca.spaceContract.IsMember(ctx, args.spaceId, args.principal)
+	membershipStatus, err := ca.spaceContract.GetMembershipStatus(ctx, args.spaceId, args.principal)
 	if err != nil {
-		return boolCacheResult(false), err
+		return &membershipStatusCacheResult{status: nil}, err
 	}
-	return boolCacheResult(isMember), nil
+	return &membershipStatusCacheResult{status: membershipStatus}, nil
 }
 
-func (ca *chainAuth) checkMembership(
+func (ca *chainAuth) checkWalletMembership(
 	ctx context.Context,
 	cfg *config.Config,
 	address common.Address,
 	spaceId shared.StreamId,
-	results chan<- bool,
+	results chan<- *membershipStatusCacheResult,
 	errors chan<- error,
 	wg *sync.WaitGroup,
 ) {
@@ -920,7 +1114,7 @@ func (ca *chainAuth) checkMembership(
 		ctx,
 		cfg,
 		&args,
-		ca.checkMembershipUncached,
+		ca.checkWalletMembershipUncached,
 	)
 	if err != nil {
 		// Errors here could be due to context cancellation if another wallet evaluates as a member.
@@ -929,7 +1123,7 @@ func (ca *chainAuth) checkMembership(
 		// linked wallet resulted in a positive membership check.
 		log.Infow(
 			"Error checking membership (due to early termination?)",
-			"err",
+			"error",
 			err,
 			"address",
 			address.Hex(),
@@ -946,89 +1140,188 @@ func (ca *chainAuth) checkMembership(
 		ca.membershipCacheMiss.Inc()
 	}
 
-	if result.IsAllowed() {
-		results <- true
-	}
-	// We expect that all linked wallets except the wallet with the membership token will evaluate to
-	// false here and don't bother logging false membership checks.
+	cachedResult := result.(*timestampedCacheValue).result.(*membershipStatusCacheResult)
+	results <- cachedResult
 }
 
 func (ca *chainAuth) checkStreamIsEnabled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
-) (bool, error) {
+) (bool, EntitlementResultReason, error) {
 	if args.kind == chainAuthKindSpace || args.kind == chainAuthKindIsSpaceMember {
-		isEnabled, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
+		isEnabled, reason, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
 		if err != nil {
-			return false, err
+			return false, reason, err
 		}
-		return isEnabled, nil
+		return isEnabled, reason, nil
 	} else if args.kind == chainAuthKindChannel {
-		isEnabled, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
+		isEnabled, reason, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
 		if err != nil {
-			return false, err
+			return false, reason, err
 		}
-		return isEnabled, nil
-	} else if args.kind == chainAuthKindIsWalletLinked {
-		return true, nil
+		return isEnabled, reason, nil
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
+		return true, EntitlementResultReason_NONE, nil
 	} else {
-		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
+		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
 }
 
-/** checkEntitlement checks if the user is entitled to the space / channel.
- * It checks the entitlments for the root key and all the wallets linked to it in parallel.
- * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
- * If any of the operations fail before getting positive result, the whole operation fails.
- * A prerequisite for this function is that one of the linked wallets is a member of the space.
- */
-func (ca *chainAuth) checkEntitlement(
+// checkIsApp checks to see if the user is an app and returns a cache result if the auth check was related
+// to whether or not a user is an app. Otherwise it will return a valid boolean, and the contract address of
+// the app if it is registered, or an error if the method encounters one.
+// TODO: it may be valuable to cache this in the future.
+func (ca *chainAuth) checkIsApp(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	if args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
+		isApp, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+		if err != nil {
+			return nil, err
+		}
+
+		logging.FromCtx(ctx).
+			Debugw(
+				"checkIsApp",
+				"kind", args.kind,
+				"args.spaceId", args.spaceId,
+				"args.channelId", args.channelId,
+				"args.appAddress", args.appAddress,
+				"principal", args.principal,
+				"foundAppAddress", appAddress,
+				"isApp", isApp,
+			)
+
+		if args.kind == chainAuthKindIsApp {
+			if isApp {
+				if appAddress == args.appAddress {
+					return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+				} else {
+					return boolCacheResult{false, EntitlementResultReason_MISMATCHED_APP_ADDRESS}, nil
+				}
+			} else {
+				return boolCacheResult{false, EntitlementResultReason_IS_NOT_APP}, nil
+			}
+		} else {
+			if isApp {
+				return boolCacheResult{false, EntitlementResultReason_IS_APP}, nil
+			} else {
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// checkAppMembership validates that the app is a member of the space. If the app
+// is not installed on the space, it will return a false entitlement result that
+// can be propogated back up the call stack.
+func (ca *chainAuth) checkAppMembership(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	result, cacheHit, err := ca.membershipCache.executeUsingCache(
+		ctx,
+		cfg,
+		args,
+		ca.checkAppMembershipUncached,
+	)
+
+	if cacheHit {
+		ca.membershipCacheHit.Inc()
+	} else {
+		ca.membershipCacheMiss.Inc()
+	}
+
+	return result, err
+}
+
+func (ca *chainAuth) checkAppMembershipUncached(
+	ctx context.Context,
+	_ *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	isInstalled, err := ca.spaceContract.IsAppInstalled(ctx, args.spaceId, args.appAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isInstalled {
+		return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP}, nil
+	}
+	return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+}
+
+// linkWallets fetches linked wallets for the user and returns a cache result if the authorization kind
+// was related to linked wallets. The way the caller should process the results is, if the cache result
+// is defined, then return it as the entitlement result. Otherwise, use the updated args which will
+// have linked wallets attached.
+func (ca *chainAuth) linkWallets(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, *ChainAuthArgs, error) {
+	log := logging.FromCtx(ctx)
+
+	// Get all linked wallets.
+	wallets, err := ca.getLinkedWallets(ctx, cfg, args)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Handle checking if the user is linked to a specific wallet
+	if args.kind == chainAuthKindIsWalletLinked {
+		for _, wallet := range wallets {
+			if wallet == args.walletAddress {
+				return boolCacheResult{true, EntitlementResultReason_NONE}, nil, nil
+			}
+		}
+		return boolCacheResult{false, EntitlementResultReason_WALLET_NOT_LINKED}, nil, nil
+	}
+
+	// If the user has more linked wallets than we can evaluate, go ahead and short-circuit the evaluation.
+	if len(wallets) > ca.linkedWalletsLimit {
+		return nil, nil, RiverError(Err_RESOURCE_EXHAUSTED,
+			"too many wallets linked to the root key",
+			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
+	}
+
+	args = args.withLinkedWallets(wallets)
+	return nil, args, nil
+}
+
+// checkMembership checks for space membership, considering all of a user's linked wallets.
+func (ca *chainAuth) checkMembership(
 	ctx context.Context,
 	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
-
-	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
-	defer cancel()
-
-	isEnabled, err := ca.checkStreamIsEnabled(ctx, cfg, args)
-	if err != nil {
-		return nil, err
-	} else if !isEnabled {
-		return boolCacheResult(false), nil
-	}
-
-	// Get all linked wallets.
-	wallets, err := ca.getLinkedWallets(ctx, cfg, args)
-	if err != nil {
-		return nil, err
-	}
-
-	// handle checking if the user is linked to a specific wallet
-	if args.kind == chainAuthKindIsWalletLinked {
-		for _, wallet := range wallets {
-			if wallet == args.walletAddress {
-				return boolCacheResult(true), nil
-			}
-		}
-		return boolCacheResult(false), nil
-	}
-
-	args = args.withLinkedWallets(wallets)
+	wallets := deserializeWallets(args.linkedWallets)
 
 	isMemberCtx, isMemberCancel := context.WithCancel(ctx)
 	defer isMemberCancel()
 
-	isMemberResults := make(chan bool, len(wallets))
+	isMemberResults := make(chan *membershipStatusCacheResult, len(wallets))
 	isMemberError := make(chan error, len(wallets))
 
 	var isMemberWg sync.WaitGroup
 
 	for _, address := range wallets {
 		isMemberWg.Add(1)
-		go ca.checkMembership(isMemberCtx, cfg, address, args.spaceId, isMemberResults, isMemberError, &isMemberWg)
+		go ca.checkWalletMembership(
+			isMemberCtx,
+			cfg,
+			address,
+			args.spaceId,
+			isMemberResults,
+			isMemberError,
+			&isMemberWg,
+		)
 	}
 
 	// Wait for at least one true result or all to complete
@@ -1039,15 +1332,21 @@ func (ca *chainAuth) checkEntitlement(
 	}()
 
 	isMember := false
+	isExpired := true
 	var membershipError error = nil
 
 	// This loop will wait on at least one true result, and will exit if the channel is closed,
 	// meaning all checks have terminated, or if at least one check was positive.
 	for result := range isMemberResults {
-		if result {
+		if result.status.IsMember {
+			args = args.appendTokenIds(result.status.TokenIds)
 			isMember = true
-			isMemberCancel() // Cancel all other goroutines
-			break
+			// if not expired, cancel other checks, otherwise continue
+			if !result.status.IsExpired {
+				isExpired = false
+				isMemberCancel()
+				break
+			}
 		}
 	}
 
@@ -1102,21 +1401,82 @@ func (ca *chainAuth) checkEntitlement(
 				"wallets",
 				wallets,
 			)
-			return boolCacheResult(false), nil
+			return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP}, nil
 		}
 	}
 
-	// Now that we know the user is a member of the space, we can check entitlements.
-	if len(wallets) > ca.linkedWalletsLimit {
-		return nil, RiverError(Err_RESOURCE_EXHAUSTED,
-			"too many wallets linked to the root key",
-			"rootKey", args.principal, "wallets", len(wallets)).LogError(log)
+	if isExpired {
+		log.Debugw("Membership expired", "principal", args.principal, "spaceId", args.spaceId)
+		return boolCacheResult{false, EntitlementResultReason_MEMBERSHIP_EXPIRED}, nil
 	}
 
-	result, err := ca.areLinkedWalletsEntitled(ctx, cfg, args)
+	return nil, nil
+}
+
+/** checkEntitlement checks if the user is entitled to the space / channel.
+ * It checks the entitlements for the root key and all the wallets linked to it in parallel.
+ * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
+ * If any of the operations fail before getting positive result, the whole operation fails.
+ * A prerequisite for this function is that one of the linked wallets is a member of the space.
+ *
+ * In the case of app users specifically, we do not support wallet linking at this time.
+ * App membership and entitlements are also evaluated via separate interfaces on the space contract.
+ */
+func (ca *chainAuth) checkEntitlement(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
+	defer cancel()
+
+	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
+	if err != nil {
+		return nil, err
+	} else if !isEnabled {
+		return boolCacheResult{false, reason}, nil
+	}
+
+	isAppResult, err := ca.checkIsApp(ctx, args)
+	if err != nil {
+		return nil, err
+	} else if isAppResult != nil {
+		return isAppResult, nil
+	}
+
+	// If the user is an app, we route membership checks via a separate path on the space
+	// contract. If the user is a normal user, we check membership the normal way and run
+	// the check for each linked wallet. At this time, we do not support wallet linking
+	// for apps.
+	zeroAddress := common.Address{}
+	if args.appAddress != zeroAddress {
+		result, err := ca.checkAppMembership(ctx, cfg, args)
+		if err != nil {
+			return nil, err
+		}
+		if !result.IsAllowed() {
+			return result, nil
+		}
+	} else {
+		var result CacheResult
+		result, args, err = ca.linkWallets(ctx, cfg, args)
+		if err != nil {
+			return boolCacheResult{}, err
+		} else if result != nil {
+			return result, nil
+		}
+		result, err = ca.checkMembership(ctx, cfg, args)
+		if err != nil {
+			return boolCacheResult{}, err
+		} else if result != nil {
+			return result, nil
+		}
+	}
+
+	result, reason, err := ca.areLinkedWalletsEntitled(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	}
 
-	return boolCacheResult(result), nil
+	return boolCacheResult{result, reason}, nil
 }

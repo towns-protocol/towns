@@ -1,31 +1,26 @@
 /* eslint-disable no-console */
 import { SnapshotCaseType } from '@towns-protocol/proto'
 import { Stream } from '../../stream'
-import { StreamChange } from '../../streamEvents'
 import {
-    getEditsId,
-    getRedactsId,
-    makeRedactionEvent,
-    toEvent,
-    toReplacedMessageEvent,
-} from './models/timelineEvent'
-import { LocalTimelineEvent } from '../../types'
-import { TimelineEvents } from './models/timelineEvents'
-import { Reactions } from './models/reactions'
-import type { TimelineEvent, TimelineEventConfirmation } from './models/timeline-types'
-import { PendingReplacedEvents } from './models/pendingReplacedEvents'
-import { ReplacedEvents } from './models/replacedEvents'
-import { ThreadStats } from './models/threadStats'
-import { Threads } from './models/threads'
+    MessageReactions,
+    MessageTips,
+    ThreadStatsData,
+    type TimelineEvent,
+} from '../../views/models/timelineTypes'
 import type { RiverConnection } from '../river-connection/riverConnection'
+import { Observable } from '../../observable/observable'
+import { TimelinesMap, TimelinesViewModel } from '../../views/streams/timelinesModel'
+
+const EMPTY_TIMELINE: TimelineEvent[] = []
+const EMPTY_RECORD = {}
 
 export class MessageTimeline {
-    events = new TimelineEvents()
-    replacedEvents = new ReplacedEvents()
-    pendingReplacedEvents = new PendingReplacedEvents()
-    threadsStats = new ThreadStats()
-    threads = new Threads()
-    reactions = new Reactions()
+    events = new Observable<TimelineEvent[]>(EMPTY_TIMELINE)
+    threads = new Observable<TimelinesMap>(EMPTY_RECORD)
+    threadsStats = new Observable<Record<string, ThreadStatsData>>(EMPTY_RECORD)
+    reactions = new Observable<Record<string, MessageReactions>>(EMPTY_RECORD)
+    tips = new Observable<Record<string, MessageTips>>(EMPTY_RECORD)
+    unsubFn: (() => void) | undefined
 
     // TODO: figure out a better way to do online check
     // lastestEventByUser = new TimelineEvents()
@@ -44,253 +39,36 @@ export class MessageTimeline {
 
     initialize(stream: Stream) {
         this.reset()
-        stream.off('streamUpdated', this.onStreamUpdated)
-        stream.off('streamLocalEventUpdated', this.onStreamLocalEventUpdated)
-        stream.on('streamUpdated', this.onStreamUpdated)
-        stream.on('streamLocalEventUpdated', this.onStreamLocalEventUpdated)
-        const events = stream.view.timeline
-            .map((event) => toEvent(event, this.userId))
-            .filter((event) => this.filterFn(event, stream.view.contentKind))
-        this.appendEvents(events, this.userId)
+        this.unsubFn = stream.view.streamsView.timelinesView.subscribe(
+            (state: TimelinesViewModel) => {
+                this.events.setValue(state.timelines[this.streamId] ?? EMPTY_TIMELINE)
+                this.threads.setValue(state.threads[this.streamId] ?? EMPTY_RECORD)
+                this.threadsStats.setValue(state.threadsStats[this.streamId] ?? EMPTY_RECORD)
+                this.reactions.setValue(state.reactions[this.streamId] ?? EMPTY_RECORD)
+                this.tips.setValue(state.tips[this.streamId] ?? EMPTY_RECORD)
+            },
+            { fireImediately: true },
+        )
     }
 
-    async scrollback(): Promise<{ terminus: boolean; firstEvent?: TimelineEvent }> {
+    async scrollback(): Promise<{ terminus: boolean; fromInclusiveMiniblockNum: bigint }> {
         return this.riverConnection.callWithStream(this.streamId, async (client) => {
-            return client.scrollback(this.streamId).then(({ terminus, firstEvent }) => ({
-                terminus,
-                firstEvent: firstEvent ? toEvent(firstEvent, this.userId) : undefined,
-            }))
+            return client
+                .scrollback(this.streamId)
+                .then(({ terminus, fromInclusiveMiniblockNum }) => ({
+                    terminus,
+                    fromInclusiveMiniblockNum,
+                }))
         })
     }
 
     private reset() {
-        this.events.reset()
-        this.threads.reset()
-        this.threadsStats.reset()
-        this.reactions.reset()
-        this.pendingReplacedEvents.reset()
-        this.replacedEvents.reset()
-    }
-
-    private onStreamUpdated = (_streamId: string, kind: SnapshotCaseType, change: StreamChange) => {
-        const { prepended, appended, updated, confirmed } = change
-        if (prepended) {
-            const events = prepended
-                .map((event) => toEvent(event, this.userId))
-                .filter((event) => this.filterFn(event, kind))
-            this.prependEvents(events, this.userId)
-        }
-        if (appended) {
-            const events = appended
-                .map((event) => toEvent(event, this.userId))
-                .filter((event) => this.filterFn(event, kind))
-            this.appendEvents(events, this.userId)
-        }
-        if (updated) {
-            const events = updated
-                .map((event) => toEvent(event, this.userId))
-                .filter((event) => this.filterFn(event, kind))
-            this.updateEvents(events, this.userId)
-        }
-        if (confirmed) {
-            const confirmations = confirmed.map((event) => ({
-                eventId: event.hashStr,
-                confirmedInBlockNum: event.miniblockNum,
-                confirmedEventNum: event.confirmedEventNum,
-            }))
-            this.confirmEvents(confirmations)
-        }
-    }
-
-    private onStreamLocalEventUpdated = (
-        _streamId: string,
-        kind: SnapshotCaseType,
-        localEventId: string,
-        localEvent: LocalTimelineEvent,
-    ) => {
-        const event = toEvent(localEvent, this.userId)
-        if (this.filterFn(event, kind)) {
-            this.updateEvent(event, localEventId)
-        }
-    }
-
-    private prependEvents(events: TimelineEvent[], userId: string) {
-        for (const event of events.reverse()) {
-            const editsEventId = getEditsId(event.content)
-            const redactsEventId = getRedactsId(event.content)
-            if (redactsEventId) {
-                const redactedEvent = makeRedactionEvent(event)
-                this.prependEvent(userId, event)
-                this.replaceEvent(userId, redactsEventId, redactedEvent)
-            } else if (editsEventId) {
-                this.replaceEvent(userId, editsEventId, event)
-            } else {
-                this.prependEvent(userId, event)
-            }
-        }
-    }
-
-    private prependEvent = (_userId: string, inTimelineEvent: TimelineEvent) => {
-        const pendingReplace = this.pendingReplacedEvents.get(inTimelineEvent.eventId)
-        const timelineEvent = pendingReplace
-            ? toReplacedMessageEvent(inTimelineEvent, pendingReplace)
-            : inTimelineEvent
-
-        this.events.prepend(timelineEvent)
-        this.reactions.addEvent(timelineEvent)
-        this.threads.add(timelineEvent)
-        this.threadsStats.add(this.userId, timelineEvent, this.events.value)
-    }
-
-    private appendEvent(_userId: string, event: TimelineEvent) {
-        this.events.append(event)
-        this.threads.add(event)
-        this.threadsStats.add(this.userId, event, this.events.value)
-        this.reactions.addEvent(event)
-    }
-
-    private replaceEvent(_userId: string, replacedEventId: string, event: TimelineEvent) {
-        const eventIndex = this.events.value.findIndex(
-            (e: TimelineEvent) =>
-                e.eventId === replacedEventId ||
-                (e.localEventId && e.localEventId === event.localEventId),
-        )
-
-        if (eventIndex === -1) {
-            // if we didn't find an event to replace..
-            const pendingReplace = this.pendingReplacedEvents.get(replacedEventId)
-            if (
-                pendingReplace?.latestEventNum &&
-                event?.latestEventNum &&
-                pendingReplace.latestEventNum > event.latestEventNum
-            ) {
-                // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
-                return
-            } else {
-                // otherwise add it to the pending list
-                this.pendingReplacedEvents.add(replacedEventId, event)
-                return
-            }
-        }
-        const oldEvent = this.events.value[eventIndex]
-        if (
-            event?.latestEventNum &&
-            oldEvent?.latestEventNum &&
-            event.latestEventNum < oldEvent.latestEventNum
-        ) {
-            return
-        }
-        const newEvent = toReplacedMessageEvent(oldEvent, event)
-        this.events.replace(event, eventIndex, this.events.value)
-        this.replacedEvents.add(event.eventId, oldEvent, newEvent)
-        this.reactions.removeEvent(oldEvent)
-        this.reactions.addEvent(newEvent)
-        this.threadsStats.remove(oldEvent)
-        this.threadsStats.add(this.userId, newEvent, this.events.value)
-
-        const threadTimeline = newEvent.threadParentId
-            ? this.threads.get(newEvent.threadParentId)
-            : undefined
-        const threadEventIndex =
-            threadTimeline?.findIndex(
-                (e) =>
-                    e.eventId === replacedEventId ||
-                    (e.localEventId && e.localEventId === newEvent.localEventId),
-            ) ?? -1
-        if (threadEventIndex !== -1) {
-            this.threads.replace(newEvent, threadEventIndex)
-        } else {
-            this.threads.add(newEvent)
-        }
-    }
-
-    private appendEvents(events: TimelineEvent[], _userId: string) {
-        for (const event of events) {
-            this.processEvent(event)
-        }
-    }
-
-    private updateEvents(events: TimelineEvent[], _userId: string) {
-        for (const event of events) {
-            this.processEvent(event, event.eventId)
-        }
-    }
-
-    private updateEvent(event: TimelineEvent, updatingEventId?: string) {
-        this.processEvent(event, updatingEventId)
-    }
-
-    private confirmEvents(
-        confirmations: {
-            eventId: string
-            confirmedInBlockNum: bigint
-            confirmedEventNum: bigint
-        }[],
-    ) {
-        for (const confirmation of confirmations) {
-            this.confirmEvent(confirmation)
-        }
-    }
-
-    // Similar to replaceEvent, but we dont only swap out the confirmedInBlockNum and confirmedEventNum
-    private confirmEvent(confirmation: TimelineEventConfirmation) {
-        const eventIndex = this.events.value.findIndex(
-            (e: TimelineEvent) => e.eventId === confirmation.eventId,
-        )
-        if (eventIndex === -1) {
-            return
-        }
-        const oldEvent = this.events.value[eventIndex]
-        const newEvent = {
-            ...oldEvent,
-            confirmedEventNum: confirmation.confirmedEventNum,
-            confirmedInBlockNum: confirmation.confirmedInBlockNum,
-        }
-
-        this.events.replace(newEvent, eventIndex, this.events.value)
-        this.replacedEvents.add(newEvent.eventId, oldEvent, newEvent)
-        // TODO: why we dont change reactions here?
-    }
-
-    // handle local pending events, redact and edits
-    private processEvent(event: TimelineEvent, updatingEventId?: string) {
-        const editsEventId = getEditsId(event.content)
-        const redactsEventId = getRedactsId(event.content)
-
-        if (redactsEventId) {
-            const redactedEvent = makeRedactionEvent(event)
-            this.replaceEvent(this.userId, redactsEventId, redactedEvent)
-            if (updatingEventId) {
-                // replace the formerly encrypted event
-                this.replaceEvent(this.userId, updatingEventId, event)
-            } else {
-                this.appendEvent(this.userId, event)
-            }
-        } else if (editsEventId) {
-            if (updatingEventId) {
-                // remove the formerly encrypted event
-                this.removeEvent(updatingEventId)
-            }
-            this.replaceEvent(this.userId, editsEventId, event)
-        } else {
-            if (updatingEventId) {
-                // replace the formerly encrypted event
-                this.replaceEvent(this.userId, updatingEventId, event)
-            } else {
-                this.appendEvent(this.userId, event)
-            }
-        }
-    }
-
-    private removeEvent(eventId: string) {
-        const eventIndex = this.events.value.findIndex((e) => e.eventId == eventId)
-        if ((eventIndex ?? -1) < 0) {
-            return
-        }
-        const event = this.events.value[eventIndex]
-        this.events.removeByIndex(eventIndex)
-        this.reactions.removeEvent(event)
-        this.threadsStats.remove(event)
-        this.threads.remove(event)
+        this.unsubFn?.()
+        this.unsubFn = undefined
+        this.events.setValue(EMPTY_TIMELINE)
+        this.threads.setValue(EMPTY_RECORD)
+        this.threadsStats.setValue(EMPTY_RECORD)
+        this.reactions.setValue(EMPTY_RECORD)
+        this.tips.setValue(EMPTY_RECORD)
     }
 }

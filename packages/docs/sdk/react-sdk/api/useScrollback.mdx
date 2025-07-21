@@ -16,11 +16,11 @@ import { useScrollback } from '@towns-protocol/react-sdk'
 ```ts
 function useScrollback(
   streamId: string,
-  config?: ActionConfig<MessageTimeline['scrollback']>,
+  config?: ActionConfig<MessageTimeline["scrollback"]>,
 ): {
     data: {
         terminus: boolean;
-        firstEvent?: TimelineEvent | undefined;
+        fromInclusiveMiniblockNum: bigint;
     } | undefined;
     error: Error | undefined;
     isPending: boolean;
@@ -28,7 +28,7 @@ function useScrollback(
     isError: boolean;
     scrollback: () => Promise<{
         terminus: boolean;
-        firstEvent?: TimelineEvent | undefined;
+        fromInclusiveMiniblockNum: bigint;
     }>;
 }
 ```
@@ -45,7 +45,7 @@ The id of the stream to get the scrollback action for.
 
 ### config
 
-- **Type:** `ActionConfig<MessageTimeline['scrollback']>`
+- **Type:** `ActionConfig<MessageTimeline["scrollback"]>`
 - **Optional**
 
 Configuration options for the action.
@@ -58,7 +58,7 @@ The `scrollback` action and its loading state.
 {
     data: {
         terminus: boolean;
-        firstEvent?: TimelineEvent | undefined;
+        fromInclusiveMiniblockNum: bigint;
     } | undefined;
     error: Error | undefined;
     isPending: boolean;
@@ -66,7 +66,7 @@ The `scrollback` action and its loading state.
     isError: boolean;
     scrollback: () => Promise<{
         terminus: boolean;
-        firstEvent?: TimelineEvent | undefined;
+        fromInclusiveMiniblockNum: bigint;
     }>;
 }
 ```

@@ -121,7 +121,10 @@ describe('streamRpcClient using v2 sync', () => {
             {
                 syncPos: [syncCookie],
             },
-            { timeoutMs: -1 },
+            {
+                timeoutMs: -1,
+                headers: { 'X-Use-Shared-Sync': 'true' },
+            },
         )
         await expect(
             waitForSyncStreams(aliceStreamIterable, async (res) => {
@@ -220,7 +223,10 @@ describe('streamRpcClient using v2 sync', () => {
             {
                 syncPos: [],
             },
-            { timeoutMs: -1 },
+            {
+                timeoutMs: -1,
+                headers: { 'X-Use-Shared-Sync': 'true' },
+            },
         )
         // bob reads the syncId from the response stream
         let syncId: string | undefined = undefined

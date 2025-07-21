@@ -1,10 +1,13 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.189",
+    "version": "0.0.282",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",
@@ -24,27 +27,24 @@
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
-        "lodash": "^4.17.21",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
-        "viem": "^2.21.51",
+        "viem": "^2.29.3",
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "@types/lodash": "^4.14.186",
-        "@types/node": "^20.5.0",
-        "@typescript-eslint/eslint-plugin": "^6.10.0",
-        "@typescript-eslint/parser": "^7.14.1",
+        "@types/node": "^20.14.8",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
         "debug": "^4.3.4",
-        "eslint": "^8.53.0",
-        "eslint-import-resolver-typescript": "^3.5.5",
-        "eslint-plugin-import": "^2.27.5",
+        "eslint": "^8.57.1",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-import-x": "^4.10.2",
         "typed-emitter": "^2.1.0",
-        "typescript": "^5.1.6",
-        "vitest": "3.0.5"
+        "typescript": "^5.8.2",
+        "vitest": "^3.2.3"
     },
     "files": [
-        "/dist",
-        "/v4"
+        "/dist"
     ]
 }

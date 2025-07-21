@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // PostgresStats contains postgres pool stats
@@ -54,12 +54,10 @@ type PostgresStatusResult struct {
 	RegularPoolStats   PostgresStats `json:"regular_pool_stats"`
 	StreamingPoolStats PostgresStats `json:"streaming_pool_stats"`
 
+	StreamCount int64
+
 	Version  string `json:"version"`
 	SystemId string `json:"system_id"`
-
-	MigratedStreams   int64
-	UnmigratedStreams int64
-	NumPartitions     int64
 }
 
 // PreparePostgresStatus prepares PostgresStatusResult by the given pool
@@ -71,7 +69,7 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 	err := pool.Pool.QueryRow(ctx, "SELECT version()").Scan(&version)
 	if err != nil {
 		version = fmt.Sprintf("Error: %v", err)
-		log.Errorw("failed to get PostgreSQL version", "err", err)
+		log.Errorw("failed to get PostgreSQL version", "error", err)
 	}
 
 	var systemId string
@@ -80,86 +78,59 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 		systemId = fmt.Sprintf("Error: %v", err)
 	}
 
-	// Note: the following statistics apply to stream stores, and not to pg stores generally.
-	// These tables may also not exist until migrations are run.
-	var migratedStreams, unmigratedStreams, numPartitions int64
-	err = pool.Pool.QueryRow(ctx, "SELECT count(*) FROM es WHERE migrated=false").Scan(&unmigratedStreams)
+	var streamCount int64
+	err = pool.Pool.QueryRow(
+		ctx,
+		// This query should be fine to run even if the es table does not exist.
+		fmt.Sprintf(
+			`SELECT safe_table_count('es', '%v');`,
+			pool.Schema,
+		),
+	).Scan(&streamCount)
 	if err != nil {
-		// Ignore nonexistent table or missing column, which occurs when stats are collected before migration completes
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable &&
-			pgerr.Code != pgerrcode.UndefinedColumn {
-			log.Errorw("Error calculating unmigrated stream count", "error", err)
-		}
-	}
-
-	err = pool.Pool.QueryRow(ctx, "SELECT count(*) FROM es WHERE migrated=true").Scan(&migratedStreams)
-	if err != nil {
-		// Ignore nonexistent table or missing column, which occurs when stats are collected before migration completes
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable &&
-			pgerr.Code != pgerrcode.UndefinedColumn {
-			log.Errorw("Error calculating migrated stream count", "error", err)
-		}
-	}
-
-	err = pool.Pool.QueryRow(ctx, "SELECT num_partitions FROM settings WHERE single_row_key=true").Scan(&numPartitions)
-	if err != nil {
-		// Ignore nonexistent table, which occurs when stats are collected before migration
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable {
-			log.Errorw("Error calculating partition count", "error", err)
-		}
+		log.Errorw("Error calculating stream count", "error", err)
 	}
 
 	return PostgresStatusResult{
 		RegularPoolStats:   newPostgresStats(pool.Pool),
 		StreamingPoolStats: newPostgresStats(pool.StreamingPool),
+		StreamCount:        streamCount,
 		Version:            version,
 		SystemId:           systemId,
-		MigratedStreams:    migratedStreams,
-		UnmigratedStreams:  unmigratedStreams,
-		NumPartitions:      numPartitions,
 	}
 }
 
-func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.MetricsFactory) {
+func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.MetricsFactory) error {
+	// Create a function to safely evaluate the count of a table that may or may not exist in the
+	// schema without triggering a postgres error, since not all runnable node services use postgres
+	// to store streams. It is easy enough to ignore these errors from the node, but it can make the
+	// postgres logs difficult to navigate.
+	if _, err := pool.Pool.Exec(
+		ctx,
+		fmt.Sprintf(
+			`
+			CREATE OR REPLACE FUNCTION "%s".safe_table_count(tablename text, schemaname text default 'public')
+			RETURNS integer AS $$
+			DECLARE
+				total integer := 0;
+			BEGIN
+				IF to_regclass(format('"%%I".%%I', schemaname, tablename)) IS NOT NULL THEN
+					EXECUTE format('SELECT COUNT(*) FROM "%%I".%%I', schemaname, tablename)
+					INTO total;
+				END IF;
+				RETURN total;
+			END;
+			$$ LANGUAGE plpgsql;
+			`,
+			pool.Schema,
+		),
+	); err != nil {
+		return base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("Unable to create stats query function")
+	}
+
 	getStatus := func() PostgresStatusResult {
 		return PreparePostgresStatus(ctx, pool)
-	}
-
-	// Metrics for numeric values
-	numericMetrics := []struct {
-		name     string
-		help     string
-		getValue func(PostgresStatusResult) float64
-	}{
-		{
-			"postgres_unmigrated_streams",
-			"Total streams stored in legacy schema layout",
-			func(s PostgresStatusResult) float64 { return float64(s.UnmigratedStreams) },
-		},
-		{
-			"postgres_migrated_streams",
-			"Total streams stored in fixed partition schema layout",
-			func(s PostgresStatusResult) float64 { return float64(s.MigratedStreams) },
-		},
-		{
-			"postgres_num_stream_partitions",
-			"Total partitions used in fixed partition schema layout",
-			func(s PostgresStatusResult) float64 { return float64(s.NumPartitions) },
-		},
-	}
-
-	for _, metric := range numericMetrics {
-		factory.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name: metric.name,
-				Help: metric.help,
-			},
-			func(getValue func(PostgresStatusResult) float64) func() float64 {
-				return func() float64 {
-					return getValue(getStatus())
-				}
-			}(metric.getValue),
-		)
 	}
 
 	// Metrics for postgres pool stats numeric values
@@ -263,7 +234,33 @@ func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 		)
 	}
 
-	// Metrics for version, system ID, and ES count
+	// Metrics for numeric values
+	numericMetrics := []struct {
+		name     string
+		help     string
+		getValue func(PostgresStatusResult) float64
+	}{
+		{
+			"postgres_stream_count",
+			"Total streams stored in schema",
+			func(s PostgresStatusResult) float64 { return float64(s.StreamCount) },
+		},
+	}
+	for _, metric := range numericMetrics {
+		factory.NewGaugeFunc(
+			prometheus.GaugeOpts{
+				Name: metric.name,
+				Help: metric.help,
+			},
+			func(getValue func(PostgresStatusResult) float64) func() float64 {
+				return func() float64 {
+					return getValue(getStatus())
+				}
+			}(metric.getValue),
+		)
+	}
+
+	// Metrics for version and system ID
 	versionGauge := factory.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "postgres_version_info",
@@ -280,7 +277,7 @@ func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 		[]string{"system_id"},
 	)
 
-	// Function to update version, system ID, and ES count
+	// Function to update version and system ID
 	var (
 		lastVersion  string
 		lastSystemID string
@@ -319,4 +316,6 @@ func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 			}
 		}
 	}()
+
+	return nil
 }

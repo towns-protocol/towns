@@ -108,10 +108,8 @@
             "towns-token/utility",
             "towns-token/economics",
             "towns-token/mechanics",
-            "towns-token/delegation",
-            "towns-token/distribution",
-            "towns-token/claiming",
-            "towns-token/staking"
+            "towns-token/staking",
+            "towns-token/claiming"
           ]
         },
         {
@@ -119,8 +117,7 @@
           "pages": [
             "grants/grants-program"
           ]
-        },
-        "FAQs"
+        }
       ]
     },
     {
@@ -207,6 +204,17 @@
             "sdk/react-sdk/api/useUserGdms",
             "sdk/react-sdk/api/useUserSpaces"
           ]
+        }
+      ]
+    },
+    {
+      "group": "White Paper",
+      "pages": [
+        "white-paper/towns-technical-overview",
+        "white-paper/technical-whitepaper",
+        {
+          "name": "MiCA Whitepaper",
+          "url": "https://towns.com/mica-whitepaper.pdf"
         }
       ]
     }

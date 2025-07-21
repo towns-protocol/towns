@@ -51,18 +51,29 @@ func runPing(cfg *config.Config) error {
 		return err
 	}
 
+	onChainConfig, err := crypto.NewOnChainConfig(
+		ctx,
+		riverChain.Client,
+		registryContract.Address,
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+	)
+	if err != nil {
+		return err
+	}
+
 	httpClient, err := http_client.GetHttpClient(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, httpClient, nil)
+		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, onChainConfig, httpClient, httpClient, nil)
 	if err != nil {
 		return err
 	}
 
-	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil, nil)
+	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil)
 	if err != nil {
 		return err
 	}

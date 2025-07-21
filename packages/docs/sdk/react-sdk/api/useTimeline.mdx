@@ -28,15 +28,8 @@ const messages = events.filter((event) => event.content?.kind === RiverTimelineE
 ```ts
 function useTimeline(
   streamId: string,
-  config?: ObservableConfig.FromObservable<TimelineEvents>,
-): {
-    data: TimelineEvent[];
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+  config?: ObservableConfig.FromObservable<TimelineEvent[]>,
+): ObservableValue<TimelineEvent[]>
 ```
 
 **Source:** [useTimeline](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useTimeline.ts)
@@ -51,7 +44,7 @@ The id of the stream to get the timeline events from.
 
 ### config
 
-- **Type:** `ObservableConfig.FromObservable<TimelineEvents>`
+- **Type:** `ObservableConfig.FromObservable<TimelineEvent[]>`
 - **Optional**
 
 Configuration options for the observable.
@@ -61,12 +54,5 @@ Configuration options for the observable.
 The timeline events of the stream as an observable.
 
 ```ts
-{
-    data: TimelineEvent[];
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+ObservableValue<TimelineEvent[]>
 ```

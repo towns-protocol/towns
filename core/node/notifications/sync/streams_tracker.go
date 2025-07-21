@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 
+	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -31,11 +32,12 @@ func NewNotificationsStreamsTracker(
 	listener track_streams.StreamEventListener,
 	storage UserPreferencesStore,
 	metricsFactory infra.MetricsFactory,
+	trackingConfig config.StreamTrackingConfig,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &NotificationsStreamsTracker{
 		storage: storage,
 	}
-	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory); err != nil {
+	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory, trackingConfig); err != nil {
 		return nil, err
 	}
 

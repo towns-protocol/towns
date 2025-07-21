@@ -21,11 +21,10 @@ module.exports = {
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
         'plugin:@typescript-eslint/recommended-requiring-type-checking',
-        'plugin:import/typescript',
-        'prettier',
+        'plugin:import-x/typescript',
         'plugin:prettier/recommended',
     ],
-    plugins: ['@typescript-eslint', 'import'],
+    plugins: ['@typescript-eslint', 'import-x'],
     overrides: [
         {
             files: ['*.ts', '*.tsx'],
@@ -55,26 +54,9 @@ module.exports = {
     rules: {
         'no-console': 'error',
         'no-void': ['error', { allowAsStatement: true }],
-        'no-restricted-imports': [
-            'error',
-            {
-                paths: [
-                    {
-                        name: 'lodash',
-                        message: 'Please use lodash submodules imports.',
-                    },
-                    {
-                        name: 'lodash/fp',
-                        message: 'Please use lodash submodules imports.',
-                    },
-                ],
-            },
-        ],
         'no-constant-condition': 'off',
-
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         '@typescript-eslint/require-await': 'off',
-
         '@typescript-eslint/no-misused-promises': [
             'error',
             {
@@ -85,11 +67,10 @@ module.exports = {
         /**
          * Import eslint rules
          */
-        'import/no-cycle': ['error', { ignoreExternal: true }],
-        'import/no-useless-path-segments': 'error',
-        'import/no-extraneous-dependencies': 'error',
-        'import/no-default-export': 'error',
-        'import/order': [
+        'import-x/no-cycle': ['error', { ignoreExternal: true }],
+        'import-x/no-useless-path-segments': 'error',
+        'import-x/no-extraneous-dependencies': 'error',
+        'import-x/order': [
             'error',
             {
                 groups: [
@@ -108,6 +89,7 @@ module.exports = {
                 'newlines-between': 'always',
             },
         ],
-        'import/no-duplicates': 'error',
+        'import-x/no-rename-default': 'off',
+        'import-x/no-duplicates': 'error',
     },
 }

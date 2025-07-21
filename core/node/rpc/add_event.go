@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/auth"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -46,19 +47,7 @@ func (s *Service) localAddEvent(
 		)
 	}
 
-	if err != nil && req.Msg.Optional {
-		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
-		// currently this is catching all errors, which is not ideal
-		riverError := AsRiverError(err)
-		return connect.NewResponse(&AddEventResponse{
-			Error: &AddEventResponse_Error{
-				Code:  riverError.Code,
-				Msg:   riverError.Error(),
-				Funcs: riverError.Funcs,
-			},
-			NewEvents: newEvents,
-		}), nil
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&AddEventResponse{
@@ -95,7 +84,7 @@ func (s *Service) ensureStreamIsUpToDate(
 
 		retryCount++
 		if retryCount == 5 { // schedules task after 100ms + 200ms + 400ms + 800ms = 1500ms
-			s.cache.SubmitSyncStreamTask(s.serverCtx, localStream)
+			s.cache.SubmitReconcileStreamTask(localStream, nil)
 		}
 
 		if err := backoff.Wait(ctx, RiverError(Err_BAD_BLOCK_NUMBER, "Stream out-of-sync",
@@ -128,7 +117,6 @@ func (s *Service) addParsedEvent(
 		parsedEvent,
 		streamView,
 	)
-
 	if err != nil {
 		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
 			// TODO: REPLICATION: FIX: implement returning relevant EventRefs here. How are they used in SDK?
@@ -143,20 +131,20 @@ func (s *Service) addParsedEvent(
 	}
 
 	if len(verifications.OneOfChainAuths) > 0 {
-		isEntitled := false
+		var isEntitledResult auth.IsEntitledResult
 		var err error
 		// Determine if any chainAuthArgs grant entitlement
 		for _, chainAuthArgs := range verifications.OneOfChainAuths {
-			isEntitled, err = s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
+			isEntitledResult, err = s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
 			if err != nil {
 				return nil, err
 			}
-			if isEntitled {
+			if isEntitledResult.IsEntitled() {
 				break
 			}
 		}
 		// If no chainAuthArgs grant entitlement, execute the OnChainAuthFailure side effect.
-		if !isEntitled {
+		if !isEntitledResult.IsEntitled() {
 			var newEvents []*EventRef = nil
 			if sideEffects.OnChainAuthFailure != nil {
 				newEvents, err = s.AddEventPayload(
@@ -172,6 +160,7 @@ func (s *Service) addParsedEvent(
 			return newEvents, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
+				"reason", isEntitledResult.Reason().String(),
 				"chainAuthArgsList",
 				verifications.OneOfChainAuths,
 			).Func("addParsedEvent")

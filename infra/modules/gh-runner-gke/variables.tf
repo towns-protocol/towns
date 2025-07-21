@@ -49,7 +49,7 @@ variable "ip_range_pods_cidr" {
   default     = "192.168.0.0/18"
 }
 
-variable "ip_range_services_cider" {
+variable "ip_range_services_cidr" {
   type        = string
   description = "The secondary ip range cidr to use for services"
   default     = "192.168.64.0/18"
@@ -94,7 +94,7 @@ variable "max_node_count" {
 variable "min_node_count" {
   type        = number
   description = "Minimum number of nodes in the runner node pool"
-  default     = 2
+  default     = 0
 }
 
 variable "gh_app_pre_defined_secret_name" {

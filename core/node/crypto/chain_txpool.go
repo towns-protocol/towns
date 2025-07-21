@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"sync/atomic"
@@ -16,14 +17,15 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -106,7 +108,7 @@ type (
 
 	// pendingTransactionPool keeps track of transactions that are submitted but the receipt has not been retrieved.
 	pendingTransactionPool struct {
-		pendingTxs *xsync.MapOf[uint64, *txPoolPendingTransaction]
+		pendingTxs *xsync.Map[uint64, *txPoolPendingTransaction]
 
 		client  BlockchainClient
 		wallet  *Wallet
@@ -194,7 +196,7 @@ func newPendingTransactionPool(
 	)
 
 	ptp := &pendingTransactionPool{
-		pendingTxs:    xsync.NewMapOf[uint64, *txPoolPendingTransaction](),
+		pendingTxs:    xsync.NewMap[uint64, *txPoolPendingTransaction](),
 		client:        client,
 		wallet:        wallet,
 		chainID:       chainID.Uint64(),
@@ -301,10 +303,22 @@ func (pool *pendingTransactionPool) closeTx(
 
 	pool.pendingTxCount.Add(-1)
 	pool.processedTxCount.Add(1)
-	pool.transactionTotalInclusionDuration.Observe(time.Since(ptx.firstSubmit).Seconds())
-	pool.transactionInclusionDuration.Observe(time.Since(ptx.lastSubmit).Seconds())
+	took := time.Since(ptx.firstSubmit)
+	pool.transactionTotalInclusionDuration.Observe(took.Seconds())
+	pool.transactionInclusionDuration.Observe(took.Seconds())
 	pool.transactionsProcessed.With(prometheus.Labels{"status": status}).Inc()
 	pool.transactionsPending.Add(-1)
+
+	if took >= 15*time.Second {
+		log.Warnw("Transaction took too long to be included in the chain",
+			"name", ptx.name,
+			"executedHash", ptx.executedHash.Load(),
+			"took", took,
+			"hashes", ptx.txHashes,
+			"firstSubmit", ptx.firstSubmit,
+			"lastSubmit", ptx.lastSubmit,
+		)
+	}
 }
 
 func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context, head *types.Header) {
@@ -320,7 +334,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 	// have a receipt available.
 	nonce, err := pool.client.NonceAt(ctx, pool.wallet.Address, head.Number)
 	if err != nil {
-		log.Warnw("unable to get tx pool nonce", "err", err)
+		log.Warnw("unable to get tx pool nonce", "error", err)
 		return
 	}
 
@@ -343,7 +357,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 					continue
 				}
 				if err != nil {
-					log.Warnw("unable to get transaction receipt", "txHash", txHash.Hex(), "err", err)
+					log.Warnw("unable to get transaction receipt", "txHash", txHash.Hex(), "error", err)
 					return true
 				}
 			}
@@ -364,7 +378,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 				close(ptx.listener) // this will return an error that the receipt wasn't available when waiting for it
 			}
 		} else if ptx.txOpts.Context != nil && ptx.txOpts.Context.Err() != nil {
-			log.Debugw("replacement transaction canceled", "txHash", ptx.tx.Hash(), "err", ptx.txOpts.Context.Err())
+			log.Debugw("replacement transaction canceled", "txHash", ptx.tx.Hash(), "error", ptx.txOpts.Context.Err())
 			pool.closeTx(log, ptx, nil, common.Hash{})
 		} else if pool.replacePolicy.Eligible(head, ptx.lastSubmit, ptx.tx) { // determine if tx is eligible for resubmit
 			ptx.txOpts.GasPrice, ptx.txOpts.GasFeeCap, ptx.txOpts.GasTipCap = pool.pricePolicy.Reprice(head, ptx.tx)
@@ -373,7 +387,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 
 			tx, err := ptx.resubmit(ptx.txOpts)
 			if err != nil {
-				log.Warnw("unable to create replacement transaction", "txHash", ptx.tx.Hash(), "err", err)
+				log.Warnw("unable to create replacement transaction", "txHash", ptx.tx.Hash(), "error", err)
 				return true
 			}
 
@@ -406,10 +420,10 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 				pool.transactionGasCap.With(prometheus.Labels{"replacement": "false"}).Set(gasCap)
 				pool.transactionGasTip.With(prometheus.Labels{"replacement": "false"}).Set(tipCap)
 			} else if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-				log.Debugw("replacement transaction canceled", "txHash", tx.Hash(), "err", err)
+				log.Debugw("replacement transaction canceled", "txHash", tx.Hash(), "error", err)
 				pool.closeTx(log, ptx, nil, common.Hash{})
 			} else {
-				log.Errorw("unable to replace transaction", "txHash", tx.Hash(), "err", err)
+				log.Errorw("unable to replace transaction", "txHash", tx.Hash(), "error", err)
 			}
 		}
 
@@ -418,7 +432,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 }
 
 // NewTransactionPoolWithPoliciesFromConfig creates an in-memory transaction pool that tracks transactions that are
-// submitted through it. Pending transactions checked on each block if they are eligable to be replaced (through the
+// submitted through it. Pending transactions checked on each block if they are eligible to be replaced (through the
 // replacement policy). If the pending transaction must be replaced is uses the price policy to determine the new gas
 // fees for the replacement transaction. The pool then submits the replacement policy. It keeps track of the old pending
 // transactions in case the original transaction was included in the chain.
@@ -456,7 +470,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 }
 
 // NewTransactionPoolWithPolicies creates an in-memory transaction pool that tracks transactions that are submitted
-// through it. Pending transactions checked on each block if they are eligable to be replaced. This is determined with
+// through it. Pending transactions checked on each block if they are eligible to be replaced. This is determined with
 // the given replacePolicy. If the pending transaction must be replaced the given pricePolicy is used to determine the
 // fees for the replacement transaction. The pool than submits the replacement policy. It keeps track of the old pending
 // transactions in case the original transaction was included in the chain.
@@ -529,12 +543,12 @@ func (r *transactionPool) sendReplacementTransactions(ctx context.Context) {
 
 	nonce, err := r.client.NonceAt(ctx, r.wallet.Address, nil)
 	if err != nil {
-		log.Errorw("Unable to obtain nonce for replacement transactions", "err", err)
+		log.Errorw("Unable to obtain nonce for replacement transactions", "error", err)
 	}
 
 	pendingNonce, err := r.client.PendingNonceAt(ctx, r.wallet.Address)
 	if err != nil {
-		log.Errorw("Unable to obtain pending nonce for replacement transactions", "err", err)
+		log.Errorw("Unable to obtain pending nonce for replacement transactions", "error", err)
 	}
 
 	if nonce >= pendingNonce {
@@ -591,12 +605,12 @@ func (r *transactionPool) sendReplacementTransactions(ctx context.Context) {
 		// send a replacement tx that is guaranteed to fail
 		tx, err := createTx(opts)
 		if err != nil {
-			log.Errorw("Unable to create replacement transaction", "err", err)
+			log.Errorw("Unable to create replacement transaction", "error", err)
 			return
 		}
 
 		if err := r.client.SendTransaction(ctx, tx); err != nil {
-			log.Errorw("Unable to submit replacement transaction", "err", err)
+			log.Errorw("Unable to submit replacement transaction", "error", err)
 			return
 		}
 
@@ -627,7 +641,7 @@ func (r *transactionPool) sendReplacementTransactions(ctx context.Context) {
 
 	// wait for pending tx to be included
 	if _, err := lastPendingTx.Wait(ctx); err != nil {
-		log.Errorw("Replacement transaction failed", "err", err)
+		log.Errorw("Replacement transaction failed", "error", err)
 		return
 	}
 
@@ -640,7 +654,12 @@ func (tx *txPoolPendingTransaction) Wait(ctx context.Context) (*types.Receipt, e
 	var span trace.Span
 	if tx.tracer != nil {
 		ctx, span = tx.tracer.Start(ctx, "pending_tx_wait",
-			trace.WithAttributes(attribute.String("function", tx.name)))
+			trace.WithAttributes(
+				attribute.String("function", tx.name),
+				attribute.String("tx", fmt.Sprintf("%s", tx.tx.Hash())),
+				attribute.Int64("nonce", int64(tx.tx.Nonce())),
+			),
+		)
 		defer span.End()
 	}
 
@@ -688,7 +707,7 @@ func (r *transactionPool) EstimateGas(ctx context.Context, createTx CreateTransa
 	tx, err := createTx(opts)
 	log := logging.FromCtx(ctx)
 	if err != nil {
-		log.Debugw("Estimating gas for transaction failed", "err", err)
+		log.Debugw("Estimating gas for transaction failed", "error", err)
 		return 0, err
 	}
 	return tx.Gas(), nil
@@ -823,7 +842,7 @@ func (r *transactionPool) onHead(ctx context.Context, head *types.Header) {
 	balance, err := r.client.BalanceAt(ctx, r.wallet.Address, nil)
 	if err != nil {
 		log := logging.FromCtx(ctx).With("chain", r.chainID)
-		log.Errorw("Unable to retrieve wallet balance", "err", err)
+		log.Errorw("Unable to retrieve wallet balance", "error", err)
 		return
 	}
 

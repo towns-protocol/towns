@@ -64,7 +64,7 @@ if err != nil {
 
 It's ok to use `AsRiverError` on other types of errors: in this case it auto-wraps with unknown error code.
 
-River errors can be agumented with extra information without the need to create a new error:
+River errors can be augmented with extra information without the need to create a new error:
 
 ```go
 return AsRiverError(err).

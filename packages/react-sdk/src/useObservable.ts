@@ -1,17 +1,16 @@
 'use client'
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { type Observable, type PersistedModel } from '@towns-protocol/sdk'
 import { isPersistedModel } from './internals/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export declare namespace ObservableConfig {
+export namespace ObservableConfig {
     /**
      * Configuration options for an observable.
      * It can be used to configure the behavior of the `useObservable` hook.
      */
-    export type FromObservable<Observable_> = Observable_ extends Observable<infer Data>
-        ? FromData<Data>
-        : never
+    export type FromObservable<Observable_> =
+        Observable_ extends Observable<infer Data> ? FromData<Data> : never
 
     // TODO: Some util props:
     // - select: select a subset of the data, or transform it
@@ -20,66 +19,52 @@ export declare namespace ObservableConfig {
      * Create configuration options for an observable from the data type.
      * It can be used to configure the behavior of the `useObservable` hook.
      */
-    export type FromData<Data> = Data extends PersistedModel<infer UnwrappedData>
-        ? {
-              /**
-               * Trigger the update immediately, without waiting for the first update.
-               * @defaultValue true
-               */
-              fireImmediately?: boolean
-              /** Callback function to be called when the data is updated. */
-              onUpdate?: (data: UnwrappedData) => void
-              // TODO: when an error occurs? store errors? RPC error?
-              /** Callback function to be called when an error occurs. */
-              onError?: (error: Error) => void
-          }
-        : {
-              /**
-               * Trigger the update immediately, without waiting for the first update.
-               * @defaultValue true
-               */
-              fireImmediately?: boolean
-              /** Callback function to be called when the data is updated. */
-              onUpdate?: (data: Data) => void
-              // TODO: when an error occurs? store errors? RPC error?
-              /** Callback function to be called when an error occurs. */
-              onError?: (error: Error) => void
-          }
+    export type FromData<Data> =
+        Data extends PersistedModel<infer UnwrappedData>
+            ? {
+                  /**
+                   * Trigger the update immediately, without waiting for the first update.
+                   * @defaultValue true
+                   */
+                  fireImmediately?: boolean
+                  /** Callback function to be called when the data is updated. */
+                  onUpdate?: (data: UnwrappedData) => void
+                  // TODO: when an error occurs? store errors? RPC error?
+                  /** Callback function to be called when an error occurs. */
+                  onError?: (error: Error) => void
+              }
+            : {
+                  /**
+                   * Trigger the update immediately, without waiting for the first update.
+                   * @defaultValue true
+                   */
+                  fireImmediately?: boolean
+                  /** Callback function to be called when the data is updated. */
+                  onUpdate?: (data: Data) => void
+                  // TODO: when an error occurs? store errors? RPC error?
+                  /** Callback function to be called when an error occurs. */
+                  onError?: (error: Error) => void
+              }
 }
 
 /**
- * SyncAgent models are wrapped in a PersistedModel when they are persisted.
- * This type is used to extract the actual data from the model.
+ * The value returned by the useObservable hook.
+ * If the observable is a PersistedModel, it will include error and status information.
  */
-type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
-    ? {
-          // Its a persisted object - PersistedObservable<T>
-          /** The data of the model. */
-          data: UnwrappedData
-          /** If the model is in an error state, this will be the error. */
-          error: Error | undefined
-          status: PersistedModel<Data>['status']
-          /** True if the model is in a loading state. */
-          isLoading: boolean
-          /** True if the model is in an error state. */
-          isError: boolean
-          /** True if the data is loaded. */
-          isLoaded: boolean
-      }
-    : {
-          // Its a non persisted object - Observable<T>
-          /** The data of the model. */
-          data: Data
-          error: undefined
-          /** The status of the model. For a non persisted model, this will be either `loading` or `loaded`. */
-          status: 'loading' | 'loaded'
-          /** True if the model is in a loading state. */
-          isLoading: boolean
-          /** Non existent for a non persisted model. */
-          isError: false
-          /** True if the data is loaded. */
-          isLoaded: boolean
-      }
+export type ObservableValue<T> = {
+    /** The data of the model. */
+    data: T
+    /** If the model is in an error state, this will be the error. */
+    error: Error | undefined
+    /** The status of the model. */
+    status: 'loading' | 'loaded' | 'error'
+    /** True if the model is in a loading state. */
+    isLoading: boolean
+    /** True if the model is in an error state. */
+    isError: boolean
+    /** True if the data is loaded. */
+    isLoaded: boolean
+}
 
 /**
  * This hook subscribes to an observable and returns the value of the observable.
@@ -87,19 +72,22 @@ type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
  * @param config - Configuration options for the observable.
  * @returns The value of the observable.
  */
-export function useObservable<T>(
-    observable: Observable<T>,
-    config?: ObservableConfig.FromData<T>,
-): ObservableValue<T> {
-    const opts = useMemo(
-        () => ({ fireImmediately: true, ...config }),
-        [config],
-    ) as ObservableConfig.FromData<T>
+export function useObservable<
+    Model,
+    Data = Model extends PersistedModel<infer UnwrappedData> ? UnwrappedData : Model,
+>(observable: Observable<Model>, config?: ObservableConfig.FromData<Model>): ObservableValue<Data> {
+    const opts = useMemo(() => ({ fireImmediately: true, ...config }), [config])
 
-    const value = useSyncExternalStore(
-        (subscriber) => observable.subscribe(subscriber, { fireImediately: opts?.fireImmediately }),
-        () => observable.value,
+    const subscribeFn = useCallback(
+        (subFn: () => void) => {
+            return observable.subscribe(subFn, {
+                fireImediately: opts?.fireImmediately,
+            })
+        },
+        [observable, opts?.fireImmediately],
     )
+
+    const value = useSyncExternalStore(subscribeFn, () => observable.value)
 
     useEffect(() => {
         if (isPersistedModel(value)) {
@@ -118,7 +106,7 @@ export function useObservable<T>(
         if (isPersistedModel(value)) {
             const { data, status } = value
             return {
-                data: data,
+                data: data as unknown as Data,
                 error: status === 'error' ? value.error : undefined,
                 status,
                 isLoading: status === 'loading',
@@ -127,15 +115,15 @@ export function useObservable<T>(
             }
         } else {
             return {
-                data: value,
+                data: value as unknown as Data,
                 error: undefined,
-                status: 'loaded',
+                status: 'loaded' as const,
                 isLoading: false,
                 isError: false,
                 isLoaded: true,
             }
         }
-    }, [value]) as ObservableValue<T>
+    }, [value]) satisfies ObservableValue<Data>
 
     return data
 }

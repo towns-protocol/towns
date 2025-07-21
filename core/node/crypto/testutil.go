@@ -59,11 +59,10 @@ func (w *autoMiningClientWrapper) SendTransaction(ctx context.Context, tx *types
 
 type TestParams struct {
 	NumKeys          int
+	NumOperators     int
 	MineOnTx         bool
 	AutoMine         bool
 	AutoMineInterval time.Duration
-	NoDeployer       bool
-	NoOnChainConfig  bool
 }
 
 type BlockchainTestContext struct {
@@ -75,14 +74,17 @@ type BlockchainTestContext struct {
 	RemoteNode   bool
 	BcClient     BlockchainClient
 
-	Wallets              []*Wallet
 	OnChainConfig        OnChainConfiguration
 	RiverRegistryAddress common.Address
 	NodeRegistry         *river.NodeRegistryV1
 	StreamRegistry       *river.StreamRegistryV1
 	Configuration        *river.RiverConfigV1
 	ChainId              *big.Int
-	DeployerBlockchain   *Blockchain
+
+	DeployerBlockchain  *Blockchain
+	NodeWallets         []*Wallet
+	OperatorWallets     []*Wallet
+	operatorBlockchains []*Blockchain
 }
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
@@ -207,13 +209,18 @@ func initAnvil(ctx context.Context, url string, numKeys int) ([]*Wallet, *ethcli
 }
 
 func NewBlockchainTestContext(ctx context.Context, params TestParams) (*BlockchainTestContext, error) {
-	// Add one for deployer
-	numKeys := params.NumKeys + 1
+	if params.NumOperators <= 0 {
+		// By default create an operator for each node
+		params.NumOperators = params.NumKeys
+	}
 
-	wallets, backend, ethClient, isRemote, err := initChainContext(ctx, numKeys)
+	allWallets, backend, ethClient, isRemote, err := initChainContext(ctx, params.NumKeys+params.NumOperators+1)
 	if err != nil {
 		return nil, err
 	}
+	nodeWallets := allWallets[:params.NumKeys]
+	operatorWallets := allWallets[params.NumKeys : params.NumKeys+params.NumOperators]
+	deployerWallet := allWallets[params.NumKeys+params.NumOperators]
 
 	var client BlockchainClient
 	client = ethClient
@@ -227,13 +234,15 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 	}
 
 	btc := &BlockchainTestContext{
-		Params:     params,
-		Backend:    backend,
-		EthClient:  ethClient,
-		RemoteNode: isRemote,
-		Wallets:    wallets,
-		ChainId:    chainId,
-		BcClient:   client,
+		Params:              params,
+		Backend:             backend,
+		EthClient:           ethClient,
+		RemoteNode:          isRemote,
+		ChainId:             chainId,
+		BcClient:            client,
+		NodeWallets:         nodeWallets,
+		OperatorWallets:     operatorWallets,
+		operatorBlockchains: make([]*Blockchain, len(operatorWallets)),
 	}
 
 	if params.MineOnTx {
@@ -276,15 +285,20 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		}()
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(wallets[len(wallets)-1].PrivateKeyStruct, chainId)
+	auth, err := bind.NewKeyedTransactorWithChainID(deployerWallet.PrivateKeyStruct, chainId)
 	if err != nil {
 		return nil, err
 	}
 
+	operatorAddrs := make([]common.Address, len(operatorWallets))
+	for i, w := range operatorWallets {
+		operatorAddrs[i] = w.Address
+	}
+	operatorAddrs = append(operatorAddrs, deployerWallet.Address)
 	btc.RiverRegistryAddress, _, _, err = deploy.DeployMockRiverRegistry(
 		auth,
 		client,
-		[]common.Address{wallets[len(wallets)-1].Address},
+		operatorAddrs,
 	)
 	if err != nil {
 		return nil, err
@@ -305,10 +319,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		return nil, err
 	}
 
-	// Add deployer as operator so it can register nodes
-	if !params.NoDeployer {
-		btc.DeployerBlockchain = makeTestBlockchain(ctx, wallets[len(wallets)-1], client)
-	}
+	btc.DeployerBlockchain = makeTestBlockchain(ctx, deployerWallet, client)
 
 	// commit the river registry deployment transaction
 	if !params.MineOnTx {
@@ -317,13 +328,11 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		}
 	}
 
-	if !params.NoOnChainConfig {
-		blockNum := btc.BlockNum(ctx)
-		btc.OnChainConfig, err = NewOnChainConfig(
-			ctx, btc.Client(), btc.RiverRegistryAddress, blockNum, btc.DeployerBlockchain.ChainMonitor)
-		if err != nil {
-			return nil, err
-		}
+	blockNum := btc.BlockNum(ctx)
+	btc.OnChainConfig, err = NewOnChainConfig(
+		ctx, btc.Client(), btc.RiverRegistryAddress, blockNum, btc.DeployerBlockchain.ChainMonitor)
+	if err != nil {
+		return nil, err
 	}
 
 	return btc, nil
@@ -405,6 +414,11 @@ func (c *BlockchainTestContext) Close() {
 	if c.DeployerBlockchain != nil {
 		c.DeployerBlockchain.Close()
 	}
+	for _, bc := range c.operatorBlockchains {
+		if bc != nil {
+			bc.Close()
+		}
+	}
 	if c.Backend != nil {
 		_ = c.Backend.Close()
 		c.Backend = nil
@@ -449,8 +463,9 @@ func (c *BlockchainTestContext) IsRemote() bool {
 	return c.RemoteNode
 }
 
+// TODO: FIX: remove
 func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {
-	return c.Wallets[len(c.Wallets)-1]
+	return c.DeployerBlockchain.Wallet
 }
 
 func makeTestBlockchain(
@@ -484,10 +499,7 @@ func makeTestBlockchain(
 }
 
 func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int) *Blockchain {
-	if index >= len(c.Wallets) {
-		return nil
-	}
-	return makeTestBlockchain(ctx, c.Wallets[index], c.Client())
+	return makeTestBlockchain(ctx, c.NodeWallets[index], c.Client())
 }
 
 func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blockchain {
@@ -498,16 +510,24 @@ func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blo
 	return makeTestBlockchain(ctx, wallet, c.Client())
 }
 
+func (c *BlockchainTestContext) OperatorForNodeIndex(ctx context.Context, nodeIndex int) *Blockchain {
+	operatorIndex := nodeIndex % len(c.operatorBlockchains)
+	if c.operatorBlockchains[operatorIndex] == nil {
+		c.operatorBlockchains[operatorIndex] = makeTestBlockchain(ctx, c.OperatorWallets[operatorIndex], c.Client())
+	}
+	return c.operatorBlockchains[operatorIndex]
+}
+
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
 	return c.InitNodeRecordEx(ctx, index, url, river.NodeStatus_Operational)
 }
 
 func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int, url string, status uint8) error {
-	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+	pendingTx, err := c.OperatorForNodeIndex(ctx, index).TxPool.Submit(
 		ctx,
 		"RegisterNode",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.RegisterNode(opts, c.Wallets[index].Address, url, status)
+			return c.NodeRegistry.RegisterNode(opts, c.NodeWallets[index].Address, url, status)
 		},
 	)
 	if err != nil {
@@ -532,11 +552,11 @@ func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int,
 }
 
 func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int, status uint8) error {
-	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+	pendingTx, err := c.OperatorForNodeIndex(ctx, index).TxPool.Submit(
 		ctx,
 		"UpdateNodeStatus",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.UpdateNodeStatus(opts, c.Wallets[index].Address, status)
+			return c.NodeRegistry.UpdateNodeStatus(opts, c.NodeWallets[index].Address, status)
 		},
 	)
 	if err != nil {
@@ -561,11 +581,11 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 }
 
 func (c *BlockchainTestContext) UpdateNodeUrl(ctx context.Context, index int, url string) error {
-	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+	pendingTx, err := c.OperatorForNodeIndex(ctx, index).TxPool.Submit(
 		ctx,
 		"UpdateNodeUrl",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.UpdateNodeUrl(opts, c.Wallets[index].Address, url)
+			return c.NodeRegistry.UpdateNodeUrl(opts, c.NodeWallets[index].Address, url)
 		},
 	)
 	if err != nil {
@@ -600,6 +620,25 @@ func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
 		panic(err)
 	}
 	return BlockNumber(blockNum)
+}
+
+func (c *BlockchainTestContext) SetStreamReplicationFactor(
+	t *testing.T,
+	ctx context.Context,
+	requests []river.SetStreamReplicationFactor,
+) {
+	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+		ctx,
+		"SetStreamReplicationFactor",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+		},
+	)
+
+	require.NoError(t, err)
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(t, err)
+	require.Equal(t, TransactionResultSuccess, receipt.Status)
 }
 
 func (c *BlockchainTestContext) SetConfigValue(t *testing.T, ctx context.Context, key string, value []byte) {
@@ -668,7 +707,12 @@ func (NoopChainMonitor) OnAllEvents(BlockNumber, OnChainEventCallback)          
 func (NoopChainMonitor) OnContractEvent(BlockNumber, common.Address, OnChainEventCallback) {}
 func (NoopChainMonitor) OnContractWithTopicsEvent(BlockNumber, common.Address, [][]common.Hash, OnChainEventCallback) {
 }
-func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback) {}
+func (NoopChainMonitor) OnNodeAdded(BlockNumber, OnNodeAddedCallback)                 {}
+func (NoopChainMonitor) OnNodeStatusUpdated(BlockNumber, OnNodeStatusUpdatedCallback) {}
+func (NoopChainMonitor) OnNodeUrlUpdated(BlockNumber, OnNodeUrlUpdatedCallback)       {}
+func (NoopChainMonitor) OnNodeRemoved(BlockNumber, OnNodeRemovedCallback)             {}
+func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback)                      {}
+func (NoopChainMonitor) EnableRiverRegistryCallbacks(common.Address)                  {}
 
 // TestMainForLeaksIgnoreGeth is a helper function to check if there are goroutine leaks.
 // It ignores goroutines created by Geth's simulated backend.

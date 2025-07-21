@@ -8,12 +8,13 @@ env:
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
-    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546,84532:${{ secrets.BASE_SEPOLIA_RPC_URL }},11155111:${{ secrets.ETH_SEPOLIA_RPC_URL }}'
+    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
 on:
     schedule:
         # Run every hour
         - cron: '0 * * * *'
     pull_request:
+    merge_group:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
             skip_common_ci:
@@ -51,7 +52,7 @@ jobs:
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-x64-16core
         timeout-minutes: 30
 
         steps:
@@ -79,7 +80,7 @@ jobs:
                   version: ${{ env.FOUNDRY_VERSION }}
 
             - name: Install Binaries
-              run: sudo apt-get update && sudo apt-get -y install make zstd libsecp256k1-dev gcc
+              run: sudo apt-get update && sudo apt-get -y install make zstd libsecp256k1-dev gcc netcat-openbsd
 
             - uses: actions/setup-node@v4
               with:
@@ -134,9 +135,9 @@ jobs:
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              uses: golangci/golangci-lint-action@v6
+              uses: golangci/golangci-lint-action@v7
               with:
-                  version: v1.62.0
+                  version: v2.0.2
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -168,7 +169,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
               with:
-                  version: v0.5.1
+                  version: v0.6.1
                   working-directory: core
                   install-go: false
 
@@ -179,10 +180,11 @@ jobs:
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
+
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-x64-16core
         timeout-minutes: 30
         services:
             postgres-core:
@@ -210,10 +212,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -249,9 +248,6 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - uses: actions/setup-node@v4
               with:
@@ -309,6 +305,10 @@ jobs:
               working-directory: core
               run: just RUN_ENV=multi_ne config-and-start
 
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi_ne start-and-wait-app-registry
+
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
               run: yarn run test:ci:multi:ne
@@ -334,7 +334,7 @@ jobs:
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-x64-16core
         timeout-minutes: 40
         services:
             postgres-core:
@@ -362,10 +362,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -401,9 +398,6 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - uses: actions/setup-node@v4
               with:
@@ -458,6 +452,10 @@ jobs:
               run: just RUN_ENV=multi config-and-start
               working-directory: core
 
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-app-registry
+
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 
@@ -469,6 +467,9 @@ jobs:
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
+
+            - name: Run Bot Uber Test (with entitlements)
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/bot
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -482,7 +483,7 @@ jobs:
     Multinode_Ent_Legacy:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-x64-16core
         timeout-minutes: 40
         services:
             postgres-core:
@@ -510,10 +511,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -549,9 +547,6 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
 
             - uses: actions/setup-node@v4
               with:
@@ -606,6 +601,10 @@ jobs:
               run: just RUN_ENV=multi config-and-start
               working-directory: core
 
+            - name: Run app registry
+              working-directory: core
+              run: just RUN_ENV=multi start-and-wait-app-registry
+
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 
@@ -624,7 +623,7 @@ jobs:
     Go_Tests:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_go
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-x64-16core
         timeout-minutes: 30
         services:
             postgres-core:
@@ -667,10 +666,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat libsecp256k1-dev
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd libsecp256k1-dev
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -687,8 +683,8 @@ jobs:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
 
-            - name: Install Protoc
-              uses: arduino/setup-protoc@v3
+            - name: Install gotestsum
+              run: go install gotest.tools/gotestsum@latest
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -718,17 +714,25 @@ jobs:
               working-directory: core
 
             - name: Run go tests with race detection exluding large tests
-              run: go test ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
+              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 
             - name: Run large go tests without race detection
-              run: go test ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
+              run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
+
+            - name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: 'go-test-logs-${{ github.job }}'
+                  path: |
+                      ./core/run_files/test_logs/
 
     XChain_Integration:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_integration
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-x64-16core
         timeout-minutes: 30
 
         steps:
@@ -742,10 +746,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y zstd make netcat libsecp256k1-dev gcc
-
-            - name: Install Rust Toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@v1
+              run: sudo apt update && sudo apt-get install -y zstd make libsecp256k1-dev gcc netcat-openbsd
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -780,7 +781,7 @@ jobs:
                 XChain_Integration,
             ]
         if: failure()
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-x64-16core
         steps:
             - name: Slack notification
               if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')

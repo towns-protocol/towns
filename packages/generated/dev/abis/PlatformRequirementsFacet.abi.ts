@@ -130,6 +130,43 @@ export default [
   },
   {
     "type": "function",
+    "name": "getSwapFees",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "protocolBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "posterBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isRouterWhitelisted",
+    "inputs": [
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "setFeeRecipient",
     "inputs": [
       {
@@ -201,6 +238,42 @@ export default [
         "name": "limit",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setRouterWhitelisted",
+    "inputs": [
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "whitelisted",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setSwapFees",
+    "inputs": [
+      {
+        "name": "protocolBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "posterBps",
+        "type": "uint16",
+        "internalType": "uint16"
       }
     ],
     "outputs": [],
@@ -343,6 +416,44 @@ export default [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "PlatformSwapFeesSet",
+    "inputs": [
+      {
+        "name": "protocolBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "posterBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RouterWhitelistUpdated",
+    "inputs": [
+      {
+        "name": "router",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "whitelisted",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "Initializable_InInitializingState",
     "inputs": []
@@ -401,6 +512,11 @@ export default [
   {
     "type": "error",
     "name": "Platform__InvalidMembershipMintLimit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Platform__InvalidSwapFeeBps",
     "inputs": []
   }
 ] as const

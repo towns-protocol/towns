@@ -14,7 +14,7 @@ import { useSetNft } from '@towns-protocol/react-sdk'
 ```ts
 function useSetNft(
   streamId: string,
-  config?: ActionConfig<Myself['setNft']>,
+  config?: ActionConfig<Myself["setNft"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -37,7 +37,7 @@ The id of the stream to set the NFT of.
 
 ### config
 
-- **Type:** `ActionConfig<Myself['setNft']>`
+- **Type:** `ActionConfig<Myself["setNft"]>`
 - **Optional**
 
 Configuration options for the action.

@@ -1,29 +1,26 @@
+import { GroupEncryptionCrypto, UserDevice } from '@towns-protocol/encryption'
 import {
     BaseDecryptionExtensions,
+    DecryptionExtensionsOptions,
     DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
     EventSignatureBundle,
-    GroupEncryptionCrypto,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
     KeySolicitationItem,
-    UserDevice,
-} from '@towns-protocol/encryption'
-import {
-    AddEventResponse_Error,
-    EncryptedData,
-    UserInboxPayload_GroupEncryptionSessions,
-} from '@towns-protocol/proto'
+} from './decryptionExtensions'
+
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@towns-protocol/web3'
 import { check } from '@towns-protocol/dlog'
-import chunk from 'lodash/chunk'
+import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
 import {
@@ -51,6 +48,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         userDevice: UserDevice,
         unpackEnvelopeOpts: { disableSignatureValidation?: boolean } | undefined,
         logId: string,
+        opts: DecryptionExtensionsOptions,
     ) {
         const upToDateStreams = new Set<string>()
         client.streams.getStreams().forEach((stream) => {
@@ -59,7 +57,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         })
 
-        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId)
+        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId, opts)
 
         this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
@@ -88,6 +86,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
             sigBundle: EventSignatureBundle,
+            ephemeral?: boolean,
         ) =>
             this.enqueueKeySolicitation(
                 streamId,
@@ -96,6 +95,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 fromUserAddress,
                 keySolicitation,
                 sigBundle,
+                ephemeral,
             )
 
         const onInitKeySolicitations = (
@@ -109,17 +109,15 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             sigBundle: EventSignatureBundle,
         ) => this.enqueueInitKeySolicitations(streamId, eventHashStr, members, sigBundle)
 
-        const onStreamInitialized = (streamId: string) => {
-            if (isUserInboxStreamId(streamId)) {
-                this.enqueueNewMessageDownload()
-            }
-        }
-
         const onStreamSyncActive = (active: boolean) => {
             this.log.info('onStreamSyncActive', active)
             if (!active) {
                 this.resetUpToDateStreams()
             }
+        }
+
+        const onEphemeralKeyFulfillment = (event: KeyFulfilmentData) => {
+            this.processEphemeralKeyFulfillment(event)
         }
 
         client.on('streamUpToDate', onStreamUpToDate)
@@ -129,8 +127,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('updatedKeySolicitation', onKeySolicitation)
         client.on('initKeySolicitations', onInitKeySolicitations)
         client.on('streamNewUserJoined', onMembershipChange)
-        client.on('streamInitialized', onStreamInitialized)
         client.on('streamSyncActive', onStreamSyncActive)
+        client.on('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
 
         this._onStopFn = () => {
             client.off('streamUpToDate', onStreamUpToDate)
@@ -140,8 +138,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('updatedKeySolicitation', onKeySolicitation)
             client.off('initKeySolicitations', onInitKeySolicitations)
             client.off('streamNewUserJoined', onMembershipChange)
-            client.off('streamInitialized', onStreamInitialized)
             client.off('streamSyncActive', onStreamSyncActive)
+            client.off('ephemeralKeyFulfillment', onEphemeralKeyFulfillment)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
     }
@@ -178,14 +176,28 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public getKeySolicitations(streamId: string): KeySolicitationContent[] {
         const stream = this.client.stream(streamId)
-        return stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const nonEphemeralSolicitations =
+            stream?.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const ephemeralSolicitations = (this.ownEphemeralSolicitations.get(streamId) ?? []).map(
+            (s) => ({
+                deviceKey: s.deviceKey,
+                fallbackKey: s.fallbackKey,
+                isNewDevice: s.isNewDevice,
+                sessionIds: Array.from(s.missingSessionIds),
+            }),
+        )
+        return [...nonEphemeralSolicitations, ...ephemeralSolicitations]
     }
 
     /**
      * Override the default implementation to use the number of members in the stream
      * to determine the delay time.
      */
-    public getRespondDelayMSForKeySolicitation(streamId: string, userId: string): number {
+    public getRespondDelayMSForKeySolicitation(
+        streamId: string,
+        userId: string,
+        opts: { ephemeral: boolean },
+    ): number {
         const multiplier = userId === this.userId ? 0.5 : 1
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -193,7 +205,14 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
         //this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
-        return waitTime * multiplier
+        const delay = waitTime * multiplier
+        if (opts.ephemeral) {
+            if (userId === this.userId) {
+                return 0
+            }
+            return delay / 2
+        }
+        return delay
     }
 
     public async isUserEntitledToKeyExchange(
@@ -268,7 +287,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     public async ackNewGroupSession(
         _session: UserInboxPayload_GroupEncryptionSessions,
     ): Promise<void> {
-        return this.client.ackInboxStream()
+        await this.client.ackInboxStream()
+        await this.client.setPendingUsernames()
     }
 
     public async encryptAndShareGroupSessions({
@@ -299,14 +319,39 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         streamId,
         isNewDevice,
         missingSessionIds,
-    }: KeySolicitationData): Promise<void> {
+        ephemeral = false,
+    }: KeySolicitationData & { ephemeral?: boolean }): Promise<void> {
         const keySolicitation = make_MemberPayload_KeySolicitation({
             deviceKey: this.userDevice.deviceKey,
             fallbackKey: this.userDevice.fallbackKey,
             isNewDevice,
-            sessionIds: isNewDevice ? [] : missingSessionIds,
+            sessionIds: missingSessionIds,
         })
-        await this.client.makeEventAndAddToStream(streamId, keySolicitation)
+
+        if (ephemeral) {
+            // Track own ephemeral solicitation with timer
+            const item = {
+                deviceKey: this.userDevice.deviceKey,
+                fallbackKey: this.userDevice.fallbackKey,
+                isNewDevice,
+                missingSessionIds,
+            }
+
+            const timerId = setTimeout(() => {
+                void this.convertEphemeralToNonEphemeral(streamId)
+            }, this.ephemeralTimeoutMs)
+
+            const existing = this.ownEphemeralSolicitations.get(streamId) || []
+            existing.push({
+                ...item,
+                missingSessionIds: new Set(item.missingSessionIds),
+                timerId,
+                timestamp: Date.now(),
+            })
+            this.ownEphemeralSolicitations.set(streamId, existing)
+        }
+
+        await this.client.makeEventAndAddToStream(streamId, keySolicitation, { ephemeral })
     }
 
     public async sendKeyFulfillment({
@@ -314,17 +359,22 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         userAddress,
         deviceKey,
         sessionIds,
-    }: KeyFulfilmentData): Promise<{ error?: AddEventResponse_Error }> {
+        ephemeral = false,
+    }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: unknown }> {
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
             sessionIds: sessionIds,
         })
 
-        const { error } = await this.client.makeEventAndAddToStream(streamId, fulfillment, {
-            optional: true,
-        })
-        return { error }
+        try {
+            await this.client.makeEventAndAddToStream(streamId, fulfillment, {
+                ephemeral,
+            })
+        } catch (err) {
+            return { error: err }
+        }
+        return {}
     }
 
     public async uploadDeviceKeys(): Promise<void> {
@@ -352,6 +402,49 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         }
     }
 
+    private async convertEphemeralToNonEphemeral(streamId: string): Promise<void> {
+        const solicitations = this.ownEphemeralSolicitations.get(streamId)
+        if (!solicitations || solicitations.length === 0) {
+            return
+        }
+
+        // Clear all timers for this stream's ephemeral solicitations
+        for (const solicitation of solicitations) {
+            if (solicitation.timerId) {
+                clearTimeout(solicitation.timerId)
+            }
+        }
+
+        // Combine all missing session IDs from all ephemeral solicitations
+        const allMissingSessionIds = new Set<string>()
+        let isNewDevice = false
+
+        for (const solicitation of solicitations) {
+            solicitation.missingSessionIds.forEach((sessionId) => {
+                allMissingSessionIds.add(sessionId)
+            })
+            if (solicitation.isNewDevice) {
+                isNewDevice = true
+            }
+        }
+
+        // Remove all ephemeral solicitations for this stream
+        this.ownEphemeralSolicitations.delete(streamId)
+
+        this.log.info('converting all ephemeral solicitations to non-ephemeral', streamId, {
+            count: solicitations.length,
+            totalSessionIds: allMissingSessionIds.size,
+        })
+
+        // Send combined non-ephemeral solicitation
+        await this.sendKeySolicitation({
+            streamId,
+            isNewDevice,
+            missingSessionIds: Array.from(allMissingSessionIds).sort(),
+            ephemeral: false,
+        })
+    }
+
     public getPriorityForStream(
         streamId: string,
         highPriorityIds: Set<string>,
@@ -371,23 +464,23 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
             return 1
         }
+        // space that we're currently viewing
+        if (highPriorityIds.has(streamId)) {
+            return 2
+        }
         // if you're getting updates for this stream, decrypt them so that you see unread messages
         if (recentStreamIds.has(streamId)) {
-            return 2
+            return 3
         }
         // channels in the space we're currently viewing
         if (isChannel) {
             const spaceId = spaceIdFromChannelId(streamId)
             if (highPriorityIds.has(spaceId)) {
-                return 3
+                return 4
             }
         }
         // dms
         if (isDmOrGdm) {
-            return 4
-        }
-        // space that we're currently viewing
-        if (highPriorityIds.has(streamId)) {
             return 5
         }
         // then other channels,

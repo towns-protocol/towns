@@ -33,21 +33,7 @@ function useUserSpaces(
   config?: ObservableConfig.FromObservable<Spaces>,
 ): {
     error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    spaceIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    spaceIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
+    status: "loading" | "loaded" | "error";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -73,21 +59,7 @@ The list of all space ids of the current user.
 ```ts
 {
     error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    spaceIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    spaceIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
+    status: "loading" | "loaded" | "error";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;

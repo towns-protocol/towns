@@ -3,11 +3,13 @@ package shared
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -64,7 +66,7 @@ func MakeSpaceId() (StreamId, error) {
 	b[0] = STREAM_SPACE_BIN
 	_, err := rand.Read(b[1:21])
 	if err != nil {
-		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "error", err)
 	}
 	return StreamIdFromBytes(b[:])
 }
@@ -79,7 +81,7 @@ func MakeChannelId(spaceId StreamId) (StreamId, error) {
 	}
 	_, err = rand.Read(b[21:])
 	if err != nil {
-		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "error", err)
 	}
 	return StreamIdFromBytes(b[:])
 }
@@ -271,4 +273,29 @@ func ValidGDMChannelStreamId(streamId *StreamId) bool {
 
 func ValidUserIdBytes(userId []byte) bool {
 	return len(userId) == 20
+}
+
+func ShardFromMetadataStreamId(streamId StreamId) (uint64, error) {
+	if streamId.Type() != STREAM_METADATA_BIN {
+		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream type for metadata", "streamId", streamId)
+	}
+	// 1 byte prefix, 8 byte big endian shard number
+	return binary.BigEndian.Uint64(streamId[1:9]), nil
+}
+
+func MetadataStreamIdFromShard(shard uint64) StreamId {
+	var b StreamId
+	b[0] = STREAM_METADATA_BIN
+	binary.BigEndian.PutUint64(b[1:9], shard)
+	return b
+}
+
+func ShardForStreamId(streamId StreamId, shardMask uint64) uint64 {
+	hash := xxhash.Sum64(streamId[:])
+	shard := hash & shardMask
+	return shard
+}
+
+func MetadataStreamIdForStreamId(streamId StreamId, shard uint64) StreamId {
+	return MetadataStreamIdFromShard(ShardForStreamId(streamId, shard))
 }

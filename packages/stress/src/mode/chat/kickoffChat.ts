@@ -61,10 +61,9 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     )
 
     const mintMembershipForWallet = async (wallet: Wallet, i: number) => {
-        const hasSpaceMembership = await rootClient.spaceDapp.hasSpaceMembership(
-            spaceId,
-            wallet.address,
-        )
+        const hasSpaceMembership = (
+            await rootClient.spaceDapp.getMembershipStatus(spaceId, [wallet.address])
+        ).isMember
         logger.debug({ i, address: wallet.address, hasSpaceMembership }, 'minting membership')
         if (!hasSpaceMembership) {
             const result = await rootClient.spaceDapp.joinSpace(
@@ -73,8 +72,6 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
                 rootClient.baseProvider.wallet,
             )
             logger.debug(result, 'minted membership')
-            // sleep for > 1 second
-            await new Promise((resolve) => setTimeout(resolve, 1100))
         }
     }
 
@@ -91,6 +88,13 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         const wallet = cfg.allWallets[i]
         await mintMembershipForWallet(wallet, i)
     }
+
+    // Signal to all follower clients that membership minting is complete
+    logger.debug('signaling membership minting complete')
+    await rootClient.sendMessage(announceChannelId, `MEMBERSHIPS_MINTED:${sessionId}`, {
+        threadId: kickoffMessageEventId,
+    })
+
     logger.info('kickoffChat done')
 }
 

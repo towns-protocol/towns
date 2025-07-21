@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/otelconnect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/auth"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -27,7 +29,10 @@ import (
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
 )
 
-type HttpClientMakerFunc = func(context.Context, *config.Config) (*http.Client, error)
+type (
+	HttpClientMakerFunc         = func(context.Context, *config.Config) (*http.Client, error)
+	HttpClientMakerWithCertFunc = func(context.Context, *config.Config, http_client.GetClientCertFunc) (*http.Client, error)
+)
 
 type Service struct {
 	// Context and config
@@ -51,7 +56,6 @@ type Service struct {
 
 	// Streams
 	cache       *StreamCache
-	mbProducer  TestMiniblockProducer
 	syncHandler river_sync.Handler
 
 	// Notifications
@@ -75,10 +79,11 @@ type Service struct {
 	entitlementEvaluator *entitlement.Evaluator
 
 	// Network
-	listener        net.Listener
-	httpServer      *http.Server
-	mux             httpMux
-	httpClientMaker HttpClientMakerFunc
+	listener                net.Listener
+	httpServer              *http.Server
+	mux                     httpMux
+	httpClientMaker         HttpClientMakerFunc
+	httpClientMakerWithCert HttpClientMakerWithCertFunc
 
 	// Status string
 	status atomic.Pointer[string]
@@ -138,4 +143,8 @@ func (s *Service) BaseChain() *crypto.Blockchain {
 
 func (s *Service) RiverChain() *crypto.Blockchain {
 	return s.riverChain
+}
+
+func (s *Service) GetWalletAddress() common.Address {
+	return s.wallet.Address
 }

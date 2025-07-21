@@ -15,10 +15,7 @@ export class MemberMetadata_DisplayNames {
     readonly streamId: string
     readonly userIdToEventId = new Map<string, string>()
     readonly plaintextDisplayNames = new Map<string, string>()
-    readonly displayNameEvents = new Map<
-        string,
-        { encryptedData: EncryptedData; userId: string; pending: boolean }
-    >()
+    readonly displayNameEvents = new Map<string, { userId: string; pending: boolean }>()
 
     constructor(streamId: string) {
         this.streamId = streamId
@@ -58,7 +55,7 @@ export class MemberMetadata_DisplayNames {
         if (!event) {
             return
         }
-        this.displayNameEvents.set(eventId, { ...event, pending: false })
+        this.displayNameEvents.set(eventId, { userId: event.userId, pending: false })
 
         // if we don't have the plaintext display name, no need to emit an event
         if (this.plaintextDisplayNames.has(event.userId)) {
@@ -127,7 +124,6 @@ export class MemberMetadata_DisplayNames {
         this.userIdToEventId.set(userId, eventId)
         this.displayNameEvents.set(eventId, {
             userId,
-            encryptedData: encryptedData,
             pending: pending,
         })
     }

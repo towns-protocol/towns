@@ -3,49 +3,28 @@ package app_client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	"google.golang.org/protobuf/proto"
+
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type EncryptionDevice struct {
-	DeviceKey   string `json:"deviceKey"`
-	FallbackKey string `json:"fallbackKey"`
+	DeviceKey   string
+	FallbackKey string
 }
 
-// command: "initialize"
-type InitializeData struct{}
-
-type InitializeResponse struct {
-	DefaultEncryptionDevice EncryptionDevice `json:"defaultEncryptionDevice"`
-}
-
-// command: "solicit"
-type KeySolicitationData struct {
-	SessionId string `json:"sessionId"`
-	ChannelId string `json:"channelId"`
-}
-
-type KeySolicitationResponse struct{}
-
-// command: "messages"
-type SendSessionMessagesRequestData struct {
-	SessionIds   []string `json:"sessionId"`
-	StreamId     string   `json:"streamId"`
-	CipherTexts  string   `json:"cipherTexts"`
-	StreamEvents [][]byte `json:"streamEvents"`
-}
-
-type SendSessionMessagesResponse struct{}
-
-type AppServiceRequestPayload struct {
-	Command string `json:"command"`
-	Data    any    `json:",omitempty"`
+type WebhookStatus struct {
+	FrameworkVersion int
+	DeviceKey        string
+	FallbackKey      string
 }
 
 type AppClient struct {
@@ -61,22 +40,22 @@ func NewAppClient(httpClient *http.Client, allowLoopback bool) *AppClient {
 	}
 }
 
-func (b *AppClient) marshalAndPost(
+func (b *AppClient) marshalAndPostProto(
 	ctx context.Context,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
-	payload *AppServiceRequestPayload,
+	payload *protocol.AppServiceRequest,
 	webhookUrl string,
 ) (*http.Response, error) {
-	jsonData, err := json.Marshal(payload)
+	marshalledProto, err := proto.Marshal(payload)
 	if err != nil {
 		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
-			Message("Error constructing messages payload").
+			Message("Error marshalling payload").
 			Tag("appId", appId).
 			Tag("webhookUrl", webhookUrl)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", webhookUrl, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequestWithContext(ctx, "POST", webhookUrl, bytes.NewReader(marshalledProto))
 	if err != nil {
 		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error constructing http request").
@@ -92,7 +71,10 @@ func (b *AppClient) marshalAndPost(
 			Tag("webhookUrl", webhookUrl)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	// Set headers to indicate that the request body is in protobuf format.
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	// Set the Accept header to indicate the expected response format.
+	req.Header.Set("Accept", "application/x-protobuf")
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
@@ -118,29 +100,26 @@ func (b *AppClient) marshalAndPost(
 	return resp, nil
 }
 
-// InitializeWebhook calls "initialize" on an app service specified by the webhook url
-// with a jwt token included in the request header that was generated from the shared
-// secret returned to the app upon registration. The caller should verify that we can
-// see a device_id and fallback key in the user stream that matches the device id and
-// fallback key returned in the status message.
-func (b *AppClient) InitializeWebhook(
+func sendRequestAndParseResponse(
+	client *AppClient,
 	ctx context.Context,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
 	webhookUrl string,
-) (*EncryptionDevice, error) {
-	resp, err := b.marshalAndPost(
+	request *protocol.AppServiceRequest,
+) (*protocol.AppServiceResponse, error) {
+	log := logging.FromCtx(ctx)
+	resp, err := client.marshalAndPostProto(
 		ctx,
 		appId,
 		hs256SharedSecret,
-		&AppServiceRequestPayload{
-			Command: "initialize",
-		},
+		request,
 		webhookUrl,
 	)
 	if err != nil {
+		log.Errorw("marshalAndPostProto err", "error", err)
 		return nil, base.AsRiverError(err).
-			Message("Unable to initialize the webhook")
+			Message("Unable to send app request")
 	}
 	defer resp.Body.Close()
 
@@ -152,15 +131,52 @@ func (b *AppClient) InitializeWebhook(
 			Tag("webhookUrl", webhookUrl)
 	}
 
-	var initializeResp InitializeResponse
-	if err = json.Unmarshal(body, &initializeResp); err != nil {
+	var response protocol.AppServiceResponse
+	if err = proto.Unmarshal(body, &response); err != nil {
 		return nil, base.WrapRiverError(protocol.Err_MALFORMED_WEBHOOK_RESPONSE, err).
-			Message("Webhook response was unparsable").
+			Message("Webhook response could not be marshalled").
 			Tag("appId", appId).
 			Tag("webhookUrl", webhookUrl)
 	}
 
-	return &initializeResp.DefaultEncryptionDevice, nil
+	return &response, nil
+}
+
+// InitializeWebhook calls "initialize" on an app service specified by the webhook url
+// with a jwt token included in the request header that was generated from the shared
+// secret returned to the app upon registration. The caller should verify that we can
+// see a device_id and fallback key in the user stream that matches the device id and
+// fallback key returned in the status message.
+func (b *AppClient) InitializeWebhook(
+	ctx context.Context,
+	appId common.Address,
+	hs256SharedSecret [32]byte,
+	webhookUrl string,
+) (*EncryptionDevice, error) {
+	resp, err := sendRequestAndParseResponse(
+		b,
+		ctx,
+		appId,
+		hs256SharedSecret,
+		webhookUrl,
+		&protocol.AppServiceRequest{
+			Payload: &protocol.AppServiceRequest_Initialize{},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if resp.GetInitialize() == nil || resp.GetInitialize().GetEncryptionDevice() == nil {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Response is missing encryption device",
+		).Func("AppClient.InitializeWebhook")
+	}
+
+	return &EncryptionDevice{
+		DeviceKey:   resp.GetInitialize().EncryptionDevice.DeviceKey,
+		FallbackKey: resp.GetInitialize().EncryptionDevice.FallbackKey,
+	}, nil
 }
 
 func (b *AppClient) RequestSolicitation(
@@ -171,76 +187,148 @@ func (b *AppClient) RequestSolicitation(
 	channelId shared.StreamId,
 	sessionId string,
 ) error {
-	resp, err := b.marshalAndPost(
+	request := &protocol.AppServiceRequest{
+		Payload: &protocol.AppServiceRequest_Events{
+			Events: &protocol.EventsPayload{
+				Events: []*protocol.EventPayload{
+					{
+						Payload: &protocol.EventPayload_Solicitation{
+							Solicitation: &protocol.EventPayload_SolicitKeys{
+								SessionIds: []string{sessionId},
+								StreamId:   channelId[:],
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := sendRequestAndParseResponse(
+		b,
 		ctx,
 		appId,
 		hs256SharedSecret,
-		&AppServiceRequestPayload{
-			Command: "solicit",
-			Data: KeySolicitationData{
-				SessionId: sessionId,
-				ChannelId: channelId.String(),
-			},
-		},
 		webhookUrl,
+		request,
 	)
-	if err != nil {
-		return base.AsRiverError(err).
-			Message("Unable to request a key solicitation").
-			Tag("channelId", channelId).
-			Tag("sessionId", sessionId)
-	}
-	defer resp.Body.Close()
 
-	return nil
+	return err
 }
 
 func (b *AppClient) SendSessionMessages(
 	ctx context.Context,
+	streamId shared.StreamId,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
-	streamId shared.StreamId,
-	sessionIds []string,
-	cipherTexts string,
+	messageEnvelopes [][]byte,
+	encryptionEnvelopes [][]byte,
 	webhookUrl string,
-	streamEvents [][]byte,
 ) error {
-	resp, err := b.marshalAndPost(
+	messages := &protocol.EventPayload_Messages{
+		StreamId: streamId[:],
+	}
+	for _, envelopeBytes := range messageEnvelopes {
+		var envelope protocol.Envelope
+		if err := proto.Unmarshal(envelopeBytes, &envelope); err != nil {
+			return base.RiverError(protocol.Err_BAD_EVENT, "Could not parse bytes as Envelope").
+				Tag("appId", appId)
+		}
+		messages.Messages = append(messages.Messages, &envelope)
+	}
+
+	for _, envelopeBytes := range encryptionEnvelopes {
+		var envelope protocol.Envelope
+		if err := proto.Unmarshal(envelopeBytes, &envelope); err != nil {
+			return base.RiverError(protocol.Err_BAD_EVENT, "Could not parse bytes as Envelope").
+				Tag("appId", appId)
+		}
+		messages.GroupEncryptionSessionsMessages = append(messages.GroupEncryptionSessionsMessages, &envelope)
+	}
+
+	_, err := sendRequestAndParseResponse(
+		b,
 		ctx,
 		appId,
 		hs256SharedSecret,
-		&AppServiceRequestPayload{
-			Command: "messages",
-			Data: SendSessionMessagesRequestData{
-				SessionIds:   sessionIds,
-				StreamId:     streamId.String(),
-				CipherTexts:  cipherTexts,
-				StreamEvents: streamEvents,
+		webhookUrl,
+		&protocol.AppServiceRequest{
+			Payload: &protocol.AppServiceRequest_Events{
+				Events: &protocol.EventsPayload{
+					Events: []*protocol.EventPayload{
+						{
+							Payload: &protocol.EventPayload_Messages_{
+								Messages: messages,
+							},
+						},
+					},
+				},
 			},
 		},
-		webhookUrl,
 	)
-	if err != nil {
-		return base.AsRiverError(err).Func("SendSessionMessages")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
-			Tag("appId", appId).
-			Tag("sessionIds", sessionIds)
-	}
-	return nil
+	return err
 }
 
-// GetWebhookStatus sends an "info" message to the app service and expects a 200 with
+// GetWebhookStatus sends a "status" message to the app service and expects a 200 with
 // version info returned.
-// TODO - implement.
 func (b *AppClient) GetWebhookStatus(
 	ctx context.Context,
 	webhookUrl string,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
-) error {
-	return base.RiverError(protocol.Err_UNIMPLEMENTED, "GetWebhookStatus unimplemented")
+) (status *protocol.AppServiceResponse_StatusResponse, err error) {
+	// Apply function-wide tags to the returned error
+	defer func() {
+		if err != nil {
+			err = base.AsRiverError(err, protocol.Err_INTERNAL).
+				Func("AppClient.InitializeWebhook").
+				Tag("appId", appId).
+				Tag("webhookUrl", webhookUrl)
+		}
+	}()
+
+	resp, err := sendRequestAndParseResponse(
+		b,
+		ctx,
+		appId,
+		hs256SharedSecret,
+		webhookUrl,
+		&protocol.AppServiceRequest{
+			Payload: &protocol.AppServiceRequest_Status{},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	status = resp.GetStatus()
+	if status == nil {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook response is missing status",
+		)
+	}
+
+	if status.GetFrameworkVersion() == 0 {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook status response is missing framework version",
+		)
+	}
+
+	if status.GetDeviceKey() == "" {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook status response is missing device key",
+		)
+	}
+
+	if status.GetFallbackKey() == "" {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook status response is missing fallback key",
+		)
+	}
+
+	return status, nil
 }

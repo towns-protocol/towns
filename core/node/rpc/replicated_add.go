@@ -7,6 +7,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/proto"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -14,7 +16,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
-	"google.golang.org/protobuf/proto"
 )
 
 func contextDeadlineLeft(ctx context.Context) time.Duration {
@@ -39,7 +40,8 @@ func (s *Service) replicatedAddEvent(ctx context.Context, stream *Stream, event 
 		err := s.replicatedAddEventImpl(ctx, stream, event)
 		if err == nil {
 			if backoff.NumAttempts > 0 {
-				logging.FromCtx(ctx).Warnw("replicatedAddEvent: success after backoff", "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
+				logging.FromCtx(ctx).
+					Warnw("replicatedAddEvent: success after backoff", "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
 			}
 			return nil
 		}
@@ -49,10 +51,12 @@ func (s *Service) replicatedAddEvent(ctx context.Context, stream *Stream, event 
 		if riverErr.IsCodeWithBases(Err_MINIBLOCK_TOO_NEW) || riverErr.IsCodeWithBases(Err_BAD_PREV_MINIBLOCK_HASH) {
 			err = backoff.Wait(ctx, err)
 			if err != nil {
-				logging.FromCtx(ctx).Warnw("replicatedAddEvent: no backoff left", "error", err, "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
+				logging.FromCtx(ctx).
+					Warnw("replicatedAddEvent: no backoff left", "error", err, "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
 				return err
 			}
-			logging.FromCtx(ctx).Warnw("replicatedAddEvent: retrying after backoff", "attempt", backoff.NumAttempts, "deadline", contextDeadlineLeft(ctx).String(), "originalDeadline", originalDeadline.String())
+			logging.FromCtx(ctx).
+				Warnw("replicatedAddEvent: retrying after backoff", "attempt", backoff.NumAttempts, "deadline", contextDeadlineLeft(ctx).String(), "originalDeadline", originalDeadline.String())
 			continue
 		}
 		return err
@@ -72,7 +76,11 @@ func (s *Service) replicatedAddEventImpl(ctx context.Context, stream *Stream, ev
 	streamId := stream.StreamId()
 
 	// TODO: REPLICATION: TEST: setting so test can have more aggressive timeout
-	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteModeWithTimeout(2500*time.Millisecond).WithTags("method", "replicatedStream.AddEvent", "streamId", streamId))
+	sender := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().WriteModeWithTimeout(2500*time.Millisecond).
+			WithTags("method", "replicatedStream.AddEvent", "streamId", streamId),
+	)
 
 	sender.AddTask(func(ctx context.Context) error {
 		return stream.AddEvent(ctx, event)
@@ -85,7 +93,7 @@ func (s *Service) replicatedAddEventImpl(ctx context.Context, stream *Stream, ev
 		}
 		_, err = stub.NewEventReceived(
 			ctx,
-			connect.NewRequest[NewEventReceivedRequest](
+			connect.NewRequest(
 				&NewEventReceivedRequest{
 					StreamId: streamId[:],
 					Event:    event.Envelope,
@@ -98,7 +106,12 @@ func (s *Service) replicatedAddEventImpl(ctx context.Context, stream *Stream, ev
 	return sender.Wait()
 }
 
-func (s *Service) replicatedAddMediaEvent(ctx context.Context, event *ParsedEvent, cc *CreationCookie, last bool) ([]byte, error) {
+func (s *Service) replicatedAddMediaEvent(
+	ctx context.Context,
+	event *ParsedEvent,
+	cc *CreationCookie,
+	last bool,
+) ([]byte, error) {
 	originalDeadline := contextDeadlineLeft(ctx)
 
 	backoff := BackoffTracker{
@@ -112,7 +125,8 @@ func (s *Service) replicatedAddMediaEvent(ctx context.Context, event *ParsedEven
 		mbHash, err := s.replicatedAddMediaEventImpl(ctx, event, cc, last)
 		if err == nil {
 			if backoff.NumAttempts > 0 {
-				logging.FromCtx(ctx).Warnw("replicatedAddMediaEvent: success after backoff", "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
+				logging.FromCtx(ctx).
+					Warnw("replicatedAddMediaEvent: success after backoff", "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
 			}
 			return mbHash, nil
 		}
@@ -121,17 +135,24 @@ func (s *Service) replicatedAddMediaEvent(ctx context.Context, event *ParsedEven
 		if AsRiverError(err).IsCodeWithBases(Err_MINIBLOCK_TOO_NEW) {
 			err = backoff.Wait(ctx, err)
 			if err != nil {
-				logging.FromCtx(ctx).Warnw("replicatedAddMediaEvent: no backoff left", "error", err, "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
+				logging.FromCtx(ctx).
+					Warnw("replicatedAddMediaEvent: no backoff left", "error", err, "attempts", backoff.NumAttempts, "originalDeadline", originalDeadline.String(), "deadline", contextDeadlineLeft(ctx).String())
 				return nil, err
 			}
-			logging.FromCtx(ctx).Warnw("replicatedAddMediaEvent: retrying after backoff", "attempt", backoff.NumAttempts, "deadline", contextDeadlineLeft(ctx).String(), "originalDeadline", originalDeadline.String())
+			logging.FromCtx(ctx).
+				Warnw("replicatedAddMediaEvent: retrying after backoff", "attempt", backoff.NumAttempts, "deadline", contextDeadlineLeft(ctx).String(), "originalDeadline", originalDeadline.String())
 			continue
 		}
 		return nil, err
 	}
 }
 
-func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *ParsedEvent, cc *CreationCookie, seal bool) ([]byte, error) {
+func (s *Service) replicatedAddMediaEventImpl(
+	ctx context.Context,
+	event *ParsedEvent,
+	cc *CreationCookie,
+	seal bool,
+) ([]byte, error) {
 	streamId, err := StreamIdFromBytes(cc.StreamId)
 	if err != nil {
 		return nil, err
@@ -147,6 +168,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	if err != nil {
 		return nil, err
 	}
+	mbHash := header.Hash
 
 	ephemeralMb := &Miniblock{
 		Events: []*Envelope{event.Envelope},
@@ -154,7 +176,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	}
 
 	// genesisMiniblockHashes is needed to register the stream onchain if everything goes well.
-	nodes := NewStreamNodesWithLock(cc.NodeAddresses(), s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address)
 	remotes, _ := nodes.GetRemotesAndIsLocal()
 
 	var (
@@ -187,10 +209,9 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
-			Number:   cc.MiniblockNum,
-			Hash:     common.BytesToHash(ephemeralMb.Header.Hash),
-			Snapshot: false,
-			Data:     mbBytes,
+			Number: cc.MiniblockNum,
+			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
+			Data:   mbBytes,
 		}); err != nil {
 			return err
 		}
@@ -223,7 +244,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 
 		if _, err = stub.SaveEphemeralMiniblock(
 			ctx,
-			connect.NewRequest[SaveEphemeralMiniblockRequest](
+			connect.NewRequest(
 				&SaveEphemeralMiniblockRequest{
 					StreamId:  streamId[:],
 					Miniblock: ephemeralMb,
@@ -241,13 +262,12 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		// Seal ephemeral stream in remotes
 		resp, err := stub.SealEphemeralStream(
 			ctx,
-			connect.NewRequest[SealEphemeralStreamRequest](
+			connect.NewRequest(
 				&SealEphemeralStreamRequest{
 					StreamId: streamId[:],
 				},
 			),
 		)
-
 		if err != nil {
 			return err
 		}
@@ -263,12 +283,19 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	})
 
 	if err = quorum.Wait(); err != nil {
-		logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "err", err)
-		return nil, err
+		if !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "error", err)
+			return nil, err
+		}
+
+		mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !seal {
-		return ephemeralMb.Header.Hash, nil
+		return mbHash, nil
 	}
 
 	quorumCheckMu.Lock()
@@ -294,5 +321,5 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		}
 	}
 
-	return ephemeralMb.Header.Hash, nil
+	return mbHash, nil
 }

@@ -7,9 +7,11 @@ services:
         ports:
             - '8080:80'
         environment:
-            - PGADMIN_DEFAULT_EMAIL=localhost@localhost.localhost
+            - PGADMIN_DEFAULT_EMAIL=admin@localhost.localdomain
             - PGADMIN_DEFAULT_PASSWORD=postgres
             - PGADMIN_CONFIG_SERVER_MODE=False
             - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+            - PGADMIN_CONFIG_CHECK_EMAIL_DELIVERABILITY=False
+            - PGADMIN_CONFIG_ALLOW_INVALID_EMAIL=True
         volumes:
             - ./pgadmin.json:/pgadmin4/servers.json

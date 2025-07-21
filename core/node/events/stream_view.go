@@ -28,37 +28,37 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(
-	ctx context.Context,
-	streamData *storage.ReadStreamFromLastSnapshotResult,
-) (*StreamView, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
-	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
-	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, lastMiniblockNumber+1)
+	var snapshot *Snapshot
+	firstMbNum := streamData.Miniblocks[0].Number
+	opts := NewParsedMiniblockInfoOpts()
+	for i, mb := range streamData.Miniblocks {
+		opts = opts.WithExpectedBlockNumber(firstMbNum + int64(i))
+		miniblock, err := NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
 		if err != nil {
-			return nil, err
+			return nil, AsRiverError(
+				err,
+				Err_BAD_BLOCK,
+			).Message("Unable to parse miniblock from descriptor").
+				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
-		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		if snapshotIndex == -1 && miniblock.Header().Snapshot != nil {
+		if miniblock.Snapshot != nil {
+			snapshot = miniblock.Snapshot
 			snapshotIndex = i
 		}
 	}
 
-	if snapshotIndex == -1 {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
-	}
-
-	snapshot := miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -99,7 +99,7 @@ func MakeStreamView(
 	}, nil
 }
 
-func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*StreamView, error) {
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if stream == nil {
 		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
 	}
@@ -108,33 +108,32 @@ func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*Stream
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
-	lastMiniblockNumber := int64(-1)
-	snapshotIndex := 0
-	for i, binMiniblock := range stream.Miniblocks {
-		opts := NewParsedMiniblockInfoOpts()
-		// Ignore block number of first block, but enforce afterwards
+	var snapshot *Snapshot
+	var snapshotIndex int
+	opts := NewParsedMiniblockInfoOpts().WithApplyOnlyMatchingSnapshot()
+	for i, mbProto := range stream.Miniblocks {
+		// Make sure block numbers are consecutive.
 		if i > 0 {
-			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
+			opts = opts.WithExpectedBlockNumber(miniblocks[0].Ref.Num + int64(i))
 		}
 
-		miniblock, err := NewMiniblockInfoFromProto(
-			binMiniblock,
-			opts,
-		)
+		miniblock, err := NewMiniblockInfoFromProto(mbProto, stream.Snapshot, opts)
 		if err != nil {
 			return nil, err
 		}
-		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		miniblocks[i] = miniblock
-		if miniblock.Header().Snapshot != nil {
+
+		if miniblock.Snapshot != nil {
+			snapshot = miniblock.Snapshot
 			snapshotIndex = i
 		}
+
+		miniblocks[i] = miniblock
 	}
 
-	snapshot := miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -357,13 +356,13 @@ func (r *StreamView) makeMiniblockCandidate(
 	eventNumOffset := last.Header().EventNumOffset + int64(len(last.Events())) + 1 // +1 for header
 	nextMiniblockNum := last.Header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
-	if last.Header().Snapshot != nil {
+	if last.Snapshot != nil {
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 
-	var snapshot *Snapshot
+	var parsedSnapshot *ParsedSnapshot
 	if proposal.shouldSnapshot {
-		snapshot = proto.Clone(r.snapshot).(*Snapshot)
+		snapshot := proto.Clone(r.snapshot).(*Snapshot)
 
 		// Apply all events in blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
@@ -393,6 +392,11 @@ func (r *StreamView) makeMiniblockCandidate(
 				)
 			}
 		}
+
+		var err error
+		if parsedSnapshot, err = MakeParsedSnapshot(params.Wallet, snapshot); err != nil {
+			log.Errorw("Failed to make parsed snapshot", "error", err, "streamId", r.streamId)
+		}
 	}
 
 	header := &MiniblockHeader{
@@ -400,7 +404,6 @@ func (r *StreamView) makeMiniblockCandidate(
 		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
 		EventHashes:              hashes,
 		PrevMiniblockHash:        last.headerEvent.Hash[:],
-		Snapshot:                 snapshot,
 		EventNumOffset:           eventNumOffset,
 		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
 		Content: &MiniblockHeader_None{
@@ -408,7 +411,18 @@ func (r *StreamView) makeMiniblockCandidate(
 		},
 	}
 
-	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events)
+	if parsedSnapshot != nil {
+		if params.ChainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
+			// Snapshot is outside the miniblock header, new format
+			header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		} else {
+			// Snapshot is inside miniblock header, legacy format
+			header.Snapshot = parsedSnapshot.Snapshot
+			parsedSnapshot = nil
+		}
+	}
+
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.
@@ -479,8 +493,8 @@ func (r *StreamView) copyAndApplyBlock(
 	var startIndex int
 	var snapshotIndex int
 	var snapshot *Snapshot
-	if header.Snapshot != nil {
-		snapshot = header.Snapshot
+	if miniblock.Snapshot != nil {
+		snapshot = miniblock.Snapshot
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
@@ -554,7 +568,7 @@ func (r *StreamView) blockWithNum(mininblockNum int64) (*MiniblockInfo, error) {
 	return r.blocks[index], nil
 }
 
-// iterate over events starting at startBlock including events in the minipool
+// ForEachEvent iterates over events starting at startBlock including events in the minipool
 func (r *StreamView) ForEachEvent(
 	startBlock int,
 	op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error),
@@ -614,12 +628,15 @@ func (r *StreamView) Miniblocks() []*MiniblockInfo {
 	return r.blocks
 }
 
-func (r *StreamView) MiniblocksFromLastSnapshot() []*Miniblock {
-	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
+func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snapshot *Envelope) {
+	miniblocks = make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
 	for i := r.snapshotIndex; i < len(r.blocks); i++ {
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
-	return miniblocks
+	if len(miniblocks) > 0 {
+		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
+	}
+	return
 }
 
 func (r *StreamView) SyncCookie(localNodeAddress common.Address) *SyncCookie {
@@ -643,7 +660,7 @@ func (r *StreamView) shouldSnapshot(cfg *crypto.OnChainSettings) bool {
 	// count the events in blocks since the last snapshot
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if block.Header().Snapshot != nil {
+		if block.Snapshot != nil {
 			break
 		}
 		count += len(block.Events())
@@ -684,7 +701,8 @@ func (r *StreamView) ValidateNextEvent(
 				"prevMiniblockNum is greater than the last miniblock number in the stream",
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -695,7 +713,9 @@ func (r *StreamView) ValidateNextEvent(
 				"prevMiniblockHash references block that is too old to be loaded",
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
+				"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -706,7 +726,8 @@ func (r *StreamView) ValidateNextEvent(
 			return RiverError(
 				Err_DATA_LOSS,
 				"prevMiniblockHash does not match the block number",
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"actualBlock", foundBlock.Ref,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
@@ -728,9 +749,11 @@ func (r *StreamView) ValidateNextEvent(
 			return RiverError(
 				Err_BAD_PREV_MINIBLOCK_HASH,
 				"prevMiniblockHash not found in recent blocks",
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", -1,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
+				"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -749,9 +772,11 @@ func (r *StreamView) ValidateNextEvent(
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"referenced block is not recent",
-			"requestedBlock", parsedEvent.MiniblockRef,
+			"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+			"requestedBlock", parsedEvent.MiniblockRef.Hash,
 			"expected", lastBlock.Ref.Hash,
 			"expNum", lastBlock.Ref.Num,
+			"firstLoadedBlockNum", r.blocks[0].Ref.Num,
 			"streamId", r.streamId,
 			"event", parsedEvent.Hash,
 		).Func("ValidateNextEvent")
@@ -806,7 +831,7 @@ func (r *StreamView) GetStats() StreamViewStats {
 
 	for _, block := range r.blocks {
 		stats.EventsInMiniblocks += len(block.Events()) + 1 // +1 for header
-		if block.Header().Snapshot != nil {
+		if block.Snapshot != nil {
 			stats.SnapshotsInMiniblocks++
 		}
 	}
@@ -895,7 +920,7 @@ func (r *StreamView) AllEvents() iter.Seq[*ParsedEvent] {
 
 func (r *StreamView) GetStreamSince(
 	ctx context.Context,
-	localNodeAddress common.Address,
+	addr common.Address,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
 	log := logging.FromCtx(ctx)
@@ -909,23 +934,17 @@ func (r *StreamView) GetStreamSince(
 		// always send response, even if there are no events so that the client knows it's upToDate
 		return &StreamAndCookie{
 			Events:         envelopes,
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
+			NextSyncCookie: r.SyncCookie(addr),
 		}, nil
 	}
 
 	miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
 	if err != nil {
 		// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-		log.Warnw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
+		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return &StreamAndCookie{
-			Events:         r.MinipoolEnvelopes(),
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
-			Miniblocks:     r.MiniblocksFromLastSnapshot(),
-			SyncReset:      true,
-		}, nil
-
+		return r.GetResetStreamAndCookie(addr), nil
 	}
 
 	// append events from blocks
@@ -944,6 +963,87 @@ func (r *StreamView) GetStreamSince(
 	// always send response, even if there are no events so that the client knows it's upToDate
 	return &StreamAndCookie{
 		Events:         envelopes,
-		NextSyncCookie: r.SyncCookie(localNodeAddress),
+		NextSyncCookie: r.SyncCookie(addr),
 	}, nil
+}
+
+func (r *StreamView) GetResetStreamAndCookie(addr common.Address) *StreamAndCookie {
+	mbs, sn := r.MiniblocksFromLastSnapshot()
+	return &StreamAndCookie{
+		Events:         r.MinipoolEnvelopes(),
+		NextSyncCookie: r.SyncCookie(addr),
+		Miniblocks:     mbs,
+		Snapshot:       sn,
+		SyncReset:      true,
+	}
+}
+
+func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(
+	addr common.Address,
+	numPrecedingMiniblocks int64,
+) *StreamAndCookie {
+	// Validate input to prevent negative values
+	if numPrecedingMiniblocks < 0 {
+		numPrecedingMiniblocks = 0
+	}
+
+	// Calculate how many miniblocks to include before the snapshot
+	startIndex := r.snapshotIndex
+
+	if numPrecedingMiniblocks > 0 && r.snapshotIndex > 0 {
+		// Prevent overflow by checking if numPrecedingMiniblocks is larger than max int
+		// or larger than the snapshot index itself
+		maxPreceding := int64(r.snapshotIndex)
+		if numPrecedingMiniblocks > maxPreceding {
+			// Can't go before the first block
+			startIndex = 0
+		} else {
+			// Safe to subtract since we know numPrecedingMiniblocks <= r.snapshotIndex
+			startIndex = r.snapshotIndex - int(numPrecedingMiniblocks)
+		}
+	}
+
+	// Ensure startIndex is within bounds
+	if startIndex < 0 {
+		startIndex = 0
+	}
+	if startIndex >= len(r.blocks) {
+		startIndex = len(r.blocks) - 1
+		if startIndex < 0 {
+			startIndex = 0
+		}
+	}
+
+	// Calculate capacity safely
+	capacity := len(r.blocks) - startIndex
+	if capacity < 0 {
+		capacity = 0
+	}
+
+	// Get miniblocks starting from the calculated index
+	miniblocks := make([]*Miniblock, 0, capacity)
+	for i := startIndex; i < len(r.blocks); i++ {
+		miniblocks = append(miniblocks, r.blocks[i].Proto)
+	}
+
+	// Get the snapshot envelope if present
+	var snapshot *Envelope
+	if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) {
+		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
+	}
+
+	// Calculate snapshot index in the result safely
+	snapshotIndexInResult := int64(0)
+	if r.snapshotIndex >= startIndex {
+		snapshotIndexInResult = int64(r.snapshotIndex - startIndex)
+	}
+
+	return &StreamAndCookie{
+		Events:                 r.MinipoolEnvelopes(),
+		NextSyncCookie:         r.SyncCookie(addr),
+		Miniblocks:             miniblocks,
+		Snapshot:               snapshot,
+		SyncReset:              true,
+		SnapshotMiniblockIndex: snapshotIndexInResult,
+	}
 }

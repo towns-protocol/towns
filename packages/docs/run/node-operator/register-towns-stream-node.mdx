@@ -43,8 +43,8 @@ Please ensure you have completed [Node Operator registration](/run/node-operator
 
 <Steps>
 <Step title="Start Stream Node in Info Mode">Operator should start the stream node process in [info](https://github.com/towns-protocol/towns/tree/main/core/node#checking-on-gamma-status-from-local-host) mode and additionally ensure DNS, TLS, and network are configured correctly.</Step>
-<Step title="Register Node in Towns Chain">Operator calls [registerNode](https://github.com/towns-protocol/towns/blob/main/contracts/src/river/registry/facets/node/NodeRegistry.sol) on the [RiverRegistry](https://github.com/towns-protocol/towns/blob/main/contracts/deployments/gamma/river/addresses/riverRegistry.json) diamond contract deployed on Towns Chain once health checks pass.</Step>
-<Step title="Register Node in Base">Operator calls [registerNode](https://github.com/towns-protocol/towns/blob/main/contracts/src/base/registry/facets/checker/EntitlementChecker.sol) on the BaseRegistry diamond contract to support cross-chain checks.</Step>
+<Step title="Register Node in Towns Chain">Operator calls [registerNode](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/river/registry/facets/node/NodeRegistry.sol) on the [RiverRegistry](https://github.com/towns-protocol/towns/blob/main/packages/contracts/deployments/gamma/river/addresses/riverRegistry.json) diamond contract deployed on Towns Chain once health checks pass.</Step>
+<Step title="Register Node in Base">Operator calls [registerNode](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/checker/EntitlementChecker.sol) on the BaseRegistry diamond contract to support cross-chain checks.</Step>
 <Step title="Start Stream Node">Operator starts the stream node by running the docker image to enter Towns Chain network once registered.</Step>
 </Steps>
 
@@ -73,7 +73,7 @@ Registering a node on Towns Chain, can be accomplished by calling the `registerN
 The below steps describe how to register a new node URL in `Operational` status using `cast`, a command-line tool that is part of Foundry for reading / writing to EVM chains over RPC url's.
 
 <Note>
-  Setting a Node to `Operational` status will allow the node to begin accepting stream writes and signal to the network that the node is healthy and ready to be connected to by clients. See all possible node statuses that a node can assume in [RegistryStorage](https://github.com/towns-protocol/towns/blob/main/contracts/src/river/registry/libraries/RegistryStorage.sol#L30).
+  Setting a Node to `Operational` status will allow the node to begin accepting stream writes and signal to the network that the node is healthy and ready to be connected to by clients. See all possible node statuses that a node can assume in [RegistryStorage](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/river/registry/libraries/RegistryStorage.sol#L30).
 </Note>
 
 <Steps>

@@ -245,7 +245,7 @@ const countStreamBlocksAndSnapshots = async (bob: StreamRpcClient, streamId: Uin
     for (const mb of stream.streamAndCookie.miniblocks) {
         expect(mb.header).toBeDefined()
         totalEvents += mb.events.length
-        if (mb.header?.snapshot !== undefined) {
+        if (mb.header?.snapshot !== undefined || mb.header?.snapshotHash !== undefined) {
             snapshots++
         }
     }

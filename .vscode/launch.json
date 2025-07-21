@@ -23,7 +23,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -36,7 +36,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -49,7 +49,20 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.ts", "--testTimeout", "0"],
+      "console": "integratedTerminal",
+    },
+      {
+      "name": "Vitest: current file in 'packages/bot/'",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development" },
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "cwd": "${workspaceFolder}/packages/bot",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "args": ["run", "${file}", "--config", "vitest.config.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
      {
@@ -62,7 +75,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.multi_ne.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.multi_ne.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -75,7 +88,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -88,7 +101,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.multi_legacy.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.multi_legacy.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -101,7 +114,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.entitlements.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.entitlements.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -117,7 +130,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     },
     {
@@ -130,7 +143,7 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,
-      "args": ["run", "${file}", "--config", "vitest.config.unit.ts"],
+      "args": ["run", "${file}", "--config", "vitest.config.unit.ts", "--testTimeout", "0"],
       "console": "integratedTerminal",
     }
   ]

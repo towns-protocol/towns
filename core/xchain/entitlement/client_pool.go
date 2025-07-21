@@ -54,7 +54,7 @@ func NewBlockchainClientPool(
 
 		client, err := ethclient.DialContext(ctx, chainCfg.NetworkUrl)
 		if err != nil {
-			log.Warnw("Unable to dial endpoint", "chainId", chainID, "err", err)
+			log.Warnw("Unable to dial endpoint", "chainId", chainID, "error", err)
 			continue
 		}
 
@@ -62,7 +62,7 @@ func NewBlockchainClientPool(
 		fetchedChainID, err := client.ChainID(ctx)
 		if err != nil {
 			client.Close()
-			log.Warnw("Unable to connect to endpoint", "chainId", chainID, "err", err)
+			log.Warnw("Unable to connect to endpoint", "chainId", chainID, "error", err)
 			continue
 		}
 		if fetchedChainID.Uint64() != chainID {

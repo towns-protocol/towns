@@ -13,7 +13,7 @@ import { useCreateDm } from '@towns-protocol/react-sdk'
 
 ```ts
 function useCreateDm(
-  config?: ActionConfig<Dms['createDM']>,
+  config?: ActionConfig<Dms["createDM"]>,
 ): {
     data: {
         streamId: string;
@@ -24,6 +24,7 @@ function useCreateDm(
     isError: boolean;
     createDM: (userId: string, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;
@@ -36,7 +37,7 @@ function useCreateDm(
 
 ### config
 
-- **Type:** `ActionConfig<Dms['createDM']>`
+- **Type:** `ActionConfig<Dms["createDM"]>`
 - **Optional**
 
 The action config.
@@ -56,6 +57,7 @@ An object containing the `createDM` action and the rest of the action result.
     isError: boolean;
     createDM: (userId: string, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;

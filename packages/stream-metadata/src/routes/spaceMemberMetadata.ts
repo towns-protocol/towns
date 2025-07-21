@@ -93,7 +93,7 @@ const getSpaceMemberMetadata = async (
 	}
 
 	const [name, renewalPrice, membershipExpiration, isBanned] = await Promise.all([
-		space.SpaceOwner.read.getSpaceInfo(spaceAddress).then((spaceInfo) => spaceInfo.name),
+		spaceDapp.spaceOwner.getSpaceInfo(spaceAddress).then((spaceInfo) => spaceInfo.name),
 		space.Membership.read.getMembershipRenewalPrice(tokenId),
 		space.Membership.read.expiresAt(tokenId),
 		space.Banning.read.isBanned(tokenId),

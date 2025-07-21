@@ -3,7 +3,6 @@
  */
 
 import {
-    getChannelMessagePayload,
     waitFor,
     setupWalletsAndContexts,
     createSpaceAndDefaultChannel,
@@ -12,6 +11,7 @@ import {
     getXchainConfigForTesting,
     setupChannelWithCustomRole,
     expectUserCanJoinChannel,
+    getTimelineMessagePayload,
 } from '../../testUtils'
 import { dlog } from '@towns-protocol/dlog'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
@@ -52,6 +52,27 @@ describe('channelsWithEntitlements', () => {
                 getXchainConfigForTesting(),
             ),
         ).resolves.toBeFalsy()
+
+        // unban alice
+        const unbanTx = await bobSpaceDapp.unbanWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await unbanTx.wait()
+
+        // Wait 5 seconds for the caches to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        await expect(
+            aliceSpaceDapp.isEntitledToChannel(
+                spaceId,
+                channelId!,
+                alice.userId,
+                Permission.Read,
+                getXchainConfigForTesting(),
+            ),
+        ).resolves.toBeTruthy()
 
         const doneStart = Date.now()
         // kill the clients
@@ -100,11 +121,10 @@ describe('channelsWithEntitlements', () => {
         let eventId: string | undefined
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) =>
-                    getChannelMessagePayload(e.localEvent?.channelMessage) === 'Very bad message!',
+                (e) => getTimelineMessagePayload(e) === 'Very bad message!',
             )
             expect(event).toBeDefined()
-            eventId = event?.hashStr
+            eventId = event?.eventId
         })
 
         expect(stream).toBeDefined()

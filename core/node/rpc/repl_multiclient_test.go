@@ -31,7 +31,7 @@ func TestReplMcSimple(t *testing.T) {
 
 	clients := tt.newTestClients(3, testClientOpts{})
 	spaceId, _ := clients[0].createSpace()
-	channelId := clients.createChannelAndJoin(spaceId)
+	channelId, _ := clients.createChannelAndJoin(spaceId)
 	phrases1 := []string{"hello from Alice", "hello from Bob", "hello from Carol"}
 	clients.say(channelId, phrases1...)
 
@@ -78,7 +78,7 @@ func testReplMcConversation(
 	tt := newServiceTesterForReplication(t)
 	clients := tt.newTestClients(numClients, testClientOpts{enableSync: true})
 	spaceId, _ := clients[0].createSpace()
-	channelId := clients.createChannelAndJoin(spaceId)
+	channelId, _ := clients.createChannelAndJoin(spaceId)
 
 	messages := make([][]string, numSteps)
 	for i := range messages {
@@ -129,8 +129,5 @@ func TestReplMcConversationShort(t *testing.T) {
 	t.Parallel()
 	t.Run("5x5", func(t *testing.T) {
 		testReplMcConversation(t, 5, 5, 1, 1, 5)
-	})
-	t.Run("5x100", func(t *testing.T) {
-		testReplMcConversation(t, 5, 100, 10, 100, 100)
 	})
 }

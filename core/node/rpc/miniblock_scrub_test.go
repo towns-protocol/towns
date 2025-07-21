@@ -168,7 +168,7 @@ func createMultiblockChannelStream(
 ) (
 	streamId StreamId,
 	mb1 *events.MiniblockInfo,
-	blocks [][]byte,
+	mbs []*storage.MiniblockDescriptor,
 ) {
 	wallet, _ := crypto.NewWallet(ctx)
 
@@ -221,13 +221,13 @@ func createMultiblockChannelStream(
 	require.NoError(err)
 	require.Equal(int64(2), b2ref.Num)
 
-	blocks, err = store.ReadMiniblocks(ctx, channelId, 0, 3)
+	blocks, err := store.ReadMiniblocks(ctx, channelId, 0, 3, false)
 	require.NoError(err)
 	require.Len(blocks, 3)
 
 	require.NoError(store.(*storage.PostgresStreamStore).DeleteStream(ctx, channelId))
 
-	mb1, err = events.NewMiniblockInfoFromBytes(blocks[1], 1)
+	mb1, err = events.NewMiniblockInfoFromDescriptor(blocks[1])
 	require.NoError(err)
 	require.NotNil(mb1)
 
@@ -240,14 +240,14 @@ func writeStreamBackToStore(
 	store storage.StreamStorage,
 	streamId StreamId,
 	mb1 *events.MiniblockInfo,
-	blocks [][]byte,
+	blocks []*storage.MiniblockDescriptor,
 ) {
-	mb2, err := events.NewMiniblockInfoFromBytes(blocks[2], 2)
+	mb2, err := events.NewMiniblockInfoFromDescriptor(blocks[2])
 	require.NoError(err)
 	require.NotNil(mb2)
 
 	// Re-write the stream with corrupt block 1
-	require.NoError(store.CreateStreamStorage(ctx, streamId, blocks[0]))
+	require.NoError(store.CreateStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: blocks[0].Data}))
 	require.NoError(
 		store.WriteMiniblocks(
 			ctx,
@@ -256,14 +256,14 @@ func writeStreamBackToStore(
 				{
 					Number:   1,
 					Hash:     mb1.Ref.Hash,
-					Snapshot: mb1.IsSnapshot(),
-					Data:     blocks[1],
+					Snapshot: blocks[1].Snapshot,
+					Data:     blocks[1].Data,
 				},
 				{
 					Number:   2,
 					Hash:     mb2.Ref.Hash,
-					Snapshot: mb2.IsSnapshot(),
-					Data:     blocks[2],
+					Snapshot: blocks[2].Snapshot,
+					Data:     blocks[2].Data,
 				},
 			},
 			3,
@@ -568,7 +568,7 @@ func TestMiniblockScrubber_CorruptBlocks(t *testing.T) {
 			channelId, mb1, blocks := createMultiblockChannelStream(ctx, require, client, store)
 
 			// Corrupt block 1
-			blocks[1] = tc.corruptBlock(require, tester.nodes[0].service.wallet, blocks[1])
+			blocks[1].Data = tc.corruptBlock(require, tester.nodes[0].service.wallet, blocks[1].Data)
 
 			writeStreamBackToStore(ctx, require, store, channelId, mb1, blocks)
 

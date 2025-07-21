@@ -4,14 +4,12 @@ import { ChannelPayload, ChannelPayload_Snapshot, Snapshot } from '@towns-protoc
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
-import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { streamIdFromBytes } from './id'
-
+import { DecryptedContent } from './encryptedContentTypes'
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
     spaceId: string = ''
-    readonlytips: { [key: string]: bigint } = {}
-    private reachedRenderableContent = false
 
     constructor(streamId: string) {
         super()
@@ -20,10 +18,6 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
 
     getStreamParentId(): string | undefined {
         return this.spaceId
-    }
-
-    needsScrollback(): boolean {
-        return !this.reachedRenderableContent
     }
 
     applySnapshot(
@@ -47,10 +41,6 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
-                // if we have a refEventId it means we're a reaction or thread message
-                if (!payload.content.value.refEventId) {
-                    this.reachedRenderableContent = true
-                }
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -80,9 +70,6 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
-                if (!payload.content.value.refEventId) {
-                    this.reachedRenderableContent = true
-                }
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -98,5 +85,13 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             default:
                 logNever(payload.content)
         }
+    }
+
+    onDecryptedContent(
+        _eventId: string,
+        _content: DecryptedContent,
+        _emitter: TypedEmitter<StreamEvents>,
+    ): void {
+        // pass
     }
 }

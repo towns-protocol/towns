@@ -13,7 +13,7 @@ import { useCreateGdm } from '@towns-protocol/react-sdk'
 
 ```ts
 function useCreateGdm(
-  config?: ActionConfig<Gdms['createGDM']>,
+  config?: ActionConfig<Gdms["createGDM"]>,
 ): {
     data: {
         streamId: string;
@@ -24,6 +24,7 @@ function useCreateGdm(
     isError: boolean;
     createGDM: (userIds: string[], channelProperties?: EncryptedData | undefined, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;
@@ -36,7 +37,7 @@ function useCreateGdm(
 
 ### config
 
-- **Type:** `ActionConfig<Gdms['createGDM']>`
+- **Type:** `ActionConfig<Gdms["createGDM"]>`
 - **Optional**
 
 The action config.
@@ -56,6 +57,7 @@ An object containing the `createGDM` action and the rest of the action result.
     isError: boolean;
     createGDM: (userIds: string[], channelProperties?: EncryptedData | undefined, streamSettings?: {
         disableMiniblockCreation: boolean;
+        lightStream: boolean;
     } | undefined) => Promise<{
         streamId: string;
     }>;

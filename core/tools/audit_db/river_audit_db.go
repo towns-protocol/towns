@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,13 +50,15 @@ func getPgxDbPool(
 	if err != nil {
 		return nil, err
 	}
-
+	cfg.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+		fmt.Printf("NOTICE: %s\n", n.Message)
+	}
 	if password != "" {
 		cfg.ConnConfig.Password = password
 	}
 
 	if db.schema != "" {
-		cfg.ConnConfig.RuntimeParams["search_path"] = db.schema
+		cfg.ConnConfig.RuntimeParams["search_path"] = fmt.Sprintf("pg_temp, %v, public", db.schema)
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
@@ -153,6 +156,11 @@ func init() {
 
 var listCmd = &cobra.Command{
 	Use:   "list",
+	Short: "List database contents",
+}
+
+var listSchemasCmd = &cobra.Command{
+	Use:   "schemas",
 	Short: "List database schemas",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -181,6 +189,7 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
+	listCmd.AddCommand(listSchemasCmd)
 	rootCmd.AddCommand(listCmd)
 }
 

@@ -21,18 +21,31 @@ func (s *Service) localGetStreamEx(
 		return err
 	}
 
-	if err = s.storage.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, _ int64) error {
-		var mb Miniblock
-		if err = proto.Unmarshal(blockdata, &mb); err != nil {
-			return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
-		}
+	if err = s.storage.ReadMiniblocksByStream(
+		ctx,
+		streamId,
+		req.Msg.GetOmitSnapshot(),
+		func(mbBytes []byte, _ int64, snBytes []byte) error {
+			var mb Miniblock
+			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			}
 
-		return resp.Send(&GetStreamExResponse{
-			Data: &GetStreamExResponse_Miniblock{
-				Miniblock: &mb,
-			},
-		})
-	}); err != nil {
+			var snapshot *Envelope
+			if len(snBytes) > 0 && !req.Msg.GetOmitSnapshot() {
+				snapshot = &Envelope{}
+				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
+				}
+			}
+
+			return resp.Send(&GetStreamExResponse{
+				Data: &GetStreamExResponse_Miniblock{
+					Miniblock: &mb,
+				},
+				Snapshot: snapshot,
+			})
+		}); err != nil {
 		return err
 	}
 

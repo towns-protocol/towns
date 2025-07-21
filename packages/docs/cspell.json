@@ -54,7 +54,16 @@
         "errorf",
         "Celestia",
         "POAP",
-        "POAPs"
+        "POAPs",
+        "pprof",
+        "unstaking",
+        "unstake",
+        "incentivizes",
+        "Merkle",
+        "merkle",
+        "repudiable",
+        "FINMA",
+        "permissioned"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [

@@ -37,7 +37,9 @@ describe('syncAgent.test.ts', () => {
             testUser.signer,
         )
         logger.log('spaceId', spaceId)
-        expect(Object.keys(syncAgent.user.memberships.data.memberships).length).toBe(2)
+        await waitFor(() =>
+            expect(Object.keys(syncAgent.user.memberships.data.memberships).length).toBe(2),
+        )
         expect(syncAgent.user.memberships.data.memberships[spaceId].op).toBe(MembershipOp.SO_JOIN)
         expect(syncAgent.user.memberships.data.memberships[defaultChannelId].op).toBe(
             MembershipOp.SO_JOIN,

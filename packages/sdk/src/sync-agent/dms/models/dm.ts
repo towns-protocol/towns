@@ -29,7 +29,11 @@ export interface DmModel extends Identifiable {
 export class Dm extends PersistedObservable<DmModel> {
     timeline: MessageTimeline
     members: Members
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+    ) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
         this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
         this.members = new Members(id, riverConnection, store)
@@ -114,11 +118,11 @@ export class Dm extends PersistedObservable<DmModel> {
     async redact(eventId: string, reason?: string) {
         const channelId = this.data.id
         const result = await this.riverConnection.withStream(channelId).call((client, stream) => {
-            const event = stream.view.events.get(eventId)
+            const event = stream.view.timeline.find((x) => x.eventId === eventId)
             if (!event) {
                 throw new Error(`ref event not found: ${eventId}`)
             }
-            if (event.remoteEvent?.creatorUserId !== this.riverConnection.userId) {
+            if (event.sender.id !== this.riverConnection.userId) {
                 throw new Error(
                     `You can only redact your own messages: ${eventId} - userId: ${this.riverConnection.userId}`,
                 )
@@ -147,12 +151,11 @@ export class Dm extends PersistedObservable<DmModel> {
             logger.log('Dm stream initialized', streamId)
             const stream = this.riverConnection.client?.stream(streamId)
             check(isDefined(stream), 'stream is not defined')
-            const view = stream.view.dmChannelContent
             const hasJoined = stream.view.getMembers().isMemberJoined(this.riverConnection.userId)
             this.setData({
                 initialized: true,
                 isJoined: hasJoined,
-                metadata: view.getChannelMetadata()?.channelProperties,
+                metadata: undefined,
             })
             this.timeline.initialize(stream)
         }

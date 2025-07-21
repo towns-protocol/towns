@@ -13,7 +13,7 @@ Please read the below requirements carefully prior to proceeding with node setup
 
 <Accordion title="Node Frontend (FE) Requirements">
   - **CPU**: Minimum 8 virtual CPUs.
-  - **Memory**: At least 16 GB of RAM.
+  - **Memory**: At least 32 GB of RAM.
   - **Architecture**: x64 or ARM64 supported.
   - **Network**: Dedicated, static public IP address, capable of handling up to 1 Gbps ingress and egress for HTTP 1.1/2
   traffic.
@@ -27,6 +27,11 @@ Please read the below requirements carefully prior to proceeding with node setup
   - **Keypair store**: Location to store ECDSA keypair associated with the data stored in the database.
 
   <Note>It is highly recommended to run a distinct Postgres instance for each Node FE to ensure resource isolation during upgrades.</Note>
+</Accordion>
+<Accordion title="Node Eth Balance Requirements">
+  - **Towns Chain Eth Balance**: Minimum 1 ETH on all stream node wallets in Towns Chain to support gas needed for miniblock validation.
+  - **Base Chain Eth Balance**: Minimum 0.5 ETH on all stream node wallets in Base Chain to support gas needed for cross-chain entitlement checks.
+<Note>Set up alerts to monitor the balance of the node's Eth balance on Towns Chain and Base Chain at a minimum alert threshold of 0.25 ETH and 0.1 ETH respectively.</Note>
 </Accordion>
 <br />
 ### Installation
@@ -94,6 +99,9 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 |DATABASE__PORT|Postgres DB port|Yes|5432|-|
 |DATABASE__USER|Postgres DB username|Yes|-|-|
 |DD_TAGS|Used by Datadog for metrics collection|No|env: (gamma), node_url:(your complete node url)|No|
+|DEBUGENDPOINTS__PPROF|Enable pprof endpoints|No|false|-|
+|DEBUGENDPOINTS__PRIVATEDEBUGSERVERADDRESS|Private debug server address|No|:8080|-|
+|DEBUGENDPOINTS__MEMPROFILEDIR|Directory for memory profile files|No|./mem_profile|-|
 |ENTITLEMENT_CONTRACT__ADDRESS|Entitlement contract address in Base Network|Yes|0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F|-|
 |LOG__FORMAT|Log format option|No|text|-|
 |LOG__LEVEL|Default log level|No|info|-|

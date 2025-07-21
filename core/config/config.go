@@ -20,8 +20,9 @@ func GetDefaultConfig() *Config {
 			StartupDelay:  2 * time.Second,
 			NumPartitions: 256,
 		},
-		StorageType:  "postgres",
-		DisableHttps: false,
+		StorageType:       "postgres",
+		TrimmingBatchSize: 100,
+		DisableHttps:      false,
 		BaseChain: ChainConfig{
 			// TODO: ChainId:
 			BlockTimeMs: 2000,
@@ -39,9 +40,10 @@ func GetDefaultConfig() *Config {
 		// TODO: ArchitectContract: ContractConfig{},
 		// TODO: RegistryContract:  ContractConfig{},
 		StreamReconciliation: StreamReconciliationConfig{
-			InitialWorkerPoolSize: 4,
-			OnlineWorkerPoolSize:  32,
-			GetMiniblocksPageSize: 128,
+			InitialWorkerPoolSize:           4,
+			OnlineWorkerPoolSize:            32,
+			GetMiniblocksPageSize:           128,
+			ReconciliationTaskRetryDuration: 2 * time.Minute,
 		},
 		Log: LogConfig{
 			Level:   "info", // NOTE: this default is replaced by flag value
@@ -66,21 +68,24 @@ func GetDefaultConfig() *Config {
 			TxPool:                true,
 			CorruptStreams:        true,
 			EnableStorageEndpoint: true,
+			MemProfileInterval:    2 * time.Minute,
 		},
 		Scrubbing: ScrubbingConfig{
 			ScrubEligibleDuration: 4 * time.Hour,
 		},
 		RiverRegistry: RiverRegistryConfig{
-			PageSize:               5000,
-			ParallelReaders:        8,
+			PageSize:               1500,
+			ParallelReaders:        100,
 			MaxRetries:             100,
 			MaxRetryElapsedTime:    5 * time.Minute,
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
+		MetadataShardMask: 0x3ff, // 1023
 	}
 }
 
+// Config contains all configuration settings for the node.
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
 	// Network
@@ -93,8 +98,9 @@ type Config struct {
 	TLSConfig    TLSConfig
 
 	// Storage
-	Database    DatabaseConfig
-	StorageType string
+	Database          DatabaseConfig
+	StorageType       string
+	TrimmingBatchSize int64
 
 	// Blockchain configuration
 	BaseChain  ChainConfig
@@ -102,6 +108,8 @@ type Config struct {
 
 	// Base chain contract configuration
 	ArchitectContract ContractConfig
+
+	AppRegistryContract ContractConfig
 
 	// Contract configuration
 	RegistryContract ContractConfig
@@ -187,6 +195,10 @@ type Config struct {
 	EntitlementContract ContractConfig `mapstructure:"entitlement_contract"`
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
+
+	// MetadataShardMask is the mask used to determine the shard for metadata streams.
+	// It is used for testing only.
+	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
 }
 
 type TLSConfig struct {
@@ -414,6 +426,19 @@ type AuthenticationConfig struct {
 	SessionToken SessionTokenConfig
 }
 
+type StreamTrackingConfig struct {
+	// Maximum number of streams to include in each sync session when tracking streams. If
+	// unset, this defaults to 100.
+	StreamsPerSyncSession int
+
+	// Default to 50
+	MaxConcurrentNodeRequests int
+
+	// NumWorkers configures the number of workers placing streams in syncs on the sync runner. If
+	// unset, this will default to 20.
+	NumWorkers int
+}
+
 type NotificationsConfig struct {
 	// SubscriptionExpirationDuration if the client isn't seen within this duration stop sending
 	// notifications to it. Defaults to 90 days.
@@ -429,6 +454,8 @@ type NotificationsConfig struct {
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig
+
+	StreamTracking StreamTrackingConfig
 }
 
 type AppRegistryConfig struct {
@@ -454,6 +481,8 @@ type AppRegistryConfig struct {
 	// workers empty the queue of outgoing webhook calls, whether they are for message sends or key
 	// solicitations. If unset or set to < 1, it will default to 50.
 	NumMessageSendWorkers int
+
+	StreamTracking StreamTrackingConfig
 }
 
 type LogConfig struct {
@@ -495,6 +524,22 @@ type DebugEndpointsConfig struct {
 	// Make storage statistics available via debug endpoints. This may involve running queries
 	// on the underlying database.
 	EnableStorageEndpoint bool
+
+	// PrivateDebugServerAddress is the address to start the debug server on, such as "127.0.0.1:8080" or ":8080" to listen on all interfaces.
+	// If not set, the debug server will not be started.
+	// There is no TLS and no authentication, all debug endpoints, including pprof, are exposed.
+	// This is highly privileged endpoint and should not be exposed to the public internet.
+	PrivateDebugServerAddress string
+
+	// MemProfileDir is the directory to write the memory profile to.
+	// If not set, the memory profile will not be written.
+	// Two last profiles are kept.
+	// To preserver profiles in the docker container, mount a volume to the directory.
+	MemProfileDir string
+
+	// MemProfileInterval is the interval to write memory profiles with, like "5m".
+	// First profile is written at MemProfileInterval / 2 after start.
+	MemProfileInterval time.Duration
 }
 
 type RiverRegistryConfig struct {
@@ -582,6 +627,10 @@ type StreamReconciliationConfig struct {
 
 	// GetMiniblocksPageSize is the number of miniblocks to read at once from the remote node.
 	GetMiniblocksPageSize int64
+
+	// ReconciliationTaskRetryDuration is the duration to wait before retrying a failed reconciliation task.
+	// default is 2 minutes.
+	ReconciliationTaskRetryDuration time.Duration
 }
 
 type FilterConfig struct {

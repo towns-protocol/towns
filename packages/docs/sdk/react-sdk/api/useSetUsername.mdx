@@ -14,7 +14,7 @@ import { useSetUsername } from '@towns-protocol/react-sdk'
 ```ts
 function useSetUsername(
   streamId: string,
-  config?: ActionConfig<Myself['setUsername']>,
+  config?: ActionConfig<Myself["setUsername"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -37,7 +37,7 @@ The id of the stream to set the username of.
 
 ### config
 
-- **Type:** `ActionConfig<Myself['setUsername']>`
+- **Type:** `ActionConfig<Myself["setUsername"]>`
 - **Optional**
 
 Configuration options for the action.

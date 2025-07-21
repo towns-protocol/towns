@@ -150,7 +150,7 @@ var maxBlocksPerScan = 100
 
 func optsFromPrevMiniblock(prevMb *events.MiniblockInfo) *events.ParsedMiniblockInfoOpts {
 	expectedPrevSnapshotNum := prevMb.Header().PrevSnapshotMiniblockNum
-	if prevMb.Header().Snapshot != nil {
+	if prevMb.Snapshot != nil {
 		expectedPrevSnapshotNum = prevMb.Header().MiniblockNum
 	}
 
@@ -184,7 +184,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 	// If the miniblock is block 0, an empty options is fine.
 	opts := events.NewParsedMiniblockInfoOpts()
 	if blockNum > 0 {
-		prevBlock, err := m.store.ReadMiniblocks(ctx, streamId, blockNum-1, blockNum)
+		prevBlock, err := m.store.ReadMiniblocks(ctx, streamId, blockNum-1, blockNum, false)
 		if err != nil || len(prevBlock) < 1 {
 			if len(prevBlock) < 1 {
 				err = fmt.Errorf("previous miniblock was not available")
@@ -201,7 +201,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 			)
 		}
 
-		prevMb, err := events.NewMiniblockInfoFromBytes(prevBlock[0], blockNum-1)
+		prevMb, err := events.NewMiniblockInfoFromDescriptor(prevBlock[0])
 		if err != nil {
 			// Don't return a corruption error here because the previous block is outside
 			// of the range we were given to check.
@@ -227,7 +227,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 
 	for blockNum <= latest {
 		toExclusive := min(blockNum+int64(maxBlocksPerScan), latest+1)
-		blocks, err := m.store.ReadMiniblocks(ctx, streamId, blockNum, toExclusive)
+		blocks, err := m.store.ReadMiniblocks(ctx, streamId, blockNum, toExclusive, false)
 		if err != nil {
 			return newErrorReport(
 				streamId,
@@ -254,7 +254,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 		}
 
 		for offset, block := range blocks {
-			mbInfo, err := events.NewMiniblockInfoFromBytesWithOpts(block, opts)
+			mbInfo, err := events.NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 			if err != nil {
 				err = base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
 					Message("Failed to validate miniblock").

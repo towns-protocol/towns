@@ -1,7 +1,17 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.189",
+    "version": "0.0.282",
     "packageManager": "yarn@3.8.0",
+    "publishConfig": {
+        "access": "public"
+    },
+    "type": "module",
+    "imports": {
+        "#/dev/*": "./dev/*",
+        "#/v3/*": "./v3/*",
+        "#/deployments/*": "./deployments/*",
+        "#/config/*": "./config/*"
+    },
     "scripts": {
         "build": "yarn make-config",
         "make-config": "node ./scripts/make-config.js",

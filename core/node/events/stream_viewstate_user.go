@@ -3,6 +3,8 @@ package events
 import (
 	"bytes"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -12,8 +14,9 @@ type UserStreamView interface {
 	GetUserInception() (*UserPayload_Inception, error)
 	GetUserMembership(streamId shared.StreamId) (MembershipOp, error)
 	IsMemberOf(streamId shared.StreamId) bool
-	HasTransaction(evmReceipt *BlockchainTransactionReceipt, 
+	HasTransaction(evmReceipt *BlockchainTransactionReceipt,
 		solanaReceipt *SolanaBlockchainTransactionReceipt) (bool, error)
+	IsAppUser() (bool, error)
 }
 
 var _ UserStreamView = (*StreamView)(nil)
@@ -87,10 +90,10 @@ func (r *StreamView) GetUserMembership(streamId shared.StreamId) (MembershipOp, 
 	return retValue, err
 }
 
-func transactionsAreEqual(blockChainTransaction *BlockchainTransaction, 
-	evmReceipt *BlockchainTransactionReceipt, 
-	solanaReceipt *SolanaBlockchainTransactionReceipt) bool {
-
+func transactionsAreEqual(blockChainTransaction *BlockchainTransaction,
+	evmReceipt *BlockchainTransactionReceipt,
+	solanaReceipt *SolanaBlockchainTransactionReceipt,
+) bool {
 	if blockChainTransaction == nil {
 		return false
 	} else if evmReceipt != nil && blockChainTransaction.Receipt != nil {
@@ -110,7 +113,10 @@ func transactionsAreEqual(blockChainTransaction *BlockchainTransaction,
 }
 
 // handles transactions for user streams and member payload of any stream
-func (r *StreamView) HasTransaction(evmReceipt *BlockchainTransactionReceipt, solanaReceipt *SolanaBlockchainTransactionReceipt) (bool, error) {
+func (r *StreamView) HasTransaction(
+	evmReceipt *BlockchainTransactionReceipt,
+	solanaReceipt *SolanaBlockchainTransactionReceipt,
+) (bool, error) {
 	retValue := false
 	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
@@ -143,4 +149,19 @@ func (r *StreamView) HasTransaction(evmReceipt *BlockchainTransactionReceipt, so
 
 	err := r.forEachEvent(0, updateFn)
 	return retValue, err
+}
+
+func (r *StreamView) IsAppUser() (bool, error) {
+	inception, err := r.GetUserInception()
+	if err != nil {
+		return false, err
+	}
+
+	zeroAddress := common.Address{}
+	// If the inception event contains a valid AppAddress, then we consider it a bot.
+	if len(inception.AppAddress) == 20 && common.Address(inception.AppAddress) != zeroAddress {
+		return true, nil
+	}
+
+	return false, err
 }

@@ -1,7 +1,7 @@
 //go:build !race
 
 // This file contains tests that are skipped when the race detector is enabled
-// because they are too resource-intensives.
+// because they are too resource-intensive.
 
 package rpc
 
@@ -13,6 +13,9 @@ import (
 
 func TestReplMcConversationNoRace(t *testing.T) {
 	t.Parallel()
+	t.Run("5x100", func(t *testing.T) {
+		testReplMcConversation(t, 5, 100, 10, 100, 100)
+	})
 	t.Run("10x1000", func(t *testing.T) {
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")

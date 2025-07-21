@@ -6,14 +6,14 @@ module.exports = {
         'plugin:@typescript-eslint/recommended',
         'plugin:react/jsx-runtime',
         'plugin:react-hooks/recommended',
-        'plugin:import/warnings',
-        'plugin:import/typescript',
+        'plugin:import-x/warnings',
+        'plugin:import-x/typescript',
     ],
     rules: {
         curly: 'warn',
         '@typescript-eslint/no-base-to-string': 'error',
         '@typescript-eslint/no-unused-vars': ['warn', { args: 'none' }],
-        'import/no-named-as-default-member': 'off',
+        'import-x/no-named-as-default-member': 'off',
         'react/display-name': 'off',
         'react/jsx-boolean-value': ['warn', 'never'],
         'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'ignore' }],
@@ -31,8 +31,8 @@ module.exports = {
                 noSortAlphabetically: true,
             },
         ],
-        'import/no-cycle': ['warn'],
-        'import/order': [
+        'import-x/no-cycle': ['warn'],
+        'import-x/order': [
             'error',
             {
                 groups: ['external', 'internal'],

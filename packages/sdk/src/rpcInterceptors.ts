@@ -11,13 +11,13 @@ import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
 import { dlog, dlogError, check } from '@towns-protocol/dlog'
-import cloneDeep from 'lodash/cloneDeep'
+import { cloneDeep } from 'lodash-es'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {
     maxAttempts: 3,
     initialRetryDelay: 2000,
     maxRetryDelay: 6000,
-    defaultTimeoutMs: 30000, // 30 seconds for long running requests
+    defaultTimeoutMs: 90000, // 90 seconds for long running requests
 }
 
 export type RetryParams = {
@@ -343,7 +343,7 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
                 logCalls(name, 'SHUTDOWN', id)
                 updateHistogram(`${name} SHUTDOWN`)
             } else {
-                const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
+                const stack = err instanceof Error && 'stack' in err ? (err.stack ?? '') : ''
                 logError(name, 'ERROR STREAMING RESPONSE', id, err, stack)
                 updateHistogram(`${name} RECV`, undefined, true)
             }
@@ -374,6 +374,14 @@ export function getRpcErrorProperty(err: unknown, prop: string): string | undefi
         }
     }
     return undefined
+}
+
+// check to see if the error contains a specific message
+export function errorContainsMessage(err: unknown, message: string): boolean {
+    if (err !== null && typeof err === 'object' && 'message' in err) {
+        return (err.message as string).includes(message)
+    }
+    return false
 }
 
 export function getRetryDelayMs(attempts: number, retryParams: RetryParams): number {

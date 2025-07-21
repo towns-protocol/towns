@@ -52,7 +52,7 @@ func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress
 	// Connect to the client using WebSocket for live subscription
 	rpcClient, err := rpc.DialContext(ctx, wsEndpoint)
 	if err != nil {
-		log.Errorw("Failed to connect to the Ethereum WebSocket client", "err", err)
+		log.Errorw("Failed to connect to the Ethereum WebSocket client", "error", err)
 		return err
 	}
 	defer rpcClient.Close()
@@ -63,7 +63,7 @@ func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress
 	headers := make(chan *types.Header)
 	subscription, err := ethClient.SubscribeNewHead(ctx, headers)
 	if err != nil {
-		log.Errorw("Failed to subscribe to new block headers", "err", err)
+		log.Errorw("Failed to subscribe to new block headers", "error", err)
 		return err
 	}
 	defer subscription.Unsubscribe()
@@ -73,14 +73,14 @@ func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress
 	for {
 		select {
 		case err := <-subscription.Err():
-			log.Errorw("Subscription error", "err", err)
+			log.Errorw("Subscription error", "error", err)
 			return err
 
 		case <-headers:
 			// Check the balance on each new block
 			balance, err := ethClient.BalanceAt(ctx, walletAddress, nil)
 			if err != nil || balance == nil {
-				log.Warnw("Failed to retrieve wallet balance", "err", err)
+				log.Warnw("Failed to retrieve wallet balance", "error", err)
 				continue // Try again in the next block
 			}
 
@@ -109,7 +109,7 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 				time.Sleep(500 * time.Millisecond)
 				continue
 			} else {
-				log.Errorw("Failed to get transaction receipt", "err", err)
+				log.Errorw("Failed to get transaction receipt", "error", err)
 				return nil
 			}
 		}
@@ -123,14 +123,14 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 				),
 			)
 			if err != nil {
-				log.Errorw("Failed to parse ABI", "err", err)
+				log.Errorw("Failed to parse ABI", "error", err)
 				return nil
 			}
 
 			if len(receipt.Logs) == 0 {
 				rcp, err := json.MarshalIndent(receipt, "", "    ")
 				if err != nil {
-					log.Errorw("Failed to marshal receipt", "err", err)
+					log.Errorw("Failed to marshal receipt", "error", err)
 					return nil
 				}
 				rpcClient := client.Client() // Access the underlying rpc.Client
@@ -158,7 +158,7 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 			var errorMsg string
 			err = parsed.UnpackIntoInterface(&errorMsg, "errorMessage", receipt.Logs[0].Data)
 			if err != nil {
-				log.Errorw("Failed to unpack error message", "err", err)
+				log.Errorw("Failed to unpack error message", "error", err)
 				return nil
 			}
 

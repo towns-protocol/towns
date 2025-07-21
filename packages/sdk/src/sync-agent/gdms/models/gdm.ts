@@ -27,7 +27,11 @@ export interface GdmModel extends Identifiable {
 export class Gdm extends PersistedObservable<GdmModel> {
     timeline: MessageTimeline
     members: Members
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+    ) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
         this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
         this.members = new Members(id, riverConnection, store)
@@ -112,11 +116,11 @@ export class Gdm extends PersistedObservable<GdmModel> {
     async redact(eventId: string, reason?: string) {
         const channelId = this.data.id
         const result = await this.riverConnection.withStream(channelId).call((client, stream) => {
-            const event = stream.view.events.get(eventId)
+            const event = stream.view.timeline.find((x) => x.eventId === eventId)
             if (!event) {
                 throw new Error(`ref event not found: ${eventId}`)
             }
-            if (event.remoteEvent?.creatorUserId !== this.riverConnection.userId) {
+            if (event.sender.id !== this.riverConnection.userId) {
                 throw new Error(
                     `You can only redact your own messages: ${eventId} - userId: ${this.riverConnection.userId}`,
                 )

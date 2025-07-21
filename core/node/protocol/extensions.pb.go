@@ -14,6 +14,7 @@ type IsUserInboxPayload_Content = isUserInboxPayload_Content
 type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
 type IsUserMetadataPayload_Content = isUserMetadataPayload_Content
 type IsMediaPayload_Content = isMediaPayload_Content
+type IsMetadataPayload_Content = isMetadataPayload_Content
 type IsSnapshot_Content = isSnapshot_Content
 type IsBlockchainTransaction_Content = isBlockchainTransaction_Content
 type IsGetStreamExResponse_Data = isGetStreamExResponse_Data
@@ -32,6 +33,7 @@ func (*UserInboxPayload_Inception) isInceptionPayload() {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserMetadataPayload_Inception) isInceptionPayload() {}
 func (*MediaPayload_Inception) isInceptionPayload() {}
+func (*MetadataPayload_Inception) isInceptionPayload() {}
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 	switch e.Content.(type) {
@@ -85,6 +87,12 @@ func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 		return r
 	case *Snapshot_MediaContent:
 		r := e.Content.(*Snapshot_MediaContent).MediaContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_MetadataContent:
+		r := e.Content.(*Snapshot_MetadataContent).MetadataContent.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -150,6 +158,12 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 			return nil
 		}
 		return r
+	case *StreamEvent_MetadataPayload:
+		r := e.Payload.(*StreamEvent_MetadataPayload).MetadataPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	default:
 		return nil
 	}
@@ -202,10 +216,15 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		if !ok {
 			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_MediaPayload::%T vs %T", e.GetMediaPayload().Content, i)
 		}
+	case *StreamEvent_MetadataPayload:
+		_, ok := i.(*MetadataPayload_Inception)
+		if !ok {
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_MetadataPayload::%T vs %T", e.GetMetadataPayload().Content, i)
+		}
 	case *StreamEvent_MemberPayload:
 		return nil
 	default:
-		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)
+		return fmt.Errorf("inception type not handled: %T vs %T", e.Payload, i)
 	}
 	return nil
 }

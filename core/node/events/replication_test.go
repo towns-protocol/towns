@@ -25,24 +25,24 @@ func TestReplicatedMbProduction(t *testing.T) {
 	stream, err := leader.cache.getStreamImpl(ctx, streamId, true)
 	require.NoError(err)
 	require.True(stream.IsLocal())
-	job := leader.mbProducer.trySchedule(ctx, stream)
+	job := leader.cache.mbProducer.trySchedule(ctx, stream, 0)
 	require.NotNil(job)
 	require.Eventually(
 		func() bool {
-			return leader.mbProducer.testCheckDone(job)
+			return leader.cache.mbProducer.testCheckDone(job)
 		},
 		10*time.Second,
 		10*time.Millisecond,
 	)
 
-	leaderMBs, err := leader.params.Storage.ReadMiniblocks(ctx, streamId, 0, 100)
+	leaderMBs, err := leader.params.Storage.ReadMiniblocks(ctx, streamId, 0, 100, false)
 	require.NoError(err)
 	require.Len(leaderMBs, 2)
 
 	for _, n := range streamNodes[1:] {
 		require.EventuallyWithT(
 			func(tt *assert.CollectT) {
-				mbs, err := tc.instancesByAddr[n].params.Storage.ReadMiniblocks(ctx, streamId, 0, 100)
+				mbs, err := tc.instancesByAddr[n].params.Storage.ReadMiniblocks(ctx, streamId, 0, 100, false)
 				_ = assert.NoError(tt, err) && assert.Len(tt, mbs, 2) && assert.EqualValues(tt, leaderMBs, mbs)
 			},
 			5*time.Second,

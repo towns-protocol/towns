@@ -38,13 +38,34 @@ fi
 
 echo "Generating server certs..."
 current_user=$(whoami)
-email="${current_user}@hntlabs.com"
+email="${current_user}@towns.com"
+
+# Determine if we're on Ubuntu or macOS to handle OpenSSL config location
+if [[ $(uname) == "Darwin" ]]; then
+    OPENSSL_CNF_PATH="/etc/ssl/openssl.cnf"
+elif [[ $(grep -i ubuntu /etc/os-release 2>/dev/null) ]]; then
+    OPENSSL_CNF_PATH="/etc/ssl/openssl.cnf"
+    # On Ubuntu 22.04, the config might be in a different location
+    if [ ! -f "$OPENSSL_CNF_PATH" ]; then
+        OPENSSL_CNF_PATH="/usr/lib/ssl/openssl.cnf"
+    fi
+else
+    # Default fallback
+    OPENSSL_CNF_PATH="/etc/ssl/openssl.cnf"
+fi
+
+# Check if the OpenSSL config file exists
+if [ ! -f "$OPENSSL_CNF_PATH" ]; then
+    echo "Error: OpenSSL configuration file not found at $OPENSSL_CNF_PATH"
+    echo "Please install openssl or specify the correct path."
+    exit 1
+fi
 
 # Generate server key and CSR
 openssl req -newkey rsa:2048 -nodes -keyout $SERVER_KEY_PATH -out $CSR_PATH \
     -subj "/C=US/ST=Some-State/L=Some-City/O=Some-Organization/OU=Some-Unit/CN=river/emailAddress=${email}" \
     -reqexts SAN \
-    -config <(cat /etc/ssl/openssl.cnf <(printf "\n[SAN]\nsubjectAltName=DNS:localhost,IP:127.0.0.1"))
+    -config <(cat "$OPENSSL_CNF_PATH" <(printf "\n[SAN]\nsubjectAltName=DNS:localhost,IP:127.0.0.1"))
 
 # Create a temporary file for extfile.cnf with a relevant name
 EXTFILE_TEMP=$(mktemp -t extfileXXXX.cnf)

@@ -35,7 +35,7 @@ redact({ eventId: reactionEventId })
 ```ts
 function useAdminRedact(
   streamId: string,
-  config?: ActionConfig<Channel['adminRedact']>,
+  config?: ActionConfig<Channel["adminRedact"]>,
 ): {
     data: {
         eventId: string;
@@ -62,7 +62,7 @@ The id of the stream to redact the message in.
 
 ### config
 
-- **Type:** `ActionConfig<Channel['adminRedact']>`
+- **Type:** `ActionConfig<Channel["adminRedact"]>`
 - **Optional**
 
 Configuration options for the action.

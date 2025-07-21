@@ -14,19 +14,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "DOMAIN_SEPARATOR",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "result",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "__ERC721A_init",
     "inputs": [
       {
@@ -54,11 +41,6 @@ export default [
       },
       {
         "name": "symbol",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "version",
         "type": "string",
         "internalType": "string"
       }
@@ -182,49 +164,6 @@ export default [
         "name": "",
         "type": "address",
         "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "eip712Domain",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "fields",
-        "type": "bytes1",
-        "internalType": "bytes1"
-      },
-      {
-        "name": "name",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "version",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "chainId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "verifyingContract",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "salt",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "extensions",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -489,25 +428,6 @@ export default [
     "outputs": [
       {
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "nonces",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "result",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -862,12 +782,6 @@ export default [
   },
   {
     "type": "event",
-    "name": "EIP712DomainChanged",
-    "inputs": [],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "GuardianDefaultCooldownUpdated",
     "inputs": [
       {
@@ -1062,33 +976,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "ECDSAInvalidSignature",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "ECDSAInvalidSignatureLength",
-    "inputs": [
-      {
-        "name": "length",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "ECDSAInvalidSignatureS",
-    "inputs": [
-      {
-        "name": "s",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ]
-  },
-  {
-    "type": "error",
     "name": "Guardian_AlreadyDisabled",
     "inputs": []
   },
@@ -1192,22 +1079,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "SafeCastOverflowedUintDowncast",
-    "inputs": [
-      {
-        "name": "bits",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "value",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
     "name": "SpaceOwner__DefaultUriNotSet",
     "inputs": []
   },
@@ -1249,16 +1120,6 @@ export default [
   {
     "type": "error",
     "name": "URIQueryForNonexistentToken",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Validator__InvalidAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Validator__InvalidStringLength",
     "inputs": []
   },
   {

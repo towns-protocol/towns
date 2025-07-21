@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -19,7 +19,7 @@ import (
 type ephemeralStreamMonitor struct {
 	// streams is a map of ephemeral stream IDs to the creation time.
 	// This is used by the monitor to detect "dead" ephemeral streams and delete them.
-	streams *xsync.MapOf[StreamId, time.Time]
+	streams *xsync.Map[StreamId, time.Time]
 	// ttl is the duration of time an ephemeral stream can exist
 	// before either being sealed/normalized or deleted.
 	ttl      time.Duration
@@ -39,7 +39,7 @@ func newEphemeralStreamMonitor(
 	}
 
 	m := &ephemeralStreamMonitor{
-		streams: xsync.NewMapOf[StreamId, time.Time](),
+		streams: xsync.NewMap[StreamId, time.Time](),
 		storage: storage,
 		ttl:     ttl,
 		stop:    make(chan struct{}),
@@ -86,7 +86,7 @@ func (m *ephemeralStreamMonitor) monitor(ctx context.Context) {
 			return
 		case <-ctx.Done():
 			if err := ctx.Err(); !errors.Is(err, context.Canceled) {
-				logging.FromCtx(ctx).Error("dead ephemeral stream monitor stopped", "err", err)
+				logging.FromCtx(ctx).Error("dead ephemeral stream monitor stopped", "error", err)
 			}
 			m.close()
 			return
@@ -133,7 +133,7 @@ func (m *ephemeralStreamMonitor) handleStream(ctx context.Context, streamId Stre
 		"streamId", streamId,
 	); err != nil {
 		if !IsRiverErrorCode(err, Err_NOT_FOUND) {
-			logging.FromCtx(ctx).Error("failed to delete dead ephemeral stream", "err", err, "streamId", streamId)
+			logging.FromCtx(ctx).Error("failed to delete dead ephemeral stream", "error", err, "streamId", streamId)
 		}
 	}
 

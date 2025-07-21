@@ -41,21 +41,7 @@ function useUserDms(
   config?: ObservableConfig.FromObservable<Dms>,
 ): {
     error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    streamIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    streamIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
+    status: "loading" | "loaded" | "error";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -81,21 +67,7 @@ The list of all direct messages stream ids of the current user.
 ```ts
 {
     error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    streamIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    streamIds: string[];
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
+    status: "loading" | "loaded" | "error";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;

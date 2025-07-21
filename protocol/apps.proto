@@ -2,6 +2,9 @@ syntax = "proto3";
 package river;
 option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 
+import "google/protobuf/empty.proto";
+import "protocol.proto";
+
 // AppRegistryService allows apps and app owners to register apps, and set app-related preferences for messages added
 // to channels the app has membership in.
 //
@@ -11,10 +14,49 @@ option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 // Err_UNAUTHENTICATED (code=16) is returned.
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
+
+    // Webhook status / registration.
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
-    // rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
-    // rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+    // App settings management.
+    rpc SetAppSettings(SetAppSettingsRequest) returns (SetAppSettingsResponse);
+    rpc GetAppSettings(GetAppSettingsRequest) returns (GetAppSettingsResponse);
+
+    // App metadata management.
+    rpc SetAppMetadata(SetAppMetadataRequest) returns (SetAppMetadataResponse);
+    rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
+
+    // RotateSecret allows the bot owner to rotate the shared secret the app registry
+    // service uses to authorize itself to the bot when making webhook calls.
+    rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
+
+    // GetSession allows the bot owner to query for specific session keys.
+    rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+
+    // ValidateBotName checks if a bot name is available for use.
+    rpc ValidateBotName(ValidateBotNameRequest) returns (ValidateBotNameResponse);
+}
+
+// ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
+// of. It specifies which messages the app registry service will consider relevant for forwarding to
+// the bot.
+enum ForwardSettingValue {
+    // FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS as the default setting.
+    FORWARD_SETTING_UNSPECIFIED = 0;
+    // FORWARD_SETTING_ALL_MESSAGES indicates that the app would like all messages forwarded for each channel
+    // it is a member of.
+    FORWARD_SETTING_ALL_MESSAGES = 1;
+    // FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS indicates that the app would only like messages forwarded in
+    // channels it has membership in if either the app is mentioned, or the message is a direct reply or reaction
+    // to it's own post. This is the default.
+    FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS = 2;
+    // SPACE_CHANNEL_SETTING_NO_MESSAGES indicates that the user won't receive notifications of any channel in the space.
+    FORWARD_SETTING_NO_MESSAGES = 3;
+  }
+
+message AppSettings {
+    ForwardSettingValue forward_setting = 1;
 }
 
 message RegisterRequest {
@@ -23,11 +65,15 @@ message RegisterRequest {
 
     // public key of the app owner
     bytes app_owner_id = 2;
+
+    AppSettings settings = 3;
+
+    AppMetadata metadata = 4;
 }
 
 message RegisterResponse {
     // The shared secret used to sign the jwt the app registry will use to authenticate to the
-    // app service. This secret should be exactly 32 bytes.
+    // app service. This secret will be exactly 32 bytes.
     bytes hs256_shared_secret = 1;
 }
 
@@ -41,14 +87,34 @@ message RegisterWebhookRequest {
 
 message RegisterWebhookResponse { }
 
+message SetAppSettingsRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    AppSettings settings = 2;
+}
+
+message SetAppSettingsResponse { }
+
+message GetAppSettingsRequest {
+    // public key of the app
+    bytes app_id = 1;
+}
+
+message GetAppSettingsResponse {
+    AppSettings settings = 1;
+}
+
+
 message RotateSecretRequest {
         // public key of the app
         bytes app_id = 1;
 }
 
 message RotateSecretResponse {
-    // the updated shared secret used to generate the hmac the app registry will send to the app service
-    string hmac_shared_secret = 1;
+    // the updated shared secret used to sign the jwt the app registry will use to authenticate
+    // to the app service. This secret should be exactly 32 bytes.
+    bytes hs256_shared_secret = 1;
 }
 
 message GetStatusRequest {
@@ -64,6 +130,143 @@ message GetStatusResponse {
     // info included in the response body.
     bool valid_response = 2;
 
-    // version info returned by the webhook
-    string version_info = 3;
+    // Forward the status returned by the bot service.
+    AppServiceResponse.StatusResponse status = 3;
 }
+
+message GetSessionRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    string session_id = 2;    
+}
+
+message GetSessionResponse {
+    // This will be 
+    Envelope group_encryption_sessions = 1;
+}
+
+// As a performance optimization, we may wish to bundle together many key solicitation requests
+// and channel messages for the bot to respond to in a single webhook call. Thus, an isolated
+// group of channel messages and encryption keys, or a request for a key solicitation, is
+// represented here. For webhook calls regarding channel content, the payload may contain one or
+// more of these events.
+message EventPayload {
+    // A Messages payload represents a group of user messages in a channel that qualifies for the app
+    // to be notified. The included set of group encryption sessions in this message should have
+    // all the needed ciphertexts to decrypt the set of messages sent in the same payload.
+    message Messages {
+        bytes stream_id = 1;
+        repeated Envelope messages = 2;
+        repeated Envelope group_encryption_sessions_messages = 3;
+    }
+
+    // A SolicitKeys request is sent when one or more messages in the same channel cannot be forwarded
+    // to the app because the app does not have keys available to decrypt it in it's user inbox stream.
+    // In this case, the app must be prompted to send a message to the stream to solicit the missing
+    // session keys so that all queued messages can be forwarded.
+    message SolicitKeys {
+        bytes stream_id = 1;
+        repeated string session_ids = 2;
+    }
+
+    oneof payload {
+        Messages messages = 1;
+        SolicitKeys solicitation = 2;
+    }
+}
+
+message EventsPayload {
+    repeated EventPayload events = 1;
+}
+
+message AppServiceRequest {
+    oneof payload {
+        google.protobuf.Empty initialize = 101;
+        google.protobuf.Empty status = 102;
+        EventsPayload events = 103;
+    }
+}
+
+
+message AppServiceResponse {
+    message InitializeResponse {
+        UserMetadataPayload.EncryptionDevice encryption_device = 1; 
+    }
+
+    message StatusResponse {
+        int32 framework_version = 1;
+        string device_key = 2;
+        string fallback_key = 3;
+    }
+
+    oneof payload {
+        InitializeResponse initialize = 101;
+        StatusResponse status = 102;
+    }
+}
+
+// SlashCommand represents a command that the bot supports.
+message SlashCommand {
+    // name is the command name (e.g., "help", "search").
+    // Must be 1-32 characters, contain only letters, numbers, and underscores,
+    // and start with a letter.
+    string name = 1;
+
+    // description is a short description of what the command does.
+    // Must be 1-256 characters.
+    string description = 2;
+}
+
+message AppMetadata {
+    // username is the identifier used to mention the bot (e.g., "@mybot").
+    // Must be unique across all bots.
+    string username = 1;
+
+    string description = 2;
+
+    // image_url is an image URL with an acceptable schema and file extension.
+    string image_url = 3;
+
+    optional string external_url = 4;
+
+    // avatar_url is an image URL with an acceptable schema and file extension.
+    string avatar_url = 5;
+
+    // slash_commands is a list of commands the bot supports.
+    // Maximum of 25 commands per bot.
+    repeated SlashCommand slash_commands = 6;
+
+    // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
+    // Must be non-empty and unique across all bots.
+    string display_name = 7;
+}
+
+// Set app metadata
+message SetAppMetadataRequest {
+    bytes app_id = 1;
+    AppMetadata metadata = 2;
+}
+
+message SetAppMetadataResponse {}
+
+// Get app metadata
+message GetAppMetadataRequest {
+    bytes app_id = 1;
+}
+
+message GetAppMetadataResponse {
+    AppMetadata metadata = 1;
+}
+
+// Validate bot username
+message ValidateBotNameRequest {
+    string username = 1;
+}
+
+message ValidateBotNameResponse {
+    bool is_available = 1;
+    string error_message = 2;
+}
+
+

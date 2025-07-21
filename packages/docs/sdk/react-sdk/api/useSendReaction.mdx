@@ -25,7 +25,7 @@ sendReaction(messageEventId, '🔥')
 ```ts
 function useSendReaction(
   streamId: string,
-  config?: ActionConfig<Channel['sendReaction']>,
+  config?: ActionConfig<Channel["sendReaction"]>,
 ): {
     data: {
         eventId: string;
@@ -52,7 +52,7 @@ The id of the stream to send the reaction to.
 
 ### config
 
-- **Type:** `ActionConfig<Channel['sendReaction']>`
+- **Type:** `ActionConfig<Channel["sendReaction"]>`
 - **Optional**
 
 Configuration options for the action.

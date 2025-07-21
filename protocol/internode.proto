@@ -14,6 +14,7 @@ message MiniblockProposal {
 message AllocateStreamRequest {
     Miniblock miniblock = 1;
     bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+    Envelope snapshot = 3;
 }
 
 message AllocateStreamResponse {
@@ -54,6 +55,7 @@ message ProposeMiniblockResponse {
 message SaveMiniblockCandidateRequest {
     bytes stream_id = 1;
     Miniblock miniblock = 2;
+    Envelope snapshot = 3;
 }
 
 message SaveMiniblockCandidateResponse {
@@ -62,11 +64,13 @@ message SaveMiniblockCandidateResponse {
 message GetMiniblocksByIdsRequest {
     bytes stream_id = 1;
     repeated int64 miniblock_ids = 2;
+    bool omit_snapshots = 3;
 }
 
 message GetMiniblockResponse {
     Miniblock miniblock = 1;
     int64 num = 2;
+    Envelope snapshot = 3;
 }
 
 /*
@@ -76,6 +80,7 @@ message GetMiniblockResponse {
 message AllocateEphemeralStreamRequest {
     Miniblock miniblock = 1;
     bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+    Envelope snapshot = 3;
 }
 
 message AllocateEphemeralStreamResponse {
@@ -84,6 +89,7 @@ message AllocateEphemeralStreamResponse {
 message SaveEphemeralMiniblockRequest {
     bytes stream_id = 1;
     Miniblock miniblock = 2;
+    Envelope snapshot = 3;
 }
 
 message SaveEphemeralMiniblockResponse {

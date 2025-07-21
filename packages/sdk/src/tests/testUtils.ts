@@ -17,7 +17,7 @@ import {
     BlockchainTransaction_TokenTransfer,
 } from '@towns-protocol/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
-import { IStreamStateView } from '../streamStateView'
+import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
 import {
     makeBaseChainConfig,
@@ -33,15 +33,15 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from '../id'
-import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
-import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { ParsedEvent, StreamTimelineEvent } from '../types'
+import { secp256k1 } from '@noble/curves/secp256k1'
+import { EntitlementsDelegate } from '../decryptionExtensions'
 import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
 import assert from 'assert'
-import _ from 'lodash'
+import { forEachRight } from 'lodash-es'
 import { MockEntitlementsDelegate } from '../utils'
 import { SignerContext, makeSignerContext } from '../signerContext'
 import {
@@ -52,7 +52,6 @@ import {
     createSpaceDapp,
     IRuleEntitlementBase,
     Permission,
-    ISpaceDapp,
     LegacyMembershipStruct,
     MembershipStruct,
     isLegacyMembershipType,
@@ -84,13 +83,11 @@ import {
     getFixedPricingModule,
     getDynamicPricingModule,
 } from '@towns-protocol/web3'
-import {
-    RiverTimelineEvent,
-    type TimelineEvent,
-} from '../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, type TimelineEvent } from '../views/models/timelineTypes'
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'
+import { MemberTokenTransfer } from '../streamStateView_Members'
 
 const log = dlog('csb:test:util')
 
@@ -249,7 +246,7 @@ export const makeRandomUserContext = async (): Promise<SignerContextWithWallet> 
 }
 
 export const makeRandomUserAddress = (): Uint8Array => {
-    return publicKeyToAddress(getPublicKey(utils.randomPrivateKey(), false))
+    return publicKeyToAddress(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey(), false))
 }
 
 export const makeUserContextFromWallet = async (
@@ -300,6 +297,10 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
         persistenceStoreName: persistenceDbName,
+        streamOpts: {
+            useModifySync: true,
+            useSharedSyncer: true,
+        },
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
@@ -341,15 +342,15 @@ export async function setupWalletsAndContexts() {
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
-            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp),
         }),
         makeTestClient({
             context: bobsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp),
         }),
         makeTestClient({
             context: carolsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp),
         }),
     ])
 
@@ -458,7 +459,7 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     f: T,
 ): ReturnType<T> | undefined => {
     let ret: ReturnType<T> | undefined = undefined
-    _.forEachRight(events, (v): boolean => {
+    forEachRight(events, (v): boolean => {
         const r = f(v)
         if (r !== undefined) {
             ret = r
@@ -474,14 +475,14 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
 // the user to the space, and starts syncing the client.
 export async function createSpaceAndDefaultChannel(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     wallet: ethers.Wallet,
     name: string,
     membership: LegacyMembershipStruct | MembershipStruct,
 ): Promise<{
     spaceId: string
     defaultChannelId: string
-    userStreamView: IStreamStateView
+    userStreamView: StreamStateView
 }> {
     const transaction = await createVersionedSpaceFromMembership(
         client,
@@ -507,7 +508,12 @@ export async function createSpaceAndDefaultChannel(
 
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
-    expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+    await waitFor(() =>
+        expect(
+            userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+            `waitFor ${spaceId} in ${userStreamId}`,
+        ).toBe(true),
+    )
 
     const channelReturnVal = await client.createChannel(
         spaceId,
@@ -516,7 +522,12 @@ export async function createSpaceAndDefaultChannel(
         channelId,
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
-    expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+    await waitFor(() =>
+        expect(
+            userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+            `waitFor ${channelId} in ${userStreamId}`,
+        ).toBe(true),
+    )
 
     return {
         spaceId,
@@ -529,7 +540,7 @@ export const DefaultFreeAllocation = 1000
 
 export async function createVersionedSpaceFromMembership(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     wallet: ethers.Wallet,
     name: string,
     membership: LegacyMembershipStruct | MembershipStruct,
@@ -605,7 +616,7 @@ export async function createVersionedSpaceFromMembership(
 // the legacy space creation endpoint, because the updated parameters are not backwards
 // compatible - we don't attempt conversion here.
 export async function createVersionedSpace(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     createSpaceParams: CreateSpaceParams | CreateLegacySpaceParams,
     signer: SignerType,
 ): Promise<ethers.ContractTransaction> {
@@ -649,7 +660,7 @@ export async function createVersionedSpace(
 // latest space creation endpoint.
 export async function createUserStreamAndSyncClient(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     name: string,
     membershipInfo: LegacyMembershipStruct | MembershipStruct,
     wallet: ethers.Wallet,
@@ -685,7 +696,7 @@ export async function expectUserCanJoin(
     channelId: string,
     name: string,
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     address: string,
     wallet: ethers.Wallet,
 ) {
@@ -714,18 +725,23 @@ export async function expectUserCanJoin(
 
     const userStreamView = client.stream(client.userStreamId!)!.view
     await waitFor(() => {
-        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
-        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
+        expect(
+            userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN),
+            `waitFor ${spaceId} in ${client.userStreamId}`,
+        ).toBe(true)
+        expect(
+            userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+            `waitFor ${channelId} in ${client.userStreamId}`,
+        ).toBe(true)
     })
 }
 
 export async function everyoneMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
 ): Promise<LegacyMembershipStruct> {
-    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-        spaceDapp,
-    )
+    const { fixedPricingModuleAddress, freeAllocation, price } =
+        await getFreeSpacePricingSetup(spaceDapp)
 
     return {
         settings: {
@@ -751,7 +767,7 @@ export async function everyoneMembershipStruct(
 
 // should start charging after the first member joins
 export async function zeroPriceWithLimitedAllocationMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
     opts: { freeAllocation: number },
 ): Promise<LegacyMembershipStruct> {
@@ -783,7 +799,7 @@ export async function zeroPriceWithLimitedAllocationMembershipStruct(
 
 // should start charing for the first member
 export async function dynamicMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
 ): Promise<LegacyMembershipStruct> {
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
@@ -812,7 +828,7 @@ export async function dynamicMembershipStruct(
 
 // should start charging after the first member joins
 export async function fixedPriceMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
     opts: { price: number } = { price: 1 },
 ): Promise<LegacyMembershipStruct> {
@@ -843,7 +859,7 @@ export async function fixedPriceMembershipStruct(
     return settings
 }
 
-export async function getFreeSpacePricingSetup(spaceDapp: ISpaceDapp): Promise<{
+export async function getFreeSpacePricingSetup(spaceDapp: SpaceDapp): Promise<{
     fixedPricingModuleAddress: string
     freeAllocation: number
     price: number
@@ -888,7 +904,7 @@ export function twoNftRuleData(
 }
 
 export async function unlinkCaller(
-    rootSpaceDapp: ISpaceDapp,
+    rootSpaceDapp: SpaceDapp,
     rootWallet: ethers.Wallet,
     caller: ethers.Wallet,
 ) {
@@ -910,7 +926,7 @@ export async function unlinkCaller(
 }
 
 export async function unlinkWallet(
-    rootSpaceDapp: ISpaceDapp,
+    rootSpaceDapp: SpaceDapp,
     rootWallet: ethers.Wallet,
     linkedWallet: ethers.Wallet,
 ) {
@@ -933,7 +949,7 @@ export async function unlinkWallet(
 
 // Hint: pass in the wallets attached to the providers.
 export async function linkWallets(
-    rootSpaceDapp: ISpaceDapp,
+    rootSpaceDapp: SpaceDapp,
     rootWallet: ethers.Wallet,
     linkedWallet: ethers.Wallet,
 ) {
@@ -954,16 +970,77 @@ export async function linkWallets(
     expect(linkedWallets).toContain(linkedWallet.address)
 }
 
-export function waitFor<T>(
-    callback: (() => T) | (() => Promise<T>),
-    options: { timeoutMS: number } = { timeoutMS: 5000 },
+/// wait for a value, return the value if it is defined, otherwise throw an error or return undefined. false is a valid value.
+export function waitForValue<T>(
+    callback: () => T | undefined,
+    options: { timeoutMS: number } = { timeoutMS: 10000 },
 ): Promise<T> {
+    const tmpError = new Error('tmp')
     const timeoutContext: Error = new Error(
-        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
+        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
     )
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let lastError: any = undefined
+        const intervalId = setInterval(checkCallback, pollIntervalMS)
+        const timeoutId = setInterval(onTimeout, timeoutMS)
+        function onDone(result: T | undefined) {
+            clearInterval(intervalId)
+            clearInterval(timeoutId)
+            if (result) {
+                resolve(result)
+            } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                reject(lastError)
+            }
+        }
+        function onTimeout() {
+            lastError = lastError ?? timeoutContext
+            onDone(undefined)
+        }
+        function checkCallback() {
+            try {
+                const result = callback()
+                if (result !== undefined) {
+                    // if result is truthy, resolve
+                    onDone(result)
+                }
+                // otherwise let the polling continue
+            } catch (err: any) {
+                lastError = err
+            }
+        }
+    })
+}
+
+/// wait for the callback to not throw an error or return anything other than false (undefined is a valid value)
+/// usage (preferred):
+/// await waitFor(() => {
+///     expect(true).toBe(true)
+///     expect(myCounter.count).toBe(10)
+/// })
+/// usage (acceptable):
+/// await waitFor(() => {
+///     return myCounter.count > 9 // not preferred, but valid
+/// })
+/// usage (alternate):
+/// const myValidValue = await waitFor(async () => {
+///     const result = await myPromiseThatReturnsValueOrUndefinedOrError()
+///     return result
+/// })
+export function waitFor<T extends void | boolean>(
+    callback: (() => T) | (() => Promise<T>),
+    options: { timeoutMS: number } = { timeoutMS: 10000 },
+): Promise<T> {
+    const tmpError = new Error('tmp')
+    const timeoutContext: Error = new Error(
+        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms\n' + tmpError.stack,
+    )
+    return new Promise((resolve, reject) => {
+        const timeoutMS = options.timeoutMS
+        const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let timedOut = false
         let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
         const intervalId = setInterval(checkCallback, pollIntervalMS)
@@ -976,11 +1053,13 @@ export function waitFor<T>(
             } else if (result === undefined && promiseStatus === 'resolved') {
                 resolve(undefined as T)
             } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 reject(lastError)
             }
         }
         function onTimeout() {
             lastError = lastError ?? timeoutContext
+            timedOut = true
             onDone()
         }
         function checkCallback() {
@@ -991,22 +1070,22 @@ export function waitFor<T>(
                     promiseStatus = 'pending'
                     result.then(
                         (res) => {
-                            promiseStatus = 'resolved'
-                            onDone(res)
+                            if (!timedOut) {
+                                promiseStatus = 'resolved'
+                                onDone(res)
+                            }
                         },
                         (err) => {
                             promiseStatus = 'rejected'
-                            // splat the error to get a stack trace, i don't know why this works
-                            lastError = {
-                                ...err,
-                            }
+                            lastError = err
                         },
                     )
                 } else {
-                    promiseStatus = 'resolved'
-                    if (result) {
-                        // if result is not truthy, resolve
-                        resolve(result)
+                    // explicitly check for false, most of these will return void
+                    if (result !== false) {
+                        promiseStatus = 'resolved'
+                        // if result is truthy, resolve
+                        onDone(result)
                     }
                     // otherwise let the polling continue
                 }
@@ -1061,16 +1140,22 @@ export function getChannelMessagePayload(event?: ChannelMessage) {
     return undefined
 }
 
+export function getTimelineMessagePayload(event?: TimelineEvent) {
+    if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return event.content.body
+    }
+    return undefined
+}
+
 export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
     const recipientReceivesMessageWithoutError = makeDonePromise()
     client.on(
         'eventDecrypted',
-        (streamId: string, contentKind: SnapshotCaseType, event: DecryptedTimelineEvent): void => {
+        (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
             recipientReceivesMessageWithoutError.runAndDone(() => {
-                const content = event.decryptedContent
-                expect(content).toBeDefined()
-                check(content.kind === 'channelMessage')
-                expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
+                expect(event.content).toBeDefined()
+                check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                expect(event.content.body).toEqual(expectedMessageText)
             })
         },
     )
@@ -1095,7 +1180,7 @@ export interface CreateRoleContext {
 // if the USE_LEGACY_SPACES environment variable is set and converting the ruleData into the correct
 // format as necessary. Be aware, though, that the legacy endpoint does not support erc1155 checks.
 export async function createRole(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     provider: ethers.providers.Provider,
     spaceId: string,
     roleName: string,
@@ -1151,7 +1236,7 @@ export interface UpdateRoleContext {
 }
 
 export async function updateRole(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     provider: ethers.providers.Provider,
     params: UpdateRoleParams,
     signer: ethers.Signer,
@@ -1182,7 +1267,7 @@ export interface CreateChannelContext {
 }
 
 export async function createChannel(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     provider: ethers.providers.Provider,
     spaceId: string,
     channelName: string,
@@ -1230,6 +1315,7 @@ export async function createTownWithRequirements(requirements: {
     everyone: boolean
     users: string[]
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
+    duration?: number
 }) {
     const {
         alice,
@@ -1246,9 +1332,8 @@ export async function createTownWithRequirements(requirements: {
         carolsWallet,
     } = await setupWalletsAndContexts()
 
-    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-        bobSpaceDapp,
-    )
+    const { fixedPricingModuleAddress, freeAllocation, price } =
+        await getFreeSpacePricingSetup(bobSpaceDapp)
 
     const userNameToWallet: Record<string, string> = {
         alice: alicesWallet.address,
@@ -1263,7 +1348,7 @@ export async function createTownWithRequirements(requirements: {
             symbol: 'MEMBER',
             price,
             maxSupply: 1000,
-            duration: 0,
+            duration: requirements.duration ?? 0,
             currency: ETH_ADDRESS,
             feeRecipient: bob.userId,
             freeAllocation,
@@ -1321,7 +1406,7 @@ export async function createTownWithRequirements(requirements: {
 export async function expectUserCannotJoinSpace(
     spaceId: string,
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     address: string,
 ) {
     // Check that the local evaluation of the user's entitlements for joining the space
@@ -1452,7 +1537,7 @@ export async function setupChannelWithCustomRole(
 
 export async function expectUserCanJoinChannel(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     spaceId: string,
     channelId: string,
 ) {
@@ -1469,14 +1554,19 @@ export async function expectUserCanJoinChannel(
 
     // Stream node should allow the join
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
-    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))!).view
+    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))).view
     // Wait for alice's user stream to have the join
-    await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
+    await waitFor(() =>
+        expect(
+            userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN),
+            `waitFor ${channelId} in ${client.userStreamId}`,
+        ).toBe(true),
+    )
 }
 
 export async function expectUserCannotJoinChannel(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     spaceId: string,
     channelId: string,
 ) {
@@ -1526,21 +1616,8 @@ export function extractBlockchainTransactionTransferEvents(
 export function extractMemberBlockchainTransactions(
     client: Client,
     channelId: string,
-): BlockchainTransaction_TokenTransfer[] {
+): MemberTokenTransfer[] {
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
-
-    return stream.view.timeline
-        .map((e) => {
-            if (
-                e.remoteEvent?.event.payload.case === 'memberPayload' &&
-                e.remoteEvent?.event.payload.value.content.case === 'memberBlockchainTransaction' &&
-                e.remoteEvent.event.payload.value.content.value.transaction?.content.case ===
-                    'tokenTransfer'
-            ) {
-                return e.remoteEvent.event.payload.value.content.value.transaction.content.value
-            }
-            return undefined
-        })
-        .filter(isDefined)
+    return stream.view.getMembers().tokenTransfers
 }

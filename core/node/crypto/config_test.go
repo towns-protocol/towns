@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
@@ -17,11 +18,85 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 )
 
+var addresses = []common.Address{
+	common.BytesToAddress(
+		[]byte{
+			0x12,
+			0x34,
+			0x56,
+			0x78,
+			0x90,
+			0x12,
+			0x34,
+			0x56,
+			0x78,
+			0x90,
+			0x12,
+			0x34,
+			0x56,
+			0x78,
+			0x90,
+			0x12,
+			0x34,
+			0x56,
+			0x78,
+			0x90,
+		},
+	),
+	common.BytesToAddress(
+		[]byte{
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x43,
+			0x43,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x04,
+			0x34,
+			0x30,
+			0x00,
+		},
+	),
+	common.BytesToAddress(
+		[]byte{
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+			0xff,
+		},
+	),
+}
+
 func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	settings, err := makeOnChainConfig(ctx, nil, nil, 1)
 	require.NoError(err)
@@ -121,8 +196,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 func TestSetOnChain(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	btc, err := NewBlockchainTestContext(ctx, TestParams{MineOnTx: true, AutoMine: true})
 	require.NoError(err)
@@ -135,6 +209,13 @@ func TestSetOnChain(t *testing.T) {
 	btc.SetConfigValue(t, ctx, "unknown key is fine", ABIEncodeUint64(5))
 	btc.SetConfigValue(t, ctx, MediaStreamMembershipLimitsDMConfigKey, ABIEncodeUint64(5))
 	btc.SetConfigValue(t, ctx, XChainBlockchainsConfigKey, ABIEncodeUint64Array([]uint64{1, 10, 100}))
+	btc.SetConfigValue(t, ctx, NodeBlocklistConfigKey, ABIEncodeAddressArray(addresses))
+	btc.SetConfigValue(t, ctx, StreamSnapshotIntervalInMiniblocksConfigKey, ABIEncodeUint64(1000))
+	btc.SetConfigValue(t, ctx, StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(1000))
+	btc.SetConfigValue(t, ctx, StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(999))
+	btc.SetConfigValue(t, ctx, StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(888))
+	btc.SetConfigValue(t, ctx, StreamEnableNewSnapshotFormatConfigKey, ABIEncodeUint64(1))
+	btc.SetConfigValue(t, ctx, ServerEnableNode2NodeAuthConfigKey, ABIEncodeUint64(1))
 
 	s := btc.OnChainConfig.Get()
 	assert.EqualValues(3, s.ReplicationFactor)
@@ -143,6 +224,13 @@ func TestSetOnChain(t *testing.T) {
 	assert.Equal(5*time.Second, s.RecencyConstraintsAge)
 	assert.EqualValues(5, s.MembershipLimits.DM)
 	assert.EqualValues([]uint64{1, 10, 100}, s.XChain.Blockchains)
+	assert.Equal(addresses, s.NodeBlocklist)
+	assert.Equal(uint64(1000), s.StreamSnapshotIntervalInMiniblocks)
+	assert.Equal(uint64(1000), s.StreamTrimmingMiniblocksToKeep.Default)
+	assert.Equal(uint64(999), s.StreamTrimmingMiniblocksToKeep.Space)
+	assert.Equal(uint64(888), s.StreamTrimmingMiniblocksToKeep.UserSetting)
+	assert.Equal(uint64(1), s.StreamEnableNewSnapshotFormat)
+	assert.Equal(uint64(1), s.ServerEnableNode2NodeAuth)
 
 	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, []byte("invalid value is ignored"))
 	assert.EqualValues(3, btc.OnChainConfig.Get().ReplicationFactor)
@@ -151,8 +239,7 @@ func TestSetOnChain(t *testing.T) {
 func TestDefaultAvailable(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	btc, err := NewBlockchainTestContext(ctx, TestParams{MineOnTx: true, AutoMine: true})
 	require.NoError(err)
@@ -160,23 +247,22 @@ func TestDefaultAvailable(t *testing.T) {
 
 	s := btc.OnChainConfig.Get()
 	assert.EqualValues(1, s.ReplicationFactor)
-	assert.EqualValues(50, s.MediaMaxChunkCount)
+	assert.EqualValues(21, s.MediaMaxChunkCount)
 	assert.Equal(5*time.Minute, s.StreamCacheExpiration)
 	assert.Equal(11*time.Second, s.RecencyConstraintsAge)
 }
 
 func TestConfigSwitchAfterNewBlock(t *testing.T) {
 	var (
-		ctx, cancel = test.NewTestContext()
-		require     = require.New(t)
-		tc, errTC   = NewBlockchainTestContext(ctx, TestParams{NumKeys: 1, MineOnTx: true, AutoMine: true})
+		ctx       = test.NewTestContext(t)
+		require   = require.New(t)
+		tc, errTC = NewBlockchainTestContext(ctx, TestParams{NumKeys: 1, MineOnTx: true, AutoMine: true})
 
 		currentBlockNum = tc.BlockNum(ctx)
 		activeBlockNum  = currentBlockNum + 5
 		newValue        = uint64(3939232)
 		newValueEncoded = ABIEncodeUint64(newValue)
 	)
-	defer cancel()
 
 	require.NoError(errTC, "unable to construct block test context")
 
@@ -216,13 +302,12 @@ func TestConfigSwitchAfterNewBlock(t *testing.T) {
 
 func TestConfigDefaultValue(t *testing.T) {
 	var (
-		ctx, cancel = test.NewTestContext()
-		require     = require.New(t)
-		tc, errTC   = NewBlockchainTestContext(ctx, TestParams{NumKeys: 1})
-		newIntVal   = int64(239398893)
-		newValue    = ABIEncodeInt64(newIntVal)
+		ctx       = test.NewTestContext(t)
+		require   = require.New(t)
+		tc, errTC = NewBlockchainTestContext(ctx, TestParams{NumKeys: 1})
+		newIntVal = int64(239398893)
+		newValue  = ABIEncodeInt64(newIntVal)
 	)
-	defer cancel()
 
 	require.NoError(errTC, "unable to construct block test context")
 
@@ -286,12 +371,14 @@ func TestConfigDefaultValue(t *testing.T) {
 }
 
 type Cfg struct {
-	C1 int64         `mapstructure:"foo.c1"`
-	C2 uint64        `mapstructure:"foo.c2"`
-	C3 time.Duration `mapstructure:"foo.c3Ms"`
-	C4 time.Duration `mapstructure:"foo.c4Seconds"`
-	C5 CfgInner      `mapstructure:",squash"`
-	C6 []uint64      `mapstructure:"foo.c6"`
+	C1 int64            `mapstructure:"foo.c1"`
+	C2 uint64           `mapstructure:"foo.c2"`
+	C3 time.Duration    `mapstructure:"foo.c3Ms"`
+	C4 time.Duration    `mapstructure:"foo.c4Seconds"`
+	C5 CfgInner         `mapstructure:",squash"`
+	C6 []uint64         `mapstructure:"foo.c6"`
+	C7 common.Address   `mapstructure:"foo.c7"`
+	C8 []common.Address `mapstructure:"foo.c8"`
 }
 
 type CfgInner struct {
@@ -309,14 +396,13 @@ func noColorLogger() *zap.SugaredLogger {
 
 func TestDecoder(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
+	ctx := test.NewTestContext(t)
 	ncl := noColorLogger()
 	ctx = logging.CtxWithLog(ctx, &logging.Log{
 		Default:   ncl.Named(string(logging.Default)),
 		Rpc:       ncl.Named(string(logging.Rpc)),
 		Miniblock: ncl.Named(string(logging.Miniblock)),
 	})
-	defer cancel()
 
 	configMap := make(map[string]interface{})
 	configMap["foo.c1"] = ABIEncodeInt64(1)
@@ -328,6 +414,8 @@ func TestDecoder(t *testing.T) {
 	configMap["foo.c6"] = ABIEncodeUint64Array([]uint64{100, 200, 300, 400})
 	configMap["foo.f3List"] = ABIEncodeUint64Array([]uint64{1, 2, 3})
 	configMap["foo.f4"] = ABIEncodeUint64Array([]uint64{})
+	configMap["foo.c7"] = ABIEncodeAddress(addresses[0])
+	configMap["foo.c8"] = ABIEncodeAddressArray(addresses)
 
 	var decodedCfg Cfg
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
@@ -348,4 +436,67 @@ func TestDecoder(t *testing.T) {
 	require.Equal([]uint64{100, 200, 300, 400}, decodedCfg.C6)
 	require.Equal([]uint64{1, 2, 3}, decodedCfg.C5.F3)
 	require.Equal([]uint64{}, decodedCfg.C5.F4)
+	require.Equal(addresses[0], decodedCfg.C7)
+	require.Equal(addresses, decodedCfg.C8)
+}
+
+func TestAddressEncoding(t *testing.T) {
+	require := require.New(t)
+
+	addressBytes := []byte{
+		0x12,
+		0x34,
+		0x56,
+		0x78,
+		0x90,
+		0x12,
+		0x34,
+		0x56,
+		0x78,
+		0x90,
+		0x12,
+		0x34,
+		0x56,
+		0x78,
+		0x90,
+		0x12,
+		0x34,
+		0x56,
+		0x78,
+		0x90,
+	}
+	address := common.BytesToAddress(addressBytes)
+	encoded := ABIEncodeAddress(address)
+	decoded, err := ABIDecodeAddress(encoded)
+	require.NoError(err)
+	require.Equal(address, decoded)
+
+	addressBytes2 := []byte{
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x43,
+		0x43,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x04,
+		0x34,
+		0x30,
+		0x00,
+	}
+	address2 := common.BytesToAddress(addressBytes2)
+	encodedArray := ABIEncodeAddressArray([]common.Address{address, address2})
+	decodedArray, err := ABIDecodeAddressArray(encodedArray)
+	require.NoError(err)
+	require.Equal(address, decodedArray[0])
+	require.Equal(address2, decodedArray[1])
 }

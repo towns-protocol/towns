@@ -1,10 +1,10 @@
-import { Client, createClient } from '@connectrpc/connect'
-import { ConnectTransportOptions } from '@connectrpc/connect-web'
+import { Client, createClient, ConnectTransportOptions } from '@towns-protocol/rpc-connector/common'
 import { AuthenticationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
-import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
+import { RpcOptions } from './rpcCommon'
+import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 
 const logInfo = dlog('csb:auto-rpc:info')
 
@@ -47,10 +47,7 @@ export function makeAuthenticationRpcClient(
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client: AuthenticationRpcClient = createClient(
-        AuthenticationService,
-        transport,
-    ) as AuthenticationRpcClient
+    const client = createClient(AuthenticationService, transport) as AuthenticationRpcClient
     client.url = url
     return client
 }

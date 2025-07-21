@@ -20,6 +20,9 @@ elif [ "$RUN_MODE" == "archive" ]; then
 elif [ "$RUN_MODE" == "notifications" ]; then
     echo "Running notification service"
     exec $RIVER_NODE_BINARY notifications
+elif [ "$RUN_MODE" == "app-registry" ]; then
+    echo "Running app registry"
+    exec $RIVER_NODE_BINARY app-registry
 else
     echo "Unknown RUN_MODE: $RUN_MODE"
     exit 1

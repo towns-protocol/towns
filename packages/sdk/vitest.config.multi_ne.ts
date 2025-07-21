@@ -6,6 +6,7 @@ export default mergeConfig(
     defineConfig({
         test: {
             environment: 'happy-dom',
+            name: 'multi_ne',
             env: {
                 RIVER_ENV: 'local_multi_ne',
             },
@@ -13,6 +14,12 @@ export default mergeConfig(
             hookTimeout: 120_000,
             testTimeout: 120_000,
             setupFiles: './vitest.setup.ts',
+        },
+        resolve: {
+            conditions: ['browser'],
+            alias: {
+                '@connectrpc/connect-node': '@connectrpc/connect-web',
+            },
         },
     }),
 )

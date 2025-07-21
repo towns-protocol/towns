@@ -41,10 +41,32 @@ resource "google_compute_subnetwork" "gh-subnetwork" {
       ip_cidr_range = var.ip_range_pods_cidr
     },
     { range_name    = var.ip_range_services_name
-      ip_cidr_range = var.ip_range_services_cider
+      ip_cidr_range = var.ip_range_services_cidr
     }
   ]
 }
+
+# resource "google_compute_router" "runner_nat_router" {
+#   name    = "runner-nat-router"
+#   project = var.project_id
+#   region  = var.region
+#   network = local.network_name
+# }
+
+# resource "google_compute_router_nat" "runner_nat" {
+#   name                               = "runner-nat"
+#   project                            = var.project_id
+#   region                             = var.region
+#   router                             = google_compute_router.runner_nat_router.name
+#   nat_ip_allocate_option             = "AUTO_ONLY" # Auto-allocate external IPs
+#   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+#   log_config {
+#     enable = true
+#     filter = "ALL"
+#   }
+# }
+
 /*****************************************
   Runner GKE
  *****************************************/
@@ -68,6 +90,19 @@ module "runner-cluster" {
   gce_pd_csi_driver        = true
   deletion_protection      = false
 
+  cluster_autoscaling = {
+    enabled             = true
+    autoscaling_profile = "OPTIMIZE_UTILIZATION"
+    min_cpu_cores       = 1
+    max_cpu_cores       = 256
+    min_memory_gb       = 0
+    max_memory_gb       = 256
+    disk_type           = "pd-standard"
+    gpu_resources       = []
+    auto_repair         = true
+    auto_upgrade        = true
+  }
+
   node_pools = [
     {
       name         = "runner-pool"
@@ -79,76 +114,6 @@ module "runner-cluster" {
     }
   ]
 }
-
-#node pool
-# resource "google_container_node_pool" "runner-pool" {
-#   project            = var.project_id
-#   location           = var.region
-#   cluster            = module.runner-cluster.cluster_id
-#   name               = "runner-pool-2"
-#   initial_node_count = 1
-
-#   node_config {
-#     machine_type = "c4-highcpu-16"
-#     disk_size_gb = 100
-#     disk_type    = "hyperdisk-balanced"
-
-#     oauth_scopes = [
-#       "https://www.googleapis.com/auth/cloud-platform",
-#       "https://www.googleapis.com/auth/compute",
-#       "https://www.googleapis.com/auth/devstorage.read_only",
-#       "https://www.googleapis.com/auth/logging.write",
-#       "https://www.googleapis.com/auth/monitoring",
-#       "https://www.googleapis.com/auth/service.management.readonly",
-#       "https://www.googleapis.com/auth/servicecontrol",
-#       "https://www.googleapis.com/auth/trace.append",
-#     ]
-#   }
-
-#   # TODO: we can only have 1 one these machines with our current quota.
-#   autoscaling {
-#     min_node_count = 1
-#     max_node_count = 1
-#   }
-#   management {
-#     auto_repair  = true
-#     auto_upgrade = true
-#   }
-# }
-
-# resource "google_container_node_pool" "runner-pool-2" {
-#   project            = var.project_id
-#   location           = var.region
-#   cluster            = module.runner-cluster.cluster_id
-#   name               = "runner-pool-3"
-#   initial_node_count = var.min_node_count
-
-#   node_config {
-#     machine_type = "n2-standard-48"
-#     disk_size_gb = 500
-#     disk_type    = "pd-ssd"
-
-#     oauth_scopes = [
-#       "https://www.googleapis.com/auth/cloud-platform",
-#       "https://www.googleapis.com/auth/compute",
-#       "https://www.googleapis.com/auth/devstorage.read_only",
-#       "https://www.googleapis.com/auth/logging.write",
-#       "https://www.googleapis.com/auth/monitoring",
-#       "https://www.googleapis.com/auth/service.management.readonly",
-#       "https://www.googleapis.com/auth/servicecontrol",
-#       "https://www.googleapis.com/auth/trace.append",
-#     ]
-#   }
-
-#   autoscaling {
-#     min_node_count = 0
-#     max_node_count = var.max_node_count
-#   }
-#   management {
-#     auto_repair  = true
-#     auto_upgrade = true
-#   }
-# }
 
 data "google_client_config" "default" {
 }

@@ -6,7 +6,6 @@ import {
     UserDevice,
 } from './olmLib'
 
-import { CryptoStore } from './cryptoStore'
 import {
     DecryptionAlgorithm,
     DecryptionError,
@@ -20,6 +19,7 @@ import { EncryptionDelegate } from './encryptionDelegate'
 import { check, dlog } from '@towns-protocol/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
 import { HybridGroupDecryption } from './hybridGroupDecryption'
+import type { CryptoStore } from './cryptoStore'
 
 const log = dlog('csb:encryption:groupEncryptionCrypto')
 
@@ -269,9 +269,7 @@ export class GroupEncryptionCrypto {
                     const algorithm = key.algorithm
                     if (algorithm in this.groupDecryption) {
                         try {
-                            await this.groupDecryption[
-                                algorithm as GroupEncryptionAlgorithmId
-                            ].importStreamKey(streamId, key)
+                            await this.groupDecryption[algorithm].importStreamKey(streamId, key)
                         } catch (error) {
                             log(`failed to import key`, error)
                         }
@@ -320,9 +318,7 @@ export class GroupEncryptionCrypto {
                 const algorithm = key.algorithm
                 if (algorithm in this.groupDecryption) {
                     try {
-                        await this.groupDecryption[
-                            algorithm as GroupEncryptionAlgorithmId
-                        ].importStreamKey(key.streamId, key)
+                        await this.groupDecryption[algorithm].importStreamKey(key.streamId, key)
                         successes++
                         if (opts.progressCallback) {
                             updateProgress()
@@ -353,5 +349,14 @@ export class GroupEncryptionCrypto {
     public async importRoomKeysAsJson(keys: string): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return await this.importRoomKeys(JSON.parse(keys))
+    }
+
+    public async hasHybridSession(streamId: string): Promise<boolean> {
+        try {
+            await this.encryptionDevice.getHybridGroupSessionKeyForStream(streamId)
+            return true
+        } catch {
+            return false
+        }
     }
 }

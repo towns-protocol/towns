@@ -40,8 +40,9 @@ func addUserToChannel(
 		events.Make_UserPayload_Membership(
 			MembershipOp_SO_JOIN,
 			channelId,
-			nil,
+			common.Address{},
 			spaceId[:],
+			nil,
 		),
 		&MiniblockRef{
 			Hash: common.BytesToHash(resUser.PrevMiniblockHash),
@@ -86,20 +87,38 @@ type MockChainAuth struct {
 	auth.ChainAuth
 	result bool
 	err    error
+	reason auth.EntitlementResultReason
+}
+
+type mockChainAuthResult struct {
+	isAllowed bool
+	reason    auth.EntitlementResultReason
+}
+
+func (m *mockChainAuthResult) IsEntitled() bool {
+	return m.isAllowed
+}
+
+func (m *mockChainAuthResult) Reason() auth.EntitlementResultReason {
+	return m.reason
 }
 
 func (m *MockChainAuth) IsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *auth.ChainAuthArgs,
-) (bool, error) {
-	return m.result, m.err
+) (auth.IsEntitledResult, error) {
+	return &mockChainAuthResult{
+		isAllowed: m.result,
+		reason:    m.reason,
+	}, m.err
 }
 
-func NewMockChainAuth(expectedResult bool, expectedErr error) auth.ChainAuth {
+func NewMockChainAuth(expectedResult bool, reason auth.EntitlementResultReason, expectedErr error) auth.ChainAuth {
 	return &MockChainAuth{
 		result: expectedResult,
 		err:    expectedErr,
+		reason: reason,
 	}
 }
 
@@ -115,13 +134,19 @@ func (m *MockChainAuthForWallets) IsEntitled(
 	ctx context.Context,
 	cfg *config.Config,
 	args *auth.ChainAuthArgs,
-) (bool, error) {
+) (auth.IsEntitledResult, error) {
 	for wallet, result := range m.walletResults {
 		if args.Principal() == wallet.Address {
-			return result.expectedResult, result.expectedErr
+			return &mockChainAuthResult{
+				isAllowed: result.expectedResult,
+				reason:    auth.EntitlementResultReason_NONE,
+			}, result.expectedErr
 		}
 	}
-	return true, nil
+	return &mockChainAuthResult{
+		isAllowed: true,
+		reason:    auth.EntitlementResultReason_NONE,
+	}, nil
 }
 
 func NewMockChainAuthForWallets(
@@ -176,6 +201,13 @@ func (o *ObservingEventAdder) AddEventPayload(
 	return newEvents, nil
 }
 
+func (o *ObservingEventAdder) GetWalletAddress() common.Address {
+	return o.adder.GetWalletAddress()
+}
+
+// force interface compliance, observing event adder should implemnt EventAdder interface
+var _ scrub.EventAdder = (*ObservingEventAdder)(nil)
+
 func (o *ObservingEventAdder) ObservedEvents() []struct {
 	streamId StreamId
 	payload  IsStreamEvent_Payload
@@ -185,9 +217,40 @@ func (o *ObservingEventAdder) ObservedEvents() []struct {
 	return slices.Clone(o.observedEvents)
 }
 
+// checks if all observed events are membership leave events
+// with the expected scrubber reason
+func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT, expectedReason *MembershipReason) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	for i, e := range o.observedEvents {
+		userPayload, ok := e.payload.(*StreamEvent_UserPayload)
+		assert.True(t, ok, "Event %d is not a UserPayload", i)
+		if !ok {
+			continue
+		}
+
+		membershipPayload, ok := userPayload.UserPayload.Content.(*UserPayload_UserMembership_)
+		assert.True(t, ok, "Event %d is not a MembershipPayload", i)
+		if !ok {
+			continue
+		}
+
+		assert.Equal(t, MembershipOp_SO_LEAVE, membershipPayload.UserMembership.Op,
+			"Event %d is not a LEAVE operation", i)
+
+		// Check for scrubber reason
+		assert.NotNil(t, membershipPayload.UserMembership.Reason, "Event %d has no reason", i)
+
+		// Verify the reason matches the expected one
+		assert.Equal(t, *expectedReason, *membershipPayload.UserMembership.Reason,
+			"Event %d has incorrect reason code. Expected: %v, Got: %v",
+			i, *expectedReason, *membershipPayload.UserMembership.Reason)
+	}
+}
+
 func TestScrubStreamTaskProcessor(t *testing.T) {
-	ctx, ctxCancel := test.NewTestContext()
-	defer ctxCancel()
+	ctx := test.NewTestContext(t)
 
 	wallet, _ := crypto.NewWallet(ctx)
 	wallet1, _ := crypto.NewWallet(ctx)
@@ -198,17 +261,23 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 	tests := map[string]struct {
 		mockChainAuth       auth.ChainAuth
 		expectedBootedUsers []*crypto.Wallet
+		expectedReasonCode  MembershipReason // Expected reason code for all booted users
 	}{
 		"always false chain auth boots all users": {
-			mockChainAuth:       NewMockChainAuth(false, nil),
+			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_NONE, nil),
 			expectedBootedUsers: allWallets,
+			expectedReasonCode:  MembershipReason_MR_NOT_ENTITLED,
 		},
 		"always true chain auth should boot no users": {
-			mockChainAuth:       NewMockChainAuth(true, nil),
+			mockChainAuth:       NewMockChainAuth(true, auth.EntitlementResultReason_NONE, nil),
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"error in chain auth should result in no booted users": {
-			mockChainAuth:       NewMockChainAuth(false, fmt.Errorf("this error should not cause a user to be booted")),
+			mockChainAuth: NewMockChainAuth(
+				false,
+				auth.EntitlementResultReason_NONE,
+				fmt.Errorf("this error should not cause a user to be booted"),
+			),
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"false or error result for individual users": {
@@ -226,6 +295,12 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 				},
 			),
 			expectedBootedUsers: []*crypto.Wallet{wallet1},
+			expectedReasonCode:  MembershipReason_MR_NOT_ENTITLED,
+		},
+		"expired membership should boot with MR_EXPIRED reason": {
+			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_MEMBERSHIP_EXPIRED, nil),
+			expectedBootedUsers: allWallets,
+			expectedReasonCode:  MembershipReason_MR_EXPIRED,
 		},
 	}
 	for name, tc := range tests {
@@ -298,6 +373,10 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 									!slices.Contains(tc.expectedBootedUsers, wallet),
 									isMember,
 									"Membership result mismatch",
+									"wallet: %v, isMember: %v, expectedBootedUsers: %v",
+									wallet.Address,
+									isMember,
+									tc.expectedBootedUsers,
 								)
 							}
 						}
@@ -307,6 +386,9 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 						// event for one of the users is emitted twice. Why?
 						// assert.Len(eventAdder.ObservedEvents(), len(tc.expectedBootedUsers))
 						assert.GreaterOrEqual(len(eventAdder.ObservedEvents()), len(tc.expectedBootedUsers))
+
+						eventAdder.ValidateMembershipLeaveEvents(t, &tc.expectedReasonCode)
+
 					}
 				},
 				10*time.Second,

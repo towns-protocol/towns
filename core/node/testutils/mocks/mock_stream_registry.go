@@ -65,36 +65,6 @@ func (_m *MockStreamRegistry) AllocateStream(ctx context.Context, streamId share
 	return r0, r1
 }
 
-// ChooseStreamNodes provides a mock function with given fields: streamId
-func (_m *MockStreamRegistry) ChooseStreamNodes(streamId shared.StreamId) ([]common.Address, error) {
-	ret := _m.Called(streamId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ChooseStreamNodes")
-	}
-
-	var r0 []common.Address
-	var r1 error
-	if rf, ok := ret.Get(0).(func(shared.StreamId) ([]common.Address, error)); ok {
-		return rf(streamId)
-	}
-	if rf, ok := ret.Get(0).(func(shared.StreamId) []common.Address); ok {
-		r0 = rf(streamId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]common.Address)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(shared.StreamId) error); ok {
-		r1 = rf(streamId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // NewMockStreamRegistry creates a new instance of MockStreamRegistry. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockStreamRegistry(t interface {

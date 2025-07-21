@@ -206,7 +206,7 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 	)
 	if err != nil {
 		log.Errorw("Failed to instantiate a CustomEntitlement contract from supplied contract address",
-			"err", err,
+			"error", err,
 			"contractAddress", op.ContractAddress,
 			"chainId", op.ChainID,
 		)
@@ -251,7 +251,7 @@ func (e *Evaluator) evaluateEthBalanceOperation(
 		client, err := e.clients.Get(chainID)
 		if err != nil {
 			log.Errorw("Provider for Chain ID not found", "chainID", chainID)
-			return false, fmt.Errorf("evaluateEthBalanceOperation: Providerfor chain ID %v not found", chainID)
+			return false, fmt.Errorf("evaluateEthBalanceOperation: Provider for chain ID %v not found", chainID)
 		}
 		params, err := types.DecodeThresholdParams(op.Params)
 		if err != nil {
@@ -305,7 +305,7 @@ func (e *Evaluator) evaluateErc20Operation(
 	if err != nil {
 		log.Errorw(
 			"Failed to instantiate a Token contract",
-			"err", err,
+			"error", err,
 			"contractAddress", op.ContractAddress,
 		)
 		return false, err
@@ -364,7 +364,7 @@ func (e *Evaluator) evaluateErc721Operation(
 	nft, err := erc721.NewErc721Caller(op.ContractAddress, client)
 	if err != nil {
 		log.Errorw("Failed to instantiate a NFT contract",
-			"err", err,
+			"error", err,
 			"contractAddress", op.ContractAddress,
 		)
 		return false, err
@@ -417,7 +417,7 @@ func (e *Evaluator) evaluateErc1155Operation(
 	collection, err := erc1155.NewErc1155Caller(op.ContractAddress, client)
 	if err != nil {
 		log.Errorw("Failed to instantiate an ERC1155 contract",
-			"err", err,
+			"error", err,
 			"contractAddress", op.ContractAddress,
 		)
 		return false, err

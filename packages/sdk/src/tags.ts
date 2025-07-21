@@ -6,16 +6,36 @@ import {
     Tags,
     PlainMessage,
 } from '@towns-protocol/proto'
-import { IStreamStateView } from './streamStateView'
+import { StreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
 import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
+import { RiverTimelineEvent } from './views/models/timelineTypes'
+
+/**
+ * Unsafe way to create tags. Possibly used in scenarios where we dont have access to the stream view.
+ * Usages of this function may create messages with the wrong tags.
+ */
+export function unsafe_makeTags(message: PlainMessage<ChannelMessage>): PlainMessage<Tags> {
+    return {
+        messageInteractionType: getMessageInteractionType(message),
+        groupMentionTypes: getGroupMentionTypes(message),
+        mentionedUserAddresses: getMentionedUserAddresses(message),
+        participatingUserAddresses: [],
+        threadId:
+            message.payload.case === 'post'
+                ? message.payload.value.threadId
+                    ? bin_fromHexString(message.payload.value.threadId)
+                    : undefined
+                : undefined,
+    } satisfies PlainMessage<Tags>
+}
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): PlainMessage<Tags> {
     return {
         messageInteractionType: getMessageInteractionType(message),
@@ -29,7 +49,7 @@ export function makeTags(
 export function makeTipTags(
     event: TipEventObject,
     toUserId: string,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): PlainMessage<Tags> | undefined {
     check(isDefined(streamView), 'stream not found')
     return {
@@ -43,7 +63,7 @@ export function makeTipTags(
 
 export function makeTransferTags(
     event: PlainMessage<BlockchainTransaction_TokenTransfer>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): PlainMessage<Tags> | undefined {
     check(isDefined(streamView), 'stream not found')
     return {
@@ -60,7 +80,7 @@ export function makeTransferTags(
 
 function getThreadId(
     message: PlainMessage<ChannelMessage>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array | undefined {
     switch (message.payload.case) {
         case 'post':
@@ -126,13 +146,14 @@ function getMentionedUserAddresses(message: PlainMessage<ChannelMessage>): Uint8
 
 function getParticipatingUserAddresses(
     message: PlainMessage<ChannelMessage>,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array[] {
     switch (message.payload.case) {
         case 'reaction': {
-            const event = streamView.events.get(message.payload.value.refEventId)
-            if (event && event.remoteEvent?.event.creatorAddress) {
-                return [event.remoteEvent.event.creatorAddress]
+            const refEventId = message.payload.value.refEventId
+            const event = streamView.timeline.find((x) => x.eventId === refEventId)
+            if (event) {
+                return [addressFromUserId(event.sender.id)]
             }
             return []
         }
@@ -150,21 +171,19 @@ function getParticipatingUserAddresses(
 
 function participantsFromParentEventId(
     parentId: string,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array[] {
     const participating = new Set<Uint8Array>()
-    const parentEvent = streamView.events.get(parentId)
-    if (parentEvent && parentEvent.remoteEvent?.event.creatorAddress) {
-        participating.add(parentEvent.remoteEvent.event.creatorAddress)
+    const parentEvent = streamView.timeline.find((x) => x.eventId === parentId)
+    if (parentEvent && parentEvent.sender.id) {
+        participating.add(addressFromUserId(parentEvent.sender.id))
     }
     streamView.timeline.forEach((event) => {
         if (
-            event.decryptedContent?.kind === 'channelMessage' &&
-            event.decryptedContent.content.payload.case === 'post' &&
-            event.decryptedContent.content.payload.value.threadId === parentId &&
-            event.remoteEvent?.event.creatorAddress
+            event.content?.kind === RiverTimelineEvent.ChannelMessage &&
+            event.content.threadId === parentId
         ) {
-            participating.add(event.remoteEvent.event.creatorAddress)
+            participating.add(addressFromUserId(event.sender.id))
         }
     })
     return Array.from(participating)
@@ -172,21 +191,18 @@ function participantsFromParentEventId(
 
 function getParentThreadId(
     eventId: string | undefined,
-    streamView: IStreamStateView,
+    streamView: StreamStateView,
 ): Uint8Array | undefined {
     if (!eventId) {
         return undefined
     }
-    const event = streamView.events.get(eventId)
+    const event = streamView.timeline.find((x) => x.eventId === eventId)
     if (!event) {
         return undefined
     }
-    if (
-        event.decryptedContent?.kind === 'channelMessage' &&
-        event.decryptedContent.content.payload.case === 'post'
-    ) {
-        if (event.decryptedContent.content.payload.value.threadId) {
-            return bin_fromHexString(event.decryptedContent.content.payload.value.threadId)
+    if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
+        if (event.content.threadId) {
+            return bin_fromHexString(event.content.threadId)
         }
     }
     return undefined

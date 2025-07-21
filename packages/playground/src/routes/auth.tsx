@@ -38,7 +38,7 @@ export const AuthRoute = () => {
                 <p className="text-lg text-muted-foreground">
                     An interactive environment for testing and experimenting with{' '}
                     <a
-                        href="https://river.build"
+                        href="https://towns.com"
                         target="_blank"
                         className="inline-flex items-center font-semibold underline-offset-4 hover:underline"
                     >
@@ -85,7 +85,7 @@ export const AuthRoute = () => {
                                 <TownsIcon className="mx-auto h-8 w-8" />
                                 <h2 className="text-xl font-semibold">Community</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Join the River Developer Community on Towns for support
+                                    Join our official Developer Town for support
                                 </p>
                             </div>
                             <a
@@ -108,7 +108,7 @@ export const AuthRoute = () => {
                             <Book className="mx-auto h-8 w-8" />
                             <h2 className="text-xl font-semibold">Documentation</h2>
                             <p className="text-sm text-muted-foreground">
-                                Learn how to use River Protocol with our comprehensive docs
+                                Learn how to use Towns Protocol with our comprehensive docs
                             </p>
                         </div>
                         <a

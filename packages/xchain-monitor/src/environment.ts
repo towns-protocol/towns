@@ -22,6 +22,7 @@ const envMainSchema = z.object({
     LOG_PRETTY: BoolFromStringSchema.optional().default('false'),
     DD_GIT_COMMIT_SHA: z.string().optional(),
     BLOCK_SCAN_CHUNK_SIZE: NumberFromIntStringSchema.optional().default('100'),
+    PERSISTENT_STORAGE_DIR: z.string().optional(),
 })
 
 function makeConfig() {
@@ -31,6 +32,7 @@ function makeConfig() {
     const transactionValidBlocks = envMain.TRANSACTION_VALID_BLOCKS
     const baseProviderUrl = envMain.BASE_PROVIDER_URL
     const blockScanChunkSize = envMain.BLOCK_SCAN_CHUNK_SIZE
+    const persistentStorageDir = envMain.PERSISTENT_STORAGE_DIR
 
     return {
         web3Config,
@@ -47,6 +49,7 @@ function makeConfig() {
             deployedAt: new Date().toISOString(),
         },
         version: envMain.DD_GIT_COMMIT_SHA,
+        persistentStorageDir,
     }
 }
 

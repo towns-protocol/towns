@@ -5,8 +5,10 @@ import (
 	"time"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 type TestStreamStore struct {
@@ -33,7 +35,13 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		GenShortNanoid(),
 		exitChan,
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
+		&mocks.MockOnChainCfg{
+			Settings: &crypto.OnChainSettings{
+				StreamEphemeralStreamTTL:       time.Minute * 10,
+				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
+			},
+		},
+		100,
 	)
 	if err != nil {
 		panic(err)

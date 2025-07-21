@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"slices"
 	"strings"
@@ -22,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
@@ -41,8 +44,9 @@ func getPartitionName(table string, streamId string, numPartitions int) string {
 }
 
 type dbInfo struct {
-	url    string
-	schema string
+	url        string
+	schema     string
+	isArchiver bool
 }
 
 func getDbPool(
@@ -83,7 +87,7 @@ func getSourceDbPool(ctx context.Context, requireSchema bool) (*pgxpool.Pool, *d
 	var info dbInfo
 	info.url = viper.GetString("RIVER_DB_SOURCE_URL")
 	if info.url == "" {
-		return nil, nil, errors.New("source database URL is not set: --source_db or RIVER_DB_SOURCE")
+		return nil, nil, errors.New("source database URL is not set: --source_db or RIVER_DB_SOURCE_URL")
 	}
 	password := viper.GetString("RIVER_DB_SOURCE_PASSWORD")
 	info.schema = viper.GetString("RIVER_DB_SCHEMA")
@@ -100,7 +104,7 @@ func getTargetDbPool(ctx context.Context, requireSchema bool) (*pgxpool.Pool, *d
 	var info dbInfo
 	info.url = viper.GetString("RIVER_DB_TARGET_URL")
 	if info.url == "" {
-		return nil, nil, errors.New("target database URL is not set: --target_db or RIVER_DB_TARGET")
+		return nil, nil, errors.New("target database URL is not set: --target_db or RIVER_DB_TARGET_URL")
 	}
 	password := viper.GetString("RIVER_DB_TARGET_PASSWORD")
 	info.schema = viper.GetString("RIVER_DB_SCHEMA")
@@ -1138,6 +1142,51 @@ func tableExists(
 	return exists, nil
 }
 
+func insertMinipoolsPlaceholder(
+	ctx context.Context,
+	source *pgxpool.Conn,
+	tx pgx.Tx,
+	streamId string,
+	targetSchemaMetadata schemaMetadata,
+) error {
+	srcMiniblocks := getPartitionName("miniblocks", streamId, 256)
+	targetMinipools := getPartitionName("minipools", streamId, targetSchemaMetadata.numPartitions)
+
+	if verbose {
+		fmt.Printf(
+			"Querying %v to determine generation for creating placeholder in %v for stream %v...\n",
+			srcMiniblocks,
+			targetMinipools,
+			streamId,
+		)
+	}
+
+	var lastMbNumInStorage *int64
+	if err := source.QueryRow(
+		ctx,
+		fmt.Sprintf("SELECT MAX(seq_num) FROM %v WHERE stream_id = $1", srcMiniblocks),
+		streamId,
+	).Scan(&lastMbNumInStorage); err != nil {
+		return err
+	}
+
+	// Some streams may have no miniblocks in storage. In that case, just insert a placeholder for
+	// generation 0.
+	if lastMbNumInStorage == nil {
+		mb := int64(-1)
+		lastMbNumInStorage = &mb
+		fmt.Printf("WARNING: no miniblocks in storage found for stream %v\n", streamId)
+	}
+
+	_, err := tx.Exec(
+		ctx,
+		fmt.Sprintf("INSERT INTO %v (stream_id, generation, slot_num) VALUES ($1, $2, -1)", targetMinipools),
+		streamId,
+		*lastMbNumInStorage+1,
+	)
+	return err
+}
+
 func copyPart(
 	ctx context.Context,
 	source *pgxpool.Conn,
@@ -1263,17 +1312,30 @@ func copyStream(
 		return wrapError("Failed to insert into es for stream "+streamId, err)
 	}
 
-	err = copyPart(ctx, source, tx, streamId, "minipools", force, sourceInfo, targetSchemaMetadata)
-	if err != nil {
-		return err
+	// Archival nodes do not have minipool records. In this case, we will want to insert a placeholder
+	// into the minipools table manually for this stream at the current generation.
+	if sourceInfo.isArchiver {
+		if err = insertMinipoolsPlaceholder(ctx, source, tx, streamId, targetSchemaMetadata); err != nil {
+			return err
+		}
+	} else {
+		err = copyPart(ctx, source, tx, streamId, "minipools", force, sourceInfo, targetSchemaMetadata)
+		if err != nil {
+			return err
+		}
 	}
+
 	err = copyPart(ctx, source, tx, streamId, "miniblocks", force, sourceInfo, targetSchemaMetadata)
 	if err != nil {
 		return err
 	}
-	err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
-	if err != nil {
-		return err
+
+	// Archiver nodes do not contain candidates, so we can go ahead and skip this.
+	if !sourceInfo.isArchiver {
+		err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -1332,16 +1394,57 @@ func copyStreams(
 	return nil
 }
 
+func filterStreamList(original []string, filtered []shared.StreamId) []string {
+	filteredStreamUsed := make(map[string]bool)
+	for _, id := range filtered {
+		filteredStreamUsed[id.String()] = false
+	}
+
+	outputList := make([]string, 0, len(filtered))
+	for _, id := range original {
+		if _, ok := filteredStreamUsed[id]; ok {
+			filteredStreamUsed[id] = true
+			outputList = append(outputList, id)
+		}
+	}
+
+	for id, used := range filteredStreamUsed {
+		if !used {
+			log.Printf("WARNING: stream %v is in filter list, but does not exist in the source DB", id)
+		}
+	}
+
+	return outputList
+}
+
 func copyData(
 	ctx context.Context,
 	source *pgxpool.Pool,
 	target *pgxpool.Pool,
 	force bool,
 	sourceInfo *dbInfo,
+	filterStreamIds []shared.StreamId,
 ) error {
 	sourceStreamIds, _, _, err := getStreamIds(ctx, source)
 	if err != nil {
 		return wrapError("Failed to get stream ids from source", err)
+	}
+
+	if len(filterStreamIds) > 0 {
+		if verbose {
+			fmt.Printf(
+				"Filtering stream list, %d streams total, %d to copy\n",
+				len(sourceStreamIds),
+				len(filterStreamIds),
+			)
+		}
+		sourceStreamIds = filterStreamList(sourceStreamIds, filterStreamIds)
+		if verbose {
+			fmt.Printf(
+				"Filtered stream list length is %d\n",
+				len(sourceStreamIds),
+			)
+		}
 	}
 
 	existingStreamIds, _, _, err := getStreamIds(ctx, target)
@@ -1415,9 +1518,45 @@ func copyData(
 	return nil
 }
 
+func readStreamIdFile(path string) []shared.StreamId {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+	defer file.Close()
+
+	// Create a scanner to read the file line by line
+	scanner := bufio.NewScanner(file)
+	streamIds := make([]shared.StreamId, 0, 34000)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Ignore commented lines
+		if len(line) > 0 && line[0] == '#' {
+			continue
+		}
+
+		streamId, err := shared.StreamIdFromString(line)
+		if err != nil {
+			log.Printf("Error: Unable to parse '%v' as a streamId", line)
+			continue
+		}
+
+		streamIds = append(streamIds, streamId)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Scanner error: %s", err)
+	}
+
+	return streamIds
+}
+
 var (
-	copyCmdForce bool
-	copyCmd      = &cobra.Command{
+	copyCmdForce             bool
+	copyCmdFromArchiver      bool
+	copyCmdFilterStreamsFile string
+	copyCmd                  = &cobra.Command{
 		Use:   "copy",
 		Short: "Copy data from source to target database",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -1430,6 +1569,14 @@ var (
 			if err != nil {
 				return err
 			}
+			sourceInfo.isArchiver = copyCmdFromArchiver
+			var filteredStreamIds []shared.StreamId
+			if sourceInfo.isArchiver {
+				if copyCmdFilterStreamsFile == "" {
+					log.Fatalf("Error: if copy source is archival, a file to filter stream ids is required")
+				}
+				filteredStreamIds = readStreamIdFile(copyCmdFilterStreamsFile)
+			}
 
 			targetPool, targetInfo, err := getTargetDbPool(ctx, true)
 			if err != nil {
@@ -1440,15 +1587,196 @@ var (
 				return err
 			}
 
-			return copyData(ctx, sourcePool, targetPool, copyCmdForce, sourceInfo)
+			return copyData(ctx, sourcePool, targetPool, copyCmdForce, sourceInfo, filteredStreamIds)
 		},
 	}
 )
 
 func init() {
 	rootCmd.AddCommand(copyCmd)
+	copyCmd.Flags().
+		BoolVar(&copyCmdFromArchiver, "from-archiver", false, "Mark the source database as an archiver backup and force the creation of minipool entries")
 	copyCmd.Flags().BoolVar(&copyCmdForce, "force", false, "Force copy even if target already has data")
 	copyCmd.Flags().BoolVar(&copyBypass, "bypass", false, "Bypass reading data into memory (another copy method)")
+	copyCmd.Flags().
+		StringVar(&copyCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node. If the copy is from an archiver, this must be a valid file with stream ids.")
+}
+
+func lastSnapshotIndexFromMiniblocks(
+	ctx context.Context,
+	target *pgxpool.Pool,
+	streamId string,
+) (int64, error) {
+	table := getPartitionName("miniblocks", streamId, 256)
+	query := fmt.Sprintf(
+		"SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101;",
+		table,
+	)
+	rows, err := target.Query(
+		ctx,
+		query,
+		streamId,
+	)
+	if err != nil {
+		return int64(0), fmt.Errorf("error reading miniblocks from stream: %w", err)
+	}
+
+	noError := fmt.Errorf("no error - terminate pgx.ForEachRow as soon as result is found")
+	var seqNum int64
+	var blockData []byte
+
+	var printMaxSeqNum bool
+	if _, err := pgx.ForEachRow(
+		rows,
+		[]any{&seqNum, &blockData},
+		func() error {
+			mbInfo, err := events.NewMiniblockInfoFromDescriptorWithOpts(
+				&storage.MiniblockDescriptor{Number: seqNum, Data: blockData},
+				events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true),
+			)
+			if err != nil {
+				return fmt.Errorf("could not parse miniblock for stream %v: %w", streamId, err)
+			}
+
+			if seqNum > 0 && !printMaxSeqNum && verbose {
+				fmt.Printf("debug -- stream %s max seq_num %d\n", streamId, seqNum)
+				printMaxSeqNum = true
+			}
+
+			if mbInfo.Snapshot != nil {
+				if verbose {
+					fmt.Printf("debug -- saw a snapshot for stream %s, seq_num %d\n", streamId, seqNum)
+				}
+				return noError
+			}
+			return nil
+		},
+	); err != nil && err != noError {
+		return int64(0), err
+	}
+
+	return seqNum, nil
+}
+
+func writeLastSnapshotMiniblock(
+	ctx context.Context,
+	target *pgxpool.Pool,
+	streamIds []string,
+	progressCounter *atomic.Int64,
+) error {
+	tx, err := target.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel:   pgx.ReadCommitted,
+		AccessMode: pgx.ReadWrite,
+	})
+	if err != nil {
+		return wrapError("failed to begin transaction", err)
+	}
+	defer rollbackTx(ctx, tx)
+
+	for _, streamId := range streamIds {
+		lastSnapshotIndex, err := lastSnapshotIndexFromMiniblocks(ctx, target, streamId)
+		if err != nil {
+			return fmt.Errorf("failed to determine last snapshot miniblock index for stream %v: %w", streamId, err)
+		}
+
+		if _, err := tx.Exec(
+			ctx,
+			"UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_id = $2",
+			lastSnapshotIndex,
+			streamId,
+		); err != nil {
+			return fmt.Errorf(
+				"failed to update snapshot index of stream %v to %d: %w",
+				streamId,
+				lastSnapshotIndex,
+				err,
+			)
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return wrapError("Failed to commit transaction", err)
+	}
+
+	progressCounter.Add(int64(len(streamIds)))
+	return nil
+}
+
+func restoreSnapshotIndices(
+	ctx context.Context,
+	target *pgxpool.Pool,
+	filteredStreamIds []shared.StreamId,
+) error {
+	streamIds, _, _, err := getStreamIds(ctx, target)
+	if len(filteredStreamIds) > 0 {
+		streamIds = filterStreamList(streamIds, filteredStreamIds)
+	}
+	if err != nil {
+		return fmt.Errorf("unable to get existing stream ids: %w", err)
+	}
+
+	if verbose {
+		fmt.Printf("Restoring %d streams\n", len(streamIds))
+	}
+
+	numWorkers := viper.GetInt("RIVER_DB_NUM_WORKERS")
+	txSize := viper.GetInt("RIVER_DB_TX_SIZE")
+	if txSize <= 0 {
+		txSize = 1
+	}
+
+	workerPool := workerpool.New(numWorkers)
+	workItems := chunk2(streamIds, txSize)
+
+	var progressCounter atomic.Int64
+	for _, workItem := range workItems {
+		workerPool.Submit(func() {
+			err := writeLastSnapshotMiniblock(ctx, target, workItem, &progressCounter)
+			if err != nil {
+				fmt.Println("ERROR:", err)
+				fmt.Println("Streams that were not updated: ", workItem)
+			}
+		})
+	}
+
+	go reportProgress("Streams updated:", &progressCounter)
+
+	workerPool.StopWait()
+	return nil
+}
+
+var (
+	restoreSnapshotIndicesCmdFilterStreamsFile string
+	restoreSnapshotIndicesCmd                  = &cobra.Command{
+		Use:   "restore-snapshot-indices",
+		Short: "Restore snapshot indices to data that was copied from an archiver backup",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			targetPool, targetInfo, err := getTargetDbPool(ctx, true)
+			if err != nil {
+				return err
+			}
+			err = testDbConnection(ctx, targetPool, targetInfo)
+			if err != nil {
+				return err
+			}
+
+			var filteredStreamIds []shared.StreamId
+			if restoreSnapshotIndicesCmdFilterStreamsFile != "" {
+				filteredStreamIds = readStreamIdFile(restoreSnapshotIndicesCmdFilterStreamsFile)
+			}
+
+			return restoreSnapshotIndices(ctx, targetPool, filteredStreamIds)
+		},
+	}
+)
+
+func init() {
+	restoreSnapshotIndicesCmd.Flags().
+		StringVar(&restoreSnapshotIndicesCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node.")
+
+	targetCmd.AddCommand(restoreSnapshotIndicesCmd)
 }
 
 func compareTableCounts(

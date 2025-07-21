@@ -15,28 +15,7 @@ import { useDm } from '@towns-protocol/react-sdk'
 function useDm(
   streamId: string,
   config?: ObservableConfig.FromData<DmModel>,
-): {
-    data: DmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: DmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: DmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+): ObservableValue<DmModel>
 ```
 
 **Source:** [useDm](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useDm.ts)
@@ -61,26 +40,5 @@ Configuration options for the observable.
 The DmModel of the DM.
 
 ```ts
-{
-    data: DmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: DmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: DmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+ObservableValue<DmModel>
 ```

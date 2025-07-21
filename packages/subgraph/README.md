@@ -262,3 +262,34 @@ ponder.on("CreateSpace:SpaceCreated", async ({ event, context }) => {
   // Custom logic to process the event
 });
 ```
+
+## Setup Ponder for Docker
+
+You can run Ponder in a docker container with a local postgres database pointing to the gamma network.
+
+```bash
+# build ponder image
+docker build --no-cache -t towns-subgraph -f packages/subgraph/Dockerfile .
+
+# start subgraph with local attached postgrs pointing to gamma network in daemon mode
+docker compose -f docker-compose-gamma.yml up -d
+```
+
+Navigate to http://localhost:42069/graphql to interact with the subgraph over the graphql api.
+
+Check endpoints below for more information.
+
+http://localhost:42069/status
+
+http://localhost:42069/ready
+
+http://localhost:42069/metrics
+
+http://localhost:42069/health
+
+## Update schema.graphql
+
+```
+# regenerate schema.graphql file with a headless instance
+yarn dev:no-ui
+```

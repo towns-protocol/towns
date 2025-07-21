@@ -1,10 +1,13 @@
 {
     "name": "@towns-protocol/proto",
-    "version": "0.0.189",
+    "version": "0.0.282",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "buf:clean": "rm -rf ./src/gen/*",
         "buf:generate": "cd ../.. && buf generate --template packages/proto/buf.gen.yaml --path protocol/protocol.proto --path protocol/payloads.proto --path packages/proto/internal.proto --path protocol/notifications.proto --path protocol/auth.proto --path protocol/apps.proto",
@@ -25,11 +28,11 @@
         "@bufbuild/buf": "^1.32.0",
         "@bufbuild/protoc-gen-es": "^2.2.2",
         "@towns-protocol/proto-source": "workspace:^",
-        "@types/node": "^20.5.0",
+        "@types/node": "^20.14.8",
         "lodash.debounce": "^4.0.8",
         "ts-node": "^10.9.1",
-        "typescript": "^5.1.6",
-        "vitest": "3.0.5"
+        "typescript": "^5.8.2",
+        "vitest": "^3.2.3"
     },
     "files": [
         "/dist"

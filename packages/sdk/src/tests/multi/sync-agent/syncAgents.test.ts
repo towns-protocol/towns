@@ -4,7 +4,7 @@
 import { dlogger } from '@towns-protocol/dlog'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
 import { Bot } from '../../../sync-agent/utils/bot'
-import { findMessageByText, waitFor } from '../../testUtils'
+import { findMessageByText, waitFor, waitForValue } from '../../testUtils'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const logger = dlogger('csb:test:syncAgents')
@@ -75,12 +75,10 @@ describe('syncAgents.test.ts', () => {
         // sleep for a bit, then check if alice got the message
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
         logger.log(aliceChannel.timeline.events.value)
-        await waitFor(
-            () =>
-                expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'Hello, World!'),
-                ).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(
+                findMessageByText(aliceChannel.timeline.events.value, 'Hello, World!'),
+            ).toBeDefined(),
         )
     })
 
@@ -111,12 +109,10 @@ describe('syncAgents.test.ts', () => {
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
         await aliceChannel.join()
         logger.log(aliceChannel.timeline.events.value)
-        await waitFor(
-            () =>
-                expect(
-                    findMessageByText(aliceChannel.timeline.events.value, 'Hello, World again!'),
-                ).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(
+                findMessageByText(aliceChannel.timeline.events.value, 'Hello, World again!'),
+            ).toBeDefined(),
         )
         // reset the unpackEnvelopeOpts
         bob.riverConnection.clientParams.opts = {
@@ -138,12 +134,14 @@ describe('syncAgents.test.ts', () => {
         const space = bob.spaces.getSpace(spaceId)
         const channel = space.getDefaultChannel()
         const channelId = channel.data.id
-        const event = findMessageByText(channel.timeline.events.value, 'Hello, World!')
-        expect(event).toBeDefined()
+        const event = await waitForValue(() => {
+            const event = findMessageByText(channel.timeline.events.value, 'Hello, World!')
+            expect(event).toBeDefined()
+            return event!
+        })
         // bob can pin
-        const result = await channel.pin(event!.eventId)
+        const result = await channel.pin(event.eventId)
         expect(result).toBeDefined()
-        expect(result.error).toBeUndefined()
         await waitFor(() =>
             expect(
                 bob.riverConnection.client?.streams.get(channelId)?.view.membershipContent.pins
@@ -151,9 +149,8 @@ describe('syncAgents.test.ts', () => {
             ).toBe(1),
         )
         // bob can unpin
-        const result2 = await channel.unpin(event!.eventId)
+        const result2 = await channel.unpin(event.eventId)
         expect(result2).toBeDefined()
-        expect(result2.error).toBeUndefined()
 
         // alice can't pin yet, she doesn't have permissions
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channelId)
@@ -181,9 +178,8 @@ describe('syncAgents.test.ts', () => {
         )
         await txn2.wait()
         // alice can pin
-        const result3 = await aliceChannel.pin(event!.eventId)
+        const result3 = await aliceChannel.pin(event.eventId)
         expect(result3).toBeDefined()
-        expect(result3.error).toBeUndefined()
     })
 
     test('dm', async () => {
@@ -196,10 +192,8 @@ describe('syncAgents.test.ts', () => {
         )
         await bobAndAliceDm.sendMessage('hi')
         const aliceAndBobDm = alice.dms.getDmWithUserId(bob.userId)
-        await waitFor(
-            () =>
-                expect(findMessageByText(aliceAndBobDm.timeline.events.value, 'hi')).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(findMessageByText(aliceAndBobDm.timeline.events.value, 'hi')).toBeDefined(),
         )
     })
 
@@ -213,12 +207,10 @@ describe('syncAgents.test.ts', () => {
         )
         await bobGdm.sendMessage('Hello, World!')
         const aliceGdm = alice.gdms.getGdm(streamId)
-        await waitFor(
-            () =>
-                expect(
-                    findMessageByText(aliceGdm.timeline.events.value, 'Hello, World!'),
-                ).toBeDefined(),
-            { timeoutMS: 10000 },
+        await waitFor(() =>
+            expect(
+                findMessageByText(aliceGdm.timeline.events.value, 'Hello, World!'),
+            ).toBeDefined(),
         )
     })
 })

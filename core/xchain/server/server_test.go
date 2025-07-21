@@ -49,7 +49,6 @@ type testNodeRecord struct {
 
 type serviceTester struct {
 	ctx                 context.Context
-	cancel              context.CancelFunc
 	require             *require.Assertions
 	btc                 *node_crypto.BlockchainTestContext
 	clientSimBlockchain *node_crypto.Blockchain
@@ -69,15 +68,14 @@ type serviceTester struct {
 	decoder *node_crypto.EvmErrorDecoder
 }
 
-func newServiceTester(numNodes int, require *require.Assertions) *serviceTester {
-	ctx, cancel := test.NewTestContext()
+func newServiceTester(t *testing.T, numNodes int) *serviceTester {
+	ctx := test.NewTestContext(t)
 	log := logging.FromCtx(ctx)
 	log.Infow("Creating service tester")
 
 	st := &serviceTester{
 		ctx:     ctx,
-		cancel:  cancel,
-		require: require,
+		require: require.New(t),
 		nodes:   make([]*testNodeRecord, numNodes),
 	}
 
@@ -85,11 +83,13 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 		ctx,
 		crypto.TestParams{NumKeys: numNodes + 1, MineOnTx: true, AutoMine: true},
 	)
-	require.NoError(err)
+	st.require.NoError(err)
 	st.btc = btc
 	st.clientSimBlockchain = st.btc.GetBlockchain(st.ctx, len(st.nodes))
 
 	st.deployXchainTestContracts()
+
+	t.Cleanup(st.close)
 
 	return st
 }
@@ -99,7 +99,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 		log                   = logging.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
 	)
-	for _, w := range st.btc.Wallets {
+	for _, w := range st.btc.NodeWallets {
 		approvedNodeOperators = append(approvedNodeOperators, w.Address)
 	}
 
@@ -175,7 +175,7 @@ func (st *serviceTester) ClientSimulatorBlockchain() *node_crypto.Blockchain {
 	return st.clientSimBlockchain
 }
 
-func (st *serviceTester) Close() {
+func (st *serviceTester) close() {
 	// Is this needed? Or is the cancel enough here? Do we need to cancel individual nodes?
 	for _, node := range st.nodes {
 		// if the node failed to start, it may not have a server
@@ -189,7 +189,6 @@ func (st *serviceTester) Close() {
 	if st.stopBlockAutoMining != nil {
 		st.stopBlockAutoMining()
 	}
-	st.cancel()
 }
 
 func (st *serviceTester) Start(t *testing.T) {
@@ -200,6 +199,7 @@ func (st *serviceTester) Start(t *testing.T) {
 		<-done
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -365,9 +365,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestNodeIsRegistered(t *testing.T) {
-	require := require.New(t)
-	st := newServiceTester(5, require)
-	defer st.Close()
+	st := newServiceTester(t, 5)
+	require := st.require
 	st.Start(t)
 
 	count, err := st.entitlementChecker.GetNodeCount(nil)
@@ -514,12 +513,9 @@ func TestErc721Entitlements(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
-
-			require := require.New(t)
-			st := newServiceTester(5, require)
-			defer st.Close()
+			st := newServiceTester(t, 5)
+			ctx := st.ctx
+			require := st.require
 			st.Start(t)
 
 			bc := st.ClientSimulatorBlockchain()
@@ -696,12 +692,9 @@ func TestErc1155Entitlements(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
-
-			require := require.New(t)
-			st := newServiceTester(5, require)
-			defer st.Close()
+			st := newServiceTester(t, 5)
+			ctx := st.ctx
+			require := st.require
 			st.Start(t)
 
 			cfg := st.Config()
@@ -810,12 +803,9 @@ func TestErc20Entitlements(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
-
-			require := require.New(t)
-			st := newServiceTester(5, require)
-			defer st.Close()
+			st := newServiceTester(t, 5)
+			ctx := st.ctx
+			require := st.require
 			st.Start(t)
 
 			cfg := st.Config()
@@ -946,12 +936,9 @@ func TestCrossChainEntitlements(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
-
-			require := require.New(t)
-			st := newServiceTester(5, require)
-			defer st.Close()
+			st := newServiceTester(t, 5)
+			ctx := st.ctx
+			require := st.require
 			st.Start(t)
 
 			cfg := st.Config()
@@ -1038,12 +1025,9 @@ func TestEthBalance(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
-
-			require := require.New(t)
-			st := newServiceTester(5, require)
-			defer st.Close()
+			st := newServiceTester(t, 5)
+			ctx := st.ctx
+			require := st.require
 			st.Start(t)
 
 			cfg := st.Config()

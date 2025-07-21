@@ -265,13 +265,13 @@ func (cs *clientSimulator) executeCheck(
 	customErr, stringErr, err := cs.decoder.DecodeEVMError(err)
 	switch {
 	case customErr != nil:
-		log.Errorw("Failed to submit entitlement check", "type", "customErr", "err", customErr)
+		log.Errorw("Failed to submit entitlement check", "type", "customErr", "error", customErr)
 		return err
 	case stringErr != nil:
-		log.Errorw("Failed to submit entitlement check", "type", "stringErr", "err", stringErr)
+		log.Errorw("Failed to submit entitlement check", "type", "stringErr", "error", stringErr)
 		return err
 	case err != nil:
-		log.Errorw("Failed to submit entitlement check", "type", "err", "err", err)
+		log.Errorw("Failed to submit entitlement check", "type", "error", "error", err)
 		return err
 	}
 
@@ -312,12 +312,12 @@ func (cs *clientSimulator) executeV2Check(
 
 			if emitV2Event {
 				tx, err := cs.entitlementGated.RequestEntitlementCheckV2RuleDataV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
-				log.Infow("RequestEntitlementCheckV2RuleDataV2 called", "tx", tx, "err", err)
+				log.Infow("RequestEntitlementCheckV2RuleDataV2 called", "tx", tx, "error", err)
 				return tx, err
 
 			} else {
 				tx, err := cs.entitlementGated.RequestEntitlementCheckV1RuleDataV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
-				log.Infow("RequestEntitlementCheckV1RuleDataV2 called", "tx", tx, "err", err)
+				log.Infow("RequestEntitlementCheckV1RuleDataV2 called", "tx", tx, "error", err)
 				return tx, err
 			}
 		})
@@ -327,13 +327,13 @@ func (cs *clientSimulator) executeV2Check(
 	customErr, stringErr, err := cs.decoder.DecodeEVMError(err)
 	switch {
 	case customErr != nil:
-		log.Errorw("Failed to submit v2 entitlement check", "type", "customErr", "err", customErr)
+		log.Errorw("Failed to submit v2 entitlement check", "type", "customErr", "error", customErr)
 		return err
 	case stringErr != nil:
-		log.Errorw("Failed to submit v2 entitlement check", "type", "stringErr", "err", stringErr)
+		log.Errorw("Failed to submit v2 entitlement check", "type", "stringErr", "error", stringErr)
 		return err
 	case err != nil:
-		log.Errorw("Failed to submit v2 entitlement check", "type", "err", "err", err)
+		log.Errorw("Failed to submit v2 entitlement check", "type", "error", "error", err)
 		return err
 	}
 
@@ -421,7 +421,7 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 	)
 
 	if err := cs.entitlementGatedContract.UnpackLog(&entitlementCheckResultPosted, "EntitlementCheckResultPosted", event); err != nil {
-		log.Errorw("Failed to unpack EntitlementCheckResultPosted event", "err", err)
+		log.Errorw("Failed to unpack EntitlementCheckResultPosted event", "error", err)
 		return
 	}
 
@@ -452,7 +452,7 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 	)
 
 	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequested", event); err != nil {
-		log.Errorw("Failed to unpack EntitlementCheckRequested event", "err", err)
+		log.Errorw("Failed to unpack EntitlementCheckRequested event", "error", err)
 		return
 	}
 
@@ -481,7 +481,7 @@ func (cs *clientSimulator) onEntitlementCheckRequestedV2(
 	)
 
 	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequestedV2", event); err != nil {
-		log.Errorw("Failed to unpack EntitlementCheckRequestedV2 event", "err", err)
+		log.Errorw("Failed to unpack EntitlementCheckRequestedV2 event", "error", err)
 		return
 	}
 
@@ -569,7 +569,7 @@ func (cs *clientSimulator) awaitNextResult(ctx context.Context) (bool, error) {
 	log.Infow("ClientSimulator waiting for request to publish")
 	txId, err := cs.waitForNextRequest(ctx)
 	if err != nil {
-		log.Errorw("Failed to wait for request", "err", err)
+		log.Errorw("Failed to wait for request", "error", err)
 		return false, err
 	} else {
 		log.Infow("ClientSimulator logged entitlement check request",
@@ -580,7 +580,7 @@ func (cs *clientSimulator) awaitNextResult(ctx context.Context) (bool, error) {
 	log.Infow("ClientSimulator waiting for result")
 	result, err := cs.waitForPostResult(ctx, txId)
 	if err != nil {
-		log.Errorw("Failed to wait for result", "err", err)
+		log.Errorw("Failed to wait for result", "error", err)
 		return false, err
 	}
 	log.Infow("ClientSimulator logged entitlement check result", "Result", result)
@@ -600,7 +600,7 @@ func (cs *clientSimulator) EvaluateRuleDataV2(
 
 	err := cs.executeV2Check(ctx, &ruleData, emitV2Event)
 	if err != nil {
-		log.Errorw("Failed to execute entitlement check", "err", err)
+		log.Errorw("Failed to execute entitlement check", "error", err)
 		return false, err
 	}
 	return cs.awaitNextResult(ctx)
@@ -619,7 +619,7 @@ func (cs *clientSimulator) EvaluateRuleData(
 
 	err := cs.executeCheck(ctx, &ruleData, emitV2Event)
 	if err != nil {
-		log.Errorw("Failed to execute entitlement check", "err", err)
+		log.Errorw("Failed to execute entitlement check", "error", err)
 		return false, err
 	}
 	return cs.awaitNextResult(ctx)
@@ -646,7 +646,7 @@ func RunClientSimulator(
 		wallet,
 	)
 	if err != nil {
-		log.Errorw("--- Failed to create clientSimulator", "err", err)
+		log.Errorw("--- Failed to create clientSimulator", "error", err)
 		return
 	}
 	cs.Start(ctx)

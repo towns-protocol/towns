@@ -230,6 +230,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "setMembershipDuration",
+    "inputs": [
+      {
+        "name": "duration",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setMembershipFreeAllocation",
     "inputs": [
       {
@@ -294,19 +307,6 @@ export default [
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "withdraw",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
     "type": "event",
     "name": "Approval",
     "inputs": [
@@ -352,25 +352,6 @@ export default [
         "type": "bool",
         "indexed": false,
         "internalType": "bool"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Banned",
-    "inputs": [
-      {
-        "name": "moderator",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -679,19 +660,6 @@ export default [
   },
   {
     "type": "event",
-    "name": "Paused",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "PermissionsAddedToChannelRole",
     "inputs": [
       {
@@ -956,38 +924,6 @@ export default [
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "Unbanned",
-    "inputs": [
-      {
-        "name": "moderator",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Unpaused",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
     "type": "error",
     "name": "ApprovalCallerNotOwnerNorApproved",
     "inputs": []
@@ -1001,49 +937,6 @@ export default [
     "type": "error",
     "name": "BalanceQueryForZeroAddress",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Banning__AlreadyBanned",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "Banning__CannotBanOwner",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Banning__CannotBanSelf",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Banning__InvalidTokenId",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "Banning__NotBanned",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
   },
   {
     "type": "error",
@@ -1090,6 +983,11 @@ export default [
   {
     "type": "error",
     "name": "EntitlementGated_InvalidEntitlement",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_InvalidValue",
     "inputs": []
   },
   {
@@ -1371,16 +1269,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "Pausable__NotPaused",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Pausable__Paused",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Prepay__InvalidAddress",
     "inputs": []
   },
@@ -1462,6 +1350,11 @@ export default [
   {
     "type": "error",
     "name": "Roles__RoleDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__RoleIsImmutable",
     "inputs": []
   },
   {

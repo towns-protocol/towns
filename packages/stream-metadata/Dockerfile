@@ -1,4 +1,4 @@
-FROM node:lts-alpine3.20 as builder
+FROM node:lts-alpine3.20 AS builder
 
 WORKDIR /river
 
@@ -6,7 +6,6 @@ WORKDIR /river
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
 COPY ./.yarn/releases ./.yarn/releases
-COPY ./remappings.txt ./remappings.txt
 COPY ./.yarnrc.yml ./.yarnrc.yml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
@@ -29,6 +28,8 @@ COPY ./packages/dlog /river/packages/dlog
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/sdk /river/packages/sdk
 COPY ./packages/encryption /river/packages/encryption
+COPY ./packages/sdk-crypto /river/packages/sdk-crypto
+COPY ./packages/rpc-connector /river/packages/rpc-connector
 COPY ./packages/stream-metadata /river/packages/stream-metadata
 
 # install dependencies and build
@@ -38,13 +39,16 @@ RUN yarn install
 RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
-FROM node:lts-alpine3.20 as runner
+FROM node:lts-alpine3.20 AS runner
 COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-metadata/dist
 
-# install dd-trace again (because the bundler excludes some of the sub-dependencies)
+# install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
 RUN yarn init --yes
-RUN yarn add dd-trace@^5.19.0
+# We need to install @towns-protocol/olm here because esbuild
+# isnt smart enough to read the export field in package json
+# and get the node specific import in the bundle step
+RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28
 
 # run the service
 ARG GIT_SHA

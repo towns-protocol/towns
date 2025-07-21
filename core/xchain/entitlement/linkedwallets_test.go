@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/contracts/base"
 	"github.com/towns-protocol/towns/core/contracts/base/deploy"
 	"github.com/towns-protocol/towns/core/node/base/test"
@@ -16,9 +17,9 @@ import (
 )
 
 func TestFetchDelegateWallets(t *testing.T) {
+	t.Skip("Skipping due to outbound network call")
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	btc, err := crypto.NewBlockchainTestContext(
 		ctx,

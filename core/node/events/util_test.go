@@ -42,7 +42,6 @@ type cacheTestInstance struct {
 	params         *StreamCacheParams
 	streamRegistry StreamRegistry
 	cache          *StreamCache
-	mbProducer     *miniblockProducer
 }
 
 type testParams struct {
@@ -52,6 +51,7 @@ type testParams struct {
 	recencyConstraintsGenerations int
 	recencyConstraintsAgeSec      int
 	defaultMinEventsPerSnapshot   int
+	enableNewSnapshotFormat       int
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -73,8 +73,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		p.numInstances = 1
 	}
 
-	ctx, cancel := test.NewTestContext()
-	t.Cleanup(cancel)
+	ctx := test.NewTestContext(t)
 
 	ctc := &cacheTestContext{
 		testParams:      p,
@@ -98,6 +97,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 	setOnChainStreamConfig(t, ctx, btc, p)
 
+	// register nodes as operational
 	baseCtx := ctx
 	for i := range p.numInstances {
 		log := logging.FromCtx(baseCtx)
@@ -105,6 +105,13 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		ctx = logging.CtxWithLog(baseCtx, log)
 
 		ctc.require.NoError(btc.InitNodeRecord(ctx, i, "fakeurl"))
+	}
+
+	// load instances
+	for i := range p.numInstances {
+		log := logging.FromCtx(baseCtx)
+		log = log.With("instance", i)
+		ctx = logging.CtxWithLog(baseCtx, log)
 
 		bc := btc.GetBlockchain(ctx, i)
 
@@ -128,12 +135,15 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			bc.Wallet.Address,
 			blockNumber,
 			bc.ChainMonitor,
+			btc.OnChainConfig,
+			nil,
 			nil,
 			nil,
 		)
 		ctc.require.NoError(err)
 
 		params := &StreamCacheParams{
+			ServerCtx:               ctx,
 			Storage:                 streamStore.Storage,
 			Wallet:                  bc.Wallet,
 			RiverChain:              bc,
@@ -162,10 +172,9 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *StreamCache {
 	streamCache := NewStreamCache(ctc.instances[n].params)
-	err := streamCache.Start(ctc.ctx)
+	err := streamCache.Start(ctc.ctx, opts)
 	ctc.require.NoError(err)
 	ctc.instances[n].cache = streamCache
-	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, opts)
 	return streamCache
 }
 
@@ -178,14 +187,14 @@ func (ctc *cacheTestContext) initAllCaches(opts *MiniblockProducerOpts) {
 func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *MiniblockRef) {
 	streamId := testutils.FakeStreamId(STREAM_USER_SETTINGS_BIN)
 	mb := MakeGenesisMiniblockForUserSettingsStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamId)
-	mbBytes, err := mb.ToBytes()
+	storageMb, err := mb.AsStorageMb()
 	ctc.require.NoError(err)
 
 	nodes, err := ctc.instances[0].streamRegistry.AllocateStream(
 		ctc.ctx,
 		streamId,
 		common.BytesToHash(mb.Proto.Header.Hash),
-		mbBytes,
+		storageMb.Data,
 	)
 	ctc.require.NoError(err)
 	ctc.require.Len(nodes, ctc.testParams.replFactor)
@@ -281,7 +290,13 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 			defer wg.Done()
 
 			streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID)
+			mb := MakeGenesisMiniblockForSpaceStream(
+				ctc.t,
+				ctc.clientWallet,
+				ctc.instances[0].params.Wallet,
+				streamID,
+				nil,
+			)
 			ctc.createStreamNoCache(streamID, mb.Proto)
 
 			mu.Lock()
@@ -294,7 +309,7 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 }
 
 func (ctc *cacheTestContext) makeMiniblock(inst int, streamId StreamId, forceSnapshot bool) *MiniblockRef {
-	ref, err := ctc.instances[inst].mbProducer.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
+	ref, err := ctc.instances[inst].cache.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
 	ctc.require.NoError(err)
 	return ref
 }
@@ -327,7 +342,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
-	mb *Miniblock,
+	candidate *MiniblockInfo,
 ) error {
 	inst := ctc.instancesByAddr[node]
 
@@ -336,7 +351,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 		return err
 	}
 
-	return stream.SaveMiniblockCandidate(ctx, mb)
+	return stream.SaveMiniblockCandidate(ctx, candidate)
 }
 
 func (ctc *cacheTestContext) GetMbs(
@@ -345,7 +360,7 @@ func (ctc *cacheTestContext) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	for _, instance := range ctc.instances {
 		if node == instance.params.Wallet.Address {
 			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)
@@ -353,7 +368,7 @@ func (ctc *cacheTestContext) GetMbs(
 				return nil, err
 			}
 
-			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive)
+			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
 			if err != nil {
 				return nil, err
 			}
@@ -407,17 +422,24 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
 		)
 	}
+	if p.enableNewSnapshotFormat != 0 {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamEnableNewSnapshotFormatConfigKey,
+			crypto.ABIEncodeUint64(uint64(p.enableNewSnapshotFormat)),
+		)
+	}
 }
 
 func (i *cacheTestInstance) makeAndSaveMbCandidate(
 	ctx context.Context,
 	stream *Stream,
+	blockNum crypto.BlockNumber,
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
 		stream: stream,
 		cache:  i.cache,
 	}
-	err := j.produceCandidate(ctx)
+	err := j.produceCandidate(ctx, blockNum)
 	if err != nil {
 		return nil, err
 	}
@@ -432,8 +454,8 @@ func (i *cacheTestInstance) makeMbCandidate(
 		stream: stream,
 		cache:  i.cache,
 	}
-	j.remoteNodes, _ = j.stream.GetRemotesAndIsLocal()
-	j.replicated = len(j.remoteNodes) > 0
+	j.quorumNodes, _ = j.stream.GetRemotesAndIsLocal()
+	j.replicated = len(j.quorumNodes) > 0
 	err := j.makeCandidate(ctx)
 	if err != nil {
 		return nil, err

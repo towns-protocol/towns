@@ -40,7 +40,7 @@ export function parseGroupEncryptionAlgorithmId(
         }
     }
     if (isGroupEncryptionAlgorithmId(value)) {
-        return { kind: 'matched', value: value as GroupEncryptionAlgorithmId }
+        return { kind: 'matched', value }
     }
     return { kind: 'unrecognized', value }
 }

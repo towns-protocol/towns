@@ -12,14 +12,17 @@ export class MemberMetadata_Usernames {
     readonly plaintextUsernames = new Map<string, string>()
     readonly userIdToEventId = new Map<string, string>()
     readonly confirmedUserIds = new Set<string>()
+    readonly userId: string
     readonly usernameEvents = new Map<
         string,
-        { encryptedData: EncryptedData; userId: string; pending: boolean }
+        { checksum: string; userId: string; pending: boolean }
     >()
     readonly checksums = new Set<string>()
+    currentUsernameEncryptedData: EncryptedData | undefined
 
-    constructor(streamId: string) {
+    constructor(streamId: string, userId: string) {
         this.streamId = streamId
+        this.userId = userId
     }
 
     setLocalUsername(userId: string, username: string, emitter?: TypedEmitter<StreamStateEvents>) {
@@ -41,6 +44,8 @@ export class MemberMetadata_Usernames {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
+        this.removeUsernameEventForUserId(userId)
+
         if (!encryptedData.checksum) {
             this.log('no checksum in encrypted data')
             return
@@ -50,7 +55,6 @@ export class MemberMetadata_Usernames {
             return
         }
 
-        this.removeUsernameEventForUserId(userId)
         this.addUsernameEventForUserId(userId, eventId, encryptedData, pending)
 
         if (cleartext) {
@@ -71,6 +75,9 @@ export class MemberMetadata_Usernames {
             this.confirmedUserIds.add(userId)
         }
 
+        if (userId === this.userId) {
+            this.currentUsernameEncryptedData = encryptedData
+        }
         this.emitUsernameUpdated(eventId, stateEmitter)
     }
 
@@ -79,7 +86,11 @@ export class MemberMetadata_Usernames {
         if (!event) {
             return
         }
-        this.usernameEvents.set(eventId, { ...event, pending: false })
+        this.usernameEvents.set(eventId, {
+            checksum: event.checksum,
+            userId: event.userId,
+            pending: false,
+        })
         this.confirmedUserIds.add(event.userId)
 
         // if we don't have the plaintext username, no need to emit an event
@@ -99,7 +110,7 @@ export class MemberMetadata_Usernames {
             return
         }
 
-        const checksum = event.encryptedData.checksum
+        const checksum = event.checksum
         if (!checksum) {
             return
         }
@@ -157,7 +168,7 @@ export class MemberMetadata_Usernames {
             this.log(`no existing username event for user ${userId} — this is a programmer error`)
             return
         }
-        this.checksums.delete(event.encryptedData.checksum ?? '')
+        this.checksums.delete(event.checksum ?? '')
         this.usernameEvents.delete(eventId)
         this.log(`deleted old username event for user ${userId}`)
     }
@@ -182,7 +193,7 @@ export class MemberMetadata_Usernames {
 
         this.usernameEvents.set(eventId, {
             userId,
-            encryptedData: encryptedData,
+            checksum: encryptedData.checksum,
             pending: pending,
         })
     }

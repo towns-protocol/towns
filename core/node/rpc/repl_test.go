@@ -1,10 +1,18 @@
 package rpc
 
 import (
+	"fmt"
+	"slices"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -82,7 +90,7 @@ func TestReplMiniblock(t *testing.T) {
 
 	tt.eventuallyCompareStreamDataInStorage(streamId, 1, 100)
 
-	mbRef, err := tt.nodes[0].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+	mbRef, err := tt.nodes[0].service.cache.TestMakeMiniblock(ctx, streamId, false)
 	require.NoError(err)
 	require.EqualValues(1, mbRef.Num)
 	tt.eventuallyCompareStreamDataInStorage(streamId, 2, 0)
@@ -124,7 +132,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	mbRef := MiniblockRefFromCookie(cookie)
 	for i := range N {
 		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, mbRef))
-		mbRef, err = tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err = tt.nodes[2].service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err, "Failed to make miniblock on round %d", i)
 
 		if mbChain[latestMbNum] != mbRef.Hash {
@@ -152,7 +160,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	require.Eventuallyf(func() bool {
 		stream, err = lastStartedNode.service.cache.GetStreamNoWait(ctx, streamId)
 		if err == nil {
-			if miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1); err == nil {
+			if miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1, true); err == nil {
 				return len(miniBlocks) == len(mbChain)
 			}
 		}
@@ -160,11 +168,11 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	}, 10*time.Second, 100*time.Millisecond, "catching up with stream failed within reasonable time")
 
 	// verify that loaded miniblocks match with blocks in expected mbChain
-	miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1)
+	miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1, true)
 	require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range miniBlocks {
-		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
+		fetchedMbChain[int64(i)] = common.BytesToHash(blk.Proto.GetHeader().GetHash())
 	}
 
 	require.Equal(mbChain, fetchedMbChain, "unexpected mini-block chain")
@@ -207,7 +215,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 
 	for range N {
 		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromCookie(cookie)))
-		mbRef, err := tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err := tt.nodes[2].service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err)
 
 		if mbChain[latestMbNum] != mbRef.Hash {
@@ -240,7 +248,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 			Hash: mbChain[latestMbNum],
 			Num:  latestMbNum,
 		}))
-		mbRef, err := tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
+		mbRef, err := tt.nodes[2].service.cache.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err)
 
 		if mbChain[latestMbNum] != mbRef.Hash {
@@ -271,14 +279,14 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// wait till stream cache has finish reconciliation for the stream
 	var (
 		stream             *Stream
-		receivedMiniblocks []*protocol.Miniblock
+		receivedMiniblocks []*MiniblockInfo
 	)
 
 	// grab mini-blocks from node that is already up and running and ensure that the just restarted node has the
 	// same miniblocks after it catches up.
 	stream, err = tt.nodes[opts.numNodes-2].service.cache.GetStreamWaitForLocal(ctx, streamId)
 	require.NoError(err)
-	expectedMiniblocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1)
+	expectedMiniblocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1, true)
 	require.NoError(err)
 
 	require.Eventuallyf(func() bool {
@@ -287,7 +295,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 			return false
 		}
 
-		if receivedMiniblocks, _, err = syncStream.GetMiniblocks(ctx, 0, latestMbNum+1); err == nil {
+		if receivedMiniblocks, _, err = syncStream.GetMiniblocks(ctx, 0, latestMbNum+1, true); err == nil {
 			return len(receivedMiniblocks) == len(expectedMiniblocks)
 		}
 		return false
@@ -298,7 +306,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range receivedMiniblocks {
-		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
+		fetchedMbChain[int64(i)] = common.BytesToHash(blk.Proto.GetHeader().GetHash())
 	}
 
 	stream, err = streamCache.GetStreamNoWait(ctx, streamId)
@@ -309,4 +317,253 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	require.Equal(mbChain, fetchedMbChain, "unexpected mini-block chain")
 	require.Equal(latestMbNum, view.LastBlock().Ref.Num, "unexpected last mini-block num")
 	require.Equal(mbChain[latestMbNum], view.LastBlock().Ref.Hash, "unexpected last mini-block hash")
+}
+
+func TestStreamAllocatedAcrossOperators(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 6, replicationFactor: 3, numOperators: 3, start: true})
+	ctx := tt.ctx
+	require := tt.require
+
+	for i := range 10 {
+		alice := tt.newTestClient(i%tt.opts.numNodes, testClientOpts{})
+		cookie := alice.createUserStreamGetCookie()
+		streamId, _ := StreamIdFromBytes(cookie.StreamId)
+
+		node := tt.nodes[(i+5)%tt.opts.numNodes]
+		stream, err := node.service.registryContract.GetStreamOnLatestBlock(ctx, streamId)
+		require.NoError(err)
+		require.Len(stream.Nodes(), 3)
+
+		operators := make(map[common.Address]bool)
+		for _, nodeAddr := range stream.Nodes() {
+			n, err := node.service.nodeRegistry.GetNode(nodeAddr)
+			require.NoError(err)
+			require.False(operators[n.Operator()])
+			operators[n.Operator()] = true
+		}
+		require.Len(operators, 3)
+	}
+}
+
+// TestStreamReconciliationTaskRescheduling ensures that when a node isn't able to reconcile a stream because
+// none of the stream nodes could provide the stream data, the node will reschedule the reconciliation task.
+//
+// Scenario:
+// - create stream
+// - updates the url endpoints of all nodes participating in the stream to an invalid unreachable url
+// - adds a new node to the stream and ensure that it can't reconcile the stream within reasonable time
+// - then restore the invalid endpoints and ensures that the node can reconcile the stream within reasonable time.
+func TestStreamReconciliationTaskRescheduling(t *testing.T) {
+	opts := serviceTesterOpts{numNodes: 5, replicationFactor: 3, start: false}
+	tt := newServiceTester(t, opts)
+
+	tt.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
+	tt.startNodes(0, opts.numNodes)
+
+	ctx := tt.ctx
+	require := tt.require
+
+	client := tt.testClient(2)
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+
+	// create a stream, add some events and create a bunch of mini-blocks for the node to catch up to
+	streamId, cookie, _, err := createUserSettingsStream(
+		ctx,
+		wallet,
+		client,
+		&protocol.StreamSettings{DisableMiniblockCreation: true},
+	)
+	require.NoError(err)
+	require.NotNil(cookie)
+
+	testfmt.Printf(t, "created stream %s", streamId)
+
+	// get stream record to determine which nodes are participating in the stream and which one are not
+	stream, err := tt.btc.StreamRegistry.GetStream(nil, streamId)
+	require.NoError(err)
+	allNodes, err := tt.btc.NodeRegistry.GetAllNodes(nil)
+	require.NoError(err)
+
+	var (
+		participatingNodes    []river.Node
+		notParticipatingNodes []river.Node
+	)
+
+	for _, node := range allNodes {
+		if slices.Contains(stream.Nodes, node.NodeAddress) {
+			participatingNodes = append(participatingNodes, node)
+		} else {
+			notParticipatingNodes = append(notParticipatingNodes, node)
+		}
+	}
+
+	// create a bunch of mini-blocks that needs to be synced
+	mbRef := MiniblockRefFromCookie(cookie)
+	mbMinterNode := tt.nodes[0]
+	for _, node := range tt.nodes {
+		if node.address == participatingNodes[0].NodeAddress {
+			mbMinterNode = node
+		}
+	}
+
+	for range 15 {
+		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, mbRef))
+		mbRef, err = mbMinterNode.service.cache.TestMakeMiniblock(ctx, streamId, false)
+		require.NoError(err)
+	}
+
+	// update the node urls of the participating nodes to ensure that the node this stream will be newly
+	// assigned to can't reconcile the stream because it can't reach any of the existing participating nodes.
+	invalidURL := "http://localhost:0"
+	participatingOrigUrls := make(map[common.Address]string)
+	for _, node := range participatingNodes {
+		index := -1
+		for i, n := range tt.nodes {
+			if n.address == node.NodeAddress {
+				index = i
+				participatingOrigUrls[n.address] = n.url
+			}
+		}
+
+		if index != -1 {
+			require.NoError(tt.btc.UpdateNodeUrl(ctx, index, invalidURL))
+			testfmt.Printf(t, "invalidated node %s url to %s", node.NodeAddress, invalidURL)
+		}
+	}
+
+	expNodesURLS := map[common.Address]string{
+		participatingNodes[0].NodeAddress:    invalidURL,
+		participatingNodes[1].NodeAddress:    invalidURL,
+		participatingNodes[2].NodeAddress:    invalidURL,
+		notParticipatingNodes[0].NodeAddress: notParticipatingNodes[0].Url,
+		notParticipatingNodes[1].NodeAddress: notParticipatingNodes[1].Url,
+	}
+
+	// ensure that all nodes updated their local node registry with the new node urls
+	tt.require.EventuallyWithT(func(collect *assert.CollectT) {
+		for _, node := range tt.nodes {
+			got := make(map[common.Address]string)
+
+			for _, nodeRecord := range node.service.nodeRegistry.GetAllNodes() {
+				got[nodeRecord.Address()] = nodeRecord.Url()
+			}
+
+			if !cmp.Equal(expNodesURLS, got) {
+				collect.Errorf("expected node urls to be %v, got %v", expNodesURLS, got)
+			}
+		}
+	}, 10*time.Second, 100*time.Millisecond)
+
+	// mark the first node that isn't participating as a sync node in the stream registry forcing it to reconcile
+	// the stream. This should fail because the node can't reach any of the participating nodes due to an invalid
+	// node url.
+	newlyAssignedNodeRecord := notParticipatingNodes[0]
+	newlyAssignedNode := tt.nodes[slices.IndexFunc(tt.nodes, func(record *testNodeRecord) bool {
+		return record.address == newlyAssignedNodeRecord.NodeAddress
+	})]
+
+	pendingTx, err := tt.btc.DeployerBlockchain.TxPool.Submit(
+		tt.ctx, "SetStreamReplicationFactor", func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			nodeNodeSet := append(stream.Nodes, newlyAssignedNodeRecord.NodeAddress)
+			return tt.btc.StreamRegistry.SetStreamReplicationFactor(opts, []river.SetStreamReplicationFactor{
+				{
+					StreamId:          streamId,
+					Nodes:             nodeNodeSet,
+					ReplicationFactor: uint8(len(stream.Nodes)),
+				},
+			})
+		})
+
+	require.NoError(err)
+	receipt, err := pendingTx.Wait(tt.ctx)
+	require.NoError(err)
+	require.Equal(types.ReceiptStatusSuccessful, receipt.Status, "failed to set stream replication factor")
+
+	getStream, err := tt.btc.StreamRegistry.GetStream(nil, streamId)
+	tt.require.NoError(err)
+	testfmt.Printf(t, "getStream: %d", getStream.LastMiniblockNum)
+
+	// ensure that the node can't reconcile the stream
+	tt.require.Never(func() bool {
+		_, err := newlyAssignedNode.service.storage.GetLastMiniblockNumber(ctx, streamId)
+		return !base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND)
+	}, 5*time.Second, 50*time.Millisecond)
+
+	// restore node endpoints and ensure that the newly added node can reconcile the stream
+	for nodeAddr, origURL := range participatingOrigUrls {
+		for index, n := range tt.nodes {
+			if n.address == nodeAddr {
+				require.NoError(tt.btc.UpdateNodeUrl(ctx, index, origURL))
+				testfmt.Printf(t, "restored node %s url to %s", nodeAddr, origURL)
+			}
+		}
+	}
+
+	// ensure that the stream is able to reconcile the stream now it can connect to the participating nodes.
+	expMbNum := int64(getStream.LastMiniblockNum)
+	tt.require.EventuallyWithT(func(collect *assert.CollectT) {
+		mbNum, err := newlyAssignedNode.service.storage.GetLastMiniblockNumber(ctx, streamId)
+		if err != nil {
+			collect.Errorf("failed to get last miniblock number: %v", err)
+		}
+		if mbNum != expMbNum {
+			collect.Errorf("mb num %d != exp mbnum %d", mbNum, expMbNum)
+		}
+		testfmt.Printf(t, "%s@%s) mb num %d", streamId, newlyAssignedNode.address, mbNum)
+	}, 30*time.Second, 250*time.Millisecond, "Unable to reconcile stream")
+}
+
+func TestStreamReconciliationFromUnreplicated(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 3, replicationFactor: 1, start: true})
+	//ctx := tt.ctx
+	require := tt.require
+
+	tt.btc.SetConfigValue(
+		t,
+		tt.ctx,
+		crypto.StreamMiniblockRegistrationFrequencyKey,
+		crypto.ABIEncodeUint64(uint64(100)),
+	)
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	_ = alice.createUserStream()
+	spaceId, _ := alice.createSpace()
+	channelId, _, _ := alice.createChannel(spaceId)
+
+	var mb *MiniblockRef
+	for count := range 100 {
+		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))
+		mb = alice.makeMiniblock(channelId, false, 0)
+		if mb.Num > 5 {
+			break
+		}
+	}
+	require.Greater(mb.Num, int64(5), "expected to make at least 5 miniblocks")
+
+	streamRecord, err := tt.btc.StreamRegistry.GetStream(&bind.CallOpts{Context: tt.ctx}, channelId)
+	require.NoError(err)
+	require.Equal(uint64(1), streamRecord.LastMiniblockNum)
+
+	nodes := []common.Address{streamRecord.Nodes[0]}
+	for _, node := range tt.nodes {
+		if !slices.Contains(nodes, node.address) {
+			nodes = append(nodes, node.address)
+		}
+	}
+
+	tt.btc.SetStreamReplicationFactor(
+		t,
+		tt.ctx,
+		[]river.SetStreamReplicationFactor{
+			{StreamId: channelId, Nodes: nodes, ReplicationFactor: uint8(1)},
+		},
+	)
+
+	// Now leader should write latest miniblock to the stream registry
+	tt.require.Eventually(func() bool {
+		streamRecord, err = tt.btc.StreamRegistry.GetStream(&bind.CallOpts{Context: tt.ctx}, channelId)
+		return err == nil && streamRecord.LastMiniblockNum >= uint64(mb.Num)
+	}, 20*time.Second, 100*time.Millisecond, "leader should write latest miniblock to the stream registry")
 }

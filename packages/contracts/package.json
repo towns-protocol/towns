@@ -1,0 +1,48 @@
+{
+  "name": "@towns-protocol/contracts",
+  "version": "0.0.282",
+  "packageManager": "yarn@3.8.0",
+  "installConfig": {
+    "hoistingLimits": "dependencies"
+  },
+  "files": [
+    "src/**/*.sol",
+    "scripts/**/*.sol",
+    "./typings/index.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "forge build",
+    "clean": "forge clean",
+    "format": "yarn prettier:write",
+    "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
+    "snapshot": "forge snapshot --isolate",
+    "test": "forge test --ffi --nmc Fork --fuzz-runs 4096",
+    "test:unit": "yarn test",
+    "typings": "wagmi generate",
+    "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
+    "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\""
+  },
+  "dependencies": {
+    "@erc6900/reference-implementation": "^0.8.1",
+    "@ethereum-attestation-service/eas-contracts": "^1.8.0",
+    "@openzeppelin/contracts": "^5.3.0",
+    "@openzeppelin/contracts-upgradeable": "^5.3.0",
+    "@prb/math": "^4.1.0",
+    "@towns-protocol/diamond": "^0.5.5",
+    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
+    "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
+    "solady": "^0.1.14"
+  },
+  "devDependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.8",
+    "@prb/test": "^0.6.4",
+    "@towns-protocol/prettier-config": "workspace:^",
+    "@wagmi/cli": "^2.2.0",
+    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.7",
+    "prettier": "^3.5.3",
+    "prettier-plugin-solidity": "^1.4.2",
+    "solhint": "^5.0.5"
+  }
+}

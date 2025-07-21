@@ -8,7 +8,7 @@ export default [
         "internalType": "address[]"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -196,7 +196,7 @@ export default [
     "inputs": [],
     "outputs": [
       {
-        "name": "",
+        "name": "settings",
         "type": "tuple[]",
         "internalType": "struct Setting[]",
         "components": [
@@ -880,6 +880,36 @@ export default [
   },
   {
     "type": "function",
+    "name": "setStreamReplicationFactor",
+    "inputs": [
+      {
+        "name": "requests",
+        "type": "tuple[]",
+        "internalType": "struct SetStreamReplicationFactor[]",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "syncNodesOnStreams",
     "inputs": [
       {
@@ -1157,89 +1187,6 @@ export default [
   },
   {
     "type": "event",
-    "name": "StreamAllocated",
-    "inputs": [
-      {
-        "name": "streamId",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "nodes",
-        "type": "address[]",
-        "indexed": false,
-        "internalType": "address[]"
-      },
-      {
-        "name": "genesisMiniblockHash",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "genesisMiniblock",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "StreamCreated",
-    "inputs": [
-      {
-        "name": "streamId",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "genesisMiniblockHash",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "stream",
-        "type": "tuple",
-        "indexed": false,
-        "internalType": "struct Stream",
-        "components": [
-          {
-            "name": "lastMiniblockHash",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "lastMiniblockNum",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "reserved0",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "flags",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "nodes",
-            "type": "address[]",
-            "internalType": "address[]"
-          }
-        ]
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "StreamLastMiniblockUpdateFailed",
     "inputs": [
       {
@@ -1265,62 +1212,6 @@ export default [
         "type": "string",
         "indexed": false,
         "internalType": "string"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "StreamLastMiniblockUpdated",
-    "inputs": [
-      {
-        "name": "streamId",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "lastMiniblockHash",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "lastMiniblockNum",
-        "type": "uint64",
-        "indexed": false,
-        "internalType": "uint64"
-      },
-      {
-        "name": "isSealed",
-        "type": "bool",
-        "indexed": false,
-        "internalType": "bool"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "StreamPlacementUpdated",
-    "inputs": [
-      {
-        "name": "streamId",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "nodeAddress",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
-      },
-      {
-        "name": "isAdded",
-        "type": "bool",
-        "indexed": false,
-        "internalType": "bool"
       }
     ],
     "anonymous": false

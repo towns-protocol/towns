@@ -1,12 +1,11 @@
-import { isNode } from 'browser-or-node'
+export const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
-export function isNodeEnv(): boolean {
-    return isNode
-}
+export const isNodeEnv =
+    typeof process !== 'undefined' && process.versions != null && process.versions.node != null
 
 export function isTestEnv(): boolean {
     return (
-        isNode &&
+        isNodeEnv &&
         (process.env.NODE_ENV === 'test' ||
             process.env.JEST_WORKER_ID !== undefined ||
             process.env.TS_JEST === '1')

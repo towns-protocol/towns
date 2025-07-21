@@ -1,0 +1,56 @@
+[profile.default]
+# Compiler settings
+auto_detect_solc = false # Foundry will automatically try to resolve appropriate Solidity compiler versions
+solc_version = "0.8.29" # Uses a single Solidity compiler version for the project
+evm_version = "cancun" # The EVM version to use during tests.
+via_ir = false # Whether to use the Solidity intermediate representation.
+optimizer = true # Whether to enable the Solidity optimizer.
+optimizer_runs = 4194303 # The amount of optimizer runs to perform.
+bytecode_hash = "none" # Determines the hash method for the metadata hash that is appended to the bytecode
+cbor_metadata = false # Remove all metadata hashes from your contract's bytecode.
+libs = ["node_modules"]
+out = "out" # The path to put contract artifacts in, relative to the root of the project.
+script = "scripts" # The path to the contract scripts relative to the root of the project.
+src = "src" # The path to the contract sources relative to the root of the project.
+test = "test" # The path to the test contract sources relative to the root of the project.
+extra_output = ["abi", "bin"]
+extra_output_files = ["abi", "bin"]
+
+
+
+# Test settings
+fuzz = { runs = 256 } # The amount of fuzz runs to perform for each fuzz test case.
+cache_path = "cache" # The path to the cache, relative to the root of the project.
+block_timestamp = 1_680_220_800 # The value of block.timestamp in tests. March 31, 2023 at 00:00 GMT
+verbosity = 3 # The verbosity level to use during tests.
+ffi = true
+fs_permissions = [
+  { access = "read-write", path = "./deployments" },
+  { access = "read-write", path = "./in" },
+  { access = "read-write", path = "./resources" },
+  { access = "read", path = "./out" },
+  { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
+] # Configures permissions for cheatcodes that touch the filesystem
+gas_reports = ["*"] # The contracts to print gas reports for.
+
+[rpc_endpoints]
+mainnet = "${ETH_RPC_URL}"
+base = "${BASE_RPC_URL}"
+base_anvil = "${BASE_ANVIL_RPC_URL}"
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+river = "${RIVER_RPC_URL}"
+river_anvil = "${RIVER_ANVIL_RPC_URL}"
+river_devnet = "${RIVER_DEVNET_RPC_URL}"
+sepolia = "${ETH_SEPOLIA_RPC_URL}"
+
+[fmt]
+bracket_spacing = false
+int_types = "long"
+line_length = 100
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+wrap_comments = true
+sort_imports = true
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

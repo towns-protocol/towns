@@ -177,7 +177,7 @@ func (s *Service) debugInfoMakeMiniblock(
 		return nil, err
 	}
 	if stream.IsLocal() {
-		ref, err := s.mbProducer.TestMakeMiniblock(ctx, streamId, forceSnapshot)
+		ref, err := s.cache.TestMakeMiniblock(ctx, streamId, forceSnapshot)
 		if err != nil {
 			return nil, err
 		}
@@ -196,15 +196,15 @@ func (s *Service) debugInfoMakeMiniblock(
 			Graffiti: g,
 			Version:  v,
 		}), nil
-	} else {
-		return utils.PeerNodeRequestWithRetries(
-			ctx,
-			stream,
-			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
-				return stub.Info(ctx, request)
-			},
-			s.config.Network.NumRetries,
-			s.nodeRegistry,
-		)
 	}
+
+	return utils.PeerNodeRequestWithRetries(
+		ctx,
+		stream,
+		func(ctx context.Context, stub StreamServiceClient, _ common.Address) (*connect.Response[InfoResponse], error) {
+			return stub.Info(ctx, request)
+		},
+		s.config.Network.NumRetries,
+		s.nodeRegistry,
+	)
 }

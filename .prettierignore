@@ -23,16 +23,20 @@ core/node/.mockery.yaml
 core/node/auth/contracts/*.json
 core/node/registries/contracts/*.json
 packages/encryption-pkg/turbo.json
-contracts/cache/*
-contracts/deployments/*
-contracts/addresses/*
-contracts/lib/*
-contracts/**/out/*
-contracts/out/*
-contracts/**/types/*
-contracts/docgen/*
+packages/contracts/cache/*
+packages/contracts/deployments/*
+packages/contracts/broadcast/*
+packages/contracts/addresses/*
+packages/contracts/lib/*
+packages/contracts/**/out/*
+packages/contracts/out/*
+packages/contracts/**/types/*
+packages/contracts/docgen/*
 packages/contract/out
-contracts/coverage/*
+packages/contracts/coverage/*
+packages/subgraph/generated/*
+packages/subgraph/.ponder/*
+packages/subgraph/*.d.ts
 core/xchain/src/gen/*
 
 broadcast/*
@@ -47,9 +51,12 @@ yarn.lock
 
 packages/generated/*
 
-scripts/bytecode-diff/templates/*
-scripts/bytecode-diff/**/*.yaml
-scripts/bytecode-diff/**/*.html
-scripts/bytecode-diff/**/*.json
+packages/contracts/scripts/bytecode-diff/templates/*
+packages/contracts/scripts/bytecode-diff/**/*.yaml
+packages/contracts/scripts/bytecode-diff/**/*.yml
+packages/contracts/scripts/bytecode-diff/**/*.html
+packages/contracts/scripts/bytecode-diff/**/*.json
 packages/proto/src/protocol_*.ts
 packages/workers/**/*.json
+
+CLAUDE.md

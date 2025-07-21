@@ -1,0 +1,37 @@
+{
+    "name": "@towns-protocol/example-bot-quickstart",
+    "version": "0.0.1",
+    "private": true,
+    "packageManager": "yarn@3.8.0",
+    "type": "module",
+    "main": "dist/bot-quickstart.cjs",
+    "scripts": {
+        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env ./esbuild.config.mjs --watch",
+        "build": "yarn typecheck && yarn compile",
+        "compile": "node ./esbuild.config.mjs",
+        "typecheck": "tsc --noEmit",
+        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env dist/bot-quickstart.cjs",
+        "clean": "rm -rf dist",
+        "lint": "yarn eslint --format unix ./src  --max-warnings=0",
+        "lint:fix": "yarn lint --fix"
+    },
+    "dependencies": {
+        "@connectrpc/connect-node": "^2.0.0",
+        "@hono/node-server": "^1.14.0",
+        "@towns-protocol/bot": "workspace:^",
+        "hono": "^4.7.11"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.8",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "esbuild": "^0.21.5",
+        "eslint": "^8.57.1",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-import-x": "^4.10.2",
+        "typescript": "^5.8.2"
+    },
+    "files": [
+        "/dist"
+    ]
+}

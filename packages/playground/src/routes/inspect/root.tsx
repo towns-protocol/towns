@@ -1,4 +1,5 @@
 import {
+    getStreamMetadataUrl,
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
@@ -36,24 +37,6 @@ const checkId = (id: string) => {
         resultIfStrip0x: id.startsWith('0x') ? check(id.slice(2)) : false,
         isStreamId: isValidStreamId(id),
     }))
-}
-
-const buildStreamMetadataUrl = (
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    env: 'gamma' | 'omega' | 'alpha' | 'local_single' | (string & {}),
-) => {
-    switch (env) {
-        case 'omega':
-            return `https://river.delivery`
-        case 'gamma':
-            return `https://gamma.river.delivery`
-        case 'alpha':
-            return `https://alpha.river.delivery`
-        case 'delta':
-            return `https://delta.river.delivery`
-        default:
-            return `http://localhost:3002`
-    }
 }
 
 export const InspectRoute = () => {
@@ -155,7 +138,7 @@ const SpaceInfo = ({ spaceId }: { spaceId: string }) => {
                 return
             }
             const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-            return fetch(`${buildStreamMetadataUrl(env)}/space/${spaceAddress}`).then((res) =>
+            return fetch(`${getStreamMetadataUrl(env)}/space/${spaceAddress}`).then((res) =>
                 res.json(),
             )
         },

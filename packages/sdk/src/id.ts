@@ -1,7 +1,14 @@
 import { utils } from 'ethers'
 import { nanoid, customAlphabet } from 'nanoid'
 import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
-import { hashString } from './utils'
+import {
+    ethereumAddressAsBytes,
+    ethereumAddressAsString,
+    ethereumAddressFromBytes,
+    ethereumAddressToBytes,
+    hashString,
+    isEthereumAddress,
+} from './utils'
 
 export const STREAM_ID_BYTES_LENGTH = 32
 export const STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
@@ -20,27 +27,12 @@ export const addressFromUserId = (userId: string): Uint8Array => {
     return addressAsBytes
 }
 
-export const streamIdToBytes = (streamId: string): Uint8Array => bin_fromHexString(streamId)
-
-export const streamIdFromBytes = (bytes: Uint8Array): string => bin_toHexString(bytes)
-
-export const streamIdAsString = (streamId: string | Uint8Array): string =>
-    typeof streamId === 'string' ? streamId : streamIdFromBytes(streamId)
-
-export const streamIdAsBytes = (streamId: string | Uint8Array): Uint8Array =>
-    typeof streamId === 'string' ? streamIdToBytes(streamId) : streamId
-
 // User id is an Ethereum address.
-// In string form it is 42 characters long, should start with 0x and TODO: have ERC-55 checksum.
-// In binary form it is 20 bytes long.
-export const isUserId = (userId: string | Uint8Array): boolean => {
-    if (userId instanceof Uint8Array) {
-        return userId.length === 20
-    } else if (typeof userId === 'string') {
-        return utils.isAddress(userId)
-    }
-    return false
-}
+export const streamIdToBytes = ethereumAddressToBytes
+export const streamIdFromBytes = ethereumAddressFromBytes
+export const streamIdAsString = ethereumAddressAsString
+export const streamIdAsBytes = ethereumAddressAsBytes
+export const isUserId = isEthereumAddress
 
 export const contractAddressFromSpaceId = (spaceId: string): string => {
     check(isSpaceStreamId(spaceId), 'Invalid space id: ' + spaceId)
@@ -58,6 +50,7 @@ export enum StreamPrefix {
     UserMetadata = 'ad',
     UserInbox = 'a1',
     UserSettings = 'a5',
+    Metadata = 'dd',
 }
 
 const allowedStreamPrefixesVar = Object.values(StreamPrefix)
@@ -74,6 +67,7 @@ const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.Media]: 62,
     [StreamPrefix.DM]: 62,
     [StreamPrefix.GDM]: 62,
+    [StreamPrefix.Metadata]: 16,
 }
 
 export const makeStreamId = (prefix: StreamPrefix, identity: string): string => {
@@ -180,6 +174,8 @@ export const isGDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.GDM)
 export const isUserInboxStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.UserInbox)
+export const isMetadataStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.Metadata)
 
 export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     const prefix = streamId.slice(0, 2) as StreamPrefix
@@ -238,7 +234,7 @@ export const checkStreamId = (streamId: string): void => {
 
 const hexNanoId = customAlphabet('0123456789abcdef', 62)
 
-export const genId = (size?: number | undefined): string => {
+export const genId = (size?: number): string => {
     return hexNanoId(size)
 }
 

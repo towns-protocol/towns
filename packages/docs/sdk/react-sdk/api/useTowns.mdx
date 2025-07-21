@@ -17,21 +17,7 @@ import { useTowns } from '@towns-protocol/react-sdk'
 function useTowns<T>(
   selector: (sync: SyncSelector) => Observable<T>,
   config?: ObservableConfig.FromData<T>,
-): T extends PersistedModel<infer UnwrappedData> ? {
-    data: UnwrappedData;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} : {
-    data: T;
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+): ObservableValue<T extends PersistedModel<infer UnwrappedData> ? UnwrappedData : T>
 ```
 
 **Source:** [useTowns](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useTowns.ts)
@@ -79,19 +65,5 @@ Callback function to be called when the data is updated.
 The data from the selected observable.
 
 ```ts
-T extends PersistedModel<infer UnwrappedData> ? {
-    data: UnwrappedData;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} : {
-    data: T;
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+ObservableValue<T extends PersistedModel<infer UnwrappedData> ? UnwrappedData : T>
 ```

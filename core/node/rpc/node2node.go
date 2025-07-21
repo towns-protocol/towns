@@ -166,6 +166,10 @@ func (s *Service) proposeMiniblock(
 
 	resp, err := view.ProposeNextMiniblock(ctx, s.chainConfig.Get(), req)
 	if err != nil {
+		// Err_MINIBLOCK_TOO_NEW indicates that the local node is behind the stream head.
+		if IsRiverErrorCode(err, Err_MINIBLOCK_TOO_NEW) {
+			s.cache.SubmitReconcileStreamTask(stream, nil)
+		}
 		return nil, err
 	}
 
@@ -207,7 +211,15 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	err = stream.SaveMiniblockCandidate(ctx, req.Miniblock)
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = stream.SaveMiniblockCandidate(ctx, mbInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -243,17 +255,32 @@ func (s *Service) streamMiniblocksByIds(
 		return err
 	}
 
-	if err = s.storage.ReadMiniblocksByIds(ctx, streamId, req.GetMiniblockIds(), func(blockdata []byte, seqNum int64) error {
-		var mb Miniblock
-		if err = proto.Unmarshal(blockdata, &mb); err != nil {
-			return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
-		}
+	if err = s.storage.ReadMiniblocksByIds(
+		ctx,
+		streamId,
+		req.GetMiniblockIds(),
+		req.GetOmitSnapshots(),
+		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
+			var mb Miniblock
+			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			}
 
-		return resp.Send(&GetMiniblockResponse{
-			Num:       seqNum,
-			Miniblock: &mb,
-		})
-	}); err != nil {
+			var snapshot *Envelope
+			if len(snBytes) > 0 && !req.GetOmitSnapshots() {
+				snapshot = &Envelope{}
+				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
+				}
+			}
+
+			return resp.Send(&GetMiniblockResponse{
+				Num:       seqNum,
+				Miniblock: &mb,
+				Snapshot:  snapshot,
+			})
+		},
+	); err != nil {
 		return err
 	}
 

@@ -12,7 +12,10 @@ const NODE_STATUS = {
 // formatting them into a prometheus-friendly format
 
 export class MetricsDiscovery {
-    constructor(private readonly riverRegistry: RiverRegistry, private readonly env: string) {}
+    constructor(
+        private readonly riverRegistry: RiverRegistry,
+        private readonly env: string,
+    ) {}
 
     public static init(config: { riverRpcURL: string; env: string }) {
         const deployment = getWeb3Deployment(config.env)
