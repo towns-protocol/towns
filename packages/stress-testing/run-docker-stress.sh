@@ -9,6 +9,7 @@ STRESS_DURATION=180
 SESSION_ID=""
 SKIP_BUILD=false
 IMAGE_TAG=alpha
+CLEANUP_BEFORE=false
 
 # Help function
 show_help() {
@@ -24,6 +25,7 @@ show_help() {
     echo "  -s, --session-id ID           Session ID for this test run (default: auto-generated)"
     echo "  --skip-build                  Skip Docker image build step"
     echo "  --image-tag TAG               Docker image tag to use (default: alpha)"
+    echo "  --cleanup                     Clean up old stress test containers before starting"
     echo "  -h, --help                    Show this help message"
     echo ""
     echo "Environment variables:"
@@ -70,6 +72,10 @@ while [[ $# -gt 0 ]]; do
         --image-tag)
             IMAGE_TAG="$2"
             shift 2
+            ;;
+        --cleanup)
+            CLEANUP_BEFORE=true
+            shift
             ;;
         -h|--help)
             show_help
@@ -135,6 +141,18 @@ echo "  Space ID: $SPACE_ID"
 echo "  Environment: $RIVER_ENV"
 echo "  Image tag: $IMAGE_TAG"
 echo ""
+
+# Clean up old containers if requested
+if [ "$CLEANUP_BEFORE" = true ]; then
+    echo "Cleaning up old stress test containers..."
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    if [ -x "$SCRIPT_DIR/cleanup-docker-stress.sh" ]; then
+        "$SCRIPT_DIR/cleanup-docker-stress.sh"
+        echo ""
+    else
+        echo "Warning: cleanup-docker-stress.sh not found or not executable"
+    fi
+fi
 
 # Build Docker image if not skipped
 if [ "$SKIP_BUILD" = false ]; then

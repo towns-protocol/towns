@@ -71,22 +71,36 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
                 wallet.address,
                 rootClient.baseProvider.wallet,
             )
-            logger.debug(result, 'minted membership')
+            logger.debug(
+                {
+                    ...result,
+                    address: wallet.address,
+                    clientIndex: i,
+                },
+                'minted membership for client',
+            )
         }
     }
 
     logger.debug('mint random memberships')
-    for (let i = 0; i < cfg.randomClients.length; i++) {
-        const client = cfg.randomClients[i]
-        await mintMembershipForWallet(client.baseProvider.wallet, i)
-    }
+    const randomMintPromises = cfg.randomClients.map((client, i) =>
+        mintMembershipForWallet(client.baseProvider.wallet, i),
+    )
+    await Promise.all(randomMintPromises)
 
-    // loop over all the clients, mint memberships for them if they're not members
+    // loop over all the clients, and mint memberships for them if they're not members
     // via spaceDapp.hasSpaceMembership
     logger.debug('mint memberships')
-    for (let i = 0; i < cfg.allWallets.length; i++) {
-        const wallet = cfg.allWallets[i]
-        await mintMembershipForWallet(wallet, i)
+    const BATCH_SIZE = 10 // Process 10 wallets at a time
+    for (let i = 0; i < cfg.allWallets.length; i += BATCH_SIZE) {
+        const batch = cfg.allWallets.slice(i, i + BATCH_SIZE)
+        const batchPromises = batch.map((wallet, index) =>
+            mintMembershipForWallet(wallet, i + index),
+        )
+        await Promise.all(batchPromises)
+        logger.debug(
+            `Minted memberships for batch ${i / BATCH_SIZE + 1} of ${Math.ceil(cfg.allWallets.length / BATCH_SIZE)}`,
+        )
     }
 
     // Signal to all follower clients that membership minting is complete

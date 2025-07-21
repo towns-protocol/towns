@@ -2,6 +2,21 @@
 
 This file provides guidance for working with the stress test package.
 
+## Docker Container Management
+
+### Cleaning Up Old Containers
+
+Stress tests create many Docker containers. To keep your Docker dashboard manageable:
+
+```bash
+# Clean up all old stress test containers
+cd packages/stress-testing
+./cleanup-docker-stress.sh
+
+# Or use the --cleanup flag when running a new test
+./run-docker-stress.sh --cleanup -c 25 -t 100
+```
+
 ## Stress Test Architecture and Race Conditions
 
 ### Root Client and Follower Client Architecture
@@ -14,9 +29,13 @@ The stress test uses a distributed architecture:
 
 To prevent race conditions between membership minting and space joining:
 
-1. The root client mints all memberships in `kickoffChat.ts`
-2. After all memberships are minted, the root client sends a `MEMBERSHIPS_MINTED:{sessionId}` signal
-3. Follower clients in `joinChat.ts` wait for this signal before attempting to join spaces
+1. The root client mints all memberships in `kickoffChat.ts` using `spaceDapp.joinSpace()` which internally waits for blockchain confirmation
+2. After all memberships are confirmed on-chain, the root client sends a `MEMBERSHIPS_MINTED:{sessionId}` signal
+3. Follower clients in `joinChat.ts`:
+   - First start the client and join the announce channel
+   - Wait for the `MEMBERSHIPS_MINTED:{sessionId}` signal
+   - Verify they have a membership NFT on-chain
+   - Join the space with `skipMintMembership: true` since membership already exists
 
 This prevents the "PERMISSION_DENIED" error that occurs when clients try to create user streams without having space membership.
 
@@ -25,6 +44,8 @@ This prevents the "PERMISSION_DENIED" error that occurs when clients try to crea
 - The synchronization signal is sent to the announce channel as a threaded message
 - The wait timeout is controlled by `waitForChannelDecryptionTimeoutMs` (defaults to max of test duration or 20 seconds)
 - Removing the 1.1 second delay between membership minting operations significantly improves performance at scale
+- Membership minting is parallelized in batches of 10 to handle large numbers of clients efficiently
+- Order of operations is critical: follower clients must wait for the MEMBERSHIPS_MINTED signal before checking membership status to avoid race conditions
 
 ## Wallet Management
 

@@ -15,20 +15,11 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
 
     logger.info('start joinChat')
 
-    // wait for the user to have a membership nft
-    await client.waitFor(
-        () =>
-            client.spaceDapp.getMembershipStatus(cfg.spaceId, [client.baseProvider.wallet.address]),
-        {
-            interval: 1000 + Math.random() * 1000,
-            timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
-        },
-    )
-
-    logger.info('start client')
-
     const announceChannelId = cfg.announceChannelId
-    // start up the client
+
+    // First, start the client without waiting for membership
+    // This creates the user stream and joins the announce channel
+    logger.info('start client')
     await startFollowerClient(client, cfg.spaceId, announceChannelId)
 
     const announceChannel = await client.streamsClient.waitForStream(announceChannelId, {
@@ -69,6 +60,17 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
             )
         },
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
+    )
+
+    // Now wait for the user to have a membership nft after minting is complete
+    logger.info('verifying membership nft')
+    await client.waitFor(
+        () =>
+            client.spaceDapp.getMembershipStatus(cfg.spaceId, [client.baseProvider.wallet.address]),
+        {
+            interval: 1000 + Math.random() * 1000,
+            timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
+        },
     )
 
     if (client.clientIndex === cfg.localClients.startIndex) {
