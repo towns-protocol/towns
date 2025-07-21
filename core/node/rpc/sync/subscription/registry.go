@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/puzpuzpuz/xsync/v4"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
