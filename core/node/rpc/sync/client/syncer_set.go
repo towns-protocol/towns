@@ -630,10 +630,6 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 // This implementation uses per-node-address locking to avoid blocking
 // other operations while creating syncers (which can be slow due to network calls).
 func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSyncer, error) {
-	if syncer, ok := ss.syncers.Load(nodeAddress); ok {
-		return syncer, nil
-	}
-
 	// Get per-node-address lock to avoid concurrent creation
 	lock := ss.getSyncerLock(nodeAddress)
 	lock.Lock()
