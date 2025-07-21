@@ -163,7 +163,6 @@ func (r *registry) CancelAll(err error) {
 
 // CleanupUnusedStreams removes unused streams from the syncer set.
 func (r *registry) CleanupUnusedStreams(cb func(streamID StreamId)) {
-	streamIds := make([][]byte, 0)
 	r.subscriptionsByStream.Range(func(streamID StreamId, subs []*Subscription) bool {
 		if len(subs) == 0 {
 			r.subscriptionsByStream.Compute(
@@ -175,7 +174,6 @@ func (r *registry) CleanupUnusedStreams(cb func(streamID StreamId)) {
 					return nil, xsync.DeleteOp
 				},
 			)
-			streamIds = append(streamIds, streamID[:])
 		}
 		return true
 	})
