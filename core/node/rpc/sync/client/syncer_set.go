@@ -18,16 +18,16 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-const (
-	// commonBufferSize is the size of the common messages buffer of the shared syncer.
-	commonBufferSize = 10240
-)
-
 type (
+	// MessageDistributor defines the contract for distributing messages to subscriptions
+	MessageDistributor interface {
+		DistributeMessage(streamID StreamId, msg *SyncStreamsResponse)
+		DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse)
+	}
+
 	StreamsSyncer interface {
 		Run()
 		Address() common.Address
@@ -51,8 +51,8 @@ type (
 		globalCtx context.Context
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
-		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
-		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+		// messageDistributor is used to distribute messages to subscriptions
+		messageDistributor MessageDistributor
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache *StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
@@ -87,20 +87,20 @@ func NewSyncers(
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
+	messageDistributor MessageDistributor,
 	otelTracer trace.Tracer,
-) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
-	ss := &SyncerSet{
-		globalCtx:        globalCtx,
-		streamCache:      streamCache,
-		nodeRegistry:     nodeRegistry,
-		localNodeAddress: localNodeAddress,
-		syncers:          make(map[common.Address]StreamsSyncer),
-		messages:         dynmsgbuf.NewDynamicBufferWithSize[*SyncStreamsResponse](commonBufferSize),
-		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:      xsync.NewMap[StreamId, *sync.Mutex](),
-		otelTracer:       otelTracer,
+) *SyncerSet {
+	return &SyncerSet{
+		globalCtx:          globalCtx,
+		streamCache:        streamCache,
+		nodeRegistry:       nodeRegistry,
+		localNodeAddress:   localNodeAddress,
+		syncers:            make(map[common.Address]StreamsSyncer),
+		messageDistributor: messageDistributor,
+		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
+		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		otelTracer:         otelTracer,
 	}
-	return ss, ss.messages
 }
 
 func (ss *SyncerSet) Run() {
@@ -632,7 +632,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.globalCtx,
 			ss.localNodeAddress,
 			ss.streamCache,
-			ss.messages,
+			ss.messageDistributor,
 			ss.streamID2Syncer.Delete,
 			ss.otelTracer,
 		)
@@ -647,7 +647,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			nodeAddress,
 			client,
 			ss.streamID2Syncer.Delete,
-			ss.messages,
+			ss.messageDistributor,
 			ss.otelTracer,
 		)
 		if err != nil {

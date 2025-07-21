@@ -107,7 +107,7 @@ export class StreamsView {
         // to get the unread markers
         const unreadMarkers = combine({
             userId: myUserId,
-            myRemoteFullyReadMarkers: myRemoteFullyReadMarkers.throttle(10),
+            myRemoteFullyReadMarkers: myRemoteFullyReadMarkers,
             timelinesView: throttledTimelinesView,
         })
             .throttle(250)
