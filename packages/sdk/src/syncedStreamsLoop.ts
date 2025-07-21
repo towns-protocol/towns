@@ -18,6 +18,7 @@ import {
     streamIdAsBytes,
     streamIdAsString,
     isChannelStreamId,
+    isHighPriorityStreamForSync,
 } from './id'
 import { ParsedEvent, ParsedSnapshot, ParsedStreamResponse } from './types'
 import { isDefined, logNever } from './check'
@@ -338,11 +339,7 @@ export class SyncedStreamsLoop {
                         // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
                         // prioritized spaces will be added later during the calls to tick()
                         for (const id of this.highPriorityIds) {
-                            if (
-                                isChannelStreamId(id) ||
-                                isDMChannelStreamId(id) ||
-                                isGDMChannelStreamId(id)
-                            ) {
+                            if (isHighPriorityStreamForSync(id)) {
                                 const syncCookie = this.streams.get(id)?.syncCookie
                                 if (syncCookie) {
                                     syncCookies.push(syncCookie)
