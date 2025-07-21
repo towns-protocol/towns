@@ -48,7 +48,6 @@ describe.concurrent('TestDecryptionExtensions', () => {
             const clientDiscoveryService: ClientDiscoveryService = {}
             const streamId = genStreamId()
             const alice = genUserId('Alice')
-            const aliceUserAddress = stringToArray(alice)
             const bob = genUserId('Bob')
             const bobsPlaintext = "bob's plaintext"
             const { client: aliceClient, decryptionExtension: aliceDex } = await createCryptoMocks(
@@ -86,22 +85,15 @@ describe.concurrent('TestDecryptionExtensions', () => {
             }
             const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
             // pretend bob receives a key solicitation request from alice, and starts processing it.
-            await bobDex.handleKeySolicitationRequest(
-                streamId,
-                '',
-                alice,
-                aliceUserAddress,
-                keySolicitationData,
-                {
-                    hash: new Uint8Array(),
-                    signature: new Uint8Array(),
-                    event: {
-                        creatorAddress: new Uint8Array(),
-                        delegateSig: new Uint8Array(),
-                        delegateExpiryEpochMs: 0n,
-                    },
+            await bobDex.handleKeySolicitationRequest(streamId, '', alice, keySolicitationData, {
+                hash: new Uint8Array(),
+                signature: new Uint8Array(),
+                event: {
+                    creatorAddress: new Uint8Array(),
+                    delegateSig: new Uint8Array(),
+                    delegateExpiryEpochMs: 0n,
                 },
-            )
+            })
             // alice waits for the response
             await keySolicitation
             // after alice gets the session key,
@@ -332,7 +324,6 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
     ): Promise<void> {
@@ -349,7 +340,6 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
                 streamId,
                 eventHashStr,
                 fromUserId,
-                fromUserAddress,
                 keySolicitation,
                 sigBundle,
             )
@@ -565,11 +555,6 @@ function genUserId(name: string): string {
 function genStreamId(): string {
     const hexNanoId = customAlphabet('0123456789abcdef', 64)
     return hexNanoId()
-}
-
-function stringToArray(fromString: string): Uint8Array {
-    const uint8Array = new TextEncoder().encode(fromString)
-    return uint8Array
 }
 
 function streamIdToBytes(streamId: string): Uint8Array {

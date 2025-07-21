@@ -17,6 +17,9 @@ export const userIdFromAddress = (address: Uint8Array): string =>
     utils.getAddress(bin_toHexString(address))
 
 // Assuming `userId` is an Ethereum address in string format
+export const userIdToAddress = (userId: string): Uint8Array => addressFromUserId(userId)
+
+// Assuming `userId` is an Ethereum address in string format
 export const addressFromUserId = (userId: string): Uint8Array => {
     // Validate and normalize the address to ensure it's properly checksummed.
     const normalizedAddress = utils.getAddress(userId)
@@ -26,6 +29,8 @@ export const addressFromUserId = (userId: string): Uint8Array => {
 
     return addressAsBytes
 }
+
+export const addressToUserId = (address: Uint8Array): string => userIdFromAddress(address)
 
 // User id is an Ethereum address.
 export const streamIdToBytes = ethereumAddressToBytes

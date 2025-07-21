@@ -32,6 +32,7 @@ import {
     isUserSettingsStreamId,
     isUserStreamId,
     isChannelStreamId,
+    userIdToAddress,
 } from './id'
 import { checkEventSignature } from './sign'
 
@@ -83,7 +84,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             streamId: string,
             eventHashStr: string,
             fromUserId: string,
-            fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
             sigBundle: EventSignatureBundle,
             ephemeral?: boolean,
@@ -92,7 +92,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 streamId,
                 eventHashStr,
                 fromUserId,
-                fromUserAddress,
                 keySolicitation,
                 sigBundle,
                 ephemeral,
@@ -103,7 +102,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             eventHashStr: string,
             members: {
                 userId: string
-                userAddress: Uint8Array
                 solicitations: KeySolicitationContent[]
             }[],
             sigBundle: EventSignatureBundle,
@@ -356,11 +354,12 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public async sendKeyFulfillment({
         streamId,
-        userAddress,
+        userId,
         deviceKey,
         sessionIds,
         ephemeral = false,
     }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: unknown }> {
+        const userAddress = userIdToAddress(userId)
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
