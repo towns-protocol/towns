@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // common
 import {Interaction} from "scripts/common/Interaction.s.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
 import {LibLayerZeroValues} from "scripts/deployments/utils/LibLayerZeroValues.sol";
@@ -23,8 +24,9 @@ contract InteractBridgeLayerZero is Interaction {
     }
 
     function __interact(address deployer) internal override {
-        address wrappedTowns = getDeployment("utils/wTowns");
-        uint256 amount = 1 ether;
+        address towns = getDeployment("townsMainnet");
+        address wrappedTowns = getDeployment("wTowns");
+        uint256 amount = 11 ether;
         uint32 dstEid = LibLayerZeroValues.getEid(56); // BNB
 
         Towns oft = Towns(wrappedTowns);
@@ -47,11 +49,15 @@ contract InteractBridgeLayerZero is Interaction {
         MessagingFee memory fee = oft.quoteSend(sendParam, false);
 
         console.log("Sending tokens...");
+        console.log("Towns address:", towns);
+        console.log("Wrapped Towns address:", wrappedTowns);
         console.log("Fee amount:", fee.nativeFee);
 
         // Send tokens
         vm.startBroadcast(deployer);
+        IERC20(towns).approve(address(oft), amount);
         oft.send{value: fee.nativeFee}(sendParam, fee, msg.sender);
+        IERC20(towns).approve(address(oft), 0);
         vm.stopBroadcast();
     }
 }
