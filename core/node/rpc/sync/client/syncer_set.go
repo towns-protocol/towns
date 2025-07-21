@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -32,6 +32,12 @@ type (
 		Address() common.Address
 		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
+	}
+
+	// StreamCache represents a behavior of the stream cache
+	StreamCache interface {
+		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
+		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
 	}
 
 	ModifyRequest struct {
@@ -53,7 +59,7 @@ type (
 		// messageDistributor is used to distribute messages to subscriptions
 		messageDistributor MessageDistributor
 		// streamCache is used to subscribe to streams managed by this node instance
-		streamCache *StreamCache
+		streamCache StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
 		nodeRegistry nodes.NodeRegistry
 		// syncerTasks is a wait group for running background StreamsSyncers that is used to ensure all syncers stopped
@@ -81,7 +87,7 @@ var (
 // are streamed to the client.
 func NewSyncers(
 	globalCtx context.Context,
-	streamCache *StreamCache,
+	streamCache StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
 	messageDistributor MessageDistributor,

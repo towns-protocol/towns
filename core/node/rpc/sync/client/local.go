@@ -10,24 +10,20 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-type streamCache interface {
-	GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error)
-}
-
 type localSyncer struct {
 	globalCtx context.Context
 
-	streamCache        streamCache
+	streamCache        StreamCache
 	messageDistributor MessageDistributor
 	localAddr          common.Address
 	unsubStream        func(streamID StreamId)
-	activeStreams      *xsync.Map[StreamId, *Stream]
+	activeStreams      *xsync.Map[StreamId, *events.Stream]
 
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
@@ -36,7 +32,7 @@ type localSyncer struct {
 func newLocalSyncer(
 	globalCtx context.Context,
 	localAddr common.Address,
-	streamCache streamCache,
+	streamCache StreamCache,
 	messageDistributor MessageDistributor,
 	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
@@ -47,7 +43,7 @@ func newLocalSyncer(
 		localAddr:          localAddr,
 		messageDistributor: messageDistributor,
 		unsubStream:        unsubStream,
-		activeStreams:      xsync.NewMap[StreamId, *Stream](),
+		activeStreams:      xsync.NewMap[StreamId, *events.Stream](),
 		otelTracer:         otelTracer,
 	}
 }
@@ -55,7 +51,7 @@ func newLocalSyncer(
 func (s *localSyncer) Run() {
 	<-s.globalCtx.Done()
 
-	s.activeStreams.Range(func(streamID StreamId, _ *Stream) bool {
+	s.activeStreams.Range(func(streamID StreamId, _ *events.Stream) bool {
 		s.streamUnsub(streamID)
 		return true
 	})
@@ -155,7 +151,7 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 
 // OnSyncError is called when a sync subscription failed unrecoverable
 func (s *localSyncer) OnSyncError(error) {
-	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
+	s.activeStreams.Range(func(streamID StreamId, syncStream *events.Stream) bool {
 		s.OnStreamSyncDown(streamID)
 		return true
 	})
