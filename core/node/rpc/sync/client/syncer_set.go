@@ -645,7 +645,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		return nil, RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	// Create new syncer (this is the slow part, but now done outside of xsync.Compute)
+	// Create new syncer
 	var syncer StreamsSyncer
 
 	if nodeAddress == ss.localNodeAddress {
