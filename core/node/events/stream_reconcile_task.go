@@ -233,7 +233,7 @@ func (s *StreamCache) reconcileStreamFromPeers(
 
 	var lastMiniblockNum int64
 	var startMiniblockNumberInclusive int64
-	var presentRanges, missingRanges []storage.MiniblockRange
+	var presentRanges []storage.MiniblockRange
 	var err error
 
 	if backwardThreshold <= 0 {
