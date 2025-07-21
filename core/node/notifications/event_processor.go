@@ -102,8 +102,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	if spaceID != nil {
 		l = l.With("space", *spaceID)
 	}
-	logging.FromCtx(ctx).Errorw("OnMessageEvent", "channel", channelID, "space", spaceID, "members", members.String(), "event", event.Hash, "eventCreator", common.BytesToAddress(event.Event.CreatorAddress))
-	l.Infow("Process event")
+	l.Debugw("Process event")
 
 	kind := "new_message"
 	tags := event.Event.GetTags()

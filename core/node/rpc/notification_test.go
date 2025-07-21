@@ -63,18 +63,18 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
 
-	log := logging.FromCtx(ctx)
-
 	// enable cold streams, since this should be the default ASAP
 	tester.btc.SetConfigValue(t, ctx, crypto.NotificationsColdStreamsEnabledConfigKey, crypto.ABIEncodeUint64(1))
 
 	test := setupNotificationsColdStreams(ctx, tester)
 
-	log.Errorw("sending message msg1", "stream id", test.dmStreamID)
-	test.sendMessageWithTags(ctx, test.initiator, "msg1", &Tags{})
+	event0 := test.sendMessageWithTags(ctx, test.initiator, "msg1", &Tags{})
+	eventHash0 := common.BytesToHash(event0.Hash)
+
+	_, err := makeMiniblock(ctx, test.streamClient, test.dmStreamID, false, 0)
+	test.req.NoError(err)
 
 	// initialize notifications service AFTER we've created the stream and sent a message
-	log.Errorw("initializing notification service", "stream id", test.dmStreamID)
 	notificationService := initNotificationService(ctx, tester, nc)
 
 	notificationClient := protocolconnect.NewNotificationServiceClient(
@@ -83,34 +83,31 @@ func TestNotificationsColdStreams(t *testing.T) {
 	authClient := protocolconnect.NewAuthenticationServiceClient(
 		httpClient, "https://"+notificationService.listener.Addr().String())
 
-	log.Errorw("subscribing to notifications", "stream id", test.dmStreamID)
 	subscribeWebPush(ctx, test.member, test.req, authClient, notificationClient)
 
-	log.Errorw("sending message", "stream id", test.dmStreamID)
 	event1 := test.sendMessageWithTags(ctx, test.initiator, "msg2", &Tags{})
 	eventHash1 := common.BytesToHash(event1.Hash)
-	log.Infow("sent message", "event hash 1", eventHash1)
-	time.Sleep(500 * time.Millisecond)
-	log.Errorw("sending message", "stream id", test.dmStreamID)
-	event2 := test.sendMessageWithTags(ctx, test.initiator, "msg3", &Tags{})
-	eventHash2 := common.BytesToHash(event2.Hash)
-	log.Infow("sent message", "event hash 2", eventHash2)
-	//time.Sleep(500 * time.Millisecond)
-	//log.Errorw("sending message", "stream id", test.dmStreamID)
-	//test.sendMessageWithTags(ctx, test.initiator, "msg4", &Tags{})
-	//time.Sleep(500 * time.Millisecond)
-	//log.Errorw("sending message", "stream id", test.dmStreamID)
-	//test.sendMessageWithTags(ctx, test.initiator, "msg5", &Tags{})
-	//time.Sleep(500 * time.Millisecond)
 
 	test.req.Eventuallyf(func() bool {
 		nc.WebPushNotificationsMu.Lock()
 		defer nc.WebPushNotificationsMu.Unlock()
 
-		log.Infow("checking notifications", "web", nc.WebPushNotifications)
-		webNotifications := nc.WebPushNotifications[eventHash2]
+		// eventHash0 should not have any notifications since it was sent before the notification service started
+		if _, exists := nc.WebPushNotifications[eventHash0]; exists {
+			return false
+		}
 
-		return cmp.Equal(webNotifications, map[common.Address]int{test.member.Address: 1})
+		// Check that we have exactly 1 event hash
+		if len(nc.WebPushNotifications) != 1 {
+			return false
+		}
+
+		_, hasHash1 := nc.WebPushNotifications[eventHash1]
+		if !hasHash1 {
+			return false
+		}
+
+		return true
 	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
 }
 
@@ -330,15 +327,13 @@ func TestNotifications(t *testing.T) {
 		testDMNotifications(tester, notificationClient, authClient, notifications)
 	})
 
-	if false {
-		tester.parallelSubtest("GDMNotifications", func(tester *serviceTester) {
-			testGDMNotifications(tester, notificationClient, authClient, notifications)
-		})
+	tester.parallelSubtest("GDMNotifications", func(tester *serviceTester) {
+		testGDMNotifications(tester, notificationClient, authClient, notifications)
+	})
 
-		tester.parallelSubtest("SpaceChannelNotification", func(tester *serviceTester) {
-			testSpaceChannelNotifications(tester, notificationClient, authClient, notifications)
-		})
-	}
+	tester.parallelSubtest("SpaceChannelNotification", func(tester *serviceTester) {
+		testSpaceChannelNotifications(tester, notificationClient, authClient, notifications)
+	})
 }
 
 func testGDMNotifications(
@@ -627,25 +622,23 @@ func testDMNotifications(
 		testDMMessageWithDefaultUserNotificationsPreferences(ctx, test, notifications)
 	})
 
-	if false {
-		tester.sequentialSubtest("DMMessageWithNotificationsMutedOnDmChannel", func(tester *serviceTester) {
-			ctx := tester.ctx
-			test := setupDMNotificationTest(ctx, tester, notificationClient, authClient)
-			testDMMessageWithNotificationsMutedOnDmChannel(ctx, test, notifications)
-		})
+	tester.sequentialSubtest("DMMessageWithNotificationsMutedOnDmChannel", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupDMNotificationTest(ctx, tester, notificationClient, authClient)
+		testDMMessageWithNotificationsMutedOnDmChannel(ctx, test, notifications)
+	})
 
-		tester.sequentialSubtest("DMMessageWithNotificationsMutedGlobal", func(tester *serviceTester) {
-			ctx := tester.ctx
-			test := setupDMNotificationTest(ctx, tester, notificationClient, authClient)
-			testDMMessageWithNotificationsMutedGlobal(ctx, test, notifications)
-		})
+	tester.sequentialSubtest("DMMessageWithNotificationsMutedGlobal", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupDMNotificationTest(ctx, tester, notificationClient, authClient)
+		testDMMessageWithNotificationsMutedGlobal(ctx, test, notifications)
+	})
 
-		tester.sequentialSubtest("MessageWithBlockedUser", func(tester *serviceTester) {
-			ctx := tester.ctx
-			test := setupDMNotificationTest(ctx, tester, notificationClient, authClient)
-			testDMMessageWithBlockedUser(ctx, test, notifications)
-		})
-	}
+	tester.sequentialSubtest("MessageWithBlockedUser", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupDMNotificationTest(ctx, tester, notificationClient, authClient)
+		testDMMessageWithBlockedUser(ctx, test, notifications)
+	})
 }
 
 func testDMMessageWithNotificationsMutedOnDmChannel(
@@ -729,8 +722,6 @@ func testDMMessageWithDefaultUserNotificationsPreferences(
 		test.member.Address: 1,
 	}
 
-	logging.FromCtx(ctx).Infow("")
-
 	test.subscribeWebPush(ctx, test.initiator)
 	test.subscribeWebPush(ctx, test.member)
 	pushVersion := NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2
@@ -738,10 +729,6 @@ func testDMMessageWithDefaultUserNotificationsPreferences(
 	subscribeApnPush(ctx, test.member, test.req, test.authClient, test.notificationClient, &pushVersion)
 
 	// send a message and ensure that all expected notification are captured
-	logging.FromCtx(ctx).Infow("sending message",
-		"sender", test.initiator.Address,
-		"recipient", test.member.Address,
-	)
 	event := test.sendMessageWithTags(
 		ctx, test.initiator, "hi!", &Tags{})
 	eventHash := common.BytesToHash(event.Hash)

@@ -1,6 +1,7 @@
 package track_streams
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -42,6 +43,8 @@ type streamSyncInitRecord struct {
 	// Set to false if we wish to send only events starting from the current sync position. This should
 	// be true, as we will restart the sync with the latest sync position.
 	applyHistoricalStreamContents bool
+	// Set applyHistoricalStreamContentFromMiniblockHash
+	applyHistoricalStreamContentFromMiniblockHash []byte
 
 	// These are tracked to determine where to restart streams. If the stream is initially
 	// being added and a sync reset is desired, set minipoolGen to MaxInt64 and prevMiniblockHash
@@ -114,7 +117,7 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Infow("Adding stream with cookie",
+		Debugw("Adding stream with cookie",
 			"stream", record.streamId,
 			"minipoolGen", record.minipoolGen,
 			"prevMiniblockHash", record.prevMiniblockHash,
@@ -128,8 +131,6 @@ func (ssr *syncSessionRunner) AddStream(
 			PrevMiniblockHash: record.prevMiniblockHash,
 		}},
 	}); err != nil || len(resp.Adds) > 0 {
-		logging.FromCtx(ctx).
-			Infow("failed to add stream to existing sync", "error", err, "streamId", record.streamId, "minipoolGen", record.minipoolGen)
 		// We failed to add this stream to the sync, return an error.
 		ssr.streamRecords.Delete(record.streamId)
 
@@ -196,8 +197,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		return
 	}
 
-	// Crystal - does this iterates over all miniblocks?
-	// do we get all of the miniblocks of the stream? is this unbounded?
+	applyBlocks := false
 	for _, block := range streamAndCookie.GetMiniblocks() {
 		if !reset {
 			if err := trackedView.ApplyBlock(
@@ -207,10 +207,13 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				log.Errorw("Unable to apply block", "error", err)
 			}
 		}
+		// apply blocks from the first block that matches applyHistoricalStreamContentFromMiniblockHash
+		// and all consecutive blocks
+		applyBlocks = applyBlocks || bytes.Equal(block.Header.GetHash(), record.applyHistoricalStreamContentFromMiniblockHash)
 		// If the stream was just allocated, process the miniblocks and events for notifications.
 		// If not, ignore them because there were already notifications sent for the stream, and possibly
 		// for these miniblocks and events.
-		if record.applyHistoricalStreamContents {
+		if record.applyHistoricalStreamContents || applyBlocks {
 			// Send notifications for all events in all blocks.
 			for _, event := range block.GetEvents() {
 				if parsedEvent, err := events.ParseEvent(event); err == nil {
@@ -254,6 +257,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	}
 
 	record.applyHistoricalStreamContents = false
+	record.applyHistoricalStreamContentFromMiniblockHash = nil
 
 	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
@@ -636,7 +640,6 @@ func (msr *MultiSyncRunner) addToSync(
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
 
-	log.Infow("addToSync", "streamId", record.streamId, "minipoolGen", record.minipoolGen, "apply", record.applyHistoricalStreamContents)
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
 		runner = newSyncSessionRunner(
@@ -794,21 +797,17 @@ func (msr *MultiSyncRunner) addToSync(
 func (msr *MultiSyncRunner) AddStream(
 	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
-	lastMiniblockNum *int64,
+	applyHistoricalStreamContentFromMiniblockHash []byte,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
-	var minipoolGen int64 = math.MaxInt64
-
-	if lastMiniblockNum != nil {
-		minipoolGen = *lastMiniblockNum
-	}
 	msr.streamsToSync <- &streamSyncInitRecord{
 		streamId:                      stream.StreamId(),
 		applyHistoricalStreamContents: applyHistoricalStreamContents,
-		minipoolGen:                   minipoolGen,
-		prevMiniblockHash:             common.Hash{}.Bytes(),
+		applyHistoricalStreamContentFromMiniblockHash: applyHistoricalStreamContentFromMiniblockHash,
+		minipoolGen:       math.MaxInt64,
+		prevMiniblockHash: common.Hash{}.Bytes(),
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),

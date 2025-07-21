@@ -2,8 +2,6 @@ package sync
 
 import (
 	"context"
-	"github.com/towns-protocol/towns/core/contracts/river"
-	"github.com/towns-protocol/towns/core/node/logging"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -70,10 +68,8 @@ func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
 }
 
 // TrackStream returns true if the given streamID must be tracked for notifications.
-func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool, updateType *river.StreamUpdatedEventType) bool {
+func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool) bool {
 	streamType := streamID.Type()
-	logging.FromCtx(tracker.Ctx).Infow("TrackStream", "streamId", streamID, "isInit", isInit, "updateType", updateType, "streamType", streamType)
-
 	// When cold streams are enabled, only track user settings stream on init
 	if isInit && tracker.coldStreamsEnabled() {
 		return streamType == shared.STREAM_USER_SETTINGS_BIN
