@@ -83,7 +83,6 @@ export interface EventSignatureBundle {
 export interface KeySolicitationItem {
     streamId: string
     fromUserId: string
-    fromUserAddress: Uint8Array
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
@@ -99,7 +98,7 @@ export interface KeySolicitationData {
 
 export interface KeyFulfilmentData {
     streamId: string
-    userAddress: Uint8Array
+    userId: string
     deviceKey: string
     sessionIds: string[]
 }
@@ -408,7 +407,6 @@ export abstract class BaseDecryptionExtensions {
         eventHashStr: string,
         members: {
             userId: string
-            userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
         sigBundle: EventSignatureBundle,
@@ -419,7 +417,7 @@ export abstract class BaseDecryptionExtensions {
             (x) => x.streamId !== streamId,
         )
         for (const member of members) {
-            const { userId: fromUserId, userAddress: fromUserAddress } = member
+            const { userId: fromUserId } = member
             for (const keySolicitation of member.solicitations) {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
@@ -434,7 +432,6 @@ export abstract class BaseDecryptionExtensions {
                 selectedQueue.push({
                     streamId,
                     fromUserId,
-                    fromUserAddress,
                     solicitation: keySolicitation,
                     respondAfter:
                         Date.now() +
@@ -454,7 +451,6 @@ export abstract class BaseDecryptionExtensions {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
         ephemeral: boolean = false,
@@ -485,7 +481,6 @@ export abstract class BaseDecryptionExtensions {
             selectedQueue.push({
                 streamId,
                 fromUserId,
-                fromUserAddress,
                 solicitation: keySolicitation,
                 respondAfter:
                     Date.now() +
@@ -1079,7 +1074,7 @@ export abstract class BaseDecryptionExtensions {
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,
-            userAddress: item.fromUserAddress,
+            userId: item.fromUserId,
             deviceKey: item.solicitation.deviceKey,
             sessionIds: allSessions
                 .map((x) => x.sessionId)

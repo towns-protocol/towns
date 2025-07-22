@@ -97,14 +97,13 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
             poster
         );
 
-        // post-swap processing (points minting and events)
-        _afterSwap(params, amountOut, protocolFee, poster);
-
         // handle refunds of unconsumed input tokens
         _handleRefunds(params.tokenIn, tokenInBalanceBefore);
 
         // reset approval for ERC20 tokens
         if (!isNativeToken) params.tokenIn.safeApprove(swapRouter, 0);
+
+        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, poster, msg.sender);
     }
 
     /// @inheritdoc ISwapFacet
@@ -130,8 +129,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
             poster
         );
 
-        // post-swap processing (points minting and events)
-        _afterSwap(params, amountOut, protocolFee, poster);
+        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, poster, permit.owner);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -166,16 +164,18 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /*                         INTERNAL                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Post-swap processing: mint points for ETH swaps and emit events
+    /// @notice Mint points for ETH swaps and emit swap events
     /// @param params The swap parameters for event emission
     /// @param amountOut The amount of output tokens received
     /// @param protocolFee The protocol fee collected for points calculation
     /// @param poster The swap poster address
-    function _afterSwap(
+    /// @param payer The address that should receive the points
+    function _mintPointsAndEmitSwapEvent(
         ExactInputParams calldata params,
         uint256 amountOut,
         uint256 protocolFee,
-        address poster
+        address poster,
+        address payer
     ) internal {
         // mint points based on the protocol fee if ETH is involved
         if (
@@ -188,7 +188,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
                 ITownsPointsBase.Action.Swap,
                 abi.encode(protocolFee)
             );
-            _mintPoints(airdropDiamond, msg.sender, points);
+            _mintPoints(airdropDiamond, payer, points);
         }
 
         emit SwapExecuted(

@@ -37,7 +37,6 @@ const log = dlog('csb:streamStateView_Members')
 
 export type StreamMember = {
     userId: string
-    userAddress: Uint8Array
     miniblockNum?: bigint
     eventNum?: bigint
     solicitations: KeySolicitationContent[]
@@ -124,7 +123,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             memberIds.push(userId)
             this.joined.set(userId, {
                 userId,
-                userAddress: member.userAddress,
                 miniblockNum: member.miniblockNum,
                 eventNum: member.eventNum,
                 solicitations: member.solicitations.map(
@@ -300,7 +298,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             }
                             this.joined.set(userId, {
                                 userId,
-                                userAddress: membership.userAddress,
                                 miniblockNum: event.miniblockNum,
                                 eventNum: event.eventNum,
                                 solicitations: [],

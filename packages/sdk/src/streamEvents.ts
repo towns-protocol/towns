@@ -42,7 +42,6 @@ export type StreamEncryptionEvents = {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
         ephemeral?: boolean,
@@ -51,7 +50,6 @@ export type StreamEncryptionEvents = {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
     ) => void
@@ -60,7 +58,6 @@ export type StreamEncryptionEvents = {
         eventHashStr: string,
         members: {
             userId: string
-            userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
         sigBundle: EventSignatureBundle,
