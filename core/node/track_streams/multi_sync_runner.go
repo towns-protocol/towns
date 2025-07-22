@@ -25,8 +25,11 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/shared"
+)
+
+const (
+	messagesBufferSize = 2048
 )
 
 type RemoteStreamSyncer interface {
@@ -76,7 +79,7 @@ type syncSessionRunner struct {
 
 	syncer RemoteStreamSyncer
 
-	messages *dynmsgbuf.DynamicBuffer[*protocol.SyncStreamsResponse]
+	messages *xsync.SPSCQueue[*protocol.SyncStreamsResponse]
 
 	// relocateStreams accepts streams that failed to sync in this session, for the purpose
 	// of relocating the stream to another node.
@@ -347,7 +350,6 @@ func (ssr *syncSessionRunner) Run() {
 	// This runner is now ready for streams to be added
 	ssr.syncStarted.Done()
 
-	var batch []*protocol.SyncStreamsResponse
 	for {
 		select {
 		case <-time.Tick(time.Second):
@@ -366,11 +368,13 @@ func (ssr *syncSessionRunner) Run() {
 			return
 
 		// Process the current batch of messages.
-		case <-ssr.messages.Wait():
-			batch = ssr.messages.GetBatch(batch)
-			for _, update := range batch {
-				ssr.processSyncUpdate(update)
+		default:
+			update, ok := ssr.messages.TryDequeue()
+			if !ok || update == nil {
+				break
 			}
+
+			ssr.processSyncUpdate(update)
 		}
 	}
 }
@@ -451,10 +455,9 @@ func (ssr *syncSessionRunner) Close(err error) {
 
 // DistributeMessage implements MessageDistributor interface
 func (ssr *syncSessionRunner) DistributeMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
+	if !ssr.messages.TryEnqueue(msg) {
 		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
+			"Failed to add message to sync session updates queue due to full buffer",
 			"syncId", ssr.GetSyncId(),
 			"node", ssr.node,
 			"streamId", msg.GetStreamId(),
@@ -465,10 +468,9 @@ func (ssr *syncSessionRunner) DistributeMessage(_ shared.StreamId, msg *protocol
 
 // DistributeBackfillMessage implements MessageDistributor interface
 func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
+	if !ssr.messages.TryEnqueue(msg) {
 		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
+			"Failed to add message to sync session updates queue due to full buffer",
 			"syncId", ssr.GetSyncId(),
 			"node", ssr.node,
 			"streamId", msg.GetStreamId(),
@@ -499,7 +501,7 @@ func newSyncSessionRunner(
 		relocateStreams:          relocateStreams,
 		node:                     targetNode,
 		nodeRegistry:             nodeRegistry,
-		messages:                 dynmsgbuf.NewDynamicBuffer[*protocol.SyncStreamsResponse](),
+		messages:                 xsync.NewSPSCQueue[*protocol.SyncStreamsResponse](messagesBufferSize),
 		streamRecords:            xsync.NewMap[shared.StreamId, *streamSyncInitRecord](),
 		metrics:                  metrics,
 		otelTracer:               otelTracer,
