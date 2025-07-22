@@ -627,24 +627,16 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		return nil, RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	syncer, ok := ss.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
-	if ok {
-		// Entry exists, wait for initialization to complete
-		syncer.Lock()
-		defer syncer.Unlock()
-
-		// Check if initialization completed successfully
-		if syncer.StreamsSyncer != nil {
-			return syncer.StreamsSyncer, nil
-		}
-
-		// Initialization failed, return error
-		return nil, RiverError(Err_INTERNAL, "Syncer initialization failed")
-	}
-
-	// Lock the given syncer until it is initialized
+	syncer, _ := ss.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
+	
+	// Lock the syncer for initialization check/creation
 	syncer.Lock()
 	defer syncer.Unlock()
+	
+	// Check if already initialized (by us or another goroutine)
+	if syncer.StreamsSyncer != nil {
+		return syncer.StreamsSyncer, nil
+	}
 
 	if nodeAddress == ss.localNodeAddress {
 		syncer.StreamsSyncer = newLocalSyncer(
