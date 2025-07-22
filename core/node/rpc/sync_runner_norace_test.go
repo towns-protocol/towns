@@ -446,8 +446,7 @@ func setupTestChannelAndAddToSyncer(
 				Reserved0: uint64(replFactor),
 			},
 		},
-		true,
-		nil,
+		track_streams.ApplyHistoricalContent{Enabled: true},
 	)
 
 	return channelId, channelHash, nil

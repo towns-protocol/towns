@@ -806,20 +806,16 @@ func (msr *MultiSyncRunner) addToSync(
 // This method may block if the queue fills.
 func (msr *MultiSyncRunner) AddStream(
 	stream *river.StreamWithId,
-	applyHistoricalStreamContents bool,
-	applyHistoricalStreamContentFromMiniblockHash []byte,
+	applyHistoricalContent ApplyHistoricalContent,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
 	msr.streamsToSync <- &streamSyncInitRecord{
-		streamId: stream.StreamId(),
-		applyHistoricalContent: ApplyHistoricalContent{
-			Enabled:           applyHistoricalStreamContents,
-			FromMiniblockHash: applyHistoricalStreamContentFromMiniblockHash,
-		},
-		minipoolGen:       math.MaxInt64,
-		prevMiniblockHash: common.Hash{}.Bytes(),
+		streamId:               stream.StreamId(),
+		applyHistoricalContent: applyHistoricalContent,
+		minipoolGen:            math.MaxInt64,
+		prevMiniblockHash:      common.Hash{}.Bytes(),
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),
