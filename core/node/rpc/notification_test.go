@@ -103,7 +103,7 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 		_, hasHash1 := nc.WebPushNotifications[eventHash1]
 		return hasHash1
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
+	}, notificationDeliveryDelay, 250*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
 }
 
 type notificationsColdStreamsTestContext struct {
