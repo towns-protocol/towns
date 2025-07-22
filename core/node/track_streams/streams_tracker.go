@@ -29,8 +29,6 @@ import (
 type StreamFilter interface {
 	// TrackStream
 	// inInit is true when the stream_tracker is initialized (usually when the process starts), otherwise it's false
-	// updateType is nil when initializing; otherwise is set the appropriate type
-	// this feels a little brittle, possibly we can create another type?
 	TrackStream(streamID shared.StreamId, isInit bool) bool
 
 	NewTrackedStream(
