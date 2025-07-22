@@ -14,7 +14,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -26,7 +25,7 @@ type SyncerSet interface {
 // Subscription represents an individual subscription for streams synchronization.
 type Subscription struct {
 	// Messages is the channel for the subscription messages
-	Messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	Messages *xsync.SPSCQueue[*SyncStreamsResponse]
 	// log is the logger for this stream sync operation
 	log *logging.Log
 	// ctx is the context of the sync operation
@@ -58,7 +57,6 @@ func (s *Subscription) Close() {
 	s.closed.Store(true)
 	// Remove the subscription from the registry
 	s.registry.RemoveSubscription(s.syncID)
-	s.Messages.Close()
 	s.initializingStreams.Clear()
 	s.backfillEvents.Clear()
 }
@@ -74,9 +72,8 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 		return
 	}
 
-	err := s.Messages.AddMessage(msg)
-	if err != nil {
-		rvrErr := AsRiverError(err).
+	if !s.Messages.TryEnqueue(msg) {
+		rvrErr := RiverError(Err_BUFFER_FULL, "Message buffer is full").
 			Tag("syncId", s.syncID).
 			Func("Subscription.Send")
 		s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation

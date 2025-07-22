@@ -170,7 +170,6 @@ func (syncOp *StreamSyncOperation) Run(
 		}
 	}()
 
-	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-syncOp.ctx.Done():
@@ -180,54 +179,21 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
-		case _, open := <-sub.Messages.Wait():
-			msgs = sub.Messages.GetBatch(msgs)
-
-			// nil msgs indicates the buffer is closed
-			if msgs == nil {
-				_ = res.Send(&SyncStreamsResponse{
-					SyncId: syncOp.SyncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				return nil
+		default:
+			msg, ok := sub.Messages.TryDequeue()
+			if !ok || msg == nil {
+				break
 			}
 
-			for i, msg := range msgs {
-				select {
-				case <-syncOp.ctx.Done():
-					// clientErr non-nil indicates client hung up, get the error from the root ctx.
-					if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
-						return clientErr
-					}
-					// otherwise syncOp is stopped internally.
-					return context.Cause(syncOp.ctx)
-				default:
-					msg.SyncId = syncOp.SyncID
-					if err := res.Send(msg); err != nil {
-						syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
-						return err
-					}
-
-					messagesSendToClient++
-					syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
-
-					if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-						return nil
-					}
-				}
+			msg.SyncId = syncOp.SyncID
+			if err := res.Send(msg); err != nil {
+				syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
+				return err
 			}
 
-			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(sub.Messages.Len()))
-			}
+			messagesSendToClient++
 
-			// If the client sent a close message, stop sending messages to client from the buffer.
-			// In theory should not happen, but just in case.
-			if !open {
-				_ = res.Send(&SyncStreamsResponse{
-					SyncId: syncOp.SyncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
+			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 				return nil
 			}
 		}

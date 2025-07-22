@@ -15,12 +15,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 const (
 	unusedStreamsCleanupInterval = 5 * time.Minute // Interval to check for unused streams
+	messagesBufferSize           = 2048
 )
 
 // Manager is the subscription manager that manages all subscriptions for stream sync operations.
@@ -87,7 +87,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		ctx:                 ctx,
 		cancel:              cancel,
 		syncID:              syncID,
-		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		Messages:            xsync.NewSPSCQueue[*SyncStreamsResponse](messagesBufferSize),
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, map[common.Hash]struct{}](),
 		syncers:             m.syncers,
