@@ -678,6 +678,63 @@ type coldStreamsTestContext struct {
 	eventTrackerMu *sync.Mutex
 }
 
+// addStreamToSyncerWithHistory adds a stream to the syncer with historical content options
+func (tc *coldStreamsTestContext) addStreamToSyncerWithHistory(streamId StreamId, fromMiniblockHash []byte) {
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
+	tc.require.NoError(err)
+	tc.msr.AddStream(
+		&river.StreamWithId{
+			Id: streamId,
+			Stream: river.Stream{
+				Nodes:     streamOnChain.Nodes(),
+				Reserved0: uint64(tc.tt.opts.replicationFactor),
+			},
+		},
+		track_streams.ApplyHistoricalContent{
+			Enabled:           true,
+			FromMiniblockHash: fromMiniblockHash,
+		},
+	)
+}
+
+// addStreamToSyncerNoHistory adds a stream to the syncer without historical content
+func (tc *coldStreamsTestContext) addStreamToSyncerNoHistory(streamId StreamId) {
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
+	tc.require.NoError(err)
+	tc.msr.AddStream(
+		&river.StreamWithId{
+			Id: streamId,
+			Stream: river.Stream{
+				Nodes:     streamOnChain.Nodes(),
+				Reserved0: uint64(tc.tt.opts.replicationFactor),
+			},
+		},
+		track_streams.ApplyHistoricalContent{
+			Enabled: false,
+		},
+	)
+}
+
+// waitForAndVerifyMessages waits for messages to be received and verifies the count
+func (tc *coldStreamsTestContext) waitForAndVerifyMessages(streamId StreamId, expectedCount int, timeout time.Duration) map[string]int {
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		return len(tc.eventTracker[streamId]) >= expectedCount
+	}, timeout, 100*time.Millisecond, "Not all messages were received")
+
+	tc.eventTrackerMu.Lock()
+	defer tc.eventTrackerMu.Unlock()
+	return tc.eventTracker[streamId]
+}
+
+// verifyNoMessages ensures no messages were received for a stream
+func (tc *coldStreamsTestContext) verifyNoMessages(streamId StreamId) {
+	tc.eventTrackerMu.Lock()
+	defer tc.eventTrackerMu.Unlock()
+	tc.require.Equal(0, len(tc.eventTracker[streamId]), "Stream should have no messages")
+}
+
 // setupColdStreamsTest creates the common test infrastructure for cold streams tests
 func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 	numNodes := 3
@@ -835,29 +892,13 @@ func TestColdStreamsNoHistory(t *testing.T) {
 	defer cancelCollector()
 
 	// Add stream to syncer with no historical content
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, channelId)
-	tc.require.NoError(err)
-	tc.msr.AddStream(
-		&river.StreamWithId{
-			Id: channelId,
-			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
-				Reserved0: uint64(tc.tt.opts.replicationFactor),
-			},
-		},
-		track_streams.ApplyHistoricalContent{
-			Enabled: false,
-		},
-	)
+	tc.addStreamToSyncerNoHistory(channelId)
 
 	// Wait a bit to ensure no events are received
 	time.Sleep(2 * time.Second)
 
 	// Verify no events received
-	tc.eventTrackerMu.Lock()
-	channelMessages := tc.eventTracker[channelId]
-	tc.eventTrackerMu.Unlock()
-	tc.require.Equal(0, len(channelMessages), "Channel should have no messages when historical content is disabled")
+	tc.verifyNoMessages(channelId)
 
 	// Cleanup
 	cancelCollector()
@@ -877,33 +918,10 @@ func TestColdStreamsFullHistory(t *testing.T) {
 	defer cancelCollector()
 
 	// Add stream to syncer with full historical content
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, channelId)
-	tc.require.NoError(err)
-	tc.msr.AddStream(
-		&river.StreamWithId{
-			Id: channelId,
-			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
-				Reserved0: uint64(tc.tt.opts.replicationFactor),
-			},
-		},
-		track_streams.ApplyHistoricalContent{
-			Enabled:           true,
-			FromMiniblockHash: nil,
-		},
-	)
+	tc.addStreamToSyncerWithHistory(channelId, nil)
 
-	// Wait for events to be processed
-	tc.require.Eventually(func() bool {
-		tc.eventTrackerMu.Lock()
-		defer tc.eventTrackerMu.Unlock()
-		return len(tc.eventTracker[channelId]) >= messagesPerChannel
-	}, 10*time.Second, 100*time.Millisecond, "Not all messages were received")
-
-	// Verify all messages received
-	tc.eventTrackerMu.Lock()
-	channelMessages := tc.eventTracker[channelId]
-	tc.eventTrackerMu.Unlock()
+	// Wait for and verify messages
+	channelMessages := tc.waitForAndVerifyMessages(channelId, messagesPerChannel, 10*time.Second)
 
 	tc.require.Equal(messagesPerChannel, len(channelMessages), "Channel should have all %d messages", messagesPerChannel)
 	for i := 0; i < messagesPerChannel; i++ {
@@ -932,33 +950,10 @@ func TestColdStreamsFromSpecificHash(t *testing.T) {
 
 	// Add stream to syncer with historical content from specific miniblock
 	// Start from miniblock 2 (which contains events after msg0)
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, channelId)
-	tc.require.NoError(err)
-	tc.msr.AddStream(
-		&river.StreamWithId{
-			Id: channelId,
-			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
-				Reserved0: uint64(tc.tt.opts.replicationFactor),
-			},
-		},
-		track_streams.ApplyHistoricalContent{
-			Enabled:           true,
-			FromMiniblockHash: miniblockRefs[2].Hash[:], // Start from miniblock 2
-		},
-	)
+	tc.addStreamToSyncerWithHistory(channelId, miniblockRefs[2].Hash[:])
 
-	// Wait for events to be processed
-	tc.require.Eventually(func() bool {
-		tc.eventTrackerMu.Lock()
-		defer tc.eventTrackerMu.Unlock()
-		return len(tc.eventTracker[channelId]) >= 2
-	}, 1000*time.Second, 100*time.Millisecond, "Expected messages were not received")
-
-	// Verify correct messages received
-	tc.eventTrackerMu.Lock()
-	channelMessages := tc.eventTracker[channelId]
-	tc.eventTrackerMu.Unlock()
+	// Wait for and verify messages
+	channelMessages := tc.waitForAndVerifyMessages(channelId, 2, 10*time.Second)
 
 	// When starting from miniblock 2, we should get all events from that miniblock onwards
 	// Since miniblock 2 was created after msg0, we should get msg1 and msg2
