@@ -47,6 +47,10 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
 
     // If the caller doesn't provide an abort controller, create one and set a timeout
     // to abort the call after 20 seconds.
+    // exmample:
+    // const startListener = space.Membership.listenForMembershipToken(recipient)
+    // const issuedListener = startListener()
+    // const result = await issuedListener()
     listenForMembershipToken(
         receiver: string,
         providedAbortController?: AbortController,
