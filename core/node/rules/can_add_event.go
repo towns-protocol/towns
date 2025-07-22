@@ -261,6 +261,17 @@ func (params *aeParams) canAddChannelMessage() ruleBuilderAE {
 					params.channelEntitlements(auth.PermissionReact),
 					params.channelEntitlements(auth.PermissionWrite),
 				)
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND:
+			// all other message types require write permission
+			return aeBuilder().
+				check(params.creatorIsMember).
+				requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
 		}
 	}
 
