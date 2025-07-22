@@ -27,6 +27,7 @@ type (
 		checkOneOf(f ...func() (bool, error)) ruleBuilderAE
 		requireChainAuth(f chainAuthFunc) ruleBuilderAE
 		requireOneOfChainAuths(f ...chainAuthFunc) ruleBuilderAE
+		requireChannelMessagePermissions(params *aeParams) ruleBuilderAE
 		requireParentEvent(f func() (*DerivedEvent, error)) ruleBuilderAE
 		onChainAuthFailure(f func() (*DerivedEvent, error)) ruleBuilderAE
 		verifyReceipt(f func() (*BlockchainTransactionReceipt, error)) ruleBuilderAE
@@ -99,6 +100,33 @@ func (re *ruleBuilderAEImpl) onChainAuthFailure(f func() (*DerivedEvent, error))
 func (re *ruleBuilderAEImpl) fail(err error) ruleBuilderAE {
 	re.failErr = err
 	return re
+}
+
+func (re *ruleBuilderAEImpl) requireChannelMessagePermissions(params *aeParams) ruleBuilderAE {
+	if params.parsedEvent.Event.Tags != nil {
+		interactionType := params.parsedEvent.Event.Tags.MessageInteractionType
+
+		switch interactionType {
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
+			// reactions - should be allowed if write or react
+			// redactions - should be allowed if write or react (users can always redact their own reactions)
+			return re.requireOneOfChainAuths(
+				params.channelEntitlements(auth.PermissionReact),
+				params.channelEntitlements(auth.PermissionWrite),
+			)
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND:
+			return re.requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
+		}
+	}
+
+	return re.requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
 }
 
 func runChecksAE(checksList [][]func() (bool, error)) (bool, error) {
