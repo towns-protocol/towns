@@ -131,7 +131,7 @@ export class StressRunner {
 
             // Report progress every 10th message
             if (i > 0 && i % 10 === 0) {
-                await job.updateProgress({ sent: i, total: task.count });
+                await job.updateProgress({ sent: i, total: task.count })
             }
         }
         return { name: 'send_messages' }
