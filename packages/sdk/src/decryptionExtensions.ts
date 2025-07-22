@@ -596,6 +596,9 @@ export abstract class BaseDecryptionExtensions {
     private lastPrintedAt = 0
     private microtaskEnqueued = false
     protected checkStartTicking() {
+        if (this.microtaskEnqueued) {
+            return
+        }
         this.microtaskEnqueued = true
         queueMicrotask(() => {
             this.microtaskEnqueued = false
