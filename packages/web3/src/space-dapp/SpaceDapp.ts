@@ -1606,9 +1606,11 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const startIssuedListener = space.Membership.listenForMembershipToken(recipient)
-
         const blockNumber = await space.provider?.getBlockNumber()
+        const startIssuedListener = space.Membership.listenForMembershipToken({
+            receiver: recipient,
+            startingBlock: blockNumber,
+        })
 
         logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
         const getPriceStart = Date.now()

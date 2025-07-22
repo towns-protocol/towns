@@ -48,13 +48,19 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
     // If the caller doesn't provide an abort controller, create one and set a timeout
     // to abort the call after 20 seconds.
     // exmample:
-    // const startListener = space.Membership.listenForMembershipToken(recipient)
-    // const issuedListener = startListener()
-    // const result = await issuedListener()
-    listenForMembershipToken(
-        receiver: string,
-        providedAbortController?: AbortController,
-    ): () => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+    // const startListener = space.Membership.listenForMembershipToken({
+    //     receiver: recipient,
+    //     startingBlock: blockNumber,
+    // })
+    // await txn()
+    // const result = await startListener()
+    listenForMembershipToken(args: {
+        receiver: string
+        startingBlock: number
+        providedAbortController?: AbortController
+    }): () => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+        const { receiver, providedAbortController, startingBlock } = args
+
         return async () => {
             const contract = this.read
             const provider = contract.provider
@@ -73,7 +79,7 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
                   }, 20_000)
 
             const pollingInterval = 1_000
-            let lastCheckedBlock = await provider.getBlockNumber()
+            let lastCheckedBlock = startingBlock
 
             return new Promise<
                 { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
