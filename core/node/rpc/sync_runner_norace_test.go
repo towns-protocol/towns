@@ -678,27 +678,8 @@ type coldStreamsTestContext struct {
 	eventTrackerMu *sync.Mutex
 }
 
-// addStreamToSyncerWithHistory adds a stream to the syncer with historical content options
-func (tc *coldStreamsTestContext) addStreamToSyncerWithHistory(streamId StreamId, fromMiniblockHash []byte) {
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
-	tc.require.NoError(err)
-	tc.msr.AddStream(
-		&river.StreamWithId{
-			Id: streamId,
-			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
-				Reserved0: uint64(tc.tt.opts.replicationFactor),
-			},
-		},
-		track_streams.ApplyHistoricalContent{
-			Enabled:           true,
-			FromMiniblockHash: fromMiniblockHash,
-		},
-	)
-}
-
 // addStreamToSyncerNoHistory adds a stream to the syncer without historical content
-func (tc *coldStreamsTestContext) addStreamToSyncerNoHistory(streamId StreamId) {
+func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockHash []byte) {
 	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
 	tc.require.NoError(err)
 	tc.msr.AddStream(
@@ -710,7 +691,8 @@ func (tc *coldStreamsTestContext) addStreamToSyncerNoHistory(streamId StreamId) 
 			},
 		},
 		track_streams.ApplyHistoricalContent{
-			Enabled: false,
+			Enabled:           enabled,
+			FromMiniblockHash: fromMiniblockHash,
 		},
 	)
 }
@@ -855,7 +837,7 @@ func createChannelWithMessages(
 		// Create miniblock after each message
 		mb, err := makeMiniblock(ctx, tc.client, channelId, false, -1)
 		// if I add this, the miniblock num is always sequential
-		//time.Sleep(100 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 
 		tc.require.NoError(err)
 		miniblockRefs = append(miniblockRefs, *mb)
@@ -892,7 +874,7 @@ func TestColdStreamsNoHistory(t *testing.T) {
 	defer cancelCollector()
 
 	// Add stream to syncer with no historical content
-	tc.addStreamToSyncerNoHistory(channelId)
+	tc.addStreamToSyncer(channelId, false, nil)
 
 	// Wait a bit to ensure no events are received
 	time.Sleep(2 * time.Second)
@@ -918,7 +900,7 @@ func TestColdStreamsFullHistory(t *testing.T) {
 	defer cancelCollector()
 
 	// Add stream to syncer with full historical content
-	tc.addStreamToSyncerWithHistory(channelId, nil)
+	tc.addStreamToSyncer(channelId, true, nil)
 
 	// Wait for and verify messages
 	channelMessages := tc.waitForAndVerifyMessages(channelId, messagesPerChannel, 10*time.Second)
@@ -950,7 +932,7 @@ func TestColdStreamsFromSpecificHash(t *testing.T) {
 
 	// Add stream to syncer with historical content from specific miniblock
 	// Start from miniblock 2 (which contains events after msg0)
-	tc.addStreamToSyncerWithHistory(channelId, miniblockRefs[2].Hash[:])
+	tc.addStreamToSyncer(channelId, true, miniblockRefs[2].Hash[:])
 
 	// Wait for and verify messages
 	channelMessages := tc.waitForAndVerifyMessages(channelId, 2, 10*time.Second)
