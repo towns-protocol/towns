@@ -263,7 +263,7 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
 		return
 	}
-	if err := tracker.AddStream(event.GetStreamId(), false, event.LastMiniblockHash[:]); err != nil {
+	if err := tracker.AddStream(event.GetStreamId(), true, event.LastMiniblockHash[:]); err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
 			"streamId", event.GetStreamId(),
 			"error", err)

@@ -35,12 +35,14 @@ type RemoteStreamSyncer interface {
 	GetSyncId() string
 }
 
-// HistoricalContentMode describes how historical content should be applied during sync
-type HistoricalContentMode struct {
-	// If false, only sync from current position. If true, apply historical content.
+// ApplyHistoricalContent describes how historical content should be applied during sync
+type ApplyHistoricalContent struct {
+	// If false, only sync from current position. If true, apply historical content
+	// since inception/last snapshot, unless FromMiniblockHash is set, in which case
+	// only events from a specific miniblock hash will be applied
 	Enabled bool
-	// If non-nil, start applying from this specific miniblock hash onwards.
-	// If nil, apply all historical content from inception.
+	// If non-nil, start applying from this specific miniblock hash onwards
+	// Enabled must be set to true
 	FromMiniblockHash []byte
 }
 
@@ -49,7 +51,7 @@ type streamSyncInitRecord struct {
 	streamId    shared.StreamId
 
 	// Describes if and how historical content should be applied
-	historicalContent HistoricalContentMode
+	applyHistoricalContent ApplyHistoricalContent
 
 	// These are tracked to determine where to restart streams. If the stream is initially
 	// being added and a sync reset is desired, set minipoolGen to MaxInt64 and prevMiniblockHash
@@ -214,12 +216,14 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		}
 		// apply blocks from the first block that matches the specified miniblock hash
 		// and all consecutive blocks
-		applyBlocks = applyBlocks || (record.historicalContent.FromMiniblockHash != nil && 
-			bytes.Equal(block.Header.GetHash(), record.historicalContent.FromMiniblockHash))
+		if record.applyHistoricalContent.Enabled {
+			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockHash == nil ||
+				bytes.Equal(block.Header.GetHash(), record.applyHistoricalContent.FromMiniblockHash)
+		}
 		// If the stream was just allocated, process the miniblocks and events for notifications.
 		// If not, ignore them because there were already notifications sent for the stream, and possibly
 		// for these miniblocks and events.
-		if record.historicalContent.Enabled || applyBlocks {
+		if applyBlocks {
 			// Send notifications for all events in all blocks.
 			for _, event := range block.GetEvents() {
 				if parsedEvent, err := events.ParseEvent(event); err == nil {
@@ -243,7 +247,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		// These events are already applied to the tracked stream view's internal state, so let's
 		// notify on them because they were not added via ApplyEvent. If added below, the events
 		// will be silently skipped because they are already a part of the minipool.
-		if record.historicalContent.Enabled {
+		if record.applyHistoricalContent.Enabled {
 			if parsedEvent, err := events.ParseEvent(event); err == nil {
 				if err := record.trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
 					log.Errorw(
@@ -263,8 +267,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	}
 
 	// Reset historical content processing after the first update
-	record.historicalContent.Enabled = false
-	record.historicalContent.FromMiniblockHash = nil
+	record.applyHistoricalContent.Enabled = false
 
 	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
@@ -811,7 +814,7 @@ func (msr *MultiSyncRunner) AddStream(
 
 	msr.streamsToSync <- &streamSyncInitRecord{
 		streamId: stream.StreamId(),
-		historicalContent: HistoricalContentMode{
+		applyHistoricalContent: ApplyHistoricalContent{
 			Enabled:           applyHistoricalStreamContents,
 			FromMiniblockHash: applyHistoricalStreamContentFromMiniblockHash,
 		},
