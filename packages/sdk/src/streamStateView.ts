@@ -44,6 +44,7 @@ import {
     isUserStreamId,
     isUserInboxStreamId,
     isMetadataStreamId,
+    userIdFromAddress,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
@@ -365,7 +366,6 @@ export class StreamStateView {
                     this.streamId,
                     event.hashStr,
                     event.creatorUserId,
-                    event.event.creatorAddress,
                     payload.value.content.value,
                     getEventSignature(event),
                     true, // ephemeral flag
@@ -375,7 +375,7 @@ export class StreamStateView {
                 const fulfillment = payload.value.content.value
                 encryptionEmitter?.emit('ephemeralKeyFulfillment', {
                     streamId: this.streamId,
-                    userAddress: fulfillment.userAddress,
+                    userId: userIdFromAddress(fulfillment.userAddress),
                     deviceKey: fulfillment.deviceKey,
                     sessionIds: fulfillment.sessionIds,
                 } satisfies KeyFulfilmentData)

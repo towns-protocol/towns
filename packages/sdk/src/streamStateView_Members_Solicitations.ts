@@ -27,7 +27,6 @@ export class StreamStateView_Members_Solicitations {
             eventHashStr,
             members.map((member) => ({
                 userId: member.userId,
-                userAddress: member.userAddress,
                 solicitations: member.solicitations,
             })),
             sigBundle,
@@ -56,7 +55,6 @@ export class StreamStateView_Members_Solicitations {
             this.streamId,
             eventId,
             user.userId,
-            user.userAddress,
             newSolicitation,
             sigBundle,
         )
@@ -86,7 +84,6 @@ export class StreamStateView_Members_Solicitations {
             this.streamId,
             this.snapshotEventId,
             user.userId,
-            user.userAddress,
             newEvent,
             this.snapshotSigBundle,
         )

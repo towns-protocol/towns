@@ -5,7 +5,7 @@
 import { createEventDecryptedPromise, makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from '../../types'
-import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils'
+import { hexToBytes } from 'ethereum-cryptography/utils'
 import { MembershipOp } from '@towns-protocol/proto'
 
 // Scaffold for ephemeral events tests
@@ -87,7 +87,7 @@ describe('ephemeralEvents', () => {
         })
 
         const solicitationEphemeralTypes: boolean[] = []
-        chuck.on('newKeySolicitation', (_, __, ___, ____, _____, ______, ephemeral) => {
+        chuck.on('newKeySolicitation', (_, __, ___, ____, _____, ephemeral) => {
             solicitationEphemeralTypes.push(ephemeral ?? false)
         })
 
@@ -116,13 +116,13 @@ describe('ephemeralEvents', () => {
         const { streamId } = await alice.createGDMChannel([bob.userId, charlie.userId])
 
         const ephemeralSolicitations: boolean[] = []
-        alice.on('newKeySolicitation', (_, __, ___, ____, _____, ______, ephemeral) => {
+        alice.on('newKeySolicitation', (_, __, ___, ____, _____, ephemeral) => {
             ephemeralSolicitations.push(ephemeral ?? false)
         })
 
-        const ephemeralFulfillments: string[] = []
-        alice.on('ephemeralKeyFulfillment', (event) => {
-            ephemeralFulfillments.push(bytesToHex(event.userAddress))
+        const ephemeralFulfillments: boolean[] = []
+        alice.on('ephemeralKeyFulfillment', (_) => {
+            ephemeralFulfillments.push(true)
         })
 
         await waitFor(() => {
@@ -139,12 +139,7 @@ describe('ephemeralEvents', () => {
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
 
         expect(ephemeralSolicitations).toEqual([true])
-
-        // Wait for at least one ephemeral fulfillment
-        await waitFor(() => expect(ephemeralFulfillments.length).toBeGreaterThanOrEqual(1))
-
-        // Verify all fulfillments are from different clients
-        const uniqueSenders = new Set(ephemeralFulfillments)
-        expect(uniqueSenders.size).toEqual(ephemeralFulfillments.length)
+        await waitFor(() => expect(ephemeralFulfillments.length).toEqual(1))
+        expect(ephemeralFulfillments).toEqual([true])
     })
 })
