@@ -1,5 +1,10 @@
 import { Worker } from 'bullmq'
-import { isDefined, makeRiverConfig, spaceIdFromChannelId } from '@towns-protocol/sdk'
+import {
+    isDefined,
+    makeRiverConfig,
+    RiverTimelineEvent,
+    spaceIdFromChannelId,
+} from '@towns-protocol/sdk'
 import { getLogger } from './utils/logger'
 import { makeStressClient, StressClient } from './utils/stressClient'
 import {
@@ -51,7 +56,7 @@ export class StressRunner {
     async process(job: StressJob): Promise<StressResult> {
         this.logger.info({ task: job.data, jobId: job.id }, 'Processing job')
         try {
-            var result: StressResult
+            let result: StressResult
             switch (job.name) {
                 case 'create':
                     result = await this.create(job)
@@ -82,7 +87,7 @@ export class StressRunner {
         }
     }
 
-    async create(job: StressJob): Promise<StressResult> {
+    async create(_: StressJob): Promise<StressResult> {
         const config = makeRiverConfig(this.runOpts.riverEnv)
         const wallet = Wallet.fromMnemonic(this.runOpts.mnemonic, walletPathForIndex(this.index))
         this.client = await makeStressClient(
@@ -95,7 +100,7 @@ export class StressRunner {
         return { name: 'create' }
     }
 
-    async createTown(job: StressJob): Promise<StressResult> {
+    async createTown(_: StressJob): Promise<StressResult> {
         check(isDefined(this.client))
 
         const { spaceId, defaultChannelId } = await this.client.createSpace('Stress Test Town')
@@ -105,7 +110,7 @@ export class StressRunner {
     async join(job: StressJob): Promise<StressResult> {
         check(isDefined(this.client))
         check(job.data.name === 'join')
-        const task = job.data as JoinTask
+        const task: JoinTask = job.data
 
         if (task.spaceId) {
             await this.client.joinSpace(task.spaceId)
@@ -120,7 +125,7 @@ export class StressRunner {
     async sendMessages(job: StressJob): Promise<StressResult> {
         check(isDefined(this.client))
         check(job.data.name === 'send_messages')
-        const task = job.data as SendMessagesTask
+        const task: SendMessagesTask = job.data
 
         const spaceId = spaceIdFromChannelId(task.channelId)
         const space = this.client.agent.spaces.getSpace(spaceId)
@@ -140,18 +145,18 @@ export class StressRunner {
     async expectMessages(job: StressJob): Promise<StressResult> {
         check(isDefined(this.client))
         check(job.data.name === 'expect_messages')
-        const task = job.data as ExpectMessagesTask
+        const task: ExpectMessagesTask = job.data
 
         const spaceId = spaceIdFromChannelId(task.channelId)
         const space = this.client.agent.spaces.getSpace(spaceId)
         const channel = space.getChannel(task.channelId)
 
-        var lastCount = 0
+        let lastCount = 0
         for (let i = 0; i < 10; i++) {
             lastCount = 0
-            await channel.timeline.events.value.forEach((e) => {
+            channel.timeline.events.value.forEach((e) => {
                 if (
-                    e.content?.kind === 'm.channel.message' &&
+                    e.content?.kind === RiverTimelineEvent.ChannelMessage &&
                     e.content.body.startsWith(task.prefix)
                 ) {
                     lastCount++
@@ -171,13 +176,13 @@ export class StressRunner {
         )
     }
 
-    async shutdown(job: StressJob): Promise<StressResult> {
+    async shutdown(_: StressJob): Promise<StressResult> {
         if (this.client !== undefined) {
             await this.client.stop()
         }
 
         // fire off close, but don't wait for it
-        this.worker.close()
+        void this.worker.close()
 
         return { name: 'shutdown' }
     }

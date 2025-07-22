@@ -1,6 +1,5 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { getLogger } from './utils/logger'
-import dotenv from 'dotenv'
+import { config } from 'dotenv'
 import { RunOpts } from './stressTypes'
 import { runSupervisor } from './stressSupervisor'
 import { runWorker } from './stressWorker'
@@ -22,7 +21,7 @@ function getEnvString(env: NodeJS.Dict<string>, key: string): string {
 }
 
 export async function run(): Promise<void> {
-    dotenv.config()
+    config()
     return runWithEnv(process.env)
 }
 

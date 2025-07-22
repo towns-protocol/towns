@@ -73,6 +73,7 @@ export class StressDriver {
     onJobAdded(args: { jobId: string; name: string }) {
         this.lastUpdateEpochMs = Date.now()
         this.scheduledJobs++
+        this.logger.info(args, 'Job ADDED')
     }
 
     async close() {
