@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -161,38 +160,42 @@ func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
 
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
-	// Number of concurrent goroutines
-	numGoroutines := 10
-	errs := make(chan error, numGoroutines)
-	syncers := make(chan StreamsSyncer, numGoroutines)
+	// Use more goroutines to increase chance of race conditions
+	numGoroutines := 50
+	var wg sync.WaitGroup
+	results := make([]StreamsSyncer, numGoroutines)
+	errors := make([]error, numGoroutines)
 
-	// Start concurrent goroutines
+	// Start all goroutines at once using WaitGroup for better concurrency
+	wg.Add(numGoroutines)
+	start := make(chan struct{})
+
 	for i := 0; i < numGoroutines; i++ {
-		go func() {
-			syncer, err := syncerSet.getOrCreateSyncer(localAddr)
-			errs <- err
-			syncers <- syncer
-		}()
+		go func(idx int) {
+			defer wg.Done()
+			<-start // Wait for signal to start all at once
+			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(localAddr)
+		}(i)
 	}
 
-	// Collect results
+	// Release all goroutines at once
+	close(start)
+	wg.Wait()
+
+	// Verify all succeeded and got the same instance
 	var firstSyncer StreamsSyncer
 	for i := 0; i < numGoroutines; i++ {
-		err := <-errs
-		syncer := <-syncers
+		require.NoError(t, errors[i])
+		require.NotNil(t, results[i])
 
-		require.NoError(t, err)
-		require.NotNil(t, syncer)
-
-		// All goroutines should get the same syncer instance
 		if firstSyncer == nil {
-			firstSyncer = syncer
+			firstSyncer = results[i]
 		} else {
-			assert.Equal(t, firstSyncer, syncer)
+			assert.Same(t, firstSyncer, results[i], "All goroutines should get the same syncer instance")
 		}
 	}
 
-	// Verify only one syncer was created and stored
+	// Verify syncer is properly stored
 	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
 	assert.True(t, found)
 	assert.Equal(t, firstSyncer, storedSyncerEntry.StreamsSyncer)
@@ -347,77 +350,6 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 	streamCache.AssertExpectations(t)
 	messageDistributor.AssertExpectations(t)
 	nodeRegistry.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_ConcurrentInitialization tests that concurrent initialization is handled correctly
-func TestGetOrCreateSyncer_ConcurrentInitialization(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
-
-	// Number of concurrent goroutines trying to create the same syncer
-	numGoroutines := 20
-	errs := make(chan error, numGoroutines)
-	syncers := make(chan StreamsSyncer, numGoroutines)
-	var wg sync.WaitGroup
-
-	// Track how many times the syncer is actually created
-	var createCount int32
-
-	// Start concurrent goroutines all trying to create the same local syncer
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			// Check if this goroutine is creating the syncer
-			if _, loaded := syncerSet.syncers.Load(localAddr); !loaded {
-				atomic.AddInt32(&createCount, 1)
-			}
-
-			syncer, err := syncerSet.getOrCreateSyncer(localAddr)
-			errs <- err
-			if syncer != nil {
-				syncers <- syncer
-			}
-		}()
-	}
-
-	// Wait for all goroutines to complete
-	wg.Wait()
-	close(errs)
-	close(syncers)
-
-	// Collect results
-	var successCount int
-	var firstSyncer StreamsSyncer
-
-	for err := range errs {
-		require.NoError(t, err)
-		successCount++
-	}
-
-	for syncer := range syncers {
-		if firstSyncer == nil {
-			firstSyncer = syncer
-		} else {
-			// All goroutines should get the same syncer instance
-			assert.Equal(t, firstSyncer, syncer)
-		}
-	}
-
-	// All should succeed
-	assert.Equal(t, numGoroutines, successCount)
-
-	// Verify only one syncer was created
-	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
-	assert.True(t, found)
-	assert.Equal(t, firstSyncer, storedSyncerEntry.StreamsSyncer)
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
 }
 
 // TestGetOrCreateSyncer_RemoteFailure tests remote syncer creation that fails
