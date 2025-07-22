@@ -178,9 +178,8 @@ func (s *StreamCache) reconciliationTask(
 
 					return nil, xsync.DeleteOp
 				})
+			return
 		}
-
-		return
 	}
 
 	schedule := false
@@ -285,9 +284,12 @@ func (s *StreamCache) reconcileStreamFromPeers(
 	}
 
 	if err != nil {
-		return AsRiverError(err, Err_UNAVAILABLE).
-			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
-			Message("No peer could provide miniblocks for stream reconciliation")
+		return RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"No peer could provide miniblocks for stream reconciliation",
+			err,
+		).
+			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 	}
 
 	return RiverError(
@@ -298,7 +300,7 @@ func (s *StreamCache) reconcileStreamFromPeers(
 }
 
 // reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
-// It returns block number of last block successfully reconciled + 1.
+// It returns the block number of the last block successfully reconciled + 1.
 func (s *StreamCache) reconcileStreamFromSinglePeer(
 	stream *Stream,
 	remote common.Address,

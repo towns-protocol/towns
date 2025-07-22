@@ -277,7 +277,6 @@ func testColdStreamPlacementUpdate(t *testing.T) {
 // testHotStreamPlacementUpdate ensures that nodes bring their local state in the expected
 // state when a stream that is still receiving events is migrated to a different set of nodes.
 func testHotStreamPlacementUpdate(t *testing.T) {
-	t.Skip("HotStream TODO Bas fix")
 	const nonReplFactor = 1
 	const replReplicationFactor = 3
 
