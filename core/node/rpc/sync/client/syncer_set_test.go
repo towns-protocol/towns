@@ -361,7 +361,7 @@ func TestGetOrCreateSyncer_ConcurrentInitialization(t *testing.T) {
 	errs := make(chan error, numGoroutines)
 	syncers := make(chan StreamsSyncer, numGoroutines)
 	var wg sync.WaitGroup
-	
+
 	// Track how many times the syncer is actually created
 	var createCount int32
 
@@ -370,12 +370,12 @@ func TestGetOrCreateSyncer_ConcurrentInitialization(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			
+
 			// Check if this goroutine is creating the syncer
 			if _, loaded := syncerSet.syncers.Load(localAddr); !loaded {
 				atomic.AddInt32(&createCount, 1)
 			}
-			
+
 			syncer, err := syncerSet.getOrCreateSyncer(localAddr)
 			errs <- err
 			if syncer != nil {
@@ -502,7 +502,7 @@ func TestStreamLocks_ConcurrentAccess(t *testing.T) {
 
 			// Each goroutine uses a different stream ID
 			streamID := StreamId{byte(idx), 0x02, 0x03}
-			
+
 			// Lock the stream
 			req := ModifyRequest{
 				ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
@@ -514,7 +514,7 @@ func TestStreamLocks_ConcurrentAccess(t *testing.T) {
 
 			// Unlock the stream
 			syncerSet.unlockStreams(lockedStreams)
-			
+
 			// After unlock, the lock should be deleted
 			_, found := syncerSet.streamLocks.Load(streamID)
 			assert.False(t, found, "Stream lock should be deleted after unlock")
@@ -543,7 +543,7 @@ func TestSyncerWithLock_Embedding(t *testing.T) {
 
 	// Verify we can use the mutex
 	swl.Lock()
-	swl.Unlock()
+	swl.Unlock() //lint:ignore SA2001 just waiting for the stream to be unlocked and then proceed
 
 	// Verify TryLock works
 	assert.True(t, swl.TryLock())
