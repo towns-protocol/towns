@@ -594,11 +594,14 @@ export abstract class BaseDecryptionExtensions {
     }
 
     private lastPrintedAt = 0
+    private microtaskEnqueued = false
     protected checkStartTicking() {
-        // tick is safe to call multiple times in the same frame, but we dont' want it
-        // slowing down the rest of the main thread, and we want tick to happen async outside of
-        // any dispatched events (decrypted item shows up, event dispatched, then event is added to timeline, only then should we update it with the decrypted content)
+        if (this.microtaskEnqueued) {
+            return
+        }
+        this.microtaskEnqueued = true
         queueMicrotask(() => {
+            this.microtaskEnqueued = false
             this.tick()
         })
     }
