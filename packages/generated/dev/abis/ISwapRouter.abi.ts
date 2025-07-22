@@ -483,6 +483,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapRouter__PosterFeeMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__RecipientRequired",
     "inputs": []
   },
