@@ -837,7 +837,7 @@ func createChannelWithMessages(
 		// Create miniblock after each message
 		mb, err := makeMiniblock(ctx, tc.client, channelId, false, -1)
 		// if I add this, the miniblock num is always sequential
-		time.Sleep(100 * time.Millisecond)
+		//time.Sleep(100 * time.Millisecond)
 
 		tc.require.NoError(err)
 		miniblockRefs = append(miniblockRefs, *mb)
