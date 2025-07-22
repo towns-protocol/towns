@@ -363,11 +363,10 @@ func TestSubscription_DebugDropStream(t *testing.T) {
 			subs := sub.registry.GetSubscriptionsForStream(tt.streamID)
 			assert.Len(t, subs, 0)
 
-			// Verify SYNC_DOWN message was sent by checking the buffer
-			assert.Equal(t, 1, sub.Messages.Len())
-			batch := sub.Messages.GetBatch(nil)
-			assert.Len(t, batch, 1)
-			msg := batch[0]
+			// Verify SYNC_DOWN message was sent by checking the queue
+			msg, ok := sub.Messages.TryDequeue()
+			assert.True(t, ok, "Expected message in queue")
+			assert.NotNil(t, msg)
 			assert.Equal(t, SyncOp_SYNC_DOWN, msg.SyncOp)
 			assert.Equal(t, tt.streamID[:], msg.StreamId)
 		})
@@ -410,16 +409,18 @@ func TestSubscription_Send(t *testing.T) {
 			name: "send when buffer is full - should cancel subscription",
 			setup: func() *Subscription {
 				sub := createTestSubscription("test-sync-1")
-				// Fill the buffer to capacity
-				// MaxBufferSize is defined in dynmsgbuf package as 2048
+				// Fill the queue to capacity
+				// Queue size is defined as 2048 in manager.go
+				messagesAdded := 0
 				for i := 0; i < 2048; i++ {
-					err := sub.Messages.AddMessage(&SyncStreamsResponse{
+					ok := sub.Messages.TryEnqueue(&SyncStreamsResponse{
 						SyncOp:   SyncOp_SYNC_UPDATE,
 						StreamId: []byte{byte(i % 256), byte(i / 256)},
 					})
-					if err != nil {
-						break // Buffer is full
+					if !ok {
+						break // Queue is full
 					}
+					messagesAdded++
 				}
 				return sub
 			},

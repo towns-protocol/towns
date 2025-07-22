@@ -40,7 +40,9 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				subs := reg.GetSubscriptionsForStream(streamID)
 				assert.Len(t, subs, 1)
 				// Verify message was sent to subscription
-				assert.Equal(t, 1, subs[0].Messages.Len())
+				msg, ok := subs[0].Messages.TryDequeue()
+				assert.True(t, ok, "Expected message in queue")
+				assert.NotNil(t, msg)
 			},
 		},
 		{
@@ -82,9 +84,13 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				_, initializing2 := sub2.initializingStreams.Load(streamID)
 				t.Logf("Sub1 initializing: %v, Sub2 initializing: %v", initializing1, initializing2)
 				
-				t.Logf("Sub1 messages: %d, Sub2 messages: %d", sub1.Messages.Len(), sub2.Messages.Len())
-				assert.Equal(t, 1, sub1.Messages.Len())
-				assert.Equal(t, 1, sub2.Messages.Len())
+				// Verify messages were sent to both subscriptions
+				msg1, ok1 := sub1.Messages.TryDequeue()
+				assert.True(t, ok1, "Expected message in sub1 queue")
+				assert.NotNil(t, msg1)
+				msg2, ok2 := sub2.Messages.TryDequeue()
+				assert.True(t, ok2, "Expected message in sub2 queue")
+				assert.NotNil(t, msg2)
 			},
 		},
 		{
@@ -172,7 +178,9 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 			verify: func(t *testing.T, reg Registry) {
 				sub, exists := reg.GetSubscriptionByID("test-sync-1")
 				assert.True(t, exists)
-				assert.Equal(t, 1, sub.Messages.Len())
+				msg, ok := sub.Messages.TryDequeue()
+				assert.True(t, ok, "Expected message in queue")
+				assert.NotNil(t, msg)
 			},
 		},
 		{
@@ -214,7 +222,9 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 				sub, exists := reg.GetSubscriptionByID("test-sync-1")
 				assert.True(t, exists)
 				// Closed subscription should not receive messages
-				assert.Equal(t, 0, sub.Messages.Len())
+				msg, ok := sub.Messages.TryDequeue()
+				assert.False(t, ok, "Expected no messages in closed subscription")
+				assert.Nil(t, msg)
 			},
 		},
 		{
@@ -271,8 +281,7 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 			},
 			verify: func(t *testing.T, sub *Subscription) {
 				// Verify message was sent to subscription
-				assert.Equal(t, 1, sub.Messages.Len())
-				batch := sub.Messages.GetBatch(nil)
+				batch := dequeueAll(sub.Messages)
 				assert.Len(t, batch, 1)
 				assert.Equal(t, SyncOp_SYNC_UPDATE, batch[0].SyncOp)
 			},
@@ -290,8 +299,7 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 			},
 			verify: func(t *testing.T, sub *Subscription) {
 				// Verify message was sent to subscription
-				assert.Equal(t, 1, sub.Messages.Len())
-				batch := sub.Messages.GetBatch(nil)
+				batch := dequeueAll(sub.Messages)
 				assert.Len(t, batch, 1)
 				assert.Equal(t, SyncOp_SYNC_DOWN, batch[0].SyncOp)
 			},
@@ -315,7 +323,9 @@ func TestDistributor_SendMessageToSubscription(t *testing.T) {
 			},
 			verify: func(t *testing.T, sub *Subscription) {
 				// Verify message was NOT sent (initializing stream)
-				assert.Equal(t, 0, sub.Messages.Len())
+				msg, ok := sub.Messages.TryDequeue()
+				assert.False(t, ok, "Expected no messages for initializing stream")
+				assert.Nil(t, msg)
 			},
 		},
 	}
@@ -440,9 +450,8 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 			time.Sleep(20 * time.Millisecond)
 
 			// Verify the messages in subscription buffer
-			assert.Equal(t, 2, sub.Messages.Len()) // One backfill + one regular
-			batch := sub.Messages.GetBatch(nil)
-			require.Len(t, batch, 2)
+			batch := dequeueAll(sub.Messages)
+			require.Len(t, batch, 2) // One backfill + one regular
 
 			// Check the regular message has filtered events
 			regularMsgReceived := batch[1]

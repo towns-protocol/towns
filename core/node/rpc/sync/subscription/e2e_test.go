@@ -94,8 +94,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Check if message was received by subscription
-	var receivedMsgs []*SyncStreamsResponse
-	receivedMsgs = sub.Messages.GetBatch(receivedMsgs)
+	receivedMsgs := dequeueAll(sub.Messages)
 	assert.Len(t, receivedMsgs, 1)
 	assert.Equal(t, SyncOp_SYNC_UPDATE, receivedMsgs[0].GetSyncOp())
 
@@ -184,15 +183,13 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Both subscriptions should receive the message
-	var receivedMsgs1 []*SyncStreamsResponse
-	receivedMsgs1 = sub1.Messages.GetBatch(receivedMsgs1)
+	receivedMsgs1 := dequeueAll(sub1.Messages)
 	t.Logf("Sub1 received %d messages", len(receivedMsgs1))
 	if len(receivedMsgs1) > 0 {
 		assert.Equal(t, SyncOp_SYNC_UPDATE, receivedMsgs1[0].GetSyncOp())
 	}
 
-	var receivedMsgs2 []*SyncStreamsResponse
-	receivedMsgs2 = sub2.Messages.GetBatch(receivedMsgs2)
+	receivedMsgs2 := dequeueAll(sub2.Messages)
 	t.Logf("Sub2 received %d messages", len(receivedMsgs2))
 	if len(receivedMsgs2) > 0 {
 		assert.Equal(t, SyncOp_SYNC_UPDATE, receivedMsgs2[0].GetSyncOp())
@@ -249,7 +246,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 
 	env.distributor.DistributeMessage(streamID, updateMsg)
 	time.Sleep(50 * time.Millisecond)
-	receivedMsgs := sub.Messages.GetBatch(nil)
+	receivedMsgs := dequeueAll(sub.Messages)
 	assert.Len(t, receivedMsgs, 1)
 	assert.Equal(t, SyncOp_SYNC_UPDATE, receivedMsgs[0].GetSyncOp())
 
@@ -263,7 +260,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Check that SYNC_DOWN was received
-	receivedMsgs = sub.Messages.GetBatch(nil)
+	receivedMsgs = dequeueAll(sub.Messages)
 	assert.Len(t, receivedMsgs, 1)
 	assert.Equal(t, SyncOp_SYNC_DOWN, receivedMsgs[0].GetSyncOp())
 
@@ -285,7 +282,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Check that no additional messages were received after SYNC_DOWN
-	receivedMsgs = sub.Messages.GetBatch(nil)
+	receivedMsgs = dequeueAll(sub.Messages)
 	t.Logf("After further message, received %d messages", len(receivedMsgs))
 	if len(receivedMsgs) > 0 {
 		t.Logf("Received message: %v", receivedMsgs[0].GetSyncOp())
@@ -307,7 +304,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	receivedMsgs = sub.Messages.GetBatch(nil)
+	receivedMsgs = dequeueAll(sub.Messages)
 	assert.Len(t, receivedMsgs, 1)
 }
 
@@ -439,8 +436,7 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 	// Verify all subscriptions received messages
 	expectedMessages := numStreams * messagesPerStream
 	for i, sub := range subscriptions {
-		var receivedMsgs []*SyncStreamsResponse
-		receivedMsgs = sub.Messages.GetBatch(receivedMsgs)
+		receivedMsgs := dequeueAll(sub.Messages)
 		receivedCount := len(receivedMsgs)
 		assert.Equal(t, expectedMessages, receivedCount,
 			"Subscription %d should have received %d messages", i, expectedMessages)
