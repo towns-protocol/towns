@@ -2,14 +2,17 @@ package client
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
@@ -18,6 +21,10 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+const (
+	hotStreamsCacheSize = 100 // Size of the hot streams cache
 )
 
 type remoteSyncer struct {
@@ -30,6 +37,9 @@ type remoteSyncer struct {
 	streams            *xsync.Map[StreamId, struct{}]
 	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream        func(streamID StreamId)
+	// hotStreamsCache is a cache for hot streams that are currently being processed.
+	// “Hot streams” are the most‐requested streams - that is, the ones clients add to sync most frequently.
+	hotStreamsCache *lru.Cache[string, *StreamAndCookie]
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -42,6 +52,11 @@ func NewRemoteSyncer(
 	messageDistributor MessageDistributor,
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
+	hotStreamsCache, err := lru.New[string, *StreamAndCookie](hotStreamsCacheSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create hot streams cache: %w", err)
+	}
+
 	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
 
 	// TODO: Remove after removing the legacy syncer
@@ -95,6 +110,7 @@ func NewRemoteSyncer(
 		responseStream:     responseStream,
 		remoteAddr:         remoteAddr,
 		unsubStream:        unsubStream,
+		hotStreamsCache:    hotStreamsCache,
 		otelTracer:         otelTracer,
 	}, nil
 }
@@ -128,6 +144,15 @@ func (s *remoteSyncer) Run() {
 			if err != nil {
 				log.Errorw("Received invalid stream ID in sync update", "remote", s.remoteAddr, "error", err)
 				continue
+			}
+
+			// Cache backfill response for the given stream if it is hot so it can be reused later
+			// to save some time on the request latency.
+			if len(res.GetTargetSyncIds()) > 0 {
+				key := getHotStreamsCacheKey(res.GetStream().GetNextSyncCookie())
+				if val, ok := s.hotStreamsCache.Get(key); ok && val == nil {
+					s.hotStreamsCache.Add(key, res.GetStream())
+				}
 			}
 
 			if err = s.sendResponse(streamID, res); err != nil {
@@ -258,6 +283,39 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 	// Force set the syncID to the current syncID
 	request.SyncId = s.syncID
 
+	// Prevent sending the backfill request for hot streams that are already in the cache.
+	newBackfillList := make([]*SyncCookie, 0, len(request.GetBackfillStreams().GetStreams()))
+	for _, cookie := range request.GetBackfillStreams().GetStreams() {
+		key := getHotStreamsCacheKey(cookie)
+		if val, ok := s.hotStreamsCache.Get(key); ok && val != nil {
+			if err := s.sendResponse(StreamId(cookie.GetStreamId()), &SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				Stream:        val,
+				TargetSyncIds: []string{request.GetBackfillStreams().GetSyncId()},
+			}); err != nil {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to send backfill response for hot stream",
+					"remote", s.remoteAddr, "streamId", cookie.GetStreamId(), "error", err)
+			}
+			continue
+		}
+
+		s.hotStreamsCache.Add(key, nil)
+		newBackfillList = append(newBackfillList, cookie)
+	}
+
+	if len(newBackfillList) > 0 {
+		request.BackfillStreams.Streams = newBackfillList
+	} else {
+		request.BackfillStreams = nil
+	}
+
+	// If there are no streams to backfill, add or remove, we can skip sending the request.
+	if len(request.GetAddStreams()) == 0 &&
+		len(request.GetRemoveStreams()) == 0 &&
+		request.BackfillStreams == nil {
+		return nil, false, nil
+	}
+
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
 	if err != nil {
 		return nil, false, err
@@ -297,4 +355,12 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		s.syncStreamCancel()
 	}
 	return noMoreStreams, nil
+}
+
+func getHotStreamsCacheKey(cookie *SyncCookie) string {
+	var key strings.Builder
+	key.Grow(40)
+	key.Write(cookie.GetStreamId())
+	key.Write(binary.LittleEndian.AppendUint64(nil, uint64(cookie.GetMinipoolGen())))
+	return key.String()
 }
