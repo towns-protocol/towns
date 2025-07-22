@@ -23,17 +23,7 @@ import { check } from '@towns-protocol/dlog'
 import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
-import {
-    spaceIdFromChannelId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
-    isUserDeviceStreamId,
-    isUserInboxStreamId,
-    isUserSettingsStreamId,
-    isUserStreamId,
-    isChannelStreamId,
-    userIdToAddress,
-} from './id'
+import { spaceIdFromChannelId, StreamPrefix, userIdToAddress } from './id'
 import { checkEventSignature } from './sign'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
@@ -450,16 +440,17 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         recentStreamIds: Set<string>,
     ): number {
         if (
-            isUserDeviceStreamId(streamId) ||
-            isUserInboxStreamId(streamId) ||
-            isUserStreamId(streamId) ||
-            isUserSettingsStreamId(streamId)
+            streamId.startsWith(StreamPrefix.UserMetadata) ||
+            streamId.startsWith(StreamPrefix.UserInbox) ||
+            streamId.startsWith(StreamPrefix.User) ||
+            streamId.startsWith(StreamPrefix.UserSettings)
         ) {
             return 0
         }
         // channel or dm we're currently viewing
-        const isChannel = isChannelStreamId(streamId)
-        const isDmOrGdm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+        const isChannel = streamId.startsWith(StreamPrefix.Channel)
+        const isDmOrGdm =
+            streamId.startsWith(StreamPrefix.DM) || streamId.startsWith(StreamPrefix.GDM)
         if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
             return 1
         }

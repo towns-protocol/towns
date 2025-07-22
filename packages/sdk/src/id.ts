@@ -59,6 +59,7 @@ export enum StreamPrefix {
 }
 
 const allowedStreamPrefixesVar = Object.values(StreamPrefix)
+const TWENTY_TWO_ZEROS = '0000000000000000000000'
 
 export const allowedStreamPrefixes = (): string[] => allowedStreamPrefixesVar
 
@@ -134,12 +135,11 @@ export const makeDefaultChannelStreamId = (spaceContractAddressOrId: string): st
         return StreamPrefix.Channel + spaceContractAddressOrId.slice(2)
     }
     // matches code in the smart contract
-    return makeStreamId(StreamPrefix.Channel, spaceContractAddressOrId + '0'.repeat(22))
+    return makeStreamId(StreamPrefix.Channel, spaceContractAddressOrId + TWENTY_TWO_ZEROS)
 }
 
 export const spaceIdFromChannelId = (channelId: string): string => {
-    check(isChannelStreamId(channelId), 'Invalid channel id: ' + channelId)
-    return makeStreamId(StreamPrefix.Space, channelId.slice(2, 42) + '0'.repeat(22))
+    return `${StreamPrefix.Space}${channelId.slice(2, 42)}${TWENTY_TWO_ZEROS}`
 }
 
 export const isDefaultChannelId = (streamId: string): boolean => {
@@ -147,7 +147,7 @@ export const isDefaultChannelId = (streamId: string): boolean => {
     if (prefix !== StreamPrefix.Channel) {
         return false
     }
-    return streamId.endsWith('0'.repeat(22))
+    return streamId.endsWith(TWENTY_TWO_ZEROS)
 }
 
 export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
@@ -197,7 +197,7 @@ export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     }
     const addressPart = streamId.slice(2, 42)
     const paddingPart = streamId.slice(42)
-    if (paddingPart !== '0'.repeat(22)) {
+    if (paddingPart !== TWENTY_TWO_ZEROS) {
         throw new Error('Invalid stream id padding: ' + streamId)
     }
     return addressFromUserId('0x' + addressPart)
