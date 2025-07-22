@@ -120,12 +120,6 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
         address swapRouter = _validateSwapPrerequisites(posterFee.recipient);
 
-        // validate that the actual poster fee matches the expected fee from the permit
-        (, uint16 actualPosterBps, ) = getSwapFees();
-        if (actualPosterBps != posterFee.feeBps) {
-            SwapFacet__PosterFeeMismatch.selector.revertWith();
-        }
-
         // execute swap through the router with permit
         uint256 protocolFee;
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit(
@@ -135,7 +129,13 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
             permit
         );
 
-        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, posterFee.recipient, permit.owner);
+        _mintPointsAndEmitSwapEvent(
+            params,
+            amountOut,
+            protocolFee,
+            posterFee.recipient,
+            permit.owner
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

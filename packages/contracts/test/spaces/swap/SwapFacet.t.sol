@@ -7,6 +7,7 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 import {ITownsPoints, ITownsPointsBase} from "../../../src/airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IImplementationRegistry} from "../../../src/factory/facets/registry/IImplementationRegistry.sol";
+import {ISwapRouterBase} from "../../../src/router/ISwapRouter.sol";
 import {IEntitlementBase} from "../../../src/spaces/entitlements/IEntitlement.sol";
 import {ISwapFacetBase, ISwapFacet} from "../../../src/spaces/facets/swap/ISwapFacet.sol";
 
@@ -1073,7 +1074,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
 
         // Step 4: Attack attempt - try to execute swap with mismatched fees
         vm.prank(user);
-        vm.expectRevert(SwapFacet__PosterFeeMismatch.selector);
+        vm.expectRevert(ISwapRouterBase.SwapRouter__PosterFeeMismatch.selector);
         swapFacet.executeSwapWithPermit(
             params,
             defaultRouterParams,

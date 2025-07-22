@@ -611,10 +611,65 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         );
     }
 
+    function test_executeSwapWithPermit_revertWhen_posterFeeMismatch(
+        uint256 privateKey,
+        uint16 platformPosterBps,
+        uint16 permitPosterBps
+    ) public {
+        // Bound inputs to valid ranges, ensuring they are different to create attack scenario
+        platformPosterBps = uint16(bound(platformPosterBps, 0, 1000)); // 0-10%
+        permitPosterBps = uint16(bound(permitPosterBps, 0, 1000)); // 0-10%
+        vm.assume(platformPosterBps != permitPosterBps); // Ensure attack scenario: platform != permit
+
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+        vm.assume(owner != feeRecipient && owner != POSTER);
+
+        // Step 1: Set platform fees to one value
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, platformPosterBps);
+
+        // Step 2: Create permit with DIFFERENT poster fee than platform configuration
+        FeeConfig memory maliciousPosterFee = FeeConfig(POSTER, permitPosterBps);
+
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(swapRouter),
+            0, // nonce
+            block.timestamp + 1 hours,
+            defaultInputParams,
+            defaultRouterParams,
+            maliciousPosterFee // Permit signed with different fee than platform!
+        );
+
+        // Step 3: Setup tokens for the attack attempt
+        token0.mint(owner, DEFAULT_AMOUNT_IN);
+        vm.prank(owner);
+        token0.approve(PERMIT2, DEFAULT_AMOUNT_IN);
+
+        // Step 4: Attempt direct attack on SwapRouter - should fail with poster fee mismatch
+        vm.expectRevert(SwapRouter__PosterFeeMismatch.selector);
+        swapRouter.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            maliciousPosterFee, // Using the mismatched fee config
+            permitParams
+        );
+
+        // The attack should fail because:
+        // - Permit was signed with permitPosterBps fee rate
+        // - But platform actually has platformPosterBps (different rate)
+        // - Our validation catches this mismatch and reverts
+    }
+
     function test_executeSwapWithPermit_revertWhen_differentRecipient(
         uint256 privateKey,
         address recipient
     ) public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
+
         test_executeSwapWithPermit_frontRunning(
             FrontRunningParams({
                 privateKey: privateKey,
@@ -633,6 +688,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 privateKey,
         address poster
     ) public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
+
         test_executeSwapWithPermit_frontRunning(
             FrontRunningParams({
                 privateKey: privateKey,
@@ -776,6 +834,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.recipient
         );
 
+        // create poster fee config with the actual fuzzed posterBps
+        FeeConfig memory posterFee = FeeConfig(POSTER, params.posterBps);
+
         // get the permit signature
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
@@ -785,7 +846,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.deadline,
             inputParams,
             routerParams,
-            POSTER
+            posterFee
         );
 
         // mint tokens for owner and approve Permit2
@@ -794,7 +855,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         token0.approve(PERMIT2, params.amountIn);
 
         // execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, defaultPosterFee, permitParams);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, posterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -855,6 +916,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.recipient
         );
 
+        // create poster fee config with the actual fuzzed posterBps
+        FeeConfig memory posterFee = FeeConfig(POSTER, params.posterBps);
+
         // get the permit signature
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
@@ -864,7 +928,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.deadline,
             inputParams,
             routerParams,
-            POSTER
+            posterFee
         );
 
         // mint tokens for owner and approve Permit2
@@ -876,7 +940,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         deal(mockRouter, params.amountOut * 2);
 
         // execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, defaultPosterFee, permitParams);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, posterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -978,6 +1042,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 amountOut,
         address recipient
     ) public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
+
         // generate a valid private key from seed
         uint256 privateKey = boundPrivateKey(privateKeySeed);
         address owner = vm.addr(privateKey);
@@ -1020,7 +1087,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             block.timestamp + 1 hours,
             inputParams,
             routerParams,
-            POSTER
+            defaultPosterFee
         );
 
         // Setup: mint tokens and approve Permit2

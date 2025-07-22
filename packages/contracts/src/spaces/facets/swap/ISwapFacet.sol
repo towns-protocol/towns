@@ -20,9 +20,6 @@ interface ISwapFacetBase {
     /// @notice Error thrown when poster address is invalid for the current fee configuration
     error SwapFacet__InvalidPosterInput();
 
-    /// @notice Error thrown when actual poster fee doesn't match expected fee from permit
-    error SwapFacet__PosterFeeMismatch();
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

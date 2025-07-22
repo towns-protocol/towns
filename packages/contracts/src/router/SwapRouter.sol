@@ -128,6 +128,12 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             SwapRouter__NativeTokenNotSupportedWithPermit.selector.revertWith();
         }
 
+        // validate that the poster fee in permit matches the actual configured fee
+        (, uint16 actualPosterBps) = _getSwapFees(_getSpaceFactory(), msg.sender);
+        if (actualPosterBps != posterFee.feeBps) {
+            SwapRouter__PosterFeeMismatch.selector.revertWith();
+        }
+
         // take balance snapshot before Permit2 transfer to handle fee-on-transfer tokens
         uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
 

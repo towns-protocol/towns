@@ -85,6 +85,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when tokenIn and tokenOut are the same
     error SwapRouter__SameToken();
 
+    /// @notice Error thrown when the poster fee in permit doesn't match the actual configured fee
+    error SwapRouter__PosterFeeMismatch();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
