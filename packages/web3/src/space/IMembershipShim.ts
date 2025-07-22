@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
+import { BigNumber, ContractTransaction, ethers, Signer } from 'ethers'
 import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
 import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
