@@ -229,9 +229,7 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 		return aeBuilder().
 			fail(invalidContentType(content))
 	case *ChannelPayload_Message:
-		return aeBuilder().
-			check(params.creatorIsMember).
-			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
+		return params.canAddChannelMessage()
 	case *ChannelPayload_Redaction_:
 		return aeBuilder().
 			check(params.creatorIsMember).
@@ -240,6 +238,35 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 		return aeBuilder().
 			fail(unknownContentType(content))
 	}
+}
+
+func (params *aeParams) canAddChannelMessage() ruleBuilderAE {
+	if params.parsedEvent.Event.Tags != nil {
+		interactionType := params.parsedEvent.Event.Tags.MessageInteractionType
+
+		switch interactionType {
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION:
+			// reactions should be allowed if user can write or react
+			return aeBuilder().
+				check(params.creatorIsMember).
+				requireOneOfChainAuths(
+					params.channelEntitlements(auth.PermissionReact),
+					params.channelEntitlements(auth.PermissionWrite),
+				)
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
+			// users that have react only permission should be able to redact their own reactions
+			return aeBuilder().
+				check(params.creatorIsMember).
+				requireOneOfChainAuths(
+					params.channelEntitlements(auth.PermissionReact),
+					params.channelEntitlements(auth.PermissionWrite),
+				)
+		}
+	}
+
+	return aeBuilder().
+		check(params.creatorIsMember).
+		requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
 }
 
 func (params *aeParams) canAddDmChannelPayload(payload *StreamEvent_DmChannelPayload) ruleBuilderAE {
