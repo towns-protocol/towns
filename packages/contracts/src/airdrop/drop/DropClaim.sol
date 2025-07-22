@@ -23,6 +23,7 @@ library DropClaim {
     struct Claim {
         uint256 conditionId;
         address account;
+        address recipient;
         uint256 quantity;
         uint256 points;
         bytes32[] proof;
