@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/towns-protocol/towns/core/node/events"
@@ -45,4 +46,32 @@ func (m *mockMessageDistributor) DistributeMessage(streamID StreamId, msg *SyncS
 func (m *mockMessageDistributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse) {
 	m.Called(streamID, msg)
 	m.messages = append(m.messages, msg)
+}
+
+// Mock types for testing
+
+type mockStreamsSyncer struct {
+	mock.Mock
+}
+
+func (m *mockStreamsSyncer) Run() {
+	m.Called()
+}
+
+func (m *mockStreamsSyncer) Address() common.Address {
+	args := m.Called()
+	return args.Get(0).(common.Address)
+}
+
+func (m *mockStreamsSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+	args := m.Called(ctx, request)
+	if args.Get(0) == nil {
+		return nil, args.Bool(1), args.Error(2)
+	}
+	return args.Get(0).(*ModifySyncResponse), args.Bool(1), args.Error(2)
+}
+
+func (m *mockStreamsSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {
+	args := m.Called(ctx, streamID)
+	return args.Bool(0), args.Error(1)
 }

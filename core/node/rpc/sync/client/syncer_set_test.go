@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
@@ -50,9 +52,9 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	assert.Equal(t, localAddr, syncer.Address())
 
 	// Verify syncer is stored
-	storedSyncer, found := syncerSet.syncers.Load(localAddr)
+	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
 	assert.True(t, found)
-	assert.Equal(t, syncer, storedSyncer)
+	assert.Equal(t, syncer, storedSyncerEntry.StreamsSyncer)
 
 	// Test getting the same syncer again (should return cached)
 	syncer2, err := syncerSet.getOrCreateSyncer(localAddr)
@@ -191,9 +193,9 @@ func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Verify only one syncer was created and stored
-	storedSyncer, found := syncerSet.syncers.Load(localAddr)
+	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
 	assert.True(t, found)
-	assert.Equal(t, firstSyncer, storedSyncer)
+	assert.Equal(t, firstSyncer, storedSyncerEntry.StreamsSyncer)
 
 	// Cleanup
 	streamCache.AssertExpectations(t)
@@ -305,7 +307,7 @@ func TestSyncerSet_Run(t *testing.T) {
 
 // TestGetOrCreateSyncer_ComputeOpBehavior tests xsync.Compute operation behavior
 func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
-	// This test verifies the atomic nature of the Compute operation
+	// This test verifies the atomic nature of the LoadOrStore operation
 	ctx := context.Background()
 	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
@@ -321,15 +323,15 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 		nodeRegistry:       nodeRegistry,
 		localNodeAddress:   localAddr,
 		messageDistributor: messageDistributor,
-		syncers:            xsync.NewMap[common.Address, StreamsSyncer](),
-		syncerLocks:        xsync.NewMap[common.Address, *sync.Mutex](),
+		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
 		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
 	}
 
 	// Pre-store a syncer
 	existingSyncer := newLocalSyncer(ctx, localAddr, streamCache, messageDistributor, func(StreamId) {}, nil)
-	syncerSet.syncers.Store(remoteAddr, existingSyncer)
+	syncerEntry := &syncerWithLock{StreamsSyncer: existingSyncer}
+	syncerSet.syncers.Store(remoteAddr, syncerEntry)
 
 	// Try to get the existing syncer
 	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
@@ -345,4 +347,207 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 	streamCache.AssertExpectations(t)
 	messageDistributor.AssertExpectations(t)
 	nodeRegistry.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_ConcurrentInitialization tests that concurrent initialization is handled correctly
+func TestGetOrCreateSyncer_ConcurrentInitialization(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+
+	// Number of concurrent goroutines trying to create the same syncer
+	numGoroutines := 20
+	errs := make(chan error, numGoroutines)
+	syncers := make(chan StreamsSyncer, numGoroutines)
+	var wg sync.WaitGroup
+	
+	// Track how many times the syncer is actually created
+	var createCount int32
+
+	// Start concurrent goroutines all trying to create the same local syncer
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			
+			// Check if this goroutine is creating the syncer
+			if _, loaded := syncerSet.syncers.Load(localAddr); !loaded {
+				atomic.AddInt32(&createCount, 1)
+			}
+			
+			syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+			errs <- err
+			if syncer != nil {
+				syncers <- syncer
+			}
+		}()
+	}
+
+	// Wait for all goroutines to complete
+	wg.Wait()
+	close(errs)
+	close(syncers)
+
+	// Collect results
+	var successCount int
+	var firstSyncer StreamsSyncer
+
+	for err := range errs {
+		require.NoError(t, err)
+		successCount++
+	}
+
+	for syncer := range syncers {
+		if firstSyncer == nil {
+			firstSyncer = syncer
+		} else {
+			// All goroutines should get the same syncer instance
+			assert.Equal(t, firstSyncer, syncer)
+		}
+	}
+
+	// All should succeed
+	assert.Equal(t, numGoroutines, successCount)
+
+	// Verify only one syncer was created
+	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
+	assert.True(t, found)
+	assert.Equal(t, firstSyncer, storedSyncerEntry.StreamsSyncer)
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestGetOrCreateSyncer_RemoteFailure tests remote syncer creation that fails
+func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+
+	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
+
+	// Mock the stream service client
+	mockClient := &mocks.MockStreamServiceClient{}
+	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil)
+
+	// Mock SyncStreams to return an error
+	syncErr := errors.New("sync failed")
+	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, syncErr)
+
+	// Try to create a remote syncer
+	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+
+	// Should fail with an error
+	require.Error(t, err)
+	require.Nil(t, syncer)
+	assert.Contains(t, err.Error(), "sync failed")
+
+	// Verify no syncer was stored since creation failed
+	_, found := syncerSet.syncers.Load(remoteAddr)
+	assert.False(t, found, "No syncer should be stored when creation fails")
+
+	// Cleanup
+	nodeRegistry.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+}
+
+// TestStreamLocks_DeleteBehavior tests that stream locks are deleted after use
+func TestStreamLocks_DeleteBehavior(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+	streamID := StreamId{0x01, 0x02, 0x03}
+
+	// Lock a stream using lockStreams
+	req := ModifyRequest{
+		ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
+	}
+	lockedStreams := syncerSet.lockStreams(ctx, req)
+	assert.Contains(t, lockedStreams, streamID)
+
+	// Verify the lock exists
+	lock, found := syncerSet.streamLocks.Load(streamID)
+	assert.True(t, found, "Stream lock should exist after locking")
+	assert.NotNil(t, lock)
+
+	// Unlock the stream
+	syncerSet.unlockStreams(lockedStreams)
+
+	// Verify the lock is deleted after unlock
+	_, found = syncerSet.streamLocks.Load(streamID)
+	assert.False(t, found, "Stream lock should be deleted after unlock")
+}
+
+// TestStreamLocks_ConcurrentAccess tests concurrent access to different stream locks
+func TestStreamLocks_ConcurrentAccess(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+	numGoroutines := 20
+	var wg sync.WaitGroup
+
+	// Start concurrent goroutines that lock and unlock different streams
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+
+			// Each goroutine uses a different stream ID
+			streamID := StreamId{byte(idx), 0x02, 0x03}
+			
+			// Lock the stream
+			req := ModifyRequest{
+				ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
+			}
+			lockedStreams := syncerSet.lockStreams(ctx, req)
+
+			// Simulate some work
+			time.Sleep(1 * time.Millisecond)
+
+			// Unlock the stream
+			syncerSet.unlockStreams(lockedStreams)
+			
+			// After unlock, the lock should be deleted
+			_, found := syncerSet.streamLocks.Load(streamID)
+			assert.False(t, found, "Stream lock should be deleted after unlock")
+		}(i)
+	}
+
+	// Wait for all goroutines to complete
+	wg.Wait()
+}
+
+// TestSyncerWithLock_Embedding tests that syncerWithLock properly embeds StreamsSyncer
+func TestSyncerWithLock_Embedding(t *testing.T) {
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	// Create a mock syncer
+	mockSyncer := &mockStreamsSyncer{}
+	mockSyncer.On("Address").Return(localAddr)
+
+	// Create syncerWithLock
+	swl := &syncerWithLock{
+		StreamsSyncer: mockSyncer,
+	}
+
+	// Verify we can call StreamsSyncer methods
+	assert.Equal(t, localAddr, swl.Address())
+
+	// Verify we can use the mutex
+	swl.Lock()
+	swl.Unlock()
+
+	// Verify TryLock works
+	assert.True(t, swl.TryLock())
+	swl.Unlock()
+
+	mockSyncer.AssertExpectations(t)
 }
