@@ -1062,7 +1062,7 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
         const firstHPI = Array.from(highPriorityIds.values())[0]
         if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-                return 4
+                return 2
             }
         }
     }
