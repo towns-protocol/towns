@@ -2,26 +2,17 @@
   "name": "@towns-protocol/contracts",
   "version": "0.0.282",
   "packageManager": "yarn@3.8.0",
-  "installConfig": {
-    "hoistingLimits": "dependencies"
-  },
-  "files": [
-    "src/**/*.sol",
-    "scripts/**/*.sol",
-    "./typings/index.ts",
-    "README.md"
-  ],
   "scripts": {
     "build": "forge build",
     "clean": "forge clean",
     "format": "yarn prettier:write",
     "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
+    "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
+    "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
     "test": "forge test --ffi --nmc Fork --fuzz-runs 4096",
     "test:unit": "yarn test",
-    "typings": "wagmi generate",
-    "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
-    "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\""
+    "typings": "wagmi generate"
   },
   "dependencies": {
     "@erc6900/reference-implementation": "^0.8.1",
@@ -44,5 +35,14 @@
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
     "solhint": "^5.0.5"
+  },
+  "files": [
+    "src/**/*.sol",
+    "scripts/**/*.sol",
+    "./typings/index.ts",
+    "README.md"
+  ],
+  "installConfig": {
+    "hoistingLimits": "dependencies"
   }
 }

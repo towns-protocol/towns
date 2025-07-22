@@ -23,16 +23,7 @@ import { check } from '@towns-protocol/dlog'
 import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
-import {
-    spaceIdFromChannelId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
-    isUserDeviceStreamId,
-    isUserInboxStreamId,
-    isUserSettingsStreamId,
-    isUserStreamId,
-    isChannelStreamId,
-} from './id'
+import { spaceIdFromChannelId, StreamPrefix, userIdToAddress } from './id'
 import { checkEventSignature } from './sign'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
@@ -83,7 +74,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             streamId: string,
             eventHashStr: string,
             fromUserId: string,
-            fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
             sigBundle: EventSignatureBundle,
             ephemeral?: boolean,
@@ -92,7 +82,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 streamId,
                 eventHashStr,
                 fromUserId,
-                fromUserAddress,
                 keySolicitation,
                 sigBundle,
                 ephemeral,
@@ -103,7 +92,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             eventHashStr: string,
             members: {
                 userId: string
-                userAddress: Uint8Array
                 solicitations: KeySolicitationContent[]
             }[],
             sigBundle: EventSignatureBundle,
@@ -356,11 +344,12 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public async sendKeyFulfillment({
         streamId,
-        userAddress,
+        userId,
         deviceKey,
         sessionIds,
         ephemeral = false,
     }: KeyFulfilmentData & { ephemeral?: boolean }): Promise<{ error?: unknown }> {
+        const userAddress = userIdToAddress(userId)
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
@@ -451,16 +440,17 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         recentStreamIds: Set<string>,
     ): number {
         if (
-            isUserDeviceStreamId(streamId) ||
-            isUserInboxStreamId(streamId) ||
-            isUserStreamId(streamId) ||
-            isUserSettingsStreamId(streamId)
+            streamId.startsWith(StreamPrefix.UserMetadata) ||
+            streamId.startsWith(StreamPrefix.UserInbox) ||
+            streamId.startsWith(StreamPrefix.User) ||
+            streamId.startsWith(StreamPrefix.UserSettings)
         ) {
             return 0
         }
         // channel or dm we're currently viewing
-        const isChannel = isChannelStreamId(streamId)
-        const isDmOrGdm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+        const isChannel = streamId.startsWith(StreamPrefix.Channel)
+        const isDmOrGdm =
+            streamId.startsWith(StreamPrefix.DM) || streamId.startsWith(StreamPrefix.GDM)
         if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
             return 1
         }
