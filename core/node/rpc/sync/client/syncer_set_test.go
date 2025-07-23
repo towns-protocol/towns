@@ -400,16 +400,18 @@ func TestStreamLocks_DeleteBehavior(t *testing.T) {
 	req := ModifyRequest{
 		ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
 	}
-	lockedStreams := syncerSet.lockStreams(ctx, req)
-	assert.Contains(t, lockedStreams, streamID)
+	unlock := syncerSet.lockStreams(ctx, req)
 
 	// Verify the lock exists
 	lock, found := syncerSet.streamLocks.Load(streamID)
 	assert.True(t, found, "Stream lock should exist after locking")
 	assert.NotNil(t, lock)
 
+	// Verify we can't acquire the lock (proving it's locked)
+	assert.False(t, lock.TryLock(), "Lock should be held")
+
 	// Unlock the stream
-	syncerSet.unlockStreams(lockedStreams)
+	unlock()
 
 	// Verify the lock still exists but is unlocked
 	lock, found = syncerSet.streamLocks.Load(streamID)
@@ -444,13 +446,13 @@ func TestStreamLocks_ConcurrentAccess(t *testing.T) {
 			req := ModifyRequest{
 				ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
 			}
-			lockedStreams := syncerSet.lockStreams(ctx, req)
+			unlock := syncerSet.lockStreams(ctx, req)
 
 			// Simulate some work
 			time.Sleep(1 * time.Millisecond)
 
 			// Unlock the stream
-			syncerSet.unlockStreams(lockedStreams)
+			unlock()
 
 			// After unlock, the lock should still exist but be unlocked
 			lock, found := syncerSet.streamLocks.Load(streamID)
@@ -491,5 +493,97 @@ func TestSyncerWithLock_Embedding(t *testing.T) {
 	assert.True(t, swl.TryLock())
 	swl.Unlock()
 
+	mockSyncer.AssertExpectations(t)
+}
+
+// TestStreamLocks_ConditionalLocking tests that streams are only locked when necessary
+func TestStreamLocks_ConditionalLocking(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+	streamID1 := StreamId{0x01, 0x02, 0x03}
+	streamID2 := StreamId{0x02, 0x03, 0x04}
+	streamID3 := StreamId{0x03, 0x04, 0x05}
+
+	// Create a mock syncer for testing
+	mockSyncer := &mockStreamsSyncer{}
+	mockSyncer.On("Address").Return(localAddr).Maybe()
+
+	// Mark streamID2 as already syncing
+	syncerSet.streamID2Syncer.Store(streamID2, mockSyncer)
+
+	// Test 1: Adding new streams (should lock streamID1, not streamID2)
+	req1 := ModifyRequest{
+		ToAdd: []*SyncCookie{
+			{StreamId: streamID1[:]},
+			{StreamId: streamID2[:]}, // Already syncing, should not lock
+		},
+	}
+	unlock1 := syncerSet.lockStreams(ctx, req1)
+
+	// Verify streamID1 is locked
+	lock1, found1 := syncerSet.streamLocks.Load(streamID1)
+	assert.True(t, found1, "Stream 1 lock should exist")
+	assert.False(t, lock1.TryLock(), "Stream 1 should be locked")
+
+	// Verify streamID2 lock state (may or may not exist, but shouldn't be locked by us)
+	lock2, found2 := syncerSet.streamLocks.Load(streamID2)
+	if found2 {
+		// If it exists, we should be able to lock it
+		assert.True(t, lock2.TryLock(), "Stream 2 should not be locked")
+		lock2.Unlock()
+	}
+
+	unlock1()
+
+	// Test 2: Removing syncing streams (should lock)
+	req2 := ModifyRequest{
+		ToRemove: [][]byte{
+			streamID2[:], // Is syncing, should lock for removal
+			streamID3[:], // Not syncing, should not lock
+		},
+	}
+	unlock2 := syncerSet.lockStreams(ctx, req2)
+
+	// Verify streamID2 is locked (for removal)
+	lock2, found2 = syncerSet.streamLocks.Load(streamID2)
+	assert.True(t, found2, "Stream 2 lock should exist")
+	assert.False(t, lock2.TryLock(), "Stream 2 should be locked for removal")
+
+	// Verify streamID3 lock state
+	lock3, found3 := syncerSet.streamLocks.Load(streamID3)
+	if found3 {
+		// If it exists, we should be able to lock it
+		assert.True(t, lock3.TryLock(), "Stream 3 should not be locked")
+		lock3.Unlock()
+	}
+
+	unlock2()
+
+	// Test 3: Backfilling syncing streams (should not lock)
+	req3 := ModifyRequest{
+		ToBackfill: []*ModifySyncRequest_Backfill{
+			{
+				Streams: []*SyncCookie{
+					{StreamId: streamID2[:]}, // Is syncing, backfill doesn't need lock
+				},
+			},
+		},
+	}
+	unlock3 := syncerSet.lockStreams(ctx, req3)
+
+	// Verify streamID2 is not locked
+	lock2, found2 = syncerSet.streamLocks.Load(streamID2)
+	if found2 {
+		assert.True(t, lock2.TryLock(), "Stream 2 should not be locked for backfill")
+		lock2.Unlock()
+	}
+
+	unlock3()
+
+	// Cleanup
+	syncerSet.streamID2Syncer.Delete(streamID2)
 	mockSyncer.AssertExpectations(t)
 }
