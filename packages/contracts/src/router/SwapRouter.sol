@@ -114,8 +114,8 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
         // validate parameters before any transfers
         _validateSwapParams(params, routerParams);
@@ -126,6 +126,12 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // Permit2 only works with ERC20 tokens, not native ETH
         if (params.tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
             SwapRouter__NativeTokenNotSupportedWithPermit.selector.revertWith();
+        }
+
+        // validate that the poster fee in permit matches the actual configured fee
+        (, uint16 actualPosterBps) = _getSwapFees(_getSpaceFactory(), msg.sender);
+        if (actualPosterBps != posterFee.feeBps) {
+            SwapRouter__PosterFeeMismatch.selector.revertWith();
         }
 
         // take balance snapshot before Permit2 transfer to handle fee-on-transfer tokens
@@ -143,13 +149,20 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
                 requestedAmount: params.amountIn
             }),
             permit.owner, // owner who signed the permit
-            Permit2Hash.hash(SwapWitness(params, routerParams, poster)),
+            Permit2Hash.hash(SwapWitness(params, routerParams, posterFee)),
             Permit2Hash.WITNESS_TYPE_STRING,
             permit.signature
         );
 
         // execute the swap with the balance before transfer
-        return _executeSwap(params, routerParams, poster, tokenInBalanceBefore, permit.owner);
+        return
+            _executeSwap(
+                params,
+                routerParams,
+                posterFee.recipient,
+                tokenInBalanceBefore,
+                permit.owner
+            );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -209,12 +222,12 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     function getPermit2MessageHash(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        address poster,
+        FeeConfig calldata posterFee,
         uint256 amount,
         uint256 nonce,
         uint256 deadline
     ) external view returns (bytes32 messageHash) {
-        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(params, routerParams, poster));
+        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(params, routerParams, posterFee));
         bytes32 tokenPermissions = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, params.tokenIn, amount)
         );
