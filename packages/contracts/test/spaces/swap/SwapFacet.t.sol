@@ -520,10 +520,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.executeSwap(params, routerParams, POSTER);
 
         // Verify refund: user should get back (maxAmountIn - actualAmountIn)
-        uint256 expectedRefund = maxAmountIn - actualAmountIn;
         assertEq(
             token0.balanceOf(caller),
-            userBalanceBefore - maxAmountIn + expectedRefund,
+            userBalanceBefore - actualAmountIn,
             "User should receive refund of unconsumed tokens"
         );
 
@@ -589,18 +588,20 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         deal(caller, maxAmountIn);
         deal(address(token1), mockRouter, amountOut);
 
-        uint256 userBalanceBefore = caller.balance;
+        {
+            uint256 userBalanceBefore = caller.balance;
 
-        vm.prank(caller);
-        swapFacet.executeSwap{value: maxAmountIn}(params, routerParams, POSTER);
+            vm.prank(caller);
+            swapFacet.executeSwap{value: maxAmountIn}(params, routerParams, POSTER);
 
-        // Verify refund: user should get back unconsumed ETH
-        uint256 expectedRefund = amountInAfterFees - actualAmountIn;
-        assertEq(
-            caller.balance,
-            userBalanceBefore - maxAmountIn + expectedRefund,
-            "User should receive refund of unconsumed ETH"
-        );
+            // Verify refund: user should get back unconsumed ETH
+            uint256 expectedRefund = amountInAfterFees - actualAmountIn;
+            assertEq(
+                caller.balance,
+                userBalanceBefore - maxAmountIn + expectedRefund,
+                "User should receive refund of unconsumed ETH"
+            );
+        }
 
         // Verify initial ETH balance remains in SwapFacet
         assertEq(
@@ -615,13 +616,16 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint256 maxAmountIn,
         uint256 actualAmountIn,
         uint256 amountOut,
-        address caller
+        address caller,
+        bool forwardPosterFee
     ) external assumeEOA(caller) givenMembership(caller) {
         vm.assume(caller != founder && caller != POSTER && caller != feeRecipient);
 
-        // Set poster fee to be collected to space (default behavior, forwardPosterFee=false)
+        // Set poster fee configuration - test both forwardPosterFee=false and forwardPosterFee=true
+        // This covers the L-2 audit finding: when forwardPosterFee=true but poster=space,
+        // fees should still go to space and be subtracted from refunds
         vm.prank(founder);
-        swapFacet.setSwapFeeConfig(50, false); // 0.5% poster fee to space
+        swapFacet.setSwapFeeConfig(50, forwardPosterFee); // 0.5% poster fee
 
         // Bound initial ETH balance to reasonable range
         initialETHBalance = bound(initialETHBalance, 0, type(uint256).max >> 1);
@@ -668,18 +672,20 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         deal(caller, maxAmountIn);
         deal(address(token1), mockRouter, amountOut);
 
-        uint256 userBalanceBefore = caller.balance;
+        {
+            uint256 userBalanceBefore = caller.balance;
 
-        vm.prank(caller);
-        swapFacet.executeSwap{value: maxAmountIn}(params, routerParams, everyoneSpace);
+            vm.prank(caller);
+            swapFacet.executeSwap{value: maxAmountIn}(params, routerParams, everyoneSpace);
 
-        // Verify refund: user should get back unconsumed ETH but not poster fee
-        uint256 expectedRefund = amountInAfterFees - actualAmountIn;
-        assertEq(
-            caller.balance,
-            userBalanceBefore - maxAmountIn + expectedRefund,
-            "User should receive refund but not poster fee"
-        );
+            // Verify refund: user should get back unconsumed ETH but not poster fee
+            uint256 expectedRefund = amountInAfterFees - actualAmountIn;
+            assertEq(
+                caller.balance,
+                userBalanceBefore - maxAmountIn + expectedRefund,
+                "User should receive refund but not poster fee"
+            );
+        }
 
         // Verify space retained initial balance plus the poster fee
         assertEq(
@@ -759,10 +765,9 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         swapFacet.executeSwapWithPermit(params, routerParams, defaultPosterFee, permitParams);
 
         // Verify refund to permit owner
-        uint256 expectedRefund = maxAmountIn - actualAmountIn;
         assertEq(
             token0.balanceOf(owner),
-            ownerBalanceBefore - maxAmountIn + expectedRefund,
+            ownerBalanceBefore - actualAmountIn,
             "Owner should receive refund of unconsumed tokens"
         );
 
@@ -1038,8 +1043,8 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
         uint16 actualFeeBps
     ) external givenMembership(user) {
         // Bound inputs to valid ranges, ensuring they are different to create the attack scenario
-        signedFeeBps = uint16(bound(signedFeeBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
-        actualFeeBps = uint16(bound(actualFeeBps, 0, MAX_FEE_BPS - PROTOCOL_BPS));
+        signedFeeBps = uint16(bound(signedFeeBps, 1, MAX_FEE_BPS - PROTOCOL_BPS)); // Must be > 0 to avoid fallback
+        actualFeeBps = uint16(bound(actualFeeBps, 1, MAX_FEE_BPS - PROTOCOL_BPS)); // Must be > 0 to avoid fallback
         vm.assume(signedFeeBps != actualFeeBps); // Ensure attack scenario: signed != actual
         privateKey = boundPrivateKey(privateKey);
         address owner = vm.addr(privateKey);
