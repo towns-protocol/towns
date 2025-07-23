@@ -105,7 +105,7 @@ export class SyncedStreamsLoop {
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
     // will restart sync for all Streams
-    // on stop, the syncLoop will be cancelled if it is runnign and removed once it stops
+    // on stop, the syncLoop will be cancelled if it is running and removed once it stops
     private syncLoop?: Promise<number>
 
     // syncId is used to add and remove streams from the sync subscription
@@ -749,7 +749,7 @@ export class SyncedStreamsLoop {
         if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
-            // On sucessful sync, reset retryCount
+            // On successful sync, reset retryCount
             this.currentRetryCount = 0
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
             this.log('syncStarted', 'syncId', this.syncId)
