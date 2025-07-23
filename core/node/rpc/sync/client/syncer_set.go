@@ -360,7 +360,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				modifySyncs[syncer.Address()].BackfillStreams.Streams,
 				cookie.CopyWithAddr(syncer.Address()),
 			)
-			// Don't unlock individual streams - we'll unlock all at the end
 			continue
 		}
 
