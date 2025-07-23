@@ -15,6 +15,9 @@ architectContract:
 # River contracts
 registryContract:
     address: '0x44354786eacbebf981453a05728e1653bc3c5def'
+
+notifications:
+    ColdStreamsEnabled: true
 # For reference:
 # Space: 0xB712844A05245fBD17dADA91615C7c9521985873
 # SpaceOwner: 0x0443258849016da8Af08e2984Bce8C0ef6Cfc9A0
