@@ -9,7 +9,7 @@ import (
 /**
  * One time fix migration to remove lost sessionIds from key solicitations
  * Loop over all Member objects, count sessionIds across solicitations
- * and log those appearing in get 2% of members, checking if they map to
+ * and log those appearing in get 5% of members, checking if they map to
  * username or display_name encrypted payloads
  */
 func snapshot_migration_0005(iSnapshot *Snapshot) {
@@ -24,7 +24,7 @@ func snapshot_migration_0005_(iSnapshot *Snapshot, force bool) {
 	members := iSnapshot.Members.Joined
 	sessionIdCounts := make(map[string]int)
 	memberCount := len(members)
-	threshold := max(memberCount/50, 2) // 2% threshold, minimum 2 for testing
+	threshold := max(memberCount/20, 2) // 5% threshold, minimum 2 for testing
 
 	for _, member := range members {
 		if len(member.Solicitations) == 0 {
