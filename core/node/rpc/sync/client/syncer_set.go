@@ -164,14 +164,25 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	// Acquire locks in order. Do not lock streams that are already syncing.
 	lockedStreamIDs := make([]StreamId, 0, len(streamIDs))
 	for _, streamID := range orderedStreamIDs {
-		_, syncing := ss.streamID2Syncer.Load(streamID)
-		_, streamToRemove := toRemove[streamID]
+		ss.streamLocks.Compute(
+			streamID,
+			func(oldStreamLock *sync.Mutex, loaded bool) (*sync.Mutex, xsync.ComputeOp) {
+				lock := oldStreamLock
+				if !loaded {
+					lock = &sync.Mutex{}
+				}
+				_, syncing := ss.streamID2Syncer.Load(streamID)
+				_, streamToRemove := toRemove[streamID]
 
-		if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
-			syncer, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
-			syncer.Lock()
-			lockedStreamIDs = append(lockedStreamIDs, streamID)
-		}
+				if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
+					lock.Lock()
+					lockedStreamIDs = append(lockedStreamIDs, streamID)
+					return lock, xsync.UpdateOp
+				}
+
+				return oldStreamLock, xsync.CancelOp
+			},
+		)
 	}
 
 	return lockedStreamIDs
