@@ -15,10 +15,14 @@ library Permit2Hash {
     bytes32 internal constant ROUTER_PARAMS_TYPE_HASH =
         keccak256("RouterParams(address router,address approveTarget,bytes swapData)");
 
+    /// @notice EIP-712 type hash for FeeConfig struct
+    bytes32 internal constant FEE_CONFIG_TYPE_HASH =
+        keccak256("FeeConfig(address recipient,uint16 feeBps)");
+
     /// @notice EIP-712 type string for SwapWitness struct used in permit signatures
     /// @dev Defines the complete type definition including nested struct types for swap parameters
     string internal constant WITNESS_TYPE =
-        "SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)";
+        "SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,FeeConfig feeConfig)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)FeeConfig(address recipient,uint16 feeBps)RouterParams(address router,address approveTarget,bytes swapData)";
 
     /// @notice Keccak256 hash of the WITNESS_TYPE string
     /// @dev Pre-computed hash for gas efficiency in signature verification
@@ -28,7 +32,7 @@ library Permit2Hash {
     /// @dev This string defines the structure of the witness data that binds permit signatures
     /// to specific swap parameters, preventing front-running and parameter manipulation attacks
     string internal constant WITNESS_TYPE_STRING =
-        "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,address poster)TokenPermissions(address token,uint256 amount)";
+        "SwapWitness witness)ExactInputParams(address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,address recipient)FeeConfig(address recipient,uint16 feeBps)RouterParams(address router,address approveTarget,bytes swapData)SwapWitness(ExactInputParams exactInputParams,RouterParams routerParams,FeeConfig feeConfig)TokenPermissions(address token,uint256 amount)";
 
     /// @notice EIP-712 type hash for PermitWitnessTransferFrom with SwapWitness
     /// @dev Combined type hash for Permit2 witness transfers with swap-specific witness data
@@ -51,7 +55,7 @@ library Permit2Hash {
                     WITNESS_TYPE_HASH,
                     hash(witness.exactInputParams),
                     hash(witness.routerParams),
-                    witness.poster
+                    hash(witness.feeConfig)
                 )
             );
     }
@@ -77,5 +81,12 @@ library Permit2Hash {
                     keccak256(params.swapData) // Dynamic bytes must be hashed
                 )
             );
+    }
+
+    /// @notice Hashes FeeConfig struct according to EIP-712
+    /// @param feeConfig The FeeConfig struct to hash
+    /// @return bytes32 The EIP-712 hashStruct of FeeConfig
+    function hash(ISwapRouterBase.FeeConfig memory feeConfig) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_CONFIG_TYPE_HASH, feeConfig));
     }
 }

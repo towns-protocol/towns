@@ -758,12 +758,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             throw new Error(`Invalid stream ID type: ${streamId}`)
         }
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
         return {
-            error,
             eventId,
             prevMiniblockHash,
         }
@@ -787,11 +786,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const uploadDeviceKeys = async () => {
@@ -808,8 +807,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({ streamId, event })
-        return { eventId, error }
+        await client.rpc.addEvent({ streamId, event })
+        return { eventId }
     }
 
     const sendMessage = async (
@@ -911,11 +910,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const setDisplayName = async (streamId: string, displayName: string) => {
@@ -933,11 +932,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const setUserProfileImage = async (chunkedMediaInfo: PlainMessage<ChunkedMedia>) => {
@@ -961,11 +960,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const decryptSessions = async (

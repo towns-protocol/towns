@@ -81,12 +81,21 @@ should be reconciled with which method.
   - Improves code clarity and maintainability for snapshot-related operations
   - Prepares codebase for backward reconciliation implementation
 
-## TODO
+- [PR #3621](https://github.com/towns-protocol/towns/pull/3621): **feat: update GetMiniblocks API for potential gaps in miniblock sequence**
+  - Implements backwards reconciliation for GetMiniblocks API to handle missing miniblocks
+  - Adds new error code `Err_MINIBLOCKS_NOT_FOUND` to distinguish between storage failures and missing miniblocks
+  - Handles three scenarios: non-forwarded requests (retry from remote), forwarded requests (return error), and non-local streams (forward with error handling)
+  - Includes comprehensive test coverage for gap handling across multiple replicas
 
-- [ ] Extend storage layer to report gaps in the stream miniblocks, so gaps can be filled
-- [ ] Modify GetMiniblocks API to fallback to remote replica if miniblocks are not available locally
+- [PR #3630](https://github.com/towns-protocol/towns/pull/3630): **feat: add StreamBackwardsReconciliationThreshold on-chain setting**
+  - Adds on-chain configuration setting to control stream synchronization strategies
+  - Default threshold set to 50 miniblocks
+  - Determines reconciliation method: backwards reconciliation if stream is behind > threshold, forward reconciliation if ≤ threshold
+  - Preparatory work for future stream reconciliation logic implementation
+
+## Remaining TODOs
+
 - [ ] Implement backward reconciliation logic in @core/node/events
-- [ ] Trigger backwards or forward reconciliation based on on-chain settings
 
 
 

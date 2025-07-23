@@ -5,20 +5,24 @@ pragma solidity ^0.8.23;
 import {IDispatcherBase} from "./IDispatcher.sol";
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {StoragePointer} from "@towns-protocol/diamond/src/libraries/StoragePointer.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {DispatcherStorage} from "./DispatcherStorage.sol";
 
 abstract contract DispatcherBase is IDispatcherBase {
-    function _captureData(bytes32 transactionId, bytes memory data) internal {
+    using CustomRevert for bytes4;
+    using StoragePointer for mapping(bytes32 => bytes);
+
+    function _deleteCapturedData(bytes32 transactionId) internal {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-        ds.transactionData[transactionId] = data;
+        delete ds.transactionData.get(transactionId).value;
     }
 
-    function _getCapturedData(bytes32 transactionId) internal view returns (bytes memory) {
+    function _getCapturedData(bytes32 transactionId) internal view returns (bytes storage) {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-        return ds.transactionData[transactionId];
+        return ds.transactionData.get(transactionId).value;
     }
 
     function _captureValue(bytes32 transactionId) internal {
@@ -69,14 +73,14 @@ abstract contract DispatcherBase is IDispatcherBase {
             _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
         );
 
+        DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
+        StoragePointer.Bytes storage capturedDataRef = ds.transactionData.get(transactionId);
         // revert if the transaction already exists
-        if (_getCapturedData(transactionId).length > 0) {
-            CustomRevert.revertWith(Dispatcher__TransactionAlreadyExists.selector);
+        if (capturedDataRef.value.length > 0) {
+            Dispatcher__TransactionAlreadyExists.selector.revertWith();
         }
 
-        _captureData(transactionId, data);
-        if (msg.value != 0) {
-            _captureValue(transactionId);
-        }
+        capturedDataRef.value = data;
+        if (msg.value != 0) _captureValue(transactionId);
     }
 }

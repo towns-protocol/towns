@@ -13,6 +13,10 @@ import {ITownsApp} from "./ITownsApp.sol";
 /// @dev Implements IERC6900Module, IERC6900ExecutionModule, and ITownsApp interfaces
 
 abstract contract BaseApp is ITownsApp {
+    receive() external payable {
+        _onPayment(msg.sender, msg.value);
+    }
+
     // External functions
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
@@ -53,4 +57,6 @@ abstract contract BaseApp is ITownsApp {
     function _installPrice() internal view virtual returns (uint256) {}
 
     function _accessDuration() internal view virtual returns (uint48) {}
+
+    function _onPayment(address payer, uint256 amount) internal virtual {}
 }

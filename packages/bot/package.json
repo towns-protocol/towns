@@ -1,23 +1,20 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.274",
+    "version": "0.0.283",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "tsc",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "typecheck": "tsc --noEmit",
-        "watch": "tsc --watch",
         "test": "vitest",
         "test:ci:multi:ent": "vitest run",
-        "test:watch": "vitest --watch"
+        "test:watch": "vitest --watch",
+        "typecheck": "tsc --noEmit",
+        "watch": "tsc --watch"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
@@ -32,9 +29,6 @@
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
         "viem": "^2.29.3"
-    },
-    "peerDependencies": {
-        "hono": "^4.7.11"
     },
     "devDependencies": {
         "@types/jsonwebtoken": "^9.0.9",
@@ -52,5 +46,11 @@
     },
     "files": [
         "/dist"
-    ]
+    ],
+    "peerDependencies": {
+        "hono": "^4.7.11"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
 }

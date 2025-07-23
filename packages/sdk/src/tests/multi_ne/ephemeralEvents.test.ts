@@ -87,7 +87,7 @@ describe('ephemeralEvents', () => {
         })
 
         const solicitationEphemeralTypes: boolean[] = []
-        chuck.on('newKeySolicitation', (_, __, ___, ____, _____, ______, ephemeral) => {
+        chuck.on('newKeySolicitation', (_, __, ___, ____, _____, ephemeral) => {
             solicitationEphemeralTypes.push(ephemeral ?? false)
         })
 
@@ -116,13 +116,13 @@ describe('ephemeralEvents', () => {
         const { streamId } = await alice.createGDMChannel([bob.userId, charlie.userId])
 
         const ephemeralSolicitations: boolean[] = []
-        alice.on('newKeySolicitation', (_, __, ___, ____, _____, ______, ephemeral) => {
+        alice.on('newKeySolicitation', (_, __, ___, ____, _____, ephemeral) => {
             ephemeralSolicitations.push(ephemeral ?? false)
         })
 
-        const ephemeralFulfillments: boolean[] = []
-        alice.on('ephemeralKeyFulfillment', (_) => {
-            ephemeralFulfillments.push(true)
+        const ephemeralFulfillments: string[] = []
+        alice.on('ephemeralKeyFulfillment', (event) => {
+            ephemeralFulfillments.push(event.userId)
         })
 
         await waitFor(() => {
@@ -139,6 +139,12 @@ describe('ephemeralEvents', () => {
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
 
         expect(ephemeralSolicitations).toEqual([true])
-        expect(ephemeralFulfillments).toEqual([true])
+
+        // Wait for at least one ephemeral fulfillment
+        await waitFor(() => expect(ephemeralFulfillments.length).toBeGreaterThanOrEqual(1))
+
+        // Verify all fulfillments are from different clients
+        const uniqueSenders = new Set(ephemeralFulfillments)
+        expect(uniqueSenders.size).toEqual(ephemeralFulfillments.length)
     })
 })

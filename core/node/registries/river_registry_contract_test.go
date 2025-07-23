@@ -20,8 +20,7 @@ import (
 
 func TestNodeEvents(t *testing.T) {
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	tt, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
 
@@ -186,8 +185,7 @@ func TestNodeEvents(t *testing.T) {
 }
 
 func TestStreamEvents(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	require := require.New(t)
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 2, MineOnTx: true, AutoMine: true})

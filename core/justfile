@@ -139,18 +139,28 @@ _config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     source ${ENV_FILE}
     mkdir -p ${INSTANCE_DIR}/{config,logs,wallet,certs}
     echo "RIVER_PORT=$((${RPC_PORT} + ${INSTANCE_NUM}))" > ${INSTANCE_DIR}/config/config.env
+
+    if [ ! -f "${INSTANCE_DIR}/wallet/operator_private_key" ]; then
+        cast wallet new --json > "${INSTANCE_DIR}/wallet/operator_wallet.json"
+        jq -r '.[0].address' "${INSTANCE_DIR}/wallet/operator_wallet.json" > "${INSTANCE_DIR}/wallet/operator_address"
+        jq -r '.[0].private_key' "${INSTANCE_DIR}/wallet/operator_wallet.json" | sed 's/^0x//' > "${INSTANCE_DIR}/wallet/operator_private_key"
+    fi
+
     if [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then
         cast wallet new --json > "${INSTANCE_DIR}/wallet/wallet.json"
         jq -r '.[0].address' "${INSTANCE_DIR}/wallet/wallet.json" > "${INSTANCE_DIR}/wallet/node_address"
         jq -r '.[0].private_key' "${INSTANCE_DIR}/wallet/wallet.json" | sed 's/^0x//' > "${INSTANCE_DIR}/wallet/private_key"
     fi
+
     if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
         ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
     fi
+
     # Next command fails if running with geth, ignore error
+    cast rpc -r ${RPC_BASE} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/operator_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff || true
+    cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/operator_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff || true
     cast rpc -r ${RPC_BASE} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff || true
     cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff
-
 
 config-instances: _require_run_env (_loop-instances "_config-instance")
 
@@ -288,10 +298,18 @@ _register-node-river $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     source ${ENV_FILE}
     source ${RUN_BASE}/contracts.env
     NODE_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/node_address)
+    NODE_OPERATOR_KEY=$(cat ${INSTANCE_DIR}/wallet/operator_private_key)
+    NODE_OPERATOR_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/operator_address)
     source ${INSTANCE_DIR}/config/config.env
     cast send \
         --rpc-url ${RPC_RIVER} \
         --private-key $LOCAL_PRIVATE_KEY \
+        $RIVER_REGISTRYCONTRACT_ADDRESS \
+        "approveOperator(address)" \
+        $NODE_OPERATOR_ADDRESS > /dev/null
+    cast send \
+        --rpc-url ${RPC_RIVER} \
+        --private-key $NODE_OPERATOR_KEY \
         $RIVER_REGISTRYCONTRACT_ADDRESS \
         "registerNode(address,string,uint8)" \
         $NODE_ADDRESS \

@@ -42,7 +42,7 @@ type Subscription struct {
 	// backfillEvents is the map of stream and backfill events and miniblocks hashes that were sent to the client.
 	// This is used to avoid sending the same backfill events multiple times.
 	// The list of hashes is deleted after receiving the first message after the backfill.
-	backfillEvents *xsync.Map[StreamId, []common.Hash]
+	backfillEvents *xsync.Map[StreamId, map[common.Hash]struct{}]
 	// syncers is the set of syncers that handle stream synchronization
 	syncers SyncerSet
 	// registry is the subscription registry that manages all subscriptions.
@@ -56,9 +56,11 @@ type Subscription struct {
 // Close closes the subscription.
 func (s *Subscription) Close() {
 	s.closed.Store(true)
-	s.Messages.Close()
 	// Remove the subscription from the registry
 	s.registry.RemoveSubscription(s.syncID)
+	s.Messages.Close()
+	s.initializingStreams.Clear()
+	s.backfillEvents.Clear()
 }
 
 // isClosed returns true if the subscription is closed, false otherwise.
@@ -76,9 +78,9 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	if err != nil {
 		rvrErr := AsRiverError(err).
 			Tag("syncId", s.syncID).
-			Tag("op", msg.GetSyncOp())
+			Func("Subscription.Send")
 		s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
-		s.log.Errorw("Failed to add message to subscription", "op", msg.GetSyncOp(), "error", err)
+		_ = rvrErr.LogError(s.log)
 	}
 }
 
@@ -106,7 +108,10 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 			req.AddingFailureHandler(status)
 			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
 		},
-		RemovingFailureHandler: req.RemovingFailureHandler,
+		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+			req.RemovingFailureHandler(status)
+			s.registry.AddStreamToSubscription(s.syncID, StreamId(status.GetStreamId()))
+		},
 	}
 
 	// Handle streams that the clients wants to subscribe to.
@@ -131,13 +136,14 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		if modifiedReq.BackfillingFailureHandler == nil {
 			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
 		} else {
+			originalBackfillingFailureHandler := req.BackfillingFailureHandler
 			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
 				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
 					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
 				}) {
 					modifiedReq.AddingFailureHandler(status)
-				} else {
-					modifiedReq.BackfillingFailureHandler(status)
+				} else if originalBackfillingFailureHandler != nil {
+					originalBackfillingFailureHandler(status)
 				}
 			}
 		}

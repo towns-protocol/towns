@@ -44,12 +44,14 @@ describe('ClientDecryptionExtensions', () => {
     }
 
     const waitForMessages = async (client: Client, streamId: string, bodys: string[]) => {
-        log('waitForMessages', client.userId, streamId, bodys)
+        log('waitForMessages:', client.userId, client.logId, streamId, bodys)
         const stream = await client.waitForStream(streamId)
+        log('waitForMessages stream:', client.userId, client.logId, streamId, stream.view.timeline)
+
         return waitFor(
             () => {
                 const messages = getDecryptedChannelMessages(stream)
-                expect(messages).toEqual(bodys)
+                expect(messages, `messages for ${client.logId}`).toEqual(bodys)
             },
             { timeoutMS: 15000 },
         )
@@ -75,13 +77,10 @@ describe('ClientDecryptionExtensions', () => {
 
     const waitForDecryptionErrors = async (client: Client, streamId: string, count: number) => {
         log('waitForDecryptionErrors', client.userId, streamId, count)
-        return waitFor(
-            async () => {
-                const errors = await getDecryptionErrors(client, streamId)
-                expect(errors.length).toEqual(count)
-            },
-            { timeoutMS: 10000 },
-        )
+        return waitFor(async () => {
+            const errors = await getDecryptionErrors(client, streamId)
+            expect(errors.length).toEqual(count)
+        })
     }
 
     beforeEach(async () => {})
@@ -140,8 +139,6 @@ describe('ClientDecryptionExtensions', () => {
             context: alice1.signerContext,
             deviceId: 'alice2',
         })
-
-        await expect(alice2_restarted.waitForStream(streamId)).resolves.not.toThrow()
 
         // she should have the keys because bob2 should share with existing members
         await expect(

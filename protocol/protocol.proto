@@ -198,12 +198,6 @@ message MemberPayload {
         map<string, uint64> tips_count = 6;
     }
 
-    message KeyPackage {
-        bytes user_address = 1;
-        bytes signature_public_key = 2;
-        bytes key_package = 3;
-    }
-
     message Membership {
         MembershipOp op = 1;
         bytes user_address = 2;
@@ -1035,19 +1029,13 @@ message GetLastMiniblockHashResponse {
 }
 
 message AddEventRequest {
+    reserved 3;
     bytes stream_id = 1;
     Envelope event = 2;
-    bool optional = 3; // if true, response will contain non nil error if event didn't pass validation
 }
 
 message AddEventResponse {
-    message Error {
-        Err code = 1;
-        string msg = 2;
-        repeated string funcs = 3;
-    }
-    // error thrown during this request, only set if AddEventRequest.optional is true, otherwise the request will fail with this error
-    Error error = 1; 
+    reserved 1;
     // all events created during this request including parent events
     repeated EventRef new_events = 2;
 }
@@ -1395,4 +1383,10 @@ enum Err {
     // SYNC_SESSION_RUNNER_UNASSIGNABLE occurs when an attempt is made to assign a stream to a
     // sync session runner that is full or closed.
     SYNC_SESSION_RUNNER_UNASSIGNABLE = 71;
+    
+    // Miniblocks are not found in the requested range. This is different from
+    // MINIBLOCKS_STORAGE_FAILURE which indicates corruption or database issues.
+    // This error is retriable and indicates the miniblocks might be available
+    // on other nodes.
+    MINIBLOCKS_NOT_FOUND = 72;
 }

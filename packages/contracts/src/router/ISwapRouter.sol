@@ -43,10 +43,18 @@ interface ISwapRouterBase {
         bytes swapData;
     }
 
+    /// @notice Fee configuration for permit-based swaps
+    /// @param recipient The address that should receive the fee
+    /// @param feeBps The expected fee in basis points
+    struct FeeConfig {
+        address recipient;
+        uint16 feeBps;
+    }
+
     struct SwapWitness {
         ExactInputParams exactInputParams;
         RouterParams routerParams;
-        address poster;
+        FeeConfig feeConfig;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -76,6 +84,9 @@ interface ISwapRouterBase {
 
     /// @notice Error thrown when tokenIn and tokenOut are the same
     error SwapRouter__SameToken();
+
+    /// @notice Error thrown when the poster fee in permit doesn't match the actual configured fee
+    error SwapRouter__PosterFeeMismatch();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -148,14 +159,14 @@ interface ISwapRouter is ISwapRouterBase {
     /// @param params The exact input swap parameters that will be bound to the permit signature
     /// @param routerParams The router interaction parameters that will be bound to the permit signature
     /// @param permit The Permit2 data containing owner, nonce, deadline, and signature
-    /// @param poster The address that posted this swap opportunity (included in witness)
+    /// @param posterFee The fee configuration including poster address and expected poster fee rate (included in witness)
     /// @return amountOut The amount of output tokens received after fees
     /// @return protocolFee The amount of protocol fee collected
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
     /// @notice Calculate fees for ETH input swaps before execution
@@ -199,7 +210,7 @@ interface ISwapRouter is ISwapRouterBase {
     /// @dev Generates the exact hash that needs to be signed for permit-based swaps
     /// @param params Swap parameters that will be bound to permit signature
     /// @param routerParams Router parameters that will be bound to permit signature
-    /// @param poster Address of poster (included in witness data)
+    /// @param posterFee Fee configuration including poster address and expected poster fee rate (included in witness)
     /// @param amount Token amount to permit (should be >= params.amountIn)
     /// @param nonce Permit nonce (use getPermit2Nonce to find available nonce)
     /// @param deadline Permit deadline (unix timestamp)
@@ -207,7 +218,7 @@ interface ISwapRouter is ISwapRouterBase {
     function getPermit2MessageHash(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        address poster,
+        FeeConfig calldata posterFee,
         uint256 amount,
         uint256 nonce,
         uint256 deadline

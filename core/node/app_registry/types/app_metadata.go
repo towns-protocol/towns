@@ -14,15 +14,16 @@ type SlashCommand struct {
 }
 
 type AppMetadata struct {
-	// We omit the name property from the JSON serialization of the app metadata object because
-	// we store the name in a separate column so that we can performantly guarantee uniqueness
-	// between bot display names.
-	Name          string         `json:"-"`
+	// We omit the username property from the JSON serialization of the app metadata object because
+	// we store the username in a separate column so that we can performantly guarantee uniqueness
+	// between bot usernames.
+	Username      string         `json:"-"`
 	Description   string         `json:"description"`
 	ImageUrl      string         `json:"image_url"`
 	ExternalUrl   string         `json:"external_url,omitempty"`
 	AvatarUrl     string         `json:"avatar_url"`
 	SlashCommands []SlashCommand `json:"slash_commands,omitempty"`
+	DisplayName   string         `json:"display_name"`
 }
 
 func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
@@ -47,12 +48,13 @@ func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
 	}
 
 	return AppMetadata{
-		Name:          metadata.GetName(),
+		Username:      metadata.GetUsername(),
 		Description:   metadata.GetDescription(),
 		ImageUrl:      metadata.GetImageUrl(),
 		ExternalUrl:   externalUrl,
 		AvatarUrl:     metadata.GetAvatarUrl(),
 		SlashCommands: slashCommands,
+		DisplayName:   metadata.GetDisplayName(),
 	}
 }
 
@@ -72,12 +74,13 @@ func StorageToProtocolAppMetadata(metadata AppMetadata) *protocol.AppMetadata {
 	}
 
 	return &protocol.AppMetadata{
-		Name:          metadata.Name,
+		Username:      metadata.Username,
 		Description:   metadata.Description,
 		ImageUrl:      metadata.ImageUrl,
 		ExternalUrl:   externalUrl,
 		AvatarUrl:     metadata.AvatarUrl,
 		SlashCommands: slashCommands,
+		DisplayName:   metadata.DisplayName,
 	}
 }
 
@@ -169,8 +172,12 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
 	}
 
-	if metadata.GetName() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata name is required")
+	if metadata.GetUsername() == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata username is required")
+	}
+
+	if metadata.GetDisplayName() == "" {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata display_name is required")
 	}
 
 	if metadata.GetDescription() == "" {
@@ -209,7 +216,7 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		if err := validateSlashCommand(cmd); err != nil {
 			return err
 		}
-		
+
 		cmdName := cmd.GetName()
 		if commandNames[cmdName] {
 			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
@@ -226,19 +233,19 @@ func validateSlashCommandName(name string) error {
 	if name == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name is required")
 	}
-	
+
 	if len(name) > 32 {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must not exceed 32 characters").
 			Tag("name", name).
 			Tag("length", len(name))
 	}
-	
+
 	// Check if name starts with a letter
 	if len(name) > 0 && !((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')) {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must start with a letter").
 			Tag("name", name)
 	}
-	
+
 	// Check if name contains only letters, numbers, and underscores
 	for i, ch := range name {
 		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_') {
@@ -247,7 +254,7 @@ func validateSlashCommandName(name string) error {
 				Tag("invalidCharAt", i)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -256,24 +263,24 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 	if cmd == nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "slash command cannot be nil")
 	}
-	
+
 	// Validate name
 	if err := validateSlashCommandName(cmd.GetName()); err != nil {
 		return err
 	}
-	
+
 	// Validate description
 	description := cmd.GetDescription()
 	if description == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command description is required").
 			Tag("commandName", cmd.GetName())
 	}
-	
+
 	if len(description) > 256 {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command description must not exceed 256 characters").
 			Tag("commandName", cmd.GetName()).
 			Tag("descriptionLength", len(description))
 	}
-	
+
 	return nil
 }
