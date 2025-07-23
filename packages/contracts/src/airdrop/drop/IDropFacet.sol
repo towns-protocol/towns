@@ -54,6 +54,7 @@ interface IDropFacetBase {
     error DropFacet__CurrencyNotSet();
     error DropFacet__RewardsDistributionNotSet();
     error DropFacet__InsufficientBalance();
+    error DropFacet__NotClaimingAccount();
 }
 
 interface IDropFacet is IDropFacetBase {
