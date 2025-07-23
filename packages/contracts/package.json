@@ -1,37 +1,29 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.250",
+  "version": "0.0.283",
   "packageManager": "yarn@3.8.0",
-  "installConfig": {
-    "hoistingLimits": "dependencies"
-  },
-  "files": [
-    "src/**/*.sol",
-    "scripts/**/*.sol",
-    "./typings/index.ts",
-    "README.md"
-  ],
   "scripts": {
     "build": "forge build",
     "clean": "forge clean",
     "format": "yarn prettier:write",
     "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
+    "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
+    "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
     "test": "forge test --ffi --nmc Fork --fuzz-runs 4096",
     "test:unit": "yarn test",
-    "typings": "wagmi generate",
-    "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
-    "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\""
+    "typings": "wagmi generate"
   },
   "dependencies": {
     "@erc6900/reference-implementation": "^0.8.1",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
-    "@openzeppelin/contracts": "^5.3.0",
-    "@openzeppelin/contracts-upgradeable": "^5.3.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "@prb/math": "^4.1.0",
-    "@towns-protocol/diamond": "^0.5.4",
+    "@towns-protocol/diamond": "^0.6.1",
+    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
     "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
-    "solady": "^0.1.14"
+    "solady": "^0.1.24"
   },
   "devDependencies": {
     "@openzeppelin/merkle-tree": "^1.0.8",
@@ -43,5 +35,14 @@
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
     "solhint": "^5.0.5"
+  },
+  "files": [
+    "src/**/*.sol",
+    "scripts/**/*.sol",
+    "./typings/index.ts",
+    "README.md"
+  ],
+  "installConfig": {
+    "hoistingLimits": "dependencies"
   }
 }

@@ -254,11 +254,12 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	}
 
 	subsystem := mode
-	if mode == ServerModeFull {
+	switch mode {
+	case ServerModeFull:
 		subsystem = "stream"
-	} else if mode == ServerModeNotification {
+	case ServerModeNotification:
 		subsystem = "notification"
-	} else if mode == ServerModeAppRegistry {
+	case ServerModeAppRegistry:
 		subsystem = "app_registry"
 	}
 
@@ -306,27 +307,31 @@ func (s *Service) initBaseChain() error {
 			return err
 		}
 
-		chainAuth, err := auth.NewChainAuth(
-			ctx,
-			s.baseChain,
-			s.entitlementEvaluator,
-			&cfg.ArchitectContract,
-			cfg.BaseChain.LinkedWalletsLimit,
-			cfg.BaseChain.ContractCallsTimeoutMs,
-			s.metrics,
-		)
-		if err != nil {
-			return err
+		// Only construct a chainAuth if we're not in app registry mode.
+		// The app registry service will construct its own specific contracts.
+		if s.mode != ServerModeAppRegistry {
+			chainAuth, err := auth.NewChainAuth(
+				ctx,
+				s.baseChain,
+				s.entitlementEvaluator,
+				&cfg.ArchitectContract,
+				&cfg.AppRegistryContract,
+				cfg.BaseChain.LinkedWalletsLimit,
+				cfg.BaseChain.ContractCallsTimeoutMs,
+				s.metrics,
+			)
+			if err != nil {
+				return err
+			}
+			s.chainAuth = chainAuth
 		}
-		s.chainAuth = chainAuth
-		return nil
 	} else {
 		if !s.config.Log.Simplify {
 			s.defaultLogger.Warnw("Using fake auth for testing")
 		}
 		s.chainAuth = auth.NewFakeChainAuth()
-		return nil
 	}
+	return nil
 }
 
 func (s *Service) initRiverChain() error {
@@ -848,6 +853,8 @@ func (s *Service) initAppRegistryHandlers() error {
 		s.config.AppRegistry.Authentication.SessionToken.Key.Algorithm,
 		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
 		"/river.AppRegistryService/GetStatus",
+		"/river.AppRegistryService/GetAppMetadata",
+		"/river.AppRegistryService/ValidateBotName",
 	)
 	if err != nil {
 		return err

@@ -4,11 +4,8 @@
 
 import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import {
-    DecryptionStatus,
-    GroupEncryptionAlgorithmId,
-    UserDevice,
-} from '@towns-protocol/encryption'
+import { GroupEncryptionAlgorithmId, UserDevice } from '@towns-protocol/encryption'
+import { DecryptionStatus } from '../../decryptionExtensions'
 import {
     makeUserStreamId,
     makeUserSettingsStreamId,
@@ -55,7 +52,7 @@ import {
 } from '../../types'
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test')
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IRewardsDistribution} from "../../base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IDropFacet} from "./IDropFacet.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
 import {DropClaim} from "./DropClaim.sol";
@@ -68,6 +69,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
 
         TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
         points.inner.burn(req.account, req.points);
+        emit IERC20.Transfer(req.account, address(0), amount);
 
         drop.condition.currency.safeTransfer(req.account, amount);
 
@@ -93,6 +95,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
 
         TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
         points.inner.burn(req.account, req.points);
+        emit IERC20.Transfer(req.account, address(0), amount);
 
         _approveClaimToken(drop.condition.currency, amount);
 

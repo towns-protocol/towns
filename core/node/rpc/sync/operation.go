@@ -22,6 +22,11 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// defaultCommandReplyTimeout is the default timeout for command replies in the sync operation.
+	defaultCommandReplyTimeout = 30 * time.Second
+)
+
 type (
 	// StreamSyncOperation represents a stream sync operation that is currently in progress.
 	StreamSyncOperation struct {
@@ -146,7 +151,10 @@ func (syncOp *StreamSyncOperation) Run(
 				reply: make(chan error, 1),
 			}
 			if err := syncOp.process(cmd); err != nil {
-				syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				if IsRiverErrorCode(err, Err_INVALID_ARGUMENT) {
+					syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				}
+				syncOp.cancel(err)
 			}
 		}()
 	}
@@ -185,19 +193,6 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			for i, msg := range msgs {
-				msg.SyncId = syncOp.SyncID
-				if err := res.Send(msg); err != nil {
-					syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
-					return err
-				}
-
-				messagesSendToClient++
-				syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
-
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					return nil
-				}
-
 				select {
 				case <-syncOp.ctx.Done():
 					// clientErr non-nil indicates client hung up, get the error from the root ctx.
@@ -207,6 +202,18 @@ func (syncOp *StreamSyncOperation) Run(
 					// otherwise syncOp is stopped internally.
 					return context.Cause(syncOp.ctx)
 				default:
+					msg.SyncId = syncOp.SyncID
+					if err := res.Send(msg); err != nil {
+						syncOp.log.Errorw("Unable to send sync stream update to client", "error", err)
+						return err
+					}
+
+					messagesSendToClient++
+					syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
+
+					if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+						return nil
+					}
 				}
 			}
 
@@ -233,6 +240,7 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subsc
 		case <-syncOp.ctx.Done():
 			return
 		case cmd := <-syncOp.commands:
+			syncOp.metrics.actions(cmd, syncOp.usingSharedSyncer)
 			if cmd.ModifySyncReq != nil {
 				cmd.Reply(sub.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
@@ -283,7 +291,7 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("AddStreamToSync")
 	}
 
 	if status != nil {
@@ -333,7 +341,7 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("RemoveStreamFromSync")
 	}
 
 	if status != nil {
@@ -401,7 +409,7 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("ModifySync")
 	}
 
 	if syncOp.metrics != nil {
@@ -438,11 +446,28 @@ func (syncOp *StreamSyncOperation) CancelSync(
 		reply:     make(chan error, 1),
 	}
 
-	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+	// Not using syncOp.process here, because we want to ignore request context to avoid flakiness.
+	// The context could be cancelled by the client before the command is processed, which would lead to a timeout
+	// in the command processing and the client would receive the "sync operation cancelled" error response.
+	timeout := time.After(defaultCommandReplyTimeout)
+	select {
+	case syncOp.commands <- cmd:
+		select {
+		case err := <-cmd.reply:
+			if err == nil {
+				return connect.NewResponse(&CancelSyncResponse{}), nil
+			}
+			return nil, err
+		case <-timeout:
+			return nil, RiverError(Err_DEADLINE_EXCEEDED, "sync operation command timed out").
+				Tags("syncId", syncOp.SyncID).
+				Func("CancelSync")
+		}
+	case <-timeout:
+		return nil, RiverError(Err_DEADLINE_EXCEEDED, "sync operation command timed out").
+			Tags("syncId", syncOp.SyncID).
+			Func("CancelSync")
 	}
-
-	return connect.NewResponse(&CancelSyncResponse{}), nil
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
@@ -462,7 +487,7 @@ func (syncOp *StreamSyncOperation) PingSync(
 	}
 
 	if err := syncOp.process(cmd); err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("PingSync")
 	}
 
 	return connect.NewResponse(&PingSyncResponse{}), nil
@@ -486,7 +511,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 			return RiverError(Err_CANCELED, "sync operation cancelled").
 				Tags("syncId", syncOp.SyncID)
 		}
-	case <-time.After(30 * time.Second): // TODO: make this configurable
+	case <-time.After(defaultCommandReplyTimeout): // TODO: make this configurable
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
 			Tags("syncId", syncOp.SyncID)
 		syncOp.log.Errorw("Sync operation command queue full", "error", err)

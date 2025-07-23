@@ -95,10 +95,9 @@ describe('spaceTests', () => {
 
         // our space channels metadata should reflect the new channel
         await waitFor(() => {
-            expect(spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)).toBeDefined()
+            expect(spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]).toBeDefined()
             expect(
-                spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)
-                    ?.updatedAtEventNum,
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]?.updatedAtEventNum,
             ).toBeGreaterThan(0)
         })
 
@@ -109,7 +108,7 @@ describe('spaceTests', () => {
 
         // save off existing updated at
         const prevUpdatedAt =
-            spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)!.updatedAtEventNum
+            spaceStream.view.spaceContent.spaceChannelsMetadata[channelId].updatedAtEventNum
 
         // make a snapshot
         await waitFor(async () => {
@@ -157,10 +156,9 @@ describe('spaceTests', () => {
 
         // see the metadata update
         await waitFor(() => {
-            expect(spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)).toBeDefined()
+            expect(spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]).toBeDefined()
             expect(
-                spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)
-                    ?.updatedAtEventNum,
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]?.updatedAtEventNum,
             ).toBeGreaterThan(prevUpdatedAt)
         })
 

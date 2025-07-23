@@ -19,8 +19,7 @@ import (
 func TestFetchDelegateWallets(t *testing.T) {
 	t.Skip("Skipping due to outbound network call")
 	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	btc, err := crypto.NewBlockchainTestContext(
 		ctx,

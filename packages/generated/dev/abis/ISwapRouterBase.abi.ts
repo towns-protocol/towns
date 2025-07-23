@@ -120,6 +120,26 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapRouter__NativeTokenNotSupportedWithPermit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__PosterFeeMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__RecipientRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__SameToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__UnexpectedETH",
     "inputs": []
   }

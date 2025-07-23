@@ -5,21 +5,21 @@ pragma solidity ^0.8.23;
 import {IRewardsDistribution} from "./IRewardsDistribution.sol";
 
 // libraries
+import {CustomRevert} from "../../../../../utils/libraries/CustomRevert.sol";
 import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
 import {StakingRewards} from "./StakingRewards.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
+import {UpgradeableBeaconBase} from "../../../../../diamond/facets/beacon/UpgradeableBeacon.sol";
+import {MainnetDelegationBase} from "../../mainnet/MainnetDelegationBase.sol";
 import {DelegationProxy} from "./DelegationProxy.sol";
 import {RewardsDistributionBase} from "./RewardsDistributionBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
 import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
-import {MainnetDelegationBase} from "src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
-import {UpgradeableBeaconBase} from "src/diamond/facets/beacon/UpgradeableBeacon.sol";
 
 contract RewardsDistributionV2 is
     IRewardsDistribution,
@@ -31,6 +31,7 @@ contract RewardsDistributionV2 is
     Nonces,
     Facet
 {
+    using CustomRevert for bytes4;
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeTransferLib for address;
     using StakingRewards for StakingRewards.Layout;
@@ -96,7 +97,7 @@ contract RewardsDistributionV2 is
         address delegatee,
         address beneficiary
     ) external returns (uint256 depositId) {
-        depositId = _stake(amount, delegatee, beneficiary, msg.sender);
+        depositId = _stake(amount, delegatee, beneficiary, msg.sender, false);
     }
 
     /// @inheritdoc IRewardsDistribution
@@ -104,13 +105,12 @@ contract RewardsDistributionV2 is
         uint96 amount,
         address delegatee,
         address beneficiary,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external returns (uint256 depositId) {
-        _permitStakeToken(amount, deadline, v, r, s);
-        depositId = _stake(amount, delegatee, beneficiary, msg.sender);
+        _permitStakeToken(amount, nonce, deadline, signature);
+        depositId = _stake(amount, delegatee, beneficiary, msg.sender, true);
     }
 
     /// @inheritdoc IRewardsDistribution
@@ -122,25 +122,24 @@ contract RewardsDistributionV2 is
         uint256,
         bytes calldata
     ) external returns (uint256 depositId) {
-        depositId = _stake(amount, delegatee, beneficiary, owner);
+        depositId = _stake(amount, delegatee, beneficiary, owner, false);
     }
 
     /// @inheritdoc IRewardsDistribution
     function increaseStake(uint256 depositId, uint96 amount) external {
-        _increaseStake(depositId, amount);
+        _increaseStake(depositId, amount, false);
     }
 
     /// @inheritdoc IRewardsDistribution
     function permitAndIncreaseStake(
         uint256 depositId,
         uint96 amount,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external {
-        _permitStakeToken(amount, deadline, v, r, s);
-        _increaseStake(depositId, amount);
+        _permitStakeToken(amount, nonce, deadline, signature);
+        _increaseStake(depositId, amount, true);
     }
 
     /// @inheritdoc IRewardsDistribution
@@ -228,13 +227,12 @@ contract RewardsDistributionV2 is
         _revertIfNotDepositOwner(owner);
 
         if (owner == address(this)) {
-            CustomRevert.revertWith(RewardsDistribution__CannotWithdrawFromSelf.selector);
+            RewardsDistribution__CannotWithdrawFromSelf.selector.revertWith();
         }
 
         amount = deposit.pendingWithdrawal;
-        if (amount == 0) {
-            CustomRevert.revertWith(RewardsDistribution__NoPendingWithdrawal.selector);
-        } else {
+        if (amount == 0) RewardsDistribution__NoPendingWithdrawal.selector.revertWith();
+        else {
             deposit.pendingWithdrawal = 0;
             address proxy = ds.proxyById[depositId];
             ds.staking.stakeToken.safeTransferFrom(proxy, owner, amount);
@@ -257,11 +255,9 @@ contract RewardsDistributionV2 is
             _revertIfNotOperatorClaimer(operator);
         }
         // If the beneficiary is an operator, only the claimer can claim the reward
-        else if (_isOperator(beneficiary)) {
-            _revertIfNotOperatorClaimer(beneficiary);
-        } else {
-            CustomRevert.revertWith(RewardsDistribution__NotBeneficiary.selector);
-        }
+        else if (_isOperator(beneficiary)) _revertIfNotOperatorClaimer(beneficiary);
+        else RewardsDistribution__NotBeneficiary.selector.revertWith();
+
         reward = ds.staking.claimReward(beneficiary);
         if (reward != 0) {
             ds.staking.rewardToken.safeTransfer(recipient, reward);
@@ -274,7 +270,7 @@ contract RewardsDistributionV2 is
     function notifyRewardAmount(uint256 reward) external {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         if (!ds.isRewardNotifier[msg.sender]) {
-            CustomRevert.revertWith(RewardsDistribution__NotRewardNotifier.selector);
+            RewardsDistribution__NotRewardNotifier.selector.revertWith();
         }
 
         ds.staking.notifyRewardAmount(reward);

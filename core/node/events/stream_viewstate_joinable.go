@@ -3,6 +3,8 @@ package events
 import (
 	"bytes"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 
@@ -11,14 +13,55 @@ import (
 )
 
 type JoinableStreamView interface {
+	GetMemberSnapshotContent() (*protocol.MemberPayload_Snapshot, error)
+	GetMemberAppAddress(userId common.Address) (common.Address, error)
 	GetChannelMembers() (mapset.Set[string], error)
 	GetMembership(userAddress []byte) (protocol.MembershipOp, error)
 	GetKeySolicitations(userAddress []byte) ([]*protocol.MemberPayload_KeySolicitation, error)
 	GetPinnedMessages() ([]*protocol.MemberPayload_SnappedPin, error)
-	HasTransaction(evmReceipt *protocol.BlockchainTransactionReceipt, solanaReceipt *protocol.SolanaBlockchainTransactionReceipt) (bool, error) // defined in userStreamView
+	HasTransaction(
+		evmReceipt *protocol.BlockchainTransactionReceipt,
+		solanaReceipt *protocol.SolanaBlockchainTransactionReceipt,
+	) (bool, error) // defined in userStreamView
 }
 
-var _ JoinableStreamView = (*StreamView)(nil)
+func (r *StreamView) GetMemberSnapshotContent() (*protocol.MemberPayload_Snapshot, error) {
+	return r.snapshot.GetMembers(), nil
+}
+
+func (r *StreamView) GetMemberAppAddress(userId common.Address) (common.Address, error) {
+	// First check the snapshot for the app address
+	member, _ := findMember(r.snapshot.Members.Joined, userId.Bytes())
+	if member != nil && member.AppAddress != nil && len(member.AppAddress) > 0 {
+		return common.BytesToAddress(member.AppAddress), nil
+	}
+
+	// If not in snapshot, check events after the snapshot
+	var appAddress common.Address
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *protocol.StreamEvent_MemberPayload:
+			switch payload := payload.MemberPayload.Content.(type) {
+			case *protocol.MemberPayload_Membership_:
+				if bytes.Equal(payload.Membership.UserAddress, userId.Bytes()) && len(payload.Membership.AppAddress) > 0 {
+					appAddress = common.BytesToAddress(payload.Membership.AppAddress)
+					return false, nil // Stop iteration, we found the app address for this user
+				}
+			default:
+				break
+			}
+		}
+		return true, nil
+	}
+
+	// Only search events after the snapshot
+	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	return appAddress, nil
+}
 
 // TODO: FIX: REFACTOR: make it to be GetChannelMembers() (map[common.Address]struct{}, error)
 func (r *StreamView) GetChannelMembers() (mapset.Set[string], error) {

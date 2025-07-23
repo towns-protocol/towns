@@ -12,7 +12,7 @@ import {
 } from './types'
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError } from './decryptionExtensions'
 import { StreamsView } from './views/streamsView'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
@@ -164,7 +164,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 }
             }
 
-            const timeoutError = new Error(`waitFor timeout waiting for ${event}`)
+            const timeoutError = new Error(`waitFor timeout: ${this.streamId} ${event}`)
             // Set up the timeout
             const timeout = setTimeout(() => {
                 this.logEmitFromStream('waitFor timeout', this.streamId, event)

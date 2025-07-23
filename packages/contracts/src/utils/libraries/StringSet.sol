@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.18;
+
+import {StoragePointer} from "@towns-protocol/diamond/src/libraries/StoragePointer.sol";
 
 library StringSet {
     struct Set {
@@ -11,25 +13,11 @@ library StringSet {
     }
 
     /**
-     * @dev A reference to a uint256 value in storage.
-     *
-     * Basically `*uint256 storage` in C++ terms.
-     */
-    struct Uint256Ref {
-        uint256 value;
-    }
-
-    /**
-     * @dev A reference to a string value in storage to allow assignment and deletion.
-     */
-    struct StringWrapper {
-        string inner;
-    }
-
-    /**
      * @dev Returns the storage reference for the length of the values array.
      */
-    function _valuesLengthRef(Set storage set) private pure returns (Uint256Ref storage ref) {
+    function _valuesLengthRef(
+        Set storage set
+    ) private pure returns (StoragePointer.Uint256 storage ref) {
         assembly ("memory-safe") {
             ref.slot := set.slot
         }
@@ -38,7 +26,10 @@ library StringSet {
     /**
      * @dev Returns the storage reference at position `index` in the set without bounds check.
      */
-    function _at(Set storage set, uint256 index) private pure returns (StringWrapper storage ref) {
+    function _at(
+        Set storage set,
+        uint256 index
+    ) private pure returns (StoragePointer.String storage ref) {
         assembly ("memory-safe") {
             mstore(0, set.slot)
             ref.slot := add(keccak256(0, 0x20), index)
@@ -51,7 +42,7 @@ library StringSet {
     function _indexRef(
         Set storage set,
         string memory value
-    ) private pure returns (Uint256Ref storage ref) {
+    ) private pure returns (StoragePointer.Uint256 storage ref) {
         // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#mappings-and-dynamic-arrays
         assembly ("memory-safe") {
             let key_len := add(mload(value), 0x20)
@@ -71,10 +62,10 @@ library StringSet {
      * already present.
      */
     function add(Set storage set, string memory value) internal returns (bool added) {
-        Uint256Ref storage indexRef = _indexRef(set, value);
+        StoragePointer.Uint256 storage indexRef = _indexRef(set, value);
         added = indexRef.value == 0;
         if (added) {
-            Uint256Ref storage lengthRef = _valuesLengthRef(set);
+            StoragePointer.Uint256 storage lengthRef = _valuesLengthRef(set);
             uint256 len = lengthRef.value;
             uint256 newLen;
             unchecked {
@@ -82,7 +73,7 @@ library StringSet {
             }
             // equivalent: set._values.push(value);
             lengthRef.value = newLen;
-            _at(set, len).inner = value;
+            _at(set, len).value = value;
             // The value is stored at length-1, but we add 1 to all indexes
             // and use 0 as a sentinel value
             // equivalent: set._indexes[value] = set._values.length;
@@ -98,7 +89,7 @@ library StringSet {
      */
     function remove(Set storage set, string memory value) internal returns (bool removed) {
         // We read and store the value's index to prevent multiple reads from the same storage slot
-        Uint256Ref storage indexRef = _indexRef(set, value);
+        StoragePointer.Uint256 storage indexRef = _indexRef(set, value);
         uint256 valueIndex = indexRef.value;
         removed = valueIndex != 0;
         if (removed) {
@@ -109,19 +100,19 @@ library StringSet {
             // the array, and then remove the last element (sometimes called as 'swap and pop').
             // This modifies the order of the array, as noted in {at}.
 
-            Uint256Ref storage lengthRef = _valuesLengthRef(set);
+            StoragePointer.Uint256 storage lengthRef = _valuesLengthRef(set);
             uint256 len = lengthRef.value;
             uint256 lastIndex;
             unchecked {
                 lastIndex = len - 1;
             }
 
-            StringWrapper storage lastRef = _at(set, lastIndex);
+            StoragePointer.String storage lastRef = _at(set, lastIndex);
             if (len != valueIndex) {
-                string memory lastValue = lastRef.inner;
+                string memory lastValue = lastRef.value;
                 unchecked {
                     // Move the last value to the index where the value to delete is
-                    _at(set, valueIndex - 1).inner = lastValue;
+                    _at(set, valueIndex - 1).value = lastValue;
                 }
                 // Update the index for the moved value
                 _indexRef(set, lastValue).value = valueIndex;
@@ -129,7 +120,7 @@ library StringSet {
 
             // Delete the slot where the moved value was stored
             // equivalent: set._values.pop();
-            delete lastRef.inner;
+            delete lastRef.value;
             lengthRef.value = lastIndex;
 
             // Delete the index for the deleted slot
@@ -141,12 +132,12 @@ library StringSet {
      * @dev Removes all values from a set. O(n).
      */
     function clear(Set storage set) internal {
-        Uint256Ref storage lengthRef = _valuesLengthRef(set);
+        StoragePointer.Uint256 storage lengthRef = _valuesLengthRef(set);
         uint256 len = lengthRef.value;
         for (uint256 i; i < len; ++i) {
-            StringWrapper storage valueRef = _at(set, i);
-            _indexRef(set, valueRef.inner).value = 0;
-            delete valueRef.inner;
+            StoragePointer.String storage valueRef = _at(set, i);
+            _indexRef(set, valueRef.value).value = 0;
+            delete valueRef.value;
         }
         lengthRef.value = 0;
     }

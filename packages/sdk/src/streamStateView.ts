@@ -20,6 +20,7 @@ import {
     isConfirmedEvent,
     isLocalEvent,
     makeRemoteTimelineEvent,
+    getEventSignature,
 } from './types'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
@@ -43,18 +44,21 @@ import {
     isUserStreamId,
     isUserInboxStreamId,
     isMetadataStreamId,
+    userIdFromAddress,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError, KeyFulfilmentData } from './decryptionExtensions'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './views/streamsView'
-import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
+import { TimelineEvent } from './views/models/timelineTypes'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
+
+const EMPTY_TIMELINE: TimelineEvent[] = []
 
 // it's very important that the Stream is the emitter for all events
 // for any mutations, go through the stream
@@ -75,7 +79,7 @@ export class StreamStateView {
     membershipContent: StreamStateView_Members
 
     get isInitialized(): boolean {
-        return this.streamsView.streamStatus.value[this.streamId]?.isInitialized ?? false
+        return this.streamsView.streamStatus.get(this.streamId).isInitialized
     }
 
     set isInitialized(value: boolean) {
@@ -83,7 +87,7 @@ export class StreamStateView {
     }
 
     get timeline(): TimelineEvent[] {
-        return this.streamsView.timelinesView.value.timelines[this.streamId]
+        return this.streamsView.timelinesView.value.timelines[this.streamId] ?? EMPTY_TIMELINE
     }
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -167,31 +171,46 @@ export class StreamStateView {
         this.streamsView = streamsView || new StreamsView('', undefined) // always have a streams view to ensure we can use the timeline
         if (isSpaceStreamId(streamId)) {
             this.contentKind = 'spaceContent'
-            this._spaceContent = new StreamStateView_Space(streamId)
+            this._spaceContent = new StreamStateView_Space(streamId, this.streamsView.spaceStreams)
         } else if (isChannelStreamId(streamId)) {
             this.contentKind = 'channelContent'
             this._channelContent = new StreamStateView_Channel(streamId)
         } else if (isDMChannelStreamId(streamId)) {
             this.contentKind = 'dmChannelContent'
-            this._dmChannelContent = new StreamStateView_DMChannel(streamId)
+            this._dmChannelContent = new StreamStateView_DMChannel(
+                streamId,
+                this.streamsView.dmStreams,
+            )
         } else if (isGDMChannelStreamId(streamId)) {
             this.contentKind = 'gdmChannelContent'
-            this._gdmChannelContent = new StreamStateView_GDMChannel(streamId)
+            this._gdmChannelContent = new StreamStateView_GDMChannel(
+                streamId,
+                this.streamsView.gdmStreams,
+            )
         } else if (isMediaStreamId(streamId)) {
             this.contentKind = 'mediaContent'
             this._mediaContent = new StreamStateView_Media(streamId)
         } else if (isUserStreamId(streamId)) {
             this.contentKind = 'userContent'
-            this._userContent = new StreamStateView_User(streamId)
+            this._userContent = new StreamStateView_User(streamId, this.streamsView.userStreams)
         } else if (isUserSettingsStreamId(streamId)) {
             this.contentKind = 'userSettingsContent'
-            this._userSettingsContent = new StreamStateView_UserSettings(streamId, this.streamsView)
+            this._userSettingsContent = new StreamStateView_UserSettings(
+                streamId,
+                this.streamsView.userSettingsStreams,
+            )
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userMetadataContent'
-            this._userMetadataContent = new StreamStateView_UserMetadata(streamId)
+            this._userMetadataContent = new StreamStateView_UserMetadata(
+                streamId,
+                this.streamsView.userMetadataStreams,
+            )
         } else if (isUserInboxStreamId(streamId)) {
             this.contentKind = 'userInboxContent'
-            this._userInboxContent = new StreamStateView_UserInbox(streamId)
+            this._userInboxContent = new StreamStateView_UserInbox(
+                streamId,
+                this.streamsView.userInboxStreams,
+            )
         } else if (isMetadataStreamId(streamId)) {
             throwWithCode('Metadata streams are not supported in SDK', Err.UNIMPLEMENTED)
         } else {
@@ -199,7 +218,11 @@ export class StreamStateView {
         }
 
         this.prevSnapshotMiniblockNum = 0n
-        this.membershipContent = new StreamStateView_Members(streamId)
+        this.membershipContent = new StreamStateView_Members(
+            streamId,
+            userId,
+            this.streamsView.streamMemberIds,
+        )
     }
 
     private applySnapshot(
@@ -295,6 +318,10 @@ export class StreamStateView {
         const updated: StreamTimelineEvent[] = []
         const confirmed: ConfirmedTimelineEvent[] = []
         for (const parsedEvent of minipoolEvents) {
+            if (parsedEvent.ephemeral) {
+                this.processEphemeralEvent(parsedEvent, encryptionEmitter)
+                continue
+            }
             const existingEvent = this.minipoolEvents.get(parsedEvent.hashStr)
             if (existingEvent) {
                 existingEvent.remoteEvent = parsedEvent
@@ -320,6 +347,46 @@ export class StreamStateView {
         }
         this.syncCookie = nextSyncCookie
         return { appended, updated, confirmed }
+    }
+
+    private processEphemeralEvent(
+        event: ParsedEvent,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ) {
+        const payload = event.event.payload
+        check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
+        if (payload.case !== 'memberPayload') {
+            return
+        }
+
+        switch (payload.value.content.case) {
+            case 'keySolicitation':
+                encryptionEmitter?.emit(
+                    'newKeySolicitation',
+                    this.streamId,
+                    event.hashStr,
+                    event.creatorUserId,
+                    payload.value.content.value,
+                    getEventSignature(event),
+                    true, // ephemeral flag
+                )
+                break
+            case 'keyFulfillment': {
+                const fulfillment = payload.value.content.value
+                encryptionEmitter?.emit('ephemeralKeyFulfillment', {
+                    streamId: this.streamId,
+                    userId: userIdFromAddress(fulfillment.userAddress),
+                    deviceKey: fulfillment.deviceKey,
+                    sessionIds: fulfillment.sessionIds,
+                } satisfies KeyFulfilmentData)
+                break
+            }
+            case undefined:
+                break
+            default:
+                // Other member payload types are not handled for ephemeral events
+                break
+        }
     }
 
     private processAppendedEvent(
@@ -495,6 +562,11 @@ export class StreamStateView {
     ) {
         this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
+
+        const minipoolEvent = this.minipoolEvents.get(eventId)
+        if (minipoolEvent) {
+            minipoolEvent.decryptedContent = content
+        }
 
         const timelineEvent = this.streamsView.timelinesView.streamEventDecrypted(
             this.streamId,
@@ -718,13 +790,13 @@ export class StreamStateView {
         log('updateLocalEvent', { localId, parsedEventHash, status })
         // we update local events multiple times, so we need to check both the localId and the parsedEventHash
         const timelineEvent =
-            this.minipoolEvents.get(localId) || this.minipoolEvents.get(parsedEventHash)
+            this.minipoolEvents.get(localId) ?? this.minipoolEvents.get(parsedEventHash)
         check(isDefined(timelineEvent), `Local event not found ${localId}`)
         check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)
         const previousId = timelineEvent.hashStr
         timelineEvent.hashStr = parsedEventHash
         timelineEvent.localEvent.status = status
-        this.minipoolEvents.delete(localId)
+        this.minipoolEvents.delete(previousId)
         this.minipoolEvents.set(parsedEventHash, timelineEvent)
 
         this.streamsView.timelinesView.streamLocalEventUpdated(
@@ -794,7 +866,7 @@ export class StreamStateView {
             case 'channelContent':
             case 'spaceContent':
             case 'gdmChannelContent':
-                return this.getMembers().joinedParticipants()
+                return this.getMembers().joinedOrPendingJoinedParticipants()
             case 'dmChannelContent':
                 return this.getMembers().participants() // send keys to all participants
             default:

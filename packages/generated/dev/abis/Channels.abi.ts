@@ -226,75 +226,6 @@ export default [
   },
   {
     "type": "event",
-    "name": "Approval",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "approved",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ApprovalForAll",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "operator",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "approved",
-        "type": "bool",
-        "indexed": false,
-        "internalType": "bool"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Banned",
-    "inputs": [
-      {
-        "name": "moderator",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "ChannelCreated",
     "inputs": [
       {
@@ -402,37 +333,6 @@ export default [
   },
   {
     "type": "event",
-    "name": "ConsecutiveTransfer",
-    "inputs": [
-      {
-        "name": "fromTokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "toTokenId",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "from",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "to",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Initialized",
     "inputs": [
       {
@@ -484,19 +384,6 @@ export default [
         "name": "newOwner",
         "type": "address",
         "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Paused",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": false,
         "internalType": "address"
       }
     ],
@@ -635,121 +522,6 @@ export default [
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "Transfer",
-    "inputs": [
-      {
-        "name": "from",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "to",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Unbanned",
-    "inputs": [
-      {
-        "name": "moderator",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Unpaused",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "error",
-    "name": "ApprovalCallerNotOwnerNorApproved",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "ApprovalQueryForNonexistentToken",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "BalanceQueryForZeroAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Banning__AlreadyBanned",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "Banning__CannotBanOwner",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Banning__CannotBanSelf",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Banning__InvalidTokenId",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "Banning__NotBanned",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
-  },
-  {
     "type": "error",
     "name": "ChannelService__ChannelAlreadyExists",
     "inputs": []
@@ -811,21 +583,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "MintERC2309QuantityExceedsLimit",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "MintToZeroAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "MintZeroQuantity",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Ownable__NotOwner",
     "inputs": [
       {
@@ -843,21 +600,6 @@ export default [
   {
     "type": "error",
     "name": "OwnerQueryForNonexistentToken",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "OwnershipNotInitializedForExtraData",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Pausable__NotPaused",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Pausable__Paused",
     "inputs": []
   },
   {
@@ -902,27 +644,18 @@ export default [
   },
   {
     "type": "error",
-    "name": "TransferCallerNotOwnerNorApproved",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "TransferFromIncorrectOwner",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "TransferToNonERC721ReceiverImplementer",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "TransferToZeroAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "URIQueryForNonexistentToken",
-    "inputs": []
+    "name": "SafeCastOverflowedUintDowncast",
+    "inputs": [
+      {
+        "name": "bits",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   }
 ] as const

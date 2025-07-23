@@ -200,29 +200,16 @@ export interface RolesInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "updateRole", data: BytesLike): Result;
 
   events: {
-    "Approval(address,address,uint256)": EventFragment;
-    "ApprovalForAll(address,address,bool)": EventFragment;
-    "Banned(address,uint256)": EventFragment;
-    "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
-    "Paused(address)": EventFragment;
     "PermissionsAddedToChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsRemovedFromChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsUpdatedForChannelRole(address,uint256,bytes32)": EventFragment;
     "RoleCreated(address,uint256)": EventFragment;
     "RoleRemoved(address,uint256)": EventFragment;
     "RoleUpdated(address,uint256)": EventFragment;
-    "Transfer(address,address,uint256)": EventFragment;
-    "Unbanned(address,uint256)": EventFragment;
-    "Unpaused(address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "PermissionsAddedToChannelRole"
   ): EventFragment;
@@ -235,56 +222,7 @@ export interface RolesInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
-
-export interface ApprovalEventObject {
-  owner: string;
-  approved: string;
-  tokenId: BigNumber;
-}
-export type ApprovalEvent = TypedEvent<
-  [string, string, BigNumber],
-  ApprovalEventObject
->;
-
-export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
-
-export interface ApprovalForAllEventObject {
-  owner: string;
-  operator: string;
-  approved: boolean;
-}
-export type ApprovalForAllEvent = TypedEvent<
-  [string, string, boolean],
-  ApprovalForAllEventObject
->;
-
-export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
-
-export interface BannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
-
-export type BannedEventFilter = TypedEventFilter<BannedEvent>;
-
-export interface ConsecutiveTransferEventObject {
-  fromTokenId: BigNumber;
-  toTokenId: BigNumber;
-  from: string;
-  to: string;
-}
-export type ConsecutiveTransferEvent = TypedEvent<
-  [BigNumber, BigNumber, string, string],
-  ConsecutiveTransferEventObject
->;
-
-export type ConsecutiveTransferEventFilter =
-  TypedEventFilter<ConsecutiveTransferEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -297,13 +235,6 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface PausedEventObject {
-  account: string;
-}
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
-
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
 
 export interface PermissionsAddedToChannelRoleEventObject {
   updater: string;
@@ -376,36 +307,6 @@ export type RoleUpdatedEvent = TypedEvent<
 >;
 
 export type RoleUpdatedEventFilter = TypedEventFilter<RoleUpdatedEvent>;
-
-export interface TransferEventObject {
-  from: string;
-  to: string;
-  tokenId: BigNumber;
-}
-export type TransferEvent = TypedEvent<
-  [string, string, BigNumber],
-  TransferEventObject
->;
-
-export type TransferEventFilter = TypedEventFilter<TransferEvent>;
-
-export interface UnbannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type UnbannedEvent = TypedEvent<
-  [string, BigNumber],
-  UnbannedEventObject
->;
-
-export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
-}
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
-
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface Roles extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -665,50 +566,6 @@ export interface Roles extends BaseContract {
   };
 
   filters: {
-    "Approval(address,address,uint256)"(
-      owner?: PromiseOrValue<string> | null,
-      approved?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): ApprovalEventFilter;
-    Approval(
-      owner?: PromiseOrValue<string> | null,
-      approved?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): ApprovalEventFilter;
-
-    "ApprovalForAll(address,address,bool)"(
-      owner?: PromiseOrValue<string> | null,
-      operator?: PromiseOrValue<string> | null,
-      approved?: null
-    ): ApprovalForAllEventFilter;
-    ApprovalForAll(
-      owner?: PromiseOrValue<string> | null,
-      operator?: PromiseOrValue<string> | null,
-      approved?: null
-    ): ApprovalForAllEventFilter;
-
-    "Banned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-    Banned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-
-    "ConsecutiveTransfer(uint256,uint256,address,address)"(
-      fromTokenId?: PromiseOrValue<BigNumberish> | null,
-      toTokenId?: null,
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null
-    ): ConsecutiveTransferEventFilter;
-    ConsecutiveTransfer(
-      fromTokenId?: PromiseOrValue<BigNumberish> | null,
-      toTokenId?: null,
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null
-    ): ConsecutiveTransferEventFilter;
-
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -717,9 +574,6 @@ export interface Roles extends BaseContract {
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
-
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
 
     "PermissionsAddedToChannelRole(address,uint256,bytes32)"(
       updater?: PromiseOrValue<string> | null,
@@ -780,29 +634,6 @@ export interface Roles extends BaseContract {
       updater?: PromiseOrValue<string> | null,
       roleId?: PromiseOrValue<BigNumberish> | null
     ): RoleUpdatedEventFilter;
-
-    "Transfer(address,address,uint256)"(
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): TransferEventFilter;
-    Transfer(
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): TransferEventFilter;
-
-    "Unbanned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-    Unbanned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
   };
 
   estimateGas: {

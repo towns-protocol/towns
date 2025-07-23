@@ -6,17 +6,20 @@ import {
     MessageTips,
     ThreadStatsData,
     type TimelineEvent,
-} from './models/timeline-types'
+} from '../../views/models/timelineTypes'
 import type { RiverConnection } from '../river-connection/riverConnection'
 import { Observable } from '../../observable/observable'
 import { TimelinesMap, TimelinesViewModel } from '../../views/streams/timelinesModel'
 
+const EMPTY_TIMELINE: TimelineEvent[] = []
+const EMPTY_RECORD = {}
+
 export class MessageTimeline {
-    events = new Observable<TimelineEvent[]>([])
-    threads = new Observable<TimelinesMap>({})
-    threadsStats = new Observable<Record<string, ThreadStatsData>>({})
-    reactions = new Observable<Record<string, MessageReactions>>({})
-    tips = new Observable<Record<string, MessageTips>>({})
+    events = new Observable<TimelineEvent[]>(EMPTY_TIMELINE)
+    threads = new Observable<TimelinesMap>(EMPTY_RECORD)
+    threadsStats = new Observable<Record<string, ThreadStatsData>>(EMPTY_RECORD)
+    reactions = new Observable<Record<string, MessageReactions>>(EMPTY_RECORD)
+    tips = new Observable<Record<string, MessageTips>>(EMPTY_RECORD)
     unsubFn: (() => void) | undefined
 
     // TODO: figure out a better way to do online check
@@ -38,11 +41,11 @@ export class MessageTimeline {
         this.reset()
         this.unsubFn = stream.view.streamsView.timelinesView.subscribe(
             (state: TimelinesViewModel) => {
-                this.events.setValue(state.timelines[this.streamId])
-                this.threads.setValue(state.threads[this.streamId])
-                this.threadsStats.setValue(state.threadsStats[this.streamId])
-                this.reactions.setValue(state.reactions[this.streamId])
-                this.tips.setValue(state.tips[this.streamId])
+                this.events.setValue(state.timelines[this.streamId] ?? EMPTY_TIMELINE)
+                this.threads.setValue(state.threads[this.streamId] ?? EMPTY_RECORD)
+                this.threadsStats.setValue(state.threadsStats[this.streamId] ?? EMPTY_RECORD)
+                this.reactions.setValue(state.reactions[this.streamId] ?? EMPTY_RECORD)
+                this.tips.setValue(state.tips[this.streamId] ?? EMPTY_RECORD)
             },
             { fireImediately: true },
         )
@@ -62,10 +65,10 @@ export class MessageTimeline {
     private reset() {
         this.unsubFn?.()
         this.unsubFn = undefined
-        this.events.setValue([])
-        this.threads.setValue({})
-        this.threadsStats.setValue({})
-        this.reactions.setValue({})
-        this.tips.setValue({})
+        this.events.setValue(EMPTY_TIMELINE)
+        this.threads.setValue(EMPTY_RECORD)
+        this.threadsStats.setValue(EMPTY_RECORD)
+        this.reactions.setValue(EMPTY_RECORD)
+        this.tips.setValue(EMPTY_RECORD)
     }
 }

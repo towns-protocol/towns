@@ -1,14 +1,17 @@
 import { FullyReadMarker } from '@towns-protocol/proto'
 import { TimelinesViewModel } from './timelinesModel'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '../../id'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent, TimelineEvent } from '../models/timelineTypes'
 import { check, dlogger } from '@towns-protocol/dlog'
 
 const console = dlogger('csb:unreadMarkersTransform')
 
 type Input = {
     userId: string
-    myRemoteFullyReadMarkers: Record<string, Record<string, FullyReadMarker>>
+    myRemoteFullyReadMarkers: Record<
+        string,
+        Record<string, FullyReadMarker | undefined> | undefined // entries in the map should never be undefined, type as such to avoid undefined on mission keys
+    >
     timelinesView: TimelinesViewModel
 }
 
@@ -21,7 +24,7 @@ export function unreadMarkersTransform(
     prev: Input,
     state?: UnreadMarkersModel,
 ): UnreadMarkersModel {
-    console.log('unreadMarkersTransform', value, prev, state)
+    //console.log('unreadMarkersTransform', value, prev, state)
 
     state = state ?? { markers: {} }
 
@@ -43,16 +46,16 @@ export function unreadMarkersTransform(
 
 /// when we get an update from the server, update our local state
 function updateFullyReadMarkersFromRemote(
-    fullyReadMarkersMap: Record<string, Record<string, FullyReadMarker>>,
+    fullyReadMarkersMap: Record<string, Record<string, FullyReadMarker | undefined> | undefined>,
     state: { markers: Record<string, FullyReadMarker> },
 ) {
     let markersUpdated = 0
     const updated = { ...state.markers }
     for (const fullyReadMarkers of Object.values(fullyReadMarkersMap)) {
-        for (const [key, marker] of Object.entries(fullyReadMarkers)) {
+        for (const [key, marker] of Object.entries(fullyReadMarkers!)) {
             // if we don't have a marker, or if the remote marker has been marked as read more recently than our local marker, update
-            if (!updated[key] || updated[key].beginUnreadWindow < marker.beginUnreadWindow) {
-                updated[key] = marker
+            if (!updated[key] || updated[key].beginUnreadWindow < marker!.beginUnreadWindow) {
+                updated[key] = marker!
                 markersUpdated++
             }
         }
@@ -237,7 +240,7 @@ function diffAdded(
         const isThread = markerId !== channelId
         const prevMarker = updated[markerId]
         const mentions =
-            prevMarker?.mentions ?? 0 + eventSegment.filter((e) => e.isMentioned).length
+            (prevMarker?.mentions ?? 0) + eventSegment.filter((e) => e.isMentioned).length
         const beginUnreadWindow = prevMarker?.beginUnreadWindow ?? eventSegment[0].eventNum
         const endUnreadWindow = eventSegment[eventSegment.length - 1].eventNum
 
@@ -274,6 +277,10 @@ function isCountedAsUnread(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
         case RiverTimelineEvent.ChannelMessage:
             return event.sender.id !== myUserId
+        case RiverTimelineEvent.ChannelMessageEncrypted:
+            return event.sender.id !== myUserId
+        case RiverTimelineEvent.ChannelMessageEncryptedWithRef:
+            return false
         default:
             return false
     }

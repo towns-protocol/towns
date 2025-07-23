@@ -22,6 +22,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
+var _ nodes.StreamNodes = (*Stream)(nil)
+
 type ViewStream interface {
 	GetView(ctx context.Context) (*StreamView, error)
 }
@@ -33,6 +35,27 @@ type SyncResultReceiver interface {
 	OnSyncError(err error)
 	// OnStreamSyncDown is called when updates for a stream could not be given.
 	OnStreamSyncDown(StreamId)
+}
+
+type localStreamState struct {
+	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
+	// Use view() and setView() to access it.
+	useGetterAndSetterToGetView *StreamView
+
+	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
+	// are never scrubbed will not have this value modified.
+	lastScrubbedTime time.Time
+
+	receivers mapset.Set[SyncResultReceiver]
+
+	// pendingCandidates contains list of miniblocks that should be applied immediately when candidate is received.
+	// When StreamLastMiniblockUpdated is received and promoteCandidate is called,
+	// if there is no candidate in local storage, request is stored in pendingCandidates.
+	// First element is the oldest candidate with block number view.LastBlock().Num + 1,
+	// second element is the next candidate with next block number and so on.
+	// If SaveMiniblockCandidate is called and it matched first element of pendingCandidates,
+	// it is removed from pendingCandidates and is applied immediately instead of being stored.
+	pendingCandidates []*MiniblockRef
 }
 
 type Stream struct {
@@ -58,27 +81,19 @@ type Stream struct {
 	local *localStreamState
 }
 
-var _ nodes.StreamNodes = (*Stream)(nil)
-
-type localStreamState struct {
-	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
-	// Use view() and setView() to access it.
-	useGetterAndSetterToGetView *StreamView
-
-	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
-	// are never scrubbed will not have this value modified.
-	lastScrubbedTime time.Time
-
-	receivers mapset.Set[SyncResultReceiver]
-
-	// pendingCandidates contains list of miniblocks that should be applied immediately when candidate is received.
-	// When StreamLastMiniblockUpdated is received and promoteCandidate is called,
-	// if there is no candidate in local storage, request is stored in pendingCandidates.
-	// First element is the oldest candidate with block number view.LastBlock().Num + 1,
-	// second element is the next candidate with next block number and so on.
-	// If SaveMiniblockCandidate is called and it matched first element of pendingCandidates,
-	// it is removed from pendingCandidates and is applied immediately instead of being stored.
-	pendingCandidates []*MiniblockRef
+// NewStream creates a new stream with the given streamId and lastAppliedBlockNum.
+func NewStream(
+	streamId StreamId,
+	lastAppliedBlockNum crypto.BlockNumber,
+	params *StreamCacheParams,
+) *Stream {
+	return &Stream{
+		params:              params,
+		streamId:            streamId,
+		lastAppliedBlockNum: lastAppliedBlockNum,
+		lastAccessedTime:    time.Now(),
+		local:               &localStreamState{},
+	}
 }
 
 // IsLocal is thread-safe.
@@ -144,7 +159,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	s.mu.Unlock()
-	s.params.streamCache.SubmitSyncStreamTask(s, nil)
+	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
 	// Wait for reconciliation to complete.
 	backoff := BackoffTracker{
@@ -293,7 +308,7 @@ func (s *Stream) importMiniblocksLocked(
 		allNewEvents = append(allNewEvents, newEvents...)
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
 		if len(miniblock.Header().GetSnapshotHash()) > 0 {
-			snapshot = miniblock.Snapshot
+			snapshot = miniblock.SnapshotEnvelope
 		}
 	}
 
@@ -381,7 +396,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	newEvents = append(newEvents, info.headerEvent.Envelope)
 	var snapshot *Envelope
 	if len(info.Header().GetSnapshotHash()) > 0 {
-		snapshot = info.Snapshot
+		snapshot = info.SnapshotEnvelope
 	}
 	s.notifySubscribersLocked(newEvents, newSyncCookie, snapshot)
 	return nil
@@ -752,6 +767,26 @@ func (s *Stream) addEventLocked(
 		logging.FromCtx(ctx).Warnw("Stream.addEventLocked: adding event with relaxed duplicate check", "error", err)
 	}
 
+	newSV := oldSV
+	if !event.Event.Ephemeral {
+		newSV, err = s.addEventToMinipoolAndStorageLocked(ctx, event, oldSV, envelopeBytes)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
+	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
+
+	return newSV, nil
+}
+
+func (s *Stream) addEventToMinipoolAndStorageLocked(
+	ctx context.Context,
+	event *ParsedEvent,
+	oldSV *StreamView,
+	envelopeBytes []byte,
+) (*StreamView, error) {
 	// Check if event can be added before writing to storage.
 	newSV, err := oldSV.copyAndAddEvent(event)
 	if err != nil {
@@ -787,10 +822,6 @@ func (s *Stream) addEventLocked(
 	}
 
 	s.setViewLocked(newSV)
-	newSyncCookie := s.getViewLocked().SyncCookie(s.params.Wallet.Address)
-
-	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie, nil)
-
 	return newSV, nil
 }
 
@@ -801,7 +832,7 @@ func (s *Stream) addEventLocked(
 func (s *Stream) UpdatesSinceCookie(
 	ctx context.Context,
 	cookie *SyncCookie,
-	cb func(*StreamAndCookie),
+	cb func(*StreamAndCookie) error,
 ) error {
 	if !s.IsLocal() {
 		return RiverError(
@@ -845,9 +876,7 @@ func (s *Stream) UpdatesSinceCookie(
 		return err
 	}
 
-	cb(resp)
-
-	return nil
+	return cb(resp)
 }
 
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.
@@ -1100,15 +1129,19 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
 	if err != nil {
+		s.mu.Unlock()
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
 	if view == nil {
+		s.mu.Unlock()
 		return // stream is not local, no need to apply miniblock updates
 	}
+
+	// Track if we need to submit a sync task after releasing the lock
+	needsSyncTask := false
 
 	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
 	// Sanity check
@@ -1129,7 +1162,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 			})
 			if err != nil {
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-					s.params.streamCache.SubmitSyncStreamTask(s, nil)
+					needsSyncTask = true
 				} else {
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "error", err)
 				}
@@ -1140,6 +1173,11 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	s.lastAppliedBlockNum = blockNum
+	s.mu.Unlock()
+
+	if needsSyncTask {
+		s.params.streamCache.SubmitReconcileStreamTask(s, nil)
+	}
 }
 
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
@@ -1161,16 +1199,16 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	return slices.Clone(r), l
 }
 
-// GetQuorumAndSyncNodesAndIsLocal returns
+// GetQuorumAndReconcileNodesAndIsLocal returns
 // quorumNodes - a list of non-local nodes that participate in the stream quorum
-// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// reconcileNodes - a list of non-local nodes that reconcile the stream into local storage but don't participate in quorum (yet)
 // isLocal - boolean, whether the stream is hosted on this node
-// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
-func (s *Stream) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+// GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
+func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	qn, sn, l := s.nodesLocked.GetQuorumAndSyncNodesAndIsLocal()
+	qn, sn, l := s.nodesLocked.GetQuorumAndReconcileNodesAndIsLocal()
 	return slices.Clone(qn), slices.Clone(sn), l
 }
 
@@ -1206,11 +1244,11 @@ func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode 
 	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
 }
 
-func (s *Stream) GetSyncNodes() []common.Address {
+func (s *Stream) GetReconcileNodes() []common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.nodesLocked.GetSyncNodes()
+	return s.nodesLocked.GetReconcileNodes()
 }
 
 func (s *Stream) IsLocalInQuorum() bool {

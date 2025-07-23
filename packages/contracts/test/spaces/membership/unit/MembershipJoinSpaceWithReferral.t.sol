@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// utils
-import {MembershipBaseSetup} from "test/spaces/membership/MembershipBaseSetup.sol";
-
-//interfaces
+// interfaces
 import {IPartnerRegistryBase} from "src/factory/facets/partner/IPartnerRegistry.sol";
 import {IReferralsBase} from "src/spaces/facets/referrals/IReferrals.sol";
 
-//libraries
+// libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 
-//contracts
+// contracts
+import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 contract MembershipJoinSpaceWithReferralTest is
     MembershipBaseSetup,

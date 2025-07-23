@@ -1,5 +1,4 @@
-// todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
-import { CryptoStore } from './cryptoStore'
+import type { CryptoStore } from './cryptoStore'
 import {
     Account,
     InboundGroupSession,
@@ -34,7 +33,7 @@ const MAX_PLAINTEXT_LENGTH = (65536 * 3) / 4
 
 /** data stored in the session store about an inbound group session */
 export interface InboundGroupSessionData {
-    stream_id: string // eslint-disable-line camelcase
+    stream_id: string
     /** pickled InboundGroupSession */
     session: string
     keysClaimed: Record<string, string>

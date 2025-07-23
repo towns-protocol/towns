@@ -92,6 +92,14 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         }
     }
 
+    function _getAppDuration(address app) internal view returns (uint48 duration) {
+        try ITownsApp(app).accessDuration() returns (uint48 accessDuration) {
+            return _validateDuration(accessDuration);
+        } catch {
+            return MAX_DURATION;
+        }
+    }
+
     /// @notice Retrieves detailed information about an app by its ID
     /// @param appId The unique identifier of the app
     /// @return appData A struct containing all app information including module, owner, clients, permissions, and manifest
@@ -238,12 +246,10 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         Attestation memory att = _getAttestation(appId);
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
-        App memory appData = abi.decode(att.data, (App));
-
         ITownsApp appContract = ITownsApp(app);
         uint256 installPrice = appContract.installPrice();
 
-        _chargeForInstall(msg.sender, appData.owner, installPrice);
+        _chargeForInstall(msg.sender, app, installPrice);
 
         IAppAccount(account).onInstallApp(appId, data);
 

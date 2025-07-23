@@ -28,6 +28,8 @@ packages/contracts/.env
 packages/contracts/.env.tpl
 packages/contracts/in
 .env
+.env.*
+!.env.example*
 
 abi/
 
@@ -90,3 +92,6 @@ go.work.sum
 # Ponder
 packages/subgraph/.ponder
 packages/generated/**/*.bin
+
+# Claude local settings
+**/.claude/settings.local.json

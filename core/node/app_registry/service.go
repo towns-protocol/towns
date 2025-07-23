@@ -17,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/app_registry/sync"
 	"github.com/towns-protocol/towns/core/node/app_registry/types"
+	"github.com/towns-protocol/towns/core/node/auth"
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -48,6 +49,9 @@ type (
 		riverRegistry                 *registries.RiverRegistryContract
 		nodeRegistry                  nodes.NodeRegistry
 		statusCache                   *ttlcache.Cache
+		// Base chain components for app validation
+		baseChain           *crypto.Blockchain
+		appRegistryContract *auth.AppRegistryContract
 	}
 )
 
@@ -63,6 +67,8 @@ func NewService(
 	metrics infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
 	webhookHttpClient *http.Client,
+	baseChain *crypto.Blockchain,
+	appRegistryContractConfig *config.ContractConfig,
 ) (*Service, error) {
 	if len(nodes) < 1 {
 		return nil, base.RiverError(
@@ -125,6 +131,27 @@ func NewService(
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
 		statusCache:                   ttlcache.New(2*time.Second, 1*time.Minute),
+	}
+
+	// Initialize app registry contract if base chain is provided and configured
+	if baseChain != nil {
+		if appRegistryContractConfig == nil {
+			return nil, base.RiverError(Err_BAD_CONFIG, "No app registry contract was configured for the service")
+		}
+		s.baseChain = baseChain
+
+		// Initialize app registry contract on Base chain
+		if appRegistryContract, err := auth.NewAppRegistryContract(
+			ctx,
+			appRegistryContractConfig,
+			baseChain.Client,
+		); err != nil {
+			return nil, base.AsRiverError(err, Err_INTERNAL).
+				Message("Failed to initialize app registry contract on Base chain").
+				Tag("contractAddress", appRegistryContractConfig.Address)
+		} else {
+			s.appRegistryContract = appRegistryContract
+		}
 	}
 
 	if err := s.InitAuthentication(appServiceChallengePrefix, &cfg.Authentication); err != nil {
@@ -355,6 +382,13 @@ func (s *Service) Register(
 		)
 	}
 
+	// Validate metadata
+	metadata := req.Msg.GetMetadata()
+	if err := types.ValidateAppMetadata(metadata); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("Register")
+	}
+
 	// Generate a secret, encrypt it, and store the app record in pg.
 	appSecret, err := genHS256SharedSecret()
 	if err != nil {
@@ -366,13 +400,18 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), encrypted); err != nil {
+	if err := s.validateAppContractAddress(ctx, app); err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error validating app contract address in user stream")
+	}
+
+	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), types.ProtocolToStorageAppMetadata(metadata), encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
 	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app)); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
-			Message("Error subscribing to app's user inbox stream to watch for keys")
+			Message("Error subscribing to app's user inbox stream to watch for keys").
+			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddress(app))
 	}
 
 	return &connect.Response[RegisterResponse]{
@@ -380,6 +419,129 @@ func (s *Service) Register(
 			Hs256SharedSecret: appSecret[:],
 		},
 	}, nil
+}
+
+// validateAppContractAddress waits up to 10 seconds for the app's user stream to become
+// available and validates that the app_address in the inception event matches the app registry contract on Base.
+func (s *Service) validateAppContractAddress(
+	ctx context.Context,
+	appId common.Address,
+) error {
+	// Skip validation if Base chain is not configured
+	if s.baseChain == nil {
+		return nil
+	}
+
+	log := logging.FromCtx(ctx)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	userStreamId := shared.UserStreamIdFromAddr(appId)
+	defer cancel()
+
+	var delay time.Duration
+	var view *events.StreamView
+	var loopExitErr error
+
+waitLoop:
+	for {
+		if view != nil {
+			break
+		}
+		delay = max(2*delay, 20*time.Millisecond)
+		select {
+		case <-ctx.Done():
+			loopExitErr = base.AsRiverError(ctx.Err(), Err_NOT_FOUND).Message("Timed out while waiting for user stream availability")
+			break waitLoop
+		case <-time.After(delay):
+			stream, err := s.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: ctx}, userStreamId)
+			if err != nil {
+				continue
+			}
+			nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+			streamResponse, err := utils.PeerNodeRequestWithRetries(
+				ctx,
+				nodes,
+				func(ctx context.Context, stub protocolconnect.StreamServiceClient, _ common.Address) (*connect.Response[GetStreamResponse], error) {
+					ret, err := stub.GetStream(
+						ctx,
+						&connect.Request[GetStreamRequest]{
+							Msg: &GetStreamRequest{
+								StreamId: userStreamId[:],
+							},
+						},
+					)
+					if err != nil {
+						return nil, err
+					}
+					return connect.NewResponse(ret.Msg), nil
+				},
+				1,
+				s.nodeRegistry,
+			)
+			if err != nil {
+				log.Debugw("Error fetching user stream for app", "error", err, "streamId", userStreamId, "appId", appId)
+				continue
+			}
+			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream)
+			if loopExitErr != nil {
+				break waitLoop
+			}
+		}
+	}
+
+	if view == nil {
+		log.Errorw("no user stream available for app", "appId", appId, "stream", userStreamId)
+		return base.AsRiverError(loopExitErr, Err_NOT_FOUND).
+			Message("user stream for app not found").
+			Tag("appId", appId).
+			Tag("userStreamId", userStreamId)
+	}
+
+	// Get the user snapshot content and extract app_address from inception
+	userContent, err := view.GetUserSnapshotContent()
+	if err != nil || userContent == nil || userContent.GetInception() == nil {
+		return base.RiverError(Err_NOT_FOUND, "user stream inception not found").
+			Tag("appId", appId).
+			Tag("userStreamId", userStreamId)
+	}
+
+	inception := userContent.GetInception()
+	appAddress := inception.GetAppAddress()
+
+	// Verify app_address is not zero
+	if len(appAddress) == 0 {
+		return base.RiverError(Err_INVALID_ARGUMENT, "app_address is not set in user stream inception").
+			Tag("appId", appId).
+			Tag("userStreamId", userStreamId)
+	}
+
+	var appContractAddress common.Address
+	if appContractAddress, err = base.BytesToAddress(appAddress); err != nil {
+		return base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app_address in user stream inception").
+			Tag("appId", appId).
+			Tag("appAddress", appAddress)
+	}
+
+	// Verify the app is registered with the client address in the Base app registry contract
+	isRegistered, err := s.appRegistryContract.IsRegisteredAppWithClient(ctx, appContractAddress, appId)
+	if err != nil {
+		return base.AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+			Message("Failed to check app registration on Base chain").
+			Tag("appId", appId).
+			Tag("appContractAddress", appContractAddress)
+	}
+
+	if !isRegistered {
+		return base.RiverError(Err_PERMISSION_DENIED, "app is not registered with client address in Base app registry contract").
+			Tag("appId", appId).
+			Tag("appContractAddress", appContractAddress)
+	}
+
+	log.Debugw("App successfully validated against Base chain app registry contract",
+		"appId", appId,
+		"appContractAddress", appContractAddress)
+
+	return nil
 }
 
 // waitForAppEncryption device waits up to 10 seconds for the app's user metadata stream to become
@@ -418,7 +580,7 @@ waitLoop:
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
-				func(ctx context.Context, stub protocolconnect.StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+				func(ctx context.Context, stub protocolconnect.StreamServiceClient, _ common.Address) (*connect.Response[GetStreamResponse], error) {
 					ret, err := stub.GetStream(
 						ctx,
 						&connect.Request[GetStreamRequest]{
@@ -628,6 +790,124 @@ func (s *Service) GetStatus(
 			IsRegistered:  true,
 			ValidResponse: true,
 			Status:        status,
+		},
+	}, nil
+}
+
+func (s *Service) SetAppMetadata(
+	ctx context.Context,
+	req *connect.Request[SetAppMetadataRequest],
+) (
+	*connect.Response[SetAppMetadataResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetAppMetadata")
+	}
+
+	// Validate metadata
+	metadata := req.Msg.GetMetadata()
+	if err := types.ValidateAppMetadata(metadata); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
+	}
+	logging.FromCtx(ctx).Infow("meta", "meta", metadata)
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetAppMetadata")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
+	}
+
+	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
+		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Unable to update app metadata").
+			Tag("appId", app).
+			Tag("userId", userId).
+			Func("SetAppMetadata")
+	}
+
+	return &connect.Response[SetAppMetadataResponse]{
+		Msg: &SetAppMetadataResponse{},
+	}, nil
+}
+
+// GetAppMetadata does not require authentication.
+func (s *Service) GetAppMetadata(
+	ctx context.Context,
+	req *connect.Request[GetAppMetadataRequest],
+) (
+	*connect.Response[GetAppMetadataResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetAppMetadata")
+	}
+
+	metadata, err := s.store.GetAppMetadata(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not get app metadata").
+			Tag("appId", app).Func("GetAppMetadata")
+	}
+
+	return &connect.Response[GetAppMetadataResponse]{
+		Msg: &GetAppMetadataResponse{
+			Metadata: types.StorageToProtocolAppMetadata(*metadata),
+		},
+	}, nil
+}
+
+// ValidateBotName does not require authentication.
+func (s *Service) ValidateBotName(
+	ctx context.Context,
+	req *connect.Request[ValidateBotNameRequest],
+) (
+	*connect.Response[ValidateBotNameResponse],
+	error,
+) {
+	// Validate input
+	if req.Msg.Username == "" {
+		return &connect.Response[ValidateBotNameResponse]{
+			Msg: &ValidateBotNameResponse{
+				IsAvailable:  false,
+				ErrorMessage: "username cannot be empty",
+			},
+		}, nil
+	}
+
+	// Check if username is already taken
+	isAvailable, err := s.store.IsUsernameAvailable(ctx, req.Msg.Username)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("failed to check bot username availability").
+			Tag("username", req.Msg.Username).
+			Func("ValidateBotName")
+	}
+
+	if !isAvailable {
+		return &connect.Response[ValidateBotNameResponse]{
+			Msg: &ValidateBotNameResponse{
+				IsAvailable:  false,
+				ErrorMessage: "username is already taken",
+			},
+		}, nil
+	}
+
+	return &connect.Response[ValidateBotNameResponse]{
+		Msg: &ValidateBotNameResponse{
+			IsAvailable: true,
 		},
 	}, nil
 }

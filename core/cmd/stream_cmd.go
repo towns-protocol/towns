@@ -4,14 +4,28 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
-	"github.com/towns-protocol/towns/core/node/rpc"
 	"math"
+	"math/big"
 	"net/http"
+	"os"
+	"reflect"
+	"slices"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/gammazero/workerpool"
+
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/rpc"
+
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -57,18 +71,15 @@ func getStreamFromNode(
 	stream := response.Msg.GetStream()
 	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
 
-	for i, mb := range stream.GetMiniblocks() {
-		info, err := events.NewMiniblockInfoFromProto(
-			mb, stream.GetSnapshotByMiniblockIndex(i),
-			events.NewParsedMiniblockInfoOpts().
-				WithDoNotParseEvents(true),
-		)
+	opt := events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true).WithApplyOnlyMatchingSnapshot()
+	for _, mb := range stream.GetMiniblocks() {
+		info, err := events.NewMiniblockInfoFromProto(mb, stream.Snapshot, opt)
 		if err != nil {
 			return err
 		}
 
 		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
-		if info.Header().IsSnapshot() {
+ 		if info.Snapshot != nil {
 			fmt.Print(" SNAPSHOT")
 		}
 		fmt.Println()
@@ -808,6 +819,492 @@ func runStreamValidateCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	streamId, err := StreamIdFromString(args[0])
+	if err != nil {
+		return err
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	stream, err := registryContract.GetStream(ctx, streamId, blockchain.InitialBlockNum)
+	if err != nil {
+		return err
+	}
+
+	// find latest mb num on each node
+	allNodes, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+	if err != nil {
+		return err
+	}
+
+	lowest := func(nodeMbChain map[common.Address]map[int64]common.Hash) int64 {
+		lowest := int64(math.MaxInt64)
+		for _, chain := range nodeMbChain {
+			for num := range chain {
+				lowest = min(lowest, num)
+			}
+		}
+		return lowest
+	}
+
+	highest := func(nodeMbChain map[common.Address]map[int64]common.Hash) int64 {
+		highest := int64(math.MinInt64)
+		for _, chain := range nodeMbChain {
+			for num := range chain {
+				highest = max(highest, num)
+			}
+		}
+		return highest
+	}
+
+	atSameMbHeight := func(nodeMbChain map[common.Address]map[int64]common.Hash) bool {
+		return lowest(nodeMbChain) == highest(nodeMbChain)
+	}
+
+	atSameMbHash := func(nodeMbChain map[common.Address]map[int64]common.Hash) bool {
+		var first map[int64]common.Hash
+		for _, chain := range nodeMbChain {
+			if first == nil {
+				first = chain
+			} else {
+				if !reflect.DeepEqual(first, chain) {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+
+	allInSync := func(nodeMbChain map[common.Address]map[int64]common.Hash) bool {
+		return atSameMbHeight(nodeMbChain) && atSameMbHash(nodeMbChain)
+	}
+
+	getMiniblockHash := func(ctx context.Context, addr common.Address, num int64) (common.Hash, error) {
+		index := slices.IndexFunc(allNodes, func(n registries.NodeRecord) bool {
+			return n.NodeAddress == addr
+		})
+
+		if index == -1 {
+			return common.Hash{}, fmt.Errorf("node %s not found in registry", addr)
+		}
+
+		node := allNodes[index]
+
+		streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
+		request := connect.NewRequest(
+			&protocol.GetMiniblocksRequest{StreamId: streamId[:], FromInclusive: num, ToExclusive: num + 1},
+		)
+		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+		response, err := streamServiceClient.GetMiniblocks(ctx, request)
+		if err != nil {
+			return common.Hash{}, err
+		}
+
+		return common.BytesToHash(response.Msg.Miniblocks[0].Header.GetHash()), nil
+	}
+
+	hasForked := func(nodeMbChain map[common.Address]map[int64]common.Hash) (bool, error) {
+		lowest := lowest(nodeMbChain)
+		lowestHashes := make(map[common.Hash]struct{})
+		for node, chain := range nodeMbChain {
+			hash, contains := chain[lowest]
+			if !contains {
+				hash, err := getMiniblockHash(ctx, node, lowest)
+				if err != nil {
+					return false, err
+				}
+				lowestHashes[hash] = struct{}{}
+			} else {
+				lowestHashes[hash] = struct{}{}
+			}
+		}
+		return len(lowestHashes) != 1, nil
+	}
+
+	printChain := func(nodeMbChain map[common.Address]map[int64]common.Hash) {
+		for node, chain := range nodeMbChain {
+			fmt.Printf("Node %s:\n", node)
+			blockNums := make([]int64, 0, len(chain))
+			for num := range chain {
+				blockNums = append(blockNums, num)
+			}
+			slices.Sort(blockNums)
+
+			for _, num := range blockNums {
+				fmt.Printf("  %d: %s\n", num, chain[num])
+			}
+		}
+		println()
+	}
+
+	printFork := func(nodeMbChain map[common.Address]map[int64]common.Hash) error {
+		lowest := lowest(nodeMbChain)
+		// loop back over all nodes until a shared hash is found
+		for num := lowest; num >= 0; num-- {
+			hashes := make(map[common.Hash]struct{})
+			for node := range nodeMbChain {
+				hash, err := getMiniblockHash(ctx, node, num)
+				if err != nil {
+					return err
+				}
+				hashes[hash] = struct{}{}
+				nodeMbChain[node][num] = hash
+			}
+			if len(hashes) == 1 {
+				printChain(nodeMbChain)
+				fmt.Printf("Forked at %d\n", num+1)
+				return nil
+			}
+		}
+
+		return fmt.Errorf("no fork detected")
+	}
+
+	loadChain := func(addr common.Address, fromInclusive int64, toExclusive int64) (map[int64]common.Hash, error) {
+		index := slices.IndexFunc(allNodes, func(n registries.NodeRecord) bool {
+			return n.NodeAddress == addr
+		})
+
+		if index == -1 {
+			return nil, fmt.Errorf("node %s not found in registry", addr)
+		}
+
+		chain := make(map[int64]common.Hash)
+		node := allNodes[index]
+		streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
+		request := connect.NewRequest(&protocol.GetMiniblocksRequest{
+			StreamId:      streamId[:],
+			FromInclusive: fromInclusive,
+			ToExclusive:   toExclusive,
+			OmitSnapshots: true,
+		})
+		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+		response, err := streamServiceClient.GetMiniblocks(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		for i, mb := range response.Msg.GetMiniblocks() {
+			info, err := events.NewMiniblockInfoFromProto(
+				mb, response.Msg.GetMiniblockSnapshot(int64(i)),
+				events.NewParsedMiniblockInfoOpts().
+					WithDoNotParseEvents(true),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			chain[info.Ref.Num] = info.Ref.Hash
+		}
+
+		return chain, nil
+	}
+
+	loadLatestMb := func(ctx context.Context, stream *river.StreamWithId) (map[common.Address]map[int64]common.Hash, error) {
+		nodeMbChain := make(map[common.Address]map[int64]common.Hash)
+		for _, addr := range stream.Nodes() {
+			index := slices.IndexFunc(allNodes, func(n registries.NodeRecord) bool {
+				return n.NodeAddress == addr
+			})
+
+			if index == -1 {
+				return nil, fmt.Errorf("node %s not found in registry", addr)
+			}
+
+			node := allNodes[index]
+			streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
+			request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: streamId[:]})
+			request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+			request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+			response, err := streamServiceClient.GetLastMiniblockHash(ctx, request)
+			if err != nil {
+				return nil, err
+			}
+
+			nodeMbChain[addr] = make(map[int64]common.Hash)
+			nodeMbChain[addr][response.Msg.GetMiniblockNum()] = common.BytesToHash(response.Msg.GetHash())
+		}
+
+		return nodeMbChain, nil
+	}
+
+	nodeMbChain, err := loadLatestMb(ctx, stream)
+	if err != nil {
+		return err
+	}
+
+	if allInSync(nodeMbChain) {
+		fmt.Println("All nodes are in sync")
+		printChain(nodeMbChain)
+		return nil
+	}
+
+	if hasForked, err := hasForked(nodeMbChain); err != nil {
+		return err
+	} else if hasForked {
+		return printFork(nodeMbChain)
+	}
+
+	fromInclusive := max(0, lowest(nodeMbChain)-15)
+	toExclusive := fromInclusive + 18
+
+	for addr := range nodeMbChain {
+		chain, err := loadChain(addr, fromInclusive, toExclusive)
+		if err != nil {
+			return err
+		}
+		nodeMbChain[addr] = chain
+	}
+
+	fmt.Println("Node out of sync")
+	printChain(nodeMbChain)
+
+	return nil
+}
+
+func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	outputFile, err := os.Create(args[0])
+	if err != nil {
+		return err
+	}
+
+	output := json.NewEncoder(outputFile)
+
+	defer outputFile.Close()
+
+	const targetReplicationFactor = 3
+
+	riverChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	defer riverChain.Close()
+
+	riverRegistry, err := registries.NewRiverRegistryContract(
+		ctx,
+		riverChain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	allNodes, err := riverRegistry.NodeRegistry.GetAllNodes(&bind.CallOpts{
+		BlockNumber: big.NewInt(int64(riverChain.InitialBlockNum)),
+	})
+	if err != nil {
+		return err
+	}
+
+	nodeWorkerPools := make(map[common.Address]*workerpool.WorkerPool)
+	for _, node := range allNodes {
+		nodeWorkerPools[node.NodeAddress] = workerpool.New(8)
+	}
+
+	onChainConfig, err := crypto.NewOnChainConfig(
+		ctx,
+		riverChain.Client,
+		riverRegistry.Address,
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+	)
+	if err != nil {
+		return err
+	}
+
+	httpClient, err := http_client.GetHttpClient(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	nodeRegistry, err := nodes.LoadNodeRegistry(
+		ctx,
+		riverRegistry,
+		common.Address{},
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+		onChainConfig,
+		httpClient,
+		nil,
+		nil)
+	if err != nil {
+		return err
+	}
+
+	type nodeStatus struct {
+		NodeAddress   common.Address `json:"nodeAddress"`
+		MiniblockNum  int64          `json:"miniblockNum"`
+		MiniblockHash common.Hash    `json:"miniblockHash"`
+		Error         string         `json:"err,omitempty"`
+	}
+
+	type streamStatus struct {
+		StreamID     StreamId
+		NodeStatuses []*nodeStatus
+	}
+
+	inSync := func(streamID StreamId, nodeStatuses []*nodeStatus) bool {
+		if len(nodeStatuses) != targetReplicationFactor {
+			return false
+		}
+
+		var miniblockNums []int64
+		hashes := make(map[common.Hash]common.Address)
+
+		for _, nodeStatus := range nodeStatuses {
+			miniblockNums = append(miniblockNums, nodeStatus.MiniblockNum)
+			hashes[nodeStatus.MiniblockHash] = nodeStatus.NodeAddress
+		}
+		slices.Sort(miniblockNums)
+
+		// allow max 1 block difference between the highest and lowest miniblock number
+		diff := miniblockNums[targetReplicationFactor-1] - miniblockNums[0]
+		return (diff == 0 && len(hashes) == 1) || diff == 1
+	}
+
+	var (
+		totalStreams           atomic.Int64
+		totalReplicatedStreams atomic.Int64
+		outOfSyncStreams       atomic.Int64
+		inSyncStreams          atomic.Int64
+	)
+
+	forAllStreamsErr := riverRegistry.ForAllStreams(
+		ctx,
+		riverChain.InitialBlockNum,
+		func(stream *river.StreamWithId) bool {
+			totalStreams.Add(1)
+			if len(stream.Nodes()) == 1 {
+				return true // non-replicated stream
+			}
+
+			if trs := totalReplicatedStreams.Add(1); trs%10_000 == 0 {
+				fmt.Printf("out-of-sync: %d in-sync: %d replicated-streams: %d total-streams: %d\n",
+					outOfSyncStreams.Load(), inSyncStreams.Load(), totalReplicatedStreams.Load(), totalStreams.Load())
+			}
+
+			if len(stream.Nodes()) != targetReplicationFactor {
+				return true
+			}
+
+			var (
+				mu           = new(sync.Mutex)
+				nodeStatuses []*nodeStatus
+			)
+
+			// request latest miniblock hash from each node and compare them.
+			for _, nodeAddress := range stream.Nodes() {
+				nodeWorkerPools[nodeAddress].Submit(func() {
+					streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+					if err != nil {
+						panic(err)
+					}
+
+					request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: stream.Id[:]})
+					request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+					request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+					var ns *nodeStatus
+					if resp, err := streamServiceClient.GetLastMiniblockHash(ctx, request); err == nil {
+						ns = &nodeStatus{
+							NodeAddress:   nodeAddress,
+							MiniblockNum:  resp.Msg.MiniblockNum,
+							MiniblockHash: common.BytesToHash(resp.Msg.Hash),
+						}
+					} else {
+						ns = &nodeStatus{NodeAddress: nodeAddress, Error: err.Error()}
+					}
+
+					mu.Lock()
+					defer mu.Unlock()
+
+					nodeStatuses = append(nodeStatuses, ns)
+					if len(nodeStatuses) == targetReplicationFactor {
+						if !inSync(stream.Id, nodeStatuses) {
+							outOfSyncStreams.Add(1)
+							_ = output.Encode(&streamStatus{
+								StreamID:     stream.Id,
+								NodeStatuses: nodeStatuses,
+							})
+						} else {
+							inSyncStreams.Add(1)
+						}
+					}
+				})
+			}
+
+			return true
+		},
+	)
+
+	if forAllStreamsErr != nil {
+		return forAllStreamsErr
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for {
+			fmt.Printf("out-of-sync: %d in-sync: %d replicated-streams: %d total-streams: %d\n",
+				outOfSyncStreams.Load(), inSyncStreams.Load(), totalReplicatedStreams.Load(), totalStreams.Load())
+			select {
+			case <-time.After(15 * time.Second):
+				continue
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	// wait for all tasks to finish
+	for _, workerPool := range nodeWorkerPools {
+		workerPool.StopWait()
+	}
+	close(done)
+
+	return nil
+}
+
 func init() {
 	cmdStream := &cobra.Command{
 		Use:   "stream",
@@ -897,6 +1394,26 @@ max-block-range is optional and limits the number of blocks to consider (default
 		RunE:  runStreamValidateCmd,
 	}
 
+	cmdStreamCompareMiniblockChain := &cobra.Command{
+		Use:   "compare-miniblock-chain <stream-id>",
+		Short: "Compare miniblock chains",
+		Long:  `Compare miniblock chain by loading all miniblocks and comparing them between nodes.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamCompareMiniblockChainCmd(cmdConfig, args)
+		},
+	}
+
+	cmdStreamOutOfSync := &cobra.Command{
+		Use:   "out-of-sync <output-file>",
+		Short: "Find out-of-sync streams",
+		Long:  `Find out-of-sync streams by loading all miniblocks and comparing them between nodes.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamOutOfSyncCmd(cmdConfig, args)
+		},
+	}
+
 	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
 	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
 	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
@@ -911,5 +1428,8 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamGetPartition)
 	cmdStream.AddCommand(cmdStreamUser)
 	cmdStream.AddCommand(cmdStreamValidate)
+	cmdStream.AddCommand(cmdStreamCompareMiniblockChain)
+	cmdStream.AddCommand(cmdStreamOutOfSync)
+
 	rootCmd.AddCommand(cmdStream)
 }

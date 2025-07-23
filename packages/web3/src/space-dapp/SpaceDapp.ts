@@ -1165,8 +1165,11 @@ export class SpaceDapp {
         if (err?.name !== UNKNOWN_ERROR) {
             return err
         }
-        const nonSpaceContracts = [this.pricingModules, this.walletLink]
+        const nonSpaceContracts = [this.airdrop.riverPoints, this.pricingModules, this.walletLink]
         for (const contract of nonSpaceContracts) {
+            if (!contract) {
+                continue
+            }
             err = contract.parseError(args.error)
             if (err?.name !== UNKNOWN_ERROR) {
                 return err
@@ -1603,19 +1606,22 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const issuedListener = space.Membership.listenForMembershipToken(recipient)
-
         const blockNumber = await space.provider?.getBlockNumber()
+        const startIssuedListener = space.Membership.listenForMembershipToken({
+            receiver: recipient,
+            startingBlock: blockNumber,
+        })
 
         logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
         const getPriceStart = Date.now()
         const { price } = await this.getJoinSpacePriceDetails(spaceId)
         logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
         const wrapStart = Date.now()
+        const issuedListener = startIssuedListener()
         const result = await wrapTransaction(async () => {
             // Set gas limit instead of using estimateGas
             // As the estimateGas is not reliable for this contract
-            return await space.Membership.write(signer).joinSpace(recipient, {
+            return await space.Membership.write(signer)['joinSpace(address)'](recipient, {
                 gasLimit: 1_500_000,
                 value: price,
             })
@@ -1865,24 +1871,6 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         return space.Treasury.write(signer).withdraw(recipient)
-    }
-
-    // If the caller doesn't provide an abort controller, listenForMembershipToken will create one
-    public listenForMembershipEvent(
-        spaceId: string,
-        receiver: string,
-        abortController?: AbortController,
-    ): Promise<
-        | { issued: true; tokenId: string; error?: Error | undefined }
-        | { issued: false; tokenId: undefined; error?: Error | undefined }
-    > {
-        const space = this.getSpace(spaceId)
-
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-
-        return space.Membership.listenForMembershipToken(receiver, abortController)
     }
 
     /**
