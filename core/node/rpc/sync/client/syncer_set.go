@@ -166,21 +166,20 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	for _, streamID := range orderedStreamIDs {
 		ss.streamLocks.Compute(
 			streamID,
-			func(oldStreamLock *sync.Mutex, loaded bool) (*sync.Mutex, xsync.ComputeOp) {
-				lock := oldStreamLock
-				if !loaded {
-					lock = &sync.Mutex{}
-				}
+			func(streamLock *sync.Mutex, loaded bool) (*sync.Mutex, xsync.ComputeOp) {
 				_, syncing := ss.streamID2Syncer.Load(streamID)
 				_, streamToRemove := toRemove[streamID]
 
 				if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
-					lock.Lock()
+					if !loaded || streamLock == nil {
+						streamLock = &sync.Mutex{}
+					}
+					streamLock.Lock()
 					lockedStreamIDs = append(lockedStreamIDs, streamID)
-					return lock, xsync.UpdateOp
+					return streamLock, xsync.UpdateOp
 				}
 
-				return oldStreamLock, xsync.CancelOp
+				return streamLock, xsync.CancelOp
 			},
 		)
 	}
