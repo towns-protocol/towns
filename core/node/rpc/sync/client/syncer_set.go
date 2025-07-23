@@ -320,6 +320,11 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			// The given stream must be syncing
 			syncer, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
+				req.BackfillingFailureHandler(&SyncStreamOpStatus{
+					StreamId: streamID[:],
+					Code:     int32(Err_NOT_FOUND),
+					Message:  "Stream must be syncing to be backfilled",
+				})
 				continue
 			}
 
