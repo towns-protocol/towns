@@ -108,7 +108,10 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 			req.AddingFailureHandler(status)
 			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
 		},
-		RemovingFailureHandler: req.RemovingFailureHandler,
+		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+			req.RemovingFailureHandler(status)
+			s.registry.AddStreamToSubscription(s.syncID, StreamId(status.GetStreamId()))
+		},
 	}
 
 	// Handle streams that the clients wants to subscribe to.

@@ -132,16 +132,21 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	// Collect all stream IDs that need to be locked
 	streamIDs := make(map[StreamId]struct{})
 
-	// Add streams from ToBackfill
+	// Lock streams from ToBackfill if they are not syncing yet.
+	// Syncing streams do not need to be locked to perform a backfill.
 	for _, backfill := range req.ToBackfill {
 		for _, cookie := range backfill.GetStreams() {
-			streamIDs[StreamId(cookie.GetStreamId())] = struct{}{}
+			if _, found := ss.streamID2Syncer.Load(StreamId(cookie.GetStreamId())); !found {
+				streamIDs[StreamId(cookie.GetStreamId())] = struct{}{}
+			}
 		}
 	}
 
-	// Add streams from ToAdd
+	// Lock streams from ToAdd is they are not syncing yet.
 	for _, cookie := range req.ToAdd {
-		streamIDs[StreamId(cookie.GetStreamId())] = struct{}{}
+		if _, found := ss.streamID2Syncer.Load(StreamId(cookie.GetStreamId())); !found {
+			streamIDs[StreamId(cookie.GetStreamId())] = struct{}{}
+		}
 	}
 
 	// Add streams from ToRemove
@@ -167,14 +172,19 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	return orderedStreamIDs
 }
 
+// unlockStream releases locks for the given stream ID
+func (ss *SyncerSet) unlockStream(streamID StreamId) {
+	lock, ok := ss.streamLocks.Load(streamID)
+	if !ok {
+		return
+	}
+	lock.Unlock()
+}
+
 // unlockStreams releases locks for the given stream IDs
 func (ss *SyncerSet) unlockStreams(streamIDs []StreamId) {
 	for _, streamID := range streamIDs {
-		lock, ok := ss.streamLocks.Load(streamID)
-		if !ok {
-			return
-		}
-		lock.Unlock()
+		ss.unlockStream(streamID)
 	}
 }
 
@@ -300,7 +310,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	// Lock ALL streams from the request including backfills.
+	// Lock streams from the request excluding backfills.
 	lockedStreams := ss.lockStreams(ctx, req)
 	defer ss.unlockStreams(lockedStreams)
 
