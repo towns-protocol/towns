@@ -217,6 +217,7 @@ func (s *StreamCache) reconciliationTask(
 
 // reconcileStreamFromPeers reconciles the database for the given streamResult by fetching missing blocks from peers
 // participating in the stream.
+// TODO: refactor this code so steps for large reconciliations are rescheduled on the pool to avoid blocking pool thread for long periods of time.
 func (s *StreamCache) reconcileStreamFromPeers(
 	stream *Stream,
 	streamRecord *river.StreamWithId,
@@ -229,42 +230,7 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		return s.normalizeEphemeralStream(ctx, stream, streamRecord.LastMbNum(), streamRecord.IsSealed())
 	}
 
-	backwardThreshold := s.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
-
-	var lastMiniblockNum int64
-	var startMiniblockNumberInclusive int64
-	var presentRanges []storage.MiniblockRange
-	var err error
-
-	if backwardThreshold <= 0 {
-		lastMiniblockNum, err = stream.getLastMiniblockNumSkipLoad(ctx)
-		if err != nil {
-			if IsRiverErrorCode(err, Err_NOT_FOUND) {
-				lastMiniblockNum = -1
-			} else {
-				return err
-			}
-		}
-	} else {
-		// TODO: calculate startMiniblockNumberInclusive based on settings.,
-		presentRanges, err = s.params.Storage.GetMiniblockNumberRanges(ctx, stream.streamId, startMiniblockNumberInclusive)
-		if err != nil && !IsRiverErrorCode(err, Err_NOT_FOUND) {
-			return err
-		}
-
-		if len(presentRanges) == 0 {
-			lastMiniblockNum = -1
-		} else {
-			lastMiniblockNum = presentRanges[len(presentRanges)-1].EndInclusive
-		}
-	}
-
-	if streamRecord.LastMbNum() <= lastMiniblockNum {
-		return nil
-	}
-
-	fromInclusive := lastMiniblockNum + 1
-	toExclusive := streamRecord.LastMbNum() + 1
+	expectedLastMbInclusive := streamRecord.LastMbNum()
 
 	stream.mu.RLock()
 	nonReplicatedStream := len(stream.nodesLocked.GetQuorumNodes()) == 1
@@ -288,14 +254,132 @@ func (s *StreamCache) reconcileStreamFromPeers(
 			req.Header().Set("X-River-No-Forward", "true")
 			resp, err := client.GetLastMiniblockHash(ctx, req)
 			if err == nil {
-				toExclusive = max(toExclusive, resp.Msg.MiniblockNum+1)
+				expectedLastMbInclusive = max(expectedLastMbInclusive, resp.Msg.MiniblockNum)
 			}
 		}
 	}
 
-	var nextFromInclusive int64
+	backwardThreshold := s.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
+	enableBackwardReconciliation := backwardThreshold > 0
+
+	var localLastMbNumInclusive int64
+	var localStartMbNumInclusive int64
+	var presentRanges, missingRanges []storage.MiniblockRange
+	var err error
+
+	if !enableBackwardReconciliation {
+		localLastMbNumInclusive, err = stream.getLastMiniblockNumSkipLoad(ctx)
+		if err != nil {
+			if IsRiverErrorCode(err, Err_NOT_FOUND) {
+				localLastMbNumInclusive = -1
+			} else {
+				return err
+			}
+		}
+
+		if expectedLastMbInclusive <= localLastMbNumInclusive {
+			return nil
+		}
+	} else {
+		// TODO: DO NOT COMMIT: calculate startMiniblockNumberInclusive based on settings.
+		presentRanges, err = s.params.Storage.GetMiniblockNumberRanges(ctx, stream.streamId, localStartMbNumInclusive)
+		if err != nil && !IsRiverErrorCode(err, Err_NOT_FOUND) {
+			return err
+		}
+
+		if len(presentRanges) == 0 {
+			localLastMbNumInclusive = -1
+			missingRanges = []storage.MiniblockRange{
+				{
+					StartInclusive: localStartMbNumInclusive,
+					EndInclusive:   expectedLastMbInclusive,
+				},
+			}
+		} else {
+			localLastMbNumInclusive = presentRanges[len(presentRanges)-1].EndInclusive
+			missingRanges = calculateMissingRanges(presentRanges, localStartMbNumInclusive, expectedLastMbInclusive)
+
+			if len(missingRanges) == 0 {
+				return nil
+			}
+		}
+	}
+
+	if !enableBackwardReconciliation {
+		fromInclusive := localLastMbNumInclusive + 1
+		toExclusive := expectedLastMbInclusive + 1
+
+		return s.reconcileStreamForward(stream, remote, remotes, fromInclusive, toExclusive)
+	}
+
+	// Backwards reconciliation is enabled.
+	// It's possible that stream is complete at the end and there are gaps in the middle.
+	// In this case only gaps need to be backfilled.
+	// If last missing range is at the end, then depending on the threshold setting
+	// either forward reconciliation should be used or the stream should be re-initialized at the end
+	// and then gaps need to be backfilled.
+	lastMissingRange := missingRanges[len(missingRanges)-1]
+	if lastMissingRange.EndInclusive == expectedLastMbInclusive {
+		rangeLen := lastMissingRange.EndInclusive - lastMissingRange.StartInclusive + 1
+		if uint64(rangeLen) <= backwardThreshold {
+			return s.reconcileStreamForward(
+				stream,
+				remote,
+				remotes,
+				lastMissingRange.StartInclusive,
+				lastMissingRange.EndInclusive+1,
+			)
+		} else {
+			return s.reconcileStreamBackward(
+				stream,
+				remote,
+				remotes,
+				missingRanges,
+			)
+		}
+	} else {
+		return s.reconcileStreamBackfillGaps(stream, remote, remotes, missingRanges)
+	}
+}
+
+func (s *StreamCache) reconcileStreamBackward(
+	stream *Stream,
+	remote common.Address,
+	remotes []common.Address,
+	missingRanges []storage.MiniblockRange,
+) error {
+	return nil
+}
+
+// func (s *StreamCache) reconcileStreamBackwardFromSinglePeer(
+// 	stream *Stream,
+// 	remote common.Address,
+// 	remotes []common.Address,
+// 	missingRanges []storage.MiniblockRange,
+// ) error {
+// 	return nil
+// }
+
+func (s *StreamCache) reconcileStreamBackfillGaps(
+	stream *Stream,
+	remote common.Address,
+	remotes []common.Address,
+	missingRanges []storage.MiniblockRange,
+) error {
+	return nil
+}
+
+func (s *StreamCache) reconcileStreamForward(
+	stream *Stream,
+	remote common.Address,
+	remotes []common.Address,
+	fromInclusive int64,
+	toExclusive int64,
+) error {
+	nextFromInclusive := fromInclusive
+	var err error
 	for range remotes {
-		nextFromInclusive, err = s.reconcileStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)
+		nextFromInclusive, err = s.reconcileStreamForwardFromSinglePeer(stream, remote, nextFromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
 		}
@@ -315,18 +399,9 @@ func (s *StreamCache) reconcileStreamFromPeers(
 	).Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 }
 
-func (s *StreamCache) reconcileStreamFromSinglePeer(
-	stream *Stream,
-	remote common.Address,
-	fromInclusive int64,
-	toExclusive int64,
-) (int64, error) {
-	return s.reconcileStreamFromSinglePeerForward(stream, remote, fromInclusive, toExclusive)
-}
-
 // reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
 // It returns block number of last block successfully reconciled + 1.
-func (s *StreamCache) reconcileStreamFromSinglePeerForward(
+func (s *StreamCache) reconcileStreamForwardFromSinglePeer(
 	stream *Stream,
 	remote common.Address,
 	fromInclusive int64,
