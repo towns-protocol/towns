@@ -198,12 +198,6 @@ message MemberPayload {
         map<string, uint64> tips_count = 6;
     }
 
-    message KeyPackage {
-        bytes user_address = 1;
-        bytes signature_public_key = 2;
-        bytes key_package = 3;
-    }
-
     message Membership {
         MembershipOp op = 1;
         bytes user_address = 2;

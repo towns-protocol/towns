@@ -83,7 +83,6 @@ export interface EventSignatureBundle {
 export interface KeySolicitationItem {
     streamId: string
     fromUserId: string
-    fromUserAddress: Uint8Array
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
@@ -99,7 +98,7 @@ export interface KeySolicitationData {
 
 export interface KeyFulfilmentData {
     streamId: string
-    userAddress: Uint8Array
+    userId: string
     deviceKey: string
     sessionIds: string[]
 }
@@ -408,7 +407,6 @@ export abstract class BaseDecryptionExtensions {
         eventHashStr: string,
         members: {
             userId: string
-            userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
         sigBundle: EventSignatureBundle,
@@ -419,7 +417,7 @@ export abstract class BaseDecryptionExtensions {
             (x) => x.streamId !== streamId,
         )
         for (const member of members) {
-            const { userId: fromUserId, userAddress: fromUserAddress } = member
+            const { userId: fromUserId } = member
             for (const keySolicitation of member.solicitations) {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
@@ -434,7 +432,6 @@ export abstract class BaseDecryptionExtensions {
                 selectedQueue.push({
                     streamId,
                     fromUserId,
-                    fromUserAddress,
                     solicitation: keySolicitation,
                     respondAfter:
                         Date.now() +
@@ -454,7 +451,6 @@ export abstract class BaseDecryptionExtensions {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
         ephemeral: boolean = false,
@@ -485,7 +481,6 @@ export abstract class BaseDecryptionExtensions {
             selectedQueue.push({
                 streamId,
                 fromUserId,
-                fromUserAddress,
                 solicitation: keySolicitation,
                 respondAfter:
                     Date.now() +
@@ -599,11 +594,14 @@ export abstract class BaseDecryptionExtensions {
     }
 
     private lastPrintedAt = 0
+    private microtaskEnqueued = false
     protected checkStartTicking() {
-        // tick is safe to call multiple times in the same frame, but we dont' want it
-        // slowing down the rest of the main thread, and we want tick to happen async outside of
-        // any dispatched events (decrypted item shows up, event dispatched, then event is added to timeline, only then should we update it with the decrypted content)
+        if (this.microtaskEnqueued) {
+            return
+        }
+        this.microtaskEnqueued = true
         queueMicrotask(() => {
+            this.microtaskEnqueued = false
             this.tick()
         })
     }
@@ -1079,7 +1077,7 @@ export abstract class BaseDecryptionExtensions {
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,
-            userAddress: item.fromUserAddress,
+            userId: item.fromUserId,
             deviceKey: item.solicitation.deviceKey,
             sessionIds: allSessions
                 .map((x) => x.sessionId)

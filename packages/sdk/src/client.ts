@@ -347,6 +347,7 @@ export class Client
             opts?.unpackEnvelopeOpts,
             this.logId,
             opts?.streamOpts,
+            opts?.highPriorityStreamIds,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
@@ -743,8 +744,8 @@ export class Client
                 await this.rpcClient.createStream(request)
             const stream = this.createSyncedStream(streamId)
             if (!response.stream) {
-                // if a stream alread exists it will return a nil stream in the response, but no error
-                // fetch the stream to get the client in the rigth state
+                // if a stream already exists it will return a nil stream in the response, but no error
+                // fetch the stream to get the client in the right state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
             const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)

@@ -84,6 +84,9 @@ interface Nonces {
     [nonce: string]: NonceStats
 }
 
+const isHighPriorityStreamForSync = (streamId: string | Uint8Array): boolean =>
+    isChannelStreamId(streamId) || isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+
 export interface PingInfo {
     nonces: Nonces // the nonce that the server should echo back
     currentSequence: number // the current sequence number
@@ -102,7 +105,7 @@ export class SyncedStreamsLoop {
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
     // will restart sync for all Streams
-    // on stop, the syncLoop will be cancelled if it is runnign and removed once it stops
+    // on stop, the syncLoop will be cancelled if it is running and removed once it stops
     private syncLoop?: Promise<number>
 
     // syncId is used to add and remove streams from the sync subscription
@@ -336,6 +339,21 @@ export class SyncedStreamsLoop {
                     const syncCookies: SyncCookie[] = []
                     if (this.streamOpts?.useModifySync == true) {
                         this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
+                        // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
+                        // prioritized spaces will be added later during the calls to tick()
+                        for (const id of this.highPriorityIds) {
+                            if (isHighPriorityStreamForSync(id)) {
+                                const syncCookie = this.streams.get(id)?.syncCookie
+                                if (syncCookie) {
+                                    syncCookies.push(syncCookie)
+                                    this.inFlightSyncCookies.add(id)
+                                }
+                            }
+                        }
+                        // remove any added stream ids from the pending sync cookies
+                        this.pendingSyncCookies = this.pendingSyncCookies.filter(
+                            (id) => !this.inFlightSyncCookies.has(id),
+                        )
                     } else {
                         syncCookies.push(
                             ...Array.from(this.streams.entries())
@@ -731,7 +749,7 @@ export class SyncedStreamsLoop {
         if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
-            // On sucessful sync, reset retryCount
+            // On successful sync, reset retryCount
             this.currentRetryCount = 0
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
             this.log('syncStarted', 'syncId', this.syncId)
@@ -1044,7 +1062,7 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
         const firstHPI = Array.from(highPriorityIds.values())[0]
         if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-                return 4
+                return 2
             }
         }
     }

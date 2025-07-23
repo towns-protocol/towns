@@ -159,6 +159,24 @@ export default [
     "name": "joinSpace",
     "inputs": [
       {
+        "name": "action",
+        "type": "uint8",
+        "internalType": "enum IMembershipBase.JoinType"
+      },
+      {
+        "name": "data",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "joinSpace",
+    "inputs": [
+      {
         "name": "receiver",
         "type": "address",
         "internalType": "address"
@@ -1078,6 +1096,11 @@ export default [
   {
     "type": "error",
     "name": "Membership__InsufficientPayment",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Membership__InvalidAction",
     "inputs": []
   },
   {

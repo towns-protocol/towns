@@ -50,6 +50,9 @@ abstract contract MembershipJoin is
     /// @notice Constant representing the permission to join a space
     bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
 
+    /// @notice Constant representing the joinSpace(address) function selector
+    bytes4 internal constant JOIN_SPACE_SELECTOR = bytes4(keccak256("joinSpace(address)"));
+
     /// @notice Encodes data for joining a space
     /// @param selector The type of transaction (join with or without referral)
     /// @param sender The address of the sender
@@ -74,11 +77,9 @@ abstract contract MembershipJoin is
         uint256 requiredAmount;
         if (shouldCharge) requiredAmount = _validatePayment();
 
-        bytes4 selector = IMembership.joinSpace.selector;
-
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(selector, msg.sender, receiver, "")
+            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "")
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -140,7 +141,7 @@ abstract contract MembershipJoin is
     }
 
     function _rejectMembership(bytes32 transactionId, address receiver) internal {
-        _captureData(transactionId, "");
+        _deleteCapturedData(transactionId);
         _refundBalance(transactionId, receiver);
         emit MembershipTokenRejected(receiver);
     }
@@ -149,8 +150,6 @@ abstract contract MembershipJoin is
         // Check if there are any prepaid memberships available
         uint256 prepaidSupply = _getPrepaidSupply();
         if (prepaidSupply > 0) return 0; // If prepaid memberships exist, no payment is required
-
-        if (price == 0) return 0; // If the price is zero, no payment is required
 
         return price;
     }
@@ -301,7 +300,7 @@ abstract contract MembershipJoin is
             (bytes4, address, address, bytes)
         );
 
-        if (selector != IMembership.joinSpace.selector) {
+        if (selector != JOIN_SPACE_SELECTOR) {
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
@@ -373,7 +372,7 @@ abstract contract MembershipJoin is
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
 
         _releaseCapturedValue(transactionId, paymentRequired);
-        _captureData(transactionId, "");
+        _deleteCapturedData(transactionId);
 
         _mintMembershipPoints(receiver, membershipPrice);
     }

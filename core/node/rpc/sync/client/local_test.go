@@ -13,40 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
-
-// Mock implementations
-type mockStreamCache struct {
-	mock.Mock
-}
-
-func (m *mockStreamCache) GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error) {
-	args := m.Called(ctx, streamId)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*Stream), args.Error(1)
-}
-
-// mockMessageDistributor for testing
-type mockMessageDistributor struct {
-	mock.Mock
-	messages []*SyncStreamsResponse
-}
-
-func (m *mockMessageDistributor) DistributeMessage(streamID StreamId, msg *SyncStreamsResponse) {
-	m.Called(streamID, msg)
-	m.messages = append(m.messages, msg)
-}
-
-func (m *mockMessageDistributor) DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse) {
-	m.Called(streamID, msg)
-	m.messages = append(m.messages, msg)
-}
 
 // createTestSyncCookie creates a SyncCookie with the correct NodeAddress for testing
 func createTestSyncCookie(streamID StreamId) *SyncCookie {
@@ -170,7 +141,7 @@ func TestLocalSyncer_OnUpdate_Error(t *testing.T) {
 		NextSyncCookie: createTestSyncCookie(streamID),
 	}
 	// Add a real *Stream with minimal valid params to activeStreams so unsubStream can be called
-	syncer.activeStreams.Store(streamID, NewStream(streamID, 0, nil))
+	syncer.activeStreams.Store(streamID, events.NewStream(streamID, 0, nil))
 
 	syncer.OnUpdate(streamAndCookie)
 
@@ -241,7 +212,7 @@ func TestLocalSyncer_OnStreamSyncDown_Error(t *testing.T) {
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	// Add a real *Stream with minimal valid params to activeStreams so unsubStream can be called
-	syncer.activeStreams.Store(streamID, NewStream(streamID, 0, nil))
+	syncer.activeStreams.Store(streamID, events.NewStream(streamID, 0, nil))
 
 	syncer.OnStreamSyncDown(streamID)
 
