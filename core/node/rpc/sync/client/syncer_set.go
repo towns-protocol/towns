@@ -146,8 +146,10 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	}
 
 	// Add streams from ToRemove
+	toRemove := make(map[StreamId]struct{}, len(req.ToRemove))
 	for _, streamID := range req.ToRemove {
 		streamIDs[StreamId(streamID)] = struct{}{}
+		toRemove[StreamId(streamID)] = struct{}{}
 	}
 
 	// Convert to slice and sort for consistent locking order
@@ -160,12 +162,19 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	})
 
 	// Acquire locks in order. Do not lock streams that are already syncing.
+	lockedStreamIDs := make([]StreamId, 0, len(streamIDs))
 	for _, streamID := range orderedStreamIDs {
-		syncer, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
-		syncer.Lock()
+		_, syncing := ss.streamID2Syncer.Load(streamID)
+		_, streamToRemove := toRemove[streamID]
+
+		if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
+			syncer, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
+			syncer.Lock()
+			lockedStreamIDs = append(lockedStreamIDs, streamID)
+		}
 	}
 
-	return orderedStreamIDs
+	return lockedStreamIDs
 }
 
 // unlockStream releases locks for the given stream ID
