@@ -214,6 +214,7 @@ Common helpers in app registry tests:
 - `authenticateBS()` - Add authentication to requests
 - `appMetadataForBot()` - Generate test metadata
 - `safeNewWallet()` - Create test wallets
+- `testutils.FakeStreamId(...)` - Create a fake stream ID with the given type
 
 ### 5. Service-Specific Configurations
 

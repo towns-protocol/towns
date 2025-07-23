@@ -305,17 +305,16 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	// Lock all affected streams including backfills.
+	// Lock ALL streams from the request including backfills.
 	lockedStreams := ss.lockStreams(ctx, req)
 
-	// Pre-analyze backfill operations to identify ALL streams that need locking
-	additionalToAdd := make([]*SyncCookie, 0)
+	// Pre-analyze backfill operations to identify ALL streams that need locking or unlocking
 	for _, backfill := range req.ToBackfill {
 		for _, cookie := range backfill.GetStreams() {
 			streamID := StreamId(cookie.GetStreamId())
-			// Check if this backfill will become an add
 			if _, found := ss.streamID2Syncer.Load(streamID); !found {
-				additionalToAdd = append(additionalToAdd, cookie)
+				// Not added yet, add first
+				req.ToAdd = append(req.ToAdd, cookie)
 			} else {
 				//  Already added, unlock
 				ss.unlockStream(streamID)
@@ -326,11 +325,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 	// Unlock the rest of streams after processing.
 	defer ss.unlockStreams(lockedStreams)
-
-	// Add the additional streams to the request BEFORE locking
-	if len(additionalToAdd) > 0 {
-		req.ToAdd = append(req.ToAdd, additionalToAdd...)
-	}
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
