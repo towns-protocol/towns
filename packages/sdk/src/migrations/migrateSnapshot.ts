@@ -4,6 +4,7 @@ import { snapshotMigration0001 } from './snapshotMigration0001'
 import { snapshotMigration0002 } from './snapshotMigration0002'
 import { snapshotMigration0003 } from './snapshotMigration0003'
 import { snapshotMigration0004 } from './snapshotMigration0004'
+import { snapshotMigration0005 } from './snapshotMigration0005'
 
 const SNAPSHOT_MIGRATIONS = [
     snapshotMigration0000,
@@ -11,6 +12,7 @@ const SNAPSHOT_MIGRATIONS = [
     snapshotMigration0002,
     snapshotMigration0003,
     snapshotMigration0004,
+    snapshotMigration0005,
 ]
 
 export function migrateSnapshot(snapshot: Snapshot): Snapshot {
