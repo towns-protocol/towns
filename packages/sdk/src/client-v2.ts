@@ -88,9 +88,13 @@ export type Prettify<T> = {
     [K in keyof T]: T[K]
 } & {}
 
-type CreateTownsClientParams = {
+export type CreateTownsClientParams = {
     env: Parameters<typeof makeRiverConfig>[0]
     encryptionDevice?: EncryptionDeviceInitOpts
+    /** Toggle hash validation of Envelopes. Defaults to `false`. */
+    hashValidation?: boolean
+    /** Toggle signature validation of Envelopes. Defaults to `false`. */
+    signatureValidation?: boolean
 }
 export const createTownsClient = async (
     params: (
@@ -242,12 +246,11 @@ export const createTownsClient = async (
                             miniblockHash,
                         )
                         const eventId = bin_toHexString(event.hash)
-                        const { error } = await rpc.addEvent({
+                        await rpc.addEvent({
                             streamId: streamIdAsBytes(streamId),
                             event,
-                            optional: false,
                         })
-                        return { miniblockHash, eventId, error }
+                        return { miniblockHash, eventId }
                     } catch {
                         return undefined
                     }
@@ -279,6 +282,7 @@ export const createTownsClient = async (
     crypto = new GroupEncryptionCrypto(buildGroupEncryptionClient(), cryptoStore)
     await crypto.init(params.encryptionDevice)
 
+    const { hashValidation = false, signatureValidation = false } = params
     const client = {
         crypto,
         keychain: cryptoStore,
@@ -286,8 +290,8 @@ export const createTownsClient = async (
         rpc,
         signer,
         userId,
-        disableHashValidation: false,
-        disableSignatureValidation: false,
+        disableHashValidation: !hashValidation,
+        disableSignatureValidation: !signatureValidation,
         getStream,
         unpackEnvelope,
         unpackEnvelopes,

@@ -69,26 +69,6 @@ func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
 	return x.Snapshots[num]
 }
 
-// GetSnapshotByMiniblockIndex returns the snapshot by the given miniblock index in the list.
-// StreamAndCookie contains a list of miniblocks starting from the latest snapshot.
-// Meaning the first miniblock in the list is the latest snapshot.
-// Meaning it returns the snapshot only when i is 0.
-func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
-	if i == 0 {
-		return x.GetSnapshot()
-	}
-
-	return nil
-}
-
-// IsSnapshot returns true if the miniblock header has a snapshot.
-func (x *MiniblockHeader) IsSnapshot() bool {
-	if x == nil {
-		return false
-	}
-	return x.GetSnapshot() != nil || len(x.GetSnapshotHash()) > 0
-}
-
 // TargetSyncIDs returns the list of target sync IDs from the ModifySyncRequest.
 func (r *ModifySyncRequest) TargetSyncIDs() []string {
 	var targetSyncIds []string

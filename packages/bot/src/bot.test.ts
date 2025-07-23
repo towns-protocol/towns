@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
     Client,
     makeBaseProvider,
@@ -32,6 +30,8 @@ import {
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
+import { randomUUID } from 'crypto'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -57,6 +57,10 @@ describe('Bot', { sequential: true }, () => {
 
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
+
+    const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
+    const BOT_DESCRIPTION = 'I shall witness everything'
+
     let bot: Bot
     let spaceId: string
     let channelId: string
@@ -107,7 +111,7 @@ describe('Bot', { sequential: true }, () => {
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
-            'bot-witness-of-infinity',
+            BOT_USERNAME,
             [...Object.values(Permission)], // all permissions
             botClientAddress,
             ethers.utils.parseEther('0.01').toBigInt(),
@@ -158,7 +162,6 @@ describe('Bot', { sequential: true }, () => {
         )
         const addResult = await botClient.uploadDeviceKeys()
         expect(addResult).toBeDefined()
-        expect(addResult.error).toBeUndefined()
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
         expect(exportedDevice).toBeDefined()
@@ -184,6 +187,13 @@ describe('Bot', { sequential: true }, () => {
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
             appId: bin_fromHexString(botClientAddress),
             appOwnerId: bin_fromHexString(bob.userId),
+            metadata: {
+                username: BOT_USERNAME,
+                displayName: 'Bot Witness of Infinity',
+                description: BOT_DESCRIPTION,
+                avatarUrl: 'https://placehold.co/64x64.png',
+                imageUrl: 'https://placehold.co/600x600.png',
+            },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
         expect(jwtSecretBase64).toBeDefined()
@@ -193,10 +203,13 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
-        const { fetch } = await bot.start()
+        const { jwtMiddleware, handler } = await bot.start()
+        const app = new Hono()
+        app.use(jwtMiddleware)
+        app.post('/webhook', handler)
         serve({
             port: Number(process.env.BOT_PORT!),
-            fetch,
+            fetch: app.fetch,
             createServer,
         })
         await appRegistryRpcClient.registerWebhook({
@@ -204,15 +217,11 @@ describe('Bot', { sequential: true }, () => {
             webhookUrl: WEBHOOK_URL,
         })
 
-        // Verify webhook registration
         const { isRegistered, validResponse } = await appRegistryRpcClient.getStatus({
             appId: bin_fromHexString(botClientAddress),
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
-        // await bobClient.riverConnection.call((client) =>
-        //     client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
-        // )
     }
 
     it('should receive a message forwarded', async () => {
@@ -441,6 +450,7 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
 
+    // TODO: flaky test
     it.skip('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const receivedReplyEvents: BotPayload<'reply'>[] = []

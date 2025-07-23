@@ -1,8 +1,8 @@
 import TypedEmitter from 'typed-emitter'
 import { Permission } from '@towns-protocol/web3'
 import {
-    AddEventResponse_Error,
     EncryptedData,
+    Err,
     PlainMessage,
     SessionKeys,
     SessionKeysSchema,
@@ -25,6 +25,9 @@ import {
 } from '@towns-protocol/encryption'
 import { create, fromJsonString } from '@bufbuild/protobuf'
 import { sortedArraysEqual } from './observable/utils'
+import { isDefined } from './check'
+import { isUserInboxStreamId } from './id'
+import { errorContains } from './rpcInterceptors'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -80,11 +83,11 @@ export interface EventSignatureBundle {
 export interface KeySolicitationItem {
     streamId: string
     fromUserId: string
-    fromUserAddress: Uint8Array
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
     hashStr: string
+    ephemeral?: boolean
 }
 
 export interface KeySolicitationData {
@@ -95,7 +98,7 @@ export interface KeySolicitationData {
 
 export interface KeyFulfilmentData {
     streamId: string
-    userAddress: Uint8Array
+    userId: string
     deviceKey: string
     sessionIds: string[]
 }
@@ -123,6 +126,7 @@ class StreamTasks {
         this.keySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
         this.keySolicitationsNeedsSort = false
     }
+
     isEmpty() {
         return (
             this.encryptedContent.length === 0 &&
@@ -172,6 +176,53 @@ class StreamQueues {
             .join(', ')
     }
 }
+
+class QueueRunner {
+    timeoutId?: NodeJS.Timeout
+    inProgress?: Promise<void>
+    streamId?: string
+    checkStartTicking?: () => void
+    logError?: DLogger
+    tag?: string
+    constructor(public readonly kind: string) {}
+    toString() {
+        return `${this.kind}${this.tag ? ` ${this.tag}` : ''}${this.streamId ? ` ${this.streamId}` : ''}`
+    }
+    run(promise: Promise<void>, streamId?: string, tag?: string) {
+        this.tag = tag
+        this.inProgress = promise
+        this.streamId = streamId
+        this.inProgress
+            .catch((e) => this.logError?.(`ProcessTick ${this.kind} Error`, e))
+            .finally(() => {
+                this.timeoutId = undefined
+                this.inProgress = undefined
+                this.streamId = undefined
+                this.tag = undefined
+                setTimeout(() => this.checkStartTicking?.())
+            })
+    }
+    async stop() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId)
+            this.timeoutId = undefined
+        }
+        if (this.inProgress) {
+            try {
+                await this.inProgress
+            } catch (e) {
+                this.logError?.(`ProcessTick Error while stopping ${this.kind}`, e)
+            } finally {
+                this.inProgress = undefined
+            }
+        }
+    }
+}
+
+export interface DecryptionExtensionsOptions {
+    enableEphemeralKeySolicitations: boolean
+}
+
 /**
  *
  * Responsibilities:
@@ -197,18 +248,40 @@ export abstract class BaseDecryptionExtensions {
         priorityTasks: new Array<() => Promise<void>>(),
         newGroupSession: new Array<NewGroupSessionItem>(),
         ownKeySolicitations: new Array<KeySolicitationItem>(),
+        ephemeralKeySolicitations: new Array<KeySolicitationItem>(),
     }
     private streamQueues = new StreamQueues()
+    private mainQueueRunners = {
+        priority: new QueueRunner('priority'),
+        newGroupSessions: new QueueRunner('newGroupSession'),
+        ownKeySolicitations: new QueueRunner('ownKeySolicitations'),
+        ephemeralKeySolicitations: new QueueRunner('ephemeralKeySolicitations'),
+    }
+    private streamQueueRunners = [
+        new QueueRunner('stream1'),
+        new QueueRunner('stream2'),
+        new QueueRunner('stream3'),
+    ]
+    private allQueueRunners = [...Object.values(this.mainQueueRunners), ...this.streamQueueRunners]
     private upToDateStreams = new Set<string>()
     private highPriorityIds: Set<string> = new Set()
     private recentStreamIds: string[] = []
     private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
-    private inProgressTick?: Promise<void>
-    private timeoutId?: NodeJS.Timeout
-    private delayMs: number = 1
+    protected ownEphemeralSolicitations = new Map<
+        string,
+        Array<{
+            deviceKey: string
+            fallbackKey: string
+            isNewDevice: boolean
+            missingSessionIds: Set<string>
+            timerId?: NodeJS.Timeout
+            timestamp: number
+        }>
+    >() // key: streamId, value: array of solicitations
     private started: boolean = false
     private numRecentStreamIds: number = 5
     private emitter: TypedEmitter<DecryptionEvents>
+    private checkStartTimeoutId?: NodeJS.Timeout
 
     protected _onStopFn?: () => void
     protected log: {
@@ -221,6 +294,7 @@ export abstract class BaseDecryptionExtensions {
     public readonly entitlementDelegate: EntitlementsDelegate
     public readonly userDevice: UserDevice
     public readonly userId: string
+    public ephemeralTimeoutMs: number = 30000 // Default 30 seconds
 
     public constructor(
         emitter: TypedEmitter<DecryptionEvents>,
@@ -230,6 +304,7 @@ export abstract class BaseDecryptionExtensions {
         userId: string,
         upToDateStreams: Set<string>,
         inLogId: string,
+        private opts: DecryptionExtensionsOptions,
     ) {
         this.emitter = emitter
         this.crypto = crypto
@@ -248,6 +323,12 @@ export abstract class BaseDecryptionExtensions {
             error: dlogError('csb:decryption:error').extend(logId),
         }
         this.log.debug('new DecryptionExtensions', { userDevice })
+
+        // initialize the queue runners
+        for (const queueRunner of this.allQueueRunners) {
+            queueRunner.logError = this.log.error
+            queueRunner.checkStartTicking = () => this.checkStartTicking()
+        }
     }
     // todo: document these abstract methods
     public abstract ackNewGroupSession(
@@ -270,10 +351,12 @@ export abstract class BaseDecryptionExtensions {
     public abstract isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string }
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
     public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
-    public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
+    public abstract sendKeySolicitation(
+        args: KeySolicitationData & { ephemeral?: boolean },
+    ): Promise<void>
     public abstract sendKeyFulfillment(
-        args: KeyFulfilmentData,
-    ): Promise<{ error?: AddEventResponse_Error }>
+        args: KeyFulfilmentData & { ephemeral?: boolean },
+    ): Promise<{ error?: unknown }>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
     public abstract shouldPauseTicking(): boolean
     /**
@@ -324,7 +407,6 @@ export abstract class BaseDecryptionExtensions {
         eventHashStr: string,
         members: {
             userId: string
-            userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
         sigBundle: EventSignatureBundle,
@@ -335,7 +417,7 @@ export abstract class BaseDecryptionExtensions {
             (x) => x.streamId !== streamId,
         )
         for (const member of members) {
-            const { userId: fromUserId, userAddress: fromUserAddress } = member
+            const { userId: fromUserId } = member
             for (const keySolicitation of member.solicitations) {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
@@ -350,10 +432,12 @@ export abstract class BaseDecryptionExtensions {
                 selectedQueue.push({
                     streamId,
                     fromUserId,
-                    fromUserAddress,
                     solicitation: keySolicitation,
                     respondAfter:
-                        Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                        Date.now() +
+                        this.getRespondDelayMSForKeySolicitation(streamId, fromUserId, {
+                            ephemeral: false,
+                        }),
                     sigBundle,
                     hashStr: eventHashStr,
                 } satisfies KeySolicitationItem)
@@ -367,19 +451,22 @@ export abstract class BaseDecryptionExtensions {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
+        ephemeral: boolean = false,
     ): void {
         if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
             //this.log.debug('ignoring key solicitation for our own device')
             return
         }
+
+        // Non-ephemeral solicitation handling (existing logic)
         const streamQueue = this.streamQueues.getQueue(streamId)
-        const selectedQueue =
-            fromUserId === this.userId
-                ? this.mainQueues.ownKeySolicitations
-                : streamQueue.keySolicitations
+        const selectedQueue = ephemeral
+            ? this.mainQueues.ephemeralKeySolicitations
+            : fromUserId === this.userId
+              ? this.mainQueues.ownKeySolicitations
+              : streamQueue.keySolicitations
 
         const index = selectedQueue.findIndex(
             (x) =>
@@ -394,12 +481,13 @@ export abstract class BaseDecryptionExtensions {
             selectedQueue.push({
                 streamId,
                 fromUserId,
-                fromUserAddress,
                 solicitation: keySolicitation,
                 respondAfter:
-                    Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    Date.now() +
+                    this.getRespondDelayMSForKeySolicitation(streamId, fromUserId, { ephemeral }),
                 sigBundle,
                 hashStr: eventHashStr,
+                ephemeral,
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
@@ -410,6 +498,10 @@ export abstract class BaseDecryptionExtensions {
     public setStreamUpToDate(streamId: string): void {
         //this.log.debug('streamUpToDate', streamId)
         this.upToDateStreams.add(streamId)
+        if (isUserInboxStreamId(streamId)) {
+            // enqueue a task to download new to-device messages
+            this.enqueueNewMessageDownload()
+        }
         this.checkStartTicking()
     }
 
@@ -442,8 +534,10 @@ export abstract class BaseDecryptionExtensions {
 
         // enqueue a task to upload device keys
         this.mainQueues.priorityTasks.push(() => this.uploadDeviceKeys())
-        // enqueue a task to download new to-device messages
-        this.enqueueNewMessageDownload()
+        if (Array.from(this.upToDateStreams).some(isUserInboxStreamId)) {
+            // enqueue a task to download new to-device messages
+            this.enqueueNewMessageDownload()
+        }
         // start the tick loop
         this.checkStartTicking()
     }
@@ -460,6 +554,15 @@ export abstract class BaseDecryptionExtensions {
     public async stop(): Promise<void> {
         this._onStopFn?.()
         this._onStopFn = undefined
+        // Clean up ephemeral solicitation timers
+        for (const solicitations of this.ownEphemeralSolicitations.values()) {
+            for (const solicitation of solicitations) {
+                if (solicitation.timerId) {
+                    clearTimeout(solicitation.timerId)
+                }
+            }
+        }
+        this.ownEphemeralSolicitations.clear()
         // let the subclass override and do any custom shutdown tasks
         await this.onStop()
         await this.stopTicking()
@@ -491,14 +594,20 @@ export abstract class BaseDecryptionExtensions {
     }
 
     private lastPrintedAt = 0
+    private microtaskEnqueued = false
     protected checkStartTicking() {
-        if (
-            !this.started ||
-            this.timeoutId ||
-            !this._onStopFn ||
-            !this.isUserInboxStreamUpToDate(this.upToDateStreams) ||
-            this.shouldPauseTicking()
-        ) {
+        if (this.microtaskEnqueued) {
+            return
+        }
+        this.microtaskEnqueued = true
+        queueMicrotask(() => {
+            this.microtaskEnqueued = false
+            this.tick()
+        })
+    }
+
+    private tick() {
+        if (!this.started || !this._onStopFn || this.shouldPauseTicking()) {
             return
         }
 
@@ -506,20 +615,25 @@ export abstract class BaseDecryptionExtensions {
             !Object.values(this.mainQueues).find((q) => q.length > 0) &&
             this.streamQueues.isEmpty()
         ) {
-            this.setStatus(DecryptionStatus.done)
+            this.log.debug('no more work to do, setting status to done')
+            if (this.allQueueRunners.every((x) => !x.inProgress)) {
+                this.setStatus(DecryptionStatus.done)
+            }
             return
         }
 
-        if (Date.now() - this.lastPrintedAt > 30000) {
+        const streamIds = this.streamQueues
+            .getStreamIds()
+            .filter((x) => !this.streamQueues.getQueue(x).isEmpty())
+            .sort((a, b) => this.compareStreamIds(a, b))
+
+        const logDebugInfo = Date.now() - this.lastPrintedAt > 30000
+        if (logDebugInfo) {
             this.log.info(
                 `status: ${this.status} queues: ${Object.entries(this.mainQueues)
                     .map(([key, q]) => `${key}: ${q.length}`)
                     .join(', ')} ${this.streamQueues.toString()}`,
             )
-            const streamIds = Array.from(this.streamQueues.streams.entries())
-                .filter(([_, value]) => !value.isEmpty())
-                .map(([key, _]) => key)
-                .sort((a, b) => this.compareStreamIds(a, b))
             const first4Priority = streamIds
                 .filter((x) => this.upToDateStreams.has(x))
                 .slice(0, 4)
@@ -529,85 +643,150 @@ export abstract class BaseDecryptionExtensions {
                 .slice(0, 4)
                 .join(', ')
             if (first4Priority.length > 0 || first4Blocked.length > 0) {
-                this.log.info(`priorityTasks: ${first4Priority} waitingFor: ${first4Blocked}`)
+                this.log.info(`priorityStreams: ${first4Priority} waitingFor: ${first4Blocked}`)
             }
             this.lastPrintedAt = Date.now()
         }
 
-        this.timeoutId = setTimeout(() => {
-            this.inProgressTick = this.tick()
-            this.inProgressTick
-                .catch((e) => this.log.error('ProcessTick Error', e))
-                .finally(() => {
-                    this.timeoutId = undefined
-                    setTimeout(() => this.checkStartTicking())
-                })
-        }, this.getDelayMs())
+        this._tick(streamIds)
+
+        if (logDebugInfo) {
+            const runners = this.allQueueRunners.filter((x) => isDefined(x.inProgress))
+            if (runners.length > 0) {
+                this.log.info(`runners: ${runners.map((x) => x.toString()).join(', ')}`)
+            }
+        }
+
+        // it's possible that we're not doing work, but we have more things to do but "respondAfter" hasn't been reached
+        clearTimeout(this.checkStartTimeoutId)
+        this.checkStartTimeoutId = setTimeout(() => {
+            this.checkStartTicking()
+        }, 100)
     }
 
     private async stopTicking() {
-        if (this.timeoutId) {
-            clearTimeout(this.timeoutId)
-            this.timeoutId = undefined
-        }
-        if (this.inProgressTick) {
-            try {
-                await this.inProgressTick
-            } catch (e) {
-                this.log.error('ProcessTick Error while stopping', e)
-            } finally {
-                this.inProgressTick = undefined
-            }
-        }
-    }
-
-    private getDelayMs() {
-        if (this.mainQueues.newGroupSession.length > 0) {
-            return 0
-        } else {
-            return this.delayMs
+        clearTimeout(this.checkStartTimeoutId)
+        for (const queueRunner of this.allQueueRunners) {
+            await queueRunner.stop()
         }
     }
 
     // just do one thing then return
-    private tick(): Promise<void> {
+    private _tick(streamIds: string[]) {
         const now = Date.now()
 
-        const priorityTask = this.mainQueues.priorityTasks.shift()
-        if (priorityTask) {
-            this.setStatus(DecryptionStatus.updating)
-            return priorityTask()
+        // update the priority queue
+        if (!this.mainQueueRunners.priority.inProgress) {
+            const priorityTask = this.mainQueues.priorityTasks.shift()
+            if (priorityTask) {
+                this.setStatus(DecryptionStatus.updating)
+                this.mainQueueRunners.priority.run(priorityTask())
+            }
         }
 
         // update any new group sessions
-        const session = this.mainQueues.newGroupSession.shift()
-        if (session) {
-            this.setStatus(DecryptionStatus.working)
-            return this.processNewGroupSession(session)
+        if (!this.mainQueueRunners.newGroupSessions.inProgress) {
+            const session = this.mainQueues.newGroupSession.shift()
+            if (session) {
+                this.setStatus(DecryptionStatus.working)
+                this.mainQueueRunners.newGroupSessions.run(this.processNewGroupSession(session))
+            }
         }
-        const ownSolicitation = this.mainQueues.ownKeySolicitations.shift()
-        if (ownSolicitation) {
-            this.log.debug(' processing own key solicitation')
-            this.setStatus(DecryptionStatus.working)
-            return this.processKeySolicitation(ownSolicitation)
+
+        // if you're not still ingesting sessions...
+        // (we don't want to respond to key solicitations while we're ingesting sessions because we might not have injested the keys yet)
+        if (!this.mainQueueRunners.newGroupSessions.inProgress) {
+            // respond to any own key solicitations
+            if (!this.mainQueueRunners.ownKeySolicitations.inProgress) {
+                // only process the first one if it's up to date
+                const ownSolicitation = dequeueUpToDate(
+                    this.mainQueues.ownKeySolicitations,
+                    now,
+                    () => 0,
+                    this.upToDateStreams,
+                )
+                if (ownSolicitation) {
+                    this.log.debug(' processing own key solicitation')
+                    this.setStatus(DecryptionStatus.working)
+                    this.mainQueueRunners.ownKeySolicitations.run(
+                        this.processKeySolicitation(ownSolicitation),
+                    )
+                }
+            }
+            // respond to any ephemeral key solicitations
+            if (!this.mainQueueRunners.ephemeralKeySolicitations.inProgress) {
+                if (this.mainQueues.ephemeralKeySolicitations.length > 0) {
+                    // sort the solicitations to match the order of stream priority and respondAfter
+                    this.mainQueues.ephemeralKeySolicitations.sort((a, b) => {
+                        return a.respondAfter - b.respondAfter
+                    })
+                    const ephemeralSolicitation = dequeueUpToDate(
+                        this.mainQueues.ephemeralKeySolicitations,
+                        now,
+                        (x) => x.respondAfter,
+                        this.upToDateStreams,
+                    )
+                    if (ephemeralSolicitation) {
+                        this.log.debug(' processing ephemeral key solicitation')
+                        this.setStatus(DecryptionStatus.working)
+                        this.mainQueueRunners.ephemeralKeySolicitations.run(
+                            this.processKeySolicitation(ephemeralSolicitation),
+                        )
+                    }
+                }
+            }
         }
-        const streamIds = this.streamQueues.getStreamIds()
-        streamIds.sort((a, b) => this.compareStreamIds(a, b))
+
+        // grab open stream queues
+        const openRunners = this.streamQueueRunners.filter((x) => !x.inProgress)
+        const inProgressStreamIds = this.streamQueueRunners.map((x) => x.streamId).filter(isDefined)
 
         for (const streamId of streamIds) {
-            if (!this.upToDateStreams.has(streamId)) {
+            // if there are no open runners left early return
+            if (openRunners.length === 0) {
+                return // exit tick
+            }
+            // if the stream is already in progress, skip it
+            if (inProgressStreamIds.includes(streamId)) {
                 continue
             }
+
+            // grab the queue for the stream
             const streamQueue = this.streamQueues.getQueue(streamId)
+            // if there is encrypted content to decrypt, decrypt it
             const encryptedContent = streamQueue.encryptedContent.shift()
             if (encryptedContent) {
                 this.setStatus(DecryptionStatus.working)
-                return this.processEncryptedContentItem(encryptedContent)
+                const runner = openRunners.shift()!
+                runner.run(
+                    this.processEncryptedContentItem(encryptedContent),
+                    streamId,
+                    'decrypting',
+                )
+                continue
             }
+
+            // if there are external things to do, don't do anything else
+            if (
+                !this.isUserInboxStreamUpToDate(this.upToDateStreams) ||
+                this.mainQueueRunners.priority.inProgress ||
+                this.mainQueueRunners.newGroupSessions.inProgress
+            ) {
+                continue
+            }
+            // if the stream is not up to date, don't move forward
+            // solicitations could have been fulfilled by someone else
+            // adding events will fail
+            if (!this.upToDateStreams.has(streamId)) {
+                continue
+            }
+
             if (streamQueue.isMissingKeys) {
                 this.setStatus(DecryptionStatus.working)
                 streamQueue.isMissingKeys = false
-                return this.processMissingKeys(streamId)
+                const runner = openRunners.shift()!
+                runner.run(this.processMissingKeys(streamId), streamId, 'missingKeys')
+                continue
             }
 
             if (streamQueue.keySolicitationsNeedsSort) {
@@ -621,12 +800,19 @@ export abstract class BaseDecryptionExtensions {
             )
             if (keySolicitation) {
                 this.setStatus(DecryptionStatus.working)
-                return this.processKeySolicitation(keySolicitation)
+                const runner = openRunners.shift()!
+                runner.run(
+                    this.processKeySolicitation(keySolicitation),
+                    streamId,
+                    'keySolicitation',
+                )
+                continue
             }
         }
 
-        this.setStatus(DecryptionStatus.idle)
-        return Promise.resolve()
+        if (this.allQueueRunners.every((x) => !x.inProgress)) {
+            this.setStatus(DecryptionStatus.idle)
+        }
     }
 
     /**
@@ -721,6 +907,7 @@ export abstract class BaseDecryptionExtensions {
         try {
             await this.decryptGroupEvent(item.streamId, item.eventId, item.kind, item.encryptedData)
         } catch (err) {
+            this.log.debug('processEncryptedContentItem error', err, 'item:', item)
             const sessionNotFound = isSessionNotFoundError(err)
 
             this.onDecryptionError(item, {
@@ -753,7 +940,14 @@ export abstract class BaseDecryptionExtensions {
                 const streamQueue = this.streamQueues.getQueue(streamId)
                 streamQueue.isMissingKeys = true
             } else {
-                this.log.info('failed to decrypt', err, 'streamId', item.streamId)
+                this.log.info(
+                    'failed to decrypt',
+                    err,
+                    'eventId',
+                    item.eventId,
+                    'streamId',
+                    item.streamId,
+                )
             }
         }
     }
@@ -784,6 +978,7 @@ export abstract class BaseDecryptionExtensions {
             this.log.debug('processing missing keys', streamId, 'user is not member of stream')
             return
         }
+
         const solicitedEvents = this.getKeySolicitations(streamId)
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
@@ -803,17 +998,19 @@ export abstract class BaseDecryptionExtensions {
         const isNewDevice = knownSessionIds.length === 0
 
         this.log.debug(
-            'requesting keys',
+            'requesting keys (ephemeral)',
             streamId,
             'isNewDevice',
             isNewDevice,
             'sessionIds:',
             missingSessionIds.length,
         )
+        // Send ephemeral solicitation first
         await this.sendKeySolicitation({
             streamId,
             isNewDevice,
             missingSessionIds,
+            ephemeral: this.opts.enableEphemeralKeySolicitations,
         })
     }
 
@@ -871,24 +1068,30 @@ export abstract class BaseDecryptionExtensions {
             requestedCount: item.solicitation.sessionIds.length,
             replyIds: replySessionIds.length,
             sessions: allSessions.length,
+            ephemeral: item.ephemeral,
         })
         if (allSessions.length === 0) {
             return
         }
+
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,
-            userAddress: item.fromUserAddress,
+            userId: item.fromUserId,
             deviceKey: item.solicitation.deviceKey,
             sessionIds: allSessions
                 .map((x) => x.sessionId)
                 .filter((x) => requestedSessionIds.has(x))
                 .sort(),
+            ephemeral: item.ephemeral,
         })
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
         if (error) {
-            if (!error.msg.includes('DUPLICATE_EVENT') && !error.msg.includes('NOT_FOUND')) {
+            if (
+                !errorContains(error, Err.DUPLICATE_EVENT) &&
+                !errorContains(error, Err.NOT_FOUND)
+            ) {
                 // duplicate events are expected, we can ignore them, others are not
                 this.log.error('failed to send key fulfillment', error)
             }
@@ -921,10 +1124,95 @@ export abstract class BaseDecryptionExtensions {
         }
     }
 
+    processEphemeralKeyFulfillment(event: KeyFulfilmentData) {
+        if (event.deviceKey === this.userDevice.deviceKey) {
+            const solicitations = this.ownEphemeralSolicitations.get(event.streamId)
+            if (solicitations) {
+                // Process each solicitation and remove those that are fully fulfilled
+                const remainingSolicitations = solicitations.filter((solicitation) => {
+                    // Remove fulfilled session IDs from the set
+                    event.sessionIds.forEach((id) => {
+                        solicitation.missingSessionIds.delete(id)
+                    })
+
+                    if (solicitation.missingSessionIds.size === 0) {
+                        // All sessions fulfilled, cancel timer
+                        if (solicitation.timerId) {
+                            clearTimeout(solicitation.timerId)
+                        }
+                        this.log.debug('ephemeral solicitation fully fulfilled', event.streamId)
+                        return false // Remove this solicitation
+                    } else {
+                        // Still has remaining session IDs
+                        this.log.debug(
+                            'ephemeral solicitation partially fulfilled',
+                            event.streamId,
+                            'remaining:',
+                            solicitation.missingSessionIds.size,
+                        )
+                        return true // Keep this solicitation
+                    }
+                })
+
+                if (remainingSolicitations.length === 0) {
+                    this.ownEphemeralSolicitations.delete(event.streamId)
+                } else {
+                    this.ownEphemeralSolicitations.set(event.streamId, remainingSolicitations)
+                }
+            }
+        }
+
+        // Cancel any pending ephemeral solicitations to prevent over-fulfilling
+        const streamQueue = this.mainQueues
+
+        // Remove solicitations that are completely fulfilled
+        streamQueue.ephemeralKeySolicitations = streamQueue.ephemeralKeySolicitations.filter(
+            (solicitation) => {
+                if (solicitation.solicitation.deviceKey !== event.deviceKey) {
+                    return true // not the same device, keep it
+                }
+
+                // Check if all requested sessions are fulfilled by this fulfillment
+                const remainingSessionIds = solicitation.solicitation.sessionIds.filter(
+                    (id) => !event.sessionIds.includes(id),
+                )
+
+                if (remainingSessionIds.length === 0) {
+                    // All sessions fulfilled, remove this solicitation to prevent duplicate responses
+                    this.log.debug(
+                        'cancelling fully fulfilled ephemeral solicitation',
+                        event.streamId,
+                        solicitation.fromUserId,
+                        'device:',
+                        solicitation.solicitation.deviceKey,
+                    )
+                    return false
+                } else {
+                    // Update with remaining session IDs
+                    solicitation.solicitation.sessionIds = remainingSessionIds
+                    this.log.debug(
+                        'partially fulfilled ephemeral solicitation',
+                        event.streamId,
+                        solicitation.fromUserId,
+                        'remaining:',
+                        remainingSessionIds.length,
+                        'respondingIn',
+                        Date.now() - solicitation.respondAfter,
+                    )
+                    return true
+                }
+            },
+        )
+    }
+
     /**
      * can be overridden to add a delay to the key solicitation response
      */
-    public getRespondDelayMSForKeySolicitation(_streamId: string, _userId: string): number {
+    public getRespondDelayMSForKeySolicitation(
+        _streamId: string,
+        _userId: string,
+        _opts: { ephemeral: boolean },
+    ): number {
         return 0
     }
 

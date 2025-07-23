@@ -92,10 +92,12 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             name: '',
             description: '',
             permissions: [Permission.Read, Permission.Write],
-            installPrice: '0.01',
+            installPrice: '0',
             membershipDuration: String(ONE_YEAR_IN_SECONDS),
             botKind: 'simple',
             contractAddress: undefined,
+            imageUrl: '',
+            avatarUrl: '',
         },
     })
 
@@ -132,6 +134,8 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                         installPrice: watchedValues.installPrice,
                         membershipDuration: watchedValues.membershipDuration,
                         permissions: watchedValues.permissions,
+                        imageUrl: watchedValues.imageUrl,
+                        avatarUrl: watchedValues.avatarUrl,
                     }
                     break
                 case 1: // Type step
@@ -176,8 +180,11 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 installPrice,
                 membershipDuration,
                 permissions,
+                description,
                 botKind,
                 contractAddress,
+                imageUrl,
+                avatarUrl,
             } = formData
             console.log('mutate', formData)
 
@@ -256,6 +263,13 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             const { hs256SharedSecret } = await appRegistryRpcClient.register({
                 appId: bin_fromHexString(botWallet.address),
                 appOwnerId: bin_fromHexString(user.id),
+                metadata: {
+                    username: name,
+                    displayName: name,
+                    description,
+                    imageUrl: imageUrl || '',
+                    avatarUrl: avatarUrl || '',
+                },
             })
             const jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
 

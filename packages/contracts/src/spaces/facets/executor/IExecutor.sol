@@ -7,45 +7,47 @@ import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 /*                           STRUCTS                          */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-// Structure that stores the details for a target contract.
+/// @notice Structure that stores the details for a target contract
+/// @param allowedGroups Mapping of allowed groups for this target
+/// @param disabledFunctions Mapping of disabled functions for this target
+/// @param disabled Whether the target is disabled
+/// @param executionId Execution ID for the target
 struct Target {
-    // Mapping of allowed groups for this target.
     mapping(bytes4 selector => bytes32 groupId) allowedGroups;
-    // Mapping of disabled functions for this target.
     mapping(bytes4 selector => bool disabled) disabledFunctions;
-    // Whether the target is disabled.
     bool disabled;
+    bytes32 executionId;
 }
 
+/// @notice Structure that stores the details for an access
+/// @param lastAccess Timepoint at which the user gets the permission
+/// @param delay Delay for execution. Only applies to execute() calls
 struct Access {
-    // Timepoint at which the user gets the permission.
-    // If this is either 0 or in the future, then the role permission is not available.
     uint48 lastAccess;
-    // Delay for execution. Only applies to execute() calls.
     Time.Delay delay;
 }
 
+/// @notice Structure that stores the details for a group
+/// @param module Address of the module that created the group
+/// @param members Mapping of members of the group
+/// @param guardian Guardian Role ID who can cancel operations targeting functions that need this group
+/// @param grantDelay Delay in which the group takes effect after being granted
+/// @param active Whether the group is active
+/// @param expiration Timepoint at which the group becomes inactive
 struct Group {
-    // Address of the module that created the group.
     address module;
-    // Members of the group.
     mapping(address user => Access access) members;
-    // Guardian Role ID who can cancel operations targeting functions that need this group.
     bytes32 guardian;
-    // Delay in which the group takes effect after being granted.
     Time.Delay grantDelay;
-    // Whether the group is active.
     bool active;
-    // Timepoint at which the group becomes inactive.
     uint48 expiration;
 }
 
-// Structure that stores the details for a scheduled operation. This structure fits into a
-// single slot.
+/// @notice Structure that stores the details for a scheduled operation
+/// @param timepoint Moment at which the operation can be executed
+/// @param nonce Operation nonce to allow third-party contracts to identify the operation
 struct Schedule {
-    // Moment at which the operation can be executed.
     uint48 timepoint;
-    // Operation nonce to allow third-party contracts to identify the operation.
     uint32 nonce;
 }
 
@@ -262,6 +264,13 @@ interface IExecutor is IExecutorBase {
      * @return The scheduled timepoint, or 0 if not scheduled or expired
      */
     function getScheduleTimepoint(bytes32 id) external view returns (uint48);
+
+    /**
+     * @notice Checks if a target is currently executing
+     * @param target The target contract address
+     * @return True if the target is currently executing
+     */
+    function onExecution(address target) external view returns (bool);
 
     /**
      * @notice Hashes an operation

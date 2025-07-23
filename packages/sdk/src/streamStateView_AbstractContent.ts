@@ -71,8 +71,4 @@ export abstract class StreamStateView_AbstractContent {
         }
         return streamIdToBytes(streamParentId)
     }
-
-    needsScrollback(): boolean {
-        return false
-    }
 }

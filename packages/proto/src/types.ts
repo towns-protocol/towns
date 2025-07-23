@@ -9,6 +9,11 @@ export type PayloadValueType = StreamEvent['payload']['value']
 
 export type FullyReadMarker = PlainMessage<FullyReadMarkers_Content>
 
+export type ContentCaseType = Extract<
+    StreamEvent['payload']['value'],
+    { content: any }
+>['content']['case']
+
 // Check if type has $typeName and potentially $unknown properties
 type HasMessageProperties<T> = T extends { $typeName: any } ? true : false
 

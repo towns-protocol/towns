@@ -237,6 +237,16 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwap{value: 0.1 ether}(defaultInputParams, defaultRouterParams, POSTER);
     }
 
+    function test_executeSwap_revertWhen_sameToken(address token) external {
+        // create swap params with same token for input and output
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.tokenIn = token;
+        inputParams.tokenOut = token; // same token
+
+        vm.expectRevert(SwapRouter__SameToken.selector);
+        swapRouter.executeSwap(inputParams, defaultRouterParams, POSTER);
+    }
+
     function test_executeSwap_gas() public {
         test_executeSwap(
             address(this),
@@ -578,6 +588,21 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         inputParams.recipient = address(0);
 
         vm.expectRevert(SwapRouter__RecipientRequired.selector);
+        swapRouter.executeSwapWithPermit(
+            inputParams,
+            defaultRouterParams,
+            defaultEmptyPermit,
+            POSTER
+        );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_sameToken(address token) public {
+        // create params with same token for input and output - no need for valid permit since validation happens early
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.tokenIn = token;
+        inputParams.tokenOut = token; // same token
+
+        vm.expectRevert(SwapRouter__SameToken.selector);
         swapRouter.executeSwapWithPermit(
             inputParams,
             defaultRouterParams,

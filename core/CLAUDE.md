@@ -92,11 +92,43 @@ This module implements the backend River node server for Towns Protocol, a distr
 
 **Event Flow**: Raw events → Rule validation → Storage → Miniblock batching → Cross-node replication → Stream view updates
 
+### Alternative Run Modes
+
+#### Notification Service
+
+The node can be run in notifications mode to listen to updates on all streams in the network and forward events from those streams to each user in the stream according to their notification settings and subscriptions.
+
+#### App Registry Service
+
+The node can be run in app registry mode to listen to updates on all streams in the network and forward events from those streams to all bot users in the stream according to their message fowarding preferences.
+
+#### Archive mode
+
+The node can be run in archive mode to listen to the stream registry for the creation of new streams, and to query the network for miniblocks for each stream, in order to maintain backup copies of all stream data on the network. Running a node in archive mode will also cause it to maintain a list of corrupt streams, which are streams that either have a corruption detected in the miniblocks stored for the stream, or streams that are persistently unavailable on every node on the network where they are hosted.
+
 ## Development Patterns
+
+### Code Formatting and Linting
+
+Before committing any Go code changes:
+
+1. **Format all modified Go files**: Run `go fmt` on all changed `.go` files
+   - From the `/core` directory: `go fmt ./path/to/file.go`
+   - Or format all files in a package: `go fmt ./node/rpc/...`
+
+2. **Run the linter**: Use the provided linter script to check code quality
+   - From the `/core` directory: `./lint.sh`
+   - This lints all Go code in the entire core directory
+   - The linter runs both `golangci-lint` and `staticcheck`
+   - Fix any issues reported before committing
+
+3. **Verify changes**: Ensure all Go files in your commit are properly formatted and pass linting
+   - You can check modified files with: `git diff --name-only | grep "\.go$"`
 
 ### Error Handling
 
 - Use `RiverError` type from `node/base/error.go` for structured errors
+- Use `RiverErrorWithBase` to construct a river error derived from an error of arbitrary or unknown type
 - Wrap blockchain errors with context using `crypto/` utilities
 - Log errors with structured fields using zap logger
 

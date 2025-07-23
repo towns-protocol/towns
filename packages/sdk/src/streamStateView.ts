@@ -20,6 +20,7 @@ import {
     isConfirmedEvent,
     isLocalEvent,
     makeRemoteTimelineEvent,
+    getEventSignature,
 } from './types'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
@@ -43,13 +44,14 @@ import {
     isUserStreamId,
     isUserInboxStreamId,
     isMetadataStreamId,
+    userIdFromAddress,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { DecryptionSessionError } from './decryptionExtensions'
+import { DecryptionSessionError, KeyFulfilmentData } from './decryptionExtensions'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './views/models/timelineTypes'
@@ -218,6 +220,7 @@ export class StreamStateView {
         this.prevSnapshotMiniblockNum = 0n
         this.membershipContent = new StreamStateView_Members(
             streamId,
+            userId,
             this.streamsView.streamMemberIds,
         )
     }
@@ -315,6 +318,10 @@ export class StreamStateView {
         const updated: StreamTimelineEvent[] = []
         const confirmed: ConfirmedTimelineEvent[] = []
         for (const parsedEvent of minipoolEvents) {
+            if (parsedEvent.ephemeral) {
+                this.processEphemeralEvent(parsedEvent, encryptionEmitter)
+                continue
+            }
             const existingEvent = this.minipoolEvents.get(parsedEvent.hashStr)
             if (existingEvent) {
                 existingEvent.remoteEvent = parsedEvent
@@ -340,6 +347,46 @@ export class StreamStateView {
         }
         this.syncCookie = nextSyncCookie
         return { appended, updated, confirmed }
+    }
+
+    private processEphemeralEvent(
+        event: ParsedEvent,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ) {
+        const payload = event.event.payload
+        check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
+        if (payload.case !== 'memberPayload') {
+            return
+        }
+
+        switch (payload.value.content.case) {
+            case 'keySolicitation':
+                encryptionEmitter?.emit(
+                    'newKeySolicitation',
+                    this.streamId,
+                    event.hashStr,
+                    event.creatorUserId,
+                    payload.value.content.value,
+                    getEventSignature(event),
+                    true, // ephemeral flag
+                )
+                break
+            case 'keyFulfillment': {
+                const fulfillment = payload.value.content.value
+                encryptionEmitter?.emit('ephemeralKeyFulfillment', {
+                    streamId: this.streamId,
+                    userId: userIdFromAddress(fulfillment.userAddress),
+                    deviceKey: fulfillment.deviceKey,
+                    sessionIds: fulfillment.sessionIds,
+                } satisfies KeyFulfilmentData)
+                break
+            }
+            case undefined:
+                break
+            default:
+                // Other member payload types are not handled for ephemeral events
+                break
+        }
     }
 
     private processAppendedEvent(
@@ -515,6 +562,11 @@ export class StreamStateView {
     ) {
         this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
+
+        const minipoolEvent = this.minipoolEvents.get(eventId)
+        if (minipoolEvent) {
+            minipoolEvent.decryptedContent = content
+        }
 
         const timelineEvent = this.streamsView.timelinesView.streamEventDecrypted(
             this.streamId,

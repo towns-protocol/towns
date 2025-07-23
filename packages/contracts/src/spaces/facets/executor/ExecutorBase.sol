@@ -172,11 +172,7 @@ abstract contract ExecutorBase is IExecutorBase {
         bytes32 groupId,
         address account
     ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
-        Group storage group = _getGroup(groupId);
-        (isMember, executionDelay) = group.hasAccess(account);
-
-        // Check both active status and expiration
-        active = group.active && (group.expiration == 0 || group.expiration > block.timestamp);
+        return ExecutorStorage.hasGroupAccess(groupId, account);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -388,40 +384,29 @@ abstract contract ExecutorBase is IExecutorBase {
         uint256 value,
         bytes calldata data
     ) internal returns (bytes memory result, uint32 nonce) {
-        address caller = msg.sender;
         bytes4 selector = _getSelector(data);
 
-        // Fetch restrictions that apply to the caller on the targeted function
-        (bool allowed, uint32 delay) = _canCall(caller, target, selector);
+        nonce = _validateExecution(target, selector, data);
 
-        // If call is not authorized, revert
-        if (!allowed && delay == 0) {
-            UnauthorizedCall.selector.revertWith();
-        }
-
-        bytes32 operationId = _hashOperation(caller, target, data);
-
-        // If caller is authorized, check operation was scheduled early enough
-        // Consume an available schedule even if there is no currently enforced delay
-        if (delay != 0 || _getScheduleTimepoint(operationId) != 0) {
-            nonce = _consumeScheduledOp(operationId);
-        }
+        // Get storage layout
+        ExecutorStorage.Layout storage $ = ExecutorStorage.getLayout();
 
         // Run pre hooks before execution
-        _executePreHooks(target, selector, value, data);
+        _executePreHooks($, target, selector, value, data);
 
-        // Mark the target and selector as authorized
-        bytes32 executionIdBefore = ExecutorStorage.getLayout().executionId;
-        ExecutorStorage.getLayout().executionId = _hashExecutionId(target, selector);
+        // Set the executionId for the target and selector using transient storage
+        bytes32 executionId = _hashExecutionId(target, selector);
+        ExecutorStorage.setTransientExecutionId(executionId);
+        ExecutorStorage.setTargetExecutionId(target, executionId);
 
         // Call the target
         result = LibCall.callContract(target, value, data);
 
         // Run post hooks after execution (will run even if execution fails)
-        _executePostHooks(target, selector);
+        _executePostHooks($, target, selector);
 
-        // Reset the executionId
-        ExecutorStorage.getLayout().executionId = executionIdBefore;
+        // Clear transient storage to prevent composability issues
+        ExecutorStorage.clearTransientStorage(target);
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
@@ -430,6 +415,15 @@ abstract contract ExecutorBase is IExecutorBase {
     function _getScheduleTimepoint(bytes32 id) internal view returns (uint48) {
         uint48 timepoint = _getSchedule(id).timepoint;
         return _isExpired(timepoint, 0) ? 0 : timepoint;
+    }
+
+    /// @dev Checks if the current execution context matches the given only target.
+    /// @param target The target contract.
+    /// @return True if currently executing.
+    function _isTargetExecuting(address target) internal view returns (bool) {
+        bytes32 globalId = ExecutorStorage.getTransientExecutionId();
+        bytes32 targetId = ExecutorStorage.getTargetExecutionId(target);
+        return globalId != 0 && targetId == globalId;
     }
 
     /// @notice Computes a unique hash for an operation.
@@ -456,6 +450,28 @@ abstract contract ExecutorBase is IExecutorBase {
         }
     }
 
+    function _validateExecution(
+        address target,
+        bytes4 selector,
+        bytes calldata data
+    ) private returns (uint32 nonce) {
+        // Fetch restrictions that apply to the caller on the targeted function
+        (bool allowed, uint32 delay) = _canCall(msg.sender, target, selector);
+
+        // If call is not authorized, revert
+        if (!allowed && delay == 0) {
+            UnauthorizedCall.selector.revertWith();
+        }
+
+        bytes32 operationId = _hashOperation(msg.sender, target, data);
+
+        // If caller is authorized, check operation was scheduled early enough
+        // Consume an available schedule even if there is no currently enforced delay
+        if (delay != 0 || _getScheduleTimepoint(operationId) != 0) {
+            nonce = _consumeScheduledOp(operationId);
+        }
+    }
+
     /// @dev Determines if a caller can invoke a function on a target, and if a delay is required.
     ///      Handles both self-calls and external calls.
     /// @param caller The address attempting the call.
@@ -468,11 +484,6 @@ abstract contract ExecutorBase is IExecutorBase {
         address target,
         bytes4 selector
     ) private view returns (bool allowed, uint32 delay) {
-        // If the contract is calling itself, ensure it's during an authorized execution
-        if (caller == address(this)) {
-            return (_isExecuting(target, selector), 0);
-        }
-
         // Disallow if the target or function is disabled
         if (_isTargetDisabled(target)) {
             return (false, 0);
@@ -513,7 +524,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param selector The function selector.
     /// @return True if currently executing.
     function _isExecuting(address target, bytes4 selector) private view returns (bool) {
-        return ExecutorStorage.getLayout().executionId == _hashExecutionId(target, selector);
+        return ExecutorStorage.getTransientExecutionId() == _hashExecutionId(target, selector);
     }
 
     /// @dev Computes a unique hash for the execution context.
@@ -537,12 +548,17 @@ abstract contract ExecutorBase is IExecutorBase {
 
     /// @dev Internal function to execute pre hooks
     function _executePreHooks(
+        ExecutorStorage.Layout storage $,
         address target,
         bytes4 selector,
         uint256 value,
         bytes calldata data
-    ) internal virtual;
+    ) internal virtual {}
 
     /// @dev Internal function to execute post hooks
-    function _executePostHooks(address target, bytes4 selector) internal virtual;
+    function _executePostHooks(
+        ExecutorStorage.Layout storage $,
+        address target,
+        bytes4 selector
+    ) internal virtual {}
 }

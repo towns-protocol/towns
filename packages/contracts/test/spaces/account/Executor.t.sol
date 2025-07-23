@@ -14,6 +14,7 @@ import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 
 //libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 
 //contracts
 import {ExecutorFacet} from "src/spaces/facets/executor/ExecutorFacet.sol";
@@ -255,5 +256,91 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
         (, , active) = executor.hasAccess(groupId, account);
         assertEq(active, true);
         vm.stopPrank();
+    }
+
+    function test_onExecution() external {
+        address caller = _randomAddress();
+        bytes32 groupId = _randomBytes32();
+
+        TargetA groupMock = new TargetA(executor, new TargetB(executor));
+
+        vm.startPrank(founder);
+        executor.grantAccess(groupId, caller, 0);
+        executor.setTargetFunctionGroup(
+            address(groupMock),
+            groupMock.callExecutor.selector,
+            groupId
+        );
+        vm.stopPrank();
+
+        assertEq(executor.onExecution(address(groupMock)), false);
+
+        vm.prank(caller);
+        executor.execute(address(groupMock), 0, abi.encodeCall(groupMock.callExecutor, ()));
+
+        assertEq(executor.onExecution(address(groupMock)), false);
+    }
+
+    function test_onExecution_targetB() external {
+        address caller = _randomAddress();
+        bytes32 groupId = _randomBytes32();
+
+        TargetB targetB = new TargetB(executor);
+        TargetA targetA = new TargetA(executor, targetB);
+
+        vm.startPrank(founder);
+        executor.grantAccess(groupId, caller, 0);
+        executor.grantAccess(groupId, address(targetB), 0);
+        executor.setTargetFunctionGroup(address(targetA), targetA.callTargetB.selector, groupId);
+        executor.setTargetFunctionGroup(address(targetB), targetB.someFunction.selector, groupId);
+        executor.setTargetFunctionGroup(address(targetB), targetB.foo.selector, groupId);
+        vm.stopPrank();
+
+        assertEq(executor.onExecution(address(targetB)), false);
+
+        vm.prank(caller);
+        executor.execute(address(targetA), 0, abi.encodeCall(targetA.callTargetB, ()));
+    }
+}
+
+contract TargetB {
+    ExecutorFacet internal executor;
+
+    constructor(ExecutorFacet executor_) {
+        executor = executor_;
+    }
+
+    function someFunction() external {
+        executor.execute(address(this), 0, abi.encodeWithSelector(this.foo.selector));
+    }
+
+    function foo() external view returns (bool) {
+        if (!executor.onExecution(address(this))) {
+            revert();
+        }
+
+        return true;
+    }
+}
+
+contract TargetA {
+    ExecutorFacet internal executor;
+    TargetB internal targetB;
+
+    constructor(ExecutorFacet executor_, TargetB targetB_) {
+        executor = executor_;
+        targetB = targetB_;
+    }
+
+    function callExecutor() external view returns (bool) {
+        if (!executor.onExecution(address(this))) {
+            revert();
+        }
+
+        return true;
+    }
+
+    function callTargetB() external {
+        LibCall.callContract(address(targetB), 0, abi.encodeCall(targetB.someFunction, ()));
     }
 }

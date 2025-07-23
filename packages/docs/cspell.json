@@ -57,7 +57,13 @@
         "POAPs",
         "pprof",
         "unstaking",
-        "unstake"
+        "unstake",
+        "incentivizes",
+        "Merkle",
+        "merkle",
+        "repudiable",
+        "FINMA",
+        "permissioned"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [

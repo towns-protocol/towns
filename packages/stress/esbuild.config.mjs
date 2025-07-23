@@ -5,7 +5,11 @@ build({
     entryPoints: {
         start: './src/start.ts',
         demo: './src/demo.ts',
+        stress: './src/stressRun.ts',
         notifications: './src/notifications.ts',
+        generateWallets: './src/generateWallets.ts',
+        transferFunds: './src/transferFunds.ts',
+        nft: './src/nft.ts',
     },
     bundle: true,
     sourcemap: 'inline',

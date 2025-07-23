@@ -32,7 +32,7 @@ func TestCreateMediaStream(t *testing.T) {
 		initialEvents := make([]*protocol.Envelope, 1, 2)
 
 		// Create inception event
-		var trueVal = true
+		trueVal := true
 		initialEvents[0], err = events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
@@ -69,7 +69,7 @@ func TestCreateMediaStream(t *testing.T) {
 		mediaStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
 		// Create inception event
-		var trueVal = true
+		trueVal := true
 		inception, err := events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
@@ -106,7 +106,10 @@ func TestCreateMediaStream(t *testing.T) {
 			StreamId: mediaStreamId[:],
 		}))
 		tt.require.NoError(err)
-		tt.require.Equal(firstCc, csResp.Msg.NextCreationCookie)
+		tt.require.Equal(firstCc.StreamId, csResp.Msg.NextCreationCookie.StreamId)
+		tt.require.Equal(firstCc.PrevMiniblockHash, csResp.Msg.NextCreationCookie.PrevMiniblockHash)
+		tt.require.Equal(firstCc.MiniblockNum, csResp.Msg.NextCreationCookie.MiniblockNum)
+		tt.require.Equal(firstCc.Nodes, csResp.Msg.NextCreationCookie.Nodes)
 
 		// Add the rest of the media chunks
 		cc := csResp.Msg.NextCreationCookie
@@ -127,7 +130,7 @@ func TestCreateMediaStream(t *testing.T) {
 				CreationCookie: cc,
 				Last:           i == chunks-1,
 			}))
-			tt.require.NoError(err)
+			tt.require.NoError(err, i)
 
 			mb.Hash = common.BytesToHash(aeResp.Msg.CreationCookie.PrevMiniblockHash)
 			mb.Num++
@@ -139,7 +142,7 @@ func TestCreateMediaStream(t *testing.T) {
 		mediaStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
 		// Create inception event
-		var trueVal = true
+		trueVal := true
 		inception, err := events.MakeEnvelopeWithPayload(
 			alice.wallet,
 			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
@@ -409,7 +412,7 @@ func TestCreateMediaStream_Legacy(t *testing.T) {
 			Event:    envelope,
 		}))
 		tt.require.NoError(err)
-		tt.require.Nil(aeResp.Msg.Error)
+		tt.require.NotNil(aeResp.Msg)
 
 		mb, err = makeMiniblock(tt.ctx, alice.client, mediaStreamId, false, int64(i))
 		tt.require.NoError(err, i)

@@ -2,6 +2,8 @@ import OpenAI from 'openai'
 import { makeTownsBot } from '@towns-protocol/bot'
 import { serve } from '@hono/node-server'
 import { createServer } from 'node:http2'
+import { Hono } from 'hono'
+import { logger } from 'hono/logger'
 
 type Context = {
     initialPrompt: string
@@ -23,14 +25,6 @@ const bot = await makeTownsBot(
     process.env.JWT_SECRET!,
     process.env.RIVER_ENV,
 )
-
-bot.onChannelJoin(async (h, { channelId, userId }) => {
-    console.log(`🧵 user ${shortId(userId)} joined channel ${shortId(channelId)}`)
-    if (userId === bot.botId) {
-        await h.setUsername(channelId, 'thread-ai-bot')
-        await h.setDisplayName(channelId, 'Thread AI Bot')
-    }
-})
 
 bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
     console.log(`🧵 new thread: user ${shortId(userId)} sent message:`, message)
@@ -94,6 +88,15 @@ const ai = async (context: Context) => {
 }
 const shortId = (id: string) => id.slice(0, 4) + '..' + id.slice(-4)
 
-const { fetch } = await bot.start()
-serve({ fetch, port: parseInt(process.env.PORT!), createServer })
+const { jwtMiddleware, handler } = await bot.start()
+
+const app = new Hono()
+app.use(logger())
+app.post('/webhook', jwtMiddleware, handler)
+
+serve({
+    fetch: app.fetch,
+    port: parseInt(process.env.PORT!),
+    createServer,
+})
 console.log(`✅ Thread AI Bot is running on https://localhost:${process.env.PORT}`)

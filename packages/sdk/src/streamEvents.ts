@@ -16,7 +16,11 @@ import {
     StreamTimelineEvent,
 } from './types'
 import { UserDevice } from '@towns-protocol/encryption'
-import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
+import {
+    EventSignatureBundle,
+    KeyFulfilmentData,
+    KeySolicitationContent,
+} from './decryptionExtensions'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
@@ -38,15 +42,14 @@ export type StreamEncryptionEvents = {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
+        ephemeral?: boolean,
     ) => void
     updatedKeySolicitation: (
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
     ) => void
@@ -55,12 +58,12 @@ export type StreamEncryptionEvents = {
         eventHashStr: string,
         members: {
             userId: string
-            userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
         sigBundle: EventSignatureBundle,
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
+    ephemeralKeyFulfillment: (event: KeyFulfilmentData) => void
 }
 
 export type SyncedStreamEvents = {

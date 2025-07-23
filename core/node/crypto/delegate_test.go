@@ -11,8 +11,7 @@ import (
 )
 
 func TestDelegateEth(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	primaryWallet, err := NewWallet(ctx)
 	assert.NoError(t, err)
@@ -33,8 +32,7 @@ func TestDelegateEth(t *testing.T) {
 }
 
 func TestDelegateEthWithExpiry(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 
 	primaryWallet, err := NewWallet(ctx)
 	assert.NoError(t, err)

@@ -1,5 +1,3 @@
-// Crypto Store uses IndexedDB, so we need to import fake-indexeddb/auto
-import 'fake-indexeddb/auto'
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 
 import {
@@ -30,10 +28,12 @@ import {
     make_MemberPayload_DisplayName,
     make_UserMetadataPayload_ProfileImage,
     spaceIdFromChannelId,
+    type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
-import { Hono, type Context } from 'hono'
-import EventEmitter from 'node:events'
-import TypedEmitter from 'typed-emitter'
+import { type Context, type Env, type Next } from 'hono'
+import { createMiddleware } from 'hono/factory'
+import { default as jwt } from 'jsonwebtoken'
+import { createNanoEvents, type Emitter } from 'nanoevents'
 import {
     type ChannelMessage_Post_Attachment,
     type ChannelMessage_Post_Mention,
@@ -84,10 +84,8 @@ import {
     type WriteContractParameters,
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
-
-// Import the jsonwebtoken library and necessary dlog utilities
-import { default as jwt } from 'jsonwebtoken'
 import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
+import type { BlankEnv } from 'hono/types'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -120,6 +118,7 @@ export type UserData = {
     /** URL that points to the profile picture of the user */
     profilePictureUrl: string
 }
+
 export type BotEvents = {
     message: (
         handler: BotActions,
@@ -218,60 +217,61 @@ type BasePayload = {
     eventId: string
 }
 
-export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
-    private readonly server: Hono
+export class Bot<HonoEnv extends Env = BlankEnv> {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
+    private readonly emitter: Emitter<BotEvents> = createNanoEvents()
 
     constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
-        super()
         this.client = clientV2
         this.botId = clientV2.userId
         this.viemClient = viemClient
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
-        this.server = new Hono()
-        this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
 
     async start() {
         await this.client.uploadDeviceKeys()
-        return { fetch: this.server.fetch }
+        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+
+        return {
+            jwtMiddleware,
+            handler: this.webhookHandler.bind(this),
+        }
     }
 
-    private async webhookResponseHandler(c: Context) {
+    private async jwtMiddleware(c: Context<HonoEnv>, next: Next): Promise<Response | void> {
         const authHeader = c.req.header('Authorization')
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return c.text('Unauthorized: Missing or malformed token', 401)
-        } else {
-            const tokenString = authHeader.substring(7)
-            try {
-                // Convert botId (Ethereum address string, e.g., "0xABC") to raw bytes,
-                // then to a lowercase hex string for the audience check.
-                // This must match how the Go service creates the 'aud' claim.
-                const botAddressBytes = bin_fromHexString(this.botId)
-                // Assumes lowercase hex output without "0x"
-                const expectedAudience = bin_toHexString(botAddressBytes)
-
-                jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
-                    algorithms: ['HS256'],
-                    audience: expectedAudience,
-                })
-            } catch (err) {
-                let errorMessage = 'Unauthorized: Token verification failed'
-                if (err instanceof jwt.TokenExpiredError) {
-                    errorMessage = 'Unauthorized: Token expired'
-                } else if (err instanceof jwt.JsonWebTokenError) {
-                    errorMessage = `Unauthorized: Invalid token (${err.message})`
-                }
-                return c.text(errorMessage, 401)
-            }
         }
 
+        const tokenString = authHeader.substring(7)
+        try {
+            const botAddressBytes = bin_fromHexString(this.botId)
+            const expectedAudience = bin_toHexString(botAddressBytes)
+            jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
+                algorithms: ['HS256'],
+                audience: expectedAudience,
+            })
+        } catch (err) {
+            let errorMessage = 'Unauthorized: Token verification failed'
+            if (err instanceof jwt.TokenExpiredError) {
+                errorMessage = 'Unauthorized: Token expired'
+            } else if (err instanceof jwt.JsonWebTokenError) {
+                errorMessage = `Unauthorized: Invalid token (${err.message})`
+            }
+            return c.text(errorMessage, 401)
+        }
+
+        await next()
+    }
+
+    private async webhookHandler(c: Context<HonoEnv>) {
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
@@ -338,7 +338,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                     continue
                 }
                 this.currentMessageTags = parsed.event.tags
-                this.emit('streamEvent', this.client, {
+                this.emitter.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
@@ -371,7 +371,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             }
                             await this.handleChannelMessage(streamId, parsed, channelMessage)
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
-                            this.emit('eventRevoke', this.client, {
+                            this.emitter.emit('eventRevoke', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
@@ -398,7 +398,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
                             if (!isChannel) continue
                             if (membership.op === MembershipOp.SO_JOIN) {
-                                this.emit('channelJoin', this.client, {
+                                this.emitter.emit('channelJoin', this.client, {
                                     userId: userIdFromAddress(membership.userAddress),
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -406,7 +406,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                                 })
                             }
                             if (membership.op === MembershipOp.SO_LEAVE) {
-                                this.emit('channelLeave', this.client, {
+                                this.emitter.emit('channelLeave', this.client, {
                                     userId: userIdFromAddress(membership.userAddress),
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -452,22 +452,22 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                     }
 
                     if (replyId) {
-                        this.emit('reply', this.client, forwardPayload)
+                        this.emitter.emit('reply', this.client, forwardPayload)
                     } else if (threadId) {
-                        this.emit('threadMessage', this.client, {
+                        this.emitter.emit('threadMessage', this.client, {
                             ...forwardPayload,
                             threadId,
                         })
                     } else if (hasBotMention) {
-                        this.emit('mentioned', this.client, forwardPayload)
+                        this.emitter.emit('mentioned', this.client, forwardPayload)
                     } else {
-                        this.emit('message', this.client, forwardPayload)
+                        this.emitter.emit('message', this.client, forwardPayload)
                     }
                 }
                 break
             }
             case 'reaction': {
-                this.emit('reaction', this.client, {
+                this.emitter.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -480,7 +480,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
             case 'edit': {
                 // TODO: framework doesnt handle non-text edits
                 if (payload.value.post?.content.case !== 'text') break
-                this.emit('messageEdit', this.client, {
+                this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -491,7 +491,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 break
             }
             case 'redaction': {
-                this.emit('redaction', this.client, {
+                this.emitter.emit('redaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -590,46 +590,46 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * This is triggered for all messages, including direct messages and group messages.
      */
     onMessage(fn: BotEvents['message']) {
-        this.on('message', fn)
+        this.emitter.on('message', fn)
     }
 
     onRedaction(fn: BotEvents['redaction']) {
-        this.on('redaction', fn)
+        this.emitter.on('redaction', fn)
     }
 
     /**
      * Triggered when a message gets edited
      */
     onMessageEdit(fn: BotEvents['messageEdit']) {
-        this.on('messageEdit', fn)
+        this.emitter.on('messageEdit', fn)
     }
 
     /**
      * Triggered when someone mentions the bot in a message
      */
     onMentioned(fn: BotEvents['mentioned']) {
-        this.on('mentioned', fn)
+        this.emitter.on('mentioned', fn)
     }
 
     /**
      * Triggered when someone replies to a message
      */
     onReply(fn: BotEvents['reply']) {
-        this.on('reply', fn)
+        this.emitter.on('reply', fn)
     }
 
     /**
      * Triggered when someone reacts to a message
      */
     onReaction(fn: BotEvents['reaction']) {
-        this.on('reaction', fn)
+        this.emitter.on('reaction', fn)
     }
 
     /**
      * Triggered when a message is revoked by a moderator
      */
     onEventRevoke(fn: BotEvents['eventRevoke']) {
-        this.on('eventRevoke', fn)
+        this.emitter.on('eventRevoke', fn)
     }
 
     /**
@@ -637,29 +637,29 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
      * TODO: impl
      */
     onTip(fn: BotEvents['tip']) {
-        this.on('tip', fn)
+        this.emitter.on('tip', fn)
     }
 
     /**
      * Triggered when someone joins a channel
      */
     onChannelJoin(fn: BotEvents['channelJoin']) {
-        this.on('channelJoin', fn)
+        this.emitter.on('channelJoin', fn)
     }
 
     /**
      * Triggered when someone leaves a channel
      */
     onChannelLeave(fn: BotEvents['channelLeave']) {
-        this.on('channelLeave', fn)
+        this.emitter.on('channelLeave', fn)
     }
 
     onStreamEvent(fn: BotEvents['streamEvent']) {
-        this.on('streamEvent', fn)
+        this.emitter.on('streamEvent', fn)
     }
 
     onThreadMessage(fn: BotEvents['threadMessage']) {
-        this.on('threadMessage', fn)
+        this.emitter.on('threadMessage', fn)
     }
 
     // onSlashCommand(command: Commands, fn: (client: BotActions, opts: BasePayload) => void) {
@@ -667,12 +667,15 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     // }
 }
 
-export const makeTownsBot = async (
+export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
     appPrivateDataBase64: string,
     jwtSecretBase64: string,
     env: Parameters<typeof makeRiverConfig>[0],
-    baseRpcUrl?: string,
+    opts: {
+        baseRpcUrl?: string
+    } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
+    const { baseRpcUrl, ...clientOpts } = opts
     const { privateKey, encryptionDevice } = fromBinary(
         AppPrivateDataSchema,
         bin_fromBase64(appPrivateDataBase64),
@@ -691,8 +694,9 @@ export const makeTownsBot = async (
         encryptionDevice: {
             fromExportedDevice: encryptionDevice,
         },
+        ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
-    return new Bot(client, viemClient, jwtSecretBase64)
+    return new Bot<HonoEnv>(client, viemClient, jwtSecretBase64)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
@@ -754,12 +758,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             throw new Error(`Invalid stream ID type: ${streamId}`)
         }
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
         return {
-            error,
             eventId,
             prevMiniblockHash,
         }
@@ -783,11 +786,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const uploadDeviceKeys = async () => {
@@ -804,8 +807,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({ streamId, event })
-        return { eventId, error }
+        await client.rpc.addEvent({ streamId, event })
+        return { eventId }
     }
 
     const sendMessage = async (
@@ -907,11 +910,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const setDisplayName = async (streamId: string, displayName: string) => {
@@ -929,11 +932,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const setUserProfileImage = async (chunkedMediaInfo: PlainMessage<ChunkedMedia>) => {
@@ -957,11 +960,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             prevMiniblockHash,
         )
         const eventId = bin_toHexString(event.hash)
-        const { error } = await client.rpc.addEvent({
+        await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
             event,
         })
-        return { eventId, error }
+        return { eventId }
     }
 
     const decryptSessions = async (

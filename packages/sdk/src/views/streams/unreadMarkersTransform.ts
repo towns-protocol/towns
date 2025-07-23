@@ -24,7 +24,7 @@ export function unreadMarkersTransform(
     prev: Input,
     state?: UnreadMarkersModel,
 ): UnreadMarkersModel {
-    console.log('unreadMarkersTransform', value, prev, state)
+    //console.log('unreadMarkersTransform', value, prev, state)
 
     state = state ?? { markers: {} }
 
@@ -240,7 +240,7 @@ function diffAdded(
         const isThread = markerId !== channelId
         const prevMarker = updated[markerId]
         const mentions =
-            prevMarker?.mentions ?? 0 + eventSegment.filter((e) => e.isMentioned).length
+            (prevMarker?.mentions ?? 0) + eventSegment.filter((e) => e.isMentioned).length
         const beginUnreadWindow = prevMarker?.beginUnreadWindow ?? eventSegment[0].eventNum
         const endUnreadWindow = eventSegment[eventSegment.length - 1].eventNum
 

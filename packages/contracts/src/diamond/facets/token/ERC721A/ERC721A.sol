@@ -88,7 +88,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
      * - `tokenId` must exist.
      */
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
-        return address(uint160(_packedOwnershipOf(tokenId)));
+        return _ownerOf(tokenId);
     }
 
     /**
@@ -160,7 +160,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address to,
         uint256 tokenId
     ) public payable virtual override {
-        uint256 prevOwnershipPacked = _packedOwnershipOf(tokenId);
+        uint256 prevOwnershipPacked = ERC721AStorage.packedOwnershipOf(_startTokenId(), tokenId);
 
         if (address(uint160(prevOwnershipPacked)) != from) {
             revert TransferFromIncorrectOwner();
@@ -189,20 +189,22 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
             }
         }
 
+        ERC721AStorage.Layout storage $ = ERC721AStorage.layout();
+
         // Underflow of the sender's balance is impossible because we check for
         // ownership above and the recipient's balance can't realistically overflow.
         // Counter overflow is incredibly unrealistic as `tokenId` would have to be 2**256.
         unchecked {
             // We can directly increment and decrement the balances.
-            --ERC721AStorage.layout()._packedAddressData[from]; // Updates: `balance -= 1`.
-            ++ERC721AStorage.layout()._packedAddressData[to]; // Updates: `balance += 1`.
+            --$._packedAddressData[from]; // Updates: `balance -= 1`.
+            ++$._packedAddressData[to]; // Updates: `balance += 1`.
 
             // Updates:
             // - `address` to the next owner.
             // - `startTimestamp` to the timestamp of transfering.
             // - `burned` to `false`.
             // - `nextInitialized` to `true`.
-            ERC721AStorage.layout()._packedOwnerships[tokenId] = _packOwnershipData(
+            $._packedOwnerships[tokenId] = _packOwnershipData(
                 to,
                 _BITMASK_NEXT_INITIALIZED | _nextExtraData(from, to, prevOwnershipPacked)
             );
@@ -211,14 +213,12 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
             if (prevOwnershipPacked & _BITMASK_NEXT_INITIALIZED == 0) {
                 uint256 nextTokenId = tokenId + 1;
                 // If the next slot's address is zero and not burned (i.e. packed value is zero).
-                if (ERC721AStorage.layout()._packedOwnerships[nextTokenId] == 0) {
+                if ($._packedOwnerships[nextTokenId] == 0) {
                     // If the next slot is within bounds.
-                    if (nextTokenId != ERC721AStorage.layout()._currentIndex) {
+                    if (nextTokenId != $._currentIndex) {
                         // Initialize the next slot to maintain correctness for `ownerOf(tokenId +
                         // 1)`.
-                        ERC721AStorage.layout()._packedOwnerships[
-                            nextTokenId
-                        ] = prevOwnershipPacked;
+                        $._packedOwnerships[nextTokenId] = prevOwnershipPacked;
                     }
                 }
             }

@@ -88,6 +88,6 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         address publicKey,
         bytes32 permission
     ) external view returns (bool) {
-        return _isEntitled(app, publicKey, permission);
+        return _isAppEntitled(app, publicKey, permission);
     }
 }

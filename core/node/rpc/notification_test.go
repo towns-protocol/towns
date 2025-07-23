@@ -823,7 +823,7 @@ func initNotificationService(
 
 	service, err := StartServerInNotificationMode(ctx, cfg, notifier, makeTestServerOpts(tester))
 	tester.require.NoError(err)
-	tester.cleanup(service.Close)
+	tester.t.Cleanup(service.Close)
 
 	return service
 }
@@ -1057,7 +1057,6 @@ func (tc *gdmChannelNotificationsTestContext) sendMessageWithTags(
 	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: tc.gdmStreamID[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)
@@ -1117,7 +1116,6 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 	aresp, err := tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: userStreamId[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)
@@ -1310,7 +1308,6 @@ func (tc *dmChannelNotificationsTestContext) sendMessageWithTags(
 	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: tc.dmStreamID[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)
@@ -1348,7 +1345,6 @@ func (tc *dmChannelNotificationsTestContext) blockUser(
 	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: streamID[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)
@@ -1472,7 +1468,6 @@ func (tc *spaceChannelNotificationsTestContext) sendMessageWithTags(
 	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: tc.channelID[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)

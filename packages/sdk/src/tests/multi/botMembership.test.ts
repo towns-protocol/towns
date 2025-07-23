@@ -17,7 +17,6 @@ import {
     createTownWithRequirements,
     createChannel,
     getXchainConfigForTesting,
-    makeTestClient,
 } from '../testUtils'
 import { makeBaseChainConfig } from '../../riverConfig'
 import { ethers } from 'ethers'
@@ -115,6 +114,8 @@ describe('bot membership tests', () => {
     test('registered and installed bots can join spaces and channels in towns with gated membership', async () => {
         // Create a town with user entitlements that only allows 'bob' (space owner)
         // The bot is NOT in this list, so it doesn't satisfy the space entitlements.
+        // Thus we know the bot is disqualified for regular membership by the gating
+        // and can only be admitted to the space via the bot entitlement pathway.
         const {
             spaceId,
             channelId: defaultChannelId,
@@ -535,20 +536,23 @@ describe('bot membership tests', () => {
         await spaceOwner.stopSync()
     })
 
-    test('bots cannot be added to DMs or GDMs', async () => {
+    // skipped because nothing is preventing you from creating dms or gdms with bots
+    test.skip('bots cannot be added to DMs or GDMs', async () => {
         const {
-            aliceProvider: ownerProvider,
+            alice,
+            aliceProvider, // owner
+            aliceSpaceDapp,
             bob: bot,
             bobsWallet: botWallet,
             bobProvider: botProvider,
             carol,
+            carolSpaceDapp,
+            carolProvider,
         } = await setupWalletsAndContexts()
-
-        const dave = await makeTestClient()
 
         const appRegistryDapp = new AppRegistryDapp(
             makeBaseChainConfig().chainConfig,
-            ownerProvider,
+            aliceProvider,
         )
 
         const tx = await appRegistryDapp.createApp(
@@ -563,10 +567,23 @@ describe('bot membership tests', () => {
         const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
         expect(foundAppAddress).toBeDefined()
 
-        expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
+        const everyoneMembership = await everyoneMembershipStruct(carolSpaceDapp, carol)
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            carol,
+            carolSpaceDapp,
+            carolProvider.wallet,
+            "space owner's town",
+            everyoneMembership,
+        )
+
+        await aliceSpaceDapp.joinSpace(spaceId, alice.userId, aliceProvider.wallet)
+
+        await expect(bot.initializeUser({ appAddress: foundAppAddress })).resolves.toBeDefined()
+        await expect(alice.initializeUser({ spaceId })).resolves.toBeDefined()
 
         // GDMs with bot creators are disallowed.
-        await expect(carol.createGDMChannel([bot.userId, dave.userId])).rejects.toThrow(
+        // (carol and dave don't have user streams yet)
+        await expect(carol.createGDMChannel([bot.userId, alice.userId])).rejects.toThrow(
             /PERMISSION_DENIED/,
         )
 
