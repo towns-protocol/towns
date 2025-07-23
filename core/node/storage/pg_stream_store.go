@@ -799,7 +799,6 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		return nil, err
 	}
 
-
 	// Calculate the starting sequence number to read numPrecedingMiniblocks before the snapshot
 	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
 	if startSeqNum < 0 {
@@ -1185,7 +1184,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	if err := s.txRunner(
 		ctx,
 		"ReadMiniblocks",
-		pgx.ReadWrite,
+		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
@@ -1255,7 +1254,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 				Tag("streamId", streamId)
 		}
 		firstRow = false
-		
+
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").
@@ -2355,7 +2354,7 @@ func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
 		"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num < $3",
 		streamId,
 	)
-	
+
 	result, err := tx.Exec(ctx, query, streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
