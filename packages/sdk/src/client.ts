@@ -352,8 +352,8 @@ export class Client
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
             {
-                startSyncStreams: async () => {
-                    this.streams.startSyncStreams()
+                startSyncStreams: async (lastAccessedAt: Record<string, number>) => {
+                    this.streams.startSyncStreams(lastAccessedAt)
                     this.decryptionExtensions?.start()
                 },
                 initStream: (streamId, allowGetStream, persistedData) =>
@@ -2914,6 +2914,7 @@ export class Client
         this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
         this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
     }
 
