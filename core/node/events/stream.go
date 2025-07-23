@@ -1130,6 +1130,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 
 	view, err := s.lockMuAndLoadView(ctx)
 	if err != nil {
+		s.mu.Unlock()
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
@@ -1174,9 +1175,8 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	s.lastAppliedBlockNum = blockNum
 	s.mu.Unlock()
 
-	// Submit sync task after releasing the lock to avoid deadlock
 	if needsSyncTask {
-		s.params.streamCache.SubmitSyncStreamTask(s, nil)
+		s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 	}
 }
 
