@@ -64,24 +64,29 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 		return err
 	}
 
+	registry, err := nodes.LoadNodeRegistry(
+		s.serverCtx,
+		s.registryContract,
+		common.Address{},
+		s.riverChain.InitialBlockNum,
+		s.riverChain.ChainMonitor,
+		s.chainConfig,
+		httpClient,
+		httpClient,
+		s.otelConnectIterceptor,
+	)
+	if err != nil {
+		return err
+	}
+
 	var registries []nodes.NodeRegistry
+
 	for range 10 {
-		registry, err := nodes.LoadNodeRegistry(
-			s.serverCtx,
-			s.registryContract,
-			common.Address{},
-			s.riverChain.InitialBlockNum,
-			s.riverChain.ChainMonitor,
-			s.chainConfig,
-			httpClient,
-			httpClient,
-			s.otelConnectIterceptor,
-		)
+		httpClient, err := s.httpClientMaker(s.serverCtx, s.config)
 		if err != nil {
 			return err
 		}
-
-		registries = append(registries, registry)
+		registries = append(registries, registry.CloneWithClients(httpClient, httpClient))
 	}
 
 	s.NotificationService, err = notifications.NewService(

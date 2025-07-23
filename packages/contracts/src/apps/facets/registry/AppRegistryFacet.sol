@@ -143,6 +143,13 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _getAppPrice(app);
     }
 
+    /// @notice Get the duration of an app
+    /// @param app The app address
+    /// @return duration The duration of the app
+    function getAppDuration(address app) external view returns (uint48 duration) {
+        return _getAppDuration(app);
+    }
+
     /// @notice Get the latest version ID for a app
     /// @param app The app address
     /// @return appId The version ID of the registered app

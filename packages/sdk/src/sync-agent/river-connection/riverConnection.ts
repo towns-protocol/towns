@@ -4,11 +4,8 @@ import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
 import { check, dlogger, shortenHexString } from '@towns-protocol/dlog'
 import { PromiseQueue } from '../utils/promiseQueue'
-import {
-    CryptoStore,
-    EntitlementsDelegate,
-    type EncryptionDeviceInitOpts,
-} from '@towns-protocol/encryption'
+import { CryptoStore, type EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
+import { EntitlementsDelegate } from '../../decryptionExtensions'
 import { Client, ClientOptions } from '../../client'
 import { SignerContext } from '../../signerContext'
 import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'

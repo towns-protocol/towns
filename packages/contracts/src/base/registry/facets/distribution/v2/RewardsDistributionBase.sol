@@ -2,18 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IRewardsDistributionBase} from "./IRewardsDistribution.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
-
+import {CustomRevert} from "../../../../../utils/libraries/CustomRevert.sol";
+import {SpaceDelegationStorage} from "../../delegation/SpaceDelegationStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "../../operator/NodeOperatorStorage.sol";
 import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
 import {StakingRewards} from "./StakingRewards.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SpaceDelegationStorage} from "src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
-import {NodeOperatorStatus, NodeOperatorStorage} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -23,20 +21,33 @@ import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 import {DelegationProxy} from "./DelegationProxy.sol";
 
 abstract contract RewardsDistributionBase is IRewardsDistributionBase {
+    using CustomRevert for bytes4;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeTransferLib for address;
     using StakingRewards for StakingRewards.Layout;
 
+    /// @notice Universal Permit2 contract address
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STAKING                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice Creates a new staking deposit for the specified owner
+    /// @dev Validates delegatee, deploys proxy, transfers tokens, and updates accounting
+    /// @param amount Amount of stake tokens to deposit
+    /// @param delegatee Address to delegate to (operator or space)
+    /// @param beneficiary Address that receives staking rewards
+    /// @param owner Address that owns the deposit
+    /// @param fromPermit Whether tokens are already in contract from permit
+    /// @return depositId The unique ID for this deposit
     function _stake(
         uint96 amount,
         address delegatee,
         address beneficiary,
-        address owner
+        address owner,
+        bool fromPermit
     ) internal returns (uint256 depositId) {
         _revertIfNotOperatorOrSpace(delegatee);
 
@@ -53,14 +64,23 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
 
         if (owner != address(this)) {
             address proxy = _deployDelegationProxy(depositId, delegatee);
-            ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
+            if (!fromPermit) {
+                ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
+            } else {
+                ds.staking.stakeToken.safeTransfer(proxy, amount);
+            }
         }
         ds.depositsByDepositor[owner].add(depositId);
 
         emit Stake(owner, delegatee, beneficiary, depositId, amount);
     }
 
-    function _increaseStake(uint256 depositId, uint96 amount) internal {
+    /// @notice Increases the stake amount for an existing deposit
+    /// @dev Validates ownership, transfers additional tokens, and updates deposit accounting
+    /// @param depositId The ID of the existing deposit to increase
+    /// @param amount Additional amount of stake tokens to add
+    /// @param fromPermit Whether tokens are already in contract from permit
+    function _increaseStake(uint256 depositId, uint96 amount, bool fromPermit) internal {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
         address owner = deposit.owner;
@@ -82,38 +102,63 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
 
         if (owner != address(this)) {
             address proxy = ds.proxyById[depositId];
-            ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
+            if (!fromPermit) {
+                ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
+            } else {
+                ds.staking.stakeToken.safeTransfer(proxy, amount);
+            }
         }
 
         emit IncreaseStake(depositId, amount);
     }
 
-    /// @dev Calls the `permit` function of the stake token
+    /**
+     * @notice Executes a Permit2 transfer using signed permit for stake token authorization
+     * @dev This function uses Uniswap's Permit2 protocol instead of EIP-2612 to enable
+     * smart contract wallet support through ERC-1271 signature verification.
+     *
+     * Design Principles:
+     * - Uses `permitTransferFrom` (not `permitWitnessTransferFrom`) since staking doesn't
+     *   require binding signatures to additional contract-specific parameters
+     * - Transfers tokens directly from caller to RewardsDistribution contract address
+     * - Supports both EOA signatures (via ecrecover) and smart contract signatures (via ERC-1271)
+     * - Towns token gives Permit2 infinite allowance by default, so no pre-approval needed
+     *
+     * Security Considerations:
+     * - Front-running protection: The permit signature cryptographically binds the owner
+     *   field to `msg.sender`. An attacker cannot use someone else's permit signature
+     *   because the signature verification will fail when called by a different address.
+     * - The beneficiary parameter can be specified by the caller, but the attacker cannot
+     *   execute the permit without being the original signer, so no funds can be stolen.
+     * - Users must have pre-approved tokens to Permit2 contract before calling this function.
+     *
+     * @param amount The amount of stake tokens to transfer
+     * @param nonce The unique nonce for this permit to prevent replay attacks
+     * @param deadline The deadline after which the permit expires
+     * @param signature The signature authorizing the transfer (supports both EOA and smart contract wallets)
+     */
     function _permitStakeToken(
         uint96 amount,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) internal {
         address stakeToken = RewardsDistributionStorage.layout().staking.stakeToken;
 
-        bytes4 selector = IERC20Permit.permit.selector;
-        assembly ("memory-safe") {
-            let fmp := mload(0x40)
-            mstore(fmp, selector)
-            mstore(add(fmp, 0x04), caller())
-            mstore(add(fmp, 0x24), address())
-            mstore(add(fmp, 0x44), amount)
-            mstore(add(fmp, 0x64), deadline)
-            mstore(add(fmp, 0x84), v)
-            mstore(add(fmp, 0xa4), r)
-            mstore(add(fmp, 0xc4), s)
-            if iszero(call(gas(), stakeToken, 0, fmp, 0xe4, 0, 0)) {
-                returndatacopy(0, 0, returndatasize())
-                revert(0, returndatasize())
-            }
-        }
+        // execute permit transfer from the caller to this contract via Permit2
+        ISignatureTransfer(PERMIT2).permitTransferFrom(
+            ISignatureTransfer.PermitTransferFrom(
+                ISignatureTransfer.TokenPermissions(stakeToken, amount),
+                nonce,
+                deadline
+            ),
+            ISignatureTransfer.SignatureTransferDetails({
+                to: address(this),
+                requestedAmount: amount
+            }),
+            msg.sender, // owner has to be the caller
+            signature
+        );
     }
 
     /// @dev Deploys a beacon proxy for the delegation
@@ -162,24 +207,14 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Sweeps the rewards in the space delegation to the operator if necessary
-    /// @dev Must be called after `StakingRewards.updateGlobalReward`
     function _sweepSpaceRewardsIfNecessary(address space) internal {
         address operator = _getOperatorBySpace(space);
         if (operator == address(0)) return;
 
         StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        StakingRewards.Treasure storage spaceTreasure = staking.treasureByBeneficiary[space];
-        staking.updateReward(spaceTreasure);
+        uint256 scaledReward = staking.transferReward(space, operator);
 
-        uint256 scaledReward = spaceTreasure.unclaimedRewardSnapshot;
-        if (scaledReward == 0) return;
-
-        StakingRewards.Treasure storage operatorTreasure = staking.treasureByBeneficiary[operator];
-
-        operatorTreasure.unclaimedRewardSnapshot += scaledReward;
-        spaceTreasure.unclaimedRewardSnapshot = 0;
-
-        emit SpaceRewardsSwept(space, operator, scaledReward);
+        if (scaledReward != 0) emit SpaceRewardsSwept(space, operator, scaledReward);
     }
 
     /// @dev Checks if the delegatee is a space
@@ -197,7 +232,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     function _getValidOperatorOrRevert(address space) internal view returns (address operator) {
         operator = _getOperatorBySpace(space);
         if (!_isValidOperator(operator)) {
-            CustomRevert.revertWith(RewardsDistribution__NotActiveOperator.selector);
+            RewardsDistribution__NotActiveOperator.selector.revertWith();
         }
     }
 
@@ -232,30 +267,24 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     function _revertIfNotOperatorOrSpace(address delegatee) internal view {
         if (_isSpace(delegatee)) return;
         if (!_isValidOperator(delegatee)) {
-            CustomRevert.revertWith(RewardsDistribution__NotOperatorOrSpace.selector);
+            RewardsDistribution__NotOperatorOrSpace.selector.revertWith();
         }
     }
 
     /// @dev Reverts if the caller is not the owner of the deposit
     function _revertIfNotDepositOwner(address owner) internal view {
-        if (msg.sender != owner) {
-            CustomRevert.revertWith(RewardsDistribution__NotDepositOwner.selector);
-        }
+        if (msg.sender != owner) RewardsDistribution__NotDepositOwner.selector.revertWith();
     }
 
     /// @dev Checks if the caller is the claimer of the operator
     function _revertIfNotOperatorClaimer(address operator) internal view {
         NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
         address claimer = nos.claimerByOperator[operator];
-        if (msg.sender != claimer) {
-            CustomRevert.revertWith(RewardsDistribution__NotClaimer.selector);
-        }
+        if (msg.sender != claimer) RewardsDistribution__NotClaimer.selector.revertWith();
     }
 
     function _revertIfPastDeadline(uint256 deadline) internal view {
-        if (block.timestamp > deadline) {
-            CustomRevert.revertWith(RewardsDistribution__ExpiredDeadline.selector);
-        }
+        if (block.timestamp > deadline) RewardsDistribution__ExpiredDeadline.selector.revertWith();
     }
 
     function _revertIfSignatureIsNotValidNow(
@@ -264,7 +293,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         bytes calldata signature
     ) internal view {
         if (!SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature)) {
-            CustomRevert.revertWith(RewardsDistribution__InvalidSignature.selector);
+            RewardsDistribution__InvalidSignature.selector.revertWith();
         }
     }
 }

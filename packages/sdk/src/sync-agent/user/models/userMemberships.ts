@@ -70,7 +70,9 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
     private initialize = (streamView: StreamStateView) => {
         const memberships = Object.entries(streamView.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
-                acc[streamId] = toUserMembership(payload)
+                if (payload) {
+                    acc[streamId] = toUserMembership(payload)
+                }
                 return acc
             },
             {} as Record<string, UserMembership>,

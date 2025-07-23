@@ -1,13 +1,22 @@
 package sync
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/towns-protocol/towns/core/node/infra"
 )
 
+const (
+	metricsActionAdd      = "add"
+	metricsActionRemove   = "remove"
+	metricsActionBackfill = "backfill"
+)
+
 // syncMetrics contains the Prometheus metrics for the sync handler.
 type syncMetrics struct {
+	actionsCounter                  *prometheus.CounterVec
 	completedSyncOpsCounter         *prometheus.CounterVec
 	syncingStreamsPerOpHistogram    *prometheus.HistogramVec
 	messageBufferSizePerOpHistogram *prometheus.HistogramVec
@@ -18,6 +27,11 @@ type syncMetrics struct {
 // TODO: Consider adding more metrics as needed for better observability.
 func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 	h.metrics = &syncMetrics{
+		actionsCounter: metrics.NewCounterVecEx(
+			"stream_sync_actions_counter",
+			"Total number of sync operations (add/remove/backfill) marked per type",
+			"use_shared_sync", "type",
+		),
 		completedSyncOpsCounter: metrics.NewCounterVecEx(
 			"stream_sync_completed_ops_counter",
 			"Total number of completed stream sync operations",
@@ -52,16 +66,32 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 	)
 	metrics.NewGaugeFunc(
 		prometheus.GaugeOpts{
-			Name: "stream_sync_shared_messages_buffer_size",
-			Help: "Buffer size of the shared syncer messages",
-		},
-		func() float64 { return float64(h.subscriptionManager.GetStats().BufferSize) },
-	)
-	metrics.NewGaugeFunc(
-		prometheus.GaugeOpts{
 			Name: "stream_sync_shared_syncing_streams_counter",
 			Help: "Total number of streams currently being synced by the shared syncer",
 		},
 		func() float64 { return float64(h.subscriptionManager.GetStats().SyncingStreamsCount) },
 	)
+}
+
+func (sm *syncMetrics) actions(cmd *subCommand, useSharedSync bool) {
+	if sm == nil || cmd == nil || cmd.ModifySyncReq == nil {
+		return
+	}
+
+	var op string
+	var count int
+	if len(cmd.ModifySyncReq.ToAdd) > 0 {
+		op = metricsActionAdd
+		count = len(cmd.ModifySyncReq.ToAdd)
+	}
+	if len(cmd.ModifySyncReq.ToRemove) > 0 {
+		op = metricsActionRemove
+		count = len(cmd.ModifySyncReq.ToRemove)
+	}
+	if len(cmd.ModifySyncReq.ToBackfill) > 0 {
+		op = metricsActionBackfill
+		count = len(cmd.ModifySyncReq.ToBackfill)
+	}
+
+	sm.actionsCounter.WithLabelValues(fmt.Sprintf("%t", useSharedSync), op).Add(float64(count))
 }

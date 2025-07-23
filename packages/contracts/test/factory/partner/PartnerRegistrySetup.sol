@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {Vm} from "forge-std/Vm.sol";
 import {IPartnerRegistryBase} from "src/factory/facets/partner/IPartnerRegistry.sol";
 import {PartnerRegistry} from "src/factory/facets/partner/PartnerRegistry.sol";
 
 // libraries
-import {Vm} from "forge-std/Test.sol";
 
 // contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";

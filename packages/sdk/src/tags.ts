@@ -12,7 +12,26 @@ import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
-import { RiverTimelineEvent } from './sync-agent/timeline/models/timeline-types'
+import { RiverTimelineEvent } from './views/models/timelineTypes'
+
+/**
+ * Unsafe way to create tags. Possibly used in scenarios where we dont have access to the stream view.
+ * Usages of this function may create messages with the wrong tags.
+ */
+export function unsafe_makeTags(message: PlainMessage<ChannelMessage>): PlainMessage<Tags> {
+    return {
+        messageInteractionType: getMessageInteractionType(message),
+        groupMentionTypes: getGroupMentionTypes(message),
+        mentionedUserAddresses: getMentionedUserAddresses(message),
+        participatingUserAddresses: [],
+        threadId:
+            message.payload.case === 'post'
+                ? message.payload.value.threadId
+                    ? bin_fromHexString(message.payload.value.threadId)
+                    : undefined
+                : undefined,
+    } satisfies PlainMessage<Tags>
+}
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,

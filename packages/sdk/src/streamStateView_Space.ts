@@ -18,29 +18,37 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@towns-protocol/dlog'
-import { logNever } from './check'
+import { isDefined, logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
 import { fromBinary } from '@bufbuild/protobuf'
 import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { bytesToHex } from 'ethereum-cryptography/utils'
-
-export type ParsedChannelProperties = {
-    isDefault: boolean
-    updatedAtEventNum: bigint
-    isAutojoin: boolean
-    hideUserJoinLeaveEvents: boolean
-}
+import {
+    ParsedChannelProperties,
+    SpaceStreamModel,
+    SpaceStreamsView,
+} from './views/streams/spaceStreams'
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
+    get spaceChannelsMetadata(): Record<string, ParsedChannelProperties> {
+        return this.spaceStreamModel.channelsMetadata
+    }
+
     private spaceImage: ChunkedMedia | undefined
     public encryptedSpaceImage: { eventId: string; data: EncryptedData } | undefined
     private decryptionInProgress:
         | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
         | undefined
 
-    constructor(streamId: string) {
+    get spaceStreamModel(): SpaceStreamModel {
+        return this.spacesView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private readonly spacesView: SpaceStreamsView,
+    ) {
         super()
         this.streamId = streamId
     }
@@ -180,14 +188,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         const { channelId: channelIdBytes, autojoin } = payload
         const channelId = streamIdAsString(channelIdBytes)
-        const channel = this.spaceChannelsMetadata.get(channelId)
-        if (!channel) {
-            throwWithCode(`Channel not found: ${channelId}`, Err.STREAM_BAD_EVENT)
-        }
-        this.spaceChannelsMetadata.set(channelId, {
-            ...channel,
-            isAutojoin: autojoin,
-        })
+        this.spacesView.updateChannelMetadata(this.streamId, channelId, { isAutojoin: autojoin })
         stateEmitter?.emit('spaceChannelAutojoinUpdated', this.streamId, channelId, autojoin)
     }
 
@@ -197,12 +198,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         const { channelId: channelIdBytes, hideUserJoinLeaveEvents } = payload
         const channelId = streamIdAsString(channelIdBytes)
-        const channel = this.spaceChannelsMetadata.get(channelId)
-        if (!channel) {
-            throwWithCode(`Channel not found: ${channelId}`, Err.STREAM_BAD_EVENT)
-        }
-        this.spaceChannelsMetadata.set(channelId, {
-            ...channel,
+        this.spacesView.updateChannelMetadata(this.streamId, channelId, {
             hideUserJoinLeaveEvents,
         })
         stateEmitter?.emit(
@@ -225,7 +221,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 const isDefault = isDefaultChannelId(channelId)
                 const isAutojoin = payload.settings?.autojoin ?? isDefault
                 const hideUserJoinLeaveEvents = payload.settings?.hideUserJoinLeaveEvents ?? false
-                this.spaceChannelsMetadata.set(channelId, {
+                this.spacesView.updateChannelMetadata(this.streamId, channelId, {
                     isDefault,
                     updatedAtEventNum,
                     isAutojoin,
@@ -235,18 +231,25 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 break
             }
             case ChannelOp.CO_DELETED:
-                if (this.spaceChannelsMetadata.delete(channelId)) {
+                if (this.spacesView.delete(this.streamId, channelId)) {
                     stateEmitter?.emit('spaceChannelDeleted', this.streamId, channelId)
                 }
                 break
             case ChannelOp.CO_UPDATED: {
                 // first take settings from payload, then from local channel, then defaults
-                const channel = this.spaceChannelsMetadata.get(channelId)
+                const channel = this.spaceChannelsMetadata[channelId]
                 const isDefault = isDefaultChannelId(channelId)
-                const isAutojoin = payload.settings?.autojoin ?? channel?.isAutojoin ?? isDefault
-                const hideUserJoinLeaveEvents =
-                    payload.settings?.hideUserJoinLeaveEvents ?? channel?.isAutojoin ?? false
-                this.spaceChannelsMetadata.set(channelId, {
+                const isAutojoin = isDefined(payload.settings?.autojoin)
+                    ? payload.settings.autojoin
+                    : isDefined(channel?.isAutojoin)
+                      ? channel.isAutojoin
+                      : isDefault
+                const hideUserJoinLeaveEvents = isDefined(payload.settings?.hideUserJoinLeaveEvents)
+                    ? payload.settings.hideUserJoinLeaveEvents
+                    : isDefined(channel?.hideUserJoinLeaveEvents)
+                      ? channel.hideUserJoinLeaveEvents
+                      : false
+                this.spacesView.updateChannelMetadata(this.streamId, channelId, {
                     isDefault,
                     updatedAtEventNum,
                     isAutojoin,

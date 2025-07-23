@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './layout'
 import { IndexRoute } from './root'
 import { AuthRoute } from './auth'
@@ -30,6 +30,7 @@ export const router = createBrowserRouter([
                         Component: DashboardRoute,
                     }
                 },
+                errorElement: <Navigate to="/auth" />,
             },
             {
                 path: '/t/:spaceId',

@@ -7,7 +7,7 @@ require (
 	connectrpc.com/otelconnect v0.7.1
 	github.com/SherClockHolmes/webpush-go v1.3.0
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/deckarep/golang-set/v2 v2.6.0
+	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/ethereum/go-ethereum v1.15.5
 	github.com/exaring/otelpgx v0.6.2
 	github.com/gammazero/workerpool v1.1.3
@@ -23,7 +23,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.20.5
-	github.com/puzpuzpuz/xsync/v4 v4.0.0
+	github.com/puzpuzpuz/xsync/v4 v4.1.0
 	github.com/rs/cors v1.11.1
 	github.com/sideshow/apns2 v0.25.0
 	github.com/spf13/cobra v1.8.1

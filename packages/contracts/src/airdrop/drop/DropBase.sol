@@ -190,7 +190,11 @@ abstract contract DropBase is IDropFacetBase {
             lastConditionId = conditionStartId + conditionCount - 1;
         }
 
-        for (uint256 i = lastConditionId; i >= conditionStartId; --i) {
+        for (uint256 i = lastConditionId + 1; i > conditionStartId; ) {
+            unchecked {
+                --i;
+            }
+
             DropGroup.ClaimCondition storage condition = _getClaimConditionById(i);
             uint256 endTimestamp = condition.endTimestamp;
             if (

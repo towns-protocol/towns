@@ -1,8 +1,8 @@
-"stream.media.maxChunkCount",0,10
+"stream.media.maxChunkCount",0,5
 "stream.media.maxChunkSize",0,1200000
 "media.streamMembershipLimits.77",0,6
 "media.streamMembershipLimits.88",0,2
-"stream.recencyConstraints.ageSeconds",0,11
+"stream.recencyConstraints.ageSeconds",0,30
 "stream.recencyConstraints.generations",0,5
 "stream.replicationFactor",0,3
 "stream.defaultMinEventsPerSnapshot",0,100
@@ -20,4 +20,5 @@
 "stream.streamTrimmingMiniblocksToKeep.10",0,1000
 "stream.streamTrimmingMiniblocksToKeep.a5",0,1000
 "stream.enableNewSnapshotFormat",0,1
-"server.enablenode2nodeauth",0,1
+"server.enablenode2nodeauth",0,0
+"stream.backwardsReconciliationThreshold",0,50

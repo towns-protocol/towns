@@ -3,7 +3,7 @@ import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@to
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
-import { EventSignatureBundle, KeySolicitationContent } from '@towns-protocol/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
 import { check } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 
@@ -27,7 +27,6 @@ export class StreamStateView_Members_Solicitations {
             eventHashStr,
             members.map((member) => ({
                 userId: member.userId,
-                userAddress: member.userAddress,
                 solicitations: member.solicitations,
             })),
             sigBundle,
@@ -56,7 +55,6 @@ export class StreamStateView_Members_Solicitations {
             this.streamId,
             eventId,
             user.userId,
-            user.userAddress,
             newSolicitation,
             sigBundle,
         )
@@ -86,7 +84,6 @@ export class StreamStateView_Members_Solicitations {
             this.streamId,
             this.snapshotEventId,
             user.userId,
-            user.userAddress,
             newEvent,
             this.snapshotSigBundle,
         )

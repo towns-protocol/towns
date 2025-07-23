@@ -7,6 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
 import {RewardsDistributionStorage} from "src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
@@ -14,6 +15,7 @@ import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRe
 import {stdError} from "forge-std/StdError.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {PermitHash} from "@uniswap/permit2/src/libraries/PermitHash.sol";
 
 // contracts
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
@@ -22,14 +24,25 @@ import {DelegationProxy} from "src/base/registry/facets/distribution/v2/Delegati
 import {RewardsDistributionV2} from "src/base/registry/facets/distribution/v2/RewardsDistributionV2.sol";
 import {UpgradeableBeaconBase} from "src/diamond/facets/beacon/UpgradeableBeacon.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
+import {DeployPermit2} from "@uniswap/permit2/test/utils/DeployPermit2.sol";
 
 contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     using FixedPointMathLib for uint256;
+
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     bytes32 internal constant STAKE_TYPEHASH =
         keccak256(
             "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
         );
+
+    function setUp() public virtual override {
+        // etch Permit2 to the deterministic address
+        new DeployPermit2().run();
+        vm.label(PERMIT2, "Permit2");
+
+        super.setUp();
+    }
 
     function test_storageSlot() public pure {
         bytes32 slot = keccak256(
@@ -236,13 +249,14 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         address user = vm.addr(privateKey);
         bridgeTokensForUser(user, amount);
 
-        (uint8 v, bytes32 r, bytes32 s) = signPermit(
+        uint256 nonce = 0; // First time permit
+        bytes memory signature = _signPermitTransferFrom(
             privateKey,
             townsToken,
-            user,
-            address(rewardsDistributionFacet),
             amount,
-            deadline
+            nonce,
+            deadline,
+            address(rewardsDistributionFacet)
         );
 
         vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
@@ -253,10 +267,9 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
             amount,
             operator,
             beneficiary,
+            nonce,
             deadline,
-            v,
-            r,
-            s
+            signature
         );
 
         verifyStake(user, depositId, amount, operator, commissionRate, beneficiary);
@@ -420,20 +433,27 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         address user,
         uint256 deadline
     ) internal {
-        (uint8 v, bytes32 r, bytes32 s) = signPermit(
+        uint256 nonce = 0; // First time permit for this amount
+        bytes memory signature = _signPermitTransferFrom(
             privateKey,
             townsToken,
-            user,
-            address(rewardsDistributionFacet),
             amount,
-            deadline
+            nonce,
+            deadline,
+            address(rewardsDistributionFacet)
         );
 
         vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
         emit IncreaseStake(depositId, amount);
 
         vm.prank(user);
-        rewardsDistributionFacet.permitAndIncreaseStake(depositId, amount, deadline, v, r, s);
+        rewardsDistributionFacet.permitAndIncreaseStake(
+            depositId,
+            amount,
+            nonce,
+            deadline,
+            signature
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -747,7 +767,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         );
 
         // Step 2: Verify earnings are accumulating before the initiation of withdrawal
-        vm.warp(block.timestamp + rewardDuration / 2);
+        skip(rewardDuration / 2);
 
         vm.prank(depositor);
         uint256 initialRewards = rewardsDistributionFacet.claimReward(depositor, depositor);
@@ -758,7 +778,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         rewardsDistributionFacet.initiateWithdraw(depositId);
 
         // Step 4: Verify that no new rewards are accumulating after the withdrawal is initiated
-        vm.warp(block.timestamp + rewardDuration / 2);
+        skip(rewardDuration / 2);
         uint256 postWithdrawRewards = rewardsDistributionFacet.currentReward(depositor);
         assertEq(postWithdrawRewards, 0);
     }
@@ -1078,7 +1098,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         StakingState memory state = rewardsDistributionFacet.stakingState();
         uint256 rewardRate = state.rewardRate;
 
-        vm.warp(block.timestamp + rewardDuration);
+        skip(rewardDuration);
 
         assertApproxEqRel(
             rewardsDistributionFacet.currentSpaceDelegationReward(OPERATOR),
@@ -1086,5 +1106,35 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
                 10_000,
             1e15
         );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          HELPERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _signPermitTransferFrom(
+        uint256 privateKey,
+        address token,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline,
+        address spender
+    ) internal view returns (bytes memory) {
+        bytes32 tokenPermissions = keccak256(
+            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, token, amount)
+        );
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                PermitHash._PERMIT_TRANSFER_FROM_TYPEHASH,
+                tokenPermissions,
+                spender,
+                nonce,
+                deadline
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = signIntent(privateKey, PERMIT2, structHash);
+        return bytes.concat(r, s, bytes1(v));
     }
 }

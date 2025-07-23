@@ -12,6 +12,30 @@ const _abi = [
     name: "createSpace",
     inputs: [
       {
+        name: "action",
+        type: "uint8",
+        internalType: "enum ICreateSpaceBase.Action",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "createSpace",
+    inputs: [
+      {
         name: "SpaceInfo",
         type: "tuple",
         internalType: "struct IArchitectBase.SpaceInfo",
@@ -708,6 +732,11 @@ const _abi = [
   {
     type: "error",
     name: "Architect__NotContract",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "CreateSpaceFacet__InvalidAction",
     inputs: [],
   },
 ] as const;

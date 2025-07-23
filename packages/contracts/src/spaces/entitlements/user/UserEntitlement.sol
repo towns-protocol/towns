@@ -251,26 +251,6 @@ contract UserEntitlement is
         return false;
     }
 
-    /// @notice utility to concat two arrays
-    /// @param a the first array
-    /// @param b the second array
-    /// @return c the combined array
-    function concatArrays(
-        Entitlement[] memory a,
-        Entitlement[] memory b
-    ) internal pure returns (Entitlement[] memory) {
-        Entitlement[] memory c = new Entitlement[](a.length + b.length);
-        uint256 i = 0;
-        for (; i < a.length; i++) {
-            c[i] = a[i];
-        }
-        uint256 j = 0;
-        while (j < b.length) {
-            c[i++] = b[j++];
-        }
-        return c;
-    }
-
     function _removeRoleIdFromUser(address user, uint256 roleId) internal {
         uint256[] storage roles = roleIdsByUser[user];
         for (uint256 i = 0; i < roles.length; i++) {

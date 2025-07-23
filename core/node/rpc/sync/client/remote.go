@@ -5,32 +5,31 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type remoteSyncer struct {
-	syncStreamCtx    context.Context
-	syncStreamCancel context.CancelFunc
-	syncID           string
-	remoteAddr       common.Address
-	client           protocolconnect.StreamServiceClient
-	messages         *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams          sync.Map
-	responseStream   *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream      func(streamID StreamId)
+	syncStreamCtx      context.Context
+	syncStreamCancel   context.CancelFunc
+	syncID             string
+	remoteAddr         common.Address
+	client             protocolconnect.StreamServiceClient
+	messageDistributor MessageDistributor
+	streams            *xsync.Map[StreamId, struct{}]
+	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream        func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -40,7 +39,7 @@ func NewRemoteSyncer(
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+	messageDistributor MessageDistributor,
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
@@ -87,15 +86,16 @@ func NewRemoteSyncer(
 	}
 
 	return &remoteSyncer{
-		syncID:           responseStream.Msg().GetSyncId(),
-		syncStreamCtx:    syncStreamCtx,
-		syncStreamCancel: syncStreamCancel,
-		client:           client,
-		messages:         messages,
-		responseStream:   responseStream,
-		remoteAddr:       remoteAddr,
-		unsubStream:      unsubStream,
-		otelTracer:       otelTracer,
+		syncID:             responseStream.Msg().GetSyncId(),
+		syncStreamCtx:      syncStreamCtx,
+		syncStreamCancel:   syncStreamCancel,
+		client:             client,
+		messageDistributor: messageDistributor,
+		streams:            xsync.NewMap[StreamId, struct{}](),
+		responseStream:     responseStream,
+		remoteAddr:         remoteAddr,
+		unsubStream:        unsubStream,
+		otelTracer:         otelTracer,
 	}, nil
 }
 
@@ -124,7 +124,13 @@ func (s *remoteSyncer) Run() {
 		res := s.responseStream.Msg()
 
 		if res.GetSyncOp() == SyncOp_SYNC_UPDATE {
-			if err := s.sendSyncStreamResponseToClient(res); err != nil {
+			streamID, err := StreamIdFromBytes(res.GetStream().GetNextSyncCookie().GetStreamId())
+			if err != nil {
+				log.Errorw("Received invalid stream ID in sync update", "remote", s.remoteAddr, "error", err)
+				continue
+			}
+
+			if err = s.sendResponse(streamID, res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				}
@@ -133,7 +139,7 @@ func (s *remoteSyncer) Run() {
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
 				s.unsubStream(streamID)
-				if err := s.sendSyncStreamResponseToClient(res); err != nil {
+				if err := s.sendResponse(streamID, res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 					}
@@ -148,14 +154,13 @@ func (s *remoteSyncer) Run() {
 	if s.syncStreamCtx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
-		s.streams.Range(func(key, value any) bool {
-			streamID := key.(StreamId)
+		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
 			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
 			// TODO: slow down a bit to give client time to read stream down updates
-			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
+			if err := s.sendResponse(streamID, msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
@@ -169,24 +174,28 @@ func (s *remoteSyncer) Run() {
 	}
 }
 
-// sendSyncStreamResponseToClient tries to write msg to the client send message channel.
+// sendResponse tries to write msg to the client send message channel.
 // If the channel is full or the sync operation is cancelled, the function returns an error.
-func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
+func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	select {
 	case <-s.syncStreamCtx.Done():
-		return s.syncStreamCtx.Err()
-	default:
-		if err := s.messages.AddMessage(msg); err != nil {
-			rvrErr := AsRiverError(err).
-				Tag("syncId", s.syncID).
-				Tag("op", msg.GetSyncOp()).
-				Func("sendSyncStreamResponseToClient")
+		if err := s.syncStreamCtx.Err(); err != nil {
+			rvrErr := AsRiverError(err, Err_CANCELED).
+				Func("localSyncer.sendResponse")
 			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
-			s.syncStreamCancel()
+			return rvrErr
 		}
-
 		return nil
+	default:
 	}
+
+	if len(msg.GetTargetSyncIds()) > 0 {
+		s.messageDistributor.DistributeBackfillMessage(streamID, msg)
+	} else {
+		s.messageDistributor.DistributeMessage(streamID, msg)
+	}
+
+	return nil
 }
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
@@ -283,15 +292,9 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		return false, AsRiverError(err)
 	}
 
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
+	noMoreStreams := s.streams.Size() == 0
 	if noMoreStreams {
 		s.syncStreamCancel()
 	}
-
 	return noMoreStreams, nil
 }

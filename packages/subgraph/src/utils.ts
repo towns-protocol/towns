@@ -1,3 +1,6 @@
+import { eq } from 'ponder'
+import { Context } from 'ponder:registry'
+import schema from 'ponder:schema'
 import { createPublicClient, http } from 'viem'
 
 const publicClient = createPublicClient({
@@ -25,6 +28,62 @@ function getCreatedDate(blockTimestamp: bigint): Date | null {
         return null
     }
     return new Date(timestamp)
+}
+
+export async function updateSpaceTotalStaked(
+    context: Context,
+    spaceId: `0x${string}`,
+    amountDelta: bigint,
+): Promise<void> {
+    const space = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, spaceId),
+    })
+    if (space) {
+        const newTotal = (space.totalAmountStaked ?? 0n) + amountDelta
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                totalAmountStaked: newTotal >= 0n ? newTotal : 0n,
+            })
+            .where(eq(schema.space.id, spaceId))
+
+        console.log(
+            `Updated space ${spaceId} totalAmountStaked: ${space.totalAmountStaked} -> ${newTotal}`,
+        )
+    }
+}
+
+export async function handleStakeToSpace(
+    context: Context,
+    delegatee: `0x${string}` | null,
+    amount: bigint,
+): Promise<void> {
+    if (!delegatee) return
+
+    const space = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, delegatee),
+    })
+    if (space) {
+        await updateSpaceTotalStaked(context, delegatee, amount)
+    }
+}
+
+export async function handleRedelegation(
+    context: Context,
+    oldDelegatee: `0x${string}` | null,
+    newDelegatee: `0x${string}` | null,
+    amount: bigint,
+): Promise<void> {
+    try {
+        if (oldDelegatee) {
+            await handleStakeToSpace(context, oldDelegatee, -amount)
+        }
+        if (newDelegatee) {
+            await handleStakeToSpace(context, newDelegatee, amount)
+        }
+    } catch (error) {
+        console.error(`Error handling redelegation:`, error)
+    }
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }

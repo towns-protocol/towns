@@ -31,6 +31,11 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
 	}
 
+	err = s.initBaseChain()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init base chain").LogError(s.defaultLogger)
+	}
+
 	// At this time, the app registry database requires serializable isolation level in order
 	// for the postgres implementation of message queueing to function properly. It's possible
 	// this could be relaxed with row locking.
@@ -100,6 +105,8 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		s.metrics,
 		streamEventListener,
 		webhookHttpClient,
+		s.baseChain,
+		&s.config.AppRegistryContract,
 	); err != nil {
 		return AsRiverError(err).Message("Failed to instantiate app registry service").LogError(s.defaultLogger)
 	}

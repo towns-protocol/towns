@@ -1,5 +1,5 @@
 import { Observable } from '../../observable/observable'
-import { TimelineEvent, RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { TimelineEvent, RiverTimelineEvent } from '../models/timelineTypes'
 import { LocalTimelineEvent, StreamTimelineEvent } from '../../types'
 import {
     makeTimelinesViewInterface,
@@ -7,10 +7,10 @@ import {
     TimelinesViewModel,
 } from './timelinesModel'
 import { StreamChange } from '../../streamEvents'
-import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from './timelineEvents'
+import { toDecryptedContentErrorEvent, toDecryptedEvent, toEvent } from '../models/timelineEvent'
 import { DecryptedContent } from '../../encryptedContentTypes'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
-import isEqual from 'lodash/isEqual'
+import { DecryptionSessionError } from '../../decryptionExtensions'
+import { isEqual } from 'lodash-es'
 import { isDMChannelStreamId } from '../../id'
 
 export interface TimelinesViewDelegate {

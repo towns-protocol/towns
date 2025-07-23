@@ -2,7 +2,7 @@
  * @group main
  */
 
-import _ from 'lodash'
+import { cloneDeep } from 'lodash-es'
 import { unpackEnvelope, makeEvent, publicKeyToAddress } from '../../sign'
 import { make_UserPayload_Inception } from '../../types'
 import { dlog, bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
@@ -238,19 +238,19 @@ describe('sign', () => {
             expect(event2).not.toEqual(event)
 
             await expect(async () => {
-                const e = _.cloneDeep(event)
+                const e = cloneDeep(event)
                 e.hash = event2.hash
                 await unpackEnvelope(e, undefined)
             }).rejects.toThrow()
 
             await expect(async () => {
-                const e = _.cloneDeep(event)
+                const e = cloneDeep(event)
                 e.signature = event2.signature
                 await unpackEnvelope(e, undefined)
             }).rejects.toThrow()
 
             await expect(async () => {
-                const e = _.cloneDeep(event)
+                const e = cloneDeep(event)
                 e.event = event2.event
                 await unpackEnvelope(e, undefined)
             }).rejects.toThrow()

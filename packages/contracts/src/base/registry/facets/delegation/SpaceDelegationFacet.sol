@@ -56,7 +56,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     function addSpaceDelegation(address space, address operator) external {
         if (operator == address(0)) SpaceDelegation__InvalidAddress.selector.revertWith();
 
-        // Validate that the space exists
+        // validate that the space exists
         if (!_isValidSpace(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
 
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
@@ -68,7 +68,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
         // Authorization logic: only members can delegate if space has never been delegated,
         // only owner can delegate/redelegate if space has been delegated before (even if removed)
         if (ds.spaceDelegationTime[space] != 0) {
-            // Space has been delegated before (even if currently removed), only owner can delegate
+            // space has been delegated before (even if currently removed), only owner can delegate
             if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
         } else {
             // Space has never been delegated, only members can delegate
@@ -126,7 +126,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
         ds.operatorBySpace[space] = address(0);
         ds.spacesByOperator[operator].remove(space);
-        // We don't reset spaceDelegationTime to preserve delegation history
+        // don't reset spaceDelegationTime to preserve delegation history
 
         emit SpaceDelegatedToOperator(space, address(0));
     }
@@ -170,26 +170,28 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Sweeps the rewards in the space delegation to the operator if necessary
+    /// @dev Handles two scenarios:
+    /// 1. If currentOperator exists: transfers accumulated rewards to the current operator
+    ///    (rewards earned while the space was delegated to them)
+    /// 2. If no currentOperator: forfeits accumulated rewards (clears unallocated rewards from
+    ///    existing stakes after undelegation that shouldn't go to a new operator)
+    /// @param space The space address to sweep rewards from
+    /// @param currentOperator The current operator (address(0) if undelegated)
     function _sweepSpaceRewardsIfNecessary(address space, address currentOperator) internal {
         StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        StakingRewards.Treasure storage spaceTreasure = staking.treasureByBeneficiary[space];
 
-        staking.updateGlobalReward();
-        staking.updateReward(spaceTreasure);
-
-        uint256 reward = spaceTreasure.unclaimedRewardSnapshot;
-        if (reward == 0) return;
-
-        // forfeit the rewards if the space has undelegated
+        uint256 reward;
         if (currentOperator != address(0)) {
-            StakingRewards.Treasure storage operatorTreasure = staking.treasureByBeneficiary[
-                currentOperator
-            ];
-            operatorTreasure.unclaimedRewardSnapshot += reward;
+            // transfer rewards from space to current operator
+            reward = staking.transferReward(space, currentOperator);
+        } else {
+            // forfeit rewards (clear without transfer)
+            reward = staking.sweepReward(space);
         }
-        spaceTreasure.unclaimedRewardSnapshot = 0;
 
-        emit IRewardsDistributionBase.SpaceRewardsSwept(space, currentOperator, reward);
+        if (reward != 0) {
+            emit IRewardsDistributionBase.SpaceRewardsSwept(space, currentOperator, reward);
+        }
     }
 
     function _getTotalDelegation(address operator) internal view returns (uint256) {

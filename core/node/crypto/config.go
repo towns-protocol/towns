@@ -58,6 +58,10 @@ const (
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
 	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
 	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
+	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
+	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
+	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
+	StreamBackwardsReconciliationThresholdConfigKey = "stream.backwardsReconciliationThreshold"
 
 	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
 	// replication factor must be picked as candidates to place a stream on. From these candidates
@@ -139,14 +143,22 @@ type OnChainSettings struct {
 
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
+
 	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined with the default value and per stream type.
 	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
+
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
+
 	// ServerEnableNode2NodeAuth indicates whether node-to-node authentication is enabled.
 	// Options: 1 means enabled, 0 means disabled.
 	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enablenode2nodeauth"`
+
+	// StreamBackwardsReconciliationThreshold is the threshold in miniblocks that determines
+	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
+	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
+	StreamBackwardsReconciliationThreshold uint64 `mapstructure:"stream.backwardsReconciliationThreshold"`
 }
 
 type XChainSettings struct {
@@ -218,7 +230,7 @@ type StreamDistribution struct {
 
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
-		MediaMaxChunkCount: 50,
+		MediaMaxChunkCount: 21,
 		MediaMaxChunkSize:  1200000,
 
 		RecencyConstraintsAge: 11 * time.Second,
@@ -262,6 +274,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 		},
 
 		ServerEnableNode2NodeAuth: 0,
+
+		StreamBackwardsReconciliationThreshold: 50,
 	}
 }
 

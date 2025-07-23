@@ -10,7 +10,6 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
@@ -36,14 +35,8 @@ abstract contract AppAccountBase is
     ExecutorBase
 {
     using CustomRevert for bytes4;
-    using DependencyLib for MembershipStorage.Layout;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
-
-    // Constants for dependency names
-    bytes32 private constant RIVER_AIRDROP = bytes32("RiverAirdrop");
-    bytes32 private constant SPACE_OPERATOR = bytes32("SpaceOperator"); // BaseRegistry
-    bytes32 private constant SPACE_OWNER = bytes32("Space Owner");
-    bytes32 private constant APP_REGISTRY = bytes32("AppRegistry");
+    using DependencyLib for MembershipStorage.Layout;
 
     uint48 private constant DEFAULT_DURATION = 365 days;
 
@@ -180,61 +173,39 @@ abstract contract AppAccountBase is
     }
 
     function _enableApp(address app) internal {
-        bytes32 appId = _getInstalledAppId(app);
+        bytes32 appId = AppAccountStorage.getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, true);
     }
 
     function _disableApp(address app) internal {
-        bytes32 appId = _getInstalledAppId(app);
+        bytes32 appId = AppAccountStorage.getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, false);
     }
 
-    function _isEntitled(
+    function _isAppEntitled(
         address module,
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        App memory app = _getApp(module);
+        return AppAccountStorage.isAppEntitled(module, client, permission);
+    }
 
-        if (app.appId == EMPTY_UID) return false;
-
-        (bool hasClientAccess, , bool isGroupActive) = _hasGroupAccess(app.appId, client);
-        if (!hasClientAccess || !isGroupActive) return false;
-
-        uint256 permissionsLength = app.permissions.length;
-        for (uint256 i; i < permissionsLength; ++i) {
-            if (app.permissions[i] == permission) {
-                return true;
-            }
-        }
-
-        return false;
+    function _getInstalledAppId(address module) internal view returns (bytes32) {
+        return AppAccountStorage.getInstalledAppId(module);
     }
 
     function _getApp(address module) internal view returns (App memory app) {
-        bytes32 appId = _getInstalledAppId(module);
-        if (appId == EMPTY_UID) return app;
-        return _getAppRegistry().getAppById(appId);
+        return AppAccountStorage.getApp(module);
     }
 
-    function _getPlatformRequirements() private view returns (IPlatformRequirements) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        return IPlatformRequirements(ms.spaceFactory);
-    }
-
-    function _getAppRegistry() private view returns (IAppRegistry) {
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        return IAppRegistry(ms.getDependency(APP_REGISTRY));
+    function _getAppRegistry() internal view returns (IAppRegistry) {
+        return DependencyLib.getAppRegistry();
     }
 
     function _getApps() internal view returns (address[] memory) {
         return AppAccountStorage.getLayout().installedApps.values();
-    }
-
-    function _getInstalledAppId(address module) internal view returns (bytes32) {
-        return AppAccountStorage.getLayout().appIdByApp[module];
     }
 
     function _isAppInstalled(address module) internal view returns (bool) {
@@ -248,10 +219,10 @@ abstract contract AppAccountBase is
         address factory = ms.spaceFactory;
 
         bytes32[] memory dependencies = new bytes32[](4);
-        dependencies[0] = RIVER_AIRDROP;
-        dependencies[1] = SPACE_OPERATOR;
-        dependencies[2] = SPACE_OWNER;
-        dependencies[3] = APP_REGISTRY;
+        dependencies[0] = DependencyLib.RIVER_AIRDROP;
+        dependencies[1] = DependencyLib.SPACE_OPERATOR;
+        dependencies[2] = DependencyLib.SPACE_OWNER;
+        dependencies[3] = DependencyLib.APP_REGISTRY;
         address[] memory deps = ms.getDependencies(dependencies);
 
         // Check if app is banned
@@ -271,9 +242,9 @@ abstract contract AppAccountBase is
         address[] memory deps
     ) private pure returns (bool) {
         return
-            module == factory ||
+            module == factory || // SpaceFactory
             module == deps[0] || // RiverAirdrop
-            module == deps[1] || // SpaceOperator
+            module == deps[1] || // BaseRegistry
             module == deps[2] || // SpaceOwner
             module == deps[3]; // AppRegistry
     }
@@ -301,13 +272,4 @@ abstract contract AppAccountBase is
     function _getOwner() internal view virtual override returns (address) {
         return _owner();
     }
-
-    function _executePreHooks(
-        address target,
-        bytes4 selector,
-        uint256 value,
-        bytes calldata data
-    ) internal virtual override {}
-
-    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }
