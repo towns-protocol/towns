@@ -46,9 +46,9 @@ type StreamsTracker interface {
 
 	// A stream that does not meet criteria for tracking at the time it is created can later be added via
 	// AddStream. An error will be returned if the stream could not be successfully added to the sync runner.
-	// set applyHistoricalStreamContents to true if you want to apply the stream from inception/last snapshot.
-	// alternatively, you can set applyHistoricalStreamContentFromMiniblockHash to the exact miniblock hash
-	// that should be applied, and all of the consecutive miniblocks
+	// set ApplyHistoricalContent.Enabled to true if you want to apply the stream from inception/last snapshot.
+	// You can set ApplyHistoricalContent.FromMiniblockHash to the exact miniblock hash
+	// that should be applied, and all of the consecutive miniblocks (Enabled needs to be true as well)
 	AddStream(
 		streamId shared.StreamId,
 		applyHistoricalContent ApplyHistoricalContent,
