@@ -62,9 +62,6 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
 
-	// enable cold streams, since this should be the default ASAP
-	tester.btc.SetConfigValue(t, ctx, crypto.NotificationsColdStreamsEnabledConfigKey, crypto.ABIEncodeUint64(1))
-
 	test := setupNotificationsColdStreams(ctx, tester)
 
 	event0 := test.sendMessageWithTags(ctx, test.initiator, "msg1", &Tags{})
@@ -304,9 +301,6 @@ func TestNotifications(t *testing.T) {
 		WebPushNotifications: make(map[common.Hash]map[common.Address]int),
 		ApnPushNotifications: make(map[common.Hash]map[common.Address]int),
 	}
-
-	// enable cold streams, since this should be the default ASAP
-	tester.btc.SetConfigValue(t, ctx, crypto.NotificationsColdStreamsEnabledConfigKey, crypto.ABIEncodeUint64(1))
 
 	notificationService := initNotificationService(ctx, tester, notifications)
 
@@ -1071,6 +1065,7 @@ func initNotificationService(
 	cfg.Notifications.Authentication.SessionToken.Key.Algorithm = "HS256"
 	cfg.Notifications.Authentication.SessionToken.Key.Key = hex.EncodeToString(key[:])
 	cfg.Notifications.StreamTracking.StreamsPerSyncSession = 4
+	cfg.Notifications.ColdStreamsEnabled = true
 
 	service, err := StartServerInNotificationMode(ctx, cfg, notifier, makeTestServerOpts(tester))
 	tester.require.NoError(err)

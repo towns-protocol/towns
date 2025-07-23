@@ -18,8 +18,9 @@ import (
 // StreamsTracker functionality with notifications-specific data structures.
 type NotificationsStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
-	storage       UserPreferencesStore
-	onChainConfig crypto.OnChainConfiguration
+	storage            UserPreferencesStore
+	onChainConfig      crypto.OnChainConfiguration
+	notificationConfig config.NotificationsConfig
 }
 
 var _ track_streams.StreamFilter = (*NotificationsStreamsTracker)(nil)
@@ -34,10 +35,12 @@ func NewNotificationsStreamsTracker(
 	storage UserPreferencesStore,
 	metricsFactory infra.MetricsFactory,
 	trackingConfig config.StreamTrackingConfig,
+	notificationConfig config.NotificationsConfig,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &NotificationsStreamsTracker{
-		onChainConfig: onChainConfig,
-		storage:       storage,
+		onChainConfig:      onChainConfig,
+		storage:            storage,
+		notificationConfig: notificationConfig,
 	}
 	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory, trackingConfig); err != nil {
 		return nil, err
@@ -63,8 +66,7 @@ func (tracker *NotificationsStreamsTracker) NewTrackedStream(
 }
 
 func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
-	settings := tracker.onChainConfig.Get()
-	return settings.NotificationsColdStreamsEnabled == 1
+	return tracker.notificationConfig.ColdStreamsEnabled
 }
 
 // TrackStream returns true if the given streamID must be tracked for notifications.
