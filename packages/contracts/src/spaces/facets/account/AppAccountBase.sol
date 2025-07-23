@@ -173,13 +173,13 @@ abstract contract AppAccountBase is
     }
 
     function _enableApp(address app) internal {
-        bytes32 appId = _getInstalledAppId(app);
+        bytes32 appId = AppAccountStorage.getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, true);
     }
 
     function _disableApp(address app) internal {
-        bytes32 appId = _getInstalledAppId(app);
+        bytes32 appId = AppAccountStorage.getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, false);
     }
@@ -189,39 +189,23 @@ abstract contract AppAccountBase is
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        App memory app = _getApp(module);
+        return AppAccountStorage.isAppEntitled(module, client, permission);
+    }
 
-        if (app.appId == EMPTY_UID) return false;
-
-        (bool hasClientAccess, , bool isGroupActive) = _hasGroupAccess(app.appId, client);
-        if (!hasClientAccess || !isGroupActive) return false;
-
-        uint256 permissionsLength = app.permissions.length;
-        for (uint256 i; i < permissionsLength; ++i) {
-            if (app.permissions[i] == permission) {
-                return true;
-            }
-        }
-
-        return false;
+    function _getInstalledAppId(address module) internal view returns (bytes32) {
+        return AppAccountStorage.getInstalledAppId(module);
     }
 
     function _getApp(address module) internal view returns (App memory app) {
-        bytes32 appId = _getInstalledAppId(module);
-        if (appId == EMPTY_UID) return app;
-        return _getAppRegistry().getAppById(appId);
+        return AppAccountStorage.getApp(module);
     }
 
     function _getAppRegistry() internal view returns (IAppRegistry) {
-        return IAppRegistry(MembershipStorage.layout().getDependency(DependencyLib.APP_REGISTRY));
+        return DependencyLib.getAppRegistry();
     }
 
     function _getApps() internal view returns (address[] memory) {
         return AppAccountStorage.getLayout().installedApps.values();
-    }
-
-    function _getInstalledAppId(address module) internal view returns (bytes32) {
-        return AppAccountStorage.getLayout().appIdByApp[module];
     }
 
     function _isAppInstalled(address module) internal view returns (bool) {
@@ -258,9 +242,9 @@ abstract contract AppAccountBase is
         address[] memory deps
     ) private pure returns (bool) {
         return
-            module == factory ||
+            module == factory || // SpaceFactory
             module == deps[0] || // RiverAirdrop
-            module == deps[1] || // SpaceOperator
+            module == deps[1] || // BaseRegistry
             module == deps[2] || // SpaceOwner
             module == deps[3]; // AppRegistry
     }

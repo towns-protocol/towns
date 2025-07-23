@@ -498,7 +498,7 @@ const BotInfo = ({ userId }: { userId: string }) => {
     const { data: metadata } = useAppMetadata(userId)
     return (
         <div className="flex items-center gap-2">
-            <span className="font-semibold text-blue-600">{metadata?.name}</span>
+            <span className="font-semibold text-blue-600">{metadata?.displayName}</span>
             <div className="flex items-center justify-center rounded-full bg-blue-500 px-1.5 py-0.5">
                 <span className="text-xs font-medium text-white">BOT</span>
             </div>

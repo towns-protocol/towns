@@ -36,7 +36,7 @@
 		"@towns-protocol/sdk-crypto": "workspace:^",
 		"@towns-protocol/web3": "workspace:^",
 		"dd-trace": "^5.19.0",
-		"dotenv": "^16.4.5",
+		"dotenv": "^16.4.7",
 		"esbuild-plugin-pino": "^2.2.0",
 		"ethers": "^5.7.2",
 		"fastify": "^5.3.3",

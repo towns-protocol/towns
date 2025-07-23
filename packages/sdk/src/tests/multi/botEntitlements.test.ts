@@ -134,8 +134,7 @@ describe('bot entitlements tests', () => {
         })
 
         // This should succeed because the bot has READ permission via app entitlements
-        const { error } = await bot.makeEventAndAddToStream(restrictedChannelId!, payload)
-        expect(error).toBeUndefined()
+        await bot.makeEventAndAddToStream(restrictedChannelId!, payload)
 
         // Cleanup
         await bot.stopSync()

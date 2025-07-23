@@ -260,17 +260,14 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 				"error",
 				AsRiverError(sc.decodeError(err)).Tag("method", "ExpiresAt"),
 			)
-			return nil, err
+			return nil, AsRiverError(sc.decodeError(err)).Tag("method", "ExpiresAt").Tag("tokenId", tokenId)
 		}
 
 		// Token never expires
 		if expiresAt.Cmp(big.NewInt(0)) == 0 {
 			hasActiveToken = true
-			// If a token is permanent, use 0 to indicate it never expires
-			if furthestExpiryTime == nil || furthestExpiryTime.Cmp(big.NewInt(0)) != 0 {
-				furthestExpiryTime = big.NewInt(0)
-			}
-			continue
+			furthestExpiryTime = big.NewInt(0)
+			break
 		}
 
 		// Check if token is not expired yet

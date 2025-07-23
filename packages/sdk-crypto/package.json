@@ -1,23 +1,10 @@
 {
     "name": "@towns-protocol/sdk-crypto",
-    "version": "0.0.271",
+    "version": "0.0.283",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "publishConfig": {
-        "access": "public"
-    },
     "main": "./dist/web/index.cjs",
-    "module": "./dist/web/index.js",
     "types": "./dist/web/index.d.ts",
-    "sideEffects": false,
-    "exports": {
-        ".": {
-            "types": "./dist/web/index.d.ts",
-            "node": "./dist/node/index.js",
-            "default": "./dist/web/index.js"
-        },
-        "./package.json": "./package.json"
-    },
     "scripts": {
         "build": "tsdown",
         "cb": "yarn clean && yarn build",
@@ -47,7 +34,20 @@
         "typescript": "^5.8.2",
         "vitest": "^3.2.3"
     },
+    "exports": {
+        ".": {
+            "types": "./dist/web/index.d.ts",
+            "node": "./dist/node/index.js",
+            "default": "./dist/web/index.js"
+        },
+        "./package.json": "./package.json"
+    },
     "files": [
         "/dist"
-    ]
+    ],
+    "module": "./dist/web/index.js",
+    "publishConfig": {
+        "access": "public"
+    },
+    "sideEffects": false
 }

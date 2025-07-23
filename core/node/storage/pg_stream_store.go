@@ -768,7 +768,7 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	ctx context.Context,
 	streamId StreamId,
-	numToRead int,
+	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	var ret *ReadStreamFromLastSnapshotResult
 	if err := s.txRunner(
@@ -777,7 +777,7 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numToRead)
+			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numPrecedingMiniblocks)
 			return err
 		},
 		nil,
@@ -792,29 +792,19 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	numToRead int,
+	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	snapshotMiniblockIndex, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var lastMiniblockIndex int64
-	if err = tx.
-		QueryRow(
-			ctx,
-			s.sqlForStream(
-				"SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1",
-				streamId,
-			),
-			streamId).
-		Scan(&lastMiniblockIndex); err != nil {
-		return nil, WrapRiverError(Err_INTERNAL, err).Message("db inconsistency: failed to get last miniblock index")
-	}
 
-	numToRead = max(1, numToRead)
-	startSeqNum := max(0, lastMiniblockIndex-int64(numToRead-1))
-	startSeqNum = min(startSeqNum, snapshotMiniblockIndex)
+	// Calculate the starting sequence number to read numPrecedingMiniblocks before the snapshot
+	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
+	if startSeqNum < 0 {
+		startSeqNum = 0
+	}
 
 	miniblocksRow, err := tx.Query(
 		ctx,
@@ -1038,6 +1028,146 @@ func (s *PostgresStreamStore) writeEventTx(
 	return nil
 }
 
+// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
+// This is used for backfilling gaps in the miniblock sequence during reconciliation.
+func (s *PostgresStreamStore) WritePrecedingMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+) error {
+	if len(miniblocks) == 0 {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"miniblocks cannot be empty",
+		)
+	}
+
+	// Validate miniblocks are continuous and in ascending order
+	for i := 1; i < len(miniblocks); i++ {
+		if miniblocks[i].Number != miniblocks[i-1].Number+1 {
+			return RiverError(
+				Err_INVALID_ARGUMENT,
+				"Miniblocks must be continuous",
+				"expectedNum", miniblocks[i-1].Number+1,
+				"actualNum", miniblocks[i].Number,
+				"index", i,
+			)
+		}
+	}
+
+	return s.txRunner(
+		ctx,
+		"WritePrecedingMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writePrecedingMiniblocksTx(ctx, tx, streamId, miniblocks)
+		},
+		nil,
+		"streamId", streamId,
+		"miniblocksCount", len(miniblocks),
+	)
+}
+
+func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblocks []*WriteMiniblockData,
+) error {
+	// Lock the stream for update
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Get the last miniblock number in storage
+	var lastMiniblockNum int64
+	err = tx.QueryRow(
+		ctx,
+		s.sqlForStream("SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1", streamId),
+		streamId,
+	).Scan(&lastMiniblockNum)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to get last miniblock number")
+	}
+
+	// Validate that miniblocks are preceding the last miniblock in storage
+	// Since miniblocks are already validated to be continuous, we only need to check the last one
+	lastInputMiniblockNum := miniblocks[len(miniblocks)-1].Number
+	if lastInputMiniblockNum >= lastMiniblockNum {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"Miniblock numbers must be less than last miniblock in storage",
+			"lastInputMiniblockNum", lastInputMiniblockNum,
+			"lastMiniblockNum", lastMiniblockNum,
+		)
+	}
+
+	// Get existing miniblock numbers to determine which ones to skip
+	existingNums := make(map[int64]bool)
+	rows, err := tx.Query(
+		ctx,
+		s.sqlForStream(
+			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num <= $3",
+			streamId,
+		),
+		streamId,
+		miniblocks[0].Number,
+		miniblocks[len(miniblocks)-1].Number,
+	)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to query existing miniblocks")
+	}
+
+	// Use ForEachRow pattern from reinitializeStreamStorageTx
+	var seqNum int64
+	seqNumArgs := []any{&seqNum}
+	_, err = pgx.ForEachRow(rows, seqNumArgs, func() error {
+		existingNums[seqNum] = true
+		return nil
+	})
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("Failed to iterate existing miniblocks")
+	}
+
+	// Prepare miniblocks to insert (skip existing ones)
+	var toInsert []*WriteMiniblockData
+	for _, mb := range miniblocks {
+		if !existingNums[mb.Number] {
+			toInsert = append(toInsert, mb)
+		}
+	}
+
+	if len(toInsert) == 0 {
+		return nil // All miniblocks already exist
+	}
+
+	// Bulk insert new miniblocks
+	rows2D := make([][]interface{}, len(toInsert))
+	for i, mb := range toInsert {
+		rows2D[i] = []interface{}{
+			streamId,
+			mb.Number,
+			mb.Data,
+			mb.Snapshot,
+		}
+	}
+
+	_, err = tx.CopyFrom(
+		ctx,
+		pgx.Identifier{s.sqlForStream("{{miniblocks}}", streamId)},
+		[]string{"stream_id", "seq_num", "blockdata", "snapshot"},
+		pgx.CopyFromRows(rows2D),
+	)
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Failed to insert miniblocks").
+			Tag("count", len(toInsert))
+	}
+
+	return nil
+}
+
 // ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 // Supported consistency checks:
 // 1. There are no gaps in miniblocks sequence
@@ -1115,10 +1245,20 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	var blockdata []byte
 	var seqNum int
 	var snapshot []byte
+	firstRow := true
 	if _, err = pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seqNum, &snapshot}, func() error {
+		// Check if the first miniblock matches the requested fromInclusive
+		if firstRow && int64(seqNum) != fromInclusive {
+			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Missing miniblocks at start of range").
+				Tag("RequestedStart", fromInclusive).
+				Tag("ActualStart", seqNum).
+				Tag("streamId", streamId)
+		}
+		firstRow = false
+		
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
-			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
+			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seqNum).
 				Tag("ExpectedBlockNumber", prevSeqNum+1).
 				Tag("streamId", streamId)
@@ -1132,6 +1272,14 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	// Check if we got any miniblocks at all when we expected some
+	if len(miniblocks) == 0 && fromInclusive < toExclusive {
+		return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "No miniblocks found in requested range").
+			Tag("fromInclusive", fromInclusive).
+			Tag("toExclusive", toExclusive).
+			Tag("streamId", streamId)
 	}
 
 	return miniblocks, nil
@@ -2169,6 +2317,65 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	return result, nil
 }
 
+func (s *PostgresStreamStore) DebugDeleteMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) error {
+	return s.txRunner(
+		ctx,
+		"DebugDeleteMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.debugDeleteMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive)
+		},
+		nil,
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toExclusive", toExclusive,
+	)
+}
+
+func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) error {
+	// Lock the stream to ensure consistency
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Delete miniblocks in the specified range
+	query := s.sqlForStream(
+		"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num < $3",
+		streamId,
+	)
+	
+	result, err := tx.Exec(ctx, query, streamId, fromInclusive, toExclusive)
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("Failed to delete miniblocks").
+			Tag("streamId", streamId).
+			Tag("fromInclusive", fromInclusive).
+			Tag("toExclusive", toExclusive)
+	}
+
+	rowsAffected := result.RowsAffected()
+	logging.FromCtx(ctx).Infow("DebugDeleteMiniblocks completed",
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toExclusive", toExclusive,
+		"rowsDeleted", rowsAffected,
+	)
+
+	return nil
+}
+
 func (s *PostgresStreamStore) DebugReadStreamStatistics(
 	ctx context.Context,
 	streamId StreamId,
@@ -2343,6 +2550,74 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 		streamId,
 	).Scan(&lowestMiniblock)
 	return lowestMiniblock, err
+}
+
+// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers present in storage
+// for the given stream, starting from the specified miniblock number.
+func (s *PostgresStreamStore) GetMiniblockNumberRanges(
+	ctx context.Context,
+	streamId StreamId,
+	startMiniblockNumberInclusive int64,
+) ([]MiniblockRange, error) {
+	var ranges []MiniblockRange
+	err := s.txRunner(
+		ctx,
+		"GetMiniblockNumberRanges",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, startMiniblockNumberInclusive)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+		"startMiniblockNumberInclusive", startMiniblockNumberInclusive,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ranges, nil
+}
+
+func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	startMiniblockNumberInclusive int64,
+) ([]MiniblockRange, error) {
+	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+		return nil, err
+	}
+
+	// Use window function to identify continuous ranges efficiently
+	query := s.sqlForStream(`
+		SELECT 
+			MIN(seq_num) AS start_range,
+			MAX(seq_num) AS end_range
+		FROM (
+			SELECT 
+				seq_num,
+				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
+			FROM {{miniblocks}}
+			WHERE stream_id = $1 AND seq_num >= $2
+		) AS subquery
+		GROUP BY grp
+		ORDER BY start_range
+	`, streamId)
+
+	rows, err := tx.Query(ctx, query, streamId, startMiniblockNumberInclusive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Use pgx.CollectRows to scan all results at once
+	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[MiniblockRange])
+	if err != nil {
+		return nil, err
+	}
+
+	return ranges, nil
 }
 
 func parseAndCheckHasLegacySnapshot(data []byte) bool {

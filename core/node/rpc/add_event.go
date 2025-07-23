@@ -47,19 +47,7 @@ func (s *Service) localAddEvent(
 		)
 	}
 
-	if err != nil && req.Msg.Optional {
-		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
-		// currently this is catching all errors, which is not ideal
-		riverError := AsRiverError(err)
-		return connect.NewResponse(&AddEventResponse{
-			Error: &AddEventResponse_Error{
-				Code:  riverError.Code,
-				Msg:   riverError.Error(),
-				Funcs: riverError.Funcs,
-			},
-			NewEvents: newEvents,
-		}), nil
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&AddEventResponse{

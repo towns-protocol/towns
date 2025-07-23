@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// utils
-import {Vm} from "forge-std/Test.sol";
-
-//interfaces
+// interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
-//libraries
+// libraries
 import {DropClaim} from "src/airdrop/drop/DropClaim.sol";
 import {DropGroup} from "src/airdrop/drop/DropGroup.sol";
 import {DropStorage} from "src/airdrop/drop/DropStorage.sol";
@@ -43,7 +42,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     }
 
     uint256 internal constant TOTAL_TOKEN_AMOUNT = 1000;
-    uint16 internal constant PENALTY_BPS = 5000;
+    uint16 internal constant PENALTY_BPS = 5000; // 50%
 
     MerkleTree internal merkleTree = new MerkleTree();
 
@@ -142,6 +141,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         vm.prank(caller);
         vm.expectEmit(address(dropFacet));
         emit DropFacet_Claimed_WithPenalty(conditionId, caller, wallet, expectedAmount);
+        emit IERC20.Transfer(wallet, address(0), expectedAmount);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
@@ -225,19 +225,117 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     // getActiveClaimConditionId
     function test_getActiveClaimConditionId() external givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3) {
         DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](3);
-        conditions[0] = _createClaimCondition(block.timestamp - 100, root, TOTAL_TOKEN_AMOUNT); // expired
-        conditions[1] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT); // active
+        conditions[0] = _createClaimCondition(block.timestamp - 100, root, TOTAL_TOKEN_AMOUNT); // current
+        conditions[1] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT); // next
         conditions[2] = _createClaimCondition(block.timestamp + 100, root, TOTAL_TOKEN_AMOUNT); // future
 
         vm.prank(deployer);
         dropFacet.setClaimConditions(conditions);
 
-        uint256 id = dropFacet.getActiveClaimConditionId();
+        uint256 id = dropFacet.getActiveClaimConditionId(); // fetch the boundary condition
         assertEq(id, 1);
 
         vm.warp(block.timestamp + 100);
         id = dropFacet.getActiveClaimConditionId();
         assertEq(id, 2);
+    }
+
+    function test_getActiveClaimConditionId_extended()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3)
+    {
+        // Test 1: No claim conditions - should revert without underflow
+        vm.expectRevert(DropFacet__NoActiveClaimCondition.selector);
+        dropFacet.getActiveClaimConditionId();
+
+        // Test 2: Expired conditions - should revert without underflow
+        DropGroup.ClaimCondition[] memory expiredConditions = new DropGroup.ClaimCondition[](2);
+        expiredConditions[0] = _createClaimCondition(
+            block.timestamp - 200,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        expiredConditions[0].endTimestamp = uint40(block.timestamp - 100); // Expired
+        expiredConditions[1] = _createClaimCondition(
+            block.timestamp - 100,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        expiredConditions[1].endTimestamp = uint40(block.timestamp - 50); // Also expired
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(expiredConditions);
+
+        vm.expectRevert(DropFacet__NoActiveClaimCondition.selector);
+        dropFacet.getActiveClaimConditionId();
+
+        // Test 3: Future conditions - should revert without underflow
+        DropGroup.ClaimCondition[] memory futureConditions = new DropGroup.ClaimCondition[](2);
+        futureConditions[0] = _createClaimCondition(
+            block.timestamp + 100,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        futureConditions[1] = _createClaimCondition(
+            block.timestamp + 200,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(futureConditions);
+
+        vm.expectRevert(DropFacet__NoActiveClaimCondition.selector);
+        dropFacet.getActiveClaimConditionId();
+
+        // Test 4: Valid active condition - should return correct ID
+        DropGroup.ClaimCondition[] memory validConditions = new DropGroup.ClaimCondition[](3);
+        validConditions[0] = _createClaimCondition(block.timestamp - 100, root, TOTAL_TOKEN_AMOUNT);
+        validConditions[0].endTimestamp = uint40(block.timestamp - 50); // Expired
+        validConditions[1] = _createClaimCondition(block.timestamp - 50, root, TOTAL_TOKEN_AMOUNT); // Active (no end time)
+        validConditions[2] = _createClaimCondition(block.timestamp + 100, root, TOTAL_TOKEN_AMOUNT); // Future
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(validConditions);
+
+        uint256 activeConditionId = dropFacet.getActiveClaimConditionId();
+        assertEq(activeConditionId, 1, "Should return the active condition ID");
+
+        // Test 5: Multiple active conditions - should return the latest one
+        DropGroup.ClaimCondition[] memory multipleActiveConditions = new DropGroup.ClaimCondition[](
+            3
+        );
+        multipleActiveConditions[0] = _createClaimCondition(
+            block.timestamp - 100,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        multipleActiveConditions[1] = _createClaimCondition(
+            block.timestamp - 50,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+        multipleActiveConditions[2] = _createClaimCondition(
+            block.timestamp - 25,
+            root,
+            TOTAL_TOKEN_AMOUNT
+        );
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(multipleActiveConditions);
+
+        uint256 latestActiveId = dropFacet.getActiveClaimConditionId();
+        assertEq(latestActiveId, 2, "Should return the latest active condition ID");
+
+        // Test 6: Edge case - single condition at boundary
+        DropGroup.ClaimCondition[] memory boundaryCondition = new DropGroup.ClaimCondition[](1);
+        boundaryCondition[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(boundaryCondition);
+
+        uint256 boundaryId = dropFacet.getActiveClaimConditionId();
+        assertEq(boundaryId, 0, "Should handle boundary condition correctly");
     }
 
     function test_getActiveClaimConditionId_revertWhen_noActiveClaimCondition() external {
@@ -969,29 +1067,10 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     function givenOffChainRoot() internal returns (bytes32) {
         string[] memory cmds = new string[](2);
         cmds[0] = "node";
-        cmds[1] = "contracts/test/airdrop/scripts/index.mjs";
+        cmds[1] = "test/airdrop/scripts/index.mjs";
         bytes memory result = vm.ffi(cmds);
         return abi.decode(result, (bytes32));
     }
-
-    // function test_endToEnd_differentialTestingRoot() external {
-    //   address[] memory _accounts = new address[](4);
-    //   uint256[] memory _amounts = new uint256[](4);
-
-    //   _accounts[0] = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-    //   _amounts[0] = 1 ether;
-    //   _accounts[1] = 0x2FaC60B7bCcEc9b234A2f07448D3B2a045d621B9;
-    //   _amounts[1] = 1 ether;
-    //   _accounts[2] = 0xa9a6512088904fbaD2aA710550B57c29ee0092c4;
-    //   _amounts[2] = 1 ether;
-    //   _accounts[3] = 0x86312a65B491CF25D9D265f6218AB013DaCa5e19;
-    //   _amounts[3] = 1 ether;
-
-    //   bytes32 offChainRoot = givenOffChainRoot();
-    //   (bytes32 onChainRoot, ) = merkleTree.constructTree(_accounts, _amounts);
-
-    //   assertEq(offChainRoot, onChainRoot);
-    // }
 
     // we claim some tokens from the first condition, and then activate the second condition
     // we claim some more tokens from the second condition
@@ -1186,6 +1265,76 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         (bytes32 _root, ) = merkleTree.constructTree(_accounts, _amounts, _points);
 
         assertEq(_root, expectedRoot);
+    }
+
+    function test_e2e_claimWithPenalty() external {
+        uint256 totalAmount = 14 ether;
+        uint16 penaltyBps = 1000; // 10% penalty
+        bytes32 merkleRoot = 0x25a11091a066f7c85124bda81bb17f1fea3d68eee4943b0580b9d2cd33f2a90e;
+
+        // 1. mint tokens to the drop facet
+        vm.prank(bridge);
+        towns.mint(address(dropFacet), totalAmount);
+
+        // 2. set claim conditions
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, merkleRoot, totalAmount);
+        conditions[0].penaltyBps = penaltyBps;
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        // 3. claim with penalty
+        address[] memory accts = new address[](4);
+        uint256[] memory amts = new uint256[](4);
+        uint256[] memory pts = new uint256[](4);
+
+        accts[0] = 0x399897aB71e0d450395de209bEBDAA1632F00414;
+        amts[0] = 2000000000000000000;
+        pts[0] = 1000000000000000000;
+
+        accts[1] = 0x94ada5c41736C7617DdC87e20f8a4D14cff01A6A;
+        amts[1] = 2000000000000000000;
+        pts[1] = 1000000000000000000;
+
+        accts[2] = 0xd5ED99854A53C4cbDF6957C3d1ab027165Bb4332;
+        amts[2] = 2000000000000000000;
+        pts[2] = 2000000000000000000;
+
+        accts[3] = 0xf32A4d7cE3C559924fD0Beb3986d5815C4E033F1;
+        amts[3] = 2000000000000000000;
+        pts[3] = 2000000000000000000;
+
+        // 3. create the merkle tree
+        MerkleTree t = new MerkleTree();
+        (bytes32 _root, bytes32[][] memory _tree) = t.constructTree(accts, amts, pts);
+        assertEq(_root, merkleRoot);
+
+        // 4. verify the claim
+        uint256 aIndex = 0;
+        bytes32[] memory proof = merkleTree.getProof(_tree, aIndex);
+
+        vm.startPrank(space);
+        pointsFacet.mint(accts[0], pts[0]);
+        vm.stopPrank();
+
+        vm.prank(accts[0]);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: 0,
+                account: accts[0],
+                quantity: amts[0],
+                points: pts[0],
+                proof: proof
+            }),
+            penaltyBps
+        );
+
+        uint256 expectedAmount = amts[0] - BasisPoints.calculate(amts[0], penaltyBps);
+
+        assertEq(dropFacet.getSupplyClaimedByWallet(accts[0], 0), expectedAmount);
+        assertEq(towns.balanceOf(address(dropFacet)), totalAmount - expectedAmount);
+        assertEq(pointsFacet.balanceOf(accts[0]), 0);
     }
 
     // =============================================================

@@ -225,7 +225,6 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 			numNodes:          testCfg.numNodes,
 			replicationFactor: testCfg.replFactor,
 			start:             true,
-			printTestLogs:     false,
 		},
 	)
 	ctx := tt.ctx
@@ -490,7 +489,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	replFactor := 5
 	tt := newServiceTester(
 		t,
-		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true, printTestLogs: false},
+		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true},
 	)
 	ctx := tt.ctx
 	require := tt.require

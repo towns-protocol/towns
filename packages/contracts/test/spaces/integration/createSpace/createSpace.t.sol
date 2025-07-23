@@ -3,39 +3,45 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IArchitect} from "src/factory/facets/architect/IArchitect.sol";
-import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
+import {IPausable, IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
+import {IArchitectBase, IArchitect} from "src/factory/facets/architect/IArchitect.sol";
+import {ICreateSpaceBase, ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlementBase} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
-import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
+import {IMembershipBase, IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
-import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
-import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
+import {IRolesBase, IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
+import {stdError} from "forge-std/StdError.sol";
+import {LibString} from "solady/utils/LibString.sol";
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {Validator} from "src/utils/libraries/Validator.sol";
 
 // contracts
-import {Architect} from "src/factory/facets/architect/Architect.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
-
-// mocks
-import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
-contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleEntitlementBase {
-    Architect public spaceArchitect;
-    CreateSpaceFacet public createSpaceFacet;
+contract IntegrationCreateSpace is
+    IArchitectBase,
+    ICreateSpaceBase,
+    IPausableBase,
+    IRolesBase,
+    IRuleEntitlementBase,
+    BaseSetup
+{
+    using LibString for string;
+
+    IArchitect public spaceArchitect;
+    ICreateSpace public createSpaceFacet;
 
     function setUp() public override {
         super.setUp();
-        spaceArchitect = Architect(spaceFactory);
-        createSpaceFacet = CreateSpaceFacet(spaceFactory);
+        spaceArchitect = IArchitect(spaceFactory);
+        createSpaceFacet = ICreateSpace(spaceFactory);
     }
 
     function test_fuzz_createEveryoneSpace(
@@ -159,11 +165,8 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
 
         address userEntitlement;
 
-        for (uint256 i = 0; i < entitlements.length; i++) {
-            if (
-                keccak256(abi.encodePacked(entitlements[i].moduleType)) ==
-                keccak256(abi.encodePacked("UserEntitlement"))
-            ) {
+        for (uint256 i; i < entitlements.length; ++i) {
+            if (entitlements[i].moduleType.eq("UserEntitlement")) {
                 userEntitlement = entitlements[i].moduleAddress;
                 break;
             }
@@ -254,23 +257,19 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         uint256 cost = spaceInfo.prepay.supply *
             IPlatformRequirements(spaceFactory).getMembershipFee();
 
-        vm.deal(founder, cost);
+        deal(founder, cost);
         vm.prank(founder);
         address newSpace = createSpaceFacet.createSpaceWithPrepay{value: cost}(spaceInfo);
 
         uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
-
+        assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(member, Permissions.JoinSpace));
-
-        assertTrue(
-            prepaidSupply == spaceInfo.prepay.supply,
-            "Prepaid supply should be equal to the supply"
-        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CreateSpaceV2                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function test_createSpaceV2_with_invalid_pricing_module() public {
         vm.prank(founder);
         vm.expectRevert(Validator.InvalidAddress.selector);
@@ -293,19 +292,161 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
     function test_fuzz_createSpaceV2(
         string memory spaceId,
         address founder,
-        address member
-    ) external assumeEOA(founder) assumeEOA(member) {
+        address recipient
+    ) external assumeEOA(founder) assumeEOA(recipient) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
-        vm.assume(founder != member);
+        vm.assume(founder != recipient);
 
         // create space with default channel
         CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
         spaceInfo.membership.settings.pricingModule = tieredPricingModule;
         spaceInfo.membership.requirements.everyone = true;
 
-        vm.prank(founder);
-        address newSpace = createSpaceFacet.createSpaceV2(spaceInfo, SpaceOptions({to: member}));
+        SpaceOptions memory options = SpaceOptions({to: recipient});
 
-        assertTrue(IERC173(newSpace).owner() == member);
+        vm.prank(founder);
+        address newSpace = createSpaceFacet.createSpaceV2(spaceInfo, options);
+
+        assertTrue(IERC173(newSpace).owner() == recipient);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     Unified createSpace                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_fuzz_createSpace_CreateBasic(
+        string memory spaceId,
+        address founder,
+        address user
+    ) external assumeEOA(founder) {
+        vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+
+        SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
+        spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+
+        bytes memory data = abi.encode(spaceInfo);
+
+        vm.prank(founder);
+        address newSpace = createSpaceFacet.createSpace(Action.CreateBasic, data);
+
+        // assert everyone can join
+        assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
+    }
+
+    function test_fuzz_createSpace_CreateWithPrepay(
+        string memory spaceId,
+        address founder,
+        address user
+    ) external assumeEOA(founder) assumeEOA(user) {
+        vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+
+        address[] memory users = new address[](1);
+        users[0] = user;
+
+        CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
+        spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+        spaceInfo.membership.requirements.users = users;
+        spaceInfo.prepay.supply = 50;
+
+        uint256 cost = spaceInfo.prepay.supply *
+            IPlatformRequirements(spaceFactory).getMembershipFee();
+
+        bytes memory data = abi.encode(spaceInfo);
+
+        deal(founder, cost);
+        vm.prank(founder);
+        address newSpace = createSpaceFacet.createSpace{value: cost}(Action.CreateWithPrepay, data);
+
+        uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
+        assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
+        assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
+    }
+
+    function test_fuzz_createSpace_CreateWithOptions(
+        string memory spaceId,
+        address founder,
+        address recipient
+    ) external assumeEOA(founder) assumeEOA(recipient) {
+        vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+        vm.assume(founder != recipient);
+
+        CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
+        spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+        spaceInfo.membership.requirements.everyone = true;
+
+        SpaceOptions memory options = SpaceOptions({to: recipient});
+
+        bytes memory data = abi.encode(spaceInfo, options);
+
+        vm.prank(founder);
+        address newSpace = createSpaceFacet.createSpace(Action.CreateWithOptions, data);
+
+        assertTrue(IERC173(newSpace).owner() == recipient, "Recipient should own the space");
+    }
+
+    function test_fuzz_createSpace_CreateLegacy(
+        string memory spaceId,
+        address founder,
+        address user
+    ) external assumeEOA(founder) {
+        vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+
+        // Use SpaceHelper to create legacy format space info
+        CreateSpaceOld memory legacySpaceInfo = _createSpaceLegacy(
+            spaceId,
+            founder,
+            tieredPricingModule
+        );
+
+        bytes memory data = abi.encode(legacySpaceInfo);
+
+        vm.prank(founder);
+        address newSpace = createSpaceFacet.createSpace(Action.CreateLegacy, data);
+
+        // Verify space creation and legacy conversion
+        assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Error Handling                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_createSpace_invalidEnum() external {
+        // Test invalid enum value - EVM validates enum bounds and causes panic
+        vm.expectRevert(stdError.enumConversionError);
+
+        bytes memory data = abi.encode(_createEveryoneSpaceInfo("test"));
+
+        // Call with invalid enum value (4 is out of bounds for 0-3 enum)
+        (bool success, ) = address(createSpaceFacet).call(
+            abi.encodeWithSelector(
+                bytes4(keccak256("createSpace(uint8,bytes)")),
+                uint8(4), // Invalid enum value
+                data
+            )
+        );
+        assertFalse(success, "Should revert with enum conversion error");
+    }
+
+    function test_createSpace_whenPaused() external {
+        // Set up the pause functionality test
+        vm.prank(deployer);
+        IPausable(address(spaceFactory)).pause();
+
+        SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo("test");
+        spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+        bytes memory data = abi.encode(spaceInfo);
+
+        vm.prank(founder);
+        vm.expectRevert(Pausable__Paused.selector);
+        createSpaceFacet.createSpace(Action.CreateBasic, data);
+
+        // Unpause and verify it works
+        vm.prank(deployer);
+        IPausable(address(spaceFactory)).unpause();
+
+        vm.prank(founder);
+        address newSpace = createSpaceFacet.createSpace(Action.CreateBasic, data);
+        assertTrue(newSpace != address(0));
     }
 }

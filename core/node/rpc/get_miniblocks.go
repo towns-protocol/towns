@@ -42,8 +42,8 @@ func (s *Service) localGetMiniblocks(
 	snapshots := make(map[int64]*Envelope)
 	for i, info := range mbsInfo {
 		miniblocks[i] = info.Proto
-		if !req.Msg.GetOmitSnapshots() && info.Snapshot != nil {
-			snapshots[info.Ref.Num] = info.Snapshot
+		if !req.Msg.GetOmitSnapshots() && info.SnapshotEnvelope != nil {
+			snapshots[info.Ref.Num] = info.SnapshotEnvelope
 		}
 	}
 
@@ -100,7 +100,7 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*E
 	return &MiniblockInfo{
 		Proto:    filteredMiniblock,
 		Ref:      info.Ref,
-		Snapshot: info.Snapshot,
+		SnapshotEnvelope: info.SnapshotEnvelope,
 	}
 }
 

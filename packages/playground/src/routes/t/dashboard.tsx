@@ -357,7 +357,7 @@ const BotCard = ({ bot }: { bot: BotInfo }) => {
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [installOpen, setInstallOpen] = useState(false)
     const { data: metadata, isLoading } = useAppMetadata(bot.app.client)
-    const displayName = metadata?.name || shortenAddress(bot.app.client)
+    const displayName = metadata?.displayName || shortenAddress(bot.app.client)
 
     return (
         <div className="flex items-center justify-between gap-3">

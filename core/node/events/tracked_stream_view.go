@@ -69,7 +69,7 @@ func (ts *TrackedStreamViewImpl) ApplyBlock(
 	mb, err := NewMiniblockInfoFromProto(
 		miniblock,
 		snapshot,
-		NewParsedMiniblockInfoOpts(),
+		NewParsedMiniblockInfoOpts().WithApplyOnlyMatchingSnapshot(),
 	)
 	if err != nil {
 		return err

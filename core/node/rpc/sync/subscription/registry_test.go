@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -57,6 +58,9 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 			setup: func(t *testing.T) *registry {
 				reg := newRegistry()
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
+				streamCount, subsCount := reg.GetStats()
+				assert.Equal(t, 0, streamCount)
+				assert.Equal(t, 1, subsCount)
 				return reg
 			},
 			syncIDToRemove: "test-sync-1",
@@ -67,6 +71,9 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 			setup: func(t *testing.T) *registry {
 				reg := newRegistry()
 				reg.AddSubscription(createTestSubscription("test-sync-1"))
+				streamCount, subsCount := reg.GetStats()
+				assert.Equal(t, 0, streamCount)
+				assert.Equal(t, 1, subsCount)
 				return reg
 			},
 			syncIDToRemove: "non-existent",
@@ -79,6 +86,9 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 				sub := createTestSubscription("test-sync-1")
 				reg.AddSubscription(sub)
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
+				streamCount, subsCount := reg.GetStats()
+				assert.Equal(t, 1, streamCount)
+				assert.Equal(t, 1, subsCount)
 				return reg
 			},
 			syncIDToRemove: "test-sync-1",
@@ -91,6 +101,7 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 			reg := tt.setup(t)
 
 			reg.RemoveSubscription(tt.syncIDToRemove)
+			reg.CleanupUnusedStreams(nil)
 
 			if tt.verifyRemoved {
 				// Verify subscription was removed
@@ -98,8 +109,9 @@ func TestRegistry_RemoveSubscription(t *testing.T) {
 				assert.False(t, exists)
 
 				// Verify no streams remain for this subscription
-				streamCount, _ := reg.GetStats()
+				streamCount, subsCount := reg.GetStats()
 				assert.Equal(t, 0, streamCount)
+				assert.Equal(t, 0, subsCount)
 			}
 		})
 	}
@@ -347,9 +359,7 @@ func TestRegistry_RemoveStreamFromSubscription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := tt.setup(t)
 
-			shouldRemoveFromRemote := reg.RemoveStreamFromSubscription(tt.syncID, tt.streamID)
-
-			assert.Equal(t, tt.expectRemoveFromRemote, shouldRemoveFromRemote)
+			reg.RemoveStreamFromSubscription(tt.syncID, tt.streamID)
 
 			// Verify stream was removed from subscription
 			subscriptions := reg.GetSubscriptionsForStream(tt.streamID)

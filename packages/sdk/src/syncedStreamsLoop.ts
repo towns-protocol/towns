@@ -84,6 +84,9 @@ interface Nonces {
     [nonce: string]: NonceStats
 }
 
+const isHighPriorityStreamForSync = (streamId: string | Uint8Array): boolean =>
+    isChannelStreamId(streamId) || isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+
 export interface PingInfo {
     nonces: Nonces // the nonce that the server should echo back
     currentSequence: number // the current sequence number
@@ -126,7 +129,8 @@ export class SyncedStreamsLoop {
     // Responses are queued and processed in order
     // and are cleared when sync stops
     private responsesQueue: SyncStreamsResponse[] = []
-    private inProgressTick?: Promise<void>
+    private inProgressResponseTick?: Promise<void>
+    private inProgressModificationTick?: Promise<void>
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
     private pendingStreamsToDelete: string[] = []
@@ -335,6 +339,21 @@ export class SyncedStreamsLoop {
                     const syncCookies: SyncCookie[] = []
                     if (this.streamOpts?.useModifySync == true) {
                         this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
+                        // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
+                        // prioritized spaces will be added later during the calls to tick()
+                        for (const id of this.highPriorityIds) {
+                            if (isHighPriorityStreamForSync(id)) {
+                                const syncCookie = this.streams.get(id)?.syncCookie
+                                if (syncCookie) {
+                                    syncCookies.push(syncCookie)
+                                    this.inFlightSyncCookies.add(id)
+                                }
+                            }
+                        }
+                        // remove any added stream ids from the pending sync cookies
+                        this.pendingSyncCookies = this.pendingSyncCookies.filter(
+                            (id) => !this.inFlightSyncCookies.has(id),
+                        )
                     } else {
                         syncCookies.push(
                             ...Array.from(this.streams.entries())
@@ -521,15 +540,35 @@ export class SyncedStreamsLoop {
     }
 
     private checkStartTicking() {
-        if (this.inProgressTick) {
+        this.checkStartTickingResponses()
+        this.checkStartTickingModifications()
+    }
+
+    private checkStartTickingModifications() {
+        if (this.inProgressModificationTick) {
             return
         }
 
-        if (
-            this.responsesQueue.length === 0 &&
-            this.pendingSyncCookies.length === 0 &&
-            this.pendingStreamsToDelete.length === 0
-        ) {
+        if (this.pendingSyncCookies.length === 0 && this.pendingStreamsToDelete.length === 0) {
+            return
+        }
+
+        const tick = this.tickModifications()
+        this.inProgressModificationTick = tick
+        queueMicrotask(() => {
+            tick.catch((e) => this.logError('ProcessModificationTick Error', e)).finally(() => {
+                this.inProgressModificationTick = undefined
+                setTimeout(() => this.checkStartTickingModifications())
+            })
+        })
+    }
+
+    private checkStartTickingResponses() {
+        if (this.inProgressResponseTick) {
+            return
+        }
+
+        if (this.responsesQueue.length === 0) {
             return
         }
 
@@ -537,17 +576,26 @@ export class SyncedStreamsLoop {
             return
         }
 
-        const tick = this.tick()
-        this.inProgressTick = tick
+        const tick = this.tickResponses()
+        this.inProgressResponseTick = tick
         queueMicrotask(() => {
-            tick.catch((e) => this.logError('ProcessTick Error', e)).finally(() => {
-                this.inProgressTick = undefined
+            tick.catch((e) => this.logError('ProcessResponseTick Error', e)).finally(() => {
+                this.inProgressResponseTick = undefined
+                // Tick both queues, not just the response queue. Handled responses affect the ModifySync flow
+                // in the modifications queue.
                 setTimeout(() => this.checkStartTicking())
             })
         })
     }
 
-    private async tick() {
+    private async tickResponses() {
+        const item = this.responsesQueue.shift()
+        if (item) {
+            await this.onUpdate(item)
+        }
+    }
+
+    private async tickModifications() {
         if (this.syncState === SyncState.Syncing) {
             const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
                 (x) => !this.inFlightSyncCookies.has(x),
@@ -605,11 +653,6 @@ export class SyncedStreamsLoop {
                 }
             }
         }
-        const item = this.responsesQueue.shift()
-        if (!item || item.syncId !== this.syncId) {
-            return
-        }
-        await this.onUpdate(item)
     }
 
     private async waitForSyncingState() {
@@ -792,9 +835,10 @@ export class SyncedStreamsLoop {
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
             if (this.syncId != res.syncId) {
-                throw new Error(
+                this.logError(
                     `syncId mismatch; has:'${this.syncId}', got:${res.syncId}'. Throw away update.`,
                 )
+                return
             }
             const syncStream = res.stream
             if (syncStream !== undefined) {
@@ -852,7 +896,7 @@ export class SyncedStreamsLoop {
                                                 syncStartedAt: this.syncStartedAt,
                                                 duration,
                                             },
-                                            `sync timed out after ${duration}ms`,
+                                            `sync has stalled after ${duration}ms`,
                                         )
                                         this.clientEmitter.emit('streamSyncTimedOut', {
                                             duration,
@@ -1018,7 +1062,7 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
         const firstHPI = Array.from(highPriorityIds.values())[0]
         if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-                return 4
+                return 2
             }
         }
     }

@@ -198,12 +198,6 @@ message MemberPayload {
         map<string, uint64> tips_count = 6;
     }
 
-    message KeyPackage {
-        bytes user_address = 1;
-        bytes signature_public_key = 2;
-        bytes key_package = 3;
-    }
-
     message Membership {
         MembershipOp op = 1;
         bytes user_address = 2;
@@ -899,6 +893,8 @@ message StreamAndCookie {
     bool sync_reset = 4;
     // if non-empty, contains the latest snapshot of the stream
     optional Envelope snapshot = 5;
+    // Index of the snapshot miniblock within the miniblocks array
+    int64 snapshot_miniblock_index = 6;
 }
 
 message Minipool {
@@ -911,6 +907,11 @@ message Tags {
     repeated bytes mentioned_user_addresses = 3;
     repeated bytes participating_user_addresses = 4;
     optional bytes thread_id = 5;
+    // app_client_address refers to the client address of an app registered to the app
+    // registry contract and not the app's contract address, which is used in other protocol
+    // messages. We expect app_client_address to be populated when the message is a slash
+    // command. 
+    optional bytes app_client_address = 6;
 }
 
 message InfoRequest {
@@ -970,6 +971,8 @@ message GetStreamRequest {
     // if a sync cookie is provided, the response will be a delta from the sync cookie
     // or a new sync cookie with sync_reset set to true if the stream has advanced far enough
     SyncCookie sync_cookie = 3;
+    // Number of miniblocks to include before the snapshot to satisfy recency checks
+    int64 number_of_preceding_miniblocks = 4;
 }
 
 message GetStreamResponse {
@@ -1026,19 +1029,13 @@ message GetLastMiniblockHashResponse {
 }
 
 message AddEventRequest {
+    reserved 3;
     bytes stream_id = 1;
     Envelope event = 2;
-    bool optional = 3; // if true, response will contain non nil error if event didn't pass validation
 }
 
 message AddEventResponse {
-    message Error {
-        Err code = 1;
-        string msg = 2;
-        repeated string funcs = 3;
-    }
-    // error thrown during this request, only set if AddEventRequest.optional is true, otherwise the request will fail with this error
-    Error error = 1; 
+    reserved 1;
     // all events created during this request including parent events
     repeated EventRef new_events = 2;
 }
@@ -1224,6 +1221,7 @@ enum MessageInteractionType {
     MESSAGE_INTERACTION_TYPE_REDACTION = 5;
     MESSAGE_INTERACTION_TYPE_TIP = 6;
     MESSAGE_INTERACTION_TYPE_TRADE = 7;
+    MESSAGE_INTERACTION_TYPE_SLASH_COMMAND = 8;
 }
 
 enum GroupMentionType {
@@ -1385,4 +1383,10 @@ enum Err {
     // SYNC_SESSION_RUNNER_UNASSIGNABLE occurs when an attempt is made to assign a stream to a
     // sync session runner that is full or closed.
     SYNC_SESSION_RUNNER_UNASSIGNABLE = 71;
+    
+    // Miniblocks are not found in the requested range. This is different from
+    // MINIBLOCKS_STORAGE_FAILURE which indicates corruption or database issues.
+    // This error is retriable and indicates the miniblocks might be available
+    // on other nodes.
+    MINIBLOCKS_NOT_FOUND = 72;
 }
