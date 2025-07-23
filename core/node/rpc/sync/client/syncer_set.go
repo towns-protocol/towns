@@ -307,23 +307,6 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 	// Lock ALL streams from the request including backfills.
 	lockedStreams := ss.lockStreams(ctx, req)
-
-	// Pre-analyze backfill operations to identify ALL streams that need locking or unlocking
-	for _, backfill := range req.ToBackfill {
-		for _, cookie := range backfill.GetStreams() {
-			streamID := StreamId(cookie.GetStreamId())
-			if _, found := ss.streamID2Syncer.Load(streamID); !found {
-				// Not added yet, add first
-				req.ToAdd = append(req.ToAdd, cookie)
-			} else {
-				//  Already added, unlock
-				ss.unlockStream(streamID)
-				lockedStreams = slices.DeleteFunc(lockedStreams, func(id StreamId) bool { return id == streamID })
-			}
-		}
-	}
-
-	// Unlock the rest of streams after processing.
 	defer ss.unlockStreams(lockedStreams)
 
 	// Group modifications by node address
@@ -334,7 +317,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		for _, cookie := range backfill.GetStreams() {
 			streamID := StreamId(cookie.GetStreamId())
 
-			// The given stream must be syncing (we already handled non-syncing streams in pre-processing)
+			// The given stream must be syncing
 			syncer, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
 				continue
