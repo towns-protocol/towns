@@ -1,85 +1,52 @@
--- Get all spaces created by SpaceFactory
-WITH space_created AS (SELECT substring(topic3 from 13) AS space_address
-                       FROM base.logs
-                       WHERE contract_address = 0x9978c826d93883701522d2CA645d5436e5654252
-                         -- SpaceCreated(address,uint256,address)
-                         AND topic0 = 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b
-                         AND block_time > cast('2024-05-01' AS timestamp)),
+-- Optimized with materialized tables
+-- Get subscription and tip transactions for filtering
+WITH subscription_tx AS (SELECT DISTINCT ms.tx_hash, ms.town_address
+                         FROM dune.towns_protocol.result_membership_subscriptions ms
+                         WHERE ms.block_time > CAST('2024-05-01' AS timestamp)),
 
--- Track ETH transfers from spaces to treasury (membership/tipping fees)
-     space_treasury_traces AS (SELECT t.block_time,
-                                      t.value,
-                                      t.tx_hash
-                               FROM base.traces t
-                                        INNER JOIN space_created sc ON sc.space_address = t."from"
-                               WHERE t.to = 0x562aA63A64f56245af69b86B4e4be34421f84c81
-                                 AND t.success = true
-                                 AND t.call_type = 'call'
-                                 AND t.value > 0
-                                 AND t.block_time > CAST('2024-05-01' AS timestamp)),
-
-     -- Track ETH transfers from SwapRouter to treasury (trading fees)
-     router_treasury_traces AS (SELECT t.block_time,
-                                       t.value
-                                FROM base.traces t
-                                WHERE t."from" = 0x95A2a333D30c8686dE8D01AC464d6034b9aA7b24
-                                  AND t.to = 0x562aA63A64f56245af69b86B4e4be34421f84c81
-                                  AND t.success = true
-                                  AND t.call_type = 'call'
-                                  AND t.value > 0
-                                  AND t.block_time > CAST('2025-05-01' AS timestamp)),
-
-     -- Get subscription and tip transactions for filtering
-     subscription_tx AS (SELECT DISTINCT l.tx_hash, l.contract_address AS space_address
-                         FROM base.logs l
-                                  JOIN space_created sc
-                                       ON l.contract_address = sc.space_address
-                         WHERE l.topic0 = 0x2ec2be2c4b90c2cf13ecb6751a24daed6bb741ae5ed3f7371aabf9402f6d62e8
-                           AND l.block_time > CAST('2024-05-01' AS timestamp)),
-
-     tip_tx AS (SELECT DISTINCT l.tx_hash, l.contract_address AS space_address
+     tip_tx AS (SELECT DISTINCT l.tx_hash, l.contract_address AS town_address
                 FROM base.logs l
-                         JOIN space_created sc
-                              ON l.contract_address = sc.space_address
+                         JOIN dune.towns_protocol.result_towns_created tc
+                              ON l.contract_address = tc.town_address
                 WHERE l.topic0 = 0x854db29cbd1986b670c0d596bf56847152a0d66e5ddef710408c1fa4ada78f2b
                   AND l.block_time > CAST('2024-12-01' AS timestamp)),
 
--- Aggregate daily protocol fees by source
+-- Aggregate daily protocol fees by source using materialized ETH flows
      summary_membership_fees
-         AS (SELECT date_trunc('day', t.block_time) AS day, SUM (t.value) / 1e18 AS membership_revenue
-FROM base.traces t
+         AS (SELECT date_trunc('day', ef.block_time) AS day, SUM (ef.eth_amount) AS membership_revenue
+FROM dune.towns_protocol.result_towns_eth_flows ef
     JOIN subscription_tx st
-ON t.tx_hash = st.tx_hash AND t."from" = st.space_address
-WHERE t.to = 0x562aA63A64f56245af69b86B4e4be34421f84c81
-  AND t.success = true
-  AND t.call_type = 'call'
-  AND t.value
-    > 0
-  AND t.block_time
+ON ef.tx_hash = st.tx_hash AND ef."from" = st.town_address
+WHERE ef.flow_type = 'protocol_fee'
+  AND ef.block_time
     > CAST ('2024-05-01' AS timestamp)
 GROUP BY 1),
     summary_tipping_fees AS (
-SELECT date_trunc('day', t.block_time) AS day, SUM (t.value) / 1e18 AS tipping_revenue
-FROM base.traces t
+SELECT date_trunc('day', ef.block_time) AS day, SUM (ef.eth_amount) AS tipping_revenue
+FROM dune.towns_protocol.result_towns_eth_flows ef
     JOIN tip_tx tt
-ON t.tx_hash = tt.tx_hash AND t."from" = tt.space_address
-WHERE t.to = 0x562aA63A64f56245af69b86B4e4be34421f84c81
-  AND t.success = true
-  AND t.call_type = 'call'
-  AND t.value
-    > 0
-  AND t.block_time
+ON ef.tx_hash = tt.tx_hash AND ef."from" = tt.town_address
+WHERE ef.flow_type = 'protocol_fee'
+  AND ef.block_time
     > CAST ('2024-12-01' AS timestamp)
 GROUP BY 1),
     summary_trading_fees AS (
-SELECT date_trunc('day', block_time) AS day, SUM (value) / 1e18 AS trading_revenue
-FROM router_treasury_traces
+SELECT date_trunc('day', ef.block_time) AS day, SUM (ef.eth_amount) AS trading_revenue
+FROM dune.towns_protocol.result_towns_eth_flows ef
+WHERE ef.flow_type = 'protocol_fee'
+  AND ef."from" = 0x95A2a333D30c8686dE8D01AC464d6034b9aA7b24
+  AND ef.block_time
+    > CAST ('2025-05-01' AS timestamp)
 GROUP BY 1),
     summary_other_fees AS (
-SELECT date_trunc('day', t.block_time) AS day, SUM (t.value) / 1e18 AS other_revenue
-FROM space_treasury_traces t
-WHERE NOT EXISTS (SELECT 1 FROM subscription_tx st WHERE st.tx_hash = t.tx_hash)
-  AND NOT EXISTS (SELECT 1 FROM tip_tx tt WHERE tt.tx_hash = t.tx_hash)
+SELECT date_trunc('day', ef.block_time) AS day, SUM (ef.eth_amount) AS other_revenue
+FROM dune.towns_protocol.result_towns_eth_flows ef
+WHERE ef.flow_type = 'protocol_fee'
+  AND ef."from" IN (SELECT town_address FROM dune.towns_protocol.result_towns_created)
+  AND ef.block_time
+    > CAST ('2024-05-01' AS timestamp)
+  AND NOT EXISTS (SELECT 1 FROM subscription_tx st WHERE st.tx_hash = ef.tx_hash)
+  AND NOT EXISTS (SELECT 1 FROM tip_tx tt WHERE tt.tx_hash = ef.tx_hash)
 GROUP BY 1),
 
 -- Generate complete date range for chart
