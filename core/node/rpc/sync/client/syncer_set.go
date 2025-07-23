@@ -56,6 +56,11 @@ type (
 		sync.Mutex
 	}
 
+	// lockedStreams is a struct that holds a list of streams that are locked for a sync operation.
+	lockedStreams struct {
+		streams []StreamId
+	}
+
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
 	SyncerSet struct {
 		// globalCtx is the root context for all syncers in this set and used to cancel them
@@ -120,7 +125,7 @@ func (ss *SyncerSet) Run() {
 
 // lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks.
 // Returns a function to unlock the streams after the operation is done.
-func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() {
+func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) *lockedStreams {
 	if ss.otelTracer != nil {
 		_, span := ss.otelTracer.Start(ctx, "SyncerSet::lockStreams",
 			trace.WithAttributes(
@@ -163,31 +168,12 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() 
 	})
 
 	// Acquire locks in order. Do not lock streams that are already syncing.
-	lockedStreamIDs := make([]StreamId, 0, len(streamIDs))
 	for _, streamID := range orderedStreamIDs {
-		ss.streamLocks.Compute(
-			streamID,
-			func(streamLock *sync.Mutex, loaded bool) (*sync.Mutex, xsync.ComputeOp) {
-				_, syncing := ss.streamID2Syncer.Load(streamID)
-				_, streamToRemove := toRemove[streamID]
-
-				if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
-					if !loaded || streamLock == nil {
-						streamLock = &sync.Mutex{}
-					}
-					streamLock.Lock()
-					lockedStreamIDs = append(lockedStreamIDs, streamID)
-					return streamLock, xsync.UpdateOp
-				}
-
-				return streamLock, xsync.CancelOp
-			},
-		)
+		streamLock, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
+		streamLock.Lock()
 	}
 
-	return func() {
-		ss.unlockStreams(lockedStreamIDs)
-	}
+	return &lockedStreams{orderedStreamIDs}
 }
 
 // unlockStream releases locks for the given stream ID
@@ -200,8 +186,8 @@ func (ss *SyncerSet) unlockStream(streamID StreamId) {
 }
 
 // unlockStreams releases locks for the given stream IDs
-func (ss *SyncerSet) unlockStreams(streamIDs []StreamId) {
-	for _, streamID := range streamIDs {
+func (ss *SyncerSet) unlockStreams(locked *lockedStreams) {
+	for _, streamID := range locked.streams {
 		ss.unlockStream(streamID)
 	}
 }
@@ -328,9 +314,9 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	// Lock streams from the request excluding backfills.
-	unlock := ss.lockStreams(ctx, req)
-	defer unlock()
+	// Lock streams from the request.
+	locked := ss.lockStreams(ctx, req)
+	defer ss.unlockStreams(locked)
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -343,13 +329,13 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			// The given stream must be syncing
 			syncer, found := ss.streamID2Syncer.Load(streamID)
 			if !found {
-				req.BackfillingFailureHandler(&SyncStreamOpStatus{
-					StreamId: streamID[:],
-					Code:     int32(Err_NOT_FOUND),
-					Message:  "Stream must be syncing to be backfilled",
-				})
+				req.ToAdd = append(req.ToAdd, cookie)
 				continue
 			}
+
+			// The given stream is already syncing so it could be unlocked.
+			ss.unlockStream(streamID)
+			locked.streams = slices.DeleteFunc(locked.streams, func(id StreamId) bool { return streamID == id })
 
 			if _, ok := modifySyncs[syncer.Address()]; !ok {
 				modifySyncs[syncer.Address()] = &ModifySyncRequest{
@@ -371,6 +357,10 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 		// Backfill the given stream if it is added already.
 		if syncer, found := ss.streamID2Syncer.Load(streamID); found {
+			// The given stream is already syncing so it could be unlocked.
+			ss.unlockStream(streamID)
+			locked.streams = slices.DeleteFunc(locked.streams, func(id StreamId) bool { return streamID == id })
+
 			if _, ok := modifySyncs[syncer.Address()]; !ok {
 				modifySyncs[syncer.Address()] = &ModifySyncRequest{
 					SyncId:          req.SyncID,
