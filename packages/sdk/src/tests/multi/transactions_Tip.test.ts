@@ -13,8 +13,8 @@ import { makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from '../../utils'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { deepCopy } from 'ethers/lib/utils'
-import { cloneDeep } from 'lodash'
-import { RiverTimelineEvent, TimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
+import { cloneDeep } from 'lodash-es'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 const base_log = dlog('csb:test:transactions_Tip')
 const logError = dlogError('csb:test:transactions_Tip_error')

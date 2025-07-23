@@ -16,12 +16,16 @@ import {
     StreamTimelineEvent,
 } from './types'
 import { UserDevice } from '@towns-protocol/encryption'
-import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
+import {
+    EventSignatureBundle,
+    KeyFulfilmentData,
+    KeySolicitationContent,
+} from './decryptionExtensions'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
 import { SpaceReviewEventObject } from '@towns-protocol/web3'
-import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
+import { TimelineEvent } from './views/models/timelineTypes'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -38,15 +42,14 @@ export type StreamEncryptionEvents = {
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
+        ephemeral?: boolean,
     ) => void
     updatedKeySolicitation: (
         streamId: string,
         eventHashStr: string,
         fromUserId: string,
-        fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
         sigBundle: EventSignatureBundle,
     ) => void
@@ -55,18 +58,20 @@ export type StreamEncryptionEvents = {
         eventHashStr: string,
         members: {
             userId: string
-            userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
         sigBundle: EventSignatureBundle,
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
+    ephemeralKeyFulfillment: (event: KeyFulfilmentData) => void
 }
 
 export type SyncedStreamEvents = {
     streamSyncStateChange: (newState: SyncState) => void
     streamRemovedFromSync: (streamId: string) => void
     streamSyncActive: (active: boolean) => void
+    streamSyncBatchCompleted: (details: { duration: number; count: number }) => void
+    streamSyncTimedOut: (details: { duration: number }) => void
 }
 
 /// Stream state events, emitted after initialization

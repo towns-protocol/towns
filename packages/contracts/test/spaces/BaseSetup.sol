@@ -19,6 +19,9 @@ import {IImplementationRegistry} from "src/factory/facets/registry/IImplementati
 import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "src/tokens/towns/mainnet/ITowns.sol";
+import {IAppRegistry, IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
+import {ITownsApp} from "src/apps/ITownsApp.sol";
 
 // libraries
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -59,11 +62,16 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address[] internal nodes;
 
     address internal deployer;
+
+    uint256 internal founderPrivateKey;
     address internal founder;
     address internal space;
     address internal everyoneSpace;
     address internal spaceFactory;
     address internal spaceDiamond;
+
+    address internal appDeveloper;
+    address internal appClient;
 
     address internal userEntitlement;
     address internal ruleEntitlement;
@@ -177,7 +185,12 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         vm.stopPrank();
 
         // create a new space
-        founder = _randomAddress();
+        founderPrivateKey = boundPrivateKey(_randomUint256());
+        founder = vm.addr(founderPrivateKey);
+        vm.label(founder, "founder");
+
+        appDeveloper = makeAddr("appDeveloper");
+        appClient = makeAddr("appClient");
 
         // Create the arguments necessary for creating a space
         IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo("BaseSetupSpace");
@@ -257,5 +270,35 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     function _createSimpleAccount(address owner) internal returns (SimpleAccount) {
         return simpleAccountFactory.createAccount(owner, _randomUint256());
+    }
+
+    function _createTestApp(bytes32[] memory permissions) internal returns (address app) {
+        IAppRegistryBase.AppParams memory appParams = IAppRegistryBase.AppParams({
+            name: "Test App",
+            permissions: permissions,
+            client: appClient,
+            installPrice: 0,
+            accessDuration: 0
+        });
+
+        vm.prank(appDeveloper);
+        (app, ) = IAppRegistry(appRegistry).createApp(appParams);
+    }
+
+    function _installAppOnEveryoneSpace(address app) internal {
+        uint256 totalRequired = IAppRegistry(appRegistry).getAppPrice(app);
+        vm.deal(address(founder), totalRequired);
+
+        vm.prank(founder);
+        IAppRegistry(appRegistry).installApp{value: totalRequired}({
+            app: ITownsApp(app),
+            account: IAppAccount(everyoneSpace),
+            data: ""
+        });
+    }
+
+    function _uninstallAppOnEveryoneSpace(address app) internal {
+        vm.prank(founder);
+        IAppRegistry(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
     }
 }

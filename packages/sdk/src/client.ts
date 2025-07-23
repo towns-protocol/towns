@@ -29,7 +29,6 @@ import {
     ChannelMessage_Post_Attachment,
     MemberPayload_Nft,
     CreateStreamRequest,
-    AddEventResponse_Error,
     ChunkedMedia,
     UserBio,
     Tags,
@@ -79,10 +78,12 @@ import {
 } from '@towns-protocol/encryption'
 import {
     DecryptionEvents,
+    DecryptionExtensionsOptions,
     EntitlementsDelegate,
     makeSessionKeys,
     type BaseDecryptionExtensions,
 } from './decryptionExtensions'
+import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -158,13 +159,20 @@ import {
     SolanaTransactionReceipt,
     isSolanaTransactionReceipt,
     ParsedEvent,
+    ExclusionFilter,
 } from './types'
+import { applyExclusionFilterToMiniblocks } from './streamUtils'
 
 import debug from 'debug'
 import { Stream } from './stream'
-import { getTime, usernameChecksum } from './utils'
+import {
+    ethereumAddressAsBytes,
+    getTime,
+    isEthereumAddress,
+    stripUndefinedMetadata,
+    usernameChecksum,
+} from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
-import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import {
     PersistenceStore,
     IPersistenceStore,
@@ -185,6 +193,8 @@ import {
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
+import { NotificationsClient, INotificationStore } from './notificationsClient'
+import { RpcOptions } from './rpcCommon'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -196,6 +206,13 @@ export type ClientOptions = {
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
     streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
+    notifications?: {
+        url: string
+        store?: INotificationStore
+        rpcOptions?: RpcOptions
+    }
+    decryptionExtensionsOpts?: DecryptionExtensionsOptions
+    excludeEventsInScrollback?: ExclusionFilter
 }
 
 type SendChannelMessageOptions = {
@@ -208,6 +225,17 @@ type SendBlockchainTransactionOptions = {
     disableTags?: boolean // if true, tags will not be added to the message
 }
 
+const defaultExcludeEventsInScrollback: ExclusionFilter = [
+    {
+        payload: 'memberPayload',
+        content: 'keySolicitation',
+    },
+    {
+        payload: 'memberPayload',
+        content: 'keyFulfillment',
+    },
+]
+
 export class Client
     extends (EventEmitter as new () => TypedEmitter<ClientEvents>)
     implements IGroupEncryptionClient
@@ -218,6 +246,8 @@ export class Client
     readonly streams: SyncedStreams
     readonly streamsView: StreamsView
     readonly logId: string
+    readonly notifications?: NotificationsClient
+    readonly excludeEventsInScrollback?: ExclusionFilter
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -246,6 +276,8 @@ export class Client
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
+    private pendingUsernames: Map<string, string> = new Map()
+    private pendingUsernameTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
     constructor(
         signerContext: SignerContext,
@@ -315,6 +347,7 @@ export class Client
             opts?.unpackEnvelopeOpts,
             this.logId,
             opts?.streamOpts,
+            opts?.highPriorityStreamIds,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
@@ -330,6 +363,22 @@ export class Client
             this.persistenceStore,
             this.logId,
         )
+
+        // Initialize notifications client if options are provided
+        if (opts?.notifications) {
+            this.notifications = new NotificationsClient(
+                signerContext,
+                opts.notifications.url,
+                opts.notifications.store,
+                opts.notifications.rpcOptions,
+                this.streamsView,
+            )
+        }
+
+        this.excludeEventsInScrollback = defaultExcludeEventsInScrollback
+        if (opts?.excludeEventsInScrollback !== undefined) {
+            this.excludeEventsInScrollback = opts.excludeEventsInScrollback
+        }
 
         this.logCall('new Client')
     }
@@ -380,7 +429,7 @@ export class Client
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
-        this.on('streamInitialized', (s) => void this.onStreamInitialized(s))
+        this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
@@ -402,6 +451,7 @@ export class Client
     async initializeUser(opts?: {
         spaceId?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
+        appAddress?: Uint8Array | string
     }): Promise<{
         initCryptoTime: number
         initUserStreamTime: number
@@ -409,11 +459,15 @@ export class Client
         initUserMetadataStreamTime: number
         initUserSettingsStreamTime: number
     }> {
-        const initUserMetadata = opts?.spaceId
-            ? {
-                  spaceId: streamIdAsBytes(opts?.spaceId),
-              }
-            : undefined
+        if (opts?.appAddress && !isEthereumAddress(opts.appAddress)) {
+            throw Error('appAddress must be an ethereum address')
+        }
+        const appAddress = opts?.appAddress ? ethereumAddressAsBytes(opts.appAddress) : undefined
+
+        const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
+        const initUserMetadata = {
+            spaceId,
+        }
 
         const initializeUserStartTime = performance.now()
         this.logCall('initializeUser', this.userId)
@@ -429,10 +483,10 @@ export class Client
             initUserMetadataStream,
             initUserSettingsStream,
         ] = await Promise.all([
-            getTime(() => this.initUserStream(initUserMetadata)),
-            getTime(() => this.initUserInboxStream(initUserMetadata)),
-            getTime(() => this.initUserMetadataStream(initUserMetadata)),
-            getTime(() => this.initUserSettingsStream(initUserMetadata)),
+            getTime(() => this.initUserStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserInboxStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserMetadataStream(initUserMetadata, appAddress)),
+            getTime(() => this.initUserSettingsStream(initUserMetadata, appAddress)),
         ])
         this.initUserJoinedStreams()
 
@@ -459,29 +513,39 @@ export class Client
         this.streams.onNetworkStatusChanged(isOnline)
     }
 
-    private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {
+    private async initUserStream(metadata?: { spaceId?: Uint8Array }, appAddress?: Uint8Array) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
         if (!(await userStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userStreamId)) ??
-                (await this.createUserStream(this.userStreamId, metadata))
+                (await this.createUserStream(this.userStreamId, metadata, appAddress))
             await userStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserInboxStream(metadata?: { spaceId: Uint8Array }) {
+    private async initUserInboxStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userInboxStreamId = makeUserInboxStreamId(this.userId)
         const userInboxStream = this.createSyncedStream(this.userInboxStreamId)
         if (!(await userInboxStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userInboxStreamId)) ??
-                (await this.createUserInboxStream(this.userInboxStreamId, metadata))
+                (await this.createUserInboxStream(this.userInboxStreamId, metadata, appAddress))
             await userInboxStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserMetadataStream(metadata?: { spaceId: Uint8Array }) {
+    private async initUserMetadataStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userMetadataStreamId = makeUserMetadataStreamId(this.userId)
         const userMetadataStream = this.createSyncedStream(this.userMetadataStreamId)
 
@@ -506,7 +570,11 @@ export class Client
             } else {
                 const createUserMetadataStreamResponse = await getTime(() => {
                     check(!!this.userMetadataStreamId, 'userMetadataStreamId must be set')
-                    return this.createUserMetadataStream(this.userMetadataStreamId, metadata)
+                    return this.createUserMetadataStream(
+                        this.userMetadataStreamId,
+                        metadata,
+                        appAddress,
+                    )
                 })
                 initUserMetadataStreamCreateUserMetadataStreamTime =
                     createUserMetadataStreamResponse.time
@@ -538,13 +606,22 @@ export class Client
         return times
     }
 
-    private async initUserSettingsStream(metadata?: { spaceId: Uint8Array }) {
+    private async initUserSettingsStream(
+        metadata?: {
+            spaceId?: Uint8Array
+        },
+        appAddress?: Uint8Array,
+    ) {
         this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
         const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
         if (!(await userSettingsStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userSettingsStreamId)) ??
-                (await this.createUserSettingsStream(this.userSettingsStreamId, metadata))
+                (await this.createUserSettingsStream(
+                    this.userSettingsStreamId,
+                    metadata,
+                    appAddress,
+                ))
             await userSettingsStream.initializeFromResponse(response)
         }
     }
@@ -565,69 +642,77 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserPayload_Inception({
                     streamId: streamIdAsBytes(userStreamId),
+                    appAddress,
                 }),
             ),
         ]
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userEvents,
             streamId: streamIdAsBytes(userStreamId),
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserMetadataStream(
         userMetadataStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserMetadataPayload_Inception({
                     streamId: streamIdAsBytes(userMetadataStreamId),
+                    appAddress,
                 }),
             ),
         ]
-
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: streamIdAsBytes(userMetadataStreamId),
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
             await makeEvent(
                 this.signerContext,
                 make_UserInboxPayload_Inception({
                     streamId: streamIdAsBytes(userInboxStreamId),
+                    appAddress,
                 }),
             ),
         ]
-
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userInboxEvents,
             streamId: streamIdAsBytes(userInboxStreamId),
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
-        metadata: { spaceId: Uint8Array } | undefined,
+        metadata?: { spaceId?: Uint8Array },
+        appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
         const userSettingsEvents = [
@@ -635,14 +720,16 @@ export class Client
                 this.signerContext,
                 make_UserSettingsPayload_Inception({
                     streamId: userSettingsStreamId,
+                    appAddress,
                 }),
             ),
         ]
 
+        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
         const response = await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
-            metadata: metadata,
+            metadata: encoded,
         })
         return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
@@ -657,8 +744,8 @@ export class Client
                 await this.rpcClient.createStream(request)
             const stream = this.createSyncedStream(streamId)
             if (!response.stream) {
-                // if a stream alread exists it will return a nil stream in the response, but no error
-                // fetch the stream to get the client in the rigth state
+                // if a stream already exists it will return a nil stream in the response, but no error
+                // fetch the stream to get the client in the right state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
             const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
@@ -1178,29 +1265,81 @@ export class Client
         )
     }
 
-    async setUsername(streamId: string, username: string) {
+    async setUsername(
+        streamId: string,
+        username: string,
+        force: boolean = false,
+        options?: {
+            largeGroupThreshold?: number // default: 100
+            delayMs?: number // default: 60000 (60 seconds)
+        },
+    ) {
         check(isDefined(this.cryptoBackend))
+        check(username.length > 0, 'username cannot be empty')
+
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
-        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
-            streamId,
-            new TextEncoder().encode(username),
-            this.defaultGroupEncryptionAlgorithm,
-        )
-        encryptedData.checksum = usernameChecksum(username, streamId)
+
+        // Clear any existing timeout first
+        const existingTimeout = this.pendingUsernameTimeouts.get(streamId)
+        if (existingTimeout) {
+            clearTimeout(existingTimeout)
+            this.pendingUsernameTimeouts.delete(streamId)
+        }
+
+        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username, this)
+
+        // be very careful about setting a username for a large group, we don't want to inject
+        // more sessions than needed into the group. unless a session has been received in 60 seconds,
+        // we will force set the username.
+        const memberCount = stream.view.membershipContent.joined.size
+        const hasHybridSession = (await this.cryptoBackend?.hasHybridSession?.(streamId)) ?? false
+
+        const largeGroupThreshold = options?.largeGroupThreshold ?? 100
+        const delayMs = options?.delayMs ?? 60000
+
+        if (memberCount > largeGroupThreshold && !hasHybridSession && !force) {
+            this.pendingUsernames.set(streamId, username)
+            const timeout = setTimeout(() => {
+                void this.setUsername(streamId, username, true, options)
+            }, delayMs)
+            this.pendingUsernameTimeouts.set(streamId, timeout)
+            return
+        }
+
+        // Clean up pending state
+        this.pendingUsernames.delete(streamId)
+        this.pendingUsernameTimeouts.delete(streamId)
+
         try {
+            const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+                streamId,
+                new TextEncoder().encode(username),
+                this.defaultGroupEncryptionAlgorithm,
+            )
+            encryptedData.checksum = usernameChecksum(username, streamId)
+
             await this.makeEventAndAddToStream(
                 streamId,
                 make_MemberPayload_Username(encryptedData),
-                {
-                    method: 'username',
-                },
+                { method: 'username' },
             )
         } catch (err) {
             stream.view.getMemberMetadata().usernames.resetLocalUsername(this.userId)
+            // Clean up pending state on error
+            this.pendingUsernames.delete(streamId)
+            this.pendingUsernameTimeouts.delete(streamId)
             throw err
         }
+    }
+
+    async setPendingUsernames() {
+        await Promise.all(
+            Array.from(this.pendingUsernames.entries()).map(([streamId, pendingUsername]) => {
+                this.pendingUsernames.delete(streamId)
+                return this.setUsername(streamId, pendingUsername)
+            }),
+        )
     }
 
     async setEnsAddress(streamId: string, walletAddress: string | Uint8Array) {
@@ -1578,20 +1717,50 @@ export class Client
         return await this.streams.removeStreamFromSync(streamId)
     }
 
-    private onStreamInitialized = (streamId: string): void => {
-        const scrollbackUntilContentFound = async () => {
-            const stream = this.streams.get(streamId)
+    private onStreamUpToDate = (streamId: string): void => {
+        // we're migrating away from the old megolm based encryption to the new `grpaes` encryption,
+        // this is to avoid too many active crypto sessions active in the same stream
+        // this function will:
+        // - check if the user's username is encrypted with the old algorithm
+        // - check if the user has a hybrid session ready to go (hasHybridSession)
+        // - re-encrypt the username with the new algorithm
+
+        const updateUsernameEncryptionIfNeeded = async () => {
+            if (!isSpaceStreamId(streamId)) {
+                return
+            }
+
+            const hasHybridSession = (await this.cryptoBackend?.hasHybridSession(streamId)) ?? false
+            if (!hasHybridSession) {
+                return
+            }
+
+            const stream = this.stream(streamId)
             if (!stream) {
                 return
             }
-            while (stream.view.getContent().needsScrollback()) {
-                const scrollback = await this.scrollback(streamId)
-                if (scrollback.terminus) {
-                    break
-                }
+            const currentUsernameEncryptedData =
+                stream.view.membershipContent.memberMetadata.usernames.currentUsernameEncryptedData
+
+            if (
+                !currentUsernameEncryptedData ||
+                currentUsernameEncryptedData.algorithm ===
+                    (GroupEncryptionAlgorithmId.HybridGroupEncryption as string)
+            ) {
+                return
             }
+            const currentUsername = stream.view.membershipContent.memberMetadata.usernames.info(
+                this.userId,
+            )
+
+            if (!currentUsername || currentUsername.username.length === 0) {
+                return
+            }
+
+            await this.setUsername(streamId, currentUsername.username)
         }
-        void scrollbackUntilContentFound()
+
+        void updateUsernameEncryptionIfNeeded()
     }
 
     startSync() {
@@ -1979,14 +2148,15 @@ export class Client
     }
 
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
-        await this.initStream(streamId)
+        const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         return this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
-                userId: addressFromUserId(userId),
+                userId: bin_fromHexString(userId),
                 streamId: streamIdAsBytes(streamId),
+                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'inviteUser' },
         )
@@ -2222,6 +2392,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        exclusionFilter?: ExclusionFilter,
         opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
@@ -2243,9 +2414,15 @@ export class Client
             this.logError('error getting miniblocks', error)
         }
 
+        // Apply exclusion filtering to cached miniblocks if filters are provided
+        const filteredCachedMiniblocks =
+            exclusionFilter && exclusionFilter.length > 0
+                ? applyExclusionFilterToMiniblocks(cachedMiniblocks, exclusionFilter)
+                : cachedMiniblocks
+
         if (toExclusive === fromInclusive) {
             return {
-                miniblocks: cachedMiniblocks,
+                miniblocks: filteredCachedMiniblocks,
                 terminus: toExclusive === 0n,
             }
         }
@@ -2256,6 +2433,7 @@ export class Client
             fromInclusive,
             toExclusive,
             true,
+            exclusionFilter,
             this.opts?.unpackEnvelopeOpts,
         )
 
@@ -2269,7 +2447,7 @@ export class Client
 
         return {
             terminus: terminus,
-            miniblocks: [...miniblocks, ...cachedMiniblocks],
+            miniblocks: [...miniblocks, ...filteredCachedMiniblocks],
         }
     }
 
@@ -2304,7 +2482,12 @@ export class Client
             })
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = stream.view.prevSnapshotMiniblockNum
-            const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive)
+            const response = await this.getMiniblocks(
+                streamId,
+                fromInclusive,
+                toExclusive,
+                this.excludeEventsInScrollback,
+            )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
 
@@ -2397,6 +2580,7 @@ export class Client
                 this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
+                undefined,
                 { skipPersistence: true },
             )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
@@ -2450,10 +2634,10 @@ export class Client
             method?: string
             localId?: string
             cleartext?: Uint8Array
-            optional?: boolean
             tags?: PlainMessage<Tags>
+            ephemeral?: boolean
         } = {},
-    ): Promise<{ eventId: string; error?: AddEventResponse_Error }> {
+    ): Promise<{ eventId: string }> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
             'await makeEventAndAddToStream',
@@ -2461,7 +2645,6 @@ export class Client
             streamId,
             payload,
             options.localId,
-            options.optional,
         )
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
@@ -2478,17 +2661,18 @@ export class Client
             isDefined(prevMiniblockNum),
             'no prev miniblock num for stream ' + streamIdAsString(streamId),
         )
-        const { eventId, error } = await this.makeEventWithHashAndAddToStream(
+        const { eventId } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
             prevMiniblockNum,
-            options.optional,
             options.localId,
             options.cleartext,
             options.tags,
+            undefined, // retryCount
+            options.ephemeral,
         )
-        return { eventId, error }
+        return { eventId }
     }
 
     async makeEventWithHashAndAddToStream(
@@ -2496,12 +2680,12 @@ export class Client
         payload: PlainMessage<StreamEvent>['payload'],
         prevMiniblockHash: Uint8Array,
         prevMiniblockNum: bigint,
-        optional?: boolean,
         localId?: string,
         cleartext?: Uint8Array,
         tags?: PlainMessage<Tags>,
         retryCount?: number,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
+        ephemeral?: boolean,
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
         const event = await makeEvent(
@@ -2510,6 +2694,7 @@ export class Client
             prevMiniblockHash,
             prevMiniblockNum,
             tags,
+            ephemeral,
         )
         const eventId = bin_toHexString(event.hash)
         if (localId) {
@@ -2525,16 +2710,15 @@ export class Client
         }
 
         try {
-            const { error } = await this.rpcClient.addEvent({
+            await this.rpcClient.addEvent({
                 streamId: streamIdAsBytes(streamId),
                 event,
-                optional,
             })
             if (localId) {
                 const stream = this.streams.get(streamId)
                 stream?.updateLocalEvent(localId, eventId, 'sent')
             }
-            return { prevMiniblockHash, eventId, error }
+            return { prevMiniblockHash, eventId }
         } catch (err) {
             // custom retry logic for addEvent
             // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH
@@ -2548,11 +2732,11 @@ export class Client
                     payload,
                     prevMiniblockHash,
                     prevMiniblockNum,
-                    optional,
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
                     tags,
                     (retryCount ?? 0) + 1,
+                    ephemeral,
                 )
             }
 
@@ -2661,6 +2845,7 @@ export class Client
             this.userDeviceKey(),
             this.opts?.unpackEnvelopeOpts,
             this.logId,
+            this.opts?.decryptionExtensionsOpts ?? { enableEphemeralKeySolicitations: true },
         )
     }
 
@@ -2813,16 +2998,28 @@ export class Client
         const toDevicesEntries = Object.entries(toDevices)
         const promises = toDevicesEntries.map(async ([userId, deviceKeys]) => {
             try {
+                if (deviceKeys.length === 0) {
+                    // means we failed to download the device keys, we should enqueue a retry
+                    this.logCall(
+                        'encryptAndShareGroupSessions: no device keys to send',
+                        inStreamId,
+                        userId,
+                    )
+                    return
+                }
                 const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    // if you only have one device this is a valid state
+                    if (userId !== this.userId) {
+                        this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                    }
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
                 if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
-                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                    this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                         toStreamId,
                         deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
                     })
@@ -2845,9 +3042,9 @@ export class Client
             }
         })
 
-        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
+        this.logCall('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
-        this.logInfo('encryptAndShareGroupSessions: done')
+        this.logCall('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.

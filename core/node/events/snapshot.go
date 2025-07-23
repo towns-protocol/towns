@@ -59,7 +59,7 @@ func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope,
 
 // ParseSnapshot parses the given envelope into a snapshot.
 // It verifies the hash and signature of the envelope.
-func ParseSnapshot(envelope *Envelope, signer common.Address) (*ParsedSnapshot, error) {
+func ParseSnapshot(envelope *Envelope, signer common.Address) (*Snapshot, error) {
 	hash := crypto.TownsHashForSnapshots.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided",
@@ -86,10 +86,7 @@ func ParseSnapshot(envelope *Envelope, signer common.Address) (*ParsedSnapshot, 
 			Func("ParseSnapshot")
 	}
 
-	return &ParsedSnapshot{
-		Snapshot: &sn,
-		Envelope: envelope,
-	}, nil
+	return &sn, nil
 }
 
 func Make_GenesisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
@@ -653,11 +650,13 @@ func update_Snapshot_Member(
 	case *MemberPayload_Membership_:
 		switch content.Membership.Op {
 		case MembershipOp_SO_JOIN:
-			snapshot.Joined = insertMember(snapshot.Joined, &MemberPayload_Snapshot_Member{
+			member := &MemberPayload_Snapshot_Member{
 				UserAddress:  content.Membership.UserAddress,
 				MiniblockNum: miniblockNum,
 				EventNum:     eventNum,
-			})
+				AppAddress:   content.Membership.AppAddress,
+			}
+			snapshot.Joined = insertMember(snapshot.Joined, member)
 			return nil
 		case MembershipOp_SO_LEAVE:
 			snapshot.Joined = removeMember(snapshot.Joined, content.Membership.UserAddress)

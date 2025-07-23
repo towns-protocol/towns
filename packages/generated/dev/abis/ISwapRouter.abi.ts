@@ -136,6 +136,23 @@ export default [
         ]
       },
       {
+        "name": "posterFee",
+        "type": "tuple",
+        "internalType": "struct ISwapRouterBase.FeeConfig",
+        "components": [
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          }
+        ]
+      },
+      {
         "name": "permit",
         "type": "tuple",
         "internalType": "struct ISwapRouterBase.Permit2Params",
@@ -161,11 +178,6 @@ export default [
             "internalType": "bytes"
           }
         ]
-      },
-      {
-        "name": "poster",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "outputs": [
@@ -280,9 +292,21 @@ export default [
         ]
       },
       {
-        "name": "poster",
-        "type": "address",
-        "internalType": "address"
+        "name": "posterFee",
+        "type": "tuple",
+        "internalType": "struct ISwapRouterBase.FeeConfig",
+        "components": [
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          }
+        ]
       },
       {
         "name": "amount",
@@ -459,7 +483,17 @@ export default [
   },
   {
     "type": "error",
+    "name": "SwapRouter__PosterFeeMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SwapRouter__RecipientRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__SameToken",
     "inputs": []
   },
   {

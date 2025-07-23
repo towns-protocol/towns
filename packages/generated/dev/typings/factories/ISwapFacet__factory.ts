@@ -139,6 +139,23 @@ const _abi = [
         ],
       },
       {
+        name: "posterFee",
+        type: "tuple",
+        internalType: "struct ISwapRouterBase.FeeConfig",
+        components: [
+          {
+            name: "recipient",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "feeBps",
+            type: "uint16",
+            internalType: "uint16",
+          },
+        ],
+      },
+      {
         name: "permit",
         type: "tuple",
         internalType: "struct ISwapRouterBase.Permit2Params",
@@ -164,11 +181,6 @@ const _abi = [
             internalType: "bytes",
           },
         ],
-      },
-      {
-        name: "poster",
-        type: "address",
-        internalType: "address",
       },
     ],
     outputs: [
@@ -397,6 +409,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SwapFacet__InvalidPosterInput",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SwapFacet__SwapRouterNotSet",
     inputs: [],
   },
@@ -437,7 +454,17 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SwapRouter__PosterFeeMismatch",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SwapRouter__RecipientRequired",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SwapRouter__SameToken",
     inputs: [],
   },
   {

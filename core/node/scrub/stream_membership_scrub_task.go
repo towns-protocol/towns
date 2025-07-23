@@ -111,6 +111,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	ctx context.Context,
 	channelId StreamId,
 	member common.Address,
+	appAddress common.Address,
 	span trace.Span,
 ) error {
 	log := logging.FromCtx(ctx)
@@ -125,6 +126,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			channelId,
 			member,
 			auth.PermissionRead,
+			appAddress,
 		),
 	)
 	if err != nil {
@@ -145,6 +147,8 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 		log.Debugw("Entitlement loss detected; adding LEAVE event for user",
 			"user",
 			member,
+			"appAddress",
+			appAddress,
 			"userStreamId",
 			userStreamId,
 			"channelId",
@@ -182,6 +186,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 	ctx context.Context,
 	channelId StreamId,
 	member common.Address,
+	appAddress common.Address,
 ) {
 	spaceId := channelId.SpaceID()
 
@@ -192,13 +197,15 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 			attribute.String("spaceId", spaceId.String()),
 			attribute.String("channelId", channelId.String()),
 			attribute.String("userId", member.Hex()),
+			attribute.String("appAddress", appAddress.Hex()),
 		)
 		defer span.End()
 	}
 
-	err := tp.processMemberImpl(ctx, channelId, member, span)
+	err := tp.processMemberImpl(ctx, channelId, member, appAddress, span)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Failed to scrub member", "channelId", channelId, "member", member, "error", err)
+		logging.FromCtx(ctx).
+			Errorw("Failed to scrub member", "channelId", channelId, "member", member, "appAddress", appAddress, "error", err)
 	}
 
 	if span != nil {
@@ -267,7 +274,22 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	}
 
 	for member := range members.Iter() {
-		tp.processMembership(ctx, streamId, common.HexToAddress(member))
+		memberAddress := common.HexToAddress(member)
+		appAddress, err := view.GetMemberAppAddress(memberAddress)
+		if err != nil {
+			logging.FromCtx(ctx).
+				Errorw(
+					"Error deriving member app address from stream during membership scrub",
+					"error",
+					err,
+					"userId",
+					memberAddress,
+					"streamId",
+					streamId,
+				)
+		} else {
+			tp.processMembership(ctx, streamId, memberAddress, appAddress)
+		}
 	}
 
 	return nil

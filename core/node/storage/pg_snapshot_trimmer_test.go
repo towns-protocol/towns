@@ -20,7 +20,6 @@ func TestSnapshotsTrimmer(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	pgStreamStore := params.pgStreamStore
-	defer params.closer()
 	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)

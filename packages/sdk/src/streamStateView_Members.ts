@@ -37,7 +37,6 @@ const log = dlog('csb:streamStateView_Members')
 
 export type StreamMember = {
     userId: string
-    userAddress: Uint8Array
     miniblockNum?: bigint
     eventNum?: bigint
     solicitations: KeySolicitationContent[]
@@ -99,12 +98,13 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     constructor(
         streamId: string,
+        currentUserId: string,
         private streamMemberIdsView: StreamMemberIdsView,
     ) {
         super()
         this.streamId = streamId
         this.solicitHelper = new StreamStateView_Members_Solicitations(streamId)
-        this.memberMetadata = new StreamStateView_MemberMetadata(streamId)
+        this.memberMetadata = new StreamStateView_MemberMetadata(streamId, currentUserId)
     }
 
     // initialization
@@ -123,7 +123,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             memberIds.push(userId)
             this.joined.set(userId, {
                 userId,
-                userAddress: member.userAddress,
                 miniblockNum: member.miniblockNum,
                 eventNum: member.eventNum,
                 solicitations: member.solicitations.map(
@@ -299,7 +298,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             }
                             this.joined.set(userId, {
                                 userId,
-                                userAddress: membership.userAddress,
                                 miniblockNum: event.miniblockNum,
                                 eventNum: event.eventNum,
                                 solicitations: [],
@@ -617,6 +615,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     joinedParticipants(): Set<string> {
         return this.joinedUsers
+    }
+
+    joinedOrPendingJoinedParticipants(): Set<string> {
+        return new Set([...this.joinedUsers, ...this.pendingJoinedUsers])
     }
 
     joinedOrInvitedParticipants(): Set<string> {

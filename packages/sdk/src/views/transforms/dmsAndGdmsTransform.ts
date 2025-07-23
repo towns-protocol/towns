@@ -1,9 +1,9 @@
 import { ChannelProperties } from '@towns-protocol/proto'
-import { Membership } from '../../sync-agent/timeline/models/timeline-types'
+import { Membership } from '../models/timelineTypes'
 import { DmStreamModel } from '../streams/dmStreams'
 import { GdmStreamModel } from '../streams/gdmStreams'
 import { isDefined } from '../../check'
-import isEqual from 'lodash/isEqual'
+import { isEqual } from 'lodash-es'
 
 export interface DmAndGdmModel {
     id: string

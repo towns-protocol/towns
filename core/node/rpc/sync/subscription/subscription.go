@@ -18,6 +18,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+// SyncerSet represents a syncer set behaviour
+type SyncerSet interface {
+	Modify(ctx context.Context, req client.ModifyRequest) error
+}
+
 // Subscription represents an individual subscription for streams synchronization.
 type Subscription struct {
 	// Messages is the channel for the subscription messages
@@ -37,19 +42,25 @@ type Subscription struct {
 	// backfillEvents is the map of stream and backfill events and miniblocks hashes that were sent to the client.
 	// This is used to avoid sending the same backfill events multiple times.
 	// The list of hashes is deleted after receiving the first message after the backfill.
-	backfillEvents *xsync.Map[StreamId, []common.Hash]
+	backfillEvents *xsync.Map[StreamId, map[common.Hash]struct{}]
+	// syncers is the set of syncers that handle stream synchronization
+	syncers SyncerSet
+	// registry is the subscription registry that manages all subscriptions.
+	registry Registry
 	// closed is the indicator of the subscription status. 1 means the subscription is closed.
 	closed atomic.Bool
-	// manager is the subscription manager that manages this subscription
-	manager *Manager
+	// otelTracer is the OpenTelemetry tracer used for tracing individual sync operations.
+	otelTracer trace.Tracer
 }
 
 // Close closes the subscription.
 func (s *Subscription) Close() {
 	s.closed.Store(true)
+	// Remove the subscription from the registry
+	s.registry.RemoveSubscription(s.syncID)
 	s.Messages.Close()
-	// The given subscription is going to be removed from the list (s.subscriptions) automatically during the next stream update.
-	// This way we can avoid iterating over all streams to remove the current subscription.
+	s.initializingStreams.Clear()
+	s.backfillEvents.Clear()
 }
 
 // isClosed returns true if the subscription is closed, false otherwise.
@@ -67,22 +78,19 @@ func (s *Subscription) Send(msg *SyncStreamsResponse) {
 	if err != nil {
 		rvrErr := AsRiverError(err).
 			Tag("syncId", s.syncID).
-			Tag("op", msg.GetSyncOp())
+			Func("Subscription.Send")
 		s.cancel(rvrErr) // Cancelling client context that will lead to the subscription cancellation
-		s.log.Errorw("Failed to add message to subscription",
-			"op", msg.GetSyncOp(), "err", err)
+		_ = rvrErr.LogError(s.log)
 	}
 }
 
 // Modify modifies the current subscription by adding or removing streams.
 // It also handles implicit backfills for streams that are added or being added.
 func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) error {
-	if s.manager.otelTracer != nil {
+	if s.otelTracer != nil {
 		var span trace.Span
-		ctx, span = s.manager.otelTracer.Start(ctx, "subscription::modify",
-			trace.WithAttributes(
-				attribute.String("syncId", s.syncID),
-			))
+		ctx, span = s.otelTracer.Start(ctx, "subscription::modify",
+			trace.WithAttributes(attribute.String("syncId", s.syncID)))
 		defer span.End()
 	}
 
@@ -98,15 +106,18 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
 			req.AddingFailureHandler(status)
-			_ = s.removeStream(status.GetStreamId())
+			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
 		},
-		RemovingFailureHandler: req.RemovingFailureHandler,
+		RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+			req.RemovingFailureHandler(status)
+			s.registry.AddStreamToSubscription(s.syncID, StreamId(status.GetStreamId()))
+		},
 	}
 
 	// Handle streams that the clients wants to subscribe to.
 	var implicitBackfills []*SyncCookie
 	for _, toAdd := range req.ToAdd {
-		addToRemote, shouldBackfill := s.addStream(toAdd)
+		addToRemote, shouldBackfill := s.registry.AddStreamToSubscription(s.syncID, StreamId(toAdd.GetStreamId()))
 		if addToRemote {
 			// The given stream must be added to the main syncer set
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
@@ -118,24 +129,21 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Handle streams that the clients wants to unsubscribe from.
 	for _, toRemove := range req.ToRemove {
-		removeFromRemote := s.removeStream(toRemove)
-		if removeFromRemote {
-			// The given stream must be removed from the main syncer set
-			modifiedReq.ToRemove = append(modifiedReq.ToRemove, toRemove)
-		}
+		s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(toRemove))
 	}
 
 	if len(implicitBackfills) > 0 {
 		if modifiedReq.BackfillingFailureHandler == nil {
 			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
 		} else {
+			originalBackfillingFailureHandler := req.BackfillingFailureHandler
 			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
 				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
 					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
 				}) {
 					modifiedReq.AddingFailureHandler(status)
-				} else {
-					modifiedReq.BackfillingFailureHandler(status)
+				} else if originalBackfillingFailureHandler != nil {
+					originalBackfillingFailureHandler(status)
 				}
 			}
 		}
@@ -154,66 +162,16 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	// Send the request to the syncer set
-	if err := s.manager.syncers.Modify(ctx, modifiedReq); err != nil {
+	if err := s.syncers.Modify(ctx, modifiedReq); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// addStream adds the given stream to the current subscription.
-// Returns true if the given stream must be added to the main syncer set.
-func (s *Subscription) addStream(cookie *SyncCookie) (shouldAdd bool, shouldBackfill bool) {
-	streamID := StreamId(cookie.GetStreamId())
-
-	s.manager.sLock.Lock()
-	subscriptions, ok := s.manager.subscriptions[streamID]
-	if !ok || len(subscriptions) == 0 {
-		shouldAdd = true
-		s.manager.subscriptions[streamID] = []*Subscription{s}
-	} else {
-		if !slices.ContainsFunc(subscriptions, func(sub *Subscription) bool {
-			return sub.syncID == s.syncID
-		}) {
-			if cookie.GetMinipoolGen() > 0 || len(cookie.GetPrevMiniblockHash()) > 0 {
-				// The given stream should be backfilled and then start syncing.
-				shouldBackfill = true
-				s.initializingStreams.Store(streamID, struct{}{})
-			}
-			s.manager.subscriptions[streamID] = append(s.manager.subscriptions[streamID], s)
-		}
-	}
-	s.manager.sLock.Unlock()
-	return
-}
-
-// removeStream removes the given stream from the current subscription.
-// Returns true if the given stream must be removed from the main syncer set.
-func (s *Subscription) removeStream(streamID []byte) (removeFromRemote bool) {
-	s.manager.sLock.Lock()
-	s.manager.subscriptions[StreamId(streamID)] = slices.DeleteFunc(
-		s.manager.subscriptions[StreamId(streamID)],
-		func(sub *Subscription) bool {
-			return sub.syncID == s.syncID
-		},
-	)
-	if removeFromRemote = len(s.manager.subscriptions[StreamId(streamID)]) == 0; removeFromRemote {
-		delete(s.manager.subscriptions, StreamId(streamID))
-	}
-	s.manager.sLock.Unlock()
-	return
-}
-
 // DebugDropStream drops the given stream from the subscription.
-func (s *Subscription) DebugDropStream(ctx context.Context, streamID StreamId) error {
-	if remove := s.removeStream(streamID[:]); remove {
-		if err := s.manager.syncers.Modify(ctx, client.ModifyRequest{
-			ToRemove:               [][]byte{streamID[:]},
-			RemovingFailureHandler: func(status *SyncStreamOpStatus) {},
-		}); err != nil {
-			s.log.Errorw("Failed to drop stream from common syncer set", "streamId", streamID, "err", err)
-		}
-	}
+func (s *Subscription) DebugDropStream(_ context.Context, streamID StreamId) error {
+	s.registry.RemoveStreamFromSubscription(s.syncID, streamID)
 	s.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	return nil
 }

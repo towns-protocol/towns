@@ -237,6 +237,16 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwap{value: 0.1 ether}(defaultInputParams, defaultRouterParams, POSTER);
     }
 
+    function test_executeSwap_revertWhen_sameToken(address token) external {
+        // create swap params with same token for input and output
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.tokenIn = token;
+        inputParams.tokenOut = token; // same token
+
+        vm.expectRevert(SwapRouter__SameToken.selector);
+        swapRouter.executeSwap(inputParams, defaultRouterParams, POSTER);
+    }
+
     function test_executeSwap_gas() public {
         test_executeSwap(
             address(this),
@@ -553,8 +563,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit{value: 0.1 ether}(
             defaultInputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -567,8 +577,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             inputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
     }
 
@@ -581,15 +591,85 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             inputParams,
             defaultRouterParams,
-            defaultEmptyPermit,
-            POSTER
+            defaultPosterFee,
+            defaultEmptyPermit
         );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_sameToken(address token) public {
+        // create params with same token for input and output - no need for valid permit since validation happens early
+        ExactInputParams memory inputParams = defaultInputParams;
+        inputParams.tokenIn = token;
+        inputParams.tokenOut = token; // same token
+
+        vm.expectRevert(SwapRouter__SameToken.selector);
+        swapRouter.executeSwapWithPermit(
+            inputParams,
+            defaultRouterParams,
+            defaultPosterFee,
+            defaultEmptyPermit
+        );
+    }
+
+    function test_executeSwapWithPermit_revertWhen_posterFeeMismatch(
+        uint256 privateKey,
+        uint16 platformPosterBps,
+        uint16 permitPosterBps
+    ) public {
+        // Bound inputs to valid ranges, ensuring they are different to create attack scenario
+        platformPosterBps = uint16(bound(platformPosterBps, 0, 1000)); // 0-10%
+        permitPosterBps = uint16(bound(permitPosterBps, 0, 1000)); // 0-10%
+        vm.assume(platformPosterBps != permitPosterBps); // Ensure attack scenario: platform != permit
+
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+        vm.assume(owner != feeRecipient && owner != POSTER);
+
+        // Step 1: Set platform fees to one value
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, platformPosterBps);
+
+        // Step 2: Create permit with DIFFERENT poster fee than platform configuration
+        FeeConfig memory maliciousPosterFee = FeeConfig(POSTER, permitPosterBps);
+
+        Permit2Params memory permitParams = _createPermitParams(
+            privateKey,
+            owner,
+            address(swapRouter),
+            0, // nonce
+            block.timestamp + 1 hours,
+            defaultInputParams,
+            defaultRouterParams,
+            maliciousPosterFee // Permit signed with different fee than platform!
+        );
+
+        // Step 3: Setup tokens for the attack attempt
+        token0.mint(owner, DEFAULT_AMOUNT_IN);
+        vm.prank(owner);
+        token0.approve(PERMIT2, DEFAULT_AMOUNT_IN);
+
+        // Step 4: Attempt direct attack on SwapRouter - should fail with poster fee mismatch
+        vm.expectRevert(SwapRouter__PosterFeeMismatch.selector);
+        swapRouter.executeSwapWithPermit(
+            defaultInputParams,
+            defaultRouterParams,
+            maliciousPosterFee, // Using the mismatched fee config
+            permitParams
+        );
+
+        // The attack should fail because:
+        // - Permit was signed with permitPosterBps fee rate
+        // - But platform actually has platformPosterBps (different rate)
+        // - Our validation catches this mismatch and reverts
     }
 
     function test_executeSwapWithPermit_revertWhen_differentRecipient(
         uint256 privateKey,
         address recipient
     ) public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
+
         test_executeSwapWithPermit_frontRunning(
             FrontRunningParams({
                 privateKey: privateKey,
@@ -608,6 +688,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 privateKey,
         address poster
     ) public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
+
         test_executeSwapWithPermit_frontRunning(
             FrontRunningParams({
                 privateKey: privateKey,
@@ -698,8 +781,8 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwapWithPermit(
             tamperedParams,
             tamperedRouterParams,
-            originalPermit,
-            tamperedPoster
+            FeeConfig(tamperedPoster, POSTER_BPS),
+            originalPermit
         );
     }
 
@@ -751,6 +834,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.recipient
         );
 
+        // create poster fee config with the actual fuzzed posterBps
+        FeeConfig memory posterFee = FeeConfig(POSTER, params.posterBps);
+
         // get the permit signature
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
@@ -760,7 +846,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.deadline,
             inputParams,
             routerParams,
-            POSTER
+            posterFee
         );
 
         // mint tokens for owner and approve Permit2
@@ -769,7 +855,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         token0.approve(PERMIT2, params.amountIn);
 
         // execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, posterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -830,6 +916,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.recipient
         );
 
+        // create poster fee config with the actual fuzzed posterBps
+        FeeConfig memory posterFee = FeeConfig(POSTER, params.posterBps);
+
         // get the permit signature
         Permit2Params memory permitParams = _createPermitParams(
             params.privateKey,
@@ -839,7 +928,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             params.deadline,
             inputParams,
             routerParams,
-            POSTER
+            posterFee
         );
 
         // mint tokens for owner and approve Permit2
@@ -851,7 +940,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         deal(mockRouter, params.amountOut * 2);
 
         // execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, posterFee, permitParams);
 
         _verifySwapResults(
             address(token0),
@@ -953,6 +1042,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 amountOut,
         address recipient
     ) public {
+        vm.prank(deployer);
+        IPlatformRequirements(spaceFactory).setSwapFees(PROTOCOL_BPS, POSTER_BPS);
+
         // generate a valid private key from seed
         uint256 privateKey = boundPrivateKey(privateKeySeed);
         address owner = vm.addr(privateKey);
@@ -995,7 +1087,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             block.timestamp + 1 hours,
             inputParams,
             routerParams,
-            POSTER
+            defaultPosterFee
         );
 
         // Setup: mint tokens and approve Permit2
@@ -1008,7 +1100,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         uint256 swapRouterBalanceBefore = token0.balanceOf(address(swapRouter));
 
         // Execute swap with permit
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, POSTER);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, defaultPosterFee, permitParams);
 
         // Verify balances: owner should receive refund
         assertEq(
@@ -1204,7 +1296,7 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         bytes32 messageHash = swapRouter.getPermit2MessageHash(
             defaultInputParams,
             defaultRouterParams,
-            POSTER,
+            defaultPosterFee,
             amount,
             nonce,
             deadline
@@ -1226,7 +1318,9 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
             ),
             ISignatureTransfer.SignatureTransferDetails(address(swapRouter), amount),
             signer,
-            Permit2Hash.hash(SwapWitness(defaultInputParams, defaultRouterParams, POSTER)),
+            Permit2Hash.hash(
+                SwapWitness(defaultInputParams, defaultRouterParams, defaultPosterFee)
+            ),
             Permit2Hash.WITNESS_TYPE_STRING,
             signature
         );

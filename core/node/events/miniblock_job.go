@@ -25,9 +25,9 @@ type mbJob struct {
 	forceSnapshot bool
 	// quorumNodes is the list of nodes that participate in the stream quorum.
 	quorumNodes []common.Address
-	// syncNodes is the list of nodes that sync the stream into local storage in anticipation
+	// reconcileNodes is the list of nodes that reconcile the stream into local storage in anticipation
 	// of joining the streams quorum.
-	syncNodes []common.Address
+	reconcileNodes []common.Address
 	// replicated is true if the stream is replicated.
 	replicated bool
 	// candidate is the produced miniblock candidate that is attempted to promote to a miniblock.
@@ -107,7 +107,7 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum crypto.BlockNumbe
 	}
 
 	// miniblock producer creates mbJob's only on nodes that participate in stream quorum.
-	j.quorumNodes, j.syncNodes, _ = j.stream.GetQuorumAndSyncNodesAndIsLocal()
+	j.quorumNodes, j.reconcileNodes, _ = j.stream.GetQuorumAndReconcileNodesAndIsLocal()
 	j.replicated = len(j.quorumNodes) > 1
 
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
@@ -266,9 +266,9 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	}
 
 	if quorumErr != nil {
-		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, sync to catch up.
+		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, reconcile to catch up.
 		if AsRiverError(quorumErr).IsCodeWithBases(Err_MINIBLOCK_TOO_OLD) {
-			j.cache.SubmitSyncStreamTask(j.stream, nil)
+			j.cache.SubmitReconcileStreamTask(j.stream, nil)
 		}
 		return nil, nil, quorumErr
 	}
@@ -443,7 +443,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	})
 
 	// save the candidate to the nodes that are not in the quorum but participating in the stream.
-	for _, node := range j.syncNodes {
+	for _, node := range j.reconcileNodes {
 		go func() {
 			_ = j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(
 				ctx,

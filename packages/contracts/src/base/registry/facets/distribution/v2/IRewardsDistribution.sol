@@ -171,24 +171,22 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         address beneficiary
     ) external returns (uint256 depositId);
 
-    /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and stakes the
+    /// @notice Approves the contract to spend the stakeToken with Permit2 and stakes the
     /// stakeToken for rewards
     /// @param amount The amount of stakeToken to stake
     /// @param delegatee The address of the delegatee
     /// @param beneficiary The address of the beneficiary who is receiving the rewards
+    /// @param nonce The nonce for the permit
     /// @param deadline The deadline for the permit
-    /// @param v The recovery byte of the permit
-    /// @param r The R signature of the permit
-    /// @param s The S signature of the permit
+    /// @param signature The signature for the permit
     /// @return depositId The ID of the deposit
     function permitAndStake(
         uint96 amount,
         address delegatee,
         address beneficiary,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external returns (uint256 depositId);
 
     /// @notice Stakes on behalf of a user with an EIP-712 signature
@@ -214,22 +212,20 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @param amount The amount of stakeToken to stake
     function increaseStake(uint256 depositId, uint96 amount) external;
 
-    /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and increases
+    /// @notice Approves the contract to spend the stakeToken with Permit2 and increases
     /// the stake of an existing deposit
     /// @dev The caller must be the owner of the deposit
     /// @param depositId The ID of the deposit
     /// @param amount The amount of stakeToken to stake
+    /// @param nonce The nonce for the permit
     /// @param deadline The deadline for the permit
-    /// @param v The recovery byte of the permit
-    /// @param r The R signature of the permit
-    /// @param s The S signature of the permit
+    /// @param signature The signature for the permit
     function permitAndIncreaseStake(
         uint256 depositId,
         uint96 amount,
+        uint256 nonce,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external;
 
     /// @notice Redelegates an existing deposit to a new delegatee or reactivates a pending
@@ -257,14 +253,32 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @return amount The amount of stakeToken that is withdrawn
     function withdraw(uint256 depositId) external returns (uint96 amount);
 
-    /// @notice Claims the reward for a beneficiary
-    /// @dev The beneficiary may be the caller.
-    /// @dev If not, the caller may be the authorized claimer of the beneficiary.
-    /// @dev If not, the beneficiary must be a space or operator while the caller must be the
-    /// authorized claimer.
-    /// @param beneficiary The address of the beneficiary whose reward is claimed
-    /// @param recipient The address of the recipient where the reward is sent
-    /// @return reward The amount of rewardToken that is claimed
+    /// @notice Claims accumulated rewards for a beneficiary and sends them to a recipient
+    ///
+    /// @dev **For Regular Users (Stakers):**
+    /// - Call with `beneficiary = your_address` to claim your own staking rewards
+    /// - You can send rewards to any `recipient` address (yourself or someone else)
+    ///
+    /// @dev **For Node Operators:**
+    /// - Operators earn commission from delegated stakes and can claim their own operator rewards
+    /// - Call with `beneficiary = operator_address` to claim operator commission rewards
+    /// - Only the operator's designated claimer can call this function for the operator
+    ///
+    /// @dev **For Space Rewards:**
+    /// - Spaces accumulate rewards from users who delegate to them
+    /// - Only the space's current operator's claimer can claim space rewards
+    /// - Call with `beneficiary = space_address` to claim rewards accumulated by the space
+    /// - Space rewards are automatically transferred to the operator when claimed
+    ///
+    /// @dev **Authorization Rules:**
+    /// 1. Self-claim: Anyone can claim their own rewards (`msg.sender == beneficiary`)
+    /// 2. Authorized claimer: If you're set as the authorized claimer for a beneficiary
+    /// 3. Operator claimer: Only operator's claimer can claim operator rewards
+    /// 4. Space operator claimer: Only the space's operator's claimer can claim space rewards
+    ///
+    /// @param beneficiary The address whose rewards are being claimed (user, operator, or space)
+    /// @param recipient The address where the claimed reward tokens will be sent
+    /// @return reward The amount of reward tokens claimed and transferred
     function claimReward(address beneficiary, address recipient) external returns (uint256 reward);
 
     /// @notice Notifies the contract of an incoming reward

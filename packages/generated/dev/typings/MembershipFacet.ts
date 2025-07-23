@@ -55,6 +55,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
     "getProtocolFee()": FunctionFragment;
     "getSpaceFactory()": FunctionFragment;
+    "joinSpace(uint8,bytes)": FunctionFragment;
     "joinSpace(address)": FunctionFragment;
     "joinSpaceWithReferral(address,(address,address,string))": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
@@ -80,7 +81,8 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipRenewalPrice"
       | "getProtocolFee"
       | "getSpaceFactory"
-      | "joinSpace"
+      | "joinSpace(uint8,bytes)"
+      | "joinSpace(address)"
       | "joinSpaceWithReferral"
       | "renewMembership"
       | "revenue"
@@ -137,7 +139,11 @@ export interface MembershipFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "joinSpace",
+    functionFragment: "joinSpace(uint8,bytes)",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "joinSpace(address)",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -215,7 +221,14 @@ export interface MembershipFacetInterface extends utils.Interface {
     functionFragment: "getSpaceFactory",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "joinSpace", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "joinSpace(uint8,bytes)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "joinSpace(address)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "joinSpaceWithReferral",
     data: BytesLike
@@ -253,7 +266,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "Banned(address,uint256)": EventFragment;
     "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
     "DefaultBpsFeeUpdated(uint256)": EventFragment;
     "EntitlementCheckResultPosted(bytes32,uint8)": EventFragment;
@@ -274,7 +286,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "PartnerRegistered(address)": EventFragment;
     "PartnerRemoved(address)": EventFragment;
     "PartnerUpdated(address)": EventFragment;
-    "Paused(address)": EventFragment;
     "PermissionsAddedToChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsRemovedFromChannelRole(address,uint256,bytes32)": EventFragment;
     "PermissionsUpdatedForChannelRole(address,uint256,bytes32)": EventFragment;
@@ -288,13 +299,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     "RoleUpdated(address,uint256)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
-    "Unbanned(address,uint256)": EventFragment;
-    "Unpaused(address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "DefaultBpsFeeUpdated"): EventFragment;
   getEvent(
@@ -321,7 +329,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "PartnerRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PartnerRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PartnerUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "PermissionsAddedToChannelRole"
   ): EventFragment;
@@ -341,8 +348,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
 
 export interface ApprovalEventObject {
@@ -368,14 +373,6 @@ export type ApprovalForAllEvent = TypedEvent<
 >;
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
-
-export interface BannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
-
-export type BannedEventFilter = TypedEventFilter<BannedEvent>;
 
 export interface ConsecutiveTransferEventObject {
   fromTokenId: BigNumber;
@@ -597,13 +594,6 @@ export type PartnerUpdatedEvent = TypedEvent<
 
 export type PartnerUpdatedEventFilter = TypedEventFilter<PartnerUpdatedEvent>;
 
-export interface PausedEventObject {
-  account: string;
-}
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
-
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
 export interface PermissionsAddedToChannelRoleEventObject {
   updater: string;
   roleId: BigNumber;
@@ -755,24 +745,6 @@ export type TransferEvent = TypedEvent<
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
-export interface UnbannedEventObject {
-  moderator: string;
-  tokenId: BigNumber;
-}
-export type UnbannedEvent = TypedEvent<
-  [string, BigNumber],
-  UnbannedEventObject
->;
-
-export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
-}
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
-
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
-
 export interface MembershipFacet extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
@@ -830,7 +802,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -907,7 +885,13 @@ export interface MembershipFacet extends BaseContract {
 
   getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
-  joinSpace(
+  "joinSpace(uint8,bytes)"(
+    action: PromiseOrValue<BigNumberish>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "joinSpace(address)"(
     receiver: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -984,7 +968,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1055,15 +1045,6 @@ export interface MembershipFacet extends BaseContract {
       operator?: PromiseOrValue<string> | null,
       approved?: null
     ): ApprovalForAllEventFilter;
-
-    "Banned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
-    Banned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): BannedEventFilter;
 
     "ConsecutiveTransfer(uint256,uint256,address,address)"(
       fromTokenId?: PromiseOrValue<BigNumberish> | null,
@@ -1205,9 +1186,6 @@ export interface MembershipFacet extends BaseContract {
       account?: PromiseOrValue<string> | null
     ): PartnerUpdatedEventFilter;
 
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
-
     "PermissionsAddedToChannelRole(address,uint256,bytes32)"(
       updater?: PromiseOrValue<string> | null,
       roleId?: PromiseOrValue<BigNumberish> | null,
@@ -1318,18 +1296,6 @@ export interface MembershipFacet extends BaseContract {
       to?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): TransferEventFilter;
-
-    "Unbanned(address,uint256)"(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-    Unbanned(
-      moderator?: PromiseOrValue<string> | null,
-      tokenId?: PromiseOrValue<BigNumberish> | null
-    ): UnbannedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
   };
 
   estimateGas: {
@@ -1361,7 +1327,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1453,7 +1425,13 @@ export interface MembershipFacet extends BaseContract {
 
     getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    joinSpace(
+    "joinSpace(uint8,bytes)"(
+      action: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "joinSpace(address)"(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

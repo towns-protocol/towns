@@ -151,7 +151,10 @@ func (syncOp *StreamSyncOperation) Run(
 				reply: make(chan error, 1),
 			}
 			if err := syncOp.process(cmd); err != nil {
-				syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				if IsRiverErrorCode(err, Err_INVALID_ARGUMENT) {
+					syncOp.log.Errorw("Unable to add initial sync position", "error", err)
+				}
+				syncOp.cancel(err)
 			}
 		}()
 	}
@@ -237,6 +240,7 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subsc
 		case <-syncOp.ctx.Done():
 			return
 		case cmd := <-syncOp.commands:
+			syncOp.metrics.actions(cmd, syncOp.usingSharedSyncer)
 			if cmd.ModifySyncReq != nil {
 				cmd.Reply(sub.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {

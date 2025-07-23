@@ -157,6 +157,7 @@ export const getAppRegistryUrl = (environmentId: string) => {
         case 'local_multi_ne':
             return 'https://localhost:6190'
         case 'alpha':
+            return 'https://app-registry.alpha.towns.com'
         case 'gamma':
         case 'omega':
         case 'delta':

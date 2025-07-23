@@ -9,8 +9,8 @@ import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IP
 import {console} from "forge-std/console.sol";
 
 contract InteractMembership is Interaction {
-    address SPACE = 0xDEeB21eD094Ec950C51D90aCCa2790D43FA9b432;
-    address MEMBERSHIP_FACET = 0xD842F3D97B73BfEC5b2Cd3DB71309Db69a9344EE;
+    address SPACE = 0x5494249cFF3F856d4611159f00C0eE916A96396D;
+    address MEMBERSHIP_FACET = 0xfE645928B2EdB6176E6b792c09708d9421E7f91b;
     address SPACE_FACTORY = 0xC09Ac0FFeecAaE5100158247512DC177AeacA3e3;
 
     function __interact(address) internal override {

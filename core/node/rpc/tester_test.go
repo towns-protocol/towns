@@ -40,8 +40,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
+	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -77,14 +77,13 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 }
 
 type serviceTester struct {
-	ctx       context.Context
-	ctxCancel context.CancelFunc
-	t         *testing.T
-	require   *require.Assertions
-	dbUrl     string
-	btc       *crypto.BlockchainTestContext
-	nodes     []*testNodeRecord
-	opts      serviceTesterOpts
+	ctx     context.Context
+	t       *testing.T
+	require *require.Assertions
+	dbUrl   string
+	btc     *crypto.BlockchainTestContext
+	nodes   []*testNodeRecord
+	opts    serviceTesterOpts
 }
 
 type serviceTesterOpts struct {
@@ -93,7 +92,7 @@ type serviceTesterOpts struct {
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
-	printTestLogs     bool
+	nodeStartOpts     *startOpts
 }
 
 func makeTestListener(t *testing.T) (net.Listener, string) {
@@ -113,27 +112,17 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		opts.replicationFactor = 1
 	}
 
-	var ctx context.Context
-	var ctxCancel func()
-	if opts.printTestLogs {
-		ctx, ctxCancel = test.NewTestContextWithLogging("info")
-	} else {
-		ctx, ctxCancel = test.NewTestContext()
-	}
+	ctx := test.NewTestContext(t)
 	require := require.New(t)
 
 	st := &serviceTester{
-		ctx:       ctx,
-		ctxCancel: ctxCancel,
-		t:         t,
-		require:   require,
-		dbUrl:     dbtestutils.GetTestDbUrl(),
-		nodes:     make([]*testNodeRecord, opts.numNodes),
-		opts:      opts,
+		ctx:     ctx,
+		t:       t,
+		require: require,
+		dbUrl:   dbtestutils.GetTestDbUrl(),
+		nodes:   make([]*testNodeRecord, opts.numNodes),
+		opts:    opts,
 	}
-
-	// Cleanup context on test completion even if no other cleanups are registered.
-	st.cleanup(func() {})
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
@@ -153,7 +142,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	)
 	require.NoError(err)
 	st.btc = btc
-	st.cleanup(st.btc.Close)
+	t.Cleanup(st.btc.Close)
 
 	for i := 0; i < opts.numNodes; i++ {
 		st.nodes[i] = &testNodeRecord{}
@@ -196,12 +185,8 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 func (st *serviceTester) makeSubtest(t *testing.T) *serviceTester {
 	var sub serviceTester = *st
 	sub.t = t
-	sub.ctx, sub.ctxCancel = context.WithCancel(st.ctx)
+	sub.ctx = test.NewTestContext(t)
 	sub.require = require.New(t)
-
-	// Cleanup context on subtest completion even if no other cleanups are registered.
-	sub.cleanup(func() {})
-
 	return &sub
 }
 
@@ -215,25 +200,6 @@ func (st *serviceTester) parallelSubtest(name string, test func(*serviceTester))
 func (st *serviceTester) sequentialSubtest(name string, test func(*serviceTester)) {
 	st.t.Run(name, func(t *testing.T) {
 		test(st.makeSubtest(t))
-	})
-}
-
-func (st *serviceTester) cleanup(f any) {
-	st.t.Cleanup(func() {
-		st.t.Helper()
-		// On first cleanup call cancel context for the current test, so relevant shutdowns are started.
-		if st.ctxCancel != nil {
-			st.ctxCancel()
-			st.ctxCancel = nil
-		}
-		switch f := f.(type) {
-		case func():
-			f()
-		case func() error:
-			_ = f()
-		default:
-			panic(fmt.Sprintf("unsupported cleanup type: %T", f))
-		}
 	})
 }
 
@@ -256,7 +222,7 @@ func (st *serviceTester) makeTestListener() (net.Listener, string) {
 			},
 		),
 	)
-	st.cleanup(l.Close)
+	st.t.Cleanup(func() { _ = l.Close() })
 	return l, url
 }
 
@@ -381,7 +347,10 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 }
 
 func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
-	options := &startOpts{}
+	options := st.opts.nodeStartOpts
+	if options == nil {
+		options = &startOpts{}
+	}
 	if len(opts) > 0 {
 		options = &opts[0]
 	}
@@ -415,7 +384,7 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 
 	var nodeRecord testNodeRecord = *st.nodes[i]
 
-	st.cleanup(func() { nodeRecord.Close(st.ctx, st.dbUrl) })
+	st.t.Cleanup(func() { nodeRecord.Close(st.ctx, st.dbUrl) })
 
 	return nil
 }
@@ -604,6 +573,9 @@ func (r *receivedStreamUpdates) ForEachEvent(
 		return
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	for _, update := range r.updates {
 		stream := update.GetStream()
 		for _, block := range stream.GetMiniblocks() {
@@ -772,7 +744,7 @@ func (tc *testClient) createUserMetadataStreamWithEncryptionDevice() {
 		},
 	)
 	tc.require.NoError(err)
-	tc.require.Nil(addEventResp.Msg.GetError())
+	tc.require.NotNil(addEventResp.Msg)
 }
 
 func (tc *testClient) createUserInboxStream() {
@@ -1279,7 +1251,11 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 	}
 }
 
-func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
+func (tc *testClient) tryMakeMiniblock(
+	streamId StreamId,
+	forceSnapshot bool,
+	lastKnownMiniblockNum int64,
+) (*MiniblockRef, error) {
 	resp, err := tc.client.Info(tc.ctx, connect.NewRequest(&InfoRequest{
 		Debug: []string{
 			"make_miniblock",
@@ -1288,7 +1264,9 @@ func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastK
 			fmt.Sprintf("%d", lastKnownMiniblockNum),
 		},
 	}))
-	tc.require.NoError(err, "client.Info make_miniblock failed")
+	if err != nil {
+		return nil, err
+	}
 	var hashBytes []byte
 	if resp.Msg.Graffiti != "" {
 		hashBytes = common.FromHex(resp.Msg.Graffiti)
@@ -1300,7 +1278,18 @@ func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastK
 	return &MiniblockRef{
 		Hash: common.BytesToHash(hashBytes),
 		Num:  num,
-	}
+	}, nil
+}
+
+func (tc *testClient) makeMiniblock(streamId StreamId, forceSnapshot bool, lastKnownMiniblockNum int64) *MiniblockRef {
+	ref, err := tc.tryMakeMiniblock(streamId, forceSnapshot, lastKnownMiniblockNum)
+	tc.require.NoError(
+		err,
+		"client.Info make_miniblock failed, forceSnapshot: %t, lastKnownMiniblockNum: %d",
+		forceSnapshot,
+		lastKnownMiniblockNum,
+	)
+	return ref
 }
 
 func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusive int64) []*MiniblockInfo {

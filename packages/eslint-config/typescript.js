@@ -54,26 +54,9 @@ module.exports = {
     rules: {
         'no-console': 'error',
         'no-void': ['error', { allowAsStatement: true }],
-        'no-restricted-imports': [
-            'error',
-            {
-                paths: [
-                    {
-                        name: 'lodash',
-                        message: 'Please use lodash submodules imports.',
-                    },
-                    {
-                        name: 'lodash/fp',
-                        message: 'Please use lodash submodules imports.',
-                    },
-                ],
-            },
-        ],
         'no-constant-condition': 'off',
-
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         '@typescript-eslint/require-await': 'off',
-
         '@typescript-eslint/no-misused-promises': [
             'error',
             {

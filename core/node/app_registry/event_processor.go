@@ -51,12 +51,42 @@ func isMentioned(
 }
 
 func shouldForwardSpaceChannelMessage(
+	ctx context.Context,
 	appUserId common.Address,
 	settings types.AppSettings,
-	tags *Tags,
+	event *events.ParsedEvent,
 ) bool {
-	// NO_MESSAGES means no forwarding whatsoever.
+	// NO_MESSAGES means no forwarding whatsoever, even for slash commands.
 	if settings.ForwardSetting == ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES {
+		return false
+	}
+
+	tags := event.Event.Tags
+	msgInteractionType := tags.GetMessageInteractionType()
+
+	// If this is a slash command, check if it's addressed to this app
+	if msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND {
+		appClientAddress := tags.GetAppClientAddress()
+		if len(appClientAddress) == 0 {
+			// Log warning with detailed event information for debugging
+			log := logging.FromCtx(ctx)
+			log.Warnw(
+				"Slash command channel message should have an app_client_address defined, but does not",
+				"eventId", hex.EncodeToString(event.Hash[:]),
+				"creatorAddress", hex.EncodeToString(event.Event.CreatorAddress),
+				"prevMiniblockHash", hex.EncodeToString(event.MiniblockRef.Hash[:]),
+				"prevMiniblockNum", event.MiniblockRef.Num,
+				"createdAt", event.Event.CreatedAtEpochMs,
+				"tags", tags,
+			)
+			return false
+		}
+
+		if bytes.Equal(appClientAddress, appUserId[:]) {
+			// This slash command is addressed to this app, forward it
+			return true
+		}
+		// Slash command addressed to a different app, don't forward
 		return false
 	}
 
@@ -65,11 +95,9 @@ func shouldForwardSpaceChannelMessage(
 		return true
 	}
 
-	msgInteractionType := tags.GetMessageInteractionType()
 	// UNSPECIFIED and MENTIONS_REPLIES_REACTIONS work the same way - messages are only
 	// forwarded if the bot is explicitly mentioned, or if the message is a reaction, reply
 	mentioned := isMentioned(appUserId, tags.GetGroupMentionTypes(), tags.GetMentionedUserAddresses())
-	tags.GetGroupMentionTypes()
 	isParticipating := listIncludesUser(tags.GetParticipatingUserAddresses(), appUserId)
 	return mentioned ||
 		(isParticipating && (msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION ||
@@ -149,7 +177,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 				"event",
 				event,
 			)
-		} else if isForwardable && shouldForwardSpaceChannelMessage(appId, settings, event.Event.Tags) {
+		} else if isForwardable && shouldForwardSpaceChannelMessage(ctx, appId, settings, event) {
 			appIds = append(appIds, appId)
 		}
 

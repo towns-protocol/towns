@@ -1,14 +1,4 @@
-import {
-    isChannelStreamId,
-    isSpaceStreamId,
-    isUserDeviceStreamId,
-    isUserSettingsStreamId,
-    isUserStreamId,
-    isUserInboxStreamId,
-    spaceIdFromChannelId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
-} from './id'
+import { isChannelStreamId, spaceIdFromChannelId, StreamPrefix } from './id'
 import { check, dlog, dlogError, DLogger } from '@towns-protocol/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
@@ -227,14 +217,18 @@ export class SyncedStreamsExtension {
         persistedData: LoadedStream | undefined,
     ) {
         const allowGetStream = this.highPriorityIds.has(streamId)
-        try {
-            await this.delegate.initStream(streamId, allowGetStream, persistedData)
-            this.loadedStreamCount++
-            this.numStreamsLoadedFromCache++
-            this.streamIds.delete(streamId)
-        } catch (err) {
+        if (persistedData === undefined && !allowGetStream) {
             this.streamCountRequiringNetworkAccess++
-            this.logError('Error initializing stream from persistence', streamId, err)
+        } else {
+            try {
+                await this.delegate.initStream(streamId, allowGetStream, persistedData)
+                this.loadedStreamCount++
+                this.numStreamsLoadedFromCache++
+                this.streamIds.delete(streamId)
+            } catch (err) {
+                this.streamCountRequiringNetworkAccess++
+                this.logError('Error initializing stream from persistence', streamId, err)
+            }
         }
         this.emitClientStatus()
     }
@@ -316,10 +310,10 @@ export class SyncedStreamsExtension {
 // and channels for any high priority spaces
 function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
     if (
-        isUserDeviceStreamId(streamId) ||
-        isUserInboxStreamId(streamId) ||
-        isUserStreamId(streamId) ||
-        isUserSettingsStreamId(streamId)
+        streamId.startsWith(StreamPrefix.UserMetadata) ||
+        streamId.startsWith(StreamPrefix.UserInbox) ||
+        streamId.startsWith(StreamPrefix.User) ||
+        streamId.startsWith(StreamPrefix.UserSettings)
     ) {
         return 0
     }
@@ -329,17 +323,17 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
     // if we're prioritizing dms, load other dms and gdm channels
     if (highPriorityIds.size > 0) {
         const hasHighPriorityDmORGDm = Array.from(highPriorityIds).some(
-            (x) => isDMChannelStreamId(x) || isGDMChannelStreamId(x),
+            (x) => x.startsWith(StreamPrefix.DM) || x.startsWith(StreamPrefix.GDM),
         )
         if (hasHighPriorityDmORGDm) {
-            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+            if (streamId.startsWith(StreamPrefix.DM) || streamId.startsWith(StreamPrefix.GDM)) {
                 return 2
             }
         }
     }
 
     // we need spaces to structure the app
-    if (isSpaceStreamId(streamId)) {
+    if (streamId.startsWith(StreamPrefix.Space)) {
         return 3
     }
 

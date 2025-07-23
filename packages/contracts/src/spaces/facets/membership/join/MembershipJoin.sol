@@ -17,6 +17,7 @@ import {Permissions} from "../../Permissions.sol";
 
 // contracts
 import {ERC5643Base} from "../../../../diamond/facets/token/ERC5643/ERC5643Base.sol";
+import {ERC721ABase} from "../../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {DispatcherBase} from "../../dispatcher/DispatcherBase.sol";
 import {Entitled} from "../../Entitled.sol";
 import {EntitlementGatedBase} from "../../gated/EntitlementGatedBase.sol";
@@ -41,12 +42,16 @@ abstract contract MembershipJoin is
     EntitlementGatedBase,
     Entitled,
     PrepayBase,
-    PointsBase
+    PointsBase,
+    ERC721ABase
 {
     using CustomRevert for bytes4;
 
     /// @notice Constant representing the permission to join a space
     bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
+
+    /// @notice Constant representing the joinSpace(address) function selector
+    bytes4 internal constant JOIN_SPACE_SELECTOR = bytes4(keccak256("joinSpace(address)"));
 
     /// @notice Encodes data for joining a space
     /// @param selector The type of transaction (join with or without referral)
@@ -70,15 +75,11 @@ abstract contract MembershipJoin is
 
         bool shouldCharge = _shouldChargeForJoinSpace();
         uint256 requiredAmount;
-        if (shouldCharge) {
-            requiredAmount = _validatePayment();
-        }
-
-        bytes4 selector = IMembership.joinSpace.selector;
+        if (shouldCharge) requiredAmount = _validatePayment();
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(selector, msg.sender, receiver, "")
+            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "")
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -107,9 +108,7 @@ abstract contract MembershipJoin is
 
         bool shouldCharge = _shouldChargeForJoinSpace();
         uint256 requiredAmount;
-        if (shouldCharge) {
-            requiredAmount = _validatePayment();
-        }
+        if (shouldCharge) requiredAmount = _validatePayment();
 
         _validateUserReferral(receiver, referral);
 
@@ -142,7 +141,7 @@ abstract contract MembershipJoin is
     }
 
     function _rejectMembership(bytes32 transactionId, address receiver) internal {
-        _captureData(transactionId, "");
+        _deleteCapturedData(transactionId);
         _refundBalance(transactionId, receiver);
         emit MembershipTokenRejected(receiver);
     }
@@ -152,8 +151,6 @@ abstract contract MembershipJoin is
         uint256 prepaidSupply = _getPrepaidSupply();
         if (prepaidSupply > 0) return 0; // If prepaid memberships exist, no payment is required
 
-        if (price == 0) return 0; // If the price is zero, no payment is required
-
         return price;
     }
 
@@ -161,15 +158,13 @@ abstract contract MembershipJoin is
         // Get the current membership price based on total supply
         uint256 membershipPrice = _getMembershipPrice(_totalSupply());
         requiredAmount = _getRequiredAmount(membershipPrice);
-        if (msg.value < requiredAmount) {
-            CustomRevert.revertWith(Membership__InsufficientPayment.selector);
-        }
+        if (msg.value < requiredAmount) Membership__InsufficientPayment.selector.revertWith();
     }
 
     function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
         if (referral.userReferral != address(0)) {
             if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
-                CustomRevert.revertWith(Membership__InvalidAddress.selector);
+                Membership__InvalidAddress.selector.revertWith();
             }
         }
     }
@@ -190,9 +185,7 @@ abstract contract MembershipJoin is
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
 
         // PHASE 1: Check LOCAL entitlements first (no payment needed)
-        if (_checkLocalEntitlements(roles, receiver)) {
-            return (true, false);
-        }
+        if (_checkLocalEntitlements(roles, receiver)) return (true, false);
 
         // PHASE 2: No local entitlements passed - check crosschain entitlements
         return _checkCrosschainEntitlements(roles, receiver, sender, transactionId, requiredAmount);
@@ -286,9 +279,7 @@ abstract contract MembershipJoin is
         uint256 freeAllocation = _getMembershipFreeAllocation();
         uint256 prepaidSupply = _getPrepaidSupply();
 
-        if (freeAllocation > totalSupply) {
-            return false;
-        }
+        if (freeAllocation > totalSupply) return false;
 
         if (prepaidSupply > 0) {
             _reducePrepay(1);
@@ -309,8 +300,8 @@ abstract contract MembershipJoin is
             (bytes4, address, address, bytes)
         );
 
-        if (selector != IMembership.joinSpace.selector) {
-            CustomRevert.revertWith(Membership__InvalidTransactionType.selector);
+        if (selector != JOIN_SPACE_SELECTOR) {
+            Membership__InvalidTransactionType.selector.revertWith();
         }
 
         uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
@@ -338,7 +329,7 @@ abstract contract MembershipJoin is
         );
 
         if (selector != IMembership.joinSpaceWithReferral.selector) {
-            CustomRevert.revertWith(Membership__InvalidTransactionType.selector);
+            Membership__InvalidTransactionType.selector.revertWith();
         }
 
         ReferralTypes memory referral = abi.decode(referralData, (ReferralTypes));
@@ -381,17 +372,9 @@ abstract contract MembershipJoin is
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
 
         _releaseCapturedValue(transactionId, paymentRequired);
-        _captureData(transactionId, "");
+        _deleteCapturedData(transactionId);
 
-        // calculate points and credit them
-        address airdropDiamond = _getAirdropDiamond();
-        uint256 points = _getPoints(
-            airdropDiamond,
-            ITownsPointsBase.Action.JoinSpace,
-            abi.encode(membershipPrice)
-        );
-        _mintPoints(airdropDiamond, receiver, points);
-        _mintPoints(airdropDiamond, _owner(), points);
+        _mintMembershipPoints(receiver, membershipPrice);
     }
 
     /// @notice Issues a membership token to the receiver
@@ -416,12 +399,10 @@ abstract contract MembershipJoin is
     /// @notice Validates if a user can join the space
     /// @param receiver The address that will receive the membership token
     function _validateJoinSpace(address receiver) internal view {
-        if (receiver == address(0)) {
-            CustomRevert.revertWith(Membership__InvalidAddress.selector);
-        }
+        if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
         uint256 membershipSupplyLimit = _getMembershipSupplyLimit();
         if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
-            CustomRevert.revertWith(Membership__MaxSupplyReached.selector);
+            Membership__MaxSupplyReached.selector.revertWith();
         }
     }
 
@@ -455,9 +436,7 @@ abstract contract MembershipJoin is
         if (bytes(referralCode).length != 0) {
             Referral memory referral = _referralInfo(referralCode);
 
-            if (referral.recipient == address(0) || referral.basisPoints == 0) {
-                return 0;
-            }
+            if (referral.recipient == address(0) || referral.basisPoints == 0) return 0;
 
             referralFee = BasisPoints.calculate(membershipPrice, referral.basisPoints);
 
@@ -510,16 +489,14 @@ abstract contract MembershipJoin is
     function _renewMembership(address payer, uint256 tokenId) internal {
         address receiver = _ownerOf(tokenId);
 
-        if (receiver == address(0)) {
-            Membership__InvalidAddress.selector.revertWith();
-        }
+        if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
         uint256 duration = _getMembershipDuration();
         uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
-        if (membershipPrice > msg.value) {
-            Membership__InvalidPayment.selector.revertWith();
-        }
+        if (membershipPrice > msg.value) Membership__InvalidPayment.selector.revertWith();
+
+        _mintMembershipPoints(receiver, membershipPrice);
 
         uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
 
@@ -537,5 +514,21 @@ abstract contract MembershipJoin is
         }
 
         _renewSubscription(tokenId, uint64(duration));
+    }
+
+    /// @notice Mints points to a member based on their paid amount
+    /// @dev This function handles point minting for both new joins and renewals
+    /// @param receiver The address receiving the points
+    /// @param paidAmount The amount paid for membership
+    function _mintMembershipPoints(address receiver, uint256 paidAmount) internal {
+        // calculate points and credit them
+        address airdropDiamond = _getAirdropDiamond();
+        uint256 points = _getPoints(
+            airdropDiamond,
+            ITownsPointsBase.Action.JoinSpace,
+            abi.encode(paidAmount)
+        );
+        _mintPoints(airdropDiamond, receiver, points);
+        _mintPoints(airdropDiamond, _owner(), points);
     }
 }

@@ -184,6 +184,19 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return undefined
         }
 
+        if (
+            persistedSyncedStream.lastMiniblockNum !==
+            persistedSyncedStream.syncCookie.minipoolGen - 1n
+        ) {
+            logError(
+                'Persisted miniblock num mismatch',
+                streamId,
+                persistedSyncedStream.lastMiniblockNum,
+                persistedSyncedStream.syncCookie.minipoolGen - 1n,
+            )
+            return undefined
+        }
+
         const miniblocks = await this.getMiniblocks(
             streamId,
             persistedSyncedStream.lastSnapshotMiniblockNum,
@@ -227,12 +240,14 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                   )
             : []
 
+        const minipoolEventIds = persistedSyncedStream.minipoolEvents.map((e) => e.hashStr)
         const snapshotEventIds = eventIdsFromSnapshot(snapshot.snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
         const prependedEventIds = prependedMiniblocks.flatMap((mb) =>
             mb.events.map((e) => e.hashStr),
         )
         const cleartexts = await this.getCleartexts([
+            ...minipoolEventIds,
             ...eventIds,
             ...snapshotEventIds,
             ...prependedEventIds,
@@ -255,7 +270,12 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 const syncedStreams = await this.getSyncedStreams(streamIds)
                 const retVal: Record<string, LoadedStream | undefined> = {}
                 for (const streamId of streamIds) {
-                    retVal[streamId] = await this.loadStream(streamId, syncedStreams[streamId])
+                    if (syncedStreams[streamId]) {
+                        const stream = await this.loadStream(streamId, syncedStreams[streamId])
+                        if (stream) {
+                            retVal[streamId] = stream
+                        }
+                    }
                 }
                 return retVal
             },

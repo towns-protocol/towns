@@ -17,9 +17,7 @@ debugEndpoints:
 # Notifications setting when node is run in notification mode
 notifications:
     simulate: true
-    subscriptionExpirationDuration: 720h
     authentication:
-        challengeTimeout: 30s
         sessionToken:
             lifetime: 30m
             key:

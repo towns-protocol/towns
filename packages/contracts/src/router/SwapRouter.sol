@@ -114,8 +114,8 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable nonReentrant whenNotPaused returns (uint256 amountOut, uint256 protocolFee) {
         // validate parameters before any transfers
         _validateSwapParams(params, routerParams);
@@ -126,6 +126,12 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
         // Permit2 only works with ERC20 tokens, not native ETH
         if (params.tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
             SwapRouter__NativeTokenNotSupportedWithPermit.selector.revertWith();
+        }
+
+        // validate that the poster fee in permit matches the actual configured fee
+        (, uint16 actualPosterBps) = _getSwapFees(_getSpaceFactory(), msg.sender);
+        if (actualPosterBps != posterFee.feeBps) {
+            SwapRouter__PosterFeeMismatch.selector.revertWith();
         }
 
         // take balance snapshot before Permit2 transfer to handle fee-on-transfer tokens
@@ -143,13 +149,20 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
                 requestedAmount: params.amountIn
             }),
             permit.owner, // owner who signed the permit
-            Permit2Hash.hash(SwapWitness(params, routerParams, poster)),
+            Permit2Hash.hash(SwapWitness(params, routerParams, posterFee)),
             Permit2Hash.WITNESS_TYPE_STRING,
             permit.signature
         );
 
         // execute the swap with the balance before transfer
-        return _executeSwap(params, routerParams, poster, tokenInBalanceBefore, permit.owner);
+        return
+            _executeSwap(
+                params,
+                routerParams,
+                posterFee.recipient,
+                tokenInBalanceBefore,
+                permit.owner
+            );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -209,12 +222,12 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     function getPermit2MessageHash(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        address poster,
+        FeeConfig calldata posterFee,
         uint256 amount,
         uint256 nonce,
         uint256 deadline
     ) external view returns (bytes32 messageHash) {
-        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(params, routerParams, poster));
+        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(params, routerParams, posterFee));
         bytes32 tokenPermissions = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, params.tokenIn, amount)
         );
@@ -246,6 +259,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     ) internal view {
         // require explicit recipient
         if (params.recipient == address(0)) SwapRouter__RecipientRequired.selector.revertWith();
+
+        // prevent swaps where tokenIn and tokenOut are the same
+        if (params.tokenIn == params.tokenOut) SwapRouter__SameToken.selector.revertWith();
 
         // only allow whitelisted routers
         if (!_isRouterWhitelisted(routerParams.router)) {
@@ -286,9 +302,6 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
                 // tokens are already in the contract, just approve the router
                 params.tokenIn.safeApprove(routerParams.approveTarget, actualAmountIn);
             } else {
-                // for native token, the value should be sent with the transaction
-                if (msg.value != params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
-
                 // calculate and collect fees before the swap for ETH input
                 (value, protocolFee, ) = _collectFees(
                     CurrencyTransfer.NATIVE_TOKEN,
@@ -414,8 +427,8 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
     /// @param token The token to check
     /// @return uint256 The balance
     function _getBalance(address token) internal view returns (uint256) {
-        if (token == CurrencyTransfer.NATIVE_TOKEN) return address(this).balance;
-        return token.balanceOf(address(this));
+        if (token != CurrencyTransfer.NATIVE_TOKEN) return token.balanceOf(address(this));
+        return address(this).balance;
     }
 
     /// @notice Calculates swap fees and the amount after fees

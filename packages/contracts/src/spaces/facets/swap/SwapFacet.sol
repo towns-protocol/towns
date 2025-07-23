@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IImplementationRegistry} from "../../../factory/facets/registry/IImplementationRegistry.sol";
 import {ISwapRouter} from "../../../router/ISwapRouter.sol";
 import {ISwapFacet} from "./ISwapFacet.sol";
 
@@ -12,6 +11,7 @@ import {ISwapFacet} from "./ISwapFacet.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {DependencyLib} from "../DependencyLib.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {SwapFacetStorage} from "./SwapFacetStorage.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
@@ -31,9 +31,6 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
     /// @notice Maximum fee in basis points (2%)
     uint16 internal constant MAX_FEE_BPS = 200;
-
-    /// @dev The implementation ID for the SwapRouter
-    bytes32 internal constant SWAP_ROUTER_DIAMOND = bytes32("SwapRouter");
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -66,7 +63,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        address swapRouter = _validateSwapPrerequisites();
+        address swapRouter = _validateSwapPrerequisites(poster);
 
         // create mutable copy in memory to modify amountIn for fee-on-transfer tokens
         ExactInputParams memory paramsMemory = params;
@@ -97,50 +94,48 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwap{value: msg.value}(
             paramsMemory,
             routerParams,
-            _resolveSwapPoster(poster)
+            poster
         );
 
-        // post-swap processing (points minting and events)
-        _afterSwap(params, amountOut, protocolFee, poster);
-
         // handle refunds of unconsumed input tokens
-        _handleRefunds(params.tokenIn, tokenInBalanceBefore);
+        _handleRefunds(params.tokenIn, tokenInBalanceBefore, poster);
 
         // reset approval for ERC20 tokens
         if (!isNativeToken) params.tokenIn.safeApprove(swapRouter, 0);
+
+        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, poster, msg.sender);
     }
 
     /// @inheritdoc ISwapFacet
+    /// @dev Permit is forwarded directly to SwapRouter which handles all token operations,
+    /// e.g. Permit2 transfers, approvals, refunds
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable nonReentrant returns (uint256 amountOut) {
         // Permit2 swaps do not support ETH
         if (msg.value != 0) SwapFacet__UnexpectedETH.selector.revertWith();
 
-        address swapRouter = _validateSwapPrerequisites();
-
-        // take snapshot of balance before Permit2 transfer for refund calculation
-        uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
+        address swapRouter = _validateSwapPrerequisites(posterFee.recipient);
 
         // execute swap through the router with permit
         uint256 protocolFee;
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit(
             params,
             routerParams,
-            permit,
-            _resolveSwapPoster(poster)
+            posterFee,
+            permit
         );
 
-        // post-swap processing (points minting and events)
-        // no approval reset needed since Permit2 handles token transfers
-        _afterSwap(params, amountOut, protocolFee, poster);
-
-        // handle refunds of unconsumed input tokens
-        // for Permit2, tokens are ERC20 only (no ETH support)
-        _handleRefunds(params.tokenIn, tokenInBalanceBefore);
+        _mintPointsAndEmitSwapEvent(
+            params,
+            amountOut,
+            protocolFee,
+            posterFee.recipient,
+            permit.owner
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -149,10 +144,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
 
     /// @inheritdoc ISwapFacet
     function getSwapRouter() public view returns (address) {
-        return
-            IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(
-                SWAP_ROUTER_DIAMOND
-            );
+        return DependencyLib.getDependency(MembershipStorage.layout(), DependencyLib.SWAP_ROUTER);
     }
 
     /// @inheritdoc ISwapFacet
@@ -178,16 +170,18 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /*                         INTERNAL                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Post-swap processing: mint points for ETH swaps and emit events
+    /// @notice Mint points for ETH swaps and emit swap events
     /// @param params The swap parameters for event emission
     /// @param amountOut The amount of output tokens received
     /// @param protocolFee The protocol fee collected for points calculation
-    /// @param poster The original poster address (for event)
-    function _afterSwap(
+    /// @param poster The swap poster address
+    /// @param payer The address that should receive the points
+    function _mintPointsAndEmitSwapEvent(
         ExactInputParams calldata params,
         uint256 amountOut,
         uint256 protocolFee,
-        address poster
+        address poster,
+        address payer
     ) internal {
         // mint points based on the protocol fee if ETH is involved
         if (
@@ -200,7 +194,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
                 ITownsPointsBase.Action.Swap,
                 abi.encode(protocolFee)
             );
-            _mintPoints(airdropDiamond, msg.sender, points);
+            _mintPoints(airdropDiamond, payer, points);
         }
 
         emit SwapExecuted(
@@ -209,23 +203,27 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
             params.tokenOut,
             params.amountIn,
             amountOut,
-            poster // use original poster for the event
+            poster
         );
     }
 
     /// @notice Handles refunds of unconsumed input tokens back to the caller
     /// @param tokenIn The input token address
     /// @param tokenInBalanceBefore The balance before receiving tokens from user
-    function _handleRefunds(address tokenIn, uint256 tokenInBalanceBefore) internal {
+    /// @param poster The poster address for this swap
+    function _handleRefunds(
+        address tokenIn,
+        uint256 tokenInBalanceBefore,
+        address poster
+    ) internal {
         uint256 currentBalance = _getBalance(tokenIn);
 
         // calculate base refund amount
         uint256 refundAmount = FixedPointMathLib.zeroFloorSub(currentBalance, tokenInBalanceBefore);
 
         // for ETH, subtract poster fee if it was collected to space
-        if (
-            tokenIn == CurrencyTransfer.NATIVE_TOKEN && !SwapFacetStorage.layout().forwardPosterFee
-        ) {
+        // this happens when poster is the space itself (regardless of forwardPosterFee setting)
+        if (tokenIn == CurrencyTransfer.NATIVE_TOKEN && poster == address(this)) {
             // get the poster fee that was collected to space
             (, uint16 posterBps, ) = getSwapFees();
             uint256 posterFee = BasisPoints.calculate(msg.value, posterBps);
@@ -237,34 +235,23 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         CurrencyTransfer.transferCurrency(tokenIn, address(this), msg.sender, refundAmount);
     }
 
-    /// @notice Validates swap prerequisites (membership and SwapRouter availability)
+    /// @notice Validates swap prerequisites (membership, SwapRouter availability, and poster address)
+    /// @param poster The poster address to validate
     /// @return swapRouter The address of the SwapRouter to use
-    function _validateSwapPrerequisites() internal view returns (address swapRouter) {
+    function _validateSwapPrerequisites(address poster) internal view returns (address swapRouter) {
         _validateMembership(msg.sender);
 
         swapRouter = getSwapRouter();
         if (swapRouter == address(0)) SwapFacet__SwapRouterNotSet.selector.revertWith();
-    }
 
-    function _getSpaceFactory() internal view returns (address) {
-        return MembershipStorage.layout().spaceFactory;
+        // validate poster address based on fee configuration
+        if (!(_isForwardPosterFee() || poster == address(this))) {
+            SwapFacet__InvalidPosterInput.selector.revertWith();
+        }
     }
 
     function _getPlatformRequirements() internal view returns (IPlatformRequirements) {
-        return IPlatformRequirements(_getSpaceFactory());
-    }
-
-    /// @notice Resolves the actual poster address based on the space's fee configuration
-    /// @param poster The original poster address
-    /// @return The actual poster address to use
-    function _resolveSwapPoster(address poster) internal view returns (address) {
-        // default behavior: fees go to space, return the space address
-        if (!SwapFacetStorage.layout().forwardPosterFee) {
-            return address(this);
-        }
-        // if fees should be forwarded to poster, return the poster as-is
-        // (including address(0) which will skip poster fee)
-        return poster;
+        return IPlatformRequirements(MembershipStorage.layout().spaceFactory);
     }
 
     /// @notice Gets the balance of a token for this contract
@@ -273,5 +260,11 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     function _getBalance(address token) internal view returns (uint256) {
         if (token == CurrencyTransfer.NATIVE_TOKEN) return address(this).balance;
         return token.balanceOf(address(this));
+    }
+
+    /// @notice Checks if poster fees should be forwarded to the poster
+    /// @return bool True if poster fees are forwarded, false if they go to the space
+    function _isForwardPosterFee() internal view returns (bool) {
+        return SwapFacetStorage.layout().forwardPosterFee;
     }
 }

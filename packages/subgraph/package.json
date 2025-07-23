@@ -1,20 +1,20 @@
 {
     "name": "@towns-protocol/subgraph",
-    "type": "module",
-    "packageManager": "yarn@3.8.0",
     "private": true,
+    "packageManager": "yarn@3.8.0",
+    "type": "module",
     "scripts": {
-        "dev": "ponder dev",
-        "start": "ponder start",
-        "db": "ponder db",
         "codegen": "ponder codegen",
-        "serve": "ponder serve",
-        "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
-        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
-        "typecheck": "tsc",
+        "db": "ponder db",
+        "dev": "ponder dev",
         "dev:fork": "./scripts/setup-subgraph.sh",
+        "dev:no-ui": "ponder dev --disable-ui",
         "find-paths": "tsx utils/findContractsPath.ts",
-        "dev:no-ui": "ponder dev --disable-ui"
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "serve": "ponder serve",
+        "start": "ponder start",
+        "typecheck": "tsc"
     },
     "dependencies": {
         "hono": "^4.7.11",

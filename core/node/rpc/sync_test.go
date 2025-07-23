@@ -141,14 +141,14 @@ func makeSyncClient(tt *serviceTester, i int) *syncClient {
 	}
 }
 
-func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) {
+func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) func() {
 	for _, client := range sc.clients {
 		go client.syncMany(ctx, cookies)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		sc.cancelAll(t, ctx)
-	})
+	}
 
 	for i, client := range sc.clients {
 		select {
@@ -156,22 +156,24 @@ func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies 
 			// Received syncId, continue
 		case err := <-client.errC:
 			t.Fatalf("Error in sync client %d: %v", i, err)
-			return
+			return cleanup
 		case <-time.After(defaultTimeout):
 			t.Fatalf("Timeout waiting for syncId from client %d", i)
-			return
+			return cleanup
 		}
 	}
+
+	return cleanup
 }
 
-func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) {
+func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) func() {
 	for _, client := range sc.clients {
 		go client.sync(ctx, cookie)
 	}
 
-	t.Cleanup(func() {
+	cleanup := func() {
 		sc.cancelAll(t, ctx)
-	})
+	}
 
 	for i, client := range sc.clients {
 		select {
@@ -179,12 +181,14 @@ func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *prot
 			// Received syncId, continue
 		case err := <-client.errC:
 			t.Fatalf("Error in sync client %d: %v", i, err)
-			return
+			return cleanup
 		case <-time.After(defaultTimeout):
 			t.Fatalf("Timeout waiting for syncId from client %d", i)
-			return
+			return cleanup
 		}
 	}
+
+	return cleanup
 }
 
 func (sc *syncClients) modifySync(t *testing.T, ctx context.Context, add []*protocol.SyncCookie, remove [][]byte) {
@@ -386,7 +390,8 @@ func TestSyncWithFlush(t *testing.T) {
 	)
 	require.NoError(err)
 
-	syncClients.startSync(t, ctx, cookie)
+	cleanup := syncClients.startSync(t, ctx, cookie)
+	defer cleanup()
 
 	syncClients.expectOneUpdate(t, &updateOpts{})
 
@@ -476,7 +481,9 @@ func TestSyncWithManyStreams(t *testing.T) {
 
 	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
+
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
@@ -541,6 +548,18 @@ func TestSyncWithManyStreams(t *testing.T) {
 		time.Since(now),
 	)
 
+	// provide invalid stream id
+	t.Run("invalid stream id provided", func(t *testing.T) {
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId: syncClients.clients[0].syncId,
+			AddStreams: []*protocol.SyncCookie{{
+				StreamId: []byte("Invalid"),
+			}},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
 	// add two same streams in the modify sync request and expect error
 	t.Run("duplicate add streams", func(t *testing.T) {
 		channel, _ := produceChannel()
@@ -575,6 +594,26 @@ func TestSyncWithManyStreams(t *testing.T) {
 		}))
 		require.Error(err)
 		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	// expect for the latest update when no minipool number is provided
+	t.Run("no minipool number provided", func(t *testing.T) {
+		channel, _ := produceChannel()
+		connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{{
+			NodeAddress: channel.GetNodeAddress(),
+			StreamId:    channel.GetStreamId(),
+		}}})
+		connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+		resp, err := syncClient0.SyncStreams(ctx, connReq)
+		require.NoError(err)
+		require.True(resp.Receive())
+		require.NoError(resp.Err())
+		require.Equal(protocol.SyncOp_SYNC_NEW, resp.Msg().GetSyncOp(), resp.Msg())
+		require.True(resp.Receive())
+		require.NoError(resp.Err())
+		require.Equal(protocol.SyncOp_SYNC_UPDATE, resp.Msg().GetSyncOp(), resp.Msg())
+		require.Equal(channel.GetStreamId(), resp.Msg().StreamID(), resp.Msg())
 	})
 
 	// finish testing
@@ -634,7 +673,9 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	}
 
 	now := time.Now()
-	syncClients.startSyncMany(t, ctx, channelCookies)
+	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
+	defer cleanup()
+
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),

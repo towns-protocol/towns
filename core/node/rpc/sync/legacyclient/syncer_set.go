@@ -41,12 +41,12 @@ type (
 		syncerTasks sync.WaitGroup
 		// muSyncers guards syncers and streamID2Syncer
 		muSyncers deadlock.Mutex
-		// stopped holds an indication if the sync operation is stopped
-		stopped bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers map[common.Address]client.StreamsSyncer
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer map[StreamId]client.StreamsSyncer
+		// stopped holds an indication if the sync operation is stopped
+		stopped bool
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -419,7 +419,7 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (client
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 
-		syncer, err = NewRemoteSyncer(
+		syncer, err = newRemoteSyncer(
 			ss.ctx,
 			ss.globalSyncOpCtxCancel,
 			ss.syncID,

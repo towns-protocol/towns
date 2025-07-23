@@ -124,6 +124,8 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		return
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
 		return
+	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND:
+		return
 	}
 
 	usersToNotify := make(map[common.Address]*types.UserPreferences)

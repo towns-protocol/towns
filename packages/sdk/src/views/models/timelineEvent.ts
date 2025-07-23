@@ -54,7 +54,11 @@ import {
     TickerAttachment,
     EncryptedChannelPropertiesEvent,
     Membership,
-} from '../../sync-agent/timeline/models/timeline-types'
+    getIsMentioned,
+    getReactionParentId,
+    getReplyParentId,
+    getThreadParentId,
+} from './timelineTypes'
 import { checkNever, isDefined, logNever } from '../../check'
 import {
     isLocalEvent,
@@ -64,12 +68,6 @@ import {
     StreamTimelineEvent,
 } from '../../types'
 import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
-import {
-    getIsMentioned,
-    getReactionParentId,
-    getReplyParentId,
-    getThreadParentId,
-} from './timelinesModel'
 import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../../encryptedContentTypes'
@@ -100,22 +98,6 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
     const { content, error } = toTownsContent(timelineEvent)
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.id, content, error)}`
-
-    function extractSessionId(event: StreamTimelineEvent): string | undefined {
-        const payload = event.remoteEvent?.event.payload
-        if (
-            !payload ||
-            payload.case !== 'channelPayload' ||
-            payload.value.content.case !== 'message'
-        ) {
-            return undefined
-        }
-
-        return payload.value.content.value.sessionIdBytes.length > 0
-            ? bin_toHexString(payload.value.content.value.sessionIdBytes)
-            : payload.value.content.value.sessionId
-    }
-
     const sessionId = extractSessionId(timelineEvent)
 
     return {
@@ -142,6 +124,17 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         sender,
         sessionId,
     }
+}
+
+function extractSessionId(event: StreamTimelineEvent): string | undefined {
+    const payload = event.remoteEvent?.event.payload
+    if (!payload || payload.value?.content.case !== 'message') {
+        return undefined
+    }
+
+    return payload.value.content.value.sessionIdBytes.length > 0
+        ? bin_toHexString(payload.value.content.value.sessionIdBytes)
+        : payload.value.content.value.sessionId
 }
 
 function getSenderId(timelineEvent: StreamTimelineEvent): string {
@@ -1009,6 +1002,7 @@ export function toDecryptedEvent(
                 return {
                     ...event,
                     content,
+                    fallbackContent: getFallbackContent(event.sender.id, content),
                     threadParentId: getThreadParentId(content),
                     replyParentId: getReplyParentId(content),
                     reactionParentId: getReactionParentId(content),
@@ -1024,12 +1018,15 @@ export function toDecryptedEvent(
         }
         case RiverTimelineEvent.SpaceDisplayName: {
             if (decryptedContent.kind === 'text') {
+                const content = {
+                    ...event.content,
+                    displayName: decryptedContent.content,
+                }
+                const fallbackContent = getFallbackContent(event.sender.id, content)
                 return {
                     ...event,
-                    content: {
-                        ...event.content,
-                        displayName: decryptedContent.content,
-                    },
+                    content,
+                    fallbackContent,
                 }
             } else {
                 logger.error('$$$ timelineStoreEvents invalid spaceDisplayName', {
@@ -1041,12 +1038,15 @@ export function toDecryptedEvent(
         }
         case RiverTimelineEvent.SpaceUsername: {
             if (decryptedContent.kind === 'text') {
+                const content = {
+                    ...event.content,
+                    username: decryptedContent.content,
+                }
+                const fallbackContent = getFallbackContent(event.sender.id, content)
                 return {
                     ...event,
-                    content: {
-                        ...event.content,
-                        username: decryptedContent.content,
-                    },
+                    content,
+                    fallbackContent,
                 }
             } else {
                 logger.error('$$$ timelineStoreEvents invalid spaceUsername', {
@@ -1058,12 +1058,15 @@ export function toDecryptedEvent(
         }
         case RiverTimelineEvent.EncryptedChannelProperties: {
             if (decryptedContent.kind === 'channelProperties') {
+                const content = {
+                    ...event.content,
+                    properties: decryptedContent.content,
+                }
+                const fallbackContent = getFallbackContent(event.sender.id, content)
                 return {
                     ...event,
-                    content: {
-                        kind: RiverTimelineEvent.ChannelProperties,
-                        properties: decryptedContent.content,
-                    } satisfies ChannelPropertiesEvent,
+                    content,
+                    fallbackContent,
                 }
             } else {
                 logger.error('$$$ timelineStoreEvents invalid encryptedChannelProperties', {

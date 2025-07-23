@@ -121,16 +121,34 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}, nil
 }
 
-func MakeEnvelopeWithPayload(
+func makeEnvelopeWithPayload(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
+	ephemeral bool,
 	prevMiniblock *MiniblockRef,
 ) (*Envelope, error) {
 	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblock)
 	if err != nil {
 		return nil, err
 	}
+	streamEvent.Ephemeral = ephemeral
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
+}
+
+func MakeEphemeralEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload IsStreamEvent_Payload,
+	prevMiniblock *MiniblockRef,
+) (*Envelope, error) {
+	return makeEnvelopeWithPayload(wallet, payload, true, prevMiniblock)
+}
+
+func MakeEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload IsStreamEvent_Payload,
+	prevMiniblock *MiniblockRef,
+) (*Envelope, error) {
+	return makeEnvelopeWithPayload(wallet, payload, false, prevMiniblock)
 }
 
 func MakeEnvelopeWithPayloadAndTags(
@@ -175,6 +193,7 @@ func Make_MemberPayload_Membership(
 	initiatorAddress []byte,
 	streamParentId []byte,
 	inReason *MembershipReason,
+	appAddress common.Address,
 ) *StreamEvent_MemberPayload {
 	reason := MembershipReason_MR_NONE
 	if inReason != nil {
@@ -189,6 +208,7 @@ func Make_MemberPayload_Membership(
 					InitiatorAddress: initiatorAddress,
 					StreamParentId:   streamParentId,
 					Reason:           reason,
+					AppAddress:       appAddress[:],
 				},
 			},
 		},
@@ -329,7 +349,7 @@ func Make_ChannelPayload_Membership(
 	} else {
 		spaceIdBytes = nil
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, spaceIdBytes, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, spaceIdBytes, nil, common.Address{})
 }
 
 func Make_DMChannelPayload_Message(content string) *StreamEvent_DmChannelPayload {
@@ -399,7 +419,7 @@ func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorI
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil, common.Address{})
 }
 
 // todo delete and replace with Make_MemberPayload_Membership
@@ -415,7 +435,7 @@ func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiator
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil, common.Address{})
 }
 
 func Make_SpacePayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_SpacePayload {
@@ -444,7 +464,7 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId st
 			panic(err) // todo convert everything to common.Address
 		}
 	}
-	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil)
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil, nil, common.Address{})
 }
 
 func Make_SpacePayload_SpaceImage(

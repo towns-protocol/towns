@@ -16,20 +16,41 @@ import (
 )
 
 type MiniblockInfo struct {
-	Ref      *MiniblockRef
-	Proto    *Miniblock
-	Snapshot *Envelope
+	Ref   *MiniblockRef
+	Proto *Miniblock
+
+	// Snapshot is not nil if this miniblock has associated snapshot.
+	// If SnapshotEvelope was provided, Snapshot is set to the snapshot from the envelope.
+	// For legacy snapshots, Snapshot is set to the snapshot from the header.
+	Snapshot *Snapshot
+
+	// SnapshotEnvelope is not nil if this miniblock has associated snapshot envelope.
+	// Hash of the snapshot envelope matches hash in the miniblock header.
+	// SnapshotEnvelope is nil for miniblocks with legacy snapshots that are stored in the header.
+	SnapshotEnvelope *Envelope
 
 	headerEvent        *ParsedEvent
-	useGetterForEvents []*ParsedEvent  // Use events(). Getter checks if events have been initialized.
-	snapshot           *ParsedSnapshot //nolint:unused
+	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
 // on whatever is set in the opts. If an empty opts is passed in, the method will still perform
 // some minimal validation to confirm that event counts between the header and body match.
-func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
-	headerEvent, err := ParseEvent(mb.Header)
+//
+// If snapshotEnvelope is provided, behaviour is controlled by the ApplyOnlyMatchingSnapshot and
+// SkipSnapshotValidation options:
+//
+// 1. If ApplyOnlyMatchingSnapshot is true, the snapshotEnvelope is only used if the hash in the
+// miniblock header matches the hash in the snapshotEnvelope.
+//
+// 2. If SkipSnapshotValidation is false, the snapshotEnvelope hash should match the hash in the
+// miniblock header.
+func NewMiniblockInfoFromProto(
+	mbProto *Miniblock,
+	snapshotEnvelope *Envelope,
+	opts *ParsedMiniblockInfoOpts,
+) (*MiniblockInfo, error) {
+	headerEvent, err := ParseEvent(mbProto.Header)
 	if err != nil {
 		return nil, AsRiverError(
 			err,
@@ -52,18 +73,18 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 
 	// Validate the number of events matches event hashes
 	// We will validate that the hashes match if the events are parsed.
-	if len(blockHeader.EventHashes) != len(mb.Events) {
+	if len(blockHeader.EventHashes) != len(mbProto.Events) {
 		return nil, RiverError(
 			Err_BAD_BLOCK,
 			"Length of events in block does not match length of event hashes in header",
 		).Func("NewMiniblockInfoFromProto").
 			Tag("eventHashesLength", len(blockHeader.EventHashes)).
-			Tag("eventsLength", len(mb.Events))
+			Tag("eventsLength", len(mbProto.Events))
 	}
 
 	var events []*ParsedEvent
 	if !opts.DoNotParseEvents() {
-		events, err = ParseEvents(mb.Events)
+		events, err = ParseEvents(mbProto.Events)
 		if err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT_HASH).Func("NewMiniblockInfoFromProto")
 		}
@@ -128,47 +149,62 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	var snapshot *ParsedSnapshot
-	if sn != nil {
-		if snapshot, err = ParseSnapshot(sn, common.BytesToAddress(headerEvent.Event.CreatorAddress)); err != nil {
+	if opts.ApplyOnlyMatchingSnapshot() && snapshotEnvelope != nil {
+		if !bytes.Equal(snapshotEnvelope.Hash, blockHeader.GetSnapshotHash()) {
+			snapshotEnvelope = nil
+		}
+	}
+
+	var snapshot *Snapshot
+	if snapshotEnvelope != nil {
+		snapshot, err = ParseSnapshot(snapshotEnvelope, common.BytesToAddress(headerEvent.Event.CreatorAddress))
+		if err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")
 		}
+	} else if blockHeader.GetSnapshot() != nil {
+		snapshot = blockHeader.GetSnapshot()
 	}
 
-	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
-	// Applied for the new snapshot format only.
-	if !opts.SkipSnapshotValidation() &&
-		blockHeader.GetSnapshot() == nil &&
-		len(blockHeader.GetSnapshotHash()) > 0 &&
-		snapshot != nil {
-		if common.BytesToHash(sn.Hash).Cmp(common.BytesToHash(blockHeader.GetSnapshotHash())) != 0 {
-			return nil, RiverError(Err_BAD_BLOCK, "Snapshot hash does not match snapshot envelope hash").
-				Func("NewMiniblockInfoFromProto")
+	if !opts.SkipSnapshotValidation() && !opts.ApplyOnlyMatchingSnapshot() {
+		expectedHash := blockHeader.GetSnapshotHash()
+		if snapshotEnvelope != nil {
+			if !bytes.Equal(snapshotEnvelope.Hash, expectedHash) {
+				return nil, RiverError(
+					Err_BAD_BLOCK,
+					"Snapshot hash does not match snapshot envelope hash",
+				).Func("NewMiniblockInfoFromProto").
+					Tag("snapshotHash", hex.EncodeToString(blockHeader.GetSnapshotHash())).
+					Tag("snapshotEnvelopeHash", hex.EncodeToString(snapshotEnvelope.Hash)).
+					Tag("mbNum", blockHeader.MiniblockNum)
+			}
+		} else if len(expectedHash) != 0 {
+			return nil, RiverError(
+				Err_BAD_BLOCK,
+				"Snapshot hash is set in the miniblock header, but no snapshot envelope is provided",
+			).Func("NewMiniblockInfoFromProto").
+				Tag("mbNum", blockHeader.MiniblockNum)
 		}
 	}
-
-	// TODO: snapshot validation if requested
-	// (How to think about versioning?)
 
 	return &MiniblockInfo{
 		Ref: &MiniblockRef{
 			Hash: headerEvent.Hash,
 			Num:  blockHeader.MiniblockNum,
 		},
-		Proto:              mb,
-		Snapshot:           sn,
+		Proto:              mbProto,
+		Snapshot:           snapshot,
+		SnapshotEnvelope:   snapshotEnvelope,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-		snapshot:           snapshot,
 	}, nil
 }
 
 func NewMiniblockInfoFromParsed(
 	headerEvent *ParsedEvent,
 	events []*ParsedEvent,
-	snapshot *ParsedSnapshot,
+	parsedSnapshot *ParsedSnapshot,
 ) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
@@ -179,7 +215,16 @@ func NewMiniblockInfoFromParsed(
 		envelopes[i] = e.Envelope
 	}
 
-	mbInfo := &MiniblockInfo{
+	var snapshot *Snapshot
+	var snapshotEnvelope *Envelope
+	if parsedSnapshot != nil {
+		snapshot = parsedSnapshot.Snapshot
+		snapshotEnvelope = parsedSnapshot.Envelope
+	} else if headerEvent.Event.GetMiniblockHeader().GetSnapshot() != nil {
+		snapshot = headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	}
+
+	return &MiniblockInfo{
 		Ref: &MiniblockRef{
 			Hash: headerEvent.Hash,
 			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
@@ -188,16 +233,11 @@ func NewMiniblockInfoFromParsed(
 			Header: headerEvent.Envelope,
 			Events: envelopes,
 		},
+		Snapshot:           snapshot,
+		SnapshotEnvelope:   snapshotEnvelope,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-		snapshot:           snapshot,
-	}
-
-	if snapshot != nil {
-		mbInfo.Snapshot = snapshot.Envelope
-	}
-
-	return mbInfo, nil
+	}, nil
 }
 
 func NewMiniblockInfoFromHeaderAndParsed(
@@ -268,21 +308,6 @@ func (b *MiniblockInfo) Header() *MiniblockHeader {
 	return b.headerEvent.Event.GetMiniblockHeader()
 }
 
-// GetSnapshot returns the snapshot of the miniblock.
-// Tries to return the snapshot from the header first,
-// if it is not set, it will return the separately stored snapshot
-func (b *MiniblockInfo) GetSnapshot() *Snapshot {
-	if b.Header().GetSnapshot() != nil {
-		return b.Header().GetSnapshot()
-	}
-
-	if b.snapshot == nil {
-		return nil
-	}
-
-	return b.snapshot.Snapshot
-}
-
 func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	events := b.Events()
 	if len(events) > 0 {
@@ -305,8 +330,8 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
 	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 	var serializedSn []byte
-	if b.Snapshot != nil && (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil) {
-		if serializedSn, err = proto.Marshal(b.Snapshot); err != nil {
+	if b.SnapshotEnvelope != nil && (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil) {
+		if serializedSn, err = proto.Marshal(b.SnapshotEnvelope); err != nil {
 			return nil, AsRiverError(err, Err_INTERNAL).
 				Message("Failed to serialize snapshot to bytes").
 				Func("AsStorageMb")
@@ -353,6 +378,7 @@ type ParsedMiniblockInfoOpts struct {
 	expectedPrevSnapshotMiniblockNum  *int64
 	dontParseEvents                   bool
 	skipSnapshotValidation            bool
+	applyOnlyMatchingSnapshot         bool
 }
 
 func NewParsedMiniblockInfoOpts() *ParsedMiniblockInfoOpts {
@@ -445,4 +471,13 @@ func (p *ParsedMiniblockInfoOpts) WithSkipSnapshotValidation() *ParsedMiniblockI
 
 func (p *ParsedMiniblockInfoOpts) SkipSnapshotValidation() bool {
 	return p.skipSnapshotValidation
+}
+
+func (p *ParsedMiniblockInfoOpts) WithApplyOnlyMatchingSnapshot() *ParsedMiniblockInfoOpts {
+	p.applyOnlyMatchingSnapshot = true
+	return p
+}
+
+func (p *ParsedMiniblockInfoOpts) ApplyOnlyMatchingSnapshot() bool {
+	return p.applyOnlyMatchingSnapshot
 }

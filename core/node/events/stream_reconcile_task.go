@@ -24,14 +24,14 @@ type reconcileTask struct {
 	stream     *Stream
 }
 
-func (s *StreamCache) SubmitSyncStreamTask(
+func (s *StreamCache) SubmitReconcileStreamTask(
 	stream *Stream,
 	streamRecord *river.StreamWithId,
 ) {
-	s.submitSyncStreamTaskToPool(s.onlineSyncWorkerPool, stream, streamRecord)
+	s.submitReconcileStreamTaskToPool(s.onlineReconcileWorkerPool, stream, streamRecord)
 }
 
-func (s *StreamCache) submitSyncStreamTaskToPool(
+func (s *StreamCache) submitReconcileStreamTaskToPool(
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
@@ -47,6 +47,10 @@ func (s *StreamCache) submitToPool(
 	pool *workerpool.WorkerPool,
 	task func(),
 ) {
+	if s.params.Config.StreamReconciliation.OnlineWorkerPoolSize == 0 {
+		return
+	}
+
 	s.stoppedMu.RLock()
 	defer s.stoppedMu.RUnlock()
 	if !s.stopped {
@@ -64,12 +68,11 @@ func (s *StreamCache) submitGetRecordTask(
 	}
 
 	s.submitToPool(pool, func() {
-		s.getRecordTask(pool, stream)
+		s.getRecordTask(stream)
 	})
 }
 
 func (s *StreamCache) getRecordTask(
-	pool *workerpool.WorkerPool,
 	stream *Stream,
 ) {
 	s.scheduledGetRecordTasks.Delete(stream.streamId)
@@ -84,7 +87,7 @@ func (s *StreamCache) getRecordTask(
 		return
 	}
 
-	s.submitReconciliationTask(pool, stream, streamRecord)
+	s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord)
 }
 
 func (s *StreamCache) submitReconciliationTask(
@@ -115,13 +118,12 @@ func (s *StreamCache) submitReconciliationTask(
 
 	if schedule {
 		s.submitToPool(pool, func() {
-			s.reconciliationTask(pool, stream.StreamId())
+			s.reconciliationTask(stream.StreamId())
 		})
 	}
 }
 
 func (s *StreamCache) reconciliationTask(
-	pool *workerpool.WorkerPool,
 	streamId StreamId,
 ) {
 	corrupt := false
@@ -152,10 +154,10 @@ func (s *StreamCache) reconciliationTask(
 		return
 	}
 
-	err := s.syncStreamFromPeers(stream, streamRecord)
+	err := s.reconcileStreamFromPeers(stream, streamRecord)
 	if err != nil {
 		logging.FromCtx(s.params.ServerCtx).
-			Errorw("syncStreamFromPeers: Unable to sync stream from peers",
+			Errorw("reconcileStreamFromPeers: Unable to reconcile stream from peers",
 				"stream", stream.streamId,
 				"error", err,
 				"streamRecord", streamRecord)
@@ -172,13 +174,12 @@ func (s *StreamCache) reconciliationTask(
 						streamRecord = existingValue.inProgress
 					}
 
-					s.retryableReconcilationTasks.Add(streamId, stream, streamRecord)
+					s.retryableReconciliationTasks.Add(streamId, stream, streamRecord)
 
 					return nil, xsync.DeleteOp
 				})
+			return
 		}
-
-		return
 	}
 
 	schedule := false
@@ -206,15 +207,15 @@ func (s *StreamCache) reconciliationTask(
 	}
 
 	if schedule {
-		s.submitToPool(pool, func() {
-			s.reconciliationTask(pool, streamId)
+		s.submitToPool(s.onlineReconcileWorkerPool, func() {
+			s.reconciliationTask(streamId)
 		})
 	}
 }
 
-// syncStreamFromPeers syncs the database for the given streamResult by fetching missing blocks from peers
+// reconcileStreamFromPeers reconciles the database for the given streamResult by fetching missing blocks from peers
 // participating in the stream.
-func (s *StreamCache) syncStreamFromPeers(
+func (s *StreamCache) reconcileStreamFromPeers(
 	stream *Stream,
 	streamRecord *river.StreamWithId,
 ) error {
@@ -274,7 +275,7 @@ func (s *StreamCache) syncStreamFromPeers(
 			toExclusive = max(toExclusive, resp.Msg.MiniblockNum+1)
 		}
 
-		nextFromInclusive, err = s.syncStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)
+		nextFromInclusive, err = s.reconcileStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
 		}
@@ -283,9 +284,12 @@ func (s *StreamCache) syncStreamFromPeers(
 	}
 
 	if err != nil {
-		return AsRiverError(err, Err_UNAVAILABLE).
-			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
-			Message("No peer could provide miniblocks for stream reconciliation")
+		return RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"No peer could provide miniblocks for stream reconciliation",
+			err,
+		).
+			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 	}
 
 	return RiverError(
@@ -295,9 +299,9 @@ func (s *StreamCache) syncStreamFromPeers(
 		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 }
 
-// syncStreamFromSinglePeer syncs the database for the given streamResult by fetching missing blocks from a single peer.
-// It returns block number of last block successfully synced + 1.
-func (s *StreamCache) syncStreamFromSinglePeer(
+// reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
+// It returns the block number of the last block successfully reconciled + 1.
+func (s *StreamCache) reconcileStreamFromSinglePeer(
 	stream *Stream,
 	remote common.Address,
 	fromInclusive int64,

@@ -60,7 +60,7 @@ contract ForkSpaceOwner is IArchitectBase, ISpaceOwnerBase, TestUtils, SpaceHelp
         diamondCut.diamondCut(cut, address(0), new bytes(0));
 
         bytes4[] memory architectSelectors = new bytes4[](1);
-        architectSelectors[0] = ICreateSpace.createSpace.selector;
+        architectSelectors[0] = 0xf822028d; // createSpace(SpaceInfo)
         IDiamond.FacetCut[] memory architectCut = new IDiamond.FacetCut[](1);
         architectCut[0] = IDiamond.FacetCut({
             facetAddress: architectFacet,

@@ -5,7 +5,7 @@
 import { MembershipOp } from '@towns-protocol/proto'
 import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
-import { getFallbackContent } from '../../views/streams/timelineEvents'
+import { getFallbackContent } from '../../views/models/timelineEvent'
 import { StreamStateView } from '../../streamStateView'
 import { dlog } from '@towns-protocol/dlog'
 
@@ -52,7 +52,11 @@ describe('syncedStream', () => {
         logTimeline('alice', aliceStream.view)
 
         // later, Bob returns
-        const bob2 = await makeTestClient({ context: bob.signerContext, deviceId: bobDeviceId })
+        const bob2 = await makeTestClient({
+            context: bob.signerContext,
+            deviceId: bobDeviceId,
+            excludeEventsInScrollback: [],
+        })
         await bob2.initializeUser()
         bob2.startSync()
 
