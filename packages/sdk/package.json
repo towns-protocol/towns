@@ -9,7 +9,8 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "tsc && node scripts/fix-esm-imports.cjs",
+        "build:tsc": "tsc",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "dev": "my-node src/index.ts",
