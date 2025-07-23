@@ -9,30 +9,35 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-const (
-	// commonBufferSize is the size of the common messages buffer of the shared syncer.
-	commonBufferSize = 10240
-)
-
 type (
+	// MessageDistributor defines the contract for distributing messages to subscriptions
+	MessageDistributor interface {
+		DistributeMessage(streamID StreamId, msg *SyncStreamsResponse)
+		DistributeBackfillMessage(streamID StreamId, msg *SyncStreamsResponse)
+	}
+
 	StreamsSyncer interface {
 		Run()
 		Address() common.Address
 		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
+	}
+
+	// StreamCache represents a behavior of the stream cache
+	StreamCache interface {
+		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
+		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
 	}
 
 	ModifyRequest struct {
@@ -45,26 +50,30 @@ type (
 		BackfillingFailureHandler func(status *SyncStreamOpStatus)
 	}
 
+	// syncerWithLock holds a syncer with its associated lock
+	syncerWithLock struct {
+		StreamsSyncer
+		sync.Mutex
+	}
+
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
 	SyncerSet struct {
 		// globalCtx is the root context for all syncers in this set and used to cancel them
 		globalCtx context.Context
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
-		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
-		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+		// messageDistributor is used to distribute messages to subscriptions
+		messageDistributor MessageDistributor
 		// streamCache is used to subscribe to streams managed by this node instance
-		streamCache *StreamCache
+		streamCache StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
 		nodeRegistry nodes.NodeRegistry
 		// syncerTasks is a wait group for running background StreamsSyncers that is used to ensure all syncers stopped
 		syncerTasks sync.WaitGroup
-		// muSyncers guards syncers map
-		muSyncers deadlock.Mutex
 		// stopped holds an indication if the sync operation is stopped
 		stopped atomic.Bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
-		syncers map[common.Address]StreamsSyncer
+		syncers *xsync.Map[common.Address, *syncerWithLock]
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// streamLocks provides per-stream locking
@@ -84,35 +93,29 @@ var (
 // are streamed to the client.
 func NewSyncers(
 	globalCtx context.Context,
-	streamCache *StreamCache,
+	streamCache StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
+	messageDistributor MessageDistributor,
 	otelTracer trace.Tracer,
-) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
-	ss := &SyncerSet{
-		globalCtx:        globalCtx,
-		streamCache:      streamCache,
-		nodeRegistry:     nodeRegistry,
-		localNodeAddress: localNodeAddress,
-		syncers:          make(map[common.Address]StreamsSyncer),
-		messages:         dynmsgbuf.NewDynamicBufferWithSize[*SyncStreamsResponse](commonBufferSize),
-		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:      xsync.NewMap[StreamId, *sync.Mutex](),
-		otelTracer:       otelTracer,
+) *SyncerSet {
+	return &SyncerSet{
+		globalCtx:          globalCtx,
+		streamCache:        streamCache,
+		nodeRegistry:       nodeRegistry,
+		localNodeAddress:   localNodeAddress,
+		messageDistributor: messageDistributor,
+		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
+		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
+		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		otelTracer:         otelTracer,
 	}
-	return ss, ss.messages
 }
 
 func (ss *SyncerSet) Run() {
 	<-ss.globalCtx.Done() // node went down
 	ss.stopped.Store(true)
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
-}
-
-// getStreamLock returns a lock for the given stream ID, creating it if it doesn't exist
-func (ss *SyncerSet) getStreamLock(streamID StreamId) *sync.Mutex {
-	lock, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
-	return lock
 }
 
 // waitForStreamUnlock waits for a stream to be unlocked with a timeout
@@ -179,7 +182,8 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 
 	// Acquire locks in order
 	for _, streamID := range orderedStreamIDs {
-		ss.getStreamLock(streamID).Lock()
+		syncer, _ := ss.streamLocks.LoadOrStore(streamID, &sync.Mutex{})
+		syncer.Lock()
 	}
 
 	return orderedStreamIDs
@@ -563,9 +567,7 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 
 	ss.streamID2Syncer.Delete(streamID)
 	if syncerStopped {
-		ss.muSyncers.Lock()
-		delete(ss.syncers, syncer.Address())
-		ss.muSyncers.Unlock()
+		ss.syncers.Delete(syncer.Address())
 	}
 
 	return nil
@@ -617,62 +619,64 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 
 // getOrCreateSyncer returns the syncer for the given node address.
 // If the syncer does not exist, it creates a new one and starts it.
+// This implementation uses per-node-address locking to avoid blocking
+// other operations while creating syncers (which can be slow due to network calls).
 func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSyncer, error) {
-	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
-
-	if syncer, found := ss.syncers[nodeAddress]; found {
-		return syncer, nil
+	// Check if stopped before creating
+	if ss.stopped.Load() {
+		return nil, RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	var syncer StreamsSyncer
+	syncer, _ := ss.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
+	
+	// Lock the syncer for initialization check/creation
+	syncer.Lock()
+	defer syncer.Unlock()
+	
+	// Check if already initialized (by us or another goroutine)
+	if syncer.StreamsSyncer != nil {
+		return syncer.StreamsSyncer, nil
+	}
 
 	if nodeAddress == ss.localNodeAddress {
-		syncer = newLocalSyncer(
+		syncer.StreamsSyncer = newLocalSyncer(
 			ss.globalCtx,
 			ss.localNodeAddress,
 			ss.streamCache,
-			ss.messages,
+			ss.messageDistributor,
 			ss.streamID2Syncer.Delete,
 			ss.otelTracer,
 		)
 	} else {
 		client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 		if err != nil {
+			ss.syncers.Delete(nodeAddress)
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 
-		syncer, err = NewRemoteSyncer(
+		syncer.StreamsSyncer, err = NewRemoteSyncer(
 			ss.globalCtx,
 			nodeAddress,
 			client,
 			ss.streamID2Syncer.Delete,
-			ss.messages,
+			ss.messageDistributor,
 			ss.otelTracer,
 		)
 		if err != nil {
+			ss.syncers.Delete(nodeAddress)
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 	}
 
-	// Check if SyncerSet is stopped before storing the given syncer.
-	// There could be a case when the node is stopped while we are trying to create a new syncer
-	// and add delta to the wait group. Just return an error in this case.
-	if ss.stopped.Load() {
-		return nil, RiverError(Err_CANCELED, "Sync stopped")
-	}
-
-	ss.syncers[nodeAddress] = syncer
+	// Start the syncer
 	ss.syncerTasks.Add(1)
 	go func() {
 		syncer.Run()
 		ss.syncerTasks.Done()
-		ss.muSyncers.Lock()
-		delete(ss.syncers, syncer.Address())
-		ss.muSyncers.Unlock()
+		ss.syncers.Delete(nodeAddress)
 	}()
 
-	return syncer, nil
+	return syncer.StreamsSyncer, nil
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.

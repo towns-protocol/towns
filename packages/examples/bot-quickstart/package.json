@@ -6,14 +6,14 @@
     "type": "module",
     "main": "dist/bot-quickstart.cjs",
     "scripts": {
-        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env ./esbuild.config.mjs --watch",
         "build": "yarn typecheck && yarn compile",
-        "compile": "node ./esbuild.config.mjs",
-        "typecheck": "tsc --noEmit",
-        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env dist/bot-quickstart.cjs",
         "clean": "rm -rf dist",
+        "compile": "node ./esbuild.config.mjs",
+        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env ./esbuild.config.mjs --watch",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
-        "lint:fix": "yarn lint --fix"
+        "lint:fix": "yarn lint --fix",
+        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env dist/bot-quickstart.cjs",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@connectrpc/connect-node": "^2.0.0",

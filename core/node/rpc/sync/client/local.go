@@ -10,25 +10,20 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
-
-type streamCache interface {
-	GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*Stream, error)
-}
 
 type localSyncer struct {
 	globalCtx context.Context
 
-	streamCache   streamCache
-	messages      *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	localAddr     common.Address
-	unsubStream   func(streamID StreamId)
-	activeStreams *xsync.Map[StreamId, *Stream]
+	streamCache        StreamCache
+	messageDistributor MessageDistributor
+	localAddr          common.Address
+	unsubStream        func(streamID StreamId)
+	activeStreams      *xsync.Map[StreamId, *events.Stream]
 
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
@@ -37,27 +32,27 @@ type localSyncer struct {
 func newLocalSyncer(
 	globalCtx context.Context,
 	localAddr common.Address,
-	streamCache streamCache,
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+	streamCache StreamCache,
+	messageDistributor MessageDistributor,
 	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		globalCtx:     globalCtx,
-		streamCache:   streamCache,
-		localAddr:     localAddr,
-		messages:      messages,
-		unsubStream:   unsubStream,
-		activeStreams: xsync.NewMap[StreamId, *Stream](),
-		otelTracer:    otelTracer,
+		globalCtx:          globalCtx,
+		streamCache:        streamCache,
+		localAddr:          localAddr,
+		messageDistributor: messageDistributor,
+		unsubStream:        unsubStream,
+		activeStreams:      xsync.NewMap[StreamId, *events.Stream](),
+		otelTracer:         otelTracer,
 	}
 }
 
 func (s *localSyncer) Run() {
 	<-s.globalCtx.Done()
 
-	s.activeStreams.Range(func(streamID StreamId, _ *Stream) bool {
-		s.streamUnbsub(streamID)
+	s.activeStreams.Range(func(streamID StreamId, _ *events.Stream) bool {
+		s.streamUnsub(streamID)
 		return true
 	})
 }
@@ -123,7 +118,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	for _, streamID := range request.GetRemoveStreams() {
-		s.streamUnbsub(StreamId(streamID))
+		s.streamUnsub(StreamId(streamID))
 	}
 
 	wg.Wait()
@@ -134,8 +129,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 // DebugDropStream is called to drop a stream from the syncer.
 func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (bool, error) {
-	if s.streamUnbsub(streamID) {
-		return false, s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	if s.streamUnsub(streamID) {
+		return false, s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	}
 
 	return false, RiverError(Err_NOT_FOUND, "stream not found").Tag("stream", streamID)
@@ -143,14 +138,20 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
-		s.streamUnbsub(StreamId(r.GetNextSyncCookie().GetStreamId()))
+	streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
+	if err != nil {
+		logging.FromCtx(s.globalCtx).Errorw("failed to get stream id", "stream", r.GetNextSyncCookie().GetStreamId(), "error", err)
+		return
+	}
+
+	if err = s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
+		s.streamUnsub(streamID)
 	}
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable
 func (s *localSyncer) OnSyncError(error) {
-	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
+	s.activeStreams.Range(func(streamID StreamId, syncStream *events.Stream) bool {
 		s.OnStreamSyncDown(streamID)
 		return true
 	})
@@ -159,8 +160,8 @@ func (s *localSyncer) OnSyncError(error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	if err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
-		s.streamUnbsub(streamID)
+	if err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
+		s.streamUnsub(streamID)
 	}
 }
 
@@ -181,7 +182,7 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 	}
 
 	return stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) error {
-		return s.sendResponse(&SyncStreamsResponse{
+		return s.sendResponse(streamID, &SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_UPDATE,
 			Stream:        streamAndCookie,
 			TargetSyncIds: targetSyncIds,
@@ -219,28 +220,30 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
-	var err error
-
+func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	select {
 	case <-s.globalCtx.Done():
-		err = s.globalCtx.Err()
+		if err := s.globalCtx.Err(); err != nil {
+			rvrErr := AsRiverError(err, Err_CANCELED).
+				Func("localSyncer.sendResponse")
+			_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
+			return rvrErr
+		}
+		return nil
 	default:
-		err = s.messages.AddMessage(msg)
 	}
 
-	if err != nil {
-		rvrErr := AsRiverError(err, Err_CANCELED).
-			Func("localSyncer.sendResponse")
-		_ = rvrErr.LogError(logging.FromCtx(s.globalCtx))
-		return rvrErr
+	if len(msg.GetTargetSyncIds()) > 0 {
+		s.messageDistributor.DistributeBackfillMessage(streamID, msg)
+	} else {
+		s.messageDistributor.DistributeMessage(streamID, msg)
 	}
 
 	return nil
 }
 
-// streamUnbsub is called to unsubscribe from a stream.
-func (s *localSyncer) streamUnbsub(streamID StreamId) bool {
+// streamUnsub is called to unsubscribe from a stream.
+func (s *localSyncer) streamUnsub(streamID StreamId) bool {
 	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
 	if found {
 		go syncStream.Unsub(s)
