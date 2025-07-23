@@ -93,6 +93,7 @@
         "WatchCasablancaWeb3",
         "WatchCasablancaSdk",
         "WatchReactSdk",
+        "WatchBot",
         "WatchStress",
       ],
       "group": {
@@ -265,7 +266,9 @@
       "label": "Both Casablancas",
       "dependsOn": [
         "Casablanca",
-        "Casablanca-No-Entitlements"
+        "Casablanca-No-Entitlements",
+        "AppRegistry",
+        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
@@ -378,6 +381,16 @@
       "label": "WatchReactSdk",
       "type": "shell",
       "command": "cd packages/react-sdk && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchBot",
+      "type": "shell",
+      "command": "cd packages/bot && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

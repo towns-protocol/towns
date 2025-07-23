@@ -12,12 +12,20 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
+import { UserInboxStreamModel, UserInboxStreamsView } from './views/streams/userInboxStreams'
 
 export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     readonly streamId: string
     deviceSummary: Record<string, UserInboxPayload_Snapshot_DeviceSummary> = {}
 
-    constructor(streamId: string) {
+    get userInboxStreamModel(): UserInboxStreamModel {
+        return this.userInboxStreamsView.get(this.streamId)
+    }
+
+    constructor(
+        streamId: string,
+        private userInboxStreamsView: UserInboxStreamsView,
+    ) {
         super()
         this.streamId = streamId
     }

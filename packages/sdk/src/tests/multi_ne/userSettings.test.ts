@@ -5,7 +5,7 @@
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { check } from '@towns-protocol/dlog'
-import { StreamTimelineEvent } from '../../types'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 describe('userSettingsTests', () => {
     let clients: Client[] = []
@@ -111,22 +111,17 @@ describe('userSettingsTests', () => {
         await expect(alicesClient.sendMessage(streamId, 'hello 2nd')).resolves.not.toThrow()
         await expect(alicesClient.sendMessage(streamId, 'hello 3rd')).resolves.not.toThrow()
 
+        // sleeps are lame, but we want to give the message time to be synced
+        await new Promise((resolve) => setTimeout(resolve, 230))
+
         // verify in bob's client, there are 3 blocked messages from alice
         await waitFor(() => {
+            const timeline = bobsClient.stream(streamId)?.view?.timeline
             expect(
-                bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
-                    return (
-                        m.creatorUserId === alicesClient.userId &&
-                        isDmChannelPayload(m) &&
-                        bobsClient
-                            .stream(bobsClient.userSettingsStreamId!)
-                            ?.view?.userSettingsContent?.isUserBlockedAt(
-                                alicesClient.userId,
-                                m.eventNum,
-                            )
-                    )
+                timeline?.filter((m) => {
+                    return m.sender.id === alicesClient.userId && isChannelMessage(m)
                 }).length,
-            ).toBe(3)
+            ).toBe(0)
         })
 
         // bob unblocks alice
@@ -148,25 +143,23 @@ describe('userSettingsTests', () => {
         await expect(alicesClient.sendMessage(streamId, 'hello 5th')).resolves.not.toThrow()
         await expect(alicesClient.sendMessage(streamId, 'hello 6th')).resolves.not.toThrow()
 
+        // sleeps are lame, but we want to give the message time to be synced
+        await new Promise((resolve) => setTimeout(resolve, 230))
+
         await waitFor(() => {
             expect(
                 bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
-                    return (
-                        m.creatorUserId === alicesClient.userId &&
-                        isDmChannelPayload(m) &&
-                        bobsClient
-                            .stream(bobsClient.userSettingsStreamId!)
-                            ?.view?.userSettingsContent?.isUserBlockedAt(
-                                alicesClient.userId,
-                                m.eventNum,
-                            )
-                    )
+                    return m.sender.id === alicesClient.userId && isChannelMessage(m)
                 }).length,
-            ).toBe(5)
+            ).toBe(1)
         })
     })
 })
 
-function isDmChannelPayload(m: StreamTimelineEvent): boolean {
-    return m.remoteEvent?.event.payload.case === 'dmChannelPayload'
+function isChannelMessage(m: TimelineEvent): boolean {
+    return (
+        m.content?.kind === RiverTimelineEvent.ChannelMessage ||
+        m.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+        m.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef
+    )
 }

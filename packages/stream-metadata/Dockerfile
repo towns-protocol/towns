@@ -1,4 +1,4 @@
-FROM node:lts-alpine3.20 as builder
+FROM node:lts-alpine3.20 AS builder
 
 WORKDIR /river
 
@@ -28,6 +28,8 @@ COPY ./packages/dlog /river/packages/dlog
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/sdk /river/packages/sdk
 COPY ./packages/encryption /river/packages/encryption
+COPY ./packages/sdk-crypto /river/packages/sdk-crypto
+COPY ./packages/rpc-connector /river/packages/rpc-connector
 COPY ./packages/stream-metadata /river/packages/stream-metadata
 
 # install dependencies and build
@@ -37,7 +39,7 @@ RUN yarn install
 RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
-FROM node:lts-alpine3.20 as runner
+FROM node:lts-alpine3.20 AS runner
 COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-metadata/dist
 
 # install external dependencies that were excluded from the bundle

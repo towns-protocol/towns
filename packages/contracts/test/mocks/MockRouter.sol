@@ -28,4 +28,40 @@ contract MockRouter {
         }
         return amountOut;
     }
+
+    /// @notice Swap function that only consumes a portion of input tokens (for testing refunds)
+    /// @param tokenIn Input token address
+    /// @param tokenOut Output token address
+    /// @param maxAmountIn Maximum amount of input tokens to consume
+    /// @param actualAmountIn Actual amount of input tokens to consume (must be <= maxAmountIn)
+    /// @param amountOut Amount of output tokens to provide
+    /// @param recipient Address to receive output tokens
+    function partialSwap(
+        address tokenIn,
+        address tokenOut,
+        uint256 maxAmountIn,
+        uint256 actualAmountIn,
+        uint256 amountOut,
+        address recipient
+    ) external payable returns (uint256) {
+        require(actualAmountIn <= maxAmountIn, "Cannot consume more than max");
+
+        if (tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
+            // Only consume actualAmountIn, leaving the rest for refund
+            tokenIn.safeTransferFrom(msg.sender, address(this), actualAmountIn);
+        } else {
+            require(msg.value == maxAmountIn, "Incorrect ETH amount");
+            // For ETH, return excess to sender
+            if (actualAmountIn < maxAmountIn) {
+                msg.sender.safeTransferETH(maxAmountIn - actualAmountIn);
+            }
+        }
+
+        if (tokenOut != CurrencyTransfer.NATIVE_TOKEN) {
+            MockERC20(tokenOut).mint(recipient, amountOut);
+        } else {
+            recipient.safeTransferETH(amountOut);
+        }
+        return amountOut;
+    }
 }

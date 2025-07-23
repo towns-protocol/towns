@@ -4,11 +4,8 @@
 
 import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import {
-    DecryptionStatus,
-    GroupEncryptionAlgorithmId,
-    UserDevice,
-} from '@towns-protocol/encryption'
+import { GroupEncryptionAlgorithmId, UserDevice } from '@towns-protocol/encryption'
+import { DecryptionStatus } from '../../decryptionExtensions'
 import {
     makeUserStreamId,
     makeUserSettingsStreamId,
@@ -28,6 +25,7 @@ import {
     TestClient,
     cloneTestClient,
     SignerContextWithWallet,
+    getTimelineMessagePayload,
 } from '../testUtils'
 import {
     CancelSyncResponse,
@@ -48,13 +46,13 @@ import { create, MessageInitShape, toBinary } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { vi } from 'vitest'
 import {
-    DecryptedTimelineEvent,
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
 } from '../../types'
-import { deriveKeyAndIV } from '../../crypto_utils'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
+import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test')
 
@@ -150,10 +148,10 @@ describe('clientTest', () => {
 
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) => getChannelMessagePayload(e.localEvent?.channelMessage) === 'Hello, world!',
+                (e) => getTimelineMessagePayload(e) === 'Hello, world!',
             )
             expect(event).toBeDefined()
-            expect(event?.remoteEvent).toBeDefined()
+            expect(event?.confirmedInBlockNum).toBeDefined()
         })
 
         await bobsClient.stopSync()
@@ -451,23 +449,15 @@ describe('clientTest', () => {
         const onEventDecrypted = (
             streamId: string,
             contentKind: SnapshotCaseType,
-            event: DecryptedTimelineEvent,
+            event: TimelineEvent,
         ): void => {
             try {
                 log(event)
-                const clearEvent = event.decryptedContent
-                check(clearEvent.kind === 'channelMessage')
-                if (
-                    clearEvent?.content.payload?.case === 'post' &&
-                    clearEvent?.content.payload?.value?.content?.case === 'text'
-                ) {
-                    expect(clearEvent?.content.payload?.value?.content.value?.body).toContain(
-                        'Hello, again!',
-                    )
-                    expect(streamId).toBe(channelWithContentId)
-                    //This done should be inside of the if statement to be sure that check happened.
-                    eventDecryptedPromise.done()
-                }
+                check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                expect(event.content.body).toContain('Hello, again!')
+                expect(streamId).toBe(channelWithContentId)
+                //This done should be inside of the if statement to be sure that check happened.
+                eventDecryptedPromise.done()
             } catch (e) {
                 log('onEventDecrypted error', e)
                 eventDecryptedPromise.reject(e)
@@ -483,19 +473,13 @@ describe('clientTest', () => {
                     channelWithContentIdPromise.done()
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('!!!channel content')
-                    log(channel.view)
-                    channel.view.timeline.forEach((x) => {
-                        log('@@@', {
-                            c1: x.remoteEvent?.event.payload.case,
-                            v1: x.remoteEvent?.event.payload.value,
-                            c2: x.remoteEvent?.event.payload.value?.content.case,
-                            b2: x.remoteEvent?.event.payload.value?.content.value,
-                        })
-                    })
+                    log(channel.view.timeline)
+
                     const messages = channel.view.timeline.filter(
                         (x) =>
-                            x.remoteEvent?.event.payload.case === 'channelPayload' &&
-                            x.remoteEvent?.event.payload.value.content.case === 'message',
+                            x.content?.kind === RiverTimelineEvent.ChannelMessage ||
+                            x.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                            x.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                     )
                     expect(messages).toHaveLength(1)
                     //This done should be inside of the if statement to be sure that check happened.
@@ -552,12 +536,10 @@ describe('clientTest', () => {
         ).resolves.not.toThrow()
         await waitFor(() => {
             const event = stream.view.timeline.find(
-                (e) =>
-                    getChannelMessagePayload(e.localEvent?.channelMessage) ===
-                    'Hello, world from Bob!',
+                (e) => getTimelineMessagePayload(e) === 'Hello, world from Bob!',
             )
             expect(event).toBeDefined()
-            expect(event?.remoteEvent).toBeDefined()
+            expect(event?.confirmedInBlockNum).toBeDefined()
         })
 
         log('bobSendsSingleMessage done')
@@ -716,35 +698,26 @@ describe('clientTest', () => {
 
         alicesClient.on(
             'eventDecrypted',
-            (
-                streamId: string,
-                contentKind: SnapshotCaseType,
-                event: DecryptedTimelineEvent,
-            ): void => {
+            (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
                 const channelId = streamId
-                const content = event.decryptedContent.content
+                const content = event.content
                 expect(content).toBeDefined()
                 log('eventDecrypted', 'Alice', channelId)
                 void (async () => {
                     try {
                         expect(channelId).toBe(bobsChannelId)
-                        const clearEvent = event.decryptedContent
-                        check(clearEvent.kind === 'channelMessage')
-                        if (
-                            clearEvent.content.payload?.case === 'post' &&
-                            clearEvent.content.payload?.value?.content?.case === 'text'
-                        ) {
-                            const body = clearEvent.content.payload?.value?.content.value?.body
-                            // @ts-ignore
-                            expect(conversation).toContain(body)
-                            if (body === 'Hello, Alice!') {
-                                await alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                            } else if (body === 'Weather nice?') {
-                                await alicesClient.sendMessage(channelId, 'Sun and rain!')
-                            } else if (body === 'Coffee or tea?') {
-                                await alicesClient.sendMessage(channelId, 'Both!')
-                                aliceGetsMessage.done()
-                            }
+                        check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                        const clearEvent = event.content
+                        const body = clearEvent.body
+                        // @ts-ignore
+                        expect(conversation).toContain(body)
+                        if (body === 'Hello, Alice!') {
+                            await alicesClient.sendMessage(channelId, 'Hello, Bob!')
+                        } else if (body === 'Weather nice?') {
+                            await alicesClient.sendMessage(channelId, 'Sun and rain!')
+                        } else if (body === 'Coffee or tea?') {
+                            await alicesClient.sendMessage(channelId, 'Both!')
+                            aliceGetsMessage.done()
                         }
                     } catch (e) {
                         log('streamInitialized error', e)
@@ -756,35 +729,26 @@ describe('clientTest', () => {
 
         bobsClient.on(
             'eventDecrypted',
-            (
-                streamId: string,
-                contentKind: SnapshotCaseType,
-                event: DecryptedTimelineEvent,
-            ): void => {
+            (streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void => {
                 const channelId = streamId
-                const content = event.decryptedContent.content
+                const content = event.content
                 expect(content).toBeDefined()
                 log('eventDecrypted', 'Bob', channelId)
 
                 void (async () => {
                     try {
                         expect(channelId).toBe(bobsChannelId)
-                        const clearEvent = event.decryptedContent
-                        check(clearEvent.kind === 'channelMessage')
-                        if (
-                            clearEvent.content?.payload?.case === 'post' &&
-                            clearEvent.content?.payload?.value?.content?.case === 'text'
-                        ) {
-                            const body = clearEvent.content?.payload?.value?.content.value?.body
-                            // @ts-ignore
-                            expect(conversation).toContain(body)
-                            if (body === 'Hello, Bob!') {
-                                await bobsClient.sendMessage(channelId, 'Weather nice?')
-                            } else if (body === 'Sun and rain!') {
-                                await bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                            } else if (body === 'Both!') {
-                                bobGetsMessage.done()
-                            }
+                        check(event.content?.kind === RiverTimelineEvent.ChannelMessage)
+                        const clearEvent = event.content
+                        const body = clearEvent.body
+                        // @ts-ignore
+                        expect(conversation).toContain(body)
+                        if (body === 'Hello, Bob!') {
+                            await bobsClient.sendMessage(channelId, 'Weather nice?')
+                        } else if (body === 'Sun and rain!') {
+                            await bobsClient.sendMessage(channelId, 'Coffee or tea?')
+                        } else if (body === 'Both!') {
+                            bobGetsMessage.done()
                         }
                     } catch (e) {
                         log('streamInitialized error', e)

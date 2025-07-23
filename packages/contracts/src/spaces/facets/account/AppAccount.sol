@@ -18,14 +18,6 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @dev This account is used to execute transactions on behalf of a Space
  */
 contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
-    /// @notice Validates if the target address is allowed for calls
-    /// @dev Prevents calls to critical system contracts
-    /// @param target The contract address to check
-    modifier onlyAuthorized(address target) {
-        _checkAuthorized(target);
-        _;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Execution                             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -34,8 +26,8 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         address target,
         uint256 value,
         bytes calldata data
-    ) external payable onlyAuthorized(target) nonReentrant returns (bytes memory result) {
-        (result, ) = _execute(target, value, data);
+    ) external payable nonReentrant returns (bytes memory result) {
+        result = _onExecute(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -43,12 +35,26 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IAppAccount
-    function installApp(
-        address app,
-        bytes calldata data,
-        AppParams calldata params
-    ) external nonReentrant onlyOwner {
-        _installApp(app, params.delays, data);
+    function onInstallApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry();
+        _installApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function onUninstallApp(bytes32 appId, bytes calldata data) external {
+        _onlyRegistry();
+        _uninstallApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function onRenewApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry();
+        _onRenewApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function enableApp(address app) external onlyOwner {
+        _enableApp(app);
     }
 
     /// @inheritdoc IAppAccount
@@ -57,23 +63,23 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
-    function uninstallApp(address app, bytes calldata data) external onlyOwner {
-        _uninstallApp(app, data);
-    }
-
-    /// @inheritdoc IAppAccount
     function getInstalledApps() external view returns (address[] memory) {
         return _getApps();
     }
 
     /// @inheritdoc IAppAccount
-    function getAppId(address app) external view returns (bytes32) {
-        return _getAppId(app);
+    function isAppInstalled(address app) external view returns (bool) {
+        return _isAppInstalled(app);
     }
 
     /// @inheritdoc IAppAccount
-    function getClients(address app) external view returns (address[] memory) {
-        return _getClients(app);
+    function getAppId(address app) external view returns (bytes32) {
+        return _getInstalledAppId(app);
+    }
+
+    /// @inheritdoc IAppAccount
+    function getAppExpiration(address app) external view returns (uint48) {
+        return _getGroupExpiration(_getInstalledAppId(app));
     }
 
     /// @inheritdoc IAppAccount
@@ -82,6 +88,6 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         address publicKey,
         bytes32 permission
     ) external view returns (bool) {
-        return _isEntitled(app, publicKey, permission);
+        return _isAppEntitled(app, publicKey, permission);
     }
 }

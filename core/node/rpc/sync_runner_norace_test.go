@@ -225,7 +225,6 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 			numNodes:          testCfg.numNodes,
 			replicationFactor: testCfg.replFactor,
 			start:             true,
-			printTestLogs:     false,
 		},
 	)
 	ctx := tt.ctx
@@ -252,6 +251,7 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 		tt.btc.DeployerBlockchain.ChainMonitor,
 		tt.btc.OnChainConfig,
 		tt.httpClient(),
+		tt.httpClientWithCert(0),
 		nil,
 	)
 	require.NoError(err, "Error creating node registry for multi-sync runner")
@@ -489,7 +489,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	replFactor := 5
 	tt := newServiceTester(
 		t,
-		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true, printTestLogs: false},
+		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true},
 	)
 	ctx := tt.ctx
 	require := tt.require
@@ -515,6 +515,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		tt.btc.DeployerBlockchain.ChainMonitor,
 		tt.btc.OnChainConfig,
 		tt.httpClient(),
+		tt.httpClientWithCert(0),
 		nil,
 	)
 	require.NoError(err, "Error creating node registry for multi-sync runner")

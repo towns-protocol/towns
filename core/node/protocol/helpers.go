@@ -4,6 +4,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	// UseSharedSyncHeaderName is the header name that indicates whether to use the shared syncer or not.
+	UseSharedSyncHeaderName = "X-Use-Shared-Sync"
+)
+
 func (e *StreamEvent) GetStreamSettings() *StreamSettings {
 	if e == nil {
 		return nil
@@ -64,22 +69,32 @@ func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
 	return x.Snapshots[num]
 }
 
-// GetSnapshotByMiniblockIndex returns the snapshot by the given miniblock index in the list.
-// StreamAndCookie contains a list of miniblocks starting from the latest snapshot.
-// Meaning the first miniblock in the list is the latest snapshot.
-// Meaning it returns the snapshot only when i is 0.
-func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
-	if i == 0 {
-		return x.GetSnapshot()
+// TargetSyncIDs returns the list of target sync IDs from the ModifySyncRequest.
+func (r *ModifySyncRequest) TargetSyncIDs() []string {
+	var targetSyncIds []string
+
+	if r.SyncId != "" {
+		targetSyncIds = append(targetSyncIds, r.SyncId)
 	}
 
-	return nil
+	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.SyncId {
+		targetSyncIds = append(targetSyncIds, r.GetBackfillStreams().GetSyncId())
+	}
+
+	return targetSyncIds
 }
 
-// IsSnapshot returns true if the miniblock header has a snapshot.
-func (x *MiniblockHeader) IsSnapshot() bool {
-	if x == nil {
-		return false
+// StreamID returns the stream ID from the SyncStreamsResponse.
+// Depending on the operation type, it can be either from the message itself
+// or from the next sync cookie of the stream.
+func (r *SyncStreamsResponse) StreamID() []byte {
+	if r == nil {
+		return nil
 	}
-	return x.GetSnapshot() != nil || len(x.GetSnapshotHash()) > 0
+
+	if r.GetSyncOp() == SyncOp_SYNC_DOWN {
+		return r.GetStreamId()
+	}
+
+	return r.GetStream().GetNextSyncCookie().GetStreamId()
 }

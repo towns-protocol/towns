@@ -16,16 +16,16 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
@@ -144,7 +144,14 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	syncPos := append(users, channels...)
 	syncOp, err := river_sync.NewStreamsSyncOperation(
-		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry, nil)
+		ctx,
+		syncID,
+		node1.address,
+		node1.service.cache,
+		node1.service.nodeRegistry,
+		subscription.NewManager(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil),
+		nil, nil,
+	)
 	req.NoError(err, "NewStreamsSyncOperation")
 
 	syncOpResult := make(chan error)
@@ -153,7 +160,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	// run the subscription in the background that takes a long time for each update to send to the client.
 	// this must cancel the sync op with a buffer too full error.
 	go func() {
-		slowSubscriber := slowStreamsResponseSender{sendDuration: 250 * time.Millisecond}
+		slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
 		syncOpErr := syncOp.Run(connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}), slowSubscriber)
 		syncOpStopped.Store(true)
 		syncOpResult <- syncOpErr
@@ -172,7 +179,13 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
 			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:],nil),
+				events.Make_UserPayload_Membership(
+					protocol.MembershipOp_SO_JOIN,
+					channelId,
+					common.Address{},
+					spaceID[:],
+					nil,
+				),
 				MiniblockRefFromLastHash(miniBlockHashResp.Msg),
 			)
 			req.NoError(err)
@@ -188,7 +201,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 			)
 
 			req.NoError(err)
-			req.Nil(resp.Msg.GetError())
+			req.NotNil(resp.Msg)
 		}
 	}
 
@@ -295,7 +308,12 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 
 	// subscribe to channel updates
 	syncPos := append(users, channels...)
-	syncRes, err := client1.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}))
+
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+
+	syncRes, err := client1.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
 
 	syncRes.Receive()
@@ -388,7 +406,13 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
 			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallet,
-				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:], nil),
+				events.Make_UserPayload_Membership(
+					protocol.MembershipOp_SO_JOIN,
+					channelId,
+					common.Address{},
+					spaceID[:],
+					nil,
+				),
 				&MiniblockRef{
 					Hash: common.BytesToHash(miniBlockHashResp.Msg.GetHash()),
 					Num:  miniBlockHashResp.Msg.GetMiniblockNum(),
@@ -407,7 +431,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 			)
 
 			req.NoError(err)
-			req.Nil(resp.Msg.GetError())
+			req.NotNil(resp.Msg)
 		}
 	}
 
@@ -446,7 +470,8 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		mu.Unlock()
 
 		return count == streamsDownCounter
-	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message: %d != %d",
+		streamsDownCounter, len(streamDownMessages))
 
 	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
 

@@ -51,15 +51,22 @@ contract MockSavingsModule is OwnableFacet, ITownsApp {
         return _owner();
     }
 
-    /**
-     * @notice Returns the required permissions for the module
-     * @return permissions The required permissions for the module
-     */
+    /// @inheritdoc ITownsApp
     function requiredPermissions() external pure returns (bytes32[] memory) {
         bytes32[] memory permissions = new bytes32[](2);
         permissions[0] = keccak256("Read");
         permissions[1] = keccak256("Write");
         return permissions;
+    }
+
+    /// @inheritdoc ITownsApp
+    function installPrice() external pure returns (uint256) {
+        return 0;
+    }
+
+    /// @inheritdoc ITownsApp
+    function accessDuration() external pure returns (uint48) {
+        return 0;
     }
 
     /**

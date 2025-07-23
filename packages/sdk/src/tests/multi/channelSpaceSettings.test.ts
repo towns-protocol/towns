@@ -63,11 +63,11 @@ describe('channelSpaceSettingsTests', () => {
 
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 2)
-            check(channelMetadata.get(defaultChannelId)?.isAutojoin === true)
-            check(channelMetadata.get(defaultChannelId)?.hideUserJoinLeaveEvents === false)
-            check(channelMetadata.get(channel1Id!)?.isAutojoin === false)
-            check(channelMetadata.get(channel1Id!)?.hideUserJoinLeaveEvents === false)
+            check(Object.keys(channelMetadata).length === 2)
+            check(channelMetadata[defaultChannelId]?.isAutojoin === true)
+            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === false)
+            check(channelMetadata[channel1Id!]?.isAutojoin === false)
+            check(channelMetadata[channel1Id!]?.hideUserJoinLeaveEvents === false)
         })
     })
 
@@ -113,9 +113,9 @@ describe('channelSpaceSettingsTests', () => {
 
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 2)
-            check(channelMetadata.get(announcementStreamId)?.isAutojoin === true)
-            check(channelMetadata.get(announcementStreamId)?.hideUserJoinLeaveEvents === true)
+            check(Object.keys(channelMetadata).length === 2)
+            check(channelMetadata[announcementStreamId]?.isAutojoin === true)
+            check(channelMetadata[announcementStreamId]?.hideUserJoinLeaveEvents === true)
         })
     })
 
@@ -165,18 +165,13 @@ describe('channelSpaceSettingsTests', () => {
         // Default channel only should be autojoin by default
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 2)
-            check(channelMetadata.get(defaultChannelId)?.isAutojoin === true)
-            check(channelMetadata.get(channel1Id!)?.isAutojoin === false)
+            check(Object.keys(channelMetadata).length === 2)
+            check(channelMetadata[defaultChannelId]?.isAutojoin === true)
+            check(channelMetadata[channel1Id!]?.isAutojoin === false)
         })
 
         // Set channel1 to autojoin=true
-        const { eventId, error: error3 } = await bob.updateChannelAutojoin(
-            spaceId,
-            channel1Id!,
-            true,
-        )
-        expect(error3).toBeUndefined()
+        const { eventId } = await bob.updateChannelAutojoin(spaceId, channel1Id!, true)
         expect(eventId).toBeDefined()
 
         // Validate autojoin event was emitted for channel1
@@ -188,7 +183,7 @@ describe('channelSpaceSettingsTests', () => {
         // Expect autojoin change to sync to space stream view
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.get(channel1Id!)?.isAutojoin === true)
+            check(channelMetadata[channel1Id!]?.isAutojoin === true)
         })
     })
 
@@ -222,8 +217,8 @@ describe('channelSpaceSettingsTests', () => {
         expect(spaceStreamView).toBeDefined()
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 1)
-            check(channelMetadata.get(defaultChannelId)?.isAutojoin === true)
+            check(Object.keys(channelMetadata).length === 1)
+            check(channelMetadata[defaultChannelId]?.isAutojoin === true)
         })
 
         // Unpermitted user alice should not be able to update autojoin.
@@ -275,8 +270,8 @@ describe('channelSpaceSettingsTests', () => {
         // Validate autojoin event was applied on client
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 1)
-            check(channelMetadata.get(defaultChannelId)?.isAutojoin === false)
+            check(Object.keys(channelMetadata).length === 1)
+            check(channelMetadata[defaultChannelId]?.isAutojoin === false)
         })
     })
 
@@ -309,17 +304,16 @@ describe('channelSpaceSettingsTests', () => {
         // All channels show join/leave events by default
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 1)
-            check(channelMetadata.get(defaultChannelId)?.hideUserJoinLeaveEvents === false)
+            check(Object.keys(channelMetadata).length === 1)
+            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === false)
         })
 
         // Set channel1 to hideUserJoinLeaveEvents=true
-        const { eventId, error: error2 } = await bob.updateChannelHideUserJoinLeaveEvents(
+        const { eventId } = await bob.updateChannelHideUserJoinLeaveEvents(
             spaceId,
             defaultChannelId,
             true,
         )
-        expect(error2).toBeUndefined()
         expect(eventId).toBeDefined()
 
         // Validate updateHideUserJoinLeaveEvent event was emitted for channel1
@@ -331,7 +325,7 @@ describe('channelSpaceSettingsTests', () => {
         // Expect hideUserJoinLeaveEvents change to sync to space stream view
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.get(defaultChannelId)?.hideUserJoinLeaveEvents === true)
+            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === true)
         })
     })
 
@@ -365,8 +359,8 @@ describe('channelSpaceSettingsTests', () => {
         expect(spaceStreamView).toBeDefined()
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 1)
-            check(channelMetadata.get(defaultChannelId)?.hideUserJoinLeaveEvents === false)
+            check(Object.keys(channelMetadata).length === 1)
+            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === false)
         })
 
         // Unpermitted user alice should not be able to update hideUserJoinLeaveEvents.
@@ -418,8 +412,8 @@ describe('channelSpaceSettingsTests', () => {
         // Validate updateHideUserJoinLeaveEvents event was applied on client
         await waitFor(() => {
             const channelMetadata = spaceStreamView.spaceChannelsMetadata
-            check(channelMetadata.size === 1)
-            check(channelMetadata.get(defaultChannelId)?.hideUserJoinLeaveEvents === true)
+            check(Object.keys(channelMetadata).length === 1)
+            check(channelMetadata[defaultChannelId]?.hideUserJoinLeaveEvents === true)
         })
     })
 })

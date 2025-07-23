@@ -13,8 +13,7 @@ import (
 )
 
 func TestEqualAndCopy(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	nodeWallet1, _ := crypto.NewWallet(ctx)
 	nodeWallet2, _ := crypto.NewWallet(ctx)
 	require.True(t, SyncCookieEqual(nil, nil))

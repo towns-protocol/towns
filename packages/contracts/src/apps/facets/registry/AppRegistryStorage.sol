@@ -18,6 +18,10 @@ library AppRegistryStorage {
         bool isBanned;
     }
 
+    struct ClientInfo {
+        address app;
+    }
+
     struct Layout {
         // Registered schema ID
         bytes32 schemaId;
@@ -25,6 +29,10 @@ library AppRegistryStorage {
         mapping(address => AppInfo) apps;
         // Simple app beacon
         address beacon;
+        // Space factory
+        address spaceFactory;
+        // client => ClientInfo
+        mapping(address => ClientInfo) client;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

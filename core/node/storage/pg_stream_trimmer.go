@@ -50,7 +50,7 @@ func newStreamTrimmer(
 ) *streamTrimmer {
 	st := &streamTrimmer{
 		ctx:               ctx,
-		log:               logging.FromCtx(ctx).Named("streamTrimmer"),
+		log:               logging.FromCtx(ctx).Named("stream-trimmer"),
 		store:             store,
 		miniblocksToKeep:  miniblocksToKeep,
 		trimmingBatchSize: trimmingBatchSize,

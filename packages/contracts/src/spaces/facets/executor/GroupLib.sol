@@ -14,9 +14,15 @@ library GroupLib {
     using Time for uint32;
 
     /// @notice Sets the status of a group.
-    /// @param status The status of the group.
+    /// @param status The status to set.
     function setStatus(Group storage self, bool status) internal {
         self.active = status;
+    }
+
+    /// @notice Sets the expiration of a group.
+    /// @param expiration The expiration of the group.
+    function setExpiration(Group storage self, uint48 expiration) internal {
+        self.expiration = expiration;
     }
 
     /// @notice Sets the guardian for a group.
@@ -90,17 +96,21 @@ library GroupLib {
         return (since, currentDelay, pendingDelay, effect);
     }
 
-    /// @notice Checks if a group has access to a module.
-    /// @param module The module to check access for.
-    /// @return isMember True if the account is a member, false otherwise.
+    /// @notice Checks if an account has access to a group.
+    /// @param group The group to check.
+    /// @param account The account to check.
+    /// @return isMember True if the account is a member.
     /// @return executionDelay The execution delay for the account.
-    /// @return active True if the group is active, false otherwise.
     function hasAccess(
-        Group storage self,
-        address module
-    ) internal view returns (bool isMember, uint32 executionDelay, bool active) {
-        (uint48 hasRoleSince, uint32 currentDelay, , ) = getAccess(self, module);
-        return (hasRoleSince != 0 && hasRoleSince <= Time.timestamp(), currentDelay, self.active);
+        Group storage group,
+        address account
+    ) internal view returns (bool isMember, uint32 executionDelay) {
+        Access storage access = group.members[account];
+        uint48 since = access.lastAccess;
+        (executionDelay, , ) = access.delay.getFull();
+
+        // Check if member has valid access time
+        isMember = since != 0 && since <= Time.timestamp();
     }
 
     /// @notice Gets the guardian for a group.
@@ -110,8 +120,9 @@ library GroupLib {
     }
 
     /// @notice Gets the grant delay for a group.
-    /// @return The grant delay in seconds.
-    function getGrantDelay(Group storage self) internal view returns (uint32) {
-        return self.grantDelay.get();
+    /// @param group The group to check.
+    /// @return The grant delay for the group.
+    function getGrantDelay(Group storage group) internal view returns (uint32) {
+        return group.grantDelay.get();
     }
 }

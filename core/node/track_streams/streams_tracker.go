@@ -3,10 +3,11 @@ package track_streams
 import (
 	"context"
 	"slices"
-	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -60,7 +61,7 @@ type StreamsTrackerImpl struct {
 	onChainConfig   crypto.OnChainConfiguration
 	listener        StreamEventListener
 	metrics         *TrackStreamsSyncMetrics
-	tracked         sync.Map // map[shared.StreamId] = struct{}
+	tracked         *xsync.Map[shared.StreamId, struct{}]
 	multiSyncRunner *MultiSyncRunner
 }
 
@@ -90,6 +91,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		streamTracking,
 		nil,
 	)
+	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 
 	// Subscribe to stream events in river registry
 	if err := tracker.riverRegistry.OnStreamEvent(
@@ -202,7 +204,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 }
 
 func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
-	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(nil, streamId)
+	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")

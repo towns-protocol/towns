@@ -2,41 +2,37 @@
 pragma solidity ^0.8.23;
 
 // utils
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
-import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 // interfaces
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
+import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "src/tokens/towns/mainnet/ITowns.sol";
+import {IAppRegistry, IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
+import {ITownsApp} from "src/apps/ITownsApp.sol";
 
 // libraries
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {TownsLib} from "src/tokens/towns/base/TownsLib.sol";
 
 // contracts
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
-import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {MockMessenger} from "test/mocks/MockMessenger.sol";
 
 // deployments
-import {Architect} from "src/factory/facets/architect/Architect.sol";
-import {RuleEntitlement} from "src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {SpaceHelper} from "test/spaces/SpaceHelper.sol";
-import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
-import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
-
-// deployments
-
 import {DeployAppRegistry} from "scripts/deployments/diamonds/DeployAppRegistry.s.sol";
 import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
@@ -66,11 +62,16 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address[] internal nodes;
 
     address internal deployer;
+
+    uint256 internal founderPrivateKey;
     address internal founder;
     address internal space;
     address internal everyoneSpace;
     address internal spaceFactory;
     address internal spaceDiamond;
+
+    address internal appDeveloper;
+    address internal appClient;
 
     address internal userEntitlement;
     address internal ruleEntitlement;
@@ -127,7 +128,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         townsToken = deployTokenBase.deploy(deployer);
 
         // Base Registry
-        deployBaseRegistry.setDependencies({riverToken_: townsToken});
         baseRegistry = deployBaseRegistry.deploy(deployer);
         entitlementChecker = IEntitlementChecker(baseRegistry);
         nodeOperator = INodeOperator(baseRegistry);
@@ -167,6 +167,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         riverAirdrop = deployRiverAirdrop.deploy(deployer);
 
         // App Registry
+        deployAppRegistry.setSpaceFactory(spaceFactory);
         appRegistry = deployAppRegistry.deploy(deployer);
 
         // Base Registry Diamond
@@ -178,15 +179,18 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
-        ISpaceDelegation(baseRegistry).setRiverToken(townsToken);
-        ISpaceDelegation(baseRegistry).setMainnetDelegation(baseRegistry);
         IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
         ISpaceDelegation(baseRegistry).setSpaceFactory(spaceFactory);
         MockMessenger(messenger).setXDomainMessageSender(mainnetProxyDelegation);
         vm.stopPrank();
 
         // create a new space
-        founder = _randomAddress();
+        founderPrivateKey = boundPrivateKey(_randomUint256());
+        founder = vm.addr(founderPrivateKey);
+        vm.label(founder, "founder");
+
+        appDeveloper = makeAddr("appDeveloper");
+        appClient = makeAddr("appClient");
 
         // Create the arguments necessary for creating a space
         IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo("BaseSetupSpace");
@@ -266,5 +270,35 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     function _createSimpleAccount(address owner) internal returns (SimpleAccount) {
         return simpleAccountFactory.createAccount(owner, _randomUint256());
+    }
+
+    function _createTestApp(bytes32[] memory permissions) internal returns (address app) {
+        IAppRegistryBase.AppParams memory appParams = IAppRegistryBase.AppParams({
+            name: "Test App",
+            permissions: permissions,
+            client: appClient,
+            installPrice: 0,
+            accessDuration: 0
+        });
+
+        vm.prank(appDeveloper);
+        (app, ) = IAppRegistry(appRegistry).createApp(appParams);
+    }
+
+    function _installAppOnEveryoneSpace(address app) internal {
+        uint256 totalRequired = IAppRegistry(appRegistry).getAppPrice(app);
+        vm.deal(address(founder), totalRequired);
+
+        vm.prank(founder);
+        IAppRegistry(appRegistry).installApp{value: totalRequired}({
+            app: ITownsApp(app),
+            account: IAppAccount(everyoneSpace),
+            data: ""
+        });
+    }
+
+    function _uninstallAppOnEveryoneSpace(address app) internal {
+        vm.prank(founder);
+        IAppRegistry(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
     }
 }

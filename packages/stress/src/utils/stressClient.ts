@@ -26,7 +26,7 @@ export async function makeStressClient(
     clientIndex: number,
     inWallet: Wallet | undefined,
     globalPersistedStore: IStorage | undefined,
-) {
+): Promise<StressClient> {
     const bot = new Bot(inWallet, config)
     const storageKey = `stressclient_${bot.userId}_${config.environmentId}`
     const logId = `client${clientIndex}:${shortenHexString(bot.userId)}`
@@ -164,7 +164,7 @@ export class StressClient {
         }
         const stream = streamsClient.stream(streamId)
         const streamStateView = stream?.view ?? (await streamsClient.getStream(streamId))
-        return streamStateView.userIsEntitledToKeyExchange(this.userId)
+        return streamStateView.membershipContent.joinedParticipants().has(this.userId)
     }
 
     async createSpace(spaceName: string) {

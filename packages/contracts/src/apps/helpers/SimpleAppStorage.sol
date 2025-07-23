@@ -15,7 +15,8 @@ library SimpleAppStorage {
     struct Layout {
         string name;
         bytes32[] permissions;
-        address[] clients;
+        uint256 installPrice;
+        uint48 accessDuration;
     }
 
     function getLayout() internal pure returns (Layout storage l) {

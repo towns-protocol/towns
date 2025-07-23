@@ -6,17 +6,15 @@ import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {DeployFacet} from "scripts/common/DeployFacet.s.sol";
 import {DeployDiamond} from "@towns-protocol/diamond/scripts/deployments/diamonds/DeployDiamond.s.sol";
 import {DeployExecutorFacet} from "scripts/deployments/facets/DeployExecutorFacet.s.sol";
-import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
-import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/executor/IExecutor.sol";
 
 //libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 
 //contracts
 import {ExecutorFacet} from "src/spaces/facets/executor/ExecutorFacet.sol";
@@ -161,5 +159,188 @@ contract ExecutorTest is IOwnableBase, TestUtils, IDiamond {
 
         // Assert that the receiver received the token
         assertEq(mockERC721.balanceOf(receiver), 1);
+    }
+
+    function test_grantAccessWithExpiration() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 expiration = uint48(block.timestamp + 1 days);
+        uint48 lastAccess = Time.timestamp() + executor.getGroupDelay(groupId);
+
+        vm.prank(founder);
+        vm.expectEmit(address(executor));
+        emit IExecutorBase.GroupAccessGranted(groupId, account, executionDelay, lastAccess, true);
+        bool newMember = executor.grantAccessWithExpiration(
+            groupId,
+            account,
+            executionDelay,
+            expiration
+        );
+        assertEq(newMember, true);
+
+        // Check access is granted
+        (bool isMember, uint32 delay, bool active) = executor.hasAccess(groupId, account);
+        assertEq(isMember, true);
+        assertEq(delay, executionDelay);
+        assertEq(active, true);
+
+        // Warp past expiration
+        vm.warp(block.timestamp + 2 days);
+
+        // Check access is expired
+        (isMember, delay, active) = executor.hasAccess(groupId, account);
+        assertEq(isMember, true);
+        assertEq(delay, executionDelay);
+        assertEq(active, false);
+    }
+
+    function test_revertWhen_grantAccessWithExpiration_invalidExpiration() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 expiration = uint48(block.timestamp - 1); // Past expiration
+
+        vm.prank(founder);
+        vm.expectRevert(IExecutorBase.InvalidExpiration.selector);
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, expiration);
+    }
+
+    function test_extendExpiration() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 initialExpiration = uint48(block.timestamp + 1 days);
+        uint48 newExpiration = uint48(block.timestamp + 2 days);
+
+        // Grant initial access with expiration
+        vm.startPrank(founder);
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, initialExpiration);
+
+        // Extend expiration
+        vm.expectEmit(address(executor));
+        emit IExecutorBase.GroupExpirationSet(groupId, newExpiration);
+        executor.setGroupExpiration(groupId, newExpiration);
+        vm.stopPrank();
+
+        // Warp past initial expiration but before new expiration
+        vm.warp(block.timestamp + 1.5 days);
+
+        // Check access is still active
+        (, , bool active) = executor.hasAccess(groupId, account);
+        assertEq(active, true);
+    }
+
+    function test_reactivateExpiredGroup() external {
+        bytes32 groupId = _randomBytes32();
+        address account = _randomAddress();
+        uint32 executionDelay = 100;
+        uint48 initialExpiration = uint48(block.timestamp + 1 days);
+        uint48 newExpiration = uint48(block.timestamp + 3 days);
+
+        // Grant initial access with expiration
+        vm.startPrank(founder);
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, initialExpiration);
+
+        // Warp past expiration
+        vm.warp(block.timestamp + 2 days);
+
+        // Check access is expired
+        (, , bool active) = executor.hasAccess(groupId, account);
+        assertEq(active, false);
+
+        // Reactivate with new expiration
+        executor.grantAccessWithExpiration(groupId, account, executionDelay, newExpiration);
+
+        // Check access is active again
+        (, , active) = executor.hasAccess(groupId, account);
+        assertEq(active, true);
+        vm.stopPrank();
+    }
+
+    function test_onExecution() external {
+        address caller = _randomAddress();
+        bytes32 groupId = _randomBytes32();
+
+        TargetA groupMock = new TargetA(executor, new TargetB(executor));
+
+        vm.startPrank(founder);
+        executor.grantAccess(groupId, caller, 0);
+        executor.setTargetFunctionGroup(
+            address(groupMock),
+            groupMock.callExecutor.selector,
+            groupId
+        );
+        vm.stopPrank();
+
+        assertEq(executor.onExecution(address(groupMock)), false);
+
+        vm.prank(caller);
+        executor.execute(address(groupMock), 0, abi.encodeCall(groupMock.callExecutor, ()));
+
+        assertEq(executor.onExecution(address(groupMock)), false);
+    }
+
+    function test_onExecution_targetB() external {
+        address caller = _randomAddress();
+        bytes32 groupId = _randomBytes32();
+
+        TargetB targetB = new TargetB(executor);
+        TargetA targetA = new TargetA(executor, targetB);
+
+        vm.startPrank(founder);
+        executor.grantAccess(groupId, caller, 0);
+        executor.grantAccess(groupId, address(targetB), 0);
+        executor.setTargetFunctionGroup(address(targetA), targetA.callTargetB.selector, groupId);
+        executor.setTargetFunctionGroup(address(targetB), targetB.someFunction.selector, groupId);
+        executor.setTargetFunctionGroup(address(targetB), targetB.foo.selector, groupId);
+        vm.stopPrank();
+
+        assertEq(executor.onExecution(address(targetB)), false);
+
+        vm.prank(caller);
+        executor.execute(address(targetA), 0, abi.encodeCall(targetA.callTargetB, ()));
+    }
+}
+
+contract TargetB {
+    ExecutorFacet internal executor;
+
+    constructor(ExecutorFacet executor_) {
+        executor = executor_;
+    }
+
+    function someFunction() external {
+        executor.execute(address(this), 0, abi.encodeWithSelector(this.foo.selector));
+    }
+
+    function foo() external view returns (bool) {
+        if (!executor.onExecution(address(this))) {
+            revert();
+        }
+
+        return true;
+    }
+}
+
+contract TargetA {
+    ExecutorFacet internal executor;
+    TargetB internal targetB;
+
+    constructor(ExecutorFacet executor_, TargetB targetB_) {
+        executor = executor_;
+        targetB = targetB_;
+    }
+
+    function callExecutor() external view returns (bool) {
+        if (!executor.onExecution(address(this))) {
+            revert();
+        }
+
+        return true;
+    }
+
+    function callTargetB() external {
+        LibCall.callContract(address(targetB), 0, abi.encodeCall(targetB.someFunction, ()));
     }
 }

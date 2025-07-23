@@ -23,6 +23,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -283,6 +284,11 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
+	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(
+		ctx,
+		nil,
+		node2nodeauth.CertGetter(nil, wallet, tester.btc.ChainId),
+	)
 	var nodeRegistry nodes.NodeRegistry
 	nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
@@ -292,6 +298,7 @@ func TestArchiveOneStream(t *testing.T) {
 		bc.ChainMonitor,
 		tester.btc.OnChainConfig,
 		httpClient,
+		httpClientWithCert,
 		nil,
 	)
 	require.NoError(err)
@@ -302,8 +309,8 @@ func TestArchiveOneStream(t *testing.T) {
 
 	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
-	tester.cleanup(pool.Pool.Close)
-	tester.cleanup(pool.StreamingPool.Close)
+	tester.t.Cleanup(pool.Pool.Close)
+	tester.t.Cleanup(pool.StreamingPool.Close)
 
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,
@@ -401,9 +408,10 @@ func TestArchiveOneStream(t *testing.T) {
 func makeTestServerOpts(tester *serviceTester) *ServerStartOpts {
 	listener, _ := tester.makeTestListener()
 	return &ServerStartOpts{
-		RiverChain:      tester.btc.NewWalletAndBlockchain(tester.ctx),
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+		RiverChain:              tester.btc.NewWalletAndBlockchain(tester.ctx),
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
 	}
 }
 
@@ -461,7 +469,7 @@ func TestArchiveContinuous(t *testing.T) {
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), false)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
 

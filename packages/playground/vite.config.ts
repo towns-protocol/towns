@@ -1,8 +1,6 @@
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-oxc'
 import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite'
 import { default as checker } from 'vite-plugin-checker'
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import { replaceCodePlugin } from 'vite-plugin-replace'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import wasm from 'vite-plugin-wasm'
 import path from 'path'
@@ -24,28 +22,12 @@ export default ({ mode }: { mode: string }) => {
         plugins: [
             wasm(),
             tsconfigPaths(),
-            replaceCodePlugin({
-                replacements: [
-                    {
-                        from: `if ((crypto && crypto.getRandomValues) || !process.browser) {
-  exports.randomFill = randomFill
-  exports.randomFillSync = randomFillSync
-} else {
-  exports.randomFill = oldBrowser
-  exports.randomFillSync = oldBrowser
-}`,
-                        to: `exports.randomFill = randomFill
-exports.randomFillSync = randomFillSync`,
-                    },
-                ],
-            }),
             checker({
                 typescript: true,
                 eslint: {
                     lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
                 },
             }),
-            nodePolyfills(),
             react(),
         ],
         resolve: {
@@ -64,6 +46,9 @@ exports.randomFillSync = randomFillSync`,
         },
         optimizeDeps: {
             exclude: ['@towns-protocol/olm'],
+        },
+        experimental: {
+            enableNativePlugin: true,
         },
     })
 }

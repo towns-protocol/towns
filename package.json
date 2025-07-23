@@ -37,6 +37,9 @@
         "test:build": "turbo test:build",
         "test:unit": "turbo test:unit -- --silent"
     },
+    "dependencies": {
+        "pino-pretty": "^13.0.0"
+    },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
         "@typechain/ethers-v5": "^10.1.1",
@@ -51,10 +54,10 @@
         "publint": "^0.2.8",
         "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
-        "turbo": "^2.0.12",
+        "turbo": "^2.5.4",
         "typechain": "^8.1.1",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5",
+        "vitest": "^3.2.3",
         "wait-on": "^7.0.1"
     },
     "husky": {
@@ -111,9 +114,7 @@
         "protocol",
         "packages/*",
         "packages/workers/*",
+        "packages/examples/*",
         "services/*"
-    ],
-    "dependencies": {
-        "pino-pretty": "^13.0.0"
-    }
+    ]
 }

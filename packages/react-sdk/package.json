@@ -1,21 +1,18 @@
 {
     "name": "@towns-protocol/react-sdk",
     "description": "React Hooks for Towns Protocol SDK",
-    "version": "0.0.238",
+    "version": "0.0.283",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "yarn run clean && yarn run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
-        "lint": "eslint ./src --max-warnings=0",
+        "clean": "rm -rf dist tsconfig.tsbuildinfo",
         "gen": "yarn gen:extractor && yarn gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
         "gen:extractor": "api-extractor run --local",
-        "clean": "rm -rf dist tsconfig.tsbuildinfo",
+        "lint": "eslint ./src --max-warnings=0",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
         "watch": "yarn build -w"
@@ -30,8 +27,8 @@
         "@microsoft/tsdoc": "^0.15.0",
         "@microsoft/tsdoc-config": "^0.17.0",
         "@types/node": "^20.14.8",
-        "@types/react": "^18.2.11",
-        "@types/react-dom": "^18.2.4",
+        "@types/react": "^19.1.8",
+        "@types/react-dom": "^19.1.6",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "eslint": "^8.57.1",
@@ -39,8 +36,8 @@
         "eslint-plugin-react": "^7.32.2",
         "eslint-plugin-react-hooks": "^4.6.0",
         "eslint-plugin-tsdoc": "^0.3.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
         "ts-morph": "^24.0.0",
         "tsx": "^4.7.1",
         "typescript": "^5.8.2"
@@ -60,8 +57,11 @@
         "web3"
     ],
     "peerDependencies": {
-        "react": "^18.2.0",
+        "react": "^18.2 || ^19.0",
         "typescript": "^5"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "repository": {
         "type": "git",

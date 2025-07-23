@@ -1,8 +1,9 @@
-import { Client, createClient } from '@connectrpc/connect'
-import { ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
+import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
+import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
+import { snakeCase } from 'lodash-es'
 import {
     DEFAULT_RETRY_PARAMS,
     getRetryDelayMs,
@@ -11,9 +12,9 @@ import {
     type RetryParams,
 } from './rpcInterceptors'
 import { UnpackEnvelopeOpts, unpackMiniblock, unpackSnapshot } from './sign'
-import { RpcOptions, createHttp2ConnectTransport } from './rpcCommon'
+import { RpcOptions } from './rpcCommon'
 import { streamIdAsBytes } from './id'
-import { ParsedMiniblock } from './types'
+import { ParsedMiniblock, ExclusionFilter } from './types'
 
 const logInfo = dlog('csb:rpc:info')
 let nextRpcClientNum = 0
@@ -37,7 +38,7 @@ export function makeStreamRpcClient(
     logInfo('makeStreamRpcClient, transportId =', transportId)
     const url = randomUrlSelector(dest)
     logInfo('makeStreamRpcClient: Connecting to url=', url, ' allUrls=', dest)
-    const options: ConnectTransportOptionsWeb = {
+    const options: ConnectTransportOptions = {
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
@@ -58,7 +59,7 @@ export function makeStreamRpcClient(
     }
     const transport = createHttp2ConnectTransport(options)
 
-    const client: StreamRpcClient = createClient(StreamService, transport) as StreamRpcClient
+    const client = createClient(StreamService, transport) as StreamRpcClient
     client.url = url
     client.opts = { retryParams }
     return client
@@ -79,6 +80,7 @@ export async function getMiniblocks(
     fromInclusive: bigint,
     toExclusive: bigint,
     omitSnapshots: boolean,
+    exclusionFilter: ExclusionFilter | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ): Promise<{
     miniblocks: ParsedMiniblock[]
@@ -97,6 +99,7 @@ export async function getMiniblocks(
             currentFromInclusive,
             toExclusive,
             omitSnapshots,
+            exclusionFilter,
             unpackEnvelopeOpts,
         )
 
@@ -133,6 +136,7 @@ async function fetchMiniblocksFromRpc(
     fromInclusive: bigint,
     toExclusive: bigint,
     omitSnapshots: boolean,
+    exclusionFilter: ExclusionFilter | undefined,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ) {
     const response = await client.getMiniblocks({
@@ -140,6 +144,11 @@ async function fetchMiniblocksFromRpc(
         fromInclusive,
         toExclusive,
         omitSnapshots,
+        exclusionFilter:
+            exclusionFilter?.map(({ payload, content }) => ({
+                payload: snakeCase(payload),
+                content: snakeCase(content),
+            })) ?? [],
     })
 
     const miniblocks: ParsedMiniblock[] = []
@@ -151,7 +160,8 @@ async function fetchMiniblocksFromRpc(
         if (!omitSnapshots && response.snapshots[unpackedMiniblockNum]) {
             parsedSnapshots[unpackedMiniblockNum] = (
                 await unpackSnapshot(
-                    unpackedMiniblock,
+                    unpackedMiniblock.events.at(-1)?.event,
+                    unpackedMiniblock.header.snapshotHash,
                     response.snapshots[unpackedMiniblockNum],
                     unpackEnvelopeOpts,
                 )

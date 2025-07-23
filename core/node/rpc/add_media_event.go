@@ -69,7 +69,7 @@ func (s *Service) localAddMediaEvent(
 	log.Debugw("localAddMediaEvent", "parsedEvent", parsedEvent, "creationCookie", creationCookie)
 
 	mbHash, err := s.replicatedAddMediaEvent(ctx, parsedEvent, creationCookie, req.Msg.GetLast())
-	if err != nil && !IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+	if err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
 		return nil, AsRiverError(err).Func("localAddMediaEvent")
 	}
 
@@ -100,7 +100,7 @@ func (s *Service) getGenesisMediaEvent(ctx context.Context, streamId StreamId) (
 
 	var mediaEvent StreamEvent
 	if err = proto.Unmarshal(mb.GetEvents()[0].Event, &mediaEvent); err != nil {
-		return nil, RiverError(Err_INTERNAL, "Failed to decode stream event from genesis miniblock")
+		return nil, RiverErrorWithBase(Err_INTERNAL, "Failed to decode stream event from genesis miniblock", err)
 	}
 
 	if mediaEvent.GetMediaPayload().GetInception() == nil {

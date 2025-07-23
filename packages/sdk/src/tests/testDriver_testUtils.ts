@@ -3,7 +3,7 @@ import { DLogger, check, dlog } from '@towns-protocol/dlog'
 import { makeTestClient, makeUniqueSpaceStreamId } from './testUtils'
 import { makeUniqueChannelStreamId } from '../id'
 import { SnapshotCaseType } from '@towns-protocol/proto'
-import { DecryptedTimelineEvent } from '../types'
+import { RiverTimelineEvent, TimelineEvent } from '../views/models/timelineTypes'
 
 class TestDriver {
     readonly client: Client
@@ -40,21 +40,11 @@ class TestDriver {
         this.log('driver stopped client')
     }
 
-    eventDecrypted(
-        streamId: string,
-        contentKind: SnapshotCaseType,
-        event: DecryptedTimelineEvent,
-    ): void {
-        const payload = event.decryptedContent
+    eventDecrypted(streamId: string, contentKind: SnapshotCaseType, event: TimelineEvent): void {
+        const payload = event.content
         let content = ''
-        check(payload.kind === 'channelMessage')
-        if (
-            payload.content?.payload?.case !== 'post' ||
-            payload.content?.payload?.value.content.case !== 'text'
-        ) {
-            throw new Error('eventDecrypted is not a post')
-        }
-        content = payload.content?.payload?.value.content.value.body
+        check(payload?.kind === RiverTimelineEvent.ChannelMessage)
+        content = payload.body
         this.log(
             'eventDecrypted channelId=',
             streamId,

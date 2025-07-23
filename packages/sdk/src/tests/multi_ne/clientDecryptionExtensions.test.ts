@@ -7,9 +7,10 @@ import { dlog } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
 import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Stream } from '../../stream'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError } from '../../decryptionExtensions'
 import { makeUniqueChannelStreamId } from '../../id'
 import { SyncState } from '../../syncedStreamsLoop'
+import { RiverTimelineEvent } from '../../views/models/timelineTypes'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -27,26 +28,15 @@ describe('ClientDecryptionExtensions', () => {
 
     const sendMessage = async (client: Client, streamId: string, body: string) => {
         await client.waitForStream(streamId)
-        await client.sendMessage(streamId, body)
+        return await client.sendMessage(streamId, body)
     }
 
     const getDecryptedChannelMessages = (stream: Stream): string[] => {
         return stream.view.timeline
             .map((e) => {
                 // for tests, return decrypted content
-                if (
-                    e.decryptedContent?.kind === 'channelMessage' &&
-                    e.decryptedContent.content.payload?.case === 'post' &&
-                    e.decryptedContent.content.payload?.value?.content?.case === 'text'
-                ) {
-                    return e.decryptedContent.content.payload?.value?.content?.value?.body
-                }
-                // and local content
-                if (
-                    e.localEvent?.channelMessage?.payload?.case === 'post' &&
-                    e.localEvent?.channelMessage?.payload?.value?.content?.case === 'text'
-                ) {
-                    return e.localEvent?.channelMessage?.payload?.value?.content?.value?.body
+                if (e.content?.kind === RiverTimelineEvent.ChannelMessage) {
+                    return e.content.body
                 }
                 return undefined
             })
@@ -54,12 +44,14 @@ describe('ClientDecryptionExtensions', () => {
     }
 
     const waitForMessages = async (client: Client, streamId: string, bodys: string[]) => {
-        log('waitForMessages', client.userId, streamId, bodys)
+        log('waitForMessages:', client.userId, client.logId, streamId, bodys)
         const stream = await client.waitForStream(streamId)
+        log('waitForMessages stream:', client.userId, client.logId, streamId, stream.view.timeline)
+
         return waitFor(
             () => {
                 const messages = getDecryptedChannelMessages(stream)
-                expect(messages).toEqual(bodys)
+                expect(messages, `messages for ${client.logId}`).toEqual(bodys)
             },
             { timeoutMS: 15000 },
         )
@@ -72,8 +64,11 @@ describe('ClientDecryptionExtensions', () => {
         const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
         return stream.view.timeline
             .map((e) => {
-                if (e.decryptedContentError) {
-                    return e.decryptedContentError
+                if (
+                    e.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                    e.content?.kind === RiverTimelineEvent.EncryptedChannelProperties
+                ) {
+                    return e.content?.error
                 }
                 return undefined
             })
@@ -82,13 +77,10 @@ describe('ClientDecryptionExtensions', () => {
 
     const waitForDecryptionErrors = async (client: Client, streamId: string, count: number) => {
         log('waitForDecryptionErrors', client.userId, streamId, count)
-        return waitFor(
-            async () => {
-                const errors = await getDecryptionErrors(client, streamId)
-                expect(errors.length).toEqual(count)
-            },
-            { timeoutMS: 10000 },
-        )
+        return waitFor(async () => {
+            const errors = await getDecryptionErrors(client, streamId)
+            expect(errors.length).toEqual(count)
+        })
     }
 
     beforeEach(async () => {})
@@ -148,8 +140,6 @@ describe('ClientDecryptionExtensions', () => {
             deviceId: 'alice2',
         })
 
-        await expect(alice2_restarted.waitForStream(streamId)).resolves.not.toThrow()
-
         // she should have the keys because bob2 should share with existing members
         await expect(
             waitForMessages(alice2_restarted, streamId, ['hello', 'whats up']),
@@ -171,6 +161,13 @@ describe('ClientDecryptionExtensions', () => {
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
+
+        // By default, clients will send an ephemeral solicitation first
+        // in this case, we want to make sure that the solicitation is sent as non-ephemeral
+        // so that bob can see the solicitation and share keys,
+        // otherwise we'd need to wait for the ephemeral timeout to expire
+        alice1['decryptionExtensions']!.ephemeralTimeoutMs = 100
+
         await expect(waitForDecryptionErrors(alice1, channelId, 1)).resolves.not.toThrow() // alice should see a decryption error
         await expect(waitForMessages(alice1, channelId, [])).resolves.not.toThrow() // alice doesn't see the message if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
@@ -201,8 +198,10 @@ describe('ClientDecryptionExtensions', () => {
         const channel2StreamId = makeUniqueChannelStreamId(spaceId)
         await bob1.createChannel(spaceId, 'channel1', '', channel1StreamId)
         await bob1.createChannel(spaceId, 'channel2', '', channel2StreamId)
-        await sendMessage(bob1, channel1StreamId, 'hello channel 1')
-        await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+        const event1 = await sendMessage(bob1, channel1StreamId, 'hello channel 1')
+        log('hello channel 1 eventId', event1.eventId)
+        const event2 = await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+        log('hello channel 2 eventId', event2.eventId)
 
         await expect(alice1.joinStream(spaceId)).resolves.not.toThrow()
         await expect(alice1.joinStream(channel1StreamId)).resolves.not.toThrow()
@@ -211,9 +210,11 @@ describe('ClientDecryptionExtensions', () => {
         // wait for the message to arrive and decrypt
         await expect(
             waitForMessages(alice1, channel1StreamId, ['hello channel 1']),
+            `waiting for ${event1.eventId}`,
         ).resolves.not.toThrow()
         await expect(
             waitForMessages(alice1, channel2StreamId, ['hello channel 2']),
+            `waiting for ${event2.eventId}`,
         ).resolves.not.toThrow()
 
         // stop bob to simplify test

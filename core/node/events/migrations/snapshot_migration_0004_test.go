@@ -73,10 +73,10 @@ func TestSnapshotMigration0004(t *testing.T) {
 			},
 		}
 
-		result := snapshot_migration_0004_(snap, true)
+		snapshot_migration_0004_(snap, true)
 
 		// Verify that common session IDs are removed
-		for _, member := range result.GetMembers().GetJoined() {
+		for _, member := range snap.GetMembers().GetJoined() {
 			for _, solicitation := range member.GetSolicitations() {
 				require.NotContains(t, solicitation.GetSessionIds(), commonSessionId)
 			}
@@ -101,8 +101,9 @@ func TestSnapshotMigration0004(t *testing.T) {
 	// Test case 2: Run migration with empty members
 	t.Run("with empty members", func(t *testing.T) {
 		snap := &Snapshot{}
-		result := snapshot_migration_0004_(snap, true)
-		require.Equal(t, snap, result)
+		snapshot_migration_0004_(snap, true)
+		// The snapshot should remain the same reference
+		require.NotNil(t, snap)
 	})
 
 	// Test case 3: Run migration with no common session IDs
@@ -134,9 +135,9 @@ func TestSnapshotMigration0004(t *testing.T) {
 
 		snapCopy, err := proto.Marshal(snap)
 		require.NoError(t, err)
-		result := snapshot_migration_0004_(snap, true)
+		snapshot_migration_0004_(snap, true)
 		// Verify the snapshot remains unchanged when no common session IDs are found
-		resultBytes, err := proto.Marshal(result)
+		resultBytes, err := proto.Marshal(snap)
 		require.NoError(t, err)
 		require.Equal(t, snapCopy, resultBytes)
 	})

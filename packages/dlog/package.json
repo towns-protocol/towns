@@ -1,13 +1,10 @@
 {
     "name": "@towns-protocol/dlog",
-    "version": "0.0.238",
+    "version": "0.0.283",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",
@@ -15,9 +12,9 @@
         "lint": "yarn eslint --format unix ./src",
         "lint:fix": "yarn lint --fix",
         "test": "vitest run",
-        "test:watch": "vitest --watch",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
+        "test:watch": "vitest --watch",
         "watch": "tsc --watch"
     },
     "dependencies": {
@@ -35,9 +32,12 @@
         "eslint-plugin-import-x": "^4.10.2",
         "ts-node": "^10.9.1",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5"
+        "vitest": "^3.2.3"
     },
     "files": [
         "/dist"
-    ]
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
 }

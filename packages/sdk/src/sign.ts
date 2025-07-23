@@ -22,6 +22,7 @@ import {
     SyncCookieSchema,
     EventRefSchema,
     SnapshotSchema,
+    MiniblockHeader,
 } from '@towns-protocol/proto'
 import { abytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
@@ -35,7 +36,7 @@ import {
 } from './types'
 import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { createHash } from 'crypto'
+import { sha256 } from '@noble/hashes/sha2'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 import { eventIdsFromSnapshot } from './persistenceStore'
 
@@ -58,6 +59,7 @@ export const _impl_makeEvent_impl_ = async (
     prevMiniblockHash?: Uint8Array,
     prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
+    ephemeral?: boolean,
 ): Promise<Envelope> => {
     const streamEvent = create(StreamEventSchema, {
         creatorAddress: context.creatorAddress,
@@ -67,6 +69,7 @@ export const _impl_makeEvent_impl_ = async (
         payload,
         createdAtEpochMs: BigInt(Date.now()),
         tags,
+        ephemeral,
     })
     if (context.delegateSig !== undefined) {
         streamEvent.delegateSig = context.delegateSig
@@ -86,6 +89,7 @@ export const makeEvent = async (
     prevMiniblockHash?: Uint8Array,
     prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
+    ephemeral?: boolean,
 ): Promise<Envelope> => {
     // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
     const pl = payload // todo check this
@@ -107,7 +111,7 @@ export const makeEvent = async (
         check(prevMiniblockNum >= 0, 'prevMiniblockNum should be non-negative', Err.BAD_PAYLOAD)
     }
 
-    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags)
+    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags, ephemeral)
 }
 
 export const makeEvents = async (
@@ -184,14 +188,36 @@ export const unpackStreamAndCookie = async (
     const miniblocks = await Promise.all(
         streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
     )
+    const events = await unpackEnvelopes(streamAndCookie.events, opts)
+    let snapshot: ParsedSnapshot | undefined
+    if (streamAndCookie.snapshot) {
+        let miniblockHeader: StreamEvent | undefined
+        let miniblockHeaderHash: Uint8Array | undefined
+
+        if (miniblocks.length > 0 && miniblocks[0].header.snapshotHash) {
+            miniblockHeader = miniblocks[0].events.at(-1)?.event
+            miniblockHeaderHash = miniblocks[0].header.snapshotHash
+        } else if (events.length > 0) {
+            miniblockHeaderHash = (
+                events.find((event) => {
+                    return event.event.payload.case === 'miniblockHeader'
+                })?.event.payload.value as MiniblockHeader
+            ).snapshotHash
+        }
+
+        snapshot = await unpackSnapshot(
+            miniblockHeader,
+            miniblockHeaderHash,
+            streamAndCookie.snapshot,
+            opts,
+        )
+    }
+
     return {
-        events: await unpackEnvelopes(streamAndCookie.events, opts),
+        events: events,
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot:
-            streamAndCookie.snapshot && miniblocks.length > 0 && miniblocks[0].header.snapshotHash
-                ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
-                : undefined,
+        snapshot: snapshot,
     }
 }
 
@@ -211,6 +237,7 @@ export const unpackMiniblock = async (
         hash: miniblock.header.hash,
         header: header.event.payload.value,
         events: [...events, header],
+        partial: miniblock.partial,
     }
 }
 
@@ -240,7 +267,8 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
-    miniblock: ParsedMiniblock,
+    miniblockHeader: StreamEvent | undefined,
+    miniblockHeaderSnapshotHash: Uint8Array | undefined,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -250,7 +278,12 @@ export const unpackSnapshot = async (
 
     // make sure the given snapshot corresponds to the miniblock
     check(
-        bin_equal(miniblock.header.snapshotHash, snapshot.hash),
+        isDefined(miniblockHeaderSnapshotHash),
+        'Miniblock header snapshot hash is not set',
+        Err.BAD_EVENT,
+    )
+    check(
+        bin_equal(miniblockHeaderSnapshotHash, snapshot.hash),
         'Snapshot hash does not match miniblock snapshot hash',
         Err.BAD_EVENT_ID,
     )
@@ -263,9 +296,8 @@ export const unpackSnapshot = async (
 
     if (opts?.disableSignatureValidation !== true) {
         // header event contains the creatorAddress of the snapshot.
-        const headerEvent = miniblock.events.at(-1)
-        check(headerEvent !== undefined, 'Miniblock header event not found', Err.BAD_EVENT)
-        checkEventSignature(headerEvent.event, snapshot.hash, snapshot.signature)
+        check(isDefined(miniblockHeader), 'Miniblock header is not set', Err.BAD_EVENT)
+        checkEventSignature(miniblockHeader, snapshot.hash, snapshot.signature)
     }
 
     return makeParsedSnapshot(
@@ -315,6 +347,7 @@ export function makeParsedEvent(
         hashStr: bin_toHexString(hash),
         signature,
         creatorUserId: userIdFromAddress(event.creatorAddress),
+        ephemeral: event.ephemeral,
     } satisfies ParsedEvent
 }
 
@@ -462,12 +495,44 @@ export function notificationServiceHash(
     // aellis - i don't understand why we need to slice here, the go and ios code both truncate the leading 0's
     check(userId.length === 20, 'User ID should be 20 bytes')
     check(challenge.length === 16, 'Challenge should be 16 bytes')
-    return createHash('sha256')
-        .update(prefixBytes)
-        .update(userId)
-        .update(expirationBytes)
-        .update(challenge)
-        .digest()
+
+    // Concatenate all data and hash with web-compatible sha256
+    const totalLength =
+        prefixBytes.length + userId.length + expirationBytes.length + challenge.length
+    const data = new Uint8Array(totalLength)
+    let offset = 0
+    data.set(prefixBytes, offset)
+    offset += prefixBytes.length
+    data.set(userId, offset)
+    offset += userId.length
+    data.set(expirationBytes, offset)
+    offset += expirationBytes.length
+    data.set(challenge, offset)
+    return sha256(data)
+}
+
+export function appRegistryHash(
+    userId: Uint8Array,
+    expiration: bigint, // unix seconds
+    challenge: Uint8Array,
+) {
+    const PREFIX = 'AS_AUTH:'
+    const prefixBytes = new TextEncoder().encode(PREFIX)
+    const expirationBytes = bigIntToBytes(expiration)
+    check(userId.length === 20, 'User ID should be 20 bytes')
+    check(challenge.length === 16, 'Challenge should be 16 bytes')
+    const totalLength =
+        prefixBytes.length + userId.length + expirationBytes.length + challenge.length
+    const data = new Uint8Array(totalLength)
+    let offset = 0
+    data.set(prefixBytes, offset)
+    offset += prefixBytes.length
+    data.set(userId, offset)
+    offset += userId.length
+    data.set(expirationBytes, offset)
+    offset += expirationBytes.length
+    data.set(challenge, offset)
+    return sha256(data)
 }
 
 export async function riverSign(

@@ -1,19 +1,6 @@
 export default [
   {
     "type": "event",
-    "name": "MainnetDelegationChanged",
-    "inputs": [
-      {
-        "name": "mainnetDelegation",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "RiverTokenChanged",
     "inputs": [
       {
@@ -58,19 +45,6 @@ export default [
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "StakeRequirementChanged",
-    "inputs": [
-      {
-        "name": "stakeRequirement",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
     "type": "error",
     "name": "SpaceDelegation__AlreadyDelegated",
     "inputs": [
@@ -80,11 +54,6 @@ export default [
         "internalType": "address"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "SpaceDelegation__AlreadyRegistered",
-    "inputs": []
   },
   {
     "type": "error",
@@ -108,27 +77,17 @@ export default [
   },
   {
     "type": "error",
-    "name": "SpaceDelegation__InvalidStatusTransition",
+    "name": "SpaceDelegation__NotDelegated",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "SpaceDelegation__NotEnoughStake",
+    "name": "SpaceDelegation__NotSpaceMember",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "SpaceDelegation__NotRegistered",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "SpaceDelegation__NotTransferable",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "SpaceDelegation__StatusNotChanged",
+    "name": "SpaceDelegation__NotSpaceOwner",
     "inputs": []
   }
 ] as const

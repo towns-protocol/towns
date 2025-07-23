@@ -206,6 +206,17 @@
           ]
         }
       ]
+    },
+    {
+      "group": "White Paper",
+      "pages": [
+        "white-paper/towns-technical-overview",
+        "white-paper/technical-whitepaper",
+        {
+          "name": "MiCA Whitepaper",
+          "url": "https://towns.com/mica-whitepaper.pdf"
+        }
+      ]
     }
   ],
   "footerSocials": {

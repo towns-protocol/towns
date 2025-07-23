@@ -41,6 +41,17 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     }
 
     /// @inheritdoc IExecutor
+    function grantAccessWithExpiration(
+        bytes32 groupId,
+        address account,
+        uint32 delay,
+        uint48 expiration
+    ) external onlyOwner returns (bool newMember) {
+        _setGroupStatus(groupId, true, expiration);
+        return _grantGroupAccess(groupId, account, _getGroupGrantDelay(groupId), delay);
+    }
+
+    /// @inheritdoc IExecutor
     function revokeAccess(bytes32 groupId, address account) external onlyOwner {
         _revokeGroupAccess(groupId, account);
     }
@@ -58,6 +69,11 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     /// @inheritdoc IExecutor
     function setGroupDelay(bytes32 groupId, uint32 delay) external onlyOwner {
         _setGroupGrantDelay(groupId, delay, 0);
+    }
+
+    /// @inheritdoc IExecutor
+    function setGroupExpiration(bytes32 groupId, uint48 expiration) external onlyOwner {
+        _setGroupExpiration(groupId, expiration);
     }
 
     /// @inheritdoc IExecutor
@@ -135,6 +151,11 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
     }
 
     /// @inheritdoc IExecutor
+    function onExecution(address target) external view returns (bool) {
+        return _isTargetExecuting(target);
+    }
+
+    /// @inheritdoc IExecutor
     function hashOperation(
         address caller,
         address target,
@@ -154,15 +175,4 @@ contract ExecutorFacet is OwnableBase, ExecutorBase, IExecutor, Facet {
 
     /// @dev Internal function to check if a target is authorized
     function _checkAuthorized(address target) internal virtual {}
-
-    /// @dev Hook called before execution
-    function _executePreHooks(
-        address target,
-        bytes4 selector,
-        uint256 value,
-        bytes calldata data
-    ) internal virtual override {}
-
-    /// @dev Hook called after execution
-    function _executePostHooks(address target, bytes4 selector) internal virtual override {}
 }

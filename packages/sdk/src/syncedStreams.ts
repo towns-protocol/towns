@@ -30,13 +30,17 @@ export class SyncedStreams {
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
         private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private readonly logId: string,
-        private readonly streamOpts?: { useModifySync?: boolean },
+        private readonly streamOpts?:
+            | { useModifySync?: boolean; useSharedSyncer?: boolean }
+            | undefined,
+        highPriorityStreamIds?: string[],
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
         this.log = dlog('csb:cl:sync').extend(this.logId)
         this.logError = dlogError('csb:cl:sync:stream').extend(this.logId)
+        this.highPriorityIds = new Set(highPriorityStreamIds ?? [])
     }
 
     public get syncState(): SyncState {

@@ -2,42 +2,31 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-
+import {Vm} from "forge-std/Vm.sol";
 import {ITownsPoints, ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
 import {IERC721A, IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {IPartnerRegistry} from "src/factory/facets/partner/IPartnerRegistry.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IWalletLink, IWalletLinkBase} from "src/factory/facets/wallet-link/IWalletLink.sol";
-import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
+import {IEntitlement, IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementsManager, IEntitlementsManagerBase} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
-
+import {IMembership, IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
-
 import {IReferrals} from "src/spaces/facets/referrals/IReferrals.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
-
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
-// libraries
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {RuleEntitlementUtil} from "test/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
-import {BaseSetup} from "test/spaces/BaseSetup.sol";
-
-import {Vm} from "forge-std/Test.sol";
-
 import {Architect} from "src/factory/facets/architect/Architect.sol";
-
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
-import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
+import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 contract MembershipBaseSetup is
     IMembershipBase,
@@ -53,7 +42,7 @@ contract MembershipBaseSetup is
     uint16 constant REFERRAL_BPS = 1000; // 10%
     uint256 constant MEMBERSHIP_PRICE = 1 ether;
 
-    MembershipFacet internal membership;
+    IMembership internal membership;
     IERC721A internal membershipToken;
     IERC721AQueryable internal membershipTokenQueryable;
     IPlatformRequirements internal platformReqs;
@@ -77,6 +66,7 @@ contract MembershipBaseSetup is
 
     address internal userSpace;
     address internal dynamicSpace;
+    address internal freeSpace;
 
     function setUp() public virtual override {
         super.setUp();
@@ -107,13 +97,19 @@ contract MembershipBaseSetup is
         );
         dynamicSpaceInfo.membership.settings.pricingModule = pricingModule;
 
+        IArchitectBase.SpaceInfo memory freeSpaceInfo = _createEveryoneSpaceInfo("FreeSpace");
+        freeSpaceInfo.membership.settings.freeAllocation = 100;
+        freeSpaceInfo.membership.settings.price = 0;
+        freeSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+
         vm.startPrank(founder);
         // user space is a space where only alice and charlie are allowed along with the founder
         userSpace = CreateSpaceFacet(spaceFactory).createSpace(userSpaceInfo);
         dynamicSpace = CreateSpaceFacet(spaceFactory).createSpace(dynamicSpaceInfo);
+        freeSpace = CreateSpaceFacet(spaceFactory).createSpace(freeSpaceInfo);
         vm.stopPrank();
 
-        membership = MembershipFacet(userSpace);
+        membership = IMembership(userSpace);
         membershipToken = IERC721A(userSpace);
         membershipTokenQueryable = IERC721AQueryable(userSpace);
         prepayFacet = IPrepay(userSpace);
@@ -171,8 +167,7 @@ contract MembershipBaseSetup is
         IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
 
         // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule
-        // entitlements that need to
-        // be checked for the joinSpace permission.
+        // entitlements that need to be checked for the joinSpace permission.
         IRolesBase.CreateEntitlement[]
             memory createEntitlements1 = new IRolesBase.CreateEntitlement[](1);
         IRolesBase.CreateEntitlement[]

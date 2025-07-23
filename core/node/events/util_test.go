@@ -73,8 +73,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		p.numInstances = 1
 	}
 
-	ctx, cancel := test.NewTestContext()
-	t.Cleanup(cancel)
+	ctx := test.NewTestContext(t)
 
 	ctc := &cacheTestContext{
 		testParams:      p,
@@ -98,6 +97,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 	setOnChainStreamConfig(t, ctx, btc, p)
 
+	// register nodes as operational
 	baseCtx := ctx
 	for i := range p.numInstances {
 		log := logging.FromCtx(baseCtx)
@@ -105,6 +105,13 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		ctx = logging.CtxWithLog(baseCtx, log)
 
 		ctc.require.NoError(btc.InitNodeRecord(ctx, i, "fakeurl"))
+	}
+
+	// load instances
+	for i := range p.numInstances {
+		log := logging.FromCtx(baseCtx)
+		log = log.With("instance", i)
+		ctx = logging.CtxWithLog(baseCtx, log)
 
 		bc := btc.GetBlockchain(ctx, i)
 
@@ -129,6 +136,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			blockNumber,
 			bc.ChainMonitor,
 			btc.OnChainConfig,
+			nil,
 			nil,
 			nil,
 		)
@@ -282,7 +290,13 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 			defer wg.Done()
 
 			streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID, nil)
+			mb := MakeGenesisMiniblockForSpaceStream(
+				ctc.t,
+				ctc.clientWallet,
+				ctc.instances[0].params.Wallet,
+				streamID,
+				nil,
+			)
 			ctc.createStreamNoCache(streamID, mb.Proto)
 
 			mu.Lock()

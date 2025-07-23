@@ -44,10 +44,21 @@ There are just commands to run go tests, `go test` works too:
 
     just test ./...  # Run go test
     just test-all # Run all go tests from module root
+    just test-all-report # Run all go tests from module root and print report at the end
     just t # Run all tests from current dir
 
     just t-debug -run TestMyName  # Run TestMyName with info logging and test printing
     just t-debug-debug -run TestMyName  # Run TestMyName with debug logging and test printing
+
+# Getting logs from tests
+
+To get logs from tests, set `RIVER_TEST_LOG_DIR` to a directory where you want to store the logs.
+
+    RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs RIVER_TEST_LOG=debug go test -v ./...
+
+Use `RIVER_TEST_LOG` to set the log level. If level is set and directory is not set, logs will be printed to console (use `-v` test flag).
+
+    RIVER_TEST_LOG=debug go test -v
 
 # Running the archiver service locally against different environments
 

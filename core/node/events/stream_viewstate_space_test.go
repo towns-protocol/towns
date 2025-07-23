@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -49,7 +50,14 @@ func makeTestSpaceStream(
 	join := makeEnvelopeWithPayload_T(
 		t,
 		userWallet,
-		Make_MemberPayload_Membership(protocol.MembershipOp_SO_JOIN, userAddess, userAddess, nil),
+		Make_MemberPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			userAddess,
+			userAddess,
+			nil,
+			nil,
+			common.Address{},
+		),
 		nil,
 	)
 
@@ -258,7 +266,7 @@ func TestSpaceViewState(t *testing.T) {
 	view3, err = MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
+				{Number: 1, Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
 	)
@@ -326,7 +334,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	streamView, err = MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
+				{Number: 1, Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
 	)
@@ -390,7 +398,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	streamView, err = MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
-				{Data: miniblockProtoBytes, Snapshot: snapshotBytes},
+				{Number: 1, Data: miniblockProtoBytes, Snapshot: snapshotBytes},
 			},
 		},
 	)

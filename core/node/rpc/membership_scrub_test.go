@@ -40,7 +40,7 @@ func addUserToChannel(
 		events.Make_UserPayload_Membership(
 			MembershipOp_SO_JOIN,
 			channelId,
-			nil,
+			common.Address{},
 			spaceId[:],
 			nil,
 		),
@@ -201,6 +201,13 @@ func (o *ObservingEventAdder) AddEventPayload(
 	return newEvents, nil
 }
 
+func (o *ObservingEventAdder) GetWalletAddress() common.Address {
+	return o.adder.GetWalletAddress()
+}
+
+// force interface compliance, observing event adder should implemnt EventAdder interface
+var _ scrub.EventAdder = (*ObservingEventAdder)(nil)
+
 func (o *ObservingEventAdder) ObservedEvents() []struct {
 	streamId StreamId
 	payload  IsStreamEvent_Payload
@@ -215,36 +222,35 @@ func (o *ObservingEventAdder) ObservedEvents() []struct {
 func (o *ObservingEventAdder) ValidateMembershipLeaveEvents(t assert.TestingT, expectedReason *MembershipReason) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	
+
 	for i, e := range o.observedEvents {
 		userPayload, ok := e.payload.(*StreamEvent_UserPayload)
 		assert.True(t, ok, "Event %d is not a UserPayload", i)
 		if !ok {
 			continue
 		}
-		
+
 		membershipPayload, ok := userPayload.UserPayload.Content.(*UserPayload_UserMembership_)
 		assert.True(t, ok, "Event %d is not a MembershipPayload", i)
 		if !ok {
 			continue
 		}
-		
-		assert.Equal(t, MembershipOp_SO_LEAVE, membershipPayload.UserMembership.Op, 
+
+		assert.Equal(t, MembershipOp_SO_LEAVE, membershipPayload.UserMembership.Op,
 			"Event %d is not a LEAVE operation", i)
-		
+
 		// Check for scrubber reason
 		assert.NotNil(t, membershipPayload.UserMembership.Reason, "Event %d has no reason", i)
-		
+
 		// Verify the reason matches the expected one
-		assert.Equal(t, *expectedReason, *membershipPayload.UserMembership.Reason, 
-			"Event %d has incorrect reason code. Expected: %v, Got: %v", 
+		assert.Equal(t, *expectedReason, *membershipPayload.UserMembership.Reason,
+			"Event %d has incorrect reason code. Expected: %v, Got: %v",
 			i, *expectedReason, *membershipPayload.UserMembership.Reason)
 	}
 }
 
 func TestScrubStreamTaskProcessor(t *testing.T) {
-	ctx, ctxCancel := test.NewTestContext()
-	defer ctxCancel()
+	ctx := test.NewTestContext(t)
 
 	wallet, _ := crypto.NewWallet(ctx)
 	wallet1, _ := crypto.NewWallet(ctx)
@@ -267,7 +273,11 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"error in chain auth should result in no booted users": {
-			mockChainAuth:       NewMockChainAuth(false, auth.EntitlementResultReason_NONE, fmt.Errorf("this error should not cause a user to be booted")),
+			mockChainAuth: NewMockChainAuth(
+				false,
+				auth.EntitlementResultReason_NONE,
+				fmt.Errorf("this error should not cause a user to be booted"),
+			),
 			expectedBootedUsers: []*crypto.Wallet{},
 		},
 		"false or error result for individual users": {
@@ -376,7 +386,7 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 						// event for one of the users is emitted twice. Why?
 						// assert.Len(eventAdder.ObservedEvents(), len(tc.expectedBootedUsers))
 						assert.GreaterOrEqual(len(eventAdder.ObservedEvents()), len(tc.expectedBootedUsers))
-						
+
 						eventAdder.ValidateMembershipLeaveEvents(t, &tc.expectedReasonCode)
 
 					}

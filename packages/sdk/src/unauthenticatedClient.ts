@@ -1,11 +1,13 @@
 import debug from 'debug'
 import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
+import { PayloadCaseType, ContentCaseType } from '@towns-protocol/proto'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
+import { StreamsView } from './views/streamsView'
 
 const SCROLLBACK_MULTIPLIER = 4n
 export class UnauthenticatedClient {
@@ -64,7 +66,10 @@ export class UnauthenticatedClient {
         return response.stream !== undefined
     }
 
-    async getStream(streamId: string | Uint8Array): Promise<StreamStateView> {
+    async getStream(
+        streamId: string | Uint8Array,
+        streamsView?: StreamsView,
+    ): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({ streamId: streamIdAsBytes(streamId) })
@@ -77,7 +82,11 @@ export class UnauthenticatedClient {
                 response.stream,
                 this.unpackEnvelopeOpts,
             )
-            const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
+            const streamView = new StreamStateView(
+                this.userId,
+                streamIdAsString(streamId),
+                streamsView,
+            )
 
             streamView.initialize(
                 streamAndCookie.nextSyncCookie,
@@ -171,6 +180,7 @@ export class UnauthenticatedClient {
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        exclusionFilter?: { payload: PayloadCaseType; content: ContentCaseType }[],
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         if (toExclusive === fromInclusive) {
             return {
@@ -185,6 +195,7 @@ export class UnauthenticatedClient {
             fromInclusive,
             toExclusive,
             true,
+            exclusionFilter,
             this.unpackEnvelopeOpts,
         )
 

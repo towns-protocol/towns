@@ -39,6 +39,31 @@ export default [
   },
   {
     "type": "event",
+    "name": "AppInstalled",
+    "inputs": [
+      {
+        "name": "app",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "appId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "AppRegistered",
     "inputs": [
       {
@@ -58,12 +83,62 @@ export default [
   },
   {
     "type": "event",
+    "name": "AppRenewed",
+    "inputs": [
+      {
+        "name": "app",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "appId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "AppSchemaSet",
     "inputs": [
       {
         "name": "uid",
         "type": "bytes32",
         "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "AppUninstalled",
+    "inputs": [
+      {
+        "name": "app",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "appId",
+        "type": "bytes32",
+        "indexed": true,
         "internalType": "bytes32"
       }
     ],
@@ -119,6 +194,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "AppNotInstalled",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "AppNotRegistered",
     "inputs": []
   },
@@ -130,6 +210,16 @@ export default [
   {
     "type": "error",
     "name": "BannedApp",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ClientAlreadyRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientPayment",
     "inputs": []
   },
   {
@@ -150,6 +240,21 @@ export default [
   {
     "type": "error",
     "name": "InvalidArrayInput",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidDuration",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPrice",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotAllowed",
     "inputs": []
   },
   {

@@ -7,8 +7,14 @@ import { Client } from '../../client'
 import { dlog } from '@towns-protocol/dlog'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId, streamIdToBytes } from '../../id'
-import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@towns-protocol/proto'
-import { deriveKeyAndIV } from '../../crypto_utils'
+import {
+    ChunkedMedia,
+    GetStreamResponse,
+    MediaInfoSchema,
+    MembershipOp,
+    PlainMessage,
+} from '@towns-protocol/proto'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
 import { create } from '@bufbuild/protobuf'
 import { unpackStream } from '../../sign'
@@ -78,6 +84,8 @@ describe('spaceTests', () => {
 
         // assert assumptions
         expect(spaceStream).toBeDefined()
+        expect(spaceStream.view.miniblockInfo).toBeDefined()
+        let spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
 
         // create a new channel
         const channelId = makeUniqueChannelStreamId(spaceId)
@@ -87,55 +95,81 @@ describe('spaceTests', () => {
 
         // our space channels metadata should reflect the new channel
         await waitFor(() => {
-            expect(spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)).toBeDefined()
+            expect(spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]).toBeDefined()
             expect(
-                spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)
-                    ?.updatedAtEventNum,
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]?.updatedAtEventNum,
             ).toBeGreaterThan(0)
+        })
+
+        // wait for the miniblock to be updated
+        await waitFor(() => {
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
         })
 
         // save off existing updated at
         const prevUpdatedAt =
-            spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)!.updatedAtEventNum
+            spaceStream.view.spaceContent.spaceChannelsMetadata[channelId].updatedAtEventNum
 
         // make a snapshot
-        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        await waitFor(async () => {
+            const response = await bobsClient.debugForceMakeMiniblock(spaceId, {
+                forceSnapshot: true,
+                lastKnownMiniblockNum: spaceStream.view.miniblockInfo!.max,
+            })
+            expect(response).toBeDefined()
+        })
 
+        let response: GetStreamResponse | undefined
         // the new snapshot should have the new data
         await waitFor(async () => {
             // fetch the raw stream with new snapshot
-            const response = await bobsClient.rpcClient.getStream({
+            response = await bobsClient.rpcClient.getStream({
                 streamId: streamIdToBytes(spaceId),
             })
-            const stream = await unpackStream(response.stream, {
-                disableHashValidation: true,
-                disableSignatureValidation: true,
-            })
-            const snapshot = stream.snapshot
-            if (snapshot?.content.case !== 'spaceContent') {
-                throw new Error('snapshot is not a space content')
-            }
-            expect(
-                snapshot.content.value.channels.length,
-                'channelMetadata: pre-update bobsClient snapshot.channels.length',
-            ).toBe(1)
-            expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
+            expect(response).toBeDefined()
         })
+        if (response === undefined) {
+            throw new Error('response is undefined')
+        }
+        const stream = await unpackStream(response.stream, {
+            disableHashValidation: true,
+            disableSignatureValidation: true,
+        })
+        const snapshot = stream.snapshot
+        if (snapshot?.content.case !== 'spaceContent') {
+            throw new Error('snapshot is not a space content')
+        }
+        expect(
+            snapshot.content.value.channels.length,
+            `channelMetadata: ${spaceId} pre-update bobsClient snapshot.channels.length`,
+        ).toBe(1)
+        expect(snapshot.content.value.channels[0].updatedAtEventNum).toBe(prevUpdatedAt)
 
+        spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
         // update the channel metadata
         await bobsClient.updateChannel(spaceId, channelId, '', '')
 
+        // wait for the miniblock to be updated
+        await waitFor(() => {
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+        })
+
         // see the metadata update
         await waitFor(() => {
-            expect(spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)).toBeDefined()
+            expect(spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]).toBeDefined()
             expect(
-                spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)
-                    ?.updatedAtEventNum,
+                spaceStream.view.spaceContent.spaceChannelsMetadata[channelId]?.updatedAtEventNum,
             ).toBeGreaterThan(prevUpdatedAt)
         })
 
-        // make a miniblock
-        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        // make a snapshot
+        await waitFor(async () => {
+            const response = await bobsClient.debugForceMakeMiniblock(spaceId, {
+                forceSnapshot: true,
+                lastKnownMiniblockNum: spaceStream.view.miniblockInfo!.max,
+            })
+            expect(response).toBeDefined()
+        })
 
         // see new snapshot should have the new data
         await waitFor(async () => {
@@ -171,7 +205,7 @@ describe('spaceTests', () => {
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         const spaceStream = await bobsClient.waitForStream(spaceId)
-
+        let spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
         spaceStream.on('spaceImageUpdated', spaceImageUpdated)
 
         // make a space image event
@@ -193,8 +227,19 @@ describe('spaceTests', () => {
 
         await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo)
 
+        // wait for the miniblock to be updated
+        await waitFor(() => {
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+        })
+
         // make a snapshot
-        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        await waitFor(async () => {
+            const response = await bobsClient.debugForceMakeMiniblock(spaceId, {
+                forceSnapshot: true,
+                lastKnownMiniblockNum: spaceStream.view.miniblockInfo!.max,
+            })
+            expect(response).toBeDefined()
+        })
 
         // see the space image in the snapshot
         await waitFor(async () => {
@@ -266,10 +311,21 @@ describe('spaceTests', () => {
             thumbnail: undefined,
         } satisfies PlainMessage<ChunkedMedia>
 
+        spaceStreamMiniblockNum = spaceStream.view.miniblockInfo!.max
         await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo2)
 
+        // wait for the miniblock to be updated
+        await waitFor(() => {
+            expect(spaceStream.view.miniblockInfo!.max).toBeGreaterThan(spaceStreamMiniblockNum)
+        })
         // make a snapshot
-        await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
+        await waitFor(async () => {
+            const response = await bobsClient.debugForceMakeMiniblock(spaceId, {
+                forceSnapshot: true,
+                lastKnownMiniblockNum: spaceStream.view.miniblockInfo!.max,
+            })
+            expect(response).toBeDefined()
+        })
 
         // see the space image in the snapshot
         await waitFor(async () => {

@@ -13,6 +13,11 @@ import {ITownsApp} from "./ITownsApp.sol";
 /// @dev Implements IERC6900Module, IERC6900ExecutionModule, and ITownsApp interfaces
 
 abstract contract BaseApp is ITownsApp {
+    receive() external payable {
+        _onPayment(msg.sender, msg.value);
+    }
+
+    // External functions
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
@@ -20,16 +25,12 @@ abstract contract BaseApp is ITownsApp {
             interfaceId == type(ITownsApp).interfaceId;
     }
 
-    /**
-     * @notice Required by IERC6900Module - called when module is installed
-     */
+    /// @notice Required by IERC6900Module - called when module is installed
     function onInstall(bytes calldata postInstallData) external {
         _onInstall(postInstallData);
     }
 
-    /**
-     * @notice Required by IERC6900Module - called when module is uninstalled
-     */
+    /// @notice Required by IERC6900Module - called when module is uninstalled
     function onUninstall(bytes calldata postUninstallData) external {
         _onUninstall(postUninstallData);
     }
@@ -38,9 +39,24 @@ abstract contract BaseApp is ITownsApp {
         return _moduleOwner();
     }
 
+    function installPrice() external view returns (uint256) {
+        return _installPrice();
+    }
+
+    function accessDuration() external view returns (uint48) {
+        return _accessDuration();
+    }
+
+    // Internal functions
     function _onInstall(bytes calldata postInstallData) internal virtual {}
 
     function _onUninstall(bytes calldata postUninstallData) internal virtual {}
 
     function _moduleOwner() internal view virtual returns (address) {}
+
+    function _installPrice() internal view virtual returns (uint256) {}
+
+    function _accessDuration() internal view virtual returns (uint48) {}
+
+    function _onPayment(address payer, uint256 amount) internal virtual {}
 }
