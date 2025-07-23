@@ -99,6 +99,7 @@ export interface SimpleAppInterface extends utils.Interface {
     "supportsInterface(bytes4)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updatePricing(uint256,uint48)": FunctionFragment;
+    "withdrawETH(address)": FunctionFragment;
   };
 
   getFunction(
@@ -121,6 +122,7 @@ export interface SimpleAppInterface extends utils.Interface {
       | "supportsInterface"
       | "transferOwnership"
       | "updatePricing"
+      | "withdrawETH"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -195,6 +197,10 @@ export interface SimpleAppInterface extends utils.Interface {
     functionFragment: "updatePricing",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawETH",
+    values: [PromiseOrValue<string>]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "accessDuration",
@@ -256,18 +262,26 @@ export interface SimpleAppInterface extends utils.Interface {
     functionFragment: "updatePricing",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawETH",
+    data: BytesLike
+  ): Result;
 
   events: {
     "Initialized(uint64)": EventFragment;
     "OwnershipHandoverCanceled(address)": EventFragment;
     "OwnershipHandoverRequested(address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "PricingUpdated(uint256,uint48)": EventFragment;
+    "Withdrawal(address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipHandoverCanceled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipHandoverRequested"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "PricingUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Withdrawal"): EventFragment;
 }
 
 export interface InitializedEventObject {
@@ -310,6 +324,28 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface PricingUpdatedEventObject {
+  installPrice: BigNumber;
+  accessDuration: number;
+}
+export type PricingUpdatedEvent = TypedEvent<
+  [BigNumber, number],
+  PricingUpdatedEventObject
+>;
+
+export type PricingUpdatedEventFilter = TypedEventFilter<PricingUpdatedEvent>;
+
+export interface WithdrawalEventObject {
+  recipient: string;
+  amount: BigNumber;
+}
+export type WithdrawalEvent = TypedEvent<
+  [string, BigNumber],
+  WithdrawalEventObject
+>;
+
+export type WithdrawalEventFilter = TypedEventFilter<WithdrawalEvent>;
 
 export interface SimpleApp extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -410,6 +446,11 @@ export interface SimpleApp extends BaseContract {
       accessDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    withdrawETH(
+      recipient: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   accessDuration(overrides?: CallOverrides): Promise<number>;
@@ -485,6 +526,11 @@ export interface SimpleApp extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  withdrawETH(
+    recipient: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     accessDuration(overrides?: CallOverrides): Promise<number>;
 
@@ -552,6 +598,11 @@ export interface SimpleApp extends BaseContract {
       accessDuration: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    withdrawETH(
+      recipient: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -580,6 +631,24 @@ export interface SimpleApp extends BaseContract {
       oldOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
+
+    "PricingUpdated(uint256,uint48)"(
+      installPrice?: null,
+      accessDuration?: null
+    ): PricingUpdatedEventFilter;
+    PricingUpdated(
+      installPrice?: null,
+      accessDuration?: null
+    ): PricingUpdatedEventFilter;
+
+    "Withdrawal(address,uint256)"(
+      recipient?: PromiseOrValue<string> | null,
+      amount?: null
+    ): WithdrawalEventFilter;
+    Withdrawal(
+      recipient?: PromiseOrValue<string> | null,
+      amount?: null
+    ): WithdrawalEventFilter;
   };
 
   estimateGas: {
@@ -651,6 +720,11 @@ export interface SimpleApp extends BaseContract {
     updatePricing(
       installPrice: PromiseOrValue<BigNumberish>,
       accessDuration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    withdrawETH(
+      recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -726,6 +800,11 @@ export interface SimpleApp extends BaseContract {
     updatePricing(
       installPrice: PromiseOrValue<BigNumberish>,
       accessDuration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdrawETH(
+      recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

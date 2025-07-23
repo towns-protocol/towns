@@ -7,6 +7,8 @@ import type * as iRuleEntitlementSol from "./IRuleEntitlement.sol";
 export type { iRuleEntitlementSol };
 import type * as mainnet from "./mainnet";
 export type { mainnet };
+import type * as multichain from "./multichain";
+export type { multichain };
 export type { Architect } from "./Architect";
 export type { Channels } from "./Channels";
 export type { DropFacet } from "./DropFacet";
