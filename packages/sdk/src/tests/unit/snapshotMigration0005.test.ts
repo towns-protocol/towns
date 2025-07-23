@@ -124,4 +124,14 @@ describe('snapshotMigration0005', () => {
         // Verify the snapshot remains unchanged when no common session IDs are found
         expect(result).toEqual(snap)
     })
+
+    test('run migration with empty solicitations', () => {
+        const snap = create(SnapshotSchema, {
+            members: {
+                joined: [{ solicitations: [] }],
+            },
+        })
+        const result = snapshotMigration0005(snap, true)
+        expect(result.members?.joined[0].solicitations).toEqual([])
+    })
 })
