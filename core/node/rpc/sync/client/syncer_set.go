@@ -167,19 +167,14 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 	return orderedStreamIDs
 }
 
-// unlockStream releases locks for the given stream ID
-func (ss *SyncerSet) unlockStream(streamID StreamId) {
-	lock, ok := ss.streamLocks.Load(streamID)
-	if !ok {
-		return
-	}
-	lock.Unlock()
-}
-
 // unlockStreams releases locks for the given stream IDs
 func (ss *SyncerSet) unlockStreams(streamIDs []StreamId) {
 	for _, streamID := range streamIDs {
-		ss.unlockStream(streamID)
+		lock, ok := ss.streamLocks.Load(streamID)
+		if !ok {
+			return
+		}
+		lock.Unlock()
 	}
 }
 
