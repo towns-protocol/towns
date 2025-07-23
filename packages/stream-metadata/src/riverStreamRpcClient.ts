@@ -7,6 +7,8 @@ import {
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
+	unpackStreamEx,
+	waitForStreamEx,
 } from '@towns-protocol/sdk'
 import { decryptAESGCM } from '@towns-protocol/sdk-crypto'
 import { filetypemime } from 'magic-bytes.js'
@@ -26,6 +28,7 @@ const streamLocationCache = new LRUCache<string, string>({ max: 5000 })
 const clients = new Map<string, StreamRpcClient>()
 const streamClientRequests = new Map<string, Promise<StreamRpcClient>>()
 const streamRequests = new Map<string, Promise<StreamStateView>>()
+const streamExRequests = new Map<string, Promise<StreamStateView>>()
 const mediaRequests = new Map<string, Promise<MediaContent | undefined>>()
 
 async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
@@ -176,6 +179,44 @@ async function mediaContentFromStreamView(
 	}
 }
 
+export async function _getStreamEx(
+	logger: FastifyBaseLogger,
+	streamId: string,
+	opts: UnpackEnvelopeOpts = STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS,
+): Promise<StreamStateView> {
+	const client = await getStreamClient(logger, streamId)
+	logger.info(
+		{
+			nodeUrl: client.url,
+			streamId,
+		},
+		'getStreamEx',
+	)
+	try {
+		const start = Date.now()
+		const response = client.getStreamEx({
+			streamId: streamIdAsBytes(streamId),
+		})
+		const miniblocks = await waitForStreamEx(streamId, response)
+		const unpackedResponse = await unpackStreamEx(miniblocks, opts)
+		const duration_ms = Date.now() - start
+		logger.info(
+			{
+				duration_ms,
+			},
+			'getStream finished',
+		)
+		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
+	} catch (e) {
+		logger.warn(
+			{ url: client.url, streamId, err: e },
+			'getStream failed, removing client from cache',
+		)
+		removeClient(logger, client)
+		throw e
+	}
+}
+
 export async function _getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
@@ -216,6 +257,24 @@ export async function _getStream(
 	}
 }
 
+export async function getStreamEx(
+	logger: FastifyBaseLogger,
+	streamId: string,
+	opts: UnpackEnvelopeOpts = STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS,
+): Promise<StreamStateView | undefined> {
+	const existing = streamExRequests.get(streamId)
+	if (existing) {
+		return existing
+	}
+	try {
+		const promise = _getStreamEx(logger, streamId, opts)
+		streamExRequests.set(streamId, promise)
+		return await promise
+	} finally {
+		streamExRequests.delete(streamId)
+	}
+}
+
 export async function getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
@@ -253,7 +312,7 @@ export async function _getMediaStreamContent(
 	secret: Uint8Array,
 	iv?: Uint8Array,
 ): Promise<MediaContent | undefined> {
-	const sv = await getStream(logger, streamId)
+	const sv = await getStreamEx(logger, streamId)
 	if (!sv) {
 		return undefined
 	}

@@ -24,7 +24,6 @@ import {
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
-    Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
     MemberPayload_Nft,
@@ -110,7 +109,13 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import {
+    makeEvent,
+    UnpackEnvelopeOpts,
+    unpackStream,
+    unpackStreamEx,
+    waitForStreamEx,
+} from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -1573,35 +1578,7 @@ export class Client
             const response = this.rpcClient.getStreamEx({
                 streamId: streamIdAsBytes(streamId),
             })
-            const miniblocks: Miniblock[] = []
-            let seenEndOfStream = false
-            for await (const chunk of response) {
-                switch (chunk.data.case) {
-                    case 'miniblock':
-                        if (seenEndOfStream) {
-                            throw new Error(
-                                `GetStreamEx: received miniblock after minipool contents for stream ${streamIdAsString(
-                                    streamId,
-                                )}.`,
-                            )
-                        }
-                        miniblocks.push(chunk.data.value)
-                        break
-                    case 'minipool':
-                        // TODO: add minipool contents to the unpacked response
-                        break
-                    case undefined:
-                        seenEndOfStream = true
-                        break
-                }
-            }
-            if (!seenEndOfStream) {
-                throw new Error(
-                    `Failed receive all getStreamEx streaming responses for stream ${streamIdAsString(
-                        streamId,
-                    )}.`,
-                )
-            }
+            const miniblocks = await waitForStreamEx(streamId, response)
             const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {

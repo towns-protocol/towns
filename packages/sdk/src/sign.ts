@@ -23,6 +23,7 @@ import {
     EventRefSchema,
     SnapshotSchema,
     MiniblockHeader,
+    GetStreamExResponse,
 } from '@towns-protocol/proto'
 import { abytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
@@ -163,6 +164,42 @@ export const unpackStream = async (
         prevSnapshotMiniblockNum,
         eventIds,
     }
+}
+
+export const waitForStreamEx = async (
+    streamId: string | Uint8Array,
+    response: AsyncIterable<GetStreamExResponse>,
+): Promise<Miniblock[]> => {
+    const miniblocks: Miniblock[] = []
+    let seenEndOfStream = false
+    for await (const chunk of response) {
+        switch (chunk.data.case) {
+            case 'miniblock':
+                if (seenEndOfStream) {
+                    throw new Error(
+                        `GetStreamEx: received miniblock after minipool contents for stream ${streamIdAsString(
+                            streamId,
+                        )}.`,
+                    )
+                }
+                miniblocks.push(chunk.data.value)
+                break
+            case 'minipool':
+                // TODO: add minipool contents to the unpacked response
+                break
+            case undefined:
+                seenEndOfStream = true
+                break
+        }
+    }
+    if (!seenEndOfStream) {
+        throw new Error(
+            `Failed receive all getStreamEx streaming responses for stream ${streamIdAsString(
+                streamId,
+            )}.`,
+        )
+    }
+    return miniblocks
 }
 
 export const unpackStreamEx = async (
