@@ -5,8 +5,6 @@ import (
 	"context"
 	"time"
 
-	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -16,7 +14,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type reconcileTask struct {
@@ -155,7 +152,7 @@ func (s *StreamCache) reconciliationTask(
 		return
 	}
 
-	err := s.reconcileStreamFromPeers(stream, streamRecord)
+	err := newStreamReconciler(s, stream, streamRecord).reconcile()
 	if err != nil {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconcileStreamFromPeers: Unable to reconcile stream from peers",
@@ -211,243 +208,6 @@ func (s *StreamCache) reconciliationTask(
 		s.submitToPool(s.onlineReconcileWorkerPool, func() {
 			s.reconciliationTask(streamId)
 		})
-	}
-}
-
-// reconcileStreamFromPeers reconciles the database for the given streamResult by fetching missing blocks from peers
-// participating in the stream.
-// TODO: refactor this code so steps for large reconciliations are rescheduled on the pool to avoid blocking pool thread for long periods of time.
-func (s *StreamCache) reconcileStreamFromPeers(
-	stream *Stream,
-	streamRecord *river.StreamWithId,
-) error {
-	ctx := s.params.ServerCtx
-
-	// Try to normalize the given stream if needed.
-	if streamRecord.IsSealed() {
-		// TODO: change normalize to work in batches and schedule next batch on the pool to avoid blocking pool thread for
-		return s.normalizeEphemeralStream(ctx, stream, streamRecord.LastMbNum(), streamRecord.IsSealed())
-	}
-
-	expectedLastMbInclusive := streamRecord.LastMbNum()
-
-	stream.mu.RLock()
-	nonReplicatedStream := len(stream.nodesLocked.GetQuorumNodes()) == 1
-	remotes, _ := stream.nodesLocked.GetRemotesAndIsLocal()
-	remote := stream.nodesLocked.GetStickyPeer()
-	stream.mu.RUnlock()
-	if len(remotes) == 0 {
-		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", stream.streamId)
-	}
-
-	// if stream is not replicated the stream registry may not have the latest miniblock
-	// because nodes only register periodically new miniblocks to reduce transaction costs
-	// for non-replicated streams. In that case fetch the latest block number from the remote.
-	if nonReplicatedStream {
-		client, err := s.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
-		if err == nil {
-			req := connect.NewRequest(&GetLastMiniblockHashRequest{
-				StreamId: stream.streamId[:],
-			})
-			// TODO: move constants from rpc/forwarder.go to shared package so they are available here.
-			req.Header().Set("X-River-No-Forward", "true")
-			resp, err := client.GetLastMiniblockHash(ctx, req)
-			if err == nil {
-				expectedLastMbInclusive = max(expectedLastMbInclusive, resp.Msg.MiniblockNum)
-			}
-		}
-	}
-
-	backwardThreshold := s.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
-	enableBackwardReconciliation := backwardThreshold > 0
-
-	var localLastMbNumInclusive int64
-	var localStartMbNumInclusive int64
-	var presentRanges, missingRanges []storage.MiniblockRange
-	var err error
-
-	if !enableBackwardReconciliation {
-		localLastMbNumInclusive, err = stream.getLastMiniblockNumSkipLoad(ctx)
-		if err != nil {
-			if IsRiverErrorCode(err, Err_NOT_FOUND) {
-				localLastMbNumInclusive = -1
-			} else {
-				return err
-			}
-		}
-
-		if expectedLastMbInclusive <= localLastMbNumInclusive {
-			return nil
-		}
-	} else {
-		// TODO: DO NOT COMMIT: calculate startMiniblockNumberInclusive based on settings.
-		presentRanges, err = s.params.Storage.GetMiniblockNumberRanges(ctx, stream.streamId, localStartMbNumInclusive)
-		if err != nil && !IsRiverErrorCode(err, Err_NOT_FOUND) {
-			return err
-		}
-
-		if len(presentRanges) == 0 {
-			localLastMbNumInclusive = -1
-			missingRanges = []storage.MiniblockRange{
-				{
-					StartInclusive: localStartMbNumInclusive,
-					EndInclusive:   expectedLastMbInclusive,
-				},
-			}
-		} else {
-			localLastMbNumInclusive = presentRanges[len(presentRanges)-1].EndInclusive
-			missingRanges = calculateMissingRanges(presentRanges, localStartMbNumInclusive, expectedLastMbInclusive)
-
-			if len(missingRanges) == 0 {
-				return nil
-			}
-		}
-	}
-
-	if !enableBackwardReconciliation {
-		fromInclusive := localLastMbNumInclusive + 1
-		toExclusive := expectedLastMbInclusive + 1
-
-		return s.reconcileStreamForward(stream, remote, remotes, fromInclusive, toExclusive)
-	}
-
-	// Backwards reconciliation is enabled.
-	// It's possible that stream is complete at the end and there are gaps in the middle.
-	// In this case only gaps need to be backfilled.
-	// If last missing range is at the end, then depending on the threshold setting
-	// either forward reconciliation should be used or the stream should be re-initialized at the end
-	// and then gaps need to be backfilled.
-	lastMissingRange := missingRanges[len(missingRanges)-1]
-	if lastMissingRange.EndInclusive == expectedLastMbInclusive {
-		rangeLen := lastMissingRange.EndInclusive - lastMissingRange.StartInclusive + 1
-		if uint64(rangeLen) <= backwardThreshold {
-			return s.reconcileStreamForward(
-				stream,
-				remote,
-				remotes,
-				lastMissingRange.StartInclusive,
-				lastMissingRange.EndInclusive+1,
-			)
-		} else {
-			return s.reconcileStreamBackward(
-				stream,
-				remote,
-				remotes,
-				missingRanges,
-			)
-		}
-	} else {
-		return s.reconcileStreamBackfillGaps(stream, remote, remotes, missingRanges)
-	}
-}
-
-func (s *StreamCache) reconcileStreamBackward(
-	stream *Stream,
-	remote common.Address,
-	remotes []common.Address,
-	missingRanges []storage.MiniblockRange,
-) error {
-	return nil
-}
-
-// func (s *StreamCache) reconcileStreamBackwardFromSinglePeer(
-// 	stream *Stream,
-// 	remote common.Address,
-// 	remotes []common.Address,
-// 	missingRanges []storage.MiniblockRange,
-// ) error {
-// 	return nil
-// }
-
-func (s *StreamCache) reconcileStreamBackfillGaps(
-	stream *Stream,
-	remote common.Address,
-	remotes []common.Address,
-	missingRanges []storage.MiniblockRange,
-) error {
-	return nil
-}
-
-func (s *StreamCache) reconcileStreamForward(
-	stream *Stream,
-	remote common.Address,
-	remotes []common.Address,
-	fromInclusive int64,
-	toExclusive int64,
-) error {
-	nextFromInclusive := fromInclusive
-	var err error
-	for range remotes {
-		nextFromInclusive, err = s.reconcileStreamForwardFromSinglePeer(stream, remote, nextFromInclusive, toExclusive)
-		if err == nil && nextFromInclusive >= toExclusive {
-			return nil
-		}
-
-		remote = stream.AdvanceStickyPeer(remote)
-	}
-
-	if err != nil {
-		return RiverErrorWithBase(
-			Err_UNAVAILABLE,
-			"No peer could provide miniblocks for stream reconciliation",
-			err,
-		).
-			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
-	}
-
-	return RiverError(
-		Err_UNAVAILABLE,
-		"No peer could provide miniblocks for stream reconciliation",
-	).Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
-}
-
-// reconcileStreamForwardFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
-// It returns the block number of the last block successfully reconciled + 1.
-func (s *StreamCache) reconcileStreamForwardFromSinglePeer(
-	stream *Stream,
-	remote common.Address,
-	fromInclusive int64,
-	toExclusive int64,
-) (int64, error) {
-	pageSize := s.params.Config.StreamReconciliation.GetMiniblocksPageSize
-	if pageSize <= 0 {
-		pageSize = 128
-	}
-
-	currentFromInclusive := fromInclusive
-	for {
-		if currentFromInclusive >= toExclusive {
-			return currentFromInclusive, nil
-		}
-
-		ctx, cancel := context.WithTimeout(s.params.ServerCtx, time.Minute)
-
-		currentToExclusive := min(currentFromInclusive+pageSize, toExclusive)
-
-		mbs, err := s.params.RemoteMiniblockProvider.GetMbs(
-			ctx,
-			remote,
-			stream.streamId,
-			currentFromInclusive,
-			currentToExclusive,
-		)
-		if err != nil {
-			cancel()
-			return currentFromInclusive, err
-		}
-
-		if len(mbs) == 0 {
-			cancel()
-			return currentFromInclusive, nil
-		}
-
-		err = stream.importMiniblocks(ctx, mbs)
-		cancel()
-		if err != nil {
-			return currentFromInclusive, err
-		}
-
-		currentFromInclusive += int64(len(mbs))
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
@@ -15,6 +16,15 @@ func TestCalculateMissingRanges(t *testing.T) {
 		endInclusive   int64
 		expected       []storage.MiniblockRange
 	}{
+		{
+			name:           "nil present ranges - entire range is missing",
+			presentRanges:  nil,
+			startInclusive: 0,
+			endInclusive:   10,
+			expected: []storage.MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 10},
+			},
+		},
 		{
 			name:           "no present ranges - entire range is missing",
 			presentRanges:  []storage.MiniblockRange{},
