@@ -411,9 +411,14 @@ func TestStreamLocks_DeleteBehavior(t *testing.T) {
 	// Unlock the stream
 	syncerSet.unlockStreams(lockedStreams)
 
-	// Verify the lock is deleted after unlock
-	_, found = syncerSet.streamLocks.Load(streamID)
-	assert.False(t, found, "Stream lock should be deleted after unlock")
+	// Verify the lock still exists but is unlocked
+	lock, found = syncerSet.streamLocks.Load(streamID)
+	assert.True(t, found, "Stream lock should still exist after unlock")
+	assert.NotNil(t, lock)
+
+	// Verify we can acquire the lock again (proving it was unlocked)
+	assert.True(t, lock.TryLock())
+	lock.Unlock()
 }
 
 // TestStreamLocks_ConcurrentAccess tests concurrent access to different stream locks
@@ -447,9 +452,14 @@ func TestStreamLocks_ConcurrentAccess(t *testing.T) {
 			// Unlock the stream
 			syncerSet.unlockStreams(lockedStreams)
 
-			// After unlock, the lock should be deleted
-			_, found := syncerSet.streamLocks.Load(streamID)
-			assert.False(t, found, "Stream lock should be deleted after unlock")
+			// After unlock, the lock should still exist but be unlocked
+			lock, found := syncerSet.streamLocks.Load(streamID)
+			assert.True(t, found, "Stream lock should still exist after unlock")
+
+			// Verify we can acquire it again
+			if lock != nil && lock.TryLock() {
+				lock.Unlock()
+			}
 		}(i)
 	}
 
