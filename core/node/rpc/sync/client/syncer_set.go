@@ -118,8 +118,9 @@ func (ss *SyncerSet) Run() {
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
-// lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks
-func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []StreamId {
+// lockStreams acquires locks for all streams in the request in a consistent order to prevent deadlocks.
+// Returns a function to unlock the streams after the operation is done.
+func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() {
 	if ss.otelTracer != nil {
 		_, span := ss.otelTracer.Start(ctx, "SyncerSet::lockStreams",
 			trace.WithAttributes(
@@ -184,7 +185,9 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) []Strea
 		)
 	}
 
-	return lockedStreamIDs
+	return func() {
+		ss.unlockStreams(lockedStreamIDs)
+	}
 }
 
 // unlockStream releases locks for the given stream ID
@@ -326,8 +329,8 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	// Lock streams from the request excluding backfills.
-	lockedStreams := ss.lockStreams(ctx, req)
-	defer ss.unlockStreams(lockedStreams)
+	unlock := ss.lockStreams(ctx, req)
+	defer unlock()
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
