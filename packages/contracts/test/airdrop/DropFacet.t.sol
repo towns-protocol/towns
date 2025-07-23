@@ -503,7 +503,11 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         );
     }
 
-    function test_revertWhen_notClaimingAccount() external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
+    function test_revertWhen_notClaimingAccount(
+        address caller
+    ) external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
+        vm.assume(caller != bob);
+
         DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
         conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
         conditions[0].penaltyBps = PENALTY_BPS;
@@ -513,8 +517,8 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
+        vm.prank(caller);
         vm.expectRevert(DropFacet__NotClaimingAccount.selector);
-        vm.prank(alice);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
