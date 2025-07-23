@@ -2132,8 +2132,8 @@ func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key solicitation event")
 	}
 
-	if len(ru.solicitation.SessionIds) == 0 {
-		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required for all solicitations")
+	if !ru.solicitation.IsNewDevice && len(ru.solicitation.SessionIds) == 0 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required for existing devices")
 	}
 
 	if !slices.IsSorted(ru.solicitation.SessionIds) {
@@ -2175,10 +2175,6 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 	for _, solicitation := range solicitations {
 		if solicitation.DeviceKey == ru.fulfillment.DeviceKey {
 			if solicitation.IsNewDevice {
-				// if the user has indicated that this is a new device, it's possible that a client
-				// will fulfill with all known sessionids, but not have an overlapping sessionId
-				// this will clear the IsNewDevice flag, but the solicitation will still be valid, and
-				// a different client could complete the fulfillment
 				return true, nil
 			}
 			if hasCommon(solicitation.SessionIds, ru.fulfillment.SessionIds) {
