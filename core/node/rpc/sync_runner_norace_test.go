@@ -458,8 +458,6 @@ func waitForMessagesDelivery(
 	eventTrackerMu *sync.Mutex,
 	eventTracker map[StreamId]map[string]int,
 	expectedMessages map[StreamId][]string,
-	timeout time.Duration,
-	pollInterval time.Duration,
 	failMessage string,
 ) {
 	require.EventuallyWithT(func(t *assert.CollectT) {
@@ -478,7 +476,7 @@ func waitForMessagesDelivery(
 				}
 			}
 		}
-	}, timeout, pollInterval, failMessage)
+	}, 30*time.Second, 100*time.Millisecond, failMessage)
 }
 
 // TestMultiSyncerWithNodeFailures stops nodes one at a time after streams have already started syncing. This
@@ -602,8 +600,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		30*time.Second,
-		100*time.Millisecond,
 		"Not all messages from first batch were received",
 	)
 
@@ -625,8 +621,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		30*time.Second,
-		100*time.Millisecond,
 		"Not all messages were received after first node failure",
 	)
 
@@ -648,8 +642,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		30*time.Second,
-		100*time.Millisecond,
 		"Not all messages were received after second node failure",
 	)
 
@@ -800,6 +792,45 @@ func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 	}
 }
 
+func createAndVerifyMiniblockWithRetry(
+	ctx context.Context,
+	client protocolconnect.StreamServiceClient,
+	channelId StreamId,
+	miniblockRefs []MiniblockRef,
+	require *require.Assertions,
+) (*MiniblockRef, []MiniblockRef) {
+	maxRetries := 10
+	expectedNum := int64(0)
+	if len(miniblockRefs) > 0 {
+		expectedNum = miniblockRefs[len(miniblockRefs)-1].Num + 1
+	}
+
+	var mb *MiniblockRef
+	var err error
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		mb, err = makeMiniblock(ctx, client, channelId, false, -1)
+		require.NoError(err, "Failed to create miniblock on attempt %d", attempt+1)
+
+		if mb.Num == expectedNum {
+			// Success - got the expected sequential number
+			miniblockRefs = append(miniblockRefs, *mb)
+			return mb, miniblockRefs
+		}
+
+		// Wrong number, wait a bit before retrying
+		if attempt < maxRetries-1 {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	// Failed after all retries
+	require.Failf("Failed to get sequential miniblock number",
+		"Expected miniblock num %d but got %d after %d retries",
+		expectedNum, mb.Num, maxRetries)
+	return nil, miniblockRefs
+}
+
 // createChannelWithMessages creates a channel and adds messages with miniblocks
 func createChannelWithMessages(
 	ctx context.Context,
@@ -823,24 +854,16 @@ func createChannelWithMessages(
 	tc.eventTracker[channelId] = make(map[string]int)
 	tc.eventTrackerMu.Unlock()
 
-	// Create initial miniblock
-	mb0, err := makeMiniblock(ctx, tc.client, channelId, false, -1)
-	tc.require.NoError(err)
-	tc.require.Equal(int64(0), mb0.Num)
-	miniblockRefs := []MiniblockRef{*mb0}
+	// Create initial miniblock with retries
+	var miniblockRefs []MiniblockRef
+	_, miniblockRefs = createAndVerifyMiniblockWithRetry(ctx, tc.client, channelId, miniblockRefs, tc.require)
 
 	// Add messages and create miniblocks
 	for j := 0; j < messagesPerChannel; j++ {
 		msg := fmt.Sprintf("channel%d-msg%d", channelIndex, j)
 		addMessageToChannel(ctx, tc.client, tc.wallet, msg, channelId, channelHash, tc.require)
 
-		// Create miniblock after each message
-		mb, err := makeMiniblock(ctx, tc.client, channelId, false, -1)
-		// if I add this, the miniblock num is always sequential
-		//time.Sleep(100 * time.Millisecond)
-
-		tc.require.NoError(err)
-		miniblockRefs = append(miniblockRefs, *mb)
+		_, miniblockRefs = createAndVerifyMiniblockWithRetry(ctx, tc.client, channelId, miniblockRefs, tc.require)
 	}
 
 	return channelId, channelHash, miniblockRefs

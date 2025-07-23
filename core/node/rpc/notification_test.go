@@ -395,7 +395,7 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		notificationsForEvent := nc.ApnPushNotifications[eventHash]
 
 		return cmp.Equal(notificationsForEvent, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
 
 	// userA unsubscribes and userB subscribes using the same device.
 	// for tests the deviceToken is the users wallet address, in this case
@@ -438,7 +438,7 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		notificationsForEvent := nc.ApnPushNotifications[eventHash]
 
 		return len(notificationsForEvent) != 0
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Receive unexpected notification")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Receive unexpected notification")
 }
 
 func testGDMMessageWithNoMentionsRepliesAndReaction(
@@ -507,7 +507,7 @@ func testGDMMessageWithNoMentionsRepliesAndReaction(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
