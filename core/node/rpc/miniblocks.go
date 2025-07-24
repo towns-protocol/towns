@@ -70,11 +70,13 @@ func (s *Service) GetMbs(
 		return nil, err
 	}
 
-	resp, err := remote.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
+	req := connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      streamId[:],
 		FromInclusive: fromInclusive,
 		ToExclusive:   toExclusive,
-	}))
+	})
+	req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err := remote.GetMiniblocks(ctx, req)
 	if err != nil {
 		return nil, err
 	}

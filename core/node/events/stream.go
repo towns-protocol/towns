@@ -253,17 +253,9 @@ func (s *Stream) importMiniblocksLocked(
 	ctx context.Context,
 	miniblocks []*MiniblockInfo,
 ) error {
-	firstMbNum := miniblocks[0].Ref.Num
-	blocksToWriteToStorage := make([]*storage.MiniblockDescriptor, len(miniblocks))
-	for i, miniblock := range miniblocks {
-		if miniblock.Ref.Num != firstMbNum+int64(i) {
-			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
-		}
-		mb, err := miniblock.AsStorageMb()
-		if err != nil {
-			return err
-		}
-		blocksToWriteToStorage[i] = mb
+	blocksToWriteToStorage, err := MiniblockInfosToStorageMbs(miniblocks)
+	if err != nil {
+		return err
 	}
 
 	if s.getViewLocked() == nil {
@@ -296,7 +288,6 @@ func (s *Stream) importMiniblocksLocked(
 	}
 
 	currentView := originalView
-	var err error
 	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
 	var snapshot *Envelope
@@ -1218,12 +1209,9 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 		return err
 	}
 
-	storageMiniblocks := make([]*storage.MiniblockDescriptor, len(miniblocks))
-	for i, mb := range miniblocks {
-		storageMiniblocks[i], err = mb.AsStorageMb()
-		if err != nil {
-			return err
-		}
+	storageMiniblocks, err := MiniblockInfosToStorageMbs(miniblocks)
+	if err != nil {
+		return err
 	}
 
 	// Reinitialize data is prepared.
