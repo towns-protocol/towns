@@ -267,7 +267,9 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	// Verify syncer is removed after Run completes
 	syncerEntity, found := syncerSet.syncers.Load(localAddr)
 	assert.True(t, found)
+	syncerEntity.Lock()
 	assert.Nil(t, syncerEntity.StreamsSyncer)
+	syncerEntity.Unlock()
 
 	// Cleanup
 	streamCache.AssertExpectations(t)
