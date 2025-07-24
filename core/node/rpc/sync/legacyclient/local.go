@@ -129,23 +129,23 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		defer span.End()
 	}
 
-	// prevent subscribing multiple times on the same stream
-	if _, found := s.activeStreams.Load(streamID); found {
-		return nil
-	}
+	var err error
+	s.activeStreams.LoadOrCompute(
+		streamID,
+		func() (*Stream, bool) {
+			var syncStream *Stream
+			if syncStream, err = s.streamCache.GetStreamWaitForLocal(ctx, streamID); err != nil {
+				return nil, true
+			}
 
-	syncStream, err := s.streamCache.GetStreamWaitForLocal(ctx, streamID)
-	if err != nil {
-		return err
-	}
+			if err = syncStream.Sub(ctx, cookie, s); err != nil {
+				return nil, true
+			}
 
-	if err = syncStream.Sub(ctx, cookie, s); err != nil {
-		return err
-	}
-
-	s.activeStreams.Store(streamID, syncStream)
-
-	return nil
+			return syncStream, false
+		},
+	)
+	return err
 }
 
 func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (bool, error) {
