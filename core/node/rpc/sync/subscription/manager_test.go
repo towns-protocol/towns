@@ -13,6 +13,7 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
@@ -22,7 +23,7 @@ func TestManager_Subscribe(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
-	sub, err := m.Subscribe(ctx, cancel, "test-sync-id")
+	sub, err := m.Subscribe(ctx, cancel, "test-sync-id", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	require.NoError(t, err)
 	require.NotNil(t, sub)
 	assert.Equal(t, "test-sync-id", sub.syncID)
@@ -34,7 +35,7 @@ func TestManager_Subscribe(t *testing.T) {
 
 	// Test stopped path
 	m.stopped.Store(true)
-	sub2, err2 := m.Subscribe(ctx, cancel, "should-fail")
+	sub2, err2 := m.Subscribe(ctx, cancel, "should-fail", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	assert.Nil(t, sub2)
 	assert.Error(t, err2)
 }
@@ -108,7 +109,7 @@ func TestManager_Subscribe_Concurrent(t *testing.T) {
 			ctx, cancel := context.WithCancelCause(context.Background())
 			defer cancel(nil)
 
-			sub, err := m.Subscribe(ctx, cancel, syncID)
+			sub, err := m.Subscribe(ctx, cancel, syncID, dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 			assert.NoError(t, err)
 			assert.NotNil(t, sub)
 			subs[idx] = sub
@@ -149,7 +150,7 @@ func TestManager_GetStats(t *testing.T) {
 		ctx, cancel := context.WithCancelCause(context.Background())
 		defer cancel(nil)
 
-		sub, err := m.Subscribe(ctx, cancel, syncID)
+		sub, err := m.Subscribe(ctx, cancel, syncID, dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 		require.NoError(t, err)
 		require.NotNil(t, sub)
 
