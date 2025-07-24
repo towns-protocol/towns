@@ -153,8 +153,7 @@ func (h *handlerImpl) SyncStreams(
 	go h.runSyncStreams(req, sender, op, doneChan)
 
 	var errCode string
-	err = <-doneChan
-	if err != nil {
+	if err = <-doneChan; err != nil {
 		errCode = AsRiverError(err).Code.String()
 	}
 

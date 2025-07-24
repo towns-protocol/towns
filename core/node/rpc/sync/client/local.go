@@ -86,9 +86,10 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 					rvrErr := AsRiverError(err)
 					backfillsLock.Lock()
 					resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: s.localAddr.Bytes(),
 					})
 					backfillsLock.Unlock()
 				}
@@ -107,9 +108,10 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 					rvrErr := AsRiverError(err)
 					addsLock.Lock()
 					resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: s.localAddr.Bytes(),
 					})
 					addsLock.Unlock()
 				}
@@ -200,23 +202,23 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		defer span.End()
 	}
 
-	// prevent subscribing multiple times on the same stream
-	if _, found := s.activeStreams.Load(streamID); found {
-		return nil
-	}
+	var err error
+	s.activeStreams.LoadOrCompute(
+		streamID,
+		func() (*events.Stream, bool) {
+			var syncStream *events.Stream
+			if syncStream, err = s.streamCache.GetStreamWaitForLocal(ctx, streamID); err != nil {
+				return nil, true
+			}
 
-	syncStream, err := s.streamCache.GetStreamWaitForLocal(ctx, streamID)
-	if err != nil {
-		return err
-	}
+			if err = syncStream.Sub(ctx, cookie, s); err != nil {
+				return nil, true
+			}
 
-	if err = syncStream.Sub(ctx, cookie, s); err != nil {
-		return err
-	}
-
-	s.activeStreams.Store(streamID, syncStream)
-
-	return nil
+			return syncStream, false
+		},
+	)
+	return err
 }
 
 // OnUpdate is called each time a new cookie is available for a stream

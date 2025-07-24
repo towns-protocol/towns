@@ -61,30 +61,33 @@ func newRemoteSyncer(
 	firstMsgChan := make(chan bool, 1)
 	go func() {
 		firstMsgChan <- responseStream.Receive()
+		close(firstMsgChan)
 	}()
 
 	select {
 	case received := <-firstMsgChan:
-		close(firstMsgChan)
 		if !received {
 			syncStreamCancel()
-			return nil, responseStream.Err()
+			if err = responseStream.Err(); err != nil {
+				return nil, err
+			}
+			return nil, RiverError(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages")
 		}
 		// First message received successfully, continue with the stream
 	case <-timer.C:
-		close(firstMsgChan)
 		syncStreamCancel()
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
 
-	log := logging.FromCtx(ctx)
-
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		log.Errorw("Received unexpected sync stream message",
+		logging.FromCtx(ctx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
-		return nil, err
+		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
+			Tags("syncOp", responseStream.Msg().SyncOp,
+				"syncId", responseStream.Msg().SyncId,
+				"remote", remoteAddr)
 	}
 
 	return &remoteSyncer{

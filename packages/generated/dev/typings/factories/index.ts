@@ -4,7 +4,6 @@
 export * as iMockLegacyArchitectSol from "./IMockLegacyArchitect.sol";
 export * as iRuleEntitlementSol from "./IRuleEntitlement.sol";
 export * as mainnet from "./mainnet";
-export * as multichain from "./multichain";
 export { Architect__factory } from "./Architect__factory";
 export { Channels__factory } from "./Channels__factory";
 export { DropFacet__factory } from "./DropFacet__factory";

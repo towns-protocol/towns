@@ -98,7 +98,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
         );
 
         // handle refunds of unconsumed input tokens
-        _handleRefunds(params.tokenIn, tokenInBalanceBefore);
+        _handleRefunds(params.tokenIn, tokenInBalanceBefore, poster);
 
         // reset approval for ERC20 tokens
         if (!isNativeToken) params.tokenIn.safeApprove(swapRouter, 0);
@@ -112,24 +112,30 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     function executeSwapWithPermit(
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
-        Permit2Params calldata permit,
-        address poster
+        FeeConfig calldata posterFee,
+        Permit2Params calldata permit
     ) external payable nonReentrant returns (uint256 amountOut) {
         // Permit2 swaps do not support ETH
         if (msg.value != 0) SwapFacet__UnexpectedETH.selector.revertWith();
 
-        address swapRouter = _validateSwapPrerequisites(poster);
+        address swapRouter = _validateSwapPrerequisites(posterFee.recipient);
 
         // execute swap through the router with permit
         uint256 protocolFee;
         (amountOut, protocolFee) = ISwapRouter(swapRouter).executeSwapWithPermit(
             params,
             routerParams,
-            permit,
-            poster
+            posterFee,
+            permit
         );
 
-        _mintPointsAndEmitSwapEvent(params, amountOut, protocolFee, poster, permit.owner);
+        _mintPointsAndEmitSwapEvent(
+            params,
+            amountOut,
+            protocolFee,
+            posterFee.recipient,
+            permit.owner
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -204,14 +210,20 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase
     /// @notice Handles refunds of unconsumed input tokens back to the caller
     /// @param tokenIn The input token address
     /// @param tokenInBalanceBefore The balance before receiving tokens from user
-    function _handleRefunds(address tokenIn, uint256 tokenInBalanceBefore) internal {
+    /// @param poster The poster address for this swap
+    function _handleRefunds(
+        address tokenIn,
+        uint256 tokenInBalanceBefore,
+        address poster
+    ) internal {
         uint256 currentBalance = _getBalance(tokenIn);
 
         // calculate base refund amount
         uint256 refundAmount = FixedPointMathLib.zeroFloorSub(currentBalance, tokenInBalanceBefore);
 
         // for ETH, subtract poster fee if it was collected to space
-        if (tokenIn == CurrencyTransfer.NATIVE_TOKEN && !_isForwardPosterFee()) {
+        // this happens when poster is the space itself (regardless of forwardPosterFee setting)
+        if (tokenIn == CurrencyTransfer.NATIVE_TOKEN && poster == address(this)) {
             // get the poster fee that was collected to space
             (, uint16 posterBps, ) = getSwapFees();
             uint256 posterFee = BasisPoints.calculate(msg.value, posterBps);

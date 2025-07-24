@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,7 +45,7 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
 	// Test creating local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
@@ -56,7 +57,7 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	assert.Equal(t, syncer, storedSyncerEntry.StreamsSyncer)
 
 	// Test getting the same syncer again (should return cached)
-	syncer2, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer2, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	assert.Equal(t, syncer, syncer2)
 
@@ -82,15 +83,16 @@ func TestGetOrCreateSyncer_RemoteNode(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
 
 	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
 	assert.Contains(t, err.Error(), "sync stream error")
 
 	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -111,15 +113,16 @@ func TestGetOrCreateSyncer_RemoteNodeError(t *testing.T) {
 	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(nil, expectedErr)
 
 	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
 	assert.Contains(t, err.Error(), "connection failed")
 
 	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -138,7 +141,7 @@ func TestGetOrCreateSyncer_SyncStopped(t *testing.T) {
 	syncerSet.stopped.Store(true)
 
 	// Test creating syncer when stopped
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -174,7 +177,7 @@ func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			<-start // Wait for signal to start all at once
-			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(localAddr)
+			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(ctx, localAddr)
 		}(i)
 	}
 
@@ -222,15 +225,16 @@ func TestGetOrCreateSyncer_RemoteSyncerInitError(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
 
 	// Test creating remote syncer with init error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
 	assert.Contains(t, err.Error(), "sync init failed")
 
 	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -247,7 +251,7 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
 	// Create a local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
 
@@ -262,8 +266,11 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Verify syncer is removed after Run completes
-	_, found = syncerSet.syncers.Load(localAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(localAddr)
+	assert.True(t, found)
+	syncerEntity.Lock()
+	assert.Nil(t, syncerEntity.StreamsSyncer)
+	syncerEntity.Unlock()
 
 	// Cleanup
 	streamCache.AssertExpectations(t)
@@ -285,7 +292,7 @@ func TestSyncerSet_Run(t *testing.T) {
 	}()
 
 	// Create a syncer to ensure we have something to wait for
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
 
@@ -328,7 +335,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 		messageDistributor: messageDistributor,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
 	}
 
 	// Pre-store a syncer
@@ -337,7 +344,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 	syncerSet.syncers.Store(remoteAddr, syncerEntry)
 
 	// Try to get the existing syncer
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
@@ -369,7 +376,7 @@ func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, syncErr)
 
 	// Try to create a remote syncer
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	// Should fail with an error
 	require.Error(t, err)
@@ -377,8 +384,9 @@ func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
 	assert.Contains(t, err.Error(), "sync failed")
 
 	// Verify no syncer was stored since creation failed
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found, "No syncer should be stored when creation fails")
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -400,20 +408,27 @@ func TestStreamLocks_DeleteBehavior(t *testing.T) {
 	req := ModifyRequest{
 		ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
 	}
-	lockedStreams := syncerSet.lockStreams(ctx, req)
-	assert.Contains(t, lockedStreams, streamID)
+	unlock := syncerSet.lockStreams(ctx, req)
 
 	// Verify the lock exists
 	lock, found := syncerSet.streamLocks.Load(streamID)
 	assert.True(t, found, "Stream lock should exist after locking")
 	assert.NotNil(t, lock)
 
-	// Unlock the stream
-	syncerSet.unlockStreams(lockedStreams)
+	// Verify we can't acquire the lock (proving it's locked)
+	assert.False(t, lock.TryLock(), "Lock should be held")
 
-	// Verify the lock is deleted after unlock
-	_, found = syncerSet.streamLocks.Load(streamID)
-	assert.False(t, found, "Stream lock should be deleted after unlock")
+	// Unlock the stream
+	unlock()
+
+	// Verify the lock still exists but is unlocked
+	lock, found = syncerSet.streamLocks.Load(streamID)
+	assert.True(t, found, "Stream lock should still exist after unlock")
+	assert.NotNil(t, lock)
+
+	// Verify we can acquire the lock again (proving it was unlocked)
+	assert.True(t, lock.TryLock())
+	lock.Unlock()
 }
 
 // TestStreamLocks_ConcurrentAccess tests concurrent access to different stream locks
@@ -439,17 +454,22 @@ func TestStreamLocks_ConcurrentAccess(t *testing.T) {
 			req := ModifyRequest{
 				ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
 			}
-			lockedStreams := syncerSet.lockStreams(ctx, req)
+			unlock := syncerSet.lockStreams(ctx, req)
 
 			// Simulate some work
 			time.Sleep(1 * time.Millisecond)
 
 			// Unlock the stream
-			syncerSet.unlockStreams(lockedStreams)
+			unlock()
 
-			// After unlock, the lock should be deleted
-			_, found := syncerSet.streamLocks.Load(streamID)
-			assert.False(t, found, "Stream lock should be deleted after unlock")
+			// After unlock, the lock should still exist but be unlocked
+			lock, found := syncerSet.streamLocks.Load(streamID)
+			assert.True(t, found, "Stream lock should still exist after unlock")
+
+			// Verify we can acquire it again
+			if lock != nil && lock.TryLock() {
+				lock.Unlock()
+			}
 		}(i)
 	}
 
@@ -481,5 +501,97 @@ func TestSyncerWithLock_Embedding(t *testing.T) {
 	assert.True(t, swl.TryLock())
 	swl.Unlock()
 
+	mockSyncer.AssertExpectations(t)
+}
+
+// TestStreamLocks_ConditionalLocking tests that streams are only locked when necessary
+func TestStreamLocks_ConditionalLocking(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+	streamID1 := StreamId{0x01, 0x02, 0x03}
+	streamID2 := StreamId{0x02, 0x03, 0x04}
+	streamID3 := StreamId{0x03, 0x04, 0x05}
+
+	// Create a mock syncer for testing
+	mockSyncer := &mockStreamsSyncer{}
+	mockSyncer.On("Address").Return(localAddr).Maybe()
+
+	// Mark streamID2 as already syncing
+	syncerSet.streamID2Syncer.Store(streamID2, mockSyncer)
+
+	// Test 1: Adding new streams (should lock streamID1, not streamID2)
+	req1 := ModifyRequest{
+		ToAdd: []*SyncCookie{
+			{StreamId: streamID1[:]},
+			{StreamId: streamID2[:]}, // Already syncing, should not lock
+		},
+	}
+	unlock1 := syncerSet.lockStreams(ctx, req1)
+
+	// Verify streamID1 is locked
+	lock1, found1 := syncerSet.streamLocks.Load(streamID1)
+	assert.True(t, found1, "Stream 1 lock should exist")
+	assert.False(t, lock1.TryLock(), "Stream 1 should be locked")
+
+	// Verify streamID2 lock state (may or may not exist, but shouldn't be locked by us)
+	lock2, found2 := syncerSet.streamLocks.Load(streamID2)
+	if found2 {
+		// If it exists, we should be able to lock it
+		assert.True(t, lock2.TryLock(), "Stream 2 should not be locked")
+		lock2.Unlock()
+	}
+
+	unlock1()
+
+	// Test 2: Removing syncing streams (should lock)
+	req2 := ModifyRequest{
+		ToRemove: [][]byte{
+			streamID2[:], // Is syncing, should lock for removal
+			streamID3[:], // Not syncing, should not lock
+		},
+	}
+	unlock2 := syncerSet.lockStreams(ctx, req2)
+
+	// Verify streamID2 is locked (for removal)
+	lock2, found2 = syncerSet.streamLocks.Load(streamID2)
+	assert.True(t, found2, "Stream 2 lock should exist")
+	assert.False(t, lock2.TryLock(), "Stream 2 should be locked for removal")
+
+	// Verify streamID3 lock state
+	lock3, found3 := syncerSet.streamLocks.Load(streamID3)
+	if found3 {
+		// If it exists, we should be able to lock it
+		assert.True(t, lock3.TryLock(), "Stream 3 should not be locked")
+		lock3.Unlock()
+	}
+
+	unlock2()
+
+	// Test 3: Backfilling syncing streams (should not lock)
+	req3 := ModifyRequest{
+		ToBackfill: []*ModifySyncRequest_Backfill{
+			{
+				Streams: []*SyncCookie{
+					{StreamId: streamID2[:]}, // Is syncing, backfill doesn't need lock
+				},
+			},
+		},
+	}
+	unlock3 := syncerSet.lockStreams(ctx, req3)
+
+	// Verify streamID2 is not locked
+	lock2, found2 = syncerSet.streamLocks.Load(streamID2)
+	if found2 {
+		assert.True(t, lock2.TryLock(), "Stream 2 should not be locked for backfill")
+		lock2.Unlock()
+	}
+
+	unlock3()
+
+	// Cleanup
+	syncerSet.streamID2Syncer.Delete(streamID2)
 	mockSyncer.AssertExpectations(t)
 }

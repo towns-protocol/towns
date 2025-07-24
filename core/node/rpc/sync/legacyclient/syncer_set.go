@@ -62,6 +62,7 @@ func NewSyncers(
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
 	ss := &SyncerSet{
@@ -73,7 +74,7 @@ func NewSyncers(
 		localNodeAddress:      localNodeAddress,
 		syncers:               make(map[common.Address]client.StreamsSyncer),
 		streamID2Syncer:       make(map[StreamId]client.StreamsSyncer),
-		messages:              dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		messages:              messages,
 		otelTracer:            otelTracer,
 	}
 	return ss, ss.messages

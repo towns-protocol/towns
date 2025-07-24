@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
@@ -57,7 +58,7 @@ func TestE2E_CompleteSubscriptionLifecycle(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
-	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1")
+	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	require.NoError(t, err)
 
 	// Step 2: Verify subscription is registered
@@ -132,10 +133,10 @@ func TestE2E_MultipleSubscriptionsSameStream(t *testing.T) {
 	ctx2, cancel2 := context.WithCancelCause(context.Background())
 	defer cancel2(nil)
 
-	sub1, err := env.manager.Subscribe(ctx1, cancel1, "test-sync-1")
+	sub1, err := env.manager.Subscribe(ctx1, cancel1, "test-sync-1", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	require.NoError(t, err)
 
-	sub2, err := env.manager.Subscribe(ctx2, cancel2, "test-sync-2")
+	sub2, err := env.manager.Subscribe(ctx2, cancel2, "test-sync-2", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	require.NoError(t, err)
 
 	// Add same stream to both subscriptions
@@ -227,7 +228,7 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
-	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1")
+	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	require.NoError(t, err)
 
 	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -322,7 +323,7 @@ func TestE2E_ErrorHandlingAndRecovery(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 
-	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1")
+	sub, err := env.manager.Subscribe(ctx, cancel, "test-sync-1", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	assert.Error(t, err)
 	assert.Nil(t, sub)
 	assert.Contains(t, err.Error(), "subscription manager is stopped")
@@ -331,7 +332,7 @@ func TestE2E_ErrorHandlingAndRecovery(t *testing.T) {
 	env.manager.stopped.Store(false)
 
 	// Test 2: Create valid subscription and then close it
-	sub, err = env.manager.Subscribe(ctx, cancel, "test-sync-1")
+	sub, err = env.manager.Subscribe(ctx, cancel, "test-sync-1", dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 	require.NoError(t, err)
 
 	// Close subscription
@@ -373,7 +374,7 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		contexts[i] = cancel
 		defer cancel(nil)
 
-		sub, err := env.manager.Subscribe(ctx, cancel, fmt.Sprintf("test-sync-%d", i))
+		sub, err := env.manager.Subscribe(ctx, cancel, fmt.Sprintf("test-sync-%d", i), dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
 		require.NoError(t, err)
 		subscriptions[i] = sub
 	}

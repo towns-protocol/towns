@@ -8,7 +8,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
@@ -22,8 +21,7 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 
 	syncers, messages := legacyclient.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)
-
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.messages, syncOp.otelTracer)
 	go syncers.Run()
 
 	// Adding the initial sync position to the syncer
@@ -57,7 +55,7 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 	}
 
 	// Start separate goroutine to process sync stream commands
-	go syncOp.runCommandsProcessingLegacy(syncers, messages)
+	go syncOp.runCommandsProcessingLegacy(syncers)
 
 	var messagesSendToClient int
 	defer func() {
@@ -131,10 +129,7 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 	}
 }
 
-func (syncOp *StreamSyncOperation) runCommandsProcessingLegacy(
-	syncers *legacyclient.SyncerSet,
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
-) {
+func (syncOp *StreamSyncOperation) runCommandsProcessingLegacy(syncers *legacyclient.SyncerSet) {
 	for {
 		select {
 		case <-syncOp.ctx.Done():
@@ -145,16 +140,10 @@ func (syncOp *StreamSyncOperation) runCommandsProcessingLegacy(
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != "" {
-				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
-				messages.Close()
+				_ = syncOp.messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				syncOp.messages.Close()
 				cmd.Reply(nil)
 				return
-			} else if cmd.PingReq != "" {
-				_ = messages.AddMessage(&SyncStreamsResponse{
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq,
-				})
-				cmd.Reply(nil)
 			}
 		}
 	}
