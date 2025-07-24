@@ -124,7 +124,7 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Debugw("Adding stream with cookie",
+		Infow("Adding stream with cookie",
 			"stream", record.streamId,
 			"minipoolGen", record.minipoolGen,
 			"prevMiniblockHash", record.prevMiniblockHash,
