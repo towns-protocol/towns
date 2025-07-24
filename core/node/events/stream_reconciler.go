@@ -54,13 +54,13 @@ func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river
 
 // reconcile runs single stream reconciliation attempt.
 func (sr *streamReconciler) reconcile() error {
-	ctx := sr.cache.params.ServerCtx
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	var cancel context.CancelFunc
+	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
 	defer cancel()
 
 	if sr.streamRecord.IsSealed() {
 		return sr.cache.normalizeEphemeralStream(
-			ctx,
+			sr.ctx,
 			sr.stream,
 			sr.streamRecord.LastMbNum(),
 			sr.streamRecord.IsSealed(),
@@ -92,7 +92,7 @@ func (sr *streamReconciler) reconcile() error {
 	enableBackwardReconciliation := backwardThreshold > 0
 
 	var err error
-	sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(ctx)
+	sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(sr.ctx)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
 			sr.notFound = true
@@ -327,9 +327,11 @@ func (sr *streamReconciler) backfillPageFromSinglePeer(
 	if err != nil {
 		return fromInclusive, err
 	}
-
 	if len(mbs) == 0 {
 		return fromInclusive, RiverError(Err_UNAVAILABLE, "Current peer returned no miniblocks")
+	}
+	if mbs[0].Ref.Num != fromInclusive {
+		return fromInclusive, RiverError(Err_INTERNAL, "Current peer returned miniblock with unexpected number")
 	}
 
 	storageMbs, err := MiniblockInfosToStorageMbs(mbs)
@@ -416,6 +418,9 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 	}
 	if len(mbs) == 0 {
 		return fromInclusive, RiverError(Err_UNAVAILABLE, "Current peer returned no miniblocks")
+	}
+	if mbs[0].Ref.Num != fromInclusive {
+		return fromInclusive, RiverError(Err_INTERNAL, "Current peer returned miniblock with unexpected number")
 	}
 
 	err = sr.stream.importMiniblocks(ctx, mbs)
