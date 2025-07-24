@@ -20,8 +20,6 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	syncOp.res = res
-
 	syncers, messages := legacyclient.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
 		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)

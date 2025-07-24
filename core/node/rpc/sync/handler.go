@@ -124,6 +124,7 @@ func (h *handlerImpl) SyncStreams(
 	op, err := NewStreamsSyncOperation(
 		ctx,
 		syncId,
+		res,
 		h.nodeAddr,
 		h.streamCache,
 		h.nodeRegistry,

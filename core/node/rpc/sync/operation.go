@@ -87,6 +87,7 @@ func (cmd *subCommand) Reply(err error) {
 func NewStreamsSyncOperation(
 	ctx context.Context,
 	syncId string,
+	res StreamsResponseSubscriber,
 	node common.Address,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
@@ -109,6 +110,7 @@ func NewStreamsSyncOperation(
 		streamCache:         streamCache,
 		nodeRegistry:        nodeRegistry,
 		subscriptionManager: subscriptionManager,
+		res:                 res,
 		otelTracer:          otelTracer,
 		metrics:             metrics,
 	}, nil
@@ -129,7 +131,6 @@ func (syncOp *StreamSyncOperation) Run(
 	defer sub.Close()
 
 	syncOp.usingSharedSyncer = true
-	syncOp.res = res
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
