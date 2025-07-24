@@ -110,6 +110,7 @@ func NewStreamsSyncOperation(
 		streamCache:         streamCache,
 		nodeRegistry:        nodeRegistry,
 		subscriptionManager: subscriptionManager,
+		messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		otelTracer:          otelTracer,
 		metrics:             metrics,
 	}, nil
@@ -122,7 +123,7 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	sub, err := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
+	sub, err := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.messages)
 	if err != nil {
 		syncOp.log.Errorw("Failed to subscribe to stream sync operation", "err", err)
 		return err
@@ -130,7 +131,6 @@ func (syncOp *StreamSyncOperation) Run(
 	defer sub.Close()
 
 	syncOp.usingSharedSyncer = true
-	syncOp.messages = sub.Messages
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {

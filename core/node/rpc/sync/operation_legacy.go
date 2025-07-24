@@ -21,10 +21,8 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 
 	syncers, messages := legacyclient.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.messages, syncOp.otelTracer)
 	go syncers.Run()
-
-	syncOp.messages = messages
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
