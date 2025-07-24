@@ -82,7 +82,10 @@ func NewRemoteSyncer(
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
-		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message")
+		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
+			Tags("syncOp", responseStream.Msg().SyncOp,
+				"syncId", responseStream.Msg().SyncId,
+				"remote", remoteAddr)
 	}
 
 	return &remoteSyncer{
