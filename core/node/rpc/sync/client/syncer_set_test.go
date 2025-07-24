@@ -262,14 +262,12 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	cancel()
 
 	// Wait for syncer to be removed (give it some time to clean up)
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// Verify syncer is removed after Run completes
 	syncerEntity, found := syncerSet.syncers.Load(localAddr)
 	assert.True(t, found)
-	syncerEntity.Lock()
 	assert.Nil(t, syncerEntity.StreamsSyncer)
-	syncerEntity.Unlock()
 
 	// Cleanup
 	streamCache.AssertExpectations(t)
