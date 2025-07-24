@@ -9,7 +9,7 @@ import (
 
 const (
 	// MaxBufferSize is the maximum buffer size.
-	MaxBufferSize = 2048
+	MaxBufferSize = 4096
 
 	// MinBufferSize is the minimum buffer size.
 	MinBufferSize = 16
