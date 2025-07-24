@@ -477,6 +477,7 @@ func (syncOp *StreamSyncOperation) PingSync(
 	}
 
 	if err := syncOp.res.Send(&SyncStreamsResponse{
+		SyncId:    syncOp.SyncID,
 		SyncOp:    SyncOp_SYNC_PONG,
 		PongNonce: req.Msg.GetNonce(),
 	}); err != nil {
