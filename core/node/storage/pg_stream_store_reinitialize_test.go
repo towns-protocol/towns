@@ -24,7 +24,7 @@ func TestReinitializeStreamStorage_CreateNew(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Prepare miniblocks
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.HexToHash("0x01"),
@@ -81,7 +81,7 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create initial stream
-	genesisMb := &WriteMiniblockData{
+	genesisMb := &MiniblockDescriptor{
 		Number:   0,
 		Hash:     common.HexToHash("0x01"),
 		Data:     []byte("genesis miniblock"),
@@ -92,12 +92,12 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 
 	// Write a miniblock to extend the stream
 	err = store.WriteMiniblocks(ctx, streamId, 
-		[]*WriteMiniblockData{{Number: 1, Data: []byte("miniblock 1")}},
+		[]*MiniblockDescriptor{{Number: 1, Data: []byte("miniblock 1")}},
 		2, [][]byte{}, 1, 0)
 	require.NoError(err)
 
 	// Add miniblock candidates
-	candidate := &WriteMiniblockData{
+	candidate := &MiniblockDescriptor{
 		Number: 2,
 		Hash:   common.HexToHash("0xc1"),
 		Data:   []byte("candidate 2"),
@@ -106,7 +106,7 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	require.NoError(err)
 
 	// Prepare new miniblocks for reinitialization (extending the stream)
-	newMiniblocks := []*WriteMiniblockData{
+	newMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   1,
 			Hash:     common.HexToHash("0x02"),
@@ -174,19 +174,19 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name                     string
-		miniblocks               []*WriteMiniblockData
+		miniblocks               []*MiniblockDescriptor
 		lastSnapshotMiniblockNum int64
 		expectedError            string
 	}{
 		{
 			name:                     "empty miniblocks",
-			miniblocks:               []*WriteMiniblockData{},
+			miniblocks:               []*MiniblockDescriptor{},
 			lastSnapshotMiniblockNum: 0,
 			expectedError:            "miniblocks cannot be empty",
 		},
 		{
 			name: "invalid snapshot number below range",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 5, Data: []byte("mb5")},
 				{Number: 6, Data: []byte("mb6")},
 			},
@@ -195,7 +195,7 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "non-continuous miniblock numbers",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 2, Data: []byte("mb2")}, // Skipped 1
 			},
@@ -204,7 +204,7 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "empty miniblock data",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 1, Data: []byte{}}, // Empty data
 			},
@@ -213,7 +213,7 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "invalid snapshot miniblock number - negative",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 1, Data: []byte("mb1")},
 			},
@@ -222,7 +222,7 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "invalid snapshot miniblock number - too high",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 1, Data: []byte("mb1")},
 			},
@@ -250,7 +250,7 @@ func TestReinitializeStreamStorage_UpdateValidation(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create stream with initial miniblocks
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{Number: 0, Data: []byte("genesis"), Snapshot: []byte("snapshot")},
 		{Number: 1, Data: []byte("miniblock 1")},
 		{Number: 2, Data: []byte("miniblock 2")},
@@ -259,7 +259,7 @@ func TestReinitializeStreamStorage_UpdateValidation(t *testing.T) {
 	require.NoError(err)
 
 	// Try to update with miniblocks not exceeding existing
-	newMiniblocks := []*WriteMiniblockData{
+	newMiniblocks := []*MiniblockDescriptor{
 		{Number: 0, Data: []byte("new genesis"), Snapshot: []byte("new snapshot")},
 		{Number: 1, Data: []byte("new miniblock 1")},
 		// Last miniblock is 1, but existing has up to 2
@@ -279,7 +279,7 @@ func TestReinitializeStreamStorage_ExistenceChecks(t *testing.T) {
 	existingStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	nonExistingStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{Number: 0, Data: []byte("genesis"), Snapshot: []byte("snapshot")},
 	}
 
@@ -324,7 +324,7 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create initial stream
-	genesisMb := &WriteMiniblockData{
+	genesisMb := &MiniblockDescriptor{
 		Number:   0,
 		Hash:     common.HexToHash("0x01"),
 		Data:     []byte("genesis miniblock"),
@@ -334,7 +334,7 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	require.NoError(err)
 
 	// Add multiple miniblock candidates
-	candidates := []*WriteMiniblockData{
+	candidates := []*MiniblockDescriptor{
 		{Number: 1, Hash: common.HexToHash("0xc1"), Data: []byte("candidate 1")},
 		{Number: 2, Hash: common.HexToHash("0xc2"), Data: []byte("candidate 2")},
 		{Number: 3, Hash: common.HexToHash("0xc3"), Data: []byte("candidate 3")},
@@ -354,7 +354,7 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	require.Equal(3, candidateCount)
 
 	// Reinitialize stream - must extend beyond existing miniblock 0
-	newMiniblocks := []*WriteMiniblockData{
+	newMiniblocks := []*MiniblockDescriptor{
 		{Number: 1, Data: []byte("new miniblock 1"), Snapshot: []byte("snapshot 1")},
 		{Number: 2, Data: []byte("new miniblock 2")},
 	}
@@ -385,7 +385,7 @@ func TestReinitializeStreamStorage_TransactionRollback(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create initial stream
-	genesisMb := &WriteMiniblockData{
+	genesisMb := &MiniblockDescriptor{
 		Number:   0,
 		Hash:     common.HexToHash("0x01"),
 		Data:     []byte("genesis miniblock"),
@@ -405,7 +405,7 @@ func TestReinitializeStreamStorage_TransactionRollback(t *testing.T) {
 	require.NoError(err)
 
 	// Prepare miniblocks that will cause an error (duplicate miniblock number)
-	badMiniblocks := []*WriteMiniblockData{
+	badMiniblocks := []*MiniblockDescriptor{
 		{Number: 0, Data: []byte("new mb0"), Snapshot: []byte("snapshot")},
 		{Number: 1, Data: []byte("new mb1")},
 		{Number: 1, Data: []byte("duplicate")}, // This will cause an error
@@ -436,9 +436,9 @@ func TestReinitializeStreamStorage_LargeDataSet(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create 100+ miniblocks
-	miniblocks := make([]*WriteMiniblockData, 150)
+	miniblocks := make([]*MiniblockDescriptor, 150)
 	for i := 0; i < 150; i++ {
-		miniblocks[i] = &WriteMiniblockData{
+		miniblocks[i] = &MiniblockDescriptor{
 			Number: int64(i),
 			Hash:   common.BytesToHash([]byte(fmt.Sprintf("hash%d", i))),
 			Data:   []byte(fmt.Sprintf("miniblock data %d", i)),
@@ -474,14 +474,14 @@ func TestReinitializeStreamStorage_SnapshotHandling(t *testing.T) {
 
 	tests := []struct {
 		name                     string
-		miniblocks               []*WriteMiniblockData
+		miniblocks               []*MiniblockDescriptor
 		lastSnapshotMiniblockNum int64
 		expectedSnapshot         int
 		expectedMiniblockCount   int
 	}{
 		{
 			name: "snapshot at genesis",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
 				{Number: 1, Data: []byte("mb1")},
 				{Number: 2, Data: []byte("mb2")},
@@ -492,7 +492,7 @@ func TestReinitializeStreamStorage_SnapshotHandling(t *testing.T) {
 		},
 		{
 			name: "snapshot in middle",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 1, Data: []byte("mb1"), Snapshot: []byte("snapshot1")},
 				{Number: 2, Data: []byte("mb2")},
@@ -504,7 +504,7 @@ func TestReinitializeStreamStorage_SnapshotHandling(t *testing.T) {
 		},
 		{
 			name: "snapshot at end",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 1, Data: []byte("mb1")},
 				{Number: 2, Data: []byte("mb2"), Snapshot: []byte("snapshot2")},
@@ -568,9 +568,9 @@ func TestReinitializeStreamStorage_MinipoolGeneration(t *testing.T) {
 			streamTypes := []byte{STREAM_CHANNEL_BIN, STREAM_SPACE_BIN, STREAM_DM_CHANNEL_BIN}
 			streamId := testutils.FakeStreamId(streamTypes[i%len(streamTypes)])
 
-			miniblocks := make([]*WriteMiniblockData, tt.miniblockCount)
+			miniblocks := make([]*MiniblockDescriptor, tt.miniblockCount)
 			for j := 0; j < tt.miniblockCount; j++ {
-				miniblocks[j] = &WriteMiniblockData{
+				miniblocks[j] = &MiniblockDescriptor{
 					Number: int64(j),
 					Data:   []byte(fmt.Sprintf("miniblock %d", j)),
 				}
@@ -597,7 +597,7 @@ func TestReinitializeStreamStorage_NonZeroStart(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Test miniblocks starting from non-zero
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{Number: 10, Data: []byte("mb10"), Snapshot: []byte("snapshot10")},
 		{Number: 11, Data: []byte("mb11")},
 		{Number: 12, Data: []byte("mb12")},
@@ -634,7 +634,7 @@ func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create initial stream with miniblocks 0-3
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{Number: 0, Data: []byte("original mb0"), Snapshot: []byte("snapshot0")},
 		{Number: 1, Data: []byte("original mb1")},
 		{Number: 2, Data: []byte("original mb2")},
@@ -644,7 +644,7 @@ func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
 	require.NoError(err)
 
 	// Update with overlapping range (2-5), existing 2-3 should remain unchanged
-	updateMiniblocks := []*WriteMiniblockData{
+	updateMiniblocks := []*MiniblockDescriptor{
 		{Number: 2, Data: []byte("new mb2 - should be ignored")},
 		{Number: 3, Data: []byte("new mb3 - should be ignored")},
 		{Number: 4, Data: []byte("new mb4")},
@@ -698,7 +698,7 @@ func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
 	require.NoError(err)
 
 	// Try to update the stream - should detect the invariant violation
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
 		{Number: 1, Data: []byte("mb1")},
 	}
@@ -716,13 +716,13 @@ func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
 
 	tests := []struct {
 		name                     string
-		miniblocks               []*WriteMiniblockData
+		miniblocks               []*MiniblockDescriptor
 		lastSnapshotMiniblockNum int64
 		expectedError            string
 	}{
 		{
 			name: "snapshot position has no snapshot",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
 				{Number: 1, Data: []byte("mb1")}, // No snapshot
 				{Number: 2, Data: []byte("mb2")},
@@ -732,7 +732,7 @@ func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
 		},
 		{
 			name: "snapshot position has empty snapshot",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0"), Snapshot: []byte("snapshot0")},
 				{Number: 1, Data: []byte("mb1"), Snapshot: []byte{}}, // Empty snapshot
 				{Number: 2, Data: []byte("mb2")},
@@ -742,7 +742,7 @@ func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
 		},
 		{
 			name: "valid snapshot position",
-			miniblocks: []*WriteMiniblockData{
+			miniblocks: []*MiniblockDescriptor{
 				{Number: 0, Data: []byte("mb0")},
 				{Number: 1, Data: []byte("mb1"), Snapshot: []byte("snapshot1")},
 				{Number: 2, Data: []byte("mb2")},
@@ -778,7 +778,7 @@ func TestReinitializeStreamStorage_IntegerOverflow(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Test with miniblock number at MaxInt64
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{Number: math.MaxInt64 - 1, Data: []byte("mb"), Snapshot: []byte("snapshot")},
 		{Number: math.MaxInt64, Data: []byte("mb at max")},
 	}

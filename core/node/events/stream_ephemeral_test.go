@@ -71,7 +71,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			})
 			tc.require.NoError(err)
 
-			err = leaderInstance.params.Storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
+			err = leaderInstance.params.Storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 				Number: mbRef.Num + 1,
 				Hash:   common.BytesToHash(header.Hash),
 				Data:   mbBytes,
@@ -132,7 +132,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			})
 			tc.require.NoError(err)
 
-			err = leaderInstance.params.Storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
+			err = leaderInstance.params.Storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 				Number: mbRef.Num + 1,
 				Hash:   common.BytesToHash(header.Hash),
 				Data:   mbBytes,
