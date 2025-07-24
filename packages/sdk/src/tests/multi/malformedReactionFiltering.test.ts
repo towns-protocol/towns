@@ -12,7 +12,7 @@ import {
     EncryptedDataSchema,
     TagsSchema,
 } from '@towns-protocol/proto'
-import { RiverTimelineEvent } from '../../views/models/timelineTypes'
+import { ChannelMessageEvent, RiverTimelineEvent } from '../../views/models/timelineTypes'
 import { ethers } from 'ethers'
 import { makeSignerContext, SignerContext } from '../../signerContext'
 import { makeParsedEvent } from '../../sign'
@@ -381,5 +381,139 @@ describe('malformedReactionFiltering', () => {
         expect(timeline).toHaveLength(2)
         expect(timeline[0].content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
         expect(timeline[1].content?.kind).toBe(RiverTimelineEvent.Reaction)
+    })
+
+    it('should filter out encrypted events that decrypt to non-reactions but are tagged as reactions', () => {
+        // create a regular message event
+        const messageEvent: StreamTimelineEvent = {
+            ...makeRemoteTimelineEvent({
+                parsedEvent: makeParsedEvent(
+                    create(StreamEventSchema, {
+                        creatorAddress: user1.context.creatorAddress,
+                        salt: genIdBlob(),
+                        prevMiniblockHash: undefined,
+                        payload: {
+                            case: 'channelPayload',
+                            value: create(ChannelPayloadSchema, {
+                                content: {
+                                    case: 'message',
+                                    value: create(EncryptedDataSchema, {}),
+                                },
+                            }),
+                        },
+                        createdAtEpochMs: BigInt(Date.now()),
+                        tags: create(TagsSchema, {
+                            messageInteractionType: MessageInteractionType.POST,
+                            groupMentionTypes: [],
+                            mentionedUserAddresses: [],
+                            participatingUserAddresses: [],
+                        }),
+                    }),
+                    undefined,
+                    undefined,
+                ),
+                eventNum: 1n,
+                miniblockNum: 1n,
+                confirmedEventNum: 1n,
+            }),
+            decryptedContent: {
+                kind: 'channelMessage',
+                content: create(ChannelMessageSchema, {
+                    payload: {
+                        case: 'post',
+                        value: {
+                            content: {
+                                case: 'text',
+                                value: {
+                                    body: 'Hello world',
+                                    mentions: [],
+                                    attachments: [],
+                                },
+                            },
+                        },
+                    },
+                }),
+            },
+        }
+
+        // create an encrypted event tagged as reaction
+        const encryptedMalformedReaction: StreamTimelineEvent = {
+            ...makeRemoteTimelineEvent({
+                parsedEvent: makeParsedEvent(
+                    create(StreamEventSchema, {
+                        creatorAddress: user2.context.creatorAddress,
+                        salt: genIdBlob(),
+                        prevMiniblockHash: undefined,
+                        payload: {
+                            case: 'channelPayload',
+                            value: create(ChannelPayloadSchema, {
+                                content: {
+                                    case: 'message',
+                                    value: create(EncryptedDataSchema, {
+                                        refEventId: messageEvent.hashStr,
+                                    }),
+                                },
+                            }),
+                        },
+                        createdAtEpochMs: BigInt(Date.now()),
+                        tags: create(TagsSchema, {
+                            messageInteractionType: MessageInteractionType.REACTION,
+                            groupMentionTypes: [],
+                            mentionedUserAddresses: [],
+                            participatingUserAddresses: [],
+                        }),
+                    }),
+                    undefined,
+                    undefined,
+                ),
+                eventNum: 2n,
+                miniblockNum: 1n,
+                confirmedEventNum: 2n,
+            }),
+        }
+
+        timelinesView.streamInitialized(channelId, [messageEvent, encryptedMalformedReaction])
+
+        // both events should be in timeline initially (encrypted event is not filtered)
+        let timeline = timelinesView.value.timelines[channelId]
+        expect(timeline).toHaveLength(2)
+        expect(timeline[0].content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        expect(timeline[1].content?.kind).toBe(RiverTimelineEvent.ChannelMessageEncryptedWithRef)
+
+        // decrypt the event to reveal it's actually a message, not a reaction
+        const decryptedMalformedReaction: StreamTimelineEvent = {
+            ...encryptedMalformedReaction,
+            decryptedContent: {
+                kind: 'channelMessage',
+                content: create(ChannelMessageSchema, {
+                    payload: {
+                        case: 'post', // not a reaction!
+                        value: {
+                            content: {
+                                case: 'text',
+                                value: {
+                                    body: 'This was encrypted but is not a reaction!',
+                                    mentions: [],
+                                    attachments: [],
+                                },
+                            },
+                        },
+                    },
+                }),
+            },
+        }
+
+        timelinesView.streamUpdated(channelId, { updated: [decryptedMalformedReaction] })
+
+        // the malformed reaction should now be filtered out
+        timeline = timelinesView.value.timelines[channelId]
+        expect(timeline).toHaveLength(1)
+        const firstEvent = timeline[0].content as ChannelMessageEvent
+        expect(firstEvent.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        expect(firstEvent.body).toBe('Hello world')
+
+        // no reactions should be recorded
+        const reactions = timelinesView.value.reactions[channelId]
+        expect(reactions).toEqual({})
     })
 })

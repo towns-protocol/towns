@@ -348,11 +348,18 @@ export function makeTimelinesViewInterface(
         streamId: string,
         updatingEventId?: string,
     ) {
-        // if it was tgged as a reaction but the content is not a reaction, just ignore
+        // if it was tagged as a reaction but the content is not a reaction, just ignore
+        // but don't filter out encrypted events as they may decrypt to valid reactions
         if (
             isReactionInteraction(event.tags) &&
-            event.content?.kind !== RiverTimelineEvent.Reaction
+            event.content?.kind !== RiverTimelineEvent.Reaction &&
+            event.content?.kind !== RiverTimelineEvent.ChannelMessageEncrypted &&
+            event.content?.kind !== RiverTimelineEvent.ChannelMessageEncryptedWithRef
         ) {
+            // if we're updating an encrypted event, we need to remove it
+            if (updatingEventId) {
+                return removeEvent(state, streamId, updatingEventId)
+            }
             return state
         }
 
