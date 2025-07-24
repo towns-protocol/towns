@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/linkdata/deadlock"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
@@ -53,7 +55,7 @@ type (
 	// syncerWithLock holds a syncer with its associated lock
 	syncerWithLock struct {
 		StreamsSyncer
-		sync.Mutex
+		deadlock.Mutex
 	}
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
@@ -77,7 +79,7 @@ type (
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// streamLocks provides per-stream locking
-		streamLocks *xsync.Map[StreamId, *sync.Mutex]
+		streamLocks *xsync.Map[StreamId, *deadlock.Mutex]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -107,7 +109,7 @@ func NewSyncers(
 		messageDistributor: messageDistributor,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
 		otelTracer:         otelTracer,
 	}
 }
@@ -167,13 +169,13 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() 
 	for _, streamID := range orderedStreamIDs {
 		ss.streamLocks.Compute(
 			streamID,
-			func(streamLock *sync.Mutex, loaded bool) (*sync.Mutex, xsync.ComputeOp) {
+			func(streamLock *deadlock.Mutex, loaded bool) (*deadlock.Mutex, xsync.ComputeOp) {
 				_, syncing := ss.streamID2Syncer.Load(streamID)
 				_, streamToRemove := toRemove[streamID]
 
 				if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
 					if !loaded || streamLock == nil {
-						streamLock = &sync.Mutex{}
+						streamLock = &deadlock.Mutex{}
 					}
 					streamLock.Lock()
 					lockedStreamIDs = append(lockedStreamIDs, streamID)
