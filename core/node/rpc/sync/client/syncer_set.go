@@ -637,8 +637,7 @@ func (ss *SyncerSet) getOrCreateSyncer(ctx context.Context, nodeAddress common.A
 	}
 
 	if ss.otelTracer != nil {
-		var span trace.Span
-		ctx, span = ss.otelTracer.Start(ctx, "syncerset::getOrCreateSyncer",
+		_, span := ss.otelTracer.Start(ctx, "syncerset::getOrCreateSyncer",
 			trace.WithAttributes(attribute.String("address", nodeAddress.Hex())))
 		defer span.End()
 	}
