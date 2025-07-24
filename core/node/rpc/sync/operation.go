@@ -55,6 +55,8 @@ type (
 		syncingStreamsCount atomic.Int64
 		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
 		usingSharedSyncer bool
+		// res is the response subscriber that will receive sync stream updates
+		res StreamsResponseSubscriber
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 		// metrics is the set of metrics used to track sync operations
@@ -65,7 +67,6 @@ type (
 	subCommand struct {
 		Ctx             context.Context
 		ModifySyncReq   *client.ModifyRequest
-		PingReq         string
 		CancelReq       string
 		DebugDropStream shared.StreamId
 		reply           chan error
@@ -128,6 +129,7 @@ func (syncOp *StreamSyncOperation) Run(
 	defer sub.Close()
 
 	syncOp.usingSharedSyncer = true
+	syncOp.res = res
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
@@ -249,12 +251,6 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subsc
 				sub.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
 				cmd.Reply(nil)
 				return
-			} else if cmd.PingReq != "" {
-				sub.Send(&SyncStreamsResponse{
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq,
-				})
-				cmd.Reply(nil)
 			}
 		}
 	}
@@ -471,7 +467,7 @@ func (syncOp *StreamSyncOperation) CancelSync(
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
-	ctx context.Context,
+	_ context.Context,
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
@@ -480,13 +476,10 @@ func (syncOp *StreamSyncOperation) PingSync(
 			Func("PingSync")
 	}
 
-	cmd := &subCommand{
-		Ctx:     ctx,
-		PingReq: req.Msg.GetNonce(),
-		reply:   make(chan error, 1),
-	}
-
-	if err := syncOp.process(cmd); err != nil {
+	if err := syncOp.res.Send(&SyncStreamsResponse{
+		SyncOp:    SyncOp_SYNC_PONG,
+		PongNonce: req.Msg.GetNonce(),
+	}); err != nil {
 		return nil, AsRiverError(err).Func("PingSync")
 	}
 

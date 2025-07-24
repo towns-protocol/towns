@@ -20,6 +20,8 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
+	syncOp.res = res
+
 	syncers, messages := legacyclient.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
 		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)
@@ -149,12 +151,6 @@ func (syncOp *StreamSyncOperation) runCommandsProcessingLegacy(
 				messages.Close()
 				cmd.Reply(nil)
 				return
-			} else if cmd.PingReq != "" {
-				_ = messages.AddMessage(&SyncStreamsResponse{
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq,
-				})
-				cmd.Reply(nil)
 			}
 		}
 	}
