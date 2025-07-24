@@ -30,7 +30,7 @@ Instructions with specific calling signatures can be found below in the [Node Op
 <Steps>
 <Step title="Register Node Operator in Base">Operators starts the onboarding process calling [registerOperator](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol) on the [BaseRegistry](https://github.com/towns-protocol/towns/blob/main/packages/contracts/deployments/gamma/base/addresses/baseRegistry.json) [diamond](https://www.quicknode.com/guides/ethereum-development/smart-contracts/the-diamond-standard-eip-2535-explained-part-1) contract deployed on Base.</Step>
 <Step title="Set Commission Rate in Base">Operator sets commission rate for rewards in Base calling [setCommissionRate](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol) on the BaseRegistry diamond contract with the desired commission rate in basis points.</Step>
-<Step title="DAO approves operator">DAO approves operator in Base and Towns Chain via governance once 100mm delegations of RVR token are received to the operator</Step>
+<Step title="DAO approves operator">DAO approves operator in Base and Towns Chain via governance once 100mm delegations of TOWNS token are received to the operator</Step>
 <Step title="DAO activates operator to start reward clock">Once a node is running and in a healthy state as observed by the network (see [check node health from debug multi dashboard](#check-node-health-from-debug-multi-dashboard)), DAO will activate operator which begins the clock for inclusion in the next reward distribution.</Step>
 </Steps>
 
@@ -47,6 +47,6 @@ on Base with the address of the wallet that they wish to claim rewards with. Not
 
 2. Node Operator should call `setCommissionRate(uint256)` on the BaseRegistry contract to set the commission rate for the operator. Ensure the commission rate is passed in using basis point notation (e.g. 10000 for 100%). Conversely, Node Operator can call the view, `getCommissionRate(address)` passing in their operator address to check their current commission rate.
 
-3. After Node Operator receives at least `100m` RVR tokens delegated,
+3. After Node Operator receives at least `100m` TOWNS tokens delegated,
    the DAO can approve it to enter into Towns Chain. The same address will be added
    to River Registry on Towns Chain in order to begin configuring Nodes.

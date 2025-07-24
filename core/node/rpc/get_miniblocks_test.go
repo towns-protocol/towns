@@ -47,7 +47,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 				DeviceKey:   "test_device_key",
 				FallbackKey: "test_fallback_key",
 				IsNewDevice: true,
-				SessionIds:  []string{},
+				SessionIds:  []string{"aaa"},
 			},
 		},
 	})

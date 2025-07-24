@@ -102,7 +102,7 @@ export class SyncedStreams {
         this.syncedStreamsLoop?.onNetworkStatusChanged(isOnline)
     }
 
-    public startSyncStreams() {
+    public startSyncStreams(lastAccessedAt: Record<string, number>) {
         const streamRecords = Array.from(this.streams.values())
             .filter((x) => isDefined(x.syncCookie))
             .map((stream) => ({ syncCookie: stream.syncCookie!, stream }))
@@ -115,6 +115,7 @@ export class SyncedStreams {
             this.unpackEnvelopeOpts,
             this.highPriorityIds,
             this.streamOpts,
+            lastAccessedAt,
         )
         this.syncedStreamsLoop.start()
     }
