@@ -1,3 +1,5 @@
+# CLAUDE.md
+
 This file provides guidance to Claude Code (claude.ai/code) when working with 
 code in this repository.
 
@@ -12,7 +14,7 @@ cross-chain entitlements.
 
 ### Root-level commands (from project root):
 
-- `yarn install && yarn prepare` - Install dependencies and set up hooks  
+- `yarn install && yarn prepare` - Install dependencies and setup hooks  
 - `yarn build` - Build all packages using turbo  
 - `yarn test` - Run all tests  
 - `yarn test:unit` - Run unit tests only  
