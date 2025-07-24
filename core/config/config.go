@@ -456,6 +456,10 @@ type NotificationsConfig struct {
 	Authentication AuthenticationConfig
 
 	StreamTracking StreamTrackingConfig
+
+	// ColdStreamsEnabled if set to true, the service will not subscribe to all of the
+	// streams on init. default is false.
+	ColdStreamsEnabled bool
 }
 
 type AppRegistryConfig struct {

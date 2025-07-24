@@ -14,16 +14,18 @@ import (
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
-// NotificationsStreamTracker implements the StreamsTracker interface for the notifications service. It encapsulates
+// NotificationsStreamsTracker implements the StreamsTracker interface for the notifications service. It encapsulates
 // StreamsTracker functionality with notifications-specific data structures.
 type NotificationsStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
-	storage UserPreferencesStore
+	storage            UserPreferencesStore
+	onChainConfig      crypto.OnChainConfiguration
+	notificationConfig config.NotificationsConfig
 }
 
 var _ track_streams.StreamFilter = (*NotificationsStreamsTracker)(nil)
 
-// NewStreamsTracker creates a stream tracker instance.
+// NewNotificationsStreamsTracker creates a stream tracker instance.
 func NewNotificationsStreamsTracker(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,
@@ -33,9 +35,12 @@ func NewNotificationsStreamsTracker(
 	storage UserPreferencesStore,
 	metricsFactory infra.MetricsFactory,
 	trackingConfig config.StreamTrackingConfig,
+	notificationConfig config.NotificationsConfig,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &NotificationsStreamsTracker{
-		storage: storage,
+		onChainConfig:      onChainConfig,
+		storage:            storage,
+		notificationConfig: notificationConfig,
 	}
 	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory, trackingConfig); err != nil {
 		return nil, err
@@ -60,9 +65,17 @@ func (tracker *NotificationsStreamsTracker) NewTrackedStream(
 	)
 }
 
+func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
+	return tracker.notificationConfig.ColdStreamsEnabled
+}
+
 // TrackStream returns true if the given streamID must be tracked for notifications.
-func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId) bool {
+func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool) bool {
 	streamType := streamID.Type()
+	// When cold streams are enabled, only track user settings stream on init
+	if isInit && tracker.coldStreamsEnabled() {
+		return streamType == shared.STREAM_USER_SETTINGS_BIN
+	}
 
 	return streamType == shared.STREAM_DM_CHANNEL_BIN ||
 		streamType == shared.STREAM_GDM_CHANNEL_BIN ||
