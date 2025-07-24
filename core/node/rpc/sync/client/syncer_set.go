@@ -274,7 +274,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		AddingFailureHandler:      req.AddingFailureHandler,
 	}
 
-	// Remove node addresses from failed to backfill streams
+	// Prepare backfill requests for failed backfilling streams
 	if len(backfillingFailures) > 0 {
 		backfills := make(map[string][]*SyncCookie, len(backfillingFailures))
 		for _, status := range backfillingFailures {
@@ -291,7 +291,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 					}
 				}
 			}
-			preparedSyncCookie.NodeAddress = status.NodeAddress
 			if _, ok := backfills[syncID]; !ok {
 				backfills[syncID] = []*SyncCookie{preparedSyncCookie}
 			} else {

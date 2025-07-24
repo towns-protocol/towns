@@ -123,7 +123,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 			// The given stream must be added to the main syncer set
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
 		} else if shouldBackfill {
-			// The given stream must be backfilled implicitly only for the given subscription
+			// The given stream must be backfilled implicitly only for the given subscription.
+			// Reset the target node address to nil to force the syncer set to use already syncing node.
+			toAdd.NodeAddress = nil
 			implicitBackfills = append(implicitBackfills, toAdd)
 		}
 		removeOnFailure[i] = StreamId(toAdd.GetStreamId())
