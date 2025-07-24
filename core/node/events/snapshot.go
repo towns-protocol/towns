@@ -1137,7 +1137,6 @@ func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *
 				if len(event.SessionIds) == 0 {
 					// Remove the solicitation if SessionIds is empty
 					member.Solicitations = append(member.Solicitations[:i], member.Solicitations[i+1:]...)
-					continue // Don't increment i, as the next element is now at index i
 				}
 				break
 			}
