@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
@@ -20,6 +18,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
