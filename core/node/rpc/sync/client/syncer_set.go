@@ -449,7 +449,7 @@ func (ss *SyncerSet) distributeSyncModifications(
 	for nodeAddress, modifySync := range modifySyncs {
 		// Get syncer for the given node address
 		syncer, err := ss.getOrCreateSyncer(nodeAddress)
-		if err != nil {
+		if err != nil || syncer == nil {
 			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 			for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
 				failedToBackfill(&SyncStreamOpStatus{
@@ -552,15 +552,11 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 			Func("DebugDropStream")
 	}
 
-	syncerStopped, err := syncer.DebugDropStream(ctx, streamID)
-	if err != nil {
+	if _, err := syncer.DebugDropStream(ctx, streamID); err != nil {
 		return err
 	}
 
 	ss.streamID2Syncer.Delete(streamID)
-	if syncerStopped {
-		ss.syncers.Delete(syncer.Address())
-	}
 
 	return nil
 }
@@ -619,19 +615,20 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		return nil, RiverError(Err_CANCELED, "Sync stopped")
 	}
 
-	syncer, _ := ss.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
+	syncerEntity, _ := ss.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
 
 	// Lock the syncer for initialization check/creation
-	syncer.Lock()
-	defer syncer.Unlock()
+	syncerEntity.Lock()
+	defer syncerEntity.Unlock()
 
 	// Check if already initialized (by us or another goroutine)
-	if syncer.StreamsSyncer != nil {
-		return syncer.StreamsSyncer, nil
+	if syncerEntity.StreamsSyncer != nil {
+		return syncerEntity.StreamsSyncer, nil
 	}
 
+	var syncer StreamsSyncer
 	if nodeAddress == ss.localNodeAddress {
-		syncer.StreamsSyncer = newLocalSyncer(
+		syncer = newLocalSyncer(
 			ss.globalCtx,
 			ss.localNodeAddress,
 			ss.streamCache,
@@ -642,11 +639,10 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 	} else {
 		client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 		if err != nil {
-			ss.syncers.Delete(nodeAddress)
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 
-		syncer.StreamsSyncer, err = NewRemoteSyncer(
+		syncer, err = NewRemoteSyncer(
 			ss.globalCtx,
 			nodeAddress,
 			client,
@@ -655,20 +651,23 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.otelTracer,
 		)
 		if err != nil {
-			ss.syncers.Delete(nodeAddress)
 			return nil, AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 		}
 	}
+
+	syncerEntity.StreamsSyncer = syncer
 
 	// Start the syncer
 	ss.syncerTasks.Add(1)
 	go func() {
 		syncer.Run()
 		ss.syncerTasks.Done()
-		ss.syncers.Delete(nodeAddress)
+		syncerEntity.Lock()
+		syncerEntity.StreamsSyncer = nil
+		syncerEntity.Unlock()
 	}()
 
-	return syncer.StreamsSyncer, nil
+	return syncer, nil
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.
