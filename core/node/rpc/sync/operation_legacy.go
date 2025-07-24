@@ -26,6 +26,8 @@ func (syncOp *StreamSyncOperation) RunLegacy(
 
 	go syncers.Run()
 
+	syncOp.messages = messages
+
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
 		go func() {

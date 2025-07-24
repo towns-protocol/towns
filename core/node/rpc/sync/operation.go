@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
@@ -55,8 +57,8 @@ type (
 		syncingStreamsCount atomic.Int64
 		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
 		usingSharedSyncer bool
-		// res is the response subscriber that will receive sync stream updates
-		res StreamsResponseSubscriber
+		// messages is the dynamic buffer used to store messages for the sync operation
+		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 		// metrics is the set of metrics used to track sync operations
@@ -87,7 +89,6 @@ func (cmd *subCommand) Reply(err error) {
 func NewStreamsSyncOperation(
 	ctx context.Context,
 	syncId string,
-	res StreamsResponseSubscriber,
 	node common.Address,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
@@ -110,7 +111,6 @@ func NewStreamsSyncOperation(
 		streamCache:         streamCache,
 		nodeRegistry:        nodeRegistry,
 		subscriptionManager: subscriptionManager,
-		res:                 res,
 		otelTracer:          otelTracer,
 		metrics:             metrics,
 	}, nil
@@ -131,6 +131,7 @@ func (syncOp *StreamSyncOperation) Run(
 	defer sub.Close()
 
 	syncOp.usingSharedSyncer = true
+	syncOp.messages = sub.Messages
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
@@ -477,7 +478,7 @@ func (syncOp *StreamSyncOperation) PingSync(
 			Func("PingSync")
 	}
 
-	if err := syncOp.res.Send(&SyncStreamsResponse{
+	if err := syncOp.messages.AddMessage(&SyncStreamsResponse{
 		SyncId:    syncOp.SyncID,
 		SyncOp:    SyncOp_SYNC_PONG,
 		PongNonce: req.Msg.GetNonce(),

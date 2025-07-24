@@ -140,15 +140,12 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		channels = append(channels, channel)
 	}
 
-	slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
-
 	// subscribe to channel updates on node 1 direct through a sync op to have better control over it
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	syncPos := append(users, channels...)
 	syncOp, err := river_sync.NewStreamsSyncOperation(
 		ctx,
 		syncID,
-		slowSubscriber,
 		node1.address,
 		node1.service.cache,
 		node1.service.nodeRegistry,
@@ -163,6 +160,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	// run the subscription in the background that takes a long time for each update to send to the client.
 	// this must cancel the sync op with a buffer too full error.
 	go func() {
+		slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
 		syncOpErr := syncOp.Run(connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}), slowSubscriber)
 		syncOpStopped.Store(true)
 		syncOpResult <- syncOpErr
