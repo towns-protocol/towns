@@ -571,16 +571,20 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 // 1. Node specified in the cookie (if any)
 // 2. Local node (if stream is local)
 // 3. Remote nodes (in order of preference)
+// Extra logic is applied if changeNode is true, which means that the node from the cookie should not be used.
 // Returns the selected node address and true if a node was found and available, false otherwise.
 // Initializes syncer for the selected node if it does not exist yet.
 func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie, changeNode bool) (common.Address, bool) {
 	streamID := StreamId(cookie.GetStreamId())
+	usedNode := common.BytesToAddress(cookie.GetNodeAddress())
 
 	// 1. Try node from cookie first
-	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
-		selectedNode := common.BytesToAddress(addrRaw)
-		if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
-			return selectedNode, true
+	if !changeNode {
+		if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
+			selectedNode := common.BytesToAddress(addrRaw)
+			if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
+				return selectedNode, true
+			}
 		}
 	}
 
@@ -591,7 +595,7 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 
 	// 2. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
-	if isLocal {
+	if isLocal && (!changeNode || ss.localNodeAddress.Cmp(usedNode) != 0) {
 		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
 			return ss.localNodeAddress, true
 		}
@@ -601,6 +605,9 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	if len(remotes) > 0 {
 		selectedNode := stream.GetStickyPeer()
 		for range remotes {
+			if changeNode && usedNode.Cmp(selectedNode) == 0 {
+				continue
+			}
 			if _, err = ss.getOrCreateSyncer(selectedNode); err == nil {
 				return selectedNode, true
 			}
