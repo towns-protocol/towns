@@ -231,11 +231,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	{
 		backfillingFailures := make([]StreamId, 0, len(req.ToBackfill))
 		backfillingFailuresHandler := func(status *SyncStreamOpStatus) {
-			if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
-				req.AddingFailureHandler(status)
-				return
-			}
-
 			backfillingFailuresLock.Lock()
 			backfillingFailures = append(backfillingFailures, StreamId(status.GetStreamId()))
 			backfillingFailuresLock.Unlock()
@@ -243,11 +238,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 		removingFailures := make([][]byte, 0, len(req.ToRemove))
 		removingFailuresHandler := func(status *SyncStreamOpStatus) {
-			if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
-				req.RemovingFailureHandler(status)
-				return
-			}
-
 			removingFailuresLock.Lock()
 			removingFailures = append(removingFailures, status.GetStreamId())
 			removingFailuresLock.Unlock()
