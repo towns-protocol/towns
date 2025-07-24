@@ -595,19 +595,23 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 
 	// 2. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
-	if isLocal && (!changeNode || ss.localNodeAddress.Cmp(usedNode) != 0) {
+	if isLocal && (!changeNode || ss.localNodeAddress != usedNode) {
 		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
 			return ss.localNodeAddress, true
 		}
+	}
+
+	// If changeNode is true, we should not use the usedNode address
+	if changeNode {
+		remotes = slices.DeleteFunc(remotes, func(addr common.Address) bool {
+			return addr == usedNode
+		})
 	}
 
 	// 3. Try remote nodes
 	if len(remotes) > 0 {
 		selectedNode := stream.GetStickyPeer()
 		for range remotes {
-			if changeNode && usedNode.Cmp(selectedNode) == 0 {
-				continue
-			}
 			if _, err = ss.getOrCreateSyncer(selectedNode); err == nil {
 				return selectedNode, true
 			}
