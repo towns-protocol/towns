@@ -351,7 +351,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			AddingFailureHandler:      addingFailuresHandler,
 			RemovingFailureHandler:    removingFailuresHandler,
 		}, false); err != nil {
-			return err
+			return AsRiverError(err).Func("SyncerSet.Modify.second")
 		}
 
 		// If a stream was failed to backfill, just try again one more time.
