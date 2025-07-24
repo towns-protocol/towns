@@ -17,9 +17,8 @@ export interface DmAndGdmModel {
 }
 
 interface Input {
-    userId: string
     memberships: Record<string, Membership>
-    streamMemberIds: Record<string, string[] | undefined>
+    streamMemberIdsSansCurrentUser: Record<string, string[] | undefined>
     dmStreams: Record<string, DmStreamModel | undefined>
     gdmStreams: Record<string, GdmStreamModel | undefined>
 }
@@ -33,16 +32,13 @@ export function dmsAndGdmsTransform(
     // local storage, then from remote data source, but for now we are copying existing behavior which is to
     // loop over streams and filter out the ones that are not relevant to the user
     const prevMap = new Map(prevResult?.map((x) => [x.id, x]))
-    const userId = value.userId
     const gdmStreams = Object.entries(value.gdmStreams)
         .map(([streamId, gdmStream]) => {
             if (!gdmStream) {
                 return undefined
             }
             const membership = value.memberships[streamId]
-            const streamMemberIds = value.streamMemberIds[streamId]
-                ?.filter((memberUserId) => memberUserId !== userId)
-                .sort((a, b) => a.localeCompare(b))
+            const streamMemberIds = value.streamMemberIdsSansCurrentUser[streamId]
             const newGdm = {
                 id: streamId,
                 joined: membership === Membership.Join,
@@ -70,12 +66,7 @@ export function dmsAndGdmsTransform(
                 return undefined
             }
             const membership = value.memberships[streamId]
-            const streamMemberIds = value.streamMemberIds[streamId]
-                ?.filter(
-                    (memberUserId, _index, numParticipants) =>
-                        memberUserId !== userId || numParticipants.length === 1,
-                )
-                .sort((a, b) => a.localeCompare(b))
+            const streamMemberIds = value.streamMemberIdsSansCurrentUser[streamId]
             const newDm = {
                 id: streamId,
                 joined: membership === Membership.Join,

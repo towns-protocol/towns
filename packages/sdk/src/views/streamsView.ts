@@ -27,6 +27,7 @@ import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTr
 import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
 import { NotificationSettings } from './streams/notificationSettings'
 import { SpaceUnreadsModel, spaceUnreadsTransform } from './transforms/spaceUnreadsTransform'
+import { streamMemberIdsSansCurrentUserTransform } from './transforms/streamMemberIdsSansCurrentUserTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -127,10 +128,14 @@ export class StreamsView {
 
         const mySpaceIds = myMemberships.map(spaceIdsTransform)
 
-        const myDmsAndGdms = combine({
+        const streamMemberIdsSansCurrentUser = combine({
             userId: myUserId,
-            memberships: myMemberships,
             streamMemberIds: this.streamMemberIds,
+        }).map(streamMemberIdsSansCurrentUserTransform)
+
+        const myDmsAndGdms = combine({
+            memberships: myMemberships,
+            streamMemberIdsSansCurrentUser,
             dmStreams: this.dmStreams,
             gdmStreams: this.gdmStreams,
         })
