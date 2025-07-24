@@ -655,12 +655,6 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 		}
 	}
 
-	if syncer == nil {
-		return nil, RiverError(Err_NOT_FOUND, "Failed to create syncer (unexpected nil result)").
-			Tag("remoteSyncerAddr", nodeAddress).
-			Func("getOrCreateSyncer")
-	}
-
 	syncerEntity.StreamsSyncer = syncer
 
 	// Start the syncer
