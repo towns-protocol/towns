@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,7 +45,7 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
 	// Test creating local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
@@ -56,7 +57,7 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	assert.Equal(t, syncer, storedSyncerEntry.StreamsSyncer)
 
 	// Test getting the same syncer again (should return cached)
-	syncer2, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer2, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	assert.Equal(t, syncer, syncer2)
 
@@ -82,7 +83,7 @@ func TestGetOrCreateSyncer_RemoteNode(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
 
 	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -112,7 +113,7 @@ func TestGetOrCreateSyncer_RemoteNodeError(t *testing.T) {
 	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(nil, expectedErr)
 
 	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -140,7 +141,7 @@ func TestGetOrCreateSyncer_SyncStopped(t *testing.T) {
 	syncerSet.stopped.Store(true)
 
 	// Test creating syncer when stopped
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -176,7 +177,7 @@ func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			<-start // Wait for signal to start all at once
-			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(localAddr)
+			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(ctx, localAddr)
 		}(i)
 	}
 
@@ -224,7 +225,7 @@ func TestGetOrCreateSyncer_RemoteSyncerInitError(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
 
 	// Test creating remote syncer with init error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -250,7 +251,7 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
 	// Create a local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
 
@@ -291,7 +292,7 @@ func TestSyncerSet_Run(t *testing.T) {
 	}()
 
 	// Create a syncer to ensure we have something to wait for
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
 
@@ -334,7 +335,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 		messageDistributor: messageDistributor,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
 	}
 
 	// Pre-store a syncer
@@ -343,7 +344,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 	syncerSet.syncers.Store(remoteAddr, syncerEntry)
 
 	// Try to get the existing syncer
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
@@ -375,7 +376,7 @@ func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, syncErr)
 
 	// Try to create a remote syncer
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	// Should fail with an error
 	require.Error(t, err)

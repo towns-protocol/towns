@@ -115,16 +115,18 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	// Handle streams that the clients wants to subscribe to.
+	removeOnFailure := make([]StreamId, len(req.ToAdd))
 	var implicitBackfills []*SyncCookie
-	for _, toAdd := range req.ToAdd {
+	for i, toAdd := range req.ToAdd {
 		addToRemote, shouldBackfill := s.registry.AddStreamToSubscription(s.syncID, StreamId(toAdd.GetStreamId()))
 		if addToRemote {
 			// The given stream must be added to the main syncer set
 			modifiedReq.ToAdd = append(modifiedReq.ToAdd, toAdd)
 		} else if shouldBackfill {
-			// The given stream must be backfilled implicitly only for the given subscription
+			// The given stream must be backfilled implicitly only for the given subscription.
 			implicitBackfills = append(implicitBackfills, toAdd)
 		}
+		removeOnFailure[i] = StreamId(toAdd.GetStreamId())
 	}
 
 	// Handle streams that the clients wants to unsubscribe from.
@@ -163,6 +165,10 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Send the request to the syncer set
 	if err := s.syncers.Modify(ctx, modifiedReq); err != nil {
+		// If the modification failed, we need to remove added streams from the subscription
+		for _, streamId := range removeOnFailure {
+			s.registry.RemoveStreamFromSubscription(s.syncID, streamId)
+		}
 		return err
 	}
 
