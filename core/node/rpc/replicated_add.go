@@ -208,7 +208,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 
-		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
+		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
