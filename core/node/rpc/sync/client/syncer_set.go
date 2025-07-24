@@ -15,7 +15,6 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/events"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -451,10 +450,6 @@ func (ss *SyncerSet) distributeSyncModifications(
 		// Get syncer for the given node address
 		syncer, err := ss.getOrCreateSyncer(nodeAddress)
 		if err != nil || syncer == nil {
-			if syncer == nil && err == nil {
-				logging.FromCtx(ss.globalCtx).Errorw("Empty syncer returned for node address", "addr", nodeAddress)
-				err = RiverError(Err_NOT_FOUND, "Empty syncer for node address")
-			}
 			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 			for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
 				failedToBackfill(&SyncStreamOpStatus{
