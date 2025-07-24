@@ -1218,7 +1218,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 		return err
 	}
 
-	storageMiniblocks := make([]*storage.WriteMiniblockData, len(miniblocks))
+	storageMiniblocks := make([]*storage.MiniblockDescriptor, len(miniblocks))
 	for i, mb := range miniblocks {
 		storageMiniblocks[i], err = mb.AsStorageMb()
 		if err != nil {
@@ -1247,7 +1247,16 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 	}
 
 	// If success, update the view.
-	s.setViewLocked(NewStreamView(miniblocks, snapshot, snapshotMbIndex))
+	// TODO: REFACTOR: introduce MakeStreamView from parsed data (to avoid re-parsing).
+	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
+		Miniblocks:              storageMiniblocks,
+		SnapshotMiniblockOffset: snapshotMbIndex,
+		MinipoolEnvelopes:       [][]byte{},
+	})
+	if err != nil {
+		return err
+	}
+	s.setViewLocked(view)
 
 	return nil
 }

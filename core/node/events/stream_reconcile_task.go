@@ -121,9 +121,7 @@ func (s *StreamCache) submitReconciliationTask(
 	}
 }
 
-func (s *StreamCache) reconciliationTask(
-	streamId StreamId,
-) {
+func (s *StreamCache) reconciliationTask(streamId StreamId) {
 	corrupt := false
 	var streamRecord *river.StreamWithId
 	var stream *Stream

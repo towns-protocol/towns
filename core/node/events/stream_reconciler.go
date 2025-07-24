@@ -22,6 +22,7 @@ const (
 
 // streamReconciler tracks state for a single stream reconciliation attempt.
 type streamReconciler struct {
+	ctx          context.Context
 	cache        *StreamCache
 	stream       *Stream
 	streamRecord *river.StreamWithId
@@ -53,6 +54,8 @@ func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river
 // reconcile runs single stream reconciliation attempt.
 func (sr *streamReconciler) reconcile() error {
 	ctx := sr.cache.params.ServerCtx
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
 
 	if sr.streamRecord.IsSealed() {
 		return sr.cache.normalizeEphemeralStream(
@@ -155,6 +158,12 @@ func (sr *streamReconciler) reconcile() error {
 }
 
 func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) error {
+	ctx, cancel := context.WithTimeout(
+		sr.ctx,
+		time.Minute,
+	) // TODO: configurable timeouts through this file
+	defer cancel()
+
 	client, err := sr.cache.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
 	if err != nil {
 		return err
@@ -164,7 +173,7 @@ func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) e
 		StreamId: sr.stream.streamId[:],
 	})
 	req.Header().Set(riverNoForwardHeader, riverHeaderTrueValue)
-	resp, err := client.GetLastMiniblockHash(sr.cache.params.ServerCtx, req)
+	resp, err := client.GetLastMiniblockHash(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -183,10 +192,50 @@ func (sr *streamReconciler) reconcileBackward() error {
 		return err
 	}
 
-	return nil
+	// Reinitialize should create new view.
+	view, _ := sr.stream.tryGetView(true)
+	if view == nil {
+		return RiverError(Err_INTERNAL, "reinitializeStreamFromSinglePeer: view is nil")
+	}
+
+	sr.localLastMbInclusive = view.LastBlock().Ref.Num
+	if sr.localLastMbInclusive < sr.expectedLastMbInclusive {
+		err = sr.reconcileForward()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Recalculate missing ranges from db.
+	presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
+		sr.ctx,
+		sr.stream.streamId,
+		sr.localStartMbInclusive,
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(presentRanges) == 0 {
+		return RiverError(Err_INTERNAL, "reconcileBackward: no present ranges after reinitialization")
+	}
+
+	sr.localLastMbInclusive = presentRanges[len(presentRanges)-1].EndInclusive
+	missingRanges := calculateMissingRanges(presentRanges, sr.localStartMbInclusive, sr.expectedLastMbInclusive)
+	if len(missingRanges) == 0 {
+		return nil
+	}
+
+	return sr.backfillGaps()
 }
 
 func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Address) error {
+	ctx, cancel := context.WithTimeout(
+		sr.ctx,
+		time.Minute,
+	) // TODO: configurable timeouts through this file
+	defer cancel()
+
 	client, err := sr.cache.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
 	if err != nil {
 		return err
@@ -199,16 +248,12 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 		NumberOfPrecedingMiniblocks: int64(numberOfPrecedingMiniblocks),
 	})
 	req.Header().Set(riverNoForwardHeader, riverHeaderTrueValue)
-	resp, err := client.GetStream(sr.cache.params.ServerCtx, req)
+	resp, err := client.GetStream(ctx, req)
 	if err != nil {
 		return err
 	}
 
-	return sr.stream.reinitialize(resp.Msg.GetStream())
-}
-
-func (sr *streamReconciler) reconcileBackwardFromSinglePeer() error {
-	return nil
+	return sr.stream.reinitialize(ctx, resp.Msg.GetStream(), !sr.notFound)
 }
 
 func (sr *streamReconciler) backfillGaps() error {
@@ -263,7 +308,7 @@ func (sr *streamReconciler) reconcileForwardFromSinglePeer(
 			return currentFromInclusive, nil
 		}
 
-		ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, time.Minute)
+		ctx, cancel = context.WithTimeout(sr.ctx, time.Minute)
 
 		currentToExclusive := min(currentFromInclusive+pageSize, toExclusive)
 
