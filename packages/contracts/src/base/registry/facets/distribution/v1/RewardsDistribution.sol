@@ -224,7 +224,7 @@ contract RewardsDistribution is
         address operator,
         uint256 delegatorsClaimAmount
     ) internal {
-        //Get all the RVR delegators from the Base token
+        //Get all the delegators from the Base token
         address[] memory delegators = _getValidDelegators(sd, operator);
 
         //Get all the spaces delegating to this operator
