@@ -383,6 +383,65 @@ describe('malformedReactionFiltering', () => {
         expect(timeline[1].content?.kind).toBe(RiverTimelineEvent.Reaction)
     })
 
+    it('should filter out top-level posts that are not tagged as POST', () => {
+        // create a malformed top-level post - tagged as REACTION instead of POST
+        const malformedPost: StreamTimelineEvent = {
+            ...makeRemoteTimelineEvent({
+                parsedEvent: makeParsedEvent(
+                    create(StreamEventSchema, {
+                        creatorAddress: user1.context.creatorAddress,
+                        salt: genIdBlob(),
+                        prevMiniblockHash: undefined,
+                        payload: {
+                            case: 'channelPayload',
+                            value: create(ChannelPayloadSchema, {
+                                content: {
+                                    case: 'message',
+                                    value: create(EncryptedDataSchema, {}),
+                                },
+                            }),
+                        },
+                        createdAtEpochMs: BigInt(Date.now()),
+                        tags: create(TagsSchema, {
+                            messageInteractionType: MessageInteractionType.REACTION, // Wrong tag for a top-level post!
+                            groupMentionTypes: [],
+                            mentionedUserAddresses: [],
+                            participatingUserAddresses: [],
+                        }),
+                    }),
+                    undefined,
+                    undefined,
+                ),
+                eventNum: 1n,
+                miniblockNum: 1n,
+                confirmedEventNum: 1n,
+            }),
+            decryptedContent: {
+                kind: 'channelMessage',
+                content: create(ChannelMessageSchema, {
+                    payload: {
+                        case: 'post',
+                        value: {
+                            content: {
+                                case: 'text',
+                                value: {
+                                    body: 'This is a top-level post but not tagged as POST',
+                                    mentions: [],
+                                    attachments: [],
+                                },
+                            },
+                        },
+                    },
+                }),
+            },
+        }
+
+        timelinesView.streamInitialized(channelId, [malformedPost])
+
+        const timeline = timelinesView.value.timelines[channelId]
+        expect(timeline).toHaveLength(0) // Should be filtered out
+    })
+
     it('should filter out encrypted events that decrypt to non-reactions but are tagged as reactions', () => {
         // create a regular message event
         const messageEvent: StreamTimelineEvent = {

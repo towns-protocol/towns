@@ -107,20 +107,22 @@ func (re *ruleBuilderAEImpl) requireChannelMessagePermissions(params *aeParams) 
 		interactionType := params.parsedEvent.Event.Tags.MessageInteractionType
 
 		switch interactionType {
+		// reactions - should be allowed if write or react
+		// redactions - should be allowed if write or react (users can always redact their own reactions)
+		// tips - if you can react in a channel, you can tip
+		// trades - if you can read/react in a channel, you should be able to make trades regardless of write
 		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE,
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
-			// reactions - should be allowed if write or react
-			// redactions - should be allowed if write or react (users can always redact their own reactions)
 			return re.requireOneOfChainAuths(
-				params.channelEntitlements(auth.PermissionReact),
 				params.channelEntitlements(auth.PermissionWrite),
+				params.channelEntitlements(auth.PermissionReact),
 			)
 		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED,
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY,
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST,
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT,
-			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP,
-			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE,
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_SLASH_COMMAND:
 			return re.requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
 		}

@@ -12,6 +12,7 @@ import {
     getRedactsId,
     getEditsId,
     isReactionInteraction,
+    isPostInteraction,
 } from '../models/timelineTypes'
 import { dlogger } from '@towns-protocol/dlog'
 import { getFallbackContent } from '../models/timelineEvent'
@@ -348,19 +349,34 @@ export function makeTimelinesViewInterface(
         streamId: string,
         updatingEventId?: string,
     ) {
-        // if it was tagged as a reaction but the content is not a reaction, just ignore
-        // but don't filter out encrypted events as they may decrypt to valid reactions
-        if (
-            isReactionInteraction(event.tags) &&
-            event.content?.kind !== RiverTimelineEvent.Reaction &&
-            event.content?.kind !== RiverTimelineEvent.ChannelMessageEncrypted &&
-            event.content?.kind !== RiverTimelineEvent.ChannelMessageEncryptedWithRef
-        ) {
-            // if we're updating an encrypted event, we need to remove it
-            if (updatingEventId) {
-                return removeEvent(state, streamId, updatingEventId)
+        const isEncrypted =
+            event.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+            event.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef
+
+        if (!isEncrypted && event.tags) {
+            if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
+                const hasReplyParent = event.replyParentId !== undefined
+                const hasThreadParent = event.threadParentId !== undefined
+
+                // if it's a top-level post it should be tagged as POST
+                if (!hasReplyParent && !hasThreadParent && !isPostInteraction(event.tags)) {
+                    if (updatingEventId) {
+                        return removeEvent(state, streamId, updatingEventId)
+                    }
+                    return state
+                }
             }
-            return state
+
+            // check if something tagged as a reaction actually has reaction content
+            if (
+                isReactionInteraction(event.tags) &&
+                event.content?.kind !== RiverTimelineEvent.Reaction
+            ) {
+                if (updatingEventId) {
+                    return removeEvent(state, streamId, updatingEventId)
+                }
+                return state
+            }
         }
 
         const editsEventId = getEditsId(event.content)

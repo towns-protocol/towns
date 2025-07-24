@@ -631,6 +631,10 @@ export function isReactionInteraction(tags: PlainMessage<Tags> | undefined): boo
     return tags?.messageInteractionType === MessageInteractionType.REACTION
 }
 
+export function isPostInteraction(tags: PlainMessage<Tags> | undefined): boolean {
+    return tags?.messageInteractionType === MessageInteractionType.POST
+}
+
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
     return content?.kind === RiverTimelineEvent.ChannelMessage
         ? content.threadId
