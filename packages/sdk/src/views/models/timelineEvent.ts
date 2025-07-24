@@ -99,6 +99,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.id, content, error)}`
     const sessionId = extractSessionId(timelineEvent)
+    const tags = timelineEvent.remoteEvent?.event.tags
 
     return {
         eventId: eventId,
@@ -123,6 +124,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
         sender,
         sessionId,
+        tags,
     }
 }
 

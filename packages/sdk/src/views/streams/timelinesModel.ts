@@ -11,6 +11,7 @@ import {
     TimelineEventConfirmation,
     getRedactsId,
     getEditsId,
+    isReactionInteraction,
 } from '../models/timelineTypes'
 import { dlogger } from '@towns-protocol/dlog'
 import { getFallbackContent } from '../models/timelineEvent'
@@ -347,6 +348,14 @@ export function makeTimelinesViewInterface(
         streamId: string,
         updatingEventId?: string,
     ) {
+        // if it was tgged as a reaction but the content is not a reaction, just ignore
+        if (
+            isReactionInteraction(event.tags) &&
+            event.content?.kind !== RiverTimelineEvent.Reaction
+        ) {
+            return state
+        }
+
         const editsEventId = getEditsId(event.content)
         const redactsEventId = getRedactsId(event.content)
 
