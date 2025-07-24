@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"encoding/hex"
+	"slices"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -25,6 +26,7 @@ func snapshot_migration_0005_(iSnapshot *Snapshot, force bool) {
 	sessionIdCounts := make(map[string]int)
 	memberCount := len(members)
 	threshold := max(memberCount/20, 2) // 5% threshold, minimum 2 for testing
+	lostSessionIdsSet := make(map[string]bool)
 
 	for _, member := range members {
 		if len(member.Solicitations) == 0 {
@@ -38,14 +40,10 @@ func snapshot_migration_0005_(iSnapshot *Snapshot, force bool) {
 
 			for _, sessionId := range solicitation.SessionIds {
 				sessionIdCounts[sessionId]++
+				if sessionIdCounts[sessionId] > threshold {
+					lostSessionIdsSet[sessionId] = true
+				}
 			}
-		}
-	}
-
-	lostSessionIdsSet := make(map[string]bool)
-	for sessionId, count := range sessionIdCounts {
-		if count > threshold {
-			lostSessionIdsSet[sessionId] = true
 		}
 	}
 
@@ -63,13 +61,9 @@ func snapshot_migration_0005_(iSnapshot *Snapshot, force bool) {
 			}
 
 			// Remove empty solicitations
-			var filteredSolicitations []*MemberPayload_KeySolicitation
-			for _, solicitation := range member.Solicitations {
-				if len(solicitation.SessionIds) > 0 {
-					filteredSolicitations = append(filteredSolicitations, solicitation)
-				}
-			}
-			member.Solicitations = filteredSolicitations
+			member.Solicitations = slices.DeleteFunc(member.Solicitations, func(solicitation *MemberPayload_KeySolicitation) bool {
+				return len(solicitation.SessionIds) == 0
+			})
 
 			// Clear lost usernames and display names
 			if member.Username != nil && member.Username.Data != nil {
