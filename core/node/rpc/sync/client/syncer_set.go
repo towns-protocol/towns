@@ -254,7 +254,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		BackfillingFailureHandler: backfillingFailuresHandler,
 		AddingFailureHandler:      addingFailuresHandler,
 		RemovingFailureHandler:    req.RemovingFailureHandler,
-	}); err != nil {
+	}, false); err != nil {
 		return err
 	}
 
@@ -289,7 +289,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 					}
 				}
 			}
-			preparedSyncCookie.NodeAddress = nil
+			preparedSyncCookie.NodeAddress = status.NodeAddress
 			if _, ok := backfills[syncID]; !ok {
 				backfills[syncID] = []*SyncCookie{preparedSyncCookie}
 			} else {
@@ -315,15 +315,15 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 				break
 			}
 		}
-		preparedSyncCookie.NodeAddress = nil
+		preparedSyncCookie.NodeAddress = status.NodeAddress
 		mr.ToAdd = append(mr.ToAdd, preparedSyncCookie)
 	}
 
-	return ss.modify(ctx, mr)
+	return ss.modify(ctx, mr, true)
 }
 
 // modify implements the actual modification logic
-func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
+func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest, changeNode bool) error {
 	if ss.stopped.Load() {
 		return RiverError(Err_CANCELED, "Sync stopped")
 	}
@@ -386,7 +386,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			continue
 		}
 
-		selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie)
+		selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie, changeNode)
 		if !nodeAvailable {
 			req.AddingFailureHandler(&SyncStreamOpStatus{
 				StreamId: streamID[:],
@@ -453,23 +453,26 @@ func (ss *SyncerSet) distributeSyncModifications(
 			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 			for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
 				failedToBackfill(&SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
+					StreamId:    cookie.GetStreamId(),
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: nodeAddress.Bytes(),
 				})
 			}
 			for _, cookie := range modifySync.GetAddStreams() {
 				failedToAdd(&SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
+					StreamId:    cookie.GetStreamId(),
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: nodeAddress.Bytes(),
 				})
 			}
 			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 				failedToRemove(&SyncStreamOpStatus{
-					StreamId: streamIDRaw,
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
+					StreamId:    streamIDRaw,
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: nodeAddress.Bytes(),
 				})
 			}
 			continue
@@ -487,23 +490,26 @@ func (ss *SyncerSet) distributeSyncModifications(
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
 				for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
 					failedToBackfill(&SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: nodeAddress.Bytes(),
 					})
 				}
 				for _, cookie := range modifySync.GetAddStreams() {
 					failedToAdd(&SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: nodeAddress.Bytes(),
 					})
 				}
 				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 					failedToRemove(&SyncStreamOpStatus{
-						StreamId: streamIDRaw,
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    streamIDRaw,
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: nodeAddress.Bytes(),
 					})
 				}
 				return
@@ -571,7 +577,7 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 // 3. Remote nodes (in order of preference)
 // Returns the selected node address and true if a node was found and available, false otherwise.
 // Initializes syncer for the selected node if it does not exist yet.
-func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie) (common.Address, bool) {
+func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie, changeNode bool) (common.Address, bool) {
 	streamID := StreamId(cookie.GetStreamId())
 
 	// 1. Try node from cookie first

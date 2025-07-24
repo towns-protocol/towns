@@ -86,9 +86,10 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 					rvrErr := AsRiverError(err)
 					backfillsLock.Lock()
 					resp.Backfills = append(resp.Backfills, &SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: s.localAddr.Bytes(),
 					})
 					backfillsLock.Unlock()
 				}
@@ -107,9 +108,10 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 					rvrErr := AsRiverError(err)
 					addsLock.Lock()
 					resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: s.localAddr.Bytes(),
 					})
 					addsLock.Unlock()
 				}
