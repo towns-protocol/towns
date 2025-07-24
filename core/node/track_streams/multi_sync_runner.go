@@ -124,7 +124,7 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.mu.Unlock()
 
 	logging.FromCtx(ctx).
-		Infow("Adding stream with cookie",
+		Debugw("Adding stream with cookie",
 			"stream", record.streamId,
 			"minipoolGen", record.minipoolGen,
 			"prevMiniblockHash", record.prevMiniblockHash,
@@ -266,7 +266,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		}
 	}
 
-	// Reset historical content processing after the first update
 	record.applyHistoricalContent.Enabled = false
 
 	// Update record cookie for restarting sync from the correct position after relocation
