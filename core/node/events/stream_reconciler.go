@@ -37,6 +37,9 @@ type streamReconciler struct {
 
 	// localStartMbInclusive is the start miniblock number to reconcile. Computed from trim settings based on the stream type.
 	localStartMbInclusive int64
+
+	// notFound is true if local storage returned Err_NOT_FOUND for the stream.
+	notFound bool
 }
 
 func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river.StreamWithId) *streamReconciler {
@@ -90,6 +93,7 @@ func (sr *streamReconciler) reconcile() error {
 		sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(ctx)
 		if err != nil {
 			if IsRiverErrorCode(err, Err_NOT_FOUND) {
+				sr.notFound = true
 				sr.localLastMbInclusive = -1
 			} else {
 				return err
@@ -104,6 +108,10 @@ func (sr *streamReconciler) reconcile() error {
 		presentRanges, err = sr.cache.params.Storage.GetMiniblockNumberRanges(ctx, sr.stream.streamId, sr.localStartMbInclusive)
 		if err != nil && !IsRiverErrorCode(err, Err_NOT_FOUND) { // TODO: make sure GetMiniblockNumberRanges returns Err_NOT_FOUND if stream is absent
 			return err
+		}
+
+		if IsRiverErrorCode(err, Err_NOT_FOUND) {
+			sr.notFound = true
 		}
 
 		if len(presentRanges) == 0 {
@@ -166,17 +174,42 @@ func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) e
 }
 
 func (sr *streamReconciler) reconcileBackward() error {
+	// First reinitialize the stream.
+	// If after that stream doesn't have miniblocks to that last expected, run forward reconciliation from this point.
+	// Backfill gaps.
+
+	err := sr.remotes.execute(sr.reinitializeStreamFromSinglePeer)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// func (sr *streamReconciler) reconcileStreamBackwardFromSinglePeer(
-// 	stream *Stream,
-// 	remote common.Address,
-// 	remotes []common.Address,
-// 	missingRanges []storage.MiniblockRange,
-// ) error {
-// 	return nil
-// }
+func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Address) error {
+	client, err := sr.cache.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
+	if err != nil {
+		return err
+	}
+
+	numberOfPrecedingMiniblocks := sr.cache.params.ChainConfig.Get().RecencyConstraintsGen
+
+	req := connect.NewRequest(&GetStreamRequest{
+		StreamId:                    sr.stream.streamId[:],
+		NumberOfPrecedingMiniblocks: int64(numberOfPrecedingMiniblocks),
+	})
+	req.Header().Set(riverNoForwardHeader, riverHeaderTrueValue)
+	resp, err := client.GetStream(sr.cache.params.ServerCtx, req)
+	if err != nil {
+		return err
+	}
+
+	return sr.stream.reinitialize(resp.Msg.GetStream())
+}
+
+func (sr *streamReconciler) reconcileBackwardFromSinglePeer() error {
+	return nil
+}
 
 func (sr *streamReconciler) backfillGaps() error {
 	return nil

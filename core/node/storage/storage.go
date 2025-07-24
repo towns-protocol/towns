@@ -24,6 +24,7 @@ type (
 		MinipoolEnvelopes       [][]byte
 	}
 
+	// TODO: replace with MiniblockDescriptor, they are the same
 	WriteMiniblockData struct {
 		Number   int64
 		Hash     common.Hash

@@ -1171,6 +1171,78 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	s.lastAppliedBlockNum = blockNum
 }
 
+func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, updateExisting bool) error {
+	if stream == nil {
+		return RiverError(Err_INTERNAL, "stream is nil")
+	}
+
+	if stream.NextSyncCookie == nil {
+		return RiverError(Err_INTERNAL, "next sync cookie is nil")
+	}
+
+	if !s.streamId.EqualsBytes(stream.NextSyncCookie.StreamId) {
+		return RiverError(Err_INTERNAL, "stream id mismatch")
+	}
+
+	if len(stream.Miniblocks) == 0 {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"no miniblocks in StreamAndCookie",
+			"streamId",
+			s.streamId,
+		).Func("reinitialize")
+	}
+
+	if stream.Snapshot != nil &&
+		(stream.SnapshotMiniblockIndex < 0 || stream.SnapshotMiniblockIndex >= int64(len(stream.Miniblocks))) {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"invalid snapshot miniblock index",
+			"streamId",
+			s.streamId,
+		).Func("reinitialize")
+	}
+
+	opts := NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true)
+	miniblocks, _, snapshotMbIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, opts)
+	if err != nil {
+		return err
+	}
+
+	storageMiniblocks := make([]*storage.WriteMiniblockData, len(miniblocks))
+	for i, mb := range miniblocks {
+		storageMiniblocks[i], err = mb.AsStorageMb()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Reinitialize data is prepared.
+	// Take lock, drop view, apply data to the database.
+	// TODO: FIX: what are implications for sync?
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.setViewLocked(nil)
+
+	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num + int64(snapshotMbIndex)
+	err = s.params.Storage.ReinitializeStreamStorage(
+		ctx,
+		s.streamId,
+		storageMiniblocks,
+		lastSnapshotMiniblockNum,
+		updateExisting,
+	)
+	if err != nil {
+		return err
+	}
+
+	// If success, update the view.
+	s.setViewLocked(NewStreamView(miniblocks, snapshot, snapshotMbIndex))
+
+	return nil
+}
+
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
 // registry. GetQuorumNodes is thread-safe.
 func (s *Stream) GetQuorumNodes() []common.Address {
