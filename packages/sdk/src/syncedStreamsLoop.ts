@@ -155,6 +155,7 @@ export class SyncedStreamsLoop {
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
         private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
+        private lastAccessedAt: Record<string, number>,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -294,6 +295,7 @@ export class SyncedStreamsLoop {
 
     public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityIds = new Set(streamIds)
+        streamIds.forEach((x) => (this.lastAccessedAt[x] = Date.now()))
         this.checkStartTicking()
     }
 
@@ -367,6 +369,11 @@ export class SyncedStreamsLoop {
                                         b[0],
                                         this.highPriorityIds,
                                     )
+                                    if (aPriority === bPriority) {
+                                        const aLastAccessedAt = this.lastAccessedAt[a[0]] ?? 0
+                                        const bLastAccessedAt = this.lastAccessedAt[b[0]] ?? 0
+                                        return bLastAccessedAt - aLastAccessedAt
+                                    }
                                     return aPriority - bPriority
                                 })
                                 .map((streamRecord) => {
@@ -622,6 +629,11 @@ export class SyncedStreamsLoop {
                 this.pendingSyncCookies.sort((a, b) => {
                     const aPriority = priorityFromStreamId(a, this.highPriorityIds)
                     const bPriority = priorityFromStreamId(b, this.highPriorityIds)
+                    if (aPriority === bPriority) {
+                        const aLastAccessedAt = this.lastAccessedAt[a] ?? 0
+                        const bLastAccessedAt = this.lastAccessedAt[b] ?? 0
+                        return bLastAccessedAt - aLastAccessedAt
+                    }
                     return aPriority - bPriority
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
@@ -1076,13 +1088,14 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
         }
     }
     // if we're prioritizing dms, load other dms and gdm channels
-    if (highPriorityIds.size > 0) {
-        const firstHPI = Array.from(highPriorityIds.values())[0]
-        if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
-            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+    if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+        if (highPriorityIds.size > 0) {
+            const firstHPI = Array.from(highPriorityIds.values())[0]
+            if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
                 return 2
             }
         }
+        return 3
     }
 
     // we need spaces to structure the app
