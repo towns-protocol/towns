@@ -16,8 +16,9 @@ import (
 
 // TODO: move constants from rpc/forwarder.go to shared package so they are available here.
 const (
-	riverNoForwardHeader = "X-River-No-Forward" // Must be set to "true" to disable forwarding
-	riverHeaderTrueValue = "true"
+	riverNoForwardHeader         = "X-River-No-Forward" // Must be set to "true" to disable forwarding
+	riverHeaderTrueValue         = "true"
+	defaultGetMiniblocksPageSize = 128
 )
 
 // streamReconciler tracks state for a single stream reconciliation attempt.
@@ -84,53 +85,29 @@ func (sr *streamReconciler) reconcile() error {
 	// because nodes only register periodically new miniblocks to reduce transaction costs
 	// for non-replicated streams. In that case fetch the latest block number from the remote.
 	if nonReplicatedStream {
-		sr.remotes.execute(sr.setExpectedLastMbFromRemote)
+		_ = sr.remotes.execute(sr.setExpectedLastMbFromRemote)
 	}
 
 	backwardThreshold := sr.cache.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
 	enableBackwardReconciliation := backwardThreshold > 0
 
-	var presentRanges, missingRanges []storage.MiniblockRange
 	var err error
-	if !enableBackwardReconciliation {
-		sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(ctx)
-		if err != nil {
-			if IsRiverErrorCode(err, Err_NOT_FOUND) {
-				sr.notFound = true
-				sr.localLastMbInclusive = -1
-			} else {
-				return err
-			}
-		}
-
-		if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
-			return nil
-		}
-	} else {
-		// TODO: DO NOT COMMIT: calculate localStartMbInclusive based on settings.
-		presentRanges, err = sr.cache.params.Storage.GetMiniblockNumberRanges(ctx, sr.stream.streamId, sr.localStartMbInclusive)
-		if err != nil && !IsRiverErrorCode(err, Err_NOT_FOUND) { // TODO: make sure GetMiniblockNumberRanges returns Err_NOT_FOUND if stream is absent
-			return err
-		}
-
+	sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(ctx)
+	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
 			sr.notFound = true
-		}
-
-		if len(presentRanges) == 0 {
 			sr.localLastMbInclusive = -1
-			missingRanges = []storage.MiniblockRange{
-				{
-					StartInclusive: sr.localStartMbInclusive,
-					EndInclusive:   sr.expectedLastMbInclusive,
-				},
-			}
 		} else {
-			sr.localLastMbInclusive = presentRanges[len(presentRanges)-1].EndInclusive
-			missingRanges = calculateMissingRanges(presentRanges, sr.localStartMbInclusive, sr.expectedLastMbInclusive)
-			if len(missingRanges) == 0 {
-				return nil
-			}
+			return err
+		}
+	}
+
+	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
+		// Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
+		if enableBackwardReconciliation {
+			return sr.backfillGaps()
+		} else {
+			return nil
 		}
 	}
 
@@ -138,23 +115,17 @@ func (sr *streamReconciler) reconcile() error {
 		return sr.reconcileForward()
 	}
 
-	// Backwards reconciliation is enabled.
-	// It's possible that stream is complete at the end and there are gaps in the middle.
-	// In this case only gaps need to be backfilled.
-	// If last missing range is at the end, then depending on the threshold setting
-	// either forward reconciliation should be used or the stream should be re-initialized at the end
-	// and then gaps need to be backfilled.
-	lastMissingRange := missingRanges[len(missingRanges)-1]
-	if lastMissingRange.EndInclusive == sr.expectedLastMbInclusive {
-		rangeLen := lastMissingRange.EndInclusive - lastMissingRange.StartInclusive + 1
-		if uint64(rangeLen) <= backwardThreshold {
-			return sr.reconcileForward()
-		} else {
-			return sr.reconcileBackward()
-		}
+	if (sr.expectedLastMbInclusive - sr.localLastMbInclusive) <= int64(backwardThreshold) {
+		err = sr.reconcileForward()
 	} else {
-		return sr.backfillGaps()
+		err = sr.reconcileBackward()
 	}
+
+	if err != nil {
+		return err
+	}
+
+	return sr.backfillGaps()
 }
 
 func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) error {
@@ -257,7 +228,125 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 }
 
 func (sr *streamReconciler) backfillGaps() error {
+	// TODO: DO NOT COMMIT: calculate localStartMbInclusive based on settings.
+	sr.localStartMbInclusive = 0
+
+	presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
+		sr.ctx,
+		sr.stream.streamId,
+		sr.localStartMbInclusive,
+	)
+	if err != nil {
+		return err
+	}
+	if len(presentRanges) == 0 {
+		return RiverError(Err_INTERNAL, "backfillGaps: no present ranges")
+	}
+
+	missingRanges := calculateMissingRanges(presentRanges, sr.localStartMbInclusive, sr.expectedLastMbInclusive)
+	if len(missingRanges) == 0 {
+		return nil
+	}
+
+	// Sanity check: at this point last missing range should not be at the end of already reconciled data.
+	if missingRanges[len(missingRanges)-1].EndInclusive == sr.expectedLastMbInclusive {
+		return RiverError(Err_INTERNAL, "backfillGaps: last missing range is at the end of already reconciled data")
+	}
+
+	// Reconcile missing ranges one by one backwards.
+	for i := len(missingRanges) - 1; i >= 0; i-- {
+		err = sr.backfillRange(missingRanges[i])
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (sr *streamReconciler) backfillRange(missingRange storage.MiniblockRange) error {
+	pageSize := sr.cache.params.Config.StreamReconciliation.GetMiniblocksPageSize
+	if pageSize <= 0 {
+		pageSize = defaultGetMiniblocksPageSize
+	}
+
+	for missingRange.StartInclusive <= missingRange.EndInclusive {
+		// Grab page size at the end of the range.
+		curRange := missingRange
+		if curRange.EndInclusive-curRange.StartInclusive+1 > pageSize {
+			curRange.StartInclusive = curRange.EndInclusive - pageSize + 1
+		}
+		missingRange.EndInclusive = curRange.StartInclusive - 1
+
+		err := sr.backfillPage(curRange)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (sr *streamReconciler) backfillPage(curRange storage.MiniblockRange) error {
+	fromInclusive := curRange.StartInclusive
+	toExclusive := curRange.EndInclusive + 1
+
+	var err error
+	err = sr.remotes.execute(func(remote common.Address) error {
+		fromInclusive, err = sr.backfillPageFromSinglePeer(remote, fromInclusive, toExclusive)
+		if err != nil {
+			return err
+		}
+		if fromInclusive >= toExclusive {
+			return nil
+		}
+		return RiverError(Err_UNAVAILABLE, "Current peer returned less than expected miniblocks")
+	})
+	if err != nil {
+		return AsRiverError(err).
+			Tags("stream", sr.stream.streamId, "missingFromInclusive", fromInclusive, "missingToExclusive", toExclusive, "localLastMbInclusive", sr.localLastMbInclusive)
+	}
+	return nil
+}
+
+func (sr *streamReconciler) backfillPageFromSinglePeer(
+	remote common.Address,
+	fromInclusive int64,
+	toExclusive int64,
+) (int64, error) {
+	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	defer cancel()
+
+	mbs, err := sr.cache.params.RemoteMiniblockProvider.GetMbs(
+		ctx,
+		remote,
+		sr.stream.streamId,
+		fromInclusive,
+		toExclusive,
+	)
+	if err != nil {
+		return fromInclusive, err
+	}
+
+	if len(mbs) == 0 {
+		return fromInclusive, RiverError(Err_UNAVAILABLE, "Current peer returned no miniblocks")
+	}
+
+	storageMbs, err := MiniblockInfosToStorageMbs(mbs)
+	if err != nil {
+		return fromInclusive, err
+	}
+
+	err = sr.cache.params.Storage.WritePrecedingMiniblocks(
+		ctx,
+		sr.stream.streamId,
+		storageMbs,
+	)
+	if err != nil {
+		return fromInclusive, err
+	}
+
+	return fromInclusive + int64(len(mbs)), nil
 }
 
 func (sr *streamReconciler) reconcileForward() error {
@@ -291,49 +380,48 @@ func (sr *streamReconciler) reconcileForwardFromSinglePeer(
 ) (int64, error) {
 	pageSize := sr.cache.params.Config.StreamReconciliation.GetMiniblocksPageSize
 	if pageSize <= 0 {
-		pageSize = 128
+		pageSize = defaultGetMiniblocksPageSize
 	}
-
-	var ctx context.Context
-	var cancel context.CancelFunc
-	defer func() {
-		if cancel != nil {
-			cancel()
-		}
-	}()
-
-	currentFromInclusive := fromInclusive
-	for {
-		if currentFromInclusive >= toExclusive {
-			return currentFromInclusive, nil
-		}
-
-		ctx, cancel = context.WithTimeout(sr.ctx, time.Minute)
-
-		currentToExclusive := min(currentFromInclusive+pageSize, toExclusive)
-
-		mbs, err := sr.cache.params.RemoteMiniblockProvider.GetMbs(
-			ctx,
+	var err error
+	for fromInclusive < toExclusive {
+		fromInclusive, err = sr.reconcilePageForwardFromSinglePeer(
 			remote,
-			sr.stream.streamId,
-			currentFromInclusive,
-			currentToExclusive,
+			fromInclusive,
+			min(fromInclusive+pageSize, toExclusive),
 		)
 		if err != nil {
-			return currentFromInclusive, err
+			return fromInclusive, err
 		}
-
-		if len(mbs) == 0 {
-			return currentFromInclusive, nil
-		}
-
-		err = sr.stream.importMiniblocks(ctx, mbs)
-		if err != nil {
-			return currentFromInclusive, err
-		}
-
-		currentFromInclusive += int64(len(mbs))
-		cancel()
-		cancel = nil
 	}
+	return fromInclusive, nil
+}
+
+func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
+	remote common.Address,
+	fromInclusive int64,
+	toExclusive int64,
+) (int64, error) {
+	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+	defer cancel()
+
+	mbs, err := sr.cache.params.RemoteMiniblockProvider.GetMbs(
+		ctx,
+		remote,
+		sr.stream.streamId,
+		fromInclusive,
+		toExclusive,
+	)
+	if err != nil {
+		return fromInclusive, err
+	}
+	if len(mbs) == 0 {
+		return fromInclusive, RiverError(Err_UNAVAILABLE, "Current peer returned no miniblocks")
+	}
+
+	err = sr.stream.importMiniblocks(ctx, mbs)
+	if err != nil {
+		return fromInclusive, err
+	}
+
+	return fromInclusive + int64(len(mbs)), nil
 }
