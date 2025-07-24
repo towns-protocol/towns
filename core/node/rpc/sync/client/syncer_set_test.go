@@ -89,8 +89,9 @@ func TestGetOrCreateSyncer_RemoteNode(t *testing.T) {
 	assert.Contains(t, err.Error(), "sync stream error")
 
 	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -118,8 +119,9 @@ func TestGetOrCreateSyncer_RemoteNodeError(t *testing.T) {
 	assert.Contains(t, err.Error(), "connection failed")
 
 	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -229,8 +231,9 @@ func TestGetOrCreateSyncer_RemoteSyncerInitError(t *testing.T) {
 	assert.Contains(t, err.Error(), "sync init failed")
 
 	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
@@ -262,8 +265,11 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Verify syncer is removed after Run completes
-	_, found = syncerSet.syncers.Load(localAddr)
-	assert.False(t, found)
+	syncerEntity, found := syncerSet.syncers.Load(localAddr)
+	assert.True(t, found)
+	syncerEntity.Lock()
+	assert.Nil(t, syncerEntity.StreamsSyncer)
+	syncerEntity.Unlock()
 
 	// Cleanup
 	streamCache.AssertExpectations(t)
@@ -377,8 +383,9 @@ func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
 	assert.Contains(t, err.Error(), "sync failed")
 
 	// Verify no syncer was stored since creation failed
-	_, found := syncerSet.syncers.Load(remoteAddr)
-	assert.False(t, found, "No syncer should be stored when creation fails")
+	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
+	assert.True(t, found)
+	assert.Nil(t, syncerEntity.StreamsSyncer)
 
 	// Cleanup
 	nodeRegistry.AssertExpectations(t)
