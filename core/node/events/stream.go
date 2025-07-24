@@ -254,7 +254,7 @@ func (s *Stream) importMiniblocksLocked(
 	miniblocks []*MiniblockInfo,
 ) error {
 	firstMbNum := miniblocks[0].Ref.Num
-	blocksToWriteToStorage := make([]*storage.WriteMiniblockData, len(miniblocks))
+	blocksToWriteToStorage := make([]*storage.MiniblockDescriptor, len(miniblocks))
 	for i, miniblock := range miniblocks {
 		if miniblock.Ref.Num != firstMbNum+int64(i) {
 			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
@@ -363,9 +363,9 @@ func (s *Stream) applyMiniblockImplLocked(
 		return err
 	}
 
-	var storageMb *storage.WriteMiniblockData
+	var storageMb *storage.MiniblockDescriptor
 	if miniblock != nil {
-		storageMb = &storage.WriteMiniblockData{
+		storageMb = &storage.MiniblockDescriptor{
 			Number:   info.Ref.Num,
 			Hash:     info.Ref.Hash,
 			Snapshot: miniblock.Snapshot,
@@ -380,7 +380,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	err = s.params.Storage.WriteMiniblocks(
 		ctx,
 		s.streamId,
-		[]*storage.WriteMiniblockData{storageMb},
+		[]*storage.MiniblockDescriptor{storageMb},
 		newSV.minipool.generation,
 		newMinipool,
 		prevSV.minipool.generation,
@@ -496,7 +496,7 @@ func (s *Stream) initFromGenesisLocked(
 	err := s.params.Storage.CreateStreamStorage(
 		ctx,
 		s.streamId,
-		&storage.WriteMiniblockData{Data: genesisBytes},
+		&storage.MiniblockDescriptor{Data: genesisBytes},
 	)
 	if err != nil {
 		return err

@@ -36,7 +36,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err := store.CreateStreamStorage(
 			ctx,
 			streamId,
-			&WriteMiniblockData{
+			&MiniblockDescriptor{
 				Number:   0,
 				Hash:     common.HexToHash("0x01"),
 				Data:     []byte("genesis"),
@@ -50,7 +50,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 			err := store.WriteMiniblocks(
 				ctx,
 				streamId,
-				[]*WriteMiniblockData{{
+				[]*MiniblockDescriptor{{
 					Number:   i,
 					Hash:     common.HexToHash(string(rune('0' + i))),
 					Data:     []byte("miniblock"),
@@ -90,7 +90,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err := store.ReinitializeStreamStorage(
 			ctx,
 			streamIdGaps,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{Number: 5, Hash: common.HexToHash("0x05"), Data: []byte("miniblock5"), Snapshot: nil},
 				{Number: 6, Hash: common.HexToHash("0x06"), Data: []byte("miniblock6"), Snapshot: nil},
 				{Number: 7, Hash: common.HexToHash("0x07"), Data: []byte("miniblock7"), Snapshot: []byte("snapshot7")},
@@ -107,7 +107,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err = store.WritePrecedingMiniblocks(
 			ctx,
 			streamIdGaps,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{Number: 0, Hash: common.HexToHash("0x00"), Data: []byte("genesis"), Snapshot: []byte("snapshot0")},
 				{Number: 1, Hash: common.HexToHash("0x01"), Data: []byte("miniblock1"), Snapshot: nil},
 				{Number: 2, Hash: common.HexToHash("0x02"), Data: []byte("miniblock2"), Snapshot: nil},
@@ -137,7 +137,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err = store.ReinitializeStreamStorage(
 			ctx,
 			streamIdGaps,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{
 					Number:   15,
 					Hash:     common.HexToHash("0x15"),
@@ -170,7 +170,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err := store.ReinitializeStreamStorage(
 			ctx,
 			streamIdNonZero,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{
 					Number:   100,
 					Hash:     common.HexToHash("0x100"),
@@ -209,7 +209,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err := store.ReinitializeStreamStorage(
 			ctx,
 			streamIdLarge,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{
 					Number:   1000,
 					Hash:     common.HexToHash("0x1000"),
@@ -228,7 +228,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err = store.ReinitializeStreamStorage(
 			ctx,
 			streamIdLarge,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{
 					Number:   2000,
 					Hash:     common.HexToHash("0x2000"),
@@ -245,7 +245,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		err = store.WritePrecedingMiniblocks(
 			ctx,
 			streamIdLarge,
-			[]*WriteMiniblockData{
+			[]*MiniblockDescriptor{
 				{Number: 0, Hash: common.HexToHash("0x00"), Data: []byte("genesis"), Snapshot: []byte("snapshot0")},
 			},
 		)
@@ -285,7 +285,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	err := store.ReinitializeStreamStorage(
 		ctx,
 		streamId,
-		[]*WriteMiniblockData{
+		[]*MiniblockDescriptor{
 			{Number: 10, Hash: common.HexToHash("0x10"), Data: []byte("miniblock10"), Snapshot: []byte("snapshot10")},
 			{Number: 11, Hash: common.HexToHash("0x11"), Data: []byte("miniblock11"), Snapshot: nil},
 			{Number: 12, Hash: common.HexToHash("0x12"), Data: []byte("miniblock12"), Snapshot: nil},
@@ -307,7 +307,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	err = store.WritePrecedingMiniblocks(
 		ctx,
 		streamId,
-		[]*WriteMiniblockData{
+		[]*MiniblockDescriptor{
 			{Number: 5, Hash: common.HexToHash("0x05"), Data: []byte("miniblock5"), Snapshot: nil},
 			{Number: 6, Hash: common.HexToHash("0x06"), Data: []byte("miniblock6"), Snapshot: nil},
 			{Number: 7, Hash: common.HexToHash("0x07"), Data: []byte("miniblock7"), Snapshot: nil},
@@ -327,7 +327,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	err = store.WritePrecedingMiniblocks(
 		ctx,
 		streamId,
-		[]*WriteMiniblockData{
+		[]*MiniblockDescriptor{
 			{Number: 0, Hash: common.HexToHash("0x00"), Data: []byte("genesis"), Snapshot: []byte("snapshot0")},
 			{Number: 1, Hash: common.HexToHash("0x01"), Data: []byte("miniblock1"), Snapshot: nil},
 			{Number: 2, Hash: common.HexToHash("0x02"), Data: []byte("miniblock2"), Snapshot: nil},
@@ -371,9 +371,9 @@ func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create initial continuous range 0-999
-	miniblocks := make([]*WriteMiniblockData, 1000)
+	miniblocks := make([]*MiniblockDescriptor, 1000)
 	for i := 0; i < 1000; i++ {
-		miniblocks[i] = &WriteMiniblockData{
+		miniblocks[i] = &MiniblockDescriptor{
 			Number:   int64(i),
 			Hash:     common.HexToHash(string(rune(i % 256))),
 			Data:     []byte("miniblock"),
@@ -395,9 +395,9 @@ func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 
 	// Add more ranges with gaps: 2000-2999, 4000-4999, etc.
 	for base := int64(2000); base < 10000; base += 2000 {
-		extraBlocks := make([]*WriteMiniblockData, 1000)
+		extraBlocks := make([]*MiniblockDescriptor, 1000)
 		for i := 0; i < 1000; i++ {
-			extraBlocks[i] = &WriteMiniblockData{
+			extraBlocks[i] = &MiniblockDescriptor{
 				Number:   base + int64(i),
 				Hash:     common.HexToHash(string(rune(i % 256))),
 				Data:     []byte("miniblock"),

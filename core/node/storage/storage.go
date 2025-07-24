@@ -24,18 +24,10 @@ type (
 		MinipoolEnvelopes       [][]byte
 	}
 
-	// TODO: replace with MiniblockDescriptor, they are the same
-	WriteMiniblockData struct {
-		Number   int64
-		Hash     common.Hash
-		Snapshot []byte
-		Data     []byte
-	}
-
 	MiniblockDescriptor struct {
 		Number   int64
 		Data     []byte
-		Hash     common.Hash // Only set for miniblock candidates
+		Hash     common.Hash // On read only set for miniblock candidates
 		Snapshot []byte
 	}
 
@@ -75,7 +67,7 @@ type (
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
 		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
-		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
+		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *MiniblockDescriptor) error
 
 		// ReinitializeStreamStorage initialized or reinitializes storage for the given stream.
 		//
@@ -95,13 +87,17 @@ type (
 		ReinitializeStreamStorage(
 			ctx context.Context,
 			streamId StreamId,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 			lastSnapshotMiniblockNum int64,
 			updateExisting bool,
 		) error
 
 		// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
-		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
+		CreateEphemeralStreamStorage(
+			ctx context.Context,
+			streamId StreamId,
+			genesisMiniblock *MiniblockDescriptor,
+		) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
@@ -157,7 +153,7 @@ type (
 		WriteMiniblockCandidate(
 			ctx context.Context,
 			streamId StreamId,
-			miniblock *WriteMiniblockData,
+			miniblock *MiniblockDescriptor,
 		) error
 
 		ReadMiniblockCandidate(
@@ -185,7 +181,7 @@ type (
 		WriteMiniblocks(
 			ctx context.Context,
 			streamId StreamId,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 			newMinipoolGeneration int64,
 			newMinipoolEnvelopes [][]byte,
 			prevMinipoolGeneration int64,
@@ -194,7 +190,7 @@ type (
 
 		// WriteEphemeralMiniblock writes a miniblock as part of ephemeral stream. Skips a bunch of consistency checks.
 		// Stream with the given ID must be ephemeral.
-		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *WriteMiniblockData) error
+		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *MiniblockDescriptor) error
 
 		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
 		// If stream record is created, but no miniblocks are archived, returns -1.
@@ -207,7 +203,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			startMiniblockNum int64,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 		) error
 
 		// GetLastMiniblockNumber returns the last miniblock number for the given stream from storage.
@@ -239,7 +235,7 @@ type (
 		WritePrecedingMiniblocks(
 			ctx context.Context,
 			streamId StreamId,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 		) error
 
 		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
