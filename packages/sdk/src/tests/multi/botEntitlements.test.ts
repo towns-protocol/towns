@@ -128,7 +128,7 @@ describe('bot entitlements tests', () => {
         // Key solicitations require READ permission, not WRITE permission
         const payload = make_MemberPayload_KeySolicitation({
             deviceKey: 'bot-device-key',
-            sessionIds: [],
+            sessionIds: ['aaa'],
             fallbackKey: 'bot-fallback-key',
             isNewDevice: true,
         })

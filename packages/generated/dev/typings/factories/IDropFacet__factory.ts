@@ -617,6 +617,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "DropFacet__NotClaimingAccount",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "DropFacet__QuantityMustBeGreaterThanZero",
     inputs: [],
   },

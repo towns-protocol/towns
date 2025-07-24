@@ -1,4 +1,4 @@
-import { isChannelStreamId, spaceIdFromChannelId, StreamPrefix } from './id'
+import { spaceIdFromChannelId, StreamPrefix } from './id'
 import { check, dlog, dlogError, DLogger } from '@towns-protocol/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
@@ -11,7 +11,7 @@ interface StreamSyncItem {
 }
 
 interface SyncedStreamsExtensionDelegate {
-    startSyncStreams: () => Promise<void>
+    startSyncStreams: (lastAccessedAt: Record<string, number>) => Promise<void>
     initStream(
         streamId: string,
         allowGetStream: boolean,
@@ -149,7 +149,7 @@ export class SyncedStreamsExtension {
         // then load the rest of the streams after, but it's not!
         // for 300ish streams,loading the rest of the streams after the application has started
         // going takes 30-50 seconds,doing it this way takes 4 seconds
-        const loadedStreams = await this.persistenceStore.loadStreams(
+        const { streams: loadedStreams, lastAccessedAt } = await this.persistenceStore.loadStreams(
             Array.from(this.highPriorityIds),
         )
         const t1 = performance.now()
@@ -169,7 +169,7 @@ export class SyncedStreamsExtension {
         // wait for 10ms to allow the client to update the status
         const t2 = performance.now()
         this.log('####Performance: loadedHighPriorityStreams!!', t2 - t1)
-        await this.startSync()
+        await this.startSync(lastAccessedAt)
         // this is real goofy, it makes the app smooth
         // push on a final task to update the client status and report stats
         this.tasks.unshift(async () => {
@@ -187,13 +187,19 @@ export class SyncedStreamsExtension {
             }
             // it sorts and slices the array
             const streamIdsForStep = streamIds
-                .sort(
-                    (a, b) =>
-                        priorityFromStreamId(a, this.highPriorityIds) -
-                        priorityFromStreamId(b, this.highPriorityIds),
-                )
+                .sort((a, b) => {
+                    const aPriority = priorityFromStreamId(a, this.highPriorityIds)
+                    const bPriority = priorityFromStreamId(b, this.highPriorityIds)
+                    if (aPriority === bPriority) {
+                        const aLastAccessedAt = lastAccessedAt[a] ?? 0
+                        const bLastAccessedAt = lastAccessedAt[b] ?? 0
+                        return bLastAccessedAt - aLastAccessedAt
+                    }
+                    return aPriority - bPriority
+                })
                 .splice(0, MAX_CONCURRENT_FROM_PERSISTENCE)
-            const loadedStreams = await this.persistenceStore.loadStreams(streamIdsForStep)
+            const { streams: loadedStreams } =
+                await this.persistenceStore.loadStreams(streamIdsForStep)
             // and then loads MAX_CONCURRENT_STREAMS streams
             await Promise.all(
                 streamIdsForStep.map(async (streamId) => {
@@ -269,9 +275,9 @@ export class SyncedStreamsExtension {
         }
     }
 
-    private async startSync() {
+    private async startSync(lastAccessedAt: Record<string, number>) {
         try {
-            await this.delegate.startSyncStreams()
+            await this.delegate.startSyncStreams(lastAccessedAt)
         } catch (err) {
             this.logError('sync failure', err)
         }
@@ -332,18 +338,21 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
         }
     }
 
-    // we need spaces to structure the app
-    if (streamId.startsWith(StreamPrefix.Space)) {
-        return 3
-    }
-
-    if (isChannelStreamId(streamId)) {
+    if (streamId.startsWith(StreamPrefix.Channel)) {
         const spaceId = spaceIdFromChannelId(streamId)
         if (highPriorityIds.has(spaceId)) {
             return 4
-        } else {
-            return 5
         }
     }
+
+    if (streamId.startsWith(StreamPrefix.DM) || streamId.startsWith(StreamPrefix.GDM)) {
+        return 4
+    }
+
+    // we need spaces to structure the app
+    if (streamId.startsWith(StreamPrefix.Space)) {
+        return 5
+    }
+
     return 6
 }
