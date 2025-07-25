@@ -304,6 +304,19 @@ func (s *Service) getMiniblocksImpl(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
+	if req.Msg.FromInclusive < 0 || req.Msg.ToExclusive <= req.Msg.FromInclusive {
+		return nil, RiverError(
+			Err_INVALID_ARGUMENT,
+			"Index can't be negative, and there should be at least one miniblock in the requestedrange",
+			"fromInclusive",
+			req.Msg.FromInclusive,
+			"toExclusive",
+			req.Msg.ToExclusive,
+			"streamId",
+			req.Msg.StreamId,
+		)
+	}
+
 	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
 		return nil, err
