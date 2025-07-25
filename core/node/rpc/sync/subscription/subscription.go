@@ -135,15 +135,19 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	if len(implicitBackfills) > 0 {
-		originalBackfillingFailureHandler := req.BackfillingFailureHandler
-		modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
-			if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
-				return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
-			}) {
-				modifiedReq.AddingFailureHandler(status)
-			} else {
-				originalBackfillingFailureHandler(status)
-				s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
+		if modifiedReq.BackfillingFailureHandler == nil {
+			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
+		} else {
+			originalBackfillingFailureHandler := req.BackfillingFailureHandler
+			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
+				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
+					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
+				}) {
+					modifiedReq.AddingFailureHandler(status)
+				} else {
+					originalBackfillingFailureHandler(status)
+					s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
+				}
 			}
 		}
 
