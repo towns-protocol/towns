@@ -101,9 +101,12 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
-		SyncID:                    s.syncID,
-		ToBackfill:                req.ToBackfill,
-		BackfillingFailureHandler: req.BackfillingFailureHandler,
+		SyncID:     s.syncID,
+		ToBackfill: req.ToBackfill,
+		BackfillingFailureHandler: func(status *SyncStreamOpStatus) {
+			req.BackfillingFailureHandler(status)
+			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
+		},
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
 			req.AddingFailureHandler(status)
 			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
@@ -135,18 +138,14 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 	}
 
 	if len(implicitBackfills) > 0 {
-		if modifiedReq.BackfillingFailureHandler == nil {
-			modifiedReq.BackfillingFailureHandler = modifiedReq.AddingFailureHandler
-		} else {
-			originalBackfillingFailureHandler := req.BackfillingFailureHandler
-			modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
-				if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
-					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
-				}) {
-					modifiedReq.AddingFailureHandler(status)
-				} else if originalBackfillingFailureHandler != nil {
-					originalBackfillingFailureHandler(status)
-				}
+		originalBackfillingFailureHandler := req.BackfillingFailureHandler
+		modifiedReq.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {
+			if slices.ContainsFunc(implicitBackfills, func(c *SyncCookie) bool {
+				return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
+			}) {
+				modifiedReq.AddingFailureHandler(status)
+			} else if originalBackfillingFailureHandler != nil {
+				originalBackfillingFailureHandler(status)
 			}
 		}
 
