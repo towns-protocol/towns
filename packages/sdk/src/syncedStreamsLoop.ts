@@ -827,10 +827,21 @@ export class SyncedStreamsLoop {
         }
         const syncId = this.syncId
         const retryCount = retryParams?.retryCount ?? 0
-        this.rpcClient
+        void this.rpcClient
             .modifySync({
                 syncId: this.syncId,
                 addStreams: [cookie],
+            })
+            .then((resp) => {
+                const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
+                if (resp?.adds && resp?.adds.length > 0) {
+                    setTimeout(() => {
+                        this.syncDown(streamId, {
+                            syncId,
+                            retryCount: retryCount + 1,
+                        })
+                    }, retryDelay)
+                }
             })
             .catch((err) => {
                 const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
@@ -848,17 +859,6 @@ export class SyncedStreamsLoop {
                         retryCount: retryCount + 1,
                     })
                 }, retryDelay)
-            })
-            .then((resp) => {
-                const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
-                if (resp?.adds && resp?.adds.length > 0) {
-                    setTimeout(() => {
-                        this.syncDown(streamId, {
-                            syncId,
-                            retryCount: retryCount + 1,
-                        })
-                    }, retryDelay)
-                }
             })
     }
 
