@@ -6,8 +6,6 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/towns-protocol/towns/core/node/stream"
-
 	"connectrpc.com/connect"
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
@@ -48,7 +47,7 @@ type nodeRegistryImpl struct {
 	connectOpts        []connect.ClientOption
 
 	// streamPicker is used to choose nodes for a stream.
-	streamPicker stream.Distributor
+	streamPicker streamplacement.Distributor
 
 	mu                    sync.RWMutex
 	nodesLocked           map[common.Address]*NodeRecord
@@ -87,7 +86,7 @@ func LoadNodeRegistry(
 		connectOpts = append(connectOpts, connect.WithInterceptors(connectOtelIterceptor))
 	}
 
-	streamPicker, err := stream.NewDistributor(ctx, onChainConfig, appliedBlockNum, chainMonitor, contract)
+	streamPicker, err := streamplacement.NewDistributor(ctx, onChainConfig, appliedBlockNum, chainMonitor, contract)
 	if err != nil {
 		return nil, err
 	}

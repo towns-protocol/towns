@@ -1,4 +1,4 @@
-package stream
+package streamplacement
 
 import (
 	"cmp"
