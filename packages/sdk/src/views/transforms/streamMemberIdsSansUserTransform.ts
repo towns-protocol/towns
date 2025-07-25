@@ -5,7 +5,7 @@ interface Input {
     streamMemberIds: Record<string, string[] | undefined>
 }
 
-export function streamMemberIdsSansCurrentUserTransform(
+export function streamMemberIdsSansUserTransform(
     value: Input,
     prev: Input,
     prevResult?: Record<string, string[] | undefined>,

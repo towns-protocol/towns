@@ -18,7 +18,7 @@ export interface DmAndGdmModel {
 
 interface Input {
     memberships: Record<string, Membership>
-    streamMemberIdsSansCurrentUser: Record<string, string[] | undefined>
+    streamMemberIds: Record<string, string[] | undefined>
     dmStreams: Record<string, DmStreamModel | undefined>
     gdmStreams: Record<string, GdmStreamModel | undefined>
 }
@@ -38,7 +38,7 @@ export function dmsAndGdmsTransform(
                 return undefined
             }
             const membership = value.memberships[streamId]
-            const streamMemberIds = value.streamMemberIdsSansCurrentUser[streamId]
+            const streamMemberIds = value.streamMemberIds[streamId]
             const newGdm = {
                 id: streamId,
                 joined: membership === Membership.Join,
@@ -66,7 +66,7 @@ export function dmsAndGdmsTransform(
                 return undefined
             }
             const membership = value.memberships[streamId]
-            const streamMemberIds = value.streamMemberIdsSansCurrentUser[streamId]
+            const streamMemberIds = value.streamMemberIds[streamId]
             const newDm = {
                 id: streamId,
                 joined: membership === Membership.Join,
