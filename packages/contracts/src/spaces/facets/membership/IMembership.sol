@@ -42,7 +42,7 @@ interface IMembershipBase {
     }
 
     struct JoinDetails {
-        uint256 joinDetails;
+        uint256 basePrice;
         uint256 amountDue;
         bool shouldCharge;
         bool isPrepaid;

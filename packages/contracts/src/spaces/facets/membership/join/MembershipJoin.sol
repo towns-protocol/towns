@@ -80,7 +80,7 @@ abstract contract MembershipJoin is
         if (freeAllocation > totalSupply) {
             return
                 JoinDetails({
-                    joinDetails: membershipPrice,
+                    basePrice: membershipPrice,
                     amountDue: 0,
                     shouldCharge: false,
                     isPrepaid: false
@@ -91,7 +91,7 @@ abstract contract MembershipJoin is
         if (prepaidSupply > 0) {
             return
                 JoinDetails({
-                    joinDetails: membershipPrice,
+                    basePrice: membershipPrice,
                     amountDue: 0,
                     shouldCharge: false,
                     isPrepaid: true
@@ -101,7 +101,7 @@ abstract contract MembershipJoin is
         // Regular paid join
         return
             JoinDetails({
-                joinDetails: membershipPrice,
+                basePrice: membershipPrice,
                 amountDue: membershipPrice,
                 shouldCharge: true,
                 isPrepaid: false
@@ -327,7 +327,7 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        uint256 protocolFee = _collectProtocolFee(sender, joinDetails.joinDetails);
+        uint256 protocolFee = _collectProtocolFee(sender, joinDetails.basePrice);
         uint256 ownerProceeds = joinDetails.amountDue - protocolFee;
 
         _afterChargeForJoinSpace(
@@ -336,7 +336,7 @@ abstract contract MembershipJoin is
             receiver,
             joinDetails.amountDue,
             ownerProceeds,
-            joinDetails.joinDetails
+            joinDetails.basePrice
         );
     }
 
@@ -360,19 +360,19 @@ abstract contract MembershipJoin is
 
         uint256 ownerProceeds;
         {
-            uint256 protocolFee = _collectProtocolFee(sender, joinDetails.joinDetails);
+            uint256 protocolFee = _collectProtocolFee(sender, joinDetails.basePrice);
 
             uint256 partnerFee = _collectPartnerFee(
                 sender,
                 referral.partner,
-                joinDetails.joinDetails
+                joinDetails.basePrice
             );
 
             uint256 referralFee = _collectReferralCodeFee(
                 sender,
                 referral.userReferral,
                 referral.referralCode,
-                joinDetails.joinDetails
+                joinDetails.basePrice
             );
 
             ownerProceeds = joinDetails.amountDue - protocolFee - partnerFee - referralFee;
@@ -384,7 +384,7 @@ abstract contract MembershipJoin is
             receiver,
             joinDetails.amountDue,
             ownerProceeds,
-            joinDetails.joinDetails
+            joinDetails.basePrice
         );
     }
 
