@@ -279,10 +279,9 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	cmd := &subCommand{
 		Ctx: ctx,
 		ModifySyncReq: &client.ModifyRequest{
-			ToAdd: []*SyncCookie{req.Msg.GetSyncPos()},
-			AddingFailureHandler: func(st *SyncStreamOpStatus) {
-				status = st
-			},
+			ToAdd:                     []*SyncCookie{req.Msg.GetSyncPos()},
+			BackfillingFailureHandler: func(st *SyncStreamOpStatus) { status = st },
+			AddingFailureHandler:      func(st *SyncStreamOpStatus) { status = st },
 		},
 		reply: make(chan error, 1),
 	}
@@ -329,10 +328,8 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	cmd := &subCommand{
 		Ctx: ctx,
 		ModifySyncReq: &client.ModifyRequest{
-			ToRemove: [][]byte{req.Msg.GetStreamId()},
-			RemovingFailureHandler: func(st *SyncStreamOpStatus) {
-				status = st
-			},
+			ToRemove:               [][]byte{req.Msg.GetStreamId()},
+			RemovingFailureHandler: func(st *SyncStreamOpStatus) { status = st },
 		},
 		reply: make(chan error, 1),
 	}

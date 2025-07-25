@@ -144,8 +144,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 					return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
 				}) {
 					modifiedReq.AddingFailureHandler(status)
-				} else if originalBackfillingFailureHandler != nil {
+				} else {
 					originalBackfillingFailureHandler(status)
+					s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
 				}
 			}
 		}
