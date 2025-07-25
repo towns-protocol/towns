@@ -82,6 +82,11 @@
             "internalType": "address"
           },
           {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
             "name": "quantity",
             "type": "uint256",
             "internalType": "uint256"
@@ -139,6 +144,11 @@
           },
           {
             "name": "account",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "recipient",
             "type": "address",
             "internalType": "address"
           },
@@ -691,6 +701,11 @@
   {
     "type": "error",
     "name": "DropFacet__InvalidProof",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DropFacet__InvalidRecipient",
     "inputs": []
   },
   {
