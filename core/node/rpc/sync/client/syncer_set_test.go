@@ -25,12 +25,35 @@ func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*Syncer
 	messageDistributor := &mockMessageDistributor{}
 	nodeRegistry := &mocks.MockNodeRegistry{}
 
+	// Default unsubStream callback that does nothing
+	unsubStream := func(streamID StreamId) {}
+
 	syncerSet := NewSyncers(
 		ctx,
 		streamCache,
 		nodeRegistry,
 		localAddr,
 		messageDistributor,
+		unsubStream,
+		nil, // no otel tracer
+	)
+
+	return syncerSet, streamCache, messageDistributor, nodeRegistry
+}
+
+// createTestSyncerSetWithCallback creates a test syncer set with a custom unsubStream callback
+func createTestSyncerSetWithCallback(ctx context.Context, localAddr common.Address, unsubStream func(StreamId)) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+	streamCache := &mockStreamCache{}
+	messageDistributor := &mockMessageDistributor{}
+	nodeRegistry := &mocks.MockNodeRegistry{}
+
+	syncerSet := NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localAddr,
+		messageDistributor,
+		unsubStream,
 		nil, // no otel tracer
 	)
 
@@ -593,5 +616,82 @@ func TestStreamLocks_ConditionalLocking(t *testing.T) {
 
 	// Cleanup
 	syncerSet.streamID2Syncer.Delete(streamID2)
+	mockSyncer.AssertExpectations(t)
+}
+
+// TestOnStreamDown tests the onStreamDown method
+func TestOnStreamDown(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	unsubCalled := false
+	var unsubStreamID StreamId
+	unsubStream := func(streamID StreamId) {
+		unsubCalled = true
+		unsubStreamID = streamID
+	}
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSetWithCallback(ctx, localAddr, unsubStream)
+
+	streamID := StreamId{0x01, 0x02, 0x03}
+
+	// Create a mock syncer and add it to streamID2Syncer
+	mockSyncer := &mockStreamsSyncer{}
+	syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+
+	// Call onStreamDown
+	syncerSet.onStreamDown(streamID)
+
+	// Verify unsubStream was called with correct streamID
+	assert.True(t, unsubCalled, "unsubStream should have been called")
+	assert.Equal(t, streamID, unsubStreamID, "unsubStream should have been called with correct streamID")
+
+	// Verify stream was removed from streamID2Syncer
+	_, found := syncerSet.streamID2Syncer.Load(streamID)
+	assert.False(t, found, "Stream should have been removed from streamID2Syncer")
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+	mockSyncer.AssertExpectations(t)
+}
+
+// TestOnStreamDown_NilCallback tests onStreamDown when unsubStream is nil
+func TestOnStreamDown_NilCallback(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	// Create syncer set with nil unsubStream callback
+	streamCache := &mockStreamCache{}
+	messageDistributor := &mockMessageDistributor{}
+	nodeRegistry := &mocks.MockNodeRegistry{}
+
+	syncerSet := NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localAddr,
+		messageDistributor,
+		nil, // nil unsubStream callback
+		nil, // no otel tracer
+	)
+
+	streamID := StreamId{0x01, 0x02, 0x03}
+
+	// Create a mock syncer and add it to streamID2Syncer
+	mockSyncer := &mockStreamsSyncer{}
+	syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+
+	// Call onStreamDown - should not panic even with nil callback
+	syncerSet.onStreamDown(streamID)
+
+	// Verify stream was still removed from streamID2Syncer
+	_, found := syncerSet.streamID2Syncer.Load(streamID)
+	assert.False(t, found, "Stream should have been removed from streamID2Syncer")
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+	nodeRegistry.AssertExpectations(t)
 	mockSyncer.AssertExpectations(t)
 }
