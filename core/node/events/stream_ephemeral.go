@@ -5,8 +5,6 @@ import (
 	"slices"
 	"time"
 
-	"connectrpc.com/connect"
-
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -159,20 +157,14 @@ func (s *StreamCache) normalizeEphemeralStream(
 		remotes, _ := stream.GetRemotesAndIsLocal()
 		currentStickyPeer := stream.GetStickyPeer()
 		for range len(remotes) {
-			stub, err := s.params.NodeRegistry.GetNodeToNodeClientForAddress(currentStickyPeer)
-			if err != nil {
-				logging.FromCtx(ctx).
-					Errorw("Failed to get node to node client", "error", err, "streamId", stream.streamId)
-				currentStickyPeer = stream.AdvanceStickyPeer(currentStickyPeer)
-				continue
-			}
-
-			resp, err := stub.GetMiniblocksByIds(ctx, connect.NewRequest[GetMiniblocksByIdsRequest](
+			resp, err := s.params.RemoteMiniblockProvider.GetMiniblocksByIds(
+				ctx,
+				currentStickyPeer,
 				&GetMiniblocksByIdsRequest{
 					StreamId:     stream.streamId[:],
 					MiniblockIds: missingMbs,
 				},
-			))
+			)
 			if err != nil {
 				logging.FromCtx(ctx).
 					Errorw("Failed to get miniblocks from sticky peer", "error", err, "streamId", stream.streamId)

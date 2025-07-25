@@ -25,6 +25,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events/remoteprovider"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -741,8 +742,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		AppliedBlockNum:         s.riverChain.InitialBlockNum,
 		ChainMonitor:            s.riverChain.ChainMonitor,
 		Metrics:                 s.metrics,
-		RemoteMiniblockProvider: s,
-		NodeRegistry:            s.nodeRegistry,
+		RemoteMiniblockProvider: remoteprovider.NewRemoteProvider(s.nodeRegistry),
 		Tracer:                  s.otelTracer,
 	}
 

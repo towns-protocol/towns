@@ -13,16 +13,9 @@ import (
 	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	. "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils"
-)
-
-const (
-	RiverNoForwardHeader     = "X-River-No-Forward" // Must be set to "true" to disable forwarding
-	RiverHeaderTrueValue     = "true"
-	RiverFromNodeHeader      = "X-River-From-Node"
-	RiverToNodeHeader        = "X-River-To-Node"
-	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 )
 
 func checkNoForward[T any](req *connect.Request[T], baseErr error) error {
