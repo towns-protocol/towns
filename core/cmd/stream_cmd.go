@@ -22,7 +22,6 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/http_client"
-	"github.com/towns-protocol/towns/core/node/rpc"
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
 
 	"connectrpc.com/connect"
@@ -1242,8 +1241,8 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 					}
 
 					request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: stream.Id[:]})
-					request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-					request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+					request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+					request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
 					var ns *nodeStatus
 					if resp, err := streamServiceClient.GetLastMiniblockHash(ctx, request); err == nil {
