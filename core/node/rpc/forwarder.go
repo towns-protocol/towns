@@ -307,7 +307,7 @@ func (s *Service) getMiniblocksImpl(
 	if req.Msg.FromInclusive < 0 || req.Msg.ToExclusive <= req.Msg.FromInclusive {
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"Index can't be negative, and there should be at least one miniblock in the requestedrange",
+			"Index can't be negative, and there should be at least one miniblock in the requested range",
 			"fromInclusive",
 			req.Msg.FromInclusive,
 			"toExclusive",
