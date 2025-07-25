@@ -37,7 +37,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func newRemoteSyncer(
+func NewRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,

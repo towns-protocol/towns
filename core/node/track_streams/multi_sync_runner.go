@@ -27,6 +27,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -80,6 +81,7 @@ type syncSessionRunner struct {
 	nodeRegistry             nodes.NodeRegistry
 	metrics                  *TrackStreamsSyncMetrics
 	maxStreamsPerSyncSession int
+	useSharedSyncer          bool
 	otelTracer               trace.Tracer
 
 	trackedViewForStream TrackedViewForStream
@@ -335,24 +337,40 @@ func (ssr *syncSessionRunner) Run() {
 		ssr.syncStarted.Done()
 		return
 	}
-	syncer, err := client.NewRemoteSyncer(
-		ssr.syncCtx,
-		ssr.node,
-		streamClient,
-		ssr.relocateStream,
-		ssr,
-		ssr.otelTracer,
-	)
+
+	var syncer RemoteStreamSyncer
+	if ssr.useSharedSyncer {
+		syncer, err = client.NewRemoteSyncer(
+			ssr.syncCtx,
+			ssr.node,
+			streamClient,
+			ssr.relocateStream,
+			ssr,
+			ssr.otelTracer,
+		)
+	} else {
+		syncer, err = legacyclient.NewRemoteSyncer(
+			ssr.syncCtx,
+			ssr.cancelSync,
+			"SyncSessionRunner",
+			ssr.node,
+			streamClient,
+			ssr.relocateStream,
+			ssr.messages,
+			ssr.otelTracer,
+		)
+	}
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node, closing sync session runner").
 			Tag("targetNode", ssr.node).
+			Tag("sharedSyncer", ssr.useSharedSyncer).
 			LogWarn(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
 	}
-	ssr.syncer = syncer
 
+	ssr.syncer = syncer
 	go ssr.syncer.Run()
 
 	// Track active syncs spawned by the multi sync runner.
@@ -502,6 +520,7 @@ func newSyncSessionRunner(
 	nodeRegistry nodes.NodeRegistry,
 	trackedViewForStream TrackedViewForStream,
 	maxStreamsPerSyncSession int,
+	useSharedSyncer bool,
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
@@ -512,6 +531,7 @@ func newSyncSessionRunner(
 		syncCtx:                  logging.CtxWithLog(ctx, logging.FromCtx(rootCtx).With("targetNode", targetNode)),
 		cancelSync:               cancel,
 		maxStreamsPerSyncSession: maxStreamsPerSyncSession,
+		useSharedSyncer:          useSharedSyncer,
 		trackedViewForStream:     trackedViewForStream,
 		relocateStreams:          relocateStreams,
 		node:                     targetNode,
@@ -537,7 +557,7 @@ type TrackedViewConstructorFn func(
 // is responsible for firing any callbacks needed by a service that is tracking the contents of remotely hosted streams.
 type MultiSyncRunner struct {
 	// Keep track of all streams that need to be added (or re-added) to a sync session
-	streamsToSync chan (*streamSyncInitRecord)
+	streamsToSync chan *streamSyncInitRecord
 
 	metrics *TrackStreamsSyncMetrics
 
@@ -659,6 +679,7 @@ func (msr *MultiSyncRunner) addToSync(
 				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 			},
 			msr.config.StreamsPerSyncSession,
+			msr.config.UseSharedSyncer,
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
@@ -736,6 +757,7 @@ func (msr *MultiSyncRunner) addToSync(
 				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 			},
 			msr.config.StreamsPerSyncSession,
+			msr.config.UseSharedSyncer,
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
