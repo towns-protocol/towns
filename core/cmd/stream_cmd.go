@@ -23,6 +23,7 @@ import (
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/rpc"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -60,8 +61,8 @@ func getStreamFromNode(
 		StreamId: streamID[:],
 		Optional: false,
 	})
-	request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-	request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+	request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+	request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
 	response, err := remoteClient.GetStream(ctx, request)
 	if err != nil {
@@ -79,7 +80,7 @@ func getStreamFromNode(
 		}
 
 		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
- 		if info.Snapshot != nil {
+		if info.Snapshot != nil {
 			fmt.Print(" SNAPSHOT")
 		}
 		fmt.Println()
@@ -918,8 +919,8 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 		request := connect.NewRequest(
 			&protocol.GetMiniblocksRequest{StreamId: streamId[:], FromInclusive: num, ToExclusive: num + 1},
 		)
-		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+		request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
 		response, err := streamServiceClient.GetMiniblocks(ctx, request)
 		if err != nil {
@@ -1004,8 +1005,8 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 			ToExclusive:   toExclusive,
 			OmitSnapshots: true,
 		})
-		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+		request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
 		response, err := streamServiceClient.GetMiniblocks(ctx, request)
 		if err != nil {
@@ -1042,8 +1043,8 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 			node := allNodes[index]
 			streamServiceClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, node.Url)
 			request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: streamId[:]})
-			request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-			request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+			request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+			request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
 			response, err := streamServiceClient.GetLastMiniblockHash(ctx, request)
 			if err != nil {
