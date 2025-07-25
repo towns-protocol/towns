@@ -144,7 +144,7 @@ func (s *remoteSyncer) Run() {
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
 				s.unsubStream(streamID)
-				if err := s.sendResponse(streamID, res); err != nil {
+				if err = s.sendResponse(streamID, res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 					}
@@ -162,20 +162,18 @@ func (s *remoteSyncer) Run() {
 		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
 			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
-			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
+			s.unsubStream(streamID)
 
-			// TODO: slow down a bit to give client time to read stream down updates
+			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 			if err := s.sendResponse(streamID, msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
 
-			// unsubStream is called to remove the stream from the local cache of the syncer set so
-			// the given stream could be re-added.
-			s.unsubStream(streamID)
-
 			return true
 		})
+
+		s.streams.Clear()
 	}
 }
 

@@ -65,6 +65,8 @@ type (
 		localNodeAddress common.Address
 		// messageDistributor is used to distribute messages to subscriptions
 		messageDistributor MessageDistributor
+		// unsubStream is called when a stream is no longer syncing due to the node outage or something else.
+		unsubStream func(streamID StreamId)
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
@@ -98,6 +100,7 @@ func NewSyncers(
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
 	messageDistributor MessageDistributor,
+	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
 ) *SyncerSet {
 	return &SyncerSet{
@@ -106,6 +109,7 @@ func NewSyncers(
 		nodeRegistry:       nodeRegistry,
 		localNodeAddress:   localNodeAddress,
 		messageDistributor: messageDistributor,
+		unsubStream:        unsubStream,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
 		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
@@ -775,7 +779,7 @@ func (ss *SyncerSet) getOrCreateSyncer(ctx context.Context, nodeAddress common.A
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messageDistributor,
-			ss.streamID2Syncer.Delete,
+			ss.onStreamDown,
 			ss.otelTracer,
 		)
 	} else {
@@ -788,7 +792,7 @@ func (ss *SyncerSet) getOrCreateSyncer(ctx context.Context, nodeAddress common.A
 			ss.globalCtx,
 			nodeAddress,
 			client,
-			ss.streamID2Syncer.Delete,
+			ss.onStreamDown,
 			ss.messageDistributor,
 			ss.otelTracer,
 		)
@@ -810,6 +814,17 @@ func (ss *SyncerSet) getOrCreateSyncer(ctx context.Context, nodeAddress common.A
 	}()
 
 	return syncer, nil
+}
+
+// onStreamDown is called when a stream is no longer syncing, e.g., due to node outage or other reasons.
+func (ss *SyncerSet) onStreamDown(streamID StreamId) {
+	if ss.unsubStream != nil {
+		ss.unsubStream(streamID)
+	}
+
+	// Remove the stream from the syncer set.
+	// !!! MIGHT BE A POTENTIAL RACE CONDITION IF THE GIVEN STREAM IS BEING MODIFIED, LOOK MORE INTO IT LATER !!!
+	ss.streamID2Syncer.Delete(streamID)
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.
