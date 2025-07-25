@@ -7,6 +7,7 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/rpcinterface"
 )
 
 // RemoteProvider abstracts communications required for miniblock production and stream reconciliation
@@ -45,7 +46,7 @@ type RemoteProvider interface {
 		ctx context.Context,
 		node common.Address,
 		req *GetMiniblocksByIdsRequest,
-	) (RpcStream[GetMiniblockResponse], error)
+	) (rpcinterface.ServerStreamForClient[GetMiniblockResponse], error)
 
 	// GetLastMiniblockHash returns the last miniblock hash and number for the given stream.
 	GetLastMiniblockHash(
@@ -53,11 +54,4 @@ type RemoteProvider interface {
 		node common.Address,
 		streamId StreamId,
 	) (*MiniblockRef, error)
-}
-
-type RpcStream[T any] interface {
-	Close() error
-	Err() error
-	Msg() *T
-	Receive() bool
 }

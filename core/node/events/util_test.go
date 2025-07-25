@@ -23,6 +23,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testrpcstream"
+	"github.com/towns-protocol/towns/core/node/utils/rpcinterface"
 )
 
 type cacheTestContext struct {
@@ -391,7 +392,7 @@ func (ctc *cacheTestContext) GetMiniblocksByIds(
 	ctx context.Context,
 	node common.Address,
 	req *GetMiniblocksByIdsRequest,
-) (RpcStream[GetMiniblockResponse], error) {
+) (rpcinterface.ServerStreamForClient[GetMiniblockResponse], error) {
 	inst, ok := ctc.instancesByAddr[node]
 	if !ok {
 		return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMiniblocksByIds node not found", "node", node)
