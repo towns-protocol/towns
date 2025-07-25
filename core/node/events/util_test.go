@@ -368,23 +368,21 @@ func (ctc *cacheTestContext) GetMbs(
 	fromInclusive int64,
 	toExclusive int64,
 ) ([]*MiniblockInfo, error) {
-	// TODO: FIX: this is not correct - exact node is specified in the call
-	for _, instance := range ctc.instances {
-		if node == instance.params.Wallet.Address {
-			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)
-			if err != nil {
-				return nil, err
-			}
-
-			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
-			if err != nil {
-				return nil, err
-			}
-			return mbs, nil
-		}
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMbs node not found", "node", node)
 	}
 
-	return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMbs node not found")
+	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
+	if err != nil {
+		return nil, err
+	}
+
+	mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
+	if err != nil {
+		return nil, err
+	}
+	return mbs, nil
 }
 
 // GetMiniblocksByIds returns miniblocks by their ids.
