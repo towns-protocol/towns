@@ -22,6 +22,8 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/testrpcstream"
+	"github.com/towns-protocol/towns/core/node/utils/rpcinterface"
 )
 
 type cacheTestContext struct {
@@ -36,7 +38,7 @@ type cacheTestContext struct {
 	instancesByAddr map[common.Address]*cacheTestInstance
 }
 
-var _ RemoteMiniblockProvider = (*cacheTestContext)(nil)
+var _ RemoteProvider = (*cacheTestContext)(nil)
 
 type cacheTestInstance struct {
 	params         *StreamCacheParams
@@ -155,7 +157,6 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			Metrics:                 infra.NewMetricsFactory(nil, "", ""),
 			RemoteMiniblockProvider: ctc,
 			Scrubber:                &noopScrubber{},
-			NodeRegistry:            nr,
 			disableCallbacks:        p.disableStreamCacheCallbacks,
 		}
 
@@ -319,7 +320,10 @@ func (ctc *cacheTestContext) GetMbProposal(
 	node common.Address,
 	request *ProposeMiniblockRequest,
 ) (*ProposeMiniblockResponse, error) {
-	inst := ctc.instancesByAddr[node]
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMbProposal node not found", "node", node)
+	}
 
 	stream, err := inst.cache.getStreamImpl(ctx, StreamId(request.StreamId), true)
 	if err != nil {
@@ -344,7 +348,10 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 	streamId StreamId,
 	candidate *MiniblockInfo,
 ) error {
-	inst := ctc.instancesByAddr[node]
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return RiverError(Err_INTERNAL, "TEST: cacheTestContext::SaveMbCandidate node not found", "node", node)
+	}
 
 	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
 	if err != nil {
@@ -361,22 +368,101 @@ func (ctc *cacheTestContext) GetMbs(
 	fromInclusive int64,
 	toExclusive int64,
 ) ([]*MiniblockInfo, error) {
-	for _, instance := range ctc.instances {
-		if node == instance.params.Wallet.Address {
-			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)
-			if err != nil {
-				return nil, err
-			}
-
-			mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
-			if err != nil {
-				return nil, err
-			}
-			return mbs, nil
-		}
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMbs node not found", "node", node)
 	}
 
-	return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMbs node not found")
+	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
+	if err != nil {
+		return nil, err
+	}
+
+	mbs, _, err := stream.GetMiniblocks(ctx, fromInclusive, toExclusive, false)
+	if err != nil {
+		return nil, err
+	}
+	return mbs, nil
+}
+
+// GetMiniblocksByIds returns miniblocks by their ids.
+func (ctc *cacheTestContext) GetMiniblocksByIds(
+	ctx context.Context,
+	node common.Address,
+	req *GetMiniblocksByIdsRequest,
+) (rpcinterface.ServerStreamForClient[GetMiniblockResponse], error) {
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetMiniblocksByIds node not found", "node", node)
+	}
+
+	streamId, err := StreamIdFromBytes(req.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []*GetMiniblockResponse{}
+	err = inst.params.Storage.ReadMiniblocksByIds(
+		ctx,
+		streamId,
+		req.MiniblockIds,
+		req.OmitSnapshots,
+		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
+			var mb Miniblock
+			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			}
+
+			var snapshot *Envelope
+			if len(snBytes) > 0 && !req.OmitSnapshots {
+				snapshot = &Envelope{}
+				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
+				}
+			}
+
+			data = append(data, &GetMiniblockResponse{
+				Num:       seqNum,
+				Miniblock: &mb,
+				Snapshot:  snapshot,
+			})
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return testrpcstream.NewTestRpcStream(data), nil
+}
+
+// GetLastMiniblockHash returns the last miniblock hash and number for the given stream.
+func (ctc *cacheTestContext) GetLastMiniblockHash(
+	ctx context.Context,
+	node common.Address,
+	streamId StreamId,
+) (*MiniblockRef, error) {
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return nil, RiverError(
+			Err_INTERNAL,
+			"TEST: cacheTestContext::GetLastMiniblockHash node not found",
+			"node",
+			node,
+		)
+	}
+
+	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
+	if err != nil {
+		return nil, err
+	}
+
+	view, err := stream.GetView(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return view.LastBlock().Ref, nil
 }
 
 func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.BlockchainTestContext, p testParams) {

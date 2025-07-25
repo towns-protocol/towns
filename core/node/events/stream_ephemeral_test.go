@@ -2,23 +2,16 @@ package events
 
 import (
 	"fmt"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/proto"
 
-	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
-	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 )
 
 func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
@@ -143,59 +136,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			mbRef.Hash = common.BytesToHash(header.Hash)
 		}
 
-		mockNode2NodeHandler := mocks.NewMockNodeToNodeHandler(t)
-		mockNode2NodeHandler.On("GetMiniblocksByIds", mock.Anything, mock.Anything, mock.Anything).
-			Run(func(args mock.Arguments) {
-				req, ok := args.Get(1).(*connect.Request[GetMiniblocksByIdsRequest])
-				tc.require.True(ok)
-				resp, ok := args.Get(2).(*connect.ServerStream[GetMiniblockResponse])
-				tc.require.True(ok)
-
-				streamId, err := StreamIdFromBytes(req.Msg.GetStreamId())
-				tc.require.NoError(err)
-
-				err = leaderInstance.params.Storage.ReadMiniblocksByIds(
-					ctx,
-					streamId,
-					req.Msg.GetMiniblockIds(),
-					req.Msg.GetOmitSnapshots(),
-					func(mbBytes []byte, seqNum int64, snBytes []byte) error {
-						var mb Miniblock
-						if err = proto.Unmarshal(mbBytes, &mb); err != nil {
-							return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
-						}
-
-						var snapshot *Envelope
-						if len(snBytes) > 0 && !req.Msg.GetOmitSnapshots() {
-							snapshot = &Envelope{}
-							if err = proto.Unmarshal(snBytes, snapshot); err != nil {
-								return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
-							}
-						}
-
-						return resp.Send(&GetMiniblockResponse{
-							Num:       seqNum,
-							Miniblock: &mb,
-							Snapshot:  snapshot,
-						})
-					},
-				)
-				tc.require.NoError(err)
-			}).Return(nil)
-
-		_, handler := protocolconnect.NewNodeToNodeHandler(mockNode2NodeHandler)
-
-		httpSrv := httptest.NewServer(handler)
-		defer httpSrv.Close()
-		httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
-		nodeToNode := protocolconnect.NewNodeToNodeClient(httpClient, httpSrv.URL, connect.WithGRPCWeb())
-
-		nodeRegistry := mocks.NewMockNodeRegistry(t)
-		nodeRegistry.On("GetNodeToNodeClientForAddress", mock.IsType(common.Address{})).
-			Return(nodeToNode, nil)
-
 		replica := tc.instances[1]
-		replica.params.NodeRegistry = nodeRegistry
 
 		si := &Stream{
 			params:              replica.params,
