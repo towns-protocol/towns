@@ -93,7 +93,6 @@ export class SyncAgent {
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,
                 logId: config.logId,
                 streamOpts: {
-                    useModifySync: true,
                     useSharedSyncer: true,
                 },
             },

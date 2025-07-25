@@ -30,7 +30,6 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
             logNamespaceFilter: undefined,
             highPriorityStreamIds: undefined,
             streamOpts: {
-                useModifySync: true,
                 useSharedSyncer: true,
             },
         },
