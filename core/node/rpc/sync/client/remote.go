@@ -149,6 +149,7 @@ func (s *remoteSyncer) Run() {
 					}
 					return
 				}
+				// This must happen only after sending the message to the client.
 				s.unsubStream(streamID)
 				s.streams.Delete(streamID)
 			}
@@ -166,6 +167,7 @@ func (s *remoteSyncer) Run() {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
+			// This must happen only after sending the message to the client.
 			s.unsubStream(streamID)
 			return true
 		})
