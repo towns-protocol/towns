@@ -68,14 +68,62 @@ abstract contract MembershipJoin is
         return abi.encode(selector, sender, receiver, referralData);
     }
 
+    /// @notice Calculates all pricing details for joining a space
+    /// @return joinDetails Struct containing all pricing information
+    function _getJoinDetails() internal view returns (JoinDetails memory joinDetails) {
+        uint256 totalSupply = _totalSupply();
+        uint256 membershipPrice = _getMembershipPrice(totalSupply);
+        uint256 freeAllocation = _getMembershipFreeAllocation();
+        uint256 prepaidSupply = _getPrepaidSupply();
+
+        // Check if this is a free join due to allocation
+        if (freeAllocation > totalSupply) {
+            return
+                JoinDetails({
+                    joinDetails: membershipPrice,
+                    amountDue: 0,
+                    shouldCharge: false,
+                    isPrepaid: false
+                });
+        }
+
+        // Check if this is a free join due to prepaid supply
+        if (prepaidSupply > 0) {
+            return
+                JoinDetails({
+                    joinDetails: membershipPrice,
+                    amountDue: 0,
+                    shouldCharge: false,
+                    isPrepaid: true
+                });
+        }
+
+        // Regular paid join
+        return
+            JoinDetails({
+                joinDetails: membershipPrice,
+                amountDue: membershipPrice,
+                shouldCharge: true,
+                isPrepaid: false
+            });
+    }
+
     /// @notice Handles the process of joining a space
     /// @param receiver The address that will receive the membership token
     function _joinSpace(address receiver) internal {
         _validateJoinSpace(receiver);
 
-        bool shouldCharge = _shouldChargeForJoinSpace();
-        uint256 requiredAmount;
-        if (shouldCharge) requiredAmount = _validatePayment();
+        JoinDetails memory joinDetails = _getJoinDetails();
+
+        // Validate payment if required
+        if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
+            Membership__InsufficientPayment.selector.revertWith();
+        }
+
+        // Consume prepaid membership if applicable
+        if (joinDetails.isPrepaid) {
+            _reducePrepay(1);
+        }
 
         bytes32 transactionId = _registerTransaction(
             receiver,
@@ -86,12 +134,12 @@ abstract contract MembershipJoin is
             receiver,
             msg.sender,
             transactionId,
-            requiredAmount
+            joinDetails.amountDue
         );
 
         if (!isCrosschainPending) {
             if (isEntitled) {
-                if (shouldCharge) _chargeForJoinSpace(transactionId);
+                if (joinDetails.shouldCharge) _chargeForJoinSpace(transactionId, joinDetails);
                 _refundBalance(transactionId, receiver);
                 _issueToken(receiver);
             } else {
@@ -106,9 +154,17 @@ abstract contract MembershipJoin is
     function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
         _validateJoinSpace(receiver);
 
-        bool shouldCharge = _shouldChargeForJoinSpace();
-        uint256 requiredAmount;
-        if (shouldCharge) requiredAmount = _validatePayment();
+        JoinDetails memory joinDetails = _getJoinDetails();
+
+        // Validate payment if required
+        if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
+            Membership__InsufficientPayment.selector.revertWith();
+        }
+
+        // Consume prepaid membership if applicable
+        if (joinDetails.isPrepaid) {
+            _reducePrepay(1);
+        }
 
         _validateUserReferral(receiver, referral);
 
@@ -125,12 +181,13 @@ abstract contract MembershipJoin is
             receiver,
             msg.sender,
             transactionId,
-            requiredAmount
+            joinDetails.amountDue
         );
 
         if (!isCrosschainPending) {
             if (isEntitled) {
-                if (shouldCharge) _chargeForJoinSpaceWithReferral(transactionId);
+                if (joinDetails.shouldCharge)
+                    _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
 
                 _refundBalance(transactionId, receiver);
                 _issueToken(receiver);
@@ -144,21 +201,6 @@ abstract contract MembershipJoin is
         _deleteCapturedData(transactionId);
         _refundBalance(transactionId, receiver);
         emit MembershipTokenRejected(receiver);
-    }
-
-    function _getRequiredAmount(uint256 price) internal view returns (uint256) {
-        // Check if there are any prepaid memberships available
-        uint256 prepaidSupply = _getPrepaidSupply();
-        if (prepaidSupply > 0) return 0; // If prepaid memberships exist, no payment is required
-
-        return price;
-    }
-
-    function _validatePayment() internal view returns (uint256 requiredAmount) {
-        // Get the current membership price based on total supply
-        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-        requiredAmount = _getRequiredAmount(membershipPrice);
-        if (msg.value < requiredAmount) Membership__InsufficientPayment.selector.revertWith();
     }
 
     function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
@@ -272,29 +314,10 @@ abstract contract MembershipJoin is
         return (false, isCrosschainPending);
     }
 
-    /// @notice Determines if a charge should be applied for joining the space
-    /// @return shouldCharge A boolean indicating whether a charge should be applied
-    function _shouldChargeForJoinSpace() internal returns (bool shouldCharge) {
-        uint256 totalSupply = _totalSupply();
-        uint256 freeAllocation = _getMembershipFreeAllocation();
-        uint256 prepaidSupply = _getPrepaidSupply();
-
-        if (freeAllocation > totalSupply) return false;
-
-        if (prepaidSupply > 0) {
-            _reducePrepay(1);
-            return false;
-        }
-
-        return true;
-    }
-
     /// @notice Processes the charge for joining a space without referral
     /// @param transactionId The unique identifier for this join transaction
-    function _chargeForJoinSpace(bytes32 transactionId) internal {
-        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-        uint256 paymentRequired = _getRequiredAmount(membershipPrice);
-
+    /// @param joinDetails The pricing details for this join
+    function _chargeForJoinSpace(bytes32 transactionId, JoinDetails memory joinDetails) internal {
         (bytes4 selector, address sender, address receiver, ) = abi.decode(
             _getCapturedData(transactionId),
             (bytes4, address, address, bytes)
@@ -304,25 +327,26 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
-        uint256 ownerProceeds = paymentRequired - protocolFee;
+        uint256 protocolFee = _collectProtocolFee(sender, joinDetails.joinDetails);
+        uint256 ownerProceeds = joinDetails.amountDue - protocolFee;
 
         _afterChargeForJoinSpace(
             transactionId,
             sender,
             receiver,
-            paymentRequired,
+            joinDetails.amountDue,
             ownerProceeds,
-            membershipPrice
+            joinDetails.joinDetails
         );
     }
 
     /// @notice Processes the charge for joining a space with referral
     /// @param transactionId The unique identifier for this join transaction
-    function _chargeForJoinSpaceWithReferral(bytes32 transactionId) internal {
-        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-        uint256 paymentRequired = _getRequiredAmount(membershipPrice);
-
+    /// @param joinDetails The pricing details for this join
+    function _chargeForJoinSpaceWithReferral(
+        bytes32 transactionId,
+        JoinDetails memory joinDetails
+    ) internal {
         (bytes4 selector, address sender, address receiver, bytes memory referralData) = abi.decode(
             _getCapturedData(transactionId),
             (bytes4, address, address, bytes)
@@ -336,27 +360,31 @@ abstract contract MembershipJoin is
 
         uint256 ownerProceeds;
         {
-            uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
+            uint256 protocolFee = _collectProtocolFee(sender, joinDetails.joinDetails);
 
-            uint256 partnerFee = _collectPartnerFee(sender, referral.partner, membershipPrice);
+            uint256 partnerFee = _collectPartnerFee(
+                sender,
+                referral.partner,
+                joinDetails.joinDetails
+            );
 
             uint256 referralFee = _collectReferralCodeFee(
                 sender,
                 referral.userReferral,
                 referral.referralCode,
-                membershipPrice
+                joinDetails.joinDetails
             );
 
-            ownerProceeds = paymentRequired - protocolFee - partnerFee - referralFee;
+            ownerProceeds = joinDetails.amountDue - protocolFee - partnerFee - referralFee;
         }
 
         _afterChargeForJoinSpace(
             transactionId,
             sender,
             receiver,
-            paymentRequired,
+            joinDetails.amountDue,
             ownerProceeds,
-            membershipPrice
+            joinDetails.joinDetails
         );
     }
 
