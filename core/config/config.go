@@ -437,6 +437,9 @@ type StreamTrackingConfig struct {
 	// NumWorkers configures the number of workers placing streams in syncs on the sync runner. If
 	// unset, this will default to 20.
 	NumWorkers int
+
+	// UseSharedSyncer indicates whether the notification service should use the shared syncer.
+	UseSharedSyncer bool
 }
 
 type NotificationsConfig struct {
