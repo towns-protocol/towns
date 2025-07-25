@@ -16,7 +16,7 @@ type Registry interface {
 	GetSubscriptionByID(syncID string) (*Subscription, bool)
 	AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool)
 	RemoveStreamFromSubscription(syncID string, streamID StreamId)
-	OnStreamDown(streamID StreamId)
+	DeleteStreamSubscriptions(streamID StreamId)
 	CleanupUnusedStreams(cb func(streamID StreamId))
 	GetStats() (streamCount, subscriptionCount int)
 	CancelAll(err error)
@@ -137,8 +137,8 @@ func (r *registry) RemoveStreamFromSubscription(syncID string, streamID StreamId
 	)
 }
 
-// OnStreamDown is called when a stream goes down
-func (r *registry) OnStreamDown(streamID StreamId) {
+// DeleteStreamSubscriptions is called to delete all subscriptions for a given stream ID.
+func (r *registry) DeleteStreamSubscriptions(streamID StreamId) {
 	r.subscriptionsByStream.Delete(streamID)
 }
 
