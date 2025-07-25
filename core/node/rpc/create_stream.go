@@ -272,7 +272,12 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId, common.BytesToHash(mb.Header.Hash), mbBytes)
+	nodesList, err := s.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.registryContract.AllocateStream(ctx, streamId, nodesList, common.BytesToHash(mb.Header.Hash), mbBytes)
 	if err != nil {
 		return nil, err
 	}

@@ -41,9 +41,9 @@ type cacheTestContext struct {
 var _ RemoteProvider = (*cacheTestContext)(nil)
 
 type cacheTestInstance struct {
-	params         *StreamCacheParams
-	streamRegistry StreamRegistry
-	cache          *StreamCache
+	params       *StreamCacheParams
+	nodeRegistry NodeRegistry
+	cache        *StreamCache
 }
 
 type testParams struct {
@@ -161,8 +161,8 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		}
 
 		inst := &cacheTestInstance{
-			params:         params,
-			streamRegistry: NewStreamRegistry(bc, nr, registry, btc.OnChainConfig),
+			params:       params,
+			nodeRegistry: nr,
 		}
 		ctc.instances = append(ctc.instances, inst)
 		ctc.instancesByAddr[bc.Wallet.Address] = inst
@@ -191,9 +191,16 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *Mi
 	storageMb, err := mb.AsStorageMb()
 	ctc.require.NoError(err)
 
-	nodes, err := ctc.instances[0].streamRegistry.AllocateStream(
+	nodes, err := ctc.instances[0].nodeRegistry.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
+		ctc.testParams.replFactor,
+	)
+	ctc.require.NoError(err)
+	err = ctc.instances[0].params.Registry.AllocateStream(
+		ctc.ctx,
+		streamId,
+		nodes,
 		common.BytesToHash(mb.Proto.Header.Hash),
 		storageMb.Data,
 	)
@@ -254,9 +261,16 @@ func (ctc *cacheTestContext) createStreamNoCache(
 	mbBytes, err := proto.Marshal(genesisMiniblock)
 	ctc.require.NoError(err)
 
-	_, err = ctc.instances[0].streamRegistry.AllocateStream(
+	nodes, err := ctc.instances[0].nodeRegistry.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
+		ctc.testParams.replFactor,
+	)
+	ctc.require.NoError(err)
+	err = ctc.instances[0].params.Registry.AllocateStream(
+		ctc.ctx,
+		streamId,
+		nodes,
 		common.BytesToHash(genesisMiniblock.Header.Hash),
 		mbBytes,
 	)
