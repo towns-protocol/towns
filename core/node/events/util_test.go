@@ -191,13 +191,14 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *Mi
 	storageMb, err := mb.AsStorageMb()
 	ctc.require.NoError(err)
 
-	nodes, err := ctc.instances[0].nodeRegistry.ChooseStreamNodes(
+	inst := ctc.instances[0]
+	nodes, err := inst.nodeRegistry.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
-		ctc.testParams.replFactor,
+		int(inst.params.ChainConfig.Get().ReplicationFactor),
 	)
 	ctc.require.NoError(err)
-	err = ctc.instances[0].params.Registry.AllocateStream(
+	err = inst.params.Registry.AllocateStream(
 		ctc.ctx,
 		streamId,
 		nodes,
@@ -261,13 +262,14 @@ func (ctc *cacheTestContext) createStreamNoCache(
 	mbBytes, err := proto.Marshal(genesisMiniblock)
 	ctc.require.NoError(err)
 
-	nodes, err := ctc.instances[0].nodeRegistry.ChooseStreamNodes(
+	inst := ctc.instances[0]
+	nodes, err := inst.nodeRegistry.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
-		ctc.testParams.replFactor,
+		int(inst.params.ChainConfig.Get().ReplicationFactor),
 	)
 	ctc.require.NoError(err)
-	err = ctc.instances[0].params.Registry.AllocateStream(
+	err = inst.params.Registry.AllocateStream(
 		ctc.ctx,
 		streamId,
 		nodes,
