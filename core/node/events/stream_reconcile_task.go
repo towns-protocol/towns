@@ -5,7 +5,6 @@ import (
 	"context"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
@@ -262,17 +261,11 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		// because nodes only register periodically new miniblocks to reduce transaction costs
 		// for non-replicated streams. In that case fetch the latest block number from the remote.
 		if nonReplicatedStream {
-			client, err := s.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
+			mbRef, err := s.params.RemoteMiniblockProvider.GetLastMiniblockHash(ctx, remote, stream.streamId)
 			if err != nil {
 				continue
 			}
-			resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
-				StreamId: stream.streamId[:],
-			}))
-			if err != nil {
-				continue
-			}
-			toExclusive = max(toExclusive, resp.Msg.MiniblockNum+1)
+			toExclusive = max(toExclusive, mbRef.Num+1)
 		}
 
 		nextFromInclusive, err = s.reconcileStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)

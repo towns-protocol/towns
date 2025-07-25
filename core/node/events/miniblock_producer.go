@@ -25,37 +25,6 @@ const (
 	MiniblockLeaderBlockInterval = 10
 )
 
-// RemoteMiniblockProvider abstracts communications required for coordinated miniblock production.
-type RemoteMiniblockProvider interface {
-	// GetMbProposal requests miniblock proposal from the given node for the given stream.
-	// The node must participate in the stream.
-	GetMbProposal(
-		ctx context.Context,
-		node common.Address,
-		request *ProposeMiniblockRequest,
-	) (*ProposeMiniblockResponse, error)
-
-	// SaveMbCandidate sends the given mb to the given node and node must save it.
-	SaveMbCandidate(
-		ctx context.Context,
-		node common.Address,
-		streamId StreamId,
-		candidate *MiniblockInfo,
-	) error
-
-	// GetMbs returns a range of miniblocks from the given stream from the given node.
-	//
-	// Note: it is possible that the returned miniblocks range is limited when the requested miniblock
-	// range is too large. Range it limited to chain config setting `stream.getMiniblocksMaxPageSize`.
-	GetMbs(
-		ctx context.Context,
-		node common.Address,
-		streamId StreamId,
-		fromInclusive int64,
-		toExclusive int64,
-	) ([]*MiniblockInfo, error)
-}
-
 type TestMiniblockProducer interface {
 	// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
 	// It is intended to be called manually from the test code.
@@ -385,7 +354,8 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	for _, job := range proposals {
-		if job.replicated || len(job.reconcileNodes) > 0 || job.candidate.Ref.Num%freq == 0 || job.candidate.Ref.Num == 1 {
+		if job.replicated || len(job.reconcileNodes) > 0 || job.candidate.Ref.Num%freq == 0 ||
+			job.candidate.Ref.Num == 1 {
 			filteredProposals = append(filteredProposals, job)
 		} else {
 			success = append(success, job.stream.streamId)

@@ -11,7 +11,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-var _ RemoteMiniblockProvider = (*Service)(nil)
+var _ RemoteProvider = (*Service)(nil)
 
 func (s *Service) GetMbProposal(
 	ctx context.Context,

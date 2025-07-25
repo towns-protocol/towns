@@ -20,7 +20,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -44,9 +43,8 @@ type StreamCacheParams struct {
 	AppliedBlockNum         crypto.BlockNumber
 	ChainMonitor            crypto.ChainMonitor // TODO: delete and use RiverChain.ChainMonitor
 	Metrics                 infra.MetricsFactory
-	RemoteMiniblockProvider RemoteMiniblockProvider
+	RemoteMiniblockProvider RemoteProvider
 	Scrubber                Scrubber
-	NodeRegistry            NodeRegistry
 	Tracer                  trace.Tracer
 	disableCallbacks        bool // for test purposes
 	streamCache             *StreamCache
