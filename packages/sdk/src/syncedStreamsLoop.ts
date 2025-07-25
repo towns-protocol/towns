@@ -827,7 +827,7 @@ export class SyncedStreamsLoop {
         }
         const syncId = this.syncId
         const retryCount = retryParams?.retryCount ?? 0
-        void this.rpcClient
+        this.rpcClient
             .modifySync({
                 syncId: this.syncId,
                 addStreams: [cookie],
