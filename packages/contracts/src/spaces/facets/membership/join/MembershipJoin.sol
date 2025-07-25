@@ -121,9 +121,7 @@ abstract contract MembershipJoin is
         }
 
         // Consume prepaid membership if applicable
-        if (joinDetails.isPrepaid) {
-            _reducePrepay(1);
-        }
+        if (joinDetails.isPrepaid) _reducePrepay(1);
 
         bytes32 transactionId = _registerTransaction(
             receiver,
