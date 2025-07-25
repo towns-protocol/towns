@@ -101,12 +101,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 
 	// Prepare a request to be sent to the syncer set if needed
 	modifiedReq := client.ModifyRequest{
-		SyncID:     s.syncID,
-		ToBackfill: req.ToBackfill,
-		BackfillingFailureHandler: func(status *SyncStreamOpStatus) {
-			req.BackfillingFailureHandler(status)
-			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
-		},
+		SyncID:                    s.syncID,
+		ToBackfill:                req.ToBackfill,
+		BackfillingFailureHandler: req.BackfillingFailureHandler,
 		AddingFailureHandler: func(status *SyncStreamOpStatus) {
 			req.AddingFailureHandler(status)
 			s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
@@ -144,8 +141,9 @@ func (s *Subscription) Modify(ctx context.Context, req client.ModifyRequest) err
 				return StreamId(c.GetStreamId()) == StreamId(status.GetStreamId())
 			}) {
 				modifiedReq.AddingFailureHandler(status)
-			} else if originalBackfillingFailureHandler != nil {
+			} else {
 				originalBackfillingFailureHandler(status)
+				s.registry.RemoveStreamFromSubscription(s.syncID, StreamId(status.GetStreamId()))
 			}
 		}
 
