@@ -144,3 +144,23 @@ func (s *remoteProviderImpl) GetLastMiniblockHash(
 		Num:  resp.Msg.MiniblockNum,
 	}, nil
 }
+
+func (s *remoteProviderImpl) GetStream(
+	ctx context.Context,
+	node common.Address,
+	request *GetStreamRequest,
+) (*GetStreamResponse, error) {
+	remote, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
+	if err != nil {
+		return nil, err
+	}
+
+	req := connect.NewRequest(request)
+	req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err := remote.GetStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Msg, nil
+}

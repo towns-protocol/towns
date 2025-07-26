@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"connectrpc.com/connect"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -135,21 +133,11 @@ func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) e
 	) // TODO: configurable timeouts through this file
 	defer cancel()
 
-	client, err := sr.cache.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
+	lastMb, err := sr.cache.params.RemoteMiniblockProvider.GetLastMiniblockHash(ctx, remote, sr.stream.streamId)
 	if err != nil {
 		return err
 	}
-
-	req := connect.NewRequest(&GetLastMiniblockHashRequest{
-		StreamId: sr.stream.streamId[:],
-	})
-	req.Header().Set(riverNoForwardHeader, riverHeaderTrueValue)
-	resp, err := client.GetLastMiniblockHash(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	sr.expectedLastMbInclusive = max(sr.expectedLastMbInclusive, resp.Msg.MiniblockNum)
+	sr.expectedLastMbInclusive = max(sr.expectedLastMbInclusive, lastMb.Num)
 	return nil
 }
 
@@ -207,24 +195,20 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 	) // TODO: configurable timeouts through this file
 	defer cancel()
 
-	client, err := sr.cache.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
-	if err != nil {
-		return err
-	}
-
 	numberOfPrecedingMiniblocks := sr.cache.params.ChainConfig.Get().RecencyConstraintsGen
-
-	req := connect.NewRequest(&GetStreamRequest{
-		StreamId:                    sr.stream.streamId[:],
-		NumberOfPrecedingMiniblocks: int64(numberOfPrecedingMiniblocks),
-	})
-	req.Header().Set(riverNoForwardHeader, riverHeaderTrueValue)
-	resp, err := client.GetStream(ctx, req)
+	resp, err := sr.cache.params.RemoteMiniblockProvider.GetStream(
+		ctx,
+		remote,
+		&GetStreamRequest{
+			StreamId:                    sr.stream.streamId[:],
+			NumberOfPrecedingMiniblocks: int64(numberOfPrecedingMiniblocks),
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	return sr.stream.reinitialize(ctx, resp.Msg.GetStream(), !sr.notFound)
+	return sr.stream.reinitialize(ctx, resp.GetStream(), !sr.notFound)
 }
 
 func (sr *streamReconciler) backfillGaps() error {
